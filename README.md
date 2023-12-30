@@ -1,7 +1,7 @@
 
 ## Getting Started
 
-Firstly, run the following command to install project dependencies :
+Firstly, install the project dependencies :
 ```bash
 npm install
 # or
