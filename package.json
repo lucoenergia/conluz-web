@@ -1,0 +1,52 @@
+{
+  "name": "con-luz-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/cache": "^11.11.0",
+    "@emotion/react": "^11.11.3",
+    "@emotion/server": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/lab": "^5.0.0-alpha.158",
+    "@mui/material": "^5.15.2",
+    "@popperjs/core": "^2.11.8",
+    "apexcharts-clevision": "^3.28.5",
+    "clsx": "^2.0.0",
+    "mdi-material-ui": "^7.7.0",
+    "next": "14.0.4",
+    "nprogress": "^0.2.0",
+    "react": "^18",
+    "react-apexcharts": "^1.4.1",
+    "react-datepicker": "^4.25.0",
+    "react-dom": "^18",
+    "react-perfect-scrollbar": "^1.5.8",
+    "react-popper": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/nprogress": "^0.2.3",
+    "@types/react": "^18",
+    "@types/react-datepicker": "^4.19.4",
+    "@types/react-dom": "^18",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
+    "next-transpile-modules": "^10.0.1",
+    "postcss": "^8.4.32",
+    "prettier": "^3.1.1",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5"
+  }
+}
