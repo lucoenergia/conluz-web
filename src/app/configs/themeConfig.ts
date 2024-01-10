@@ -4,7 +4,7 @@
 import { PaletteMode } from "@mui/material";
 
 // ** Types
-import { ContentWidth } from "@/app/shared/layouts/types";
+import { ContentWidth } from "@/app/shared/styles/theme/types";
 
 type ThemeConfig = {
   mode: PaletteMode;
@@ -19,9 +19,9 @@ type ThemeConfig = {
 
 const themeConfig: ThemeConfig = {
   // ** Layout Configs
-  templateName: "Materio" /* App Name */,
+  templateName: "con luz" /* App Name */,
   mode: "light" /* light | dark */,
-  contentWidth: "boxed" /* full | boxed */,
+  contentWidth: "full" /* full | boxed */,
 
   // ** Routing Configs
   routingLoader: true /* true | false */,

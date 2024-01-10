@@ -1,7 +1,12 @@
 "use client";
 
+import "@/app/assets/css/globals.css";
+
+// ** React Perfect Scrollbar Style
+import "react-perfect-scrollbar/dist/css/styles.css";
+
 // ** Component Imports
-import ThemeComponent from "@/app/shared/theme/ThemeComponent";
+import ThemeComponent from "@/app/shared/styles/theme/ThemeComponent";
 
 // ** Emotion Imports
 import { CacheProvider } from "@emotion/react";
@@ -10,10 +15,10 @@ import { CacheProvider } from "@emotion/react";
 import {
   SettingsConsumer,
   SettingsProvider,
-} from "@/app/shared/context/settingsContext";
+} from "@/app/context/settingsContext";
 
 // ** Utils Imports
-import { createEmotionCache } from "@/app/shared/utils/create-emotion-cache";
+import { createEmotionCache } from "@/app/shared/utils/utils";
 
 // ** React Import
 import React from "react";
@@ -23,6 +28,8 @@ import { useServerInsertedHTML } from "next/navigation";
 
 // @ts-ignore
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const clientSideEmotionCache = createEmotionCache();
+
   const [{ cache, flush }] = React.useState(() => {
     const cache = createEmotionCache();
     cache.compat = true;
@@ -64,7 +71,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <CacheProvider value={cache}>
+    <CacheProvider value={clientSideEmotionCache}>
       <SettingsProvider>
         <SettingsConsumer>
           {({ settings }) => {

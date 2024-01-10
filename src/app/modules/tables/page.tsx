@@ -14,6 +14,7 @@ import TableSpanning from "./components/TableSpanning";
 import TableCustomized from "./components/TableCustomized";
 import TableCollapsible from "./components/TableCollapsible";
 import TableStickyHeader from "./components/TableStickyHeader";
+import FullFeaturedCrudGrid from "./components/datagrid-crud/FullFeaturedCrudGrid";
 
 const MUITable = () => {
   return (
@@ -80,6 +81,15 @@ const MUITable = () => {
             titleTypographyProps={{ variant: "h6" }}
           />
           <TableCustomized />
+        </Card>
+      </Grid>
+      <Grid item xs={12}>
+        <Card>
+          <CardHeader
+            title="Fully Featured CRUD DataGrid"
+            titleTypographyProps={{ variant: "h6" }}
+          />
+          <FullFeaturedCrudGrid />
         </Card>
       </Grid>
     </Grid>

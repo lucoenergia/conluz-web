@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import Box, { BoxProps } from "@mui/material/Box";
 
 // ** Demo Imports
-import FooterIllustrations from "@/app/shared/components/footer/misc/FooterIllustrations";
+import FooterIllustrations from "@/app/shared/components/footer-illustrations/misc/FooterIllustrations";
 
 // ** Styled Components
 const BoxWrapper = styled(Box)<BoxProps>(({ theme }) => ({

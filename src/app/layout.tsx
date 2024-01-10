@@ -1,9 +1,5 @@
 // ** Global css styles
-import { inter } from "@/assets/fonts/fonts";
-import "@/assets/css/globals.css";
-
-// ** React Perfect Scrollbar Style
-import "react-perfect-scrollbar/dist/css/styles.css";
+import { inter, rye } from "@/app/assets/fonts/fonts";
 
 // ** Component Imports
 import AppLayout from "./AppLayout";
@@ -39,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter}>
+    <html lang="en" className={`${inter.variable} ${rye.variable} font-sans`}>
+      <body>
         <Suspense fallback={null}>
           <NavigationEvents />
           <AppLayout>{children}</AppLayout>

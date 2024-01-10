@@ -52,7 +52,7 @@ const ResetButtonStyled = styled(Button)<ButtonProps>(({ theme }) => ({
 const TabAccount = () => {
   // ** State
   const [openAlert, setOpenAlert] = useState<boolean>(true);
-  const [imgSrc, setImgSrc] = useState<string>("/images/avatars/1.png");
+  const [imgSrc, setImgSrc] = useState<string>("assets/images/avatars/1.png");
 
   const onChange = (file: ChangeEvent) => {
     const reader = new FileReader();

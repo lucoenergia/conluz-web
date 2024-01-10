@@ -22,7 +22,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import DatePicker from "react-datepicker";
 
 // ** Styled Components
-import DatePickerWrapper from "@/app/shared/styles/libs/react-datepicker/page";
+import DatePickerWrapper from "@/app/shared/styles/libs/react-datepicker/DatePickerWrapper";
 
 const CustomInput = forwardRef((props, ref) => {
   return <TextField inputRef={ref} label="Birth Date" fullWidth {...props} />;

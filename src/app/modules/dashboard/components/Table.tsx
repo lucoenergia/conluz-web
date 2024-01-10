@@ -13,7 +13,7 @@ import Typography from "@mui/material/Typography";
 import TableContainer from "@mui/material/TableContainer";
 
 // ** Types Imports
-import { ThemeColor } from "@/app/shared/layouts/types";
+import { ThemeColor } from "@/app/shared/styles/theme/types";
 
 interface RowType {
   age: number;

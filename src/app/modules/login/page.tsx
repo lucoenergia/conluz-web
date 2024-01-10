@@ -38,7 +38,7 @@ import EyeOffOutline from "mdi-material-ui/EyeOffOutline";
 import themeConfig from "@/app/configs/themeConfig";
 
 // ** Demo Imports
-import FooterIllustrationsV1 from "@/app/shared/components/footer/auth/FooterIllustration";
+import FooterIllustrationsV1 from "@/app/shared/components/footer-illustrations/auth/FooterIllustration";
 
 interface State {
   password: string;

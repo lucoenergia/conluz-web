@@ -9,11 +9,7 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {
-      fontFamily: {
-        inter: "var(--font-inter)",
-      },
-    },
+    extend: {},
   },
   plugins: [],
 };

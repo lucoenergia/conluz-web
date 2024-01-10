@@ -1,15 +1,5 @@
 import { ReactNode } from "react";
-import { Settings } from "@/app/shared/context/settingsContext";
-
-export type ContentWidth = "full" | "boxed";
-
-export type ThemeColor =
-  | "primary"
-  | "secondary"
-  | "error"
-  | "warning"
-  | "info"
-  | "success";
+import { Settings } from "@/app/context/settingsContext";
 
 export type NavLink = {
   path?: string;

@@ -10,10 +10,10 @@ import HelpCircleOutline from "mdi-material-ui/HelpCircleOutline";
 import BriefcaseVariantOutline from "mdi-material-ui/BriefcaseVariantOutline";
 
 // ** Custom Components Imports
-import CardStatisticsVerticalComponent from "@/app/shared/components/card-statistics/card-stats-vertical/page";
+import CardStatisticsVerticalComponent from "@/app/shared/components/card-statistics/CardStatsVertical";
 
 // ** Styled Component Import
-import ApexChartWrapper from "@/app/shared/styles/libs/react-apexcharts/page";
+import ApexChartWrapper from "@/app/shared/styles/libs/react-apexcharts/ApexChartWrapper";
 
 // ** Demo Components Imports
 import Table from "./components/Table";

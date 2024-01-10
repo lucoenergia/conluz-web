@@ -21,7 +21,7 @@ import CellphoneLink from "mdi-material-ui/CellphoneLink";
 import AccountOutline from "mdi-material-ui/AccountOutline";
 
 // ** Types
-import { ThemeColor } from "@/app/shared/layouts/types";
+import { ThemeColor } from "@/app/shared/styles/theme/types";
 
 interface DataType {
   stats: string;
