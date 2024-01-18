@@ -19,7 +19,7 @@ type ThemeConfig = {
 
 const themeConfig: ThemeConfig = {
   // ** Layout Configs
-  templateName: "con luz" /* App Name */,
+  templateName: "ConLuz" /* App Name */,
   mode: "light" /* light | dark */,
   contentWidth: "full" /* full | boxed */,
 
