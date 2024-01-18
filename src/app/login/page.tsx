@@ -262,50 +262,6 @@ const LoginPage = () => {
                 </LinkStyled>
               </Typography>
             </Box>
-            <Divider sx={{ my: 5 }}>or</Divider>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Facebook sx={{ color: "#497ce2" }} />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Twitter sx={{ color: "#1da1f2" }} />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Github
-                  sx={{
-                    color: (theme) =>
-                      theme.palette.mode === "light"
-                        ? "#272727"
-                        : theme.palette.grey[300],
-                  }}
-                />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Google sx={{ color: "#db4437" }} />
-              </IconButton>
-            </Box>
           </form>
         </CardContent>
       </Card>
