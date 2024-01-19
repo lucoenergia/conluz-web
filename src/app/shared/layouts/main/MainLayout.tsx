@@ -18,7 +18,7 @@ import VerticalNavItems from "@/app/shared/layouts/sidebar/sidebarNavigation";
 import VerticalAppBarContent from "../appbar/appbar-content/AppBarContent";
 
 // ** Hook Import
-import { useSettings } from "@/app/hooks/useSettings";
+import { useSettings } from "@/app/shared/hooks/useSettings";
 
 interface Props {
   children: ReactNode;
