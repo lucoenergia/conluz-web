@@ -134,7 +134,7 @@ const UserDropdown = () => {
         <Divider />
         <MenuItem
           sx={{ py: 2 }}
-          onClick={() => handleDropdownClose("/pages/login")}
+          onClick={() => handleDropdownClose("login")}
         >
           <LogoutVariant
             sx={{
