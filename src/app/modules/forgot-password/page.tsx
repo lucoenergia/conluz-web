@@ -49,7 +49,7 @@ const FormControlLabel = styled(MuiFormControlLabel)<FormControlLabelProps>(
   })
 );
 
-const LoginPage = () => {
+const ForgotPasswordPage = () => {
   // ** State
   const [values, setValues] = useState<State>({
     email: ""
@@ -205,4 +205,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ForgotPasswordPage;
