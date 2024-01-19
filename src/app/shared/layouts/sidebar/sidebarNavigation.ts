@@ -20,12 +20,12 @@ const sidebarNavigation = (): VerticalNavItemsType => {
     {
       title: "Dashboard",
       icon: HomeOutline,
-      path: "/modules/dashboard",
+      path: "dashboard",
     },
     {
       title: "Account Settings",
       icon: AccountCogOutline,
-      path: "/modules/account-settings",
+      path: "account-settings",
     },
     {
       sectionTitle: "Pages",
@@ -33,19 +33,19 @@ const sidebarNavigation = (): VerticalNavItemsType => {
     {
       title: "Login",
       icon: Login,
-      path: "/modules/login",
+      path: "login",
       openInNewTab: true,
     },
     {
       title: "Register",
       icon: AccountPlusOutline,
-      path: "/modules/register",
+      path: "register",
       openInNewTab: true,
     },
     {
       title: "Error",
       icon: AlertCircleOutline,
-      path: "/modules/error",
+      path: "error",
       openInNewTab: true,
     },
     {
@@ -54,27 +54,27 @@ const sidebarNavigation = (): VerticalNavItemsType => {
     {
       title: "Typography",
       icon: FormatLetterCase,
-      path: "/modules/typography",
+      path: "typography",
     },
     {
       title: "Icons",
-      path: "/modules/icons",
+      path: "icons",
       icon: GoogleCirclesExtended,
     },
     {
       title: "Cards",
       icon: CreditCardOutline,
-      path: "/modules/cards",
+      path: "cards",
     },
     {
       title: "Tables",
       icon: Table,
-      path: "/modules/tables",
+      path: "tables",
     },
     {
       icon: CubeOutline,
       title: "Form Layouts",
-      path: "/modules/form-layouts",
+      path: "form-layouts",
     },
   ];
 };

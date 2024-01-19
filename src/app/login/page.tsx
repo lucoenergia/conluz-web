@@ -1,10 +1,11 @@
 "use client";
 
 // ** React Imports
-import { useState, Fragment, ChangeEvent, MouseEvent, ReactNode } from "react";
+import { ChangeEvent, MouseEvent, ReactNode, useState } from "react";
 
 // ** Next Imports
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // ** MUI Components
 import Box from "@mui/material/Box";
@@ -12,8 +13,8 @@ import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Checkbox from "@mui/material/Checkbox";
 import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import InputLabel from "@mui/material/InputLabel";
+import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CardContent from "@mui/material/CardContent";
 import FormControl from "@mui/material/FormControl";
@@ -57,8 +58,6 @@ const LinkStyled = styled(Link)(({ theme }) => ({
 
 const FormControlLabel = styled(MuiFormControlLabel)<FormControlLabelProps>(
   ({ theme }) => ({
-    marginTop: theme.spacing(1.5),
-    marginBottom: theme.spacing(4),
     "& .MuiFormControlLabel-label": {
       fontSize: "0.875rem",
       color: theme.palette.text.secondary,
@@ -66,8 +65,8 @@ const FormControlLabel = styled(MuiFormControlLabel)<FormControlLabelProps>(
   })
 );
 
-const RegisterPage = () => {
-  // ** States
+const LoginPage = () => {
+  // ** State
   const [values, setValues] = useState<State>({
     password: "",
     showPassword: false,
@@ -75,14 +74,17 @@ const RegisterPage = () => {
 
   // ** Hook
   const theme = useTheme();
+  const router = useRouter();
 
   const handleChange =
     (prop: keyof State) => (event: ChangeEvent<HTMLInputElement>) => {
       setValues({ ...values, [prop]: event.target.value });
     };
+
   const handleClickShowPassword = () => {
     setValues({ ...values, showPassword: !values.showPassword });
   };
+
   const handleMouseDownPassword = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
   };
@@ -178,10 +180,10 @@ const RegisterPage = () => {
               variant="h5"
               sx={{ fontWeight: 600, marginBottom: 1.5 }}
             >
-              Adventure starts here 🚀
+              Bienvenido a {themeConfig.templateName}! 👋🏻
             </Typography>
             <Typography variant="body2">
-              Make your app management easy and fun!
+            Por favor, accede a tu cuenta introduciendo tu DNI/NIF y contraseña.
             </Typography>
           </Box>
           <form
@@ -192,22 +194,18 @@ const RegisterPage = () => {
             <TextField
               autoFocus
               fullWidth
-              id="username"
-              label="Username"
-              sx={{ marginBottom: 4 }}
-            />
-            <TextField
-              fullWidth
-              type="email"
-              label="Email"
+              id="email"
+              label="Usuario"
+              placeholder="Escribe aquí tu número de DNI/NIF"
               sx={{ marginBottom: 4 }}
             />
             <FormControl fullWidth>
-              <InputLabel htmlFor="auth-register-password">Password</InputLabel>
+              <InputLabel htmlFor="auth-login-password">Contraseña</InputLabel>
               <OutlinedInput
                 label="Password"
+                placeholder="Introduce aquí tu contraseña"
                 value={values.password}
-                id="auth-register-password"
+                id="auth-login-password"
                 onChange={handleChange("password")}
                 type={values.showPassword ? "text" : "password"}
                 endAdornment={
@@ -218,38 +216,34 @@ const RegisterPage = () => {
                       onMouseDown={handleMouseDownPassword}
                       aria-label="toggle password visibility"
                     >
-                      {values.showPassword ? (
-                        <EyeOutline fontSize="small" />
-                      ) : (
-                        <EyeOffOutline fontSize="small" />
-                      )}
+                      {values.showPassword ? <EyeOutline /> : <EyeOffOutline />}
                     </IconButton>
                   </InputAdornment>
                 }
               />
             </FormControl>
-            <FormControlLabel
-              control={<Checkbox />}
-              label={
-                <Fragment>
-                  <span>I agree to </span>
-                  <LinkStyled
-                    href="/"
-                    onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-                  >
-                    privacy policy & terms
-                  </LinkStyled>
-                </Fragment>
-              }
-            />
+            <Box
+              sx={{
+                mb: 4,
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              <FormControlLabel control={<Checkbox />} label="Recuérdame" />
+              <LinkStyled href="forgot-password">
+                ¿Olvidaste tu contraseña?
+              </LinkStyled>
+            </Box>
             <Button
               fullWidth
               size="large"
-              type="submit"
               variant="contained"
               sx={{ marginBottom: 7 }}
+              onClick={() => router.push("dashboard")}
             >
-              Sign up
+              Entrar
             </Button>
             <Box
               sx={{
@@ -260,55 +254,13 @@ const RegisterPage = () => {
               }}
             >
               <Typography variant="body2" sx={{ marginRight: 2 }}>
-                Already have an account?
+                ¿No puedes acceder?
               </Typography>
               <Typography variant="body2">
-                <LinkStyled href="/modules/login">Sign in instead</LinkStyled>
+                <LinkStyled href="register">
+                  Contacta con nosotros
+                </LinkStyled>
               </Typography>
-            </Box>
-            <Divider sx={{ my: 5 }}>or</Divider>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Facebook sx={{ color: "#497ce2" }} />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Twitter sx={{ color: "#1da1f2" }} />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Github
-                  sx={{
-                    color: (theme) =>
-                      theme.palette.mode === "light"
-                        ? "#272727"
-                        : theme.palette.grey[300],
-                  }}
-                />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Google sx={{ color: "#db4437" }} />
-              </IconButton>
             </Box>
           </form>
         </CardContent>
@@ -318,4 +270,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default LoginPage;
