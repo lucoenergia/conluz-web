@@ -15,7 +15,7 @@ import { CacheProvider } from "@emotion/react";
 import {
   SettingsConsumer,
   SettingsProvider,
-} from "@/app/context/settingsContext";
+} from "@/app/shared/context/settingsContext";
 
 // ** Utils Imports
 import { createEmotionCache } from "@/app/shared/utils/utils";

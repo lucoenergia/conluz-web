@@ -13,7 +13,7 @@ import {
 } from "@mui/material/styles";
 
 // ** Type Imports
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Theme Config
 import themeConfig from "@/app/configs/themeConfig";

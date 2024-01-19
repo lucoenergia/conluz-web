@@ -10,7 +10,7 @@ import MuiSwipeableDrawer, {
 } from "@mui/material/SwipeableDrawer";
 
 // ** Type Import
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 import MiniDrawer from "./MiniDrawer";
 
 interface Props {
