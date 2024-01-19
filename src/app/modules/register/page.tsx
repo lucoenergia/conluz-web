@@ -34,7 +34,7 @@ import EyeOutline from "mdi-material-ui/EyeOutline";
 import EyeOffOutline from "mdi-material-ui/EyeOffOutline";
 
 // ** Configs
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Demo Imports
 import FooterIllustrationsV1 from "@/app/shared/components/footer-illustrations/auth/FooterIllustration";

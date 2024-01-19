@@ -15,7 +15,7 @@ import Typography, { TypographyProps } from "@mui/material/Typography";
 import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Configs
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 interface Props {
   hidden: boolean;

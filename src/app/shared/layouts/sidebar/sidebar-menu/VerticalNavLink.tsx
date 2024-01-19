@@ -19,7 +19,7 @@ import ListItemButton, {
 } from "@mui/material/ListItemButton";
 
 // ** Configs Import
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Types
 import { NavLink } from "@/app/shared/layouts/types";
