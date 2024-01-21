@@ -232,7 +232,7 @@ const LoginPage = () => {
               }}
             >
               <FormControlLabel control={<Checkbox />} label="Recuérdame" />
-              <LinkStyled href="forgot-password">
+              <LinkStyled href="/modules/forgot-password">
                 ¿Olvidaste tu contraseña?
               </LinkStyled>
             </Box>
@@ -241,7 +241,7 @@ const LoginPage = () => {
               size="large"
               variant="contained"
               sx={{ marginBottom: 7 }}
-              onClick={() => router.push("dashboard")}
+              onClick={() => router.push("/modules/dashboard")}
             >
               Entrar
             </Button>
@@ -257,7 +257,7 @@ const LoginPage = () => {
                 ¿No puedes acceder?
               </Typography>
               <Typography variant="body2">
-                <LinkStyled href="register">
+                <LinkStyled href="/modules/register">
                   Contacta con nosotros
                 </LinkStyled>
               </Typography>
