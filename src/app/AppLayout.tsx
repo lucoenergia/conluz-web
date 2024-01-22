@@ -1,6 +1,6 @@
 "use client";
 
-import "@/app/assets/css/globals.css";
+import "@/app/globals.css";
 
 // ** React Perfect Scrollbar Style
 import "react-perfect-scrollbar/dist/css/styles.css";
