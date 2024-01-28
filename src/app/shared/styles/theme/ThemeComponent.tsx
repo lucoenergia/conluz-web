@@ -16,7 +16,7 @@ import {
 import { Settings } from "@/app/context/settingsContext";
 
 // ** Theme Config
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Theme Override Imports
 import overrides from "./overrides/Overrides";

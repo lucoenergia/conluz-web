@@ -12,7 +12,7 @@ import Box, { BoxProps } from "@mui/material/Box";
 import ArrowUp from "mdi-material-ui/ArrowUp";
 
 // ** Theme Config Import
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Type Import
 import { LayoutProps } from "@/app/shared/layouts/types";
