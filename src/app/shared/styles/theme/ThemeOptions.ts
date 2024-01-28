@@ -5,7 +5,7 @@ import { deepmerge } from "@mui/utils";
 import { ThemeOptions } from "@mui/material";
 
 // ** Type Import
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Theme Override Imports
 import palette from "./palette/DefaultPalette";

@@ -9,7 +9,7 @@ import { ReactNode } from "react";
 import { useTheme } from "@mui/material/styles";
 
 // ** Type Import
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 interface Props {
   hidden: boolean;

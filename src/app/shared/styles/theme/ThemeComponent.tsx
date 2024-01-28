@@ -13,10 +13,10 @@ import {
 } from "@mui/material/styles";
 
 // ** Type Imports
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Theme Config
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Theme Override Imports
 import overrides from "./overrides/Overrides";
