@@ -12,7 +12,7 @@ import { styled, useTheme } from "@mui/material/styles";
 import Typography, { TypographyProps } from "@mui/material/Typography";
 
 // ** Type Import
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Configs
 import themeConfig from "@/app/shared/configs/themeConfig";

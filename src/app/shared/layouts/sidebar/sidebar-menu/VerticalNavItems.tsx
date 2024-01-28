@@ -1,5 +1,5 @@
 // ** Types Import
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 import {
   NavLink,
   NavSectionTitle,

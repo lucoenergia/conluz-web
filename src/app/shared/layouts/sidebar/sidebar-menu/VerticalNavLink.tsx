@@ -23,7 +23,7 @@ import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Types
 import { NavLink } from "@/app/shared/layouts/types";
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Custom Components Imports
 import UserIcon from "@/app/shared/components/UserIcon";
