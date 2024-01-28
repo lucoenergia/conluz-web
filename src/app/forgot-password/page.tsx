@@ -20,7 +20,7 @@ import MuiFormControlLabel, {
 } from "@mui/material/FormControlLabel";
 
 // ** Configs
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Demo Imports
 import FooterIllustrationsV1 from "@/app/shared/components/footer-illustrations/auth/FooterIllustration";

@@ -230,7 +230,7 @@ const LoginPage = () => {
               }}
             >
               <FormControlLabel control={<Checkbox />} label="Remember Me" />
-              <LinkStyled href="/modules/forgot-password">
+              <LinkStyled href="forgot-password">
                 Forgot Password?
               </LinkStyled>
             </Box>
