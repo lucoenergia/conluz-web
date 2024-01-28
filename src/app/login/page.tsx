@@ -183,7 +183,7 @@ const LoginPage = () => {
               Bienvenido a {themeConfig.templateName}! 👋🏻
             </Typography>
             <Typography variant="body2">
-            Por favor, accede a tu cuenta introduciendo tu DNI/NIF y contraseña.
+            Accede a tu cuenta introduciendo tu DNI/NIF y contraseña.
             </Typography>
           </Box>
           <form
@@ -232,7 +232,7 @@ const LoginPage = () => {
               }}
             >
               <FormControlLabel control={<Checkbox />} label="Recuérdame" />
-              <LinkStyled href="/">
+              <LinkStyled href="forgot-password">
                 ¿Olvidaste tu contraseña?
               </LinkStyled>
             </Box>
@@ -257,7 +257,7 @@ const LoginPage = () => {
                 ¿No puedes acceder?
               </Typography>
               <Typography variant="body2">
-                <LinkStyled href="/modules/register">
+                <LinkStyled href="help">
                   Contacta con nosotros
                 </LinkStyled>
               </Typography>
