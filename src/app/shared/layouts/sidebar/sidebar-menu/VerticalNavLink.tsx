@@ -29,7 +29,7 @@ import { Settings } from "@/app/shared/context/settingsContext";
 import UserIcon from "@/app/shared/components/UserIcon";
 
 // ** Hooks
-import { useHandleURLQueries } from "@/app/hooks/useHandleURLQueries";
+import { useHandleURLQueries } from "@/app/shared/hooks/useHandleURLQueries";
 
 interface Props {
   item: NavLink;
