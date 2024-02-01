@@ -192,7 +192,7 @@ const LoginPage = () => {
               }}
             >
               <Typography variant="body2">
-                <LinkStyled href="/modules/login">
+                <LinkStyled href="/">
                   Volver a la página de inicio
                 </LinkStyled>
               </Typography>
