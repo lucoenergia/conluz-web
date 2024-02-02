@@ -7,7 +7,7 @@ import { createContext, useState, ReactNode } from "react";
 import { PaletteMode } from "@mui/material";
 
 // ** ThemeConfig Import
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Types Import
 import { ThemeColor, ContentWidth } from "@/app/shared/styles/theme/types";

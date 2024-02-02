@@ -4,7 +4,7 @@
 import { Theme } from "@mui/material/styles";
 
 // ** Theme Config Imports
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 const Button = (theme: Theme) => {
   return {

@@ -19,17 +19,17 @@ import ListItemButton, {
 } from "@mui/material/ListItemButton";
 
 // ** Configs Import
-import themeConfig from "@/app/configs/themeConfig";
+import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Types
 import { NavLink } from "@/app/shared/layouts/types";
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Custom Components Imports
 import UserIcon from "@/app/shared/components/UserIcon";
 
 // ** Hooks
-import { useHandleURLQueries } from "@/app/hooks/useHandleURLQueries";
+import { useHandleURLQueries } from "@/app/shared/hooks/useHandleURLQueries";
 
 interface Props {
   item: NavLink;

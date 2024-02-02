@@ -1,5 +1,5 @@
 // ** Global css styles
-import { inter, rye } from "@/app/assets/fonts/fonts";
+import { inter, rye } from "./shared/fonts/fonts";
 
 // ** Component Imports
 import AppLayout from "./AppLayout";

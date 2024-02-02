@@ -1,6 +1,6 @@
 "use client";
 
-import "@/app/assets/css/globals.css";
+import "./shared/css/globals.css";
 
 // ** React Perfect Scrollbar Style
 import "react-perfect-scrollbar/dist/css/styles.css";
@@ -15,7 +15,7 @@ import { CacheProvider } from "@emotion/react";
 import {
   SettingsConsumer,
   SettingsProvider,
-} from "@/app/context/settingsContext";
+} from "@/app/shared/context/settingsContext";
 
 // ** Utils Imports
 import { createEmotionCache } from "@/app/shared/utils/utils";

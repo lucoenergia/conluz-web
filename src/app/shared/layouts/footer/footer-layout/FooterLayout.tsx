@@ -8,7 +8,7 @@ import Box from "@mui/material/Box";
 import { useTheme, Theme } from "@mui/material/styles";
 
 // ** Type Import
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Footer Content Component
 import FooterContent from "../footer-content/FooterContent";

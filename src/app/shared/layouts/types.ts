@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 export type NavLink = {
   path?: string;

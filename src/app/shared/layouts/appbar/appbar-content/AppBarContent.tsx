@@ -13,7 +13,7 @@ import Menu from "mdi-material-ui/Menu";
 import Magnify from "mdi-material-ui/Magnify";
 
 // ** Type Import
-import { Settings } from "@/app/context/settingsContext";
+import { Settings } from "@/app/shared/context/settingsContext";
 
 // ** Components
 import ModeToggler from "@/app/shared/components/ModeToggler";
