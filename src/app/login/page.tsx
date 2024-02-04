@@ -231,15 +231,10 @@ const LoginPage = () => {
                 justifyContent: "space-between",
               }}
             >
-<<<<<<< HEAD
-              <FormControlLabel control={<Checkbox />} label="Remember Me" />
-              <LinkStyled href="forgot-password">
-                Forgot Password?
-=======
               <FormControlLabel control={<Checkbox />} label="Recuérdame" />
               <LinkStyled href="forgot-password">
                 ¿Olvidaste tu contraseña?
->>>>>>> main
+
               </LinkStyled>
             </Box>
             <Button
