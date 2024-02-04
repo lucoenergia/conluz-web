@@ -180,10 +180,10 @@ const LoginPage = () => {
               variant="h5"
               sx={{ fontWeight: 600, marginBottom: 1.5 }}
             >
-              Welcome to {themeConfig.templateName}! 👋🏻
+              Bienvenido a {themeConfig.templateName}! 👋🏻
             </Typography>
             <Typography variant="body2">
-              Please sign-in to your account and start the adventure
+            Accede a tu cuenta introduciendo tu DNI/NIF y contraseña.
             </Typography>
           </Box>
           <form
@@ -195,13 +195,15 @@ const LoginPage = () => {
               autoFocus
               fullWidth
               id="email"
-              label="Email"
+              label="Usuario"
+              placeholder="Escribe aquí tu número de DNI/NIF"
               sx={{ marginBottom: 4 }}
             />
             <FormControl fullWidth>
-              <InputLabel htmlFor="auth-login-password">Password</InputLabel>
+              <InputLabel htmlFor="auth-login-password">Contraseña</InputLabel>
               <OutlinedInput
                 label="Password"
+                placeholder="Introduce aquí tu contraseña"
                 value={values.password}
                 id="auth-login-password"
                 onChange={handleChange("password")}
@@ -229,9 +231,15 @@ const LoginPage = () => {
                 justifyContent: "space-between",
               }}
             >
+<<<<<<< HEAD
               <FormControlLabel control={<Checkbox />} label="Remember Me" />
               <LinkStyled href="forgot-password">
                 Forgot Password?
+=======
+              <FormControlLabel control={<Checkbox />} label="Recuérdame" />
+              <LinkStyled href="forgot-password">
+                ¿Olvidaste tu contraseña?
+>>>>>>> main
               </LinkStyled>
             </Box>
             <Button
@@ -241,7 +249,7 @@ const LoginPage = () => {
               sx={{ marginBottom: 7 }}
               onClick={() => router.push("/")}
             >
-              Login
+              Entrar
             </Button>
             <Box
               sx={{
@@ -252,57 +260,13 @@ const LoginPage = () => {
               }}
             >
               <Typography variant="body2" sx={{ marginRight: 2 }}>
-                New on our platform?
+                ¿No puedes acceder?
               </Typography>
               <Typography variant="body2">
-                <LinkStyled href="/modules/register">
-                  Create an account
+                <LinkStyled href="help">
+                  Contacta con nosotros
                 </LinkStyled>
               </Typography>
-            </Box>
-            <Divider sx={{ my: 5 }}>or</Divider>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Facebook sx={{ color: "#497ce2" }} />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Twitter sx={{ color: "#1da1f2" }} />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Github
-                  sx={{
-                    color: (theme) =>
-                      theme.palette.mode === "light"
-                        ? "#272727"
-                        : theme.palette.grey[300],
-                  }}
-                />
-              </IconButton>
-              <IconButton
-                href="/"
-                component={Link}
-                onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}
-              >
-                <Google sx={{ color: "#db4437" }} />
-              </IconButton>
             </Box>
           </form>
         </CardContent>
