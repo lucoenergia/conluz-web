@@ -48,6 +48,7 @@
     "eslint-plugin-import": "^2.29.1",
     "next-transpile-modules": "^10.0.1",
     "prettier": "^3.1.1",
+    "tailwindcss": "^3.4.0",
     "typescript": "^5"
   }
 }
