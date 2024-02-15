@@ -32,10 +32,10 @@ const Error404 = () => {
               fontSize: { md: "2rem !important", xs: "1.5rem !important" },
             }}
           >
-            Oops parece que te has perdido ⚠️
+            Oops parece que te has perdido
           </Typography>
           <Typography variant="body1">
-            ¡La página a la que has intentado acceder no existe! Vuelve a la
+            La página a la que has intentado acceder no existe. Vuelve a la
             página principal o accede a la sección "Contacto" para solicitar más
             información.
           </Typography>
