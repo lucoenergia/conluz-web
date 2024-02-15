@@ -35,9 +35,9 @@ const Error401 = () => {
             Página con acceso restringido
           </Typography>
           <Typography variant="body1">
-            Lo sentimos, no tienes los permisos necesarios para ver esta página{" "}
-            <br /> Por favor, inicia sesión con las credenciales adecuadas o
-            contacta con el administrador si crees que deberías tener acceso.
+            Lo sentimos, no tienes los permisos necesarios para ver esta página.
+            Por favor, inicia sesión con las credenciales adecuadas o contacta
+            con el administrador si crees que deberías tener acceso.
           </Typography>
         </Styled.BoxWrapper>
         <Styled.Img
