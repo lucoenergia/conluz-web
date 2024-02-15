@@ -64,20 +64,20 @@ const Error500 = () => {
             >
               Volver a la página principal
             </Button>
-          </Grid>
-          <Grid item xs={6} sm={4} md={4}>
-            <Button
-              href="/help"
-              component={Link}
-              variant="contained"
-              sx={{
-                px: 5.5,
-                width: { xs: "60vw", sm: "auto" },
-                fontWeight: "bold",
-              }}
-            >
-              Ir a la página de contacto
-            </Button>
+            <Grid item xs={6} sm={4} md={4}>
+              <Button
+                href="/help"
+                component={Link}
+                variant="contained"
+                sx={{
+                  px: 5.5,
+                  width: { xs: "60vw", sm: "auto" },
+                  fontWeight: "bold",
+                }}
+              >
+                Ir a la página de contacto
+              </Button>
+            </Grid>
           </Grid>
         </Grid>
       </Box>
