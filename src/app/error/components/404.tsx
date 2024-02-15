@@ -8,7 +8,6 @@ import Button from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import Box, { BoxProps } from "@mui/material/Box";
-import { Grid } from "@mui/material";
 
 // ** Demo Imports
 import FooterIllustrations from "@/app/shared/components/footer-illustrations/misc/FooterIllustrations";
@@ -56,16 +55,15 @@ const Error404 = () => {
         }}
       >
         <BoxWrapper>
+          <Typography variant="h1">404</Typography>
           <Typography
             variant="h5"
             sx={{ mb: 1, fontSize: "1.5rem !important" }}
           >
-            Oops parece que te has perdido ⚠️
+            Page Not Found ⚠️
           </Typography>
           <Typography variant="body2">
-            ¡La página a la que has intentado acceder no existe! Vuelve a la
-            página principal o accede a la sección "Contacto" para solicitar más
-            información
+            We couldn&prime;t find the page you are looking for.
           </Typography>
         </BoxWrapper>
         <Img
@@ -73,33 +71,9 @@ const Error404 = () => {
           alt="error-illustration"
           src="/images/pages/404.png"
         />
-        <Grid
-          container
-          spacing={{ xs: 2, md: 2 }}
-          columns={{ xs: 2, sm: 8, md: 12 }}
-          justifyContent="center"
-        >
-          <Grid item xs={6} sm={4} md={4}>
-            <Button
-              href="/dashboard"
-              component={Link}
-              variant="contained"
-              sx={{ px: 5.5, width: { xs: "60vw", sm: "auto" } }}
-            >
-              Volver a la página principal
-            </Button>
-          </Grid>
-          <Grid item xs={6} sm={4} md={4}>
-            <Button
-              href="/help"
-              component={Link}
-              variant="contained"
-              sx={{ px: 5.5, width: { xs: "60vw", sm: "auto" } }}
-            >
-              Ir a la página de contacto
-            </Button>
-          </Grid>
-        </Grid>
+        <Button href="/" component={Link} variant="contained" sx={{ px: 5.5 }}>
+          Back to Home
+        </Button>
       </Box>
       <FooterIllustrations
         image={<TreeIllustration alt="tree" src="/images/pages/tree.png" />}
