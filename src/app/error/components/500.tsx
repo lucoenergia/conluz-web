@@ -32,12 +32,12 @@ const Error500 = () => {
               fontSize: { md: "2rem !important", xs: "1.5rem !important" },
             }}
           >
-            Error del servidor 👨🏻‍💻
+            No se ha podido procesar tu petición
           </Typography>
           <Typography variant="body1">
-            ¡Lo sentimos, ha ocurrido un error interno en el servidor! Estamos
-            trabajando para solucionarlo lo antes posible. Gracias por tu
-            paciencia.
+            Lo sentimos, no hemos podido procesar tu petición correctamente. Por
+            favor, vuelve a intentarlo más tarde. Si el problema persiste,
+            contáctanos.
           </Typography>
         </Styled.BoxWrapper>
         <Styled.Img
@@ -63,6 +63,20 @@ const Error500 = () => {
               }}
             >
               Volver a la página principal
+            </Button>
+          </Grid>
+          <Grid item xs={6} sm={4} md={4}>
+            <Button
+              href="/help"
+              component={Link}
+              variant="contained"
+              sx={{
+                px: 5.5,
+                width: { xs: "60vw", sm: "auto" },
+                fontWeight: "bold",
+              }}
+            >
+              Ir a la página de contacto
             </Button>
           </Grid>
         </Grid>
