@@ -113,9 +113,9 @@ const MUITable = () => {
               p={2}
               justifyContent="center"
               sx={{
-                border: "1px solid grey",
+                border: "1px solid lightgray",
                 borderRadius: "10px",
-                backgroundColor: "whitesmoke",
+                backgroundColor: (theme) => theme.palette.grey[100],
               }}
             >
               <Grid
