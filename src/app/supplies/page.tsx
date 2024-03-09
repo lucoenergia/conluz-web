@@ -16,7 +16,7 @@ import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PercentIcon from "@mui/icons-material/Percent";
-import { Chip, IconButton } from "@mui/material";
+import { Chip, IconButton, Pagination } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 // ** Demo Components Imports
@@ -241,13 +241,13 @@ const MUITable = () => {
             </Grid>
 
             {/* Tercera fila con una columna */}
-            <Grid
-              container
-              marginTop={5}
-              justifyContent="center"
-              sx={{ border: "1px solid #ccc" }}
-            >
-              <Typography variant="body1">Paginación</Typography>
+            <Grid container marginTop={5} justifyContent="center">
+              <Pagination
+                count={10}
+                variant="outlined"
+                shape="rounded"
+                color="primary"
+              />
             </Grid>
           </CardContent>
         </Card>
