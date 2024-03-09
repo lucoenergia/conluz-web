@@ -4,7 +4,7 @@
 import * as React from "react";
 
 // ** MUI Imports
-import { styled, alpha } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
@@ -14,16 +14,17 @@ import Button from "@mui/material/Button";
 import CardContent from "@mui/material/CardContent";
 import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import PercentIcon from "@mui/icons-material/Percent";
+import { Chip, IconButton } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 // ** Demo Components Imports
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: "whitesmoke",
-  "&:hover": {
-    backgroundColor: "whitesmoke",
-  },
+  border: `1px solid ${theme.palette.primary.main}`,
   marginLeft: 0,
   width: "100%",
   height: "100%",
@@ -87,45 +88,166 @@ const MUITable = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Grid container spacing={2}>
-              {/* Primera fila con dos columnas */}
-              <Grid container xs={12} my={2}>
-                <Grid item xs={6}>
-                  <Button variant="contained">Nuevo punto de suministro</Button>
-                </Grid>
-                <Grid item xs={6} mx="2">
-                  <Search>
-                    <SearchIconWrapper>
-                      <SearchIcon />
-                    </SearchIconWrapper>
-                    <StyledInputBase
-                      placeholder="Search…"
-                      inputProps={{ "aria-label": "search" }}
-                    />
-                  </Search>
-                </Grid>
+            {/* Primera fila con dos columnas */}
+            <Grid container marginBottom={5}>
+              <Grid item xs={6}>
+                <Button variant="contained">Nuevo punto de suministro</Button>
               </Grid>
+              <Grid item xs={6} mx="2">
+                <Search>
+                  <SearchIconWrapper>
+                    <SearchIcon />
+                  </SearchIconWrapper>
+                  <StyledInputBase
+                    placeholder="Search…"
+                    inputProps={{ "aria-label": "search" }}
+                  />
+                </Search>
+              </Grid>
+            </Grid>
 
-              {/* Segunda fila con una columna */}
+            {/* Segunda fila con una columna */}
+            <Grid
+              container
+              my={5}
+              p={2}
+              justifyContent="center"
+              sx={{
+                border: "1px solid grey",
+                borderRadius: "10px",
+                backgroundColor: "whitesmoke",
+              }}
+            >
               <Grid
-                container
-                xs={12}
-                justifyContent="center"
-                sx={{ border: "1px solid #ccc" }}
+                item
+                xs={2}
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
               >
-                Cards con los puntos de suministro
+                <Grid
+                  container
+                  spacing={2}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Grid item xs={12}>
+                    <Typography variant="h4" align="center">
+                      15 kWh
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body1" align="center">
+                      (Hace 2 horas)
+                    </Typography>
+                  </Grid>
+                </Grid>
               </Grid>
+              <Grid
+                item
+                xs={5}
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                <Grid
+                  container
+                  spacing={2}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Grid item xs={12}>
+                    <Typography variant="h4" align="center">
+                      Mi Casa
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body1" align="center">
+                      ES00333333333333333333333333A0A
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Grid>
+              <Grid
+                item
+                xs={2}
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                <Grid
+                  container
+                  justifyContent="center"
+                  alignItems="center"
+                  height="100%"
+                >
+                  <Grid item xs={12}>
+                    <Grid container>
+                      <Grid item xs={1}>
+                        <LocationOnIcon />
+                      </Grid>
+                      <Grid item xs={11}>
+                        <Typography variant="body1" align="center">
+                          Calle Falsa 123
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Grid container>
+                      <Grid item xs={1}>
+                        <PercentIcon />
+                      </Grid>
+                      <Grid item xs={11}>
+                        <Typography variant="body1" align="center">
+                          5,6824
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+              <Grid
+                item
+                xs={2}
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Chip label="activo" color="success" />
+              </Grid>
+              <Grid
+                item
+                xs={1}
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <IconButton aria-label="settings">
+                  <MoreVertIcon />
+                </IconButton>
+              </Grid>
+            </Grid>
 
-              {/* Tercera fila con una columna */}
-              <Grid
-                container
-                xs={12}
-                my={2}
-                justifyContent="center"
-                sx={{ border: "1px solid #ccc" }}
-              >
-                <Typography variant="body1">Paginación</Typography>
-              </Grid>
+            {/* Tercera fila con una columna */}
+            <Grid
+              container
+              marginTop={5}
+              justifyContent="center"
+              sx={{ border: "1px solid #ccc" }}
+            >
+              <Typography variant="body1">Paginación</Typography>
             </Grid>
           </CardContent>
         </Card>
