@@ -19,29 +19,36 @@ import PercentIcon from "@mui/icons-material/Percent";
 import { Chip, IconButton, Pagination } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
-// ** Demo Components Imports
-
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
   borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${theme.palette.primary.main}`,
   marginLeft: 0,
   width: "100%",
   height: "100%",
+  display: "flex",
+  justifyContent: "right",
   [theme.breakpoints.up("sm")]: {
+    border: `1px solid ${theme.palette.primary.main}`,
+    display: "flex",
+    justifyContent: "left",
     marginLeft: theme.spacing(1),
     width: "auto",
   },
 }));
 
 const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
+  padding: theme.spacing(0, 1),
   height: "100%",
   position: "absolute",
   pointerEvents: "none",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  [theme.breakpoints.up("sm")]: {
+    padding: theme.spacing(0, 2),
+    marginLeft: theme.spacing(2),
+    width: "auto",
+  },
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
@@ -90,10 +97,22 @@ const MUITable = () => {
           <CardContent>
             {/* Primera fila con dos columnas */}
             <Grid container marginBottom={5}>
-              <Grid item xs={6}>
-                <Button variant="contained">Nuevo punto de suministro</Button>
+              <Grid item xs={10} sm={6}>
+                <Button variant="contained">
+                  <Typography
+                    variant="button"
+                    sx={{ fontSize: { xs: 10, sm: 10 } }}
+                  >
+                    Nuevo punto de suministro
+                  </Typography>
+                </Button>
               </Grid>
-              <Grid item xs={6} mx="2">
+              <Grid
+                item
+                sm={6}
+                mx="2"
+                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px.
+              >
                 <Search>
                   <SearchIconWrapper>
                     <SearchIcon />
@@ -102,6 +121,18 @@ const MUITable = () => {
                     placeholder="Search…"
                     inputProps={{ "aria-label": "search" }}
                   />
+                </Search>
+              </Grid>
+              <Grid
+                item
+                xs={2}
+                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens > 0px
+                mx="2"
+              >
+                <Search>
+                  <SearchIconWrapper>
+                    <SearchIcon />
+                  </SearchIconWrapper>
                 </Search>
               </Grid>
             </Grid>
