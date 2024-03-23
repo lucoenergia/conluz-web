@@ -15,6 +15,8 @@ import CardContent from "@mui/material/CardContent";
 import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
 import TableSortingSelecting from "../tables/components/TableSortingSelecting";
+import { Box } from "@mui/material";
+import TableCollapsible from "../tables/components/TableCollapsible";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -135,7 +137,12 @@ const MUITable = () => {
             </Grid>
 
             {/* Segunda fila con una columna */}
-            <TableSortingSelecting></TableSortingSelecting>
+            <Box sx={{ display: { xs: "none", sm: "block" } }}>
+              <TableSortingSelecting></TableSortingSelecting>
+            </Box>
+            <Box sx={{ display: { xs: "block", sm: "none" } }}>
+              <TableCollapsible />
+            </Box>
           </CardContent>
         </Card>
       </Grid>
