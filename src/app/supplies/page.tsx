@@ -156,7 +156,7 @@ const MUITable = () => {
 
             {/* Segunda fila con una columna */}
             <Box
-              sx={configBoxForHigherScreens} // This Box is shown for screens > 600px
+              sx={configBoxForHigherScreens} // This Box is shown for screens > 960px
             >
               <Grid
                 container
@@ -292,7 +292,7 @@ const MUITable = () => {
               </Grid>
             </Box>
             <Box
-              sx={configBoxForSmallerScreens} // This Box is shown for screens < 600px
+              sx={configBoxForSmallerScreens} // This Box is shown for screens < 960px
             >
               <Grid
                 container
