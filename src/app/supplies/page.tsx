@@ -393,14 +393,30 @@ const MUITable = () => {
             </Box>
 
             {/* Tercera fila con una columna */}
-            <Grid container marginTop={5} justifyContent="center">
-              <Pagination
-                count={10}
-                variant="outlined"
-                shape="rounded"
-                color="primary"
-              />
-            </Grid>
+            <Box
+              sx={{ display: { xs: "none", sm: "block" } }} // This Box is shown for screens > 600px
+            >
+              <Grid container marginTop={5} justifyContent="center">
+                <Pagination
+                  count={10}
+                  variant="outlined"
+                  shape="rounded"
+                  color="primary"
+                />
+              </Grid>
+            </Box>
+            <Box
+              sx={{ display: { xs: "block", sm: "none" } }} // This Box is shown for screens < 600px
+            >
+              <Grid container marginTop={5} justifyContent="center">
+                <Pagination
+                  count={3}
+                  variant="outlined"
+                  shape="rounded"
+                  color="primary"
+                />
+              </Grid>
+            </Box>
           </CardContent>
         </Card>
       </Grid>
