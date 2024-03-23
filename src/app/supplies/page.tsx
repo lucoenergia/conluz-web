@@ -111,7 +111,7 @@ const MUITable = () => {
                 item
                 sm={6}
                 mx="2"
-                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px.
+                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
               >
                 <Search>
                   <SearchIconWrapper>
@@ -126,7 +126,7 @@ const MUITable = () => {
               <Grid
                 item
                 xs={2}
-                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens > 0px
+                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
                 mx="2"
               >
                 <Search>
