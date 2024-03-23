@@ -20,48 +20,67 @@ import Switch from "@mui/material/Switch";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
+import { Chip, Grid } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 interface Data {
   id: number;
-  calories: number;
-  carbs: number;
-  fat: number;
-  name: string;
-  protein: number;
+  cups: string;
+  address: string;
+  distributionCoefficient: number;
+  owner: string;
+  status: string;
+  actions: string;
 }
 
 function createData(
   id: number,
-  name: string,
-  calories: number,
-  fat: number,
-  carbs: number,
-  protein: number
+  cups: string,
+  address: string,
+  distributionCoefficient: number,
+  owner: string,
+  status: string,
+  actions: string
 ): Data {
   return {
     id,
-    name,
-    calories,
-    fat,
-    carbs,
-    protein,
+    cups,
+    address,
+    distributionCoefficient,
+    owner,
+    status,
+    actions,
   };
 }
 
 const rows = [
-  createData(1, "Cupcake", 305, 3.7, 67, 4.3),
-  createData(2, "Donut", 452, 25.0, 51, 4.9),
-  createData(3, "Eclair", 262, 16.0, 24, 6.0),
-  createData(4, "Frozen yoghurt", 159, 6.0, 24, 4.0),
-  createData(5, "Gingerbread", 356, 16.0, 49, 3.9),
-  createData(6, "Honeycomb", 408, 3.2, 87, 6.5),
-  createData(7, "Ice cream sandwich", 237, 9.0, 37, 4.3),
-  createData(8, "Jelly Bean", 375, 0.0, 94, 0.0),
-  createData(9, "KitKat", 518, 26.0, 65, 7.0),
-  createData(10, "Lollipop", 392, 0.2, 98, 0.0),
-  createData(11, "Marshmallow", 318, 0, 81, 2.0),
-  createData(12, "Nougat", 360, 19.0, 9, 37.0),
-  createData(13, "Oreo", 437, 18.0, 63, 4.0),
+  createData(
+    1,
+    "ES00333",
+    "Calle Falsa 123",
+    3.076,
+    "Marco Botton",
+    "activo",
+    ""
+  ),
+  createData(
+    2,
+    "ES00333",
+    "Calle Falsa 123",
+    3.076,
+    "Marco Botton",
+    "inactivo",
+    ""
+  ),
+  createData(
+    3,
+    "ES00333",
+    "Calle Falsa 123",
+    3.076,
+    "Marco Botton",
+    "inactivo",
+    ""
+  ),
 ];
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
@@ -116,34 +135,40 @@ interface HeadCell {
 
 const headCells: readonly HeadCell[] = [
   {
-    id: "name",
+    id: "cups",
     numeric: false,
     disablePadding: true,
-    label: "Dessert (100g serving)",
+    label: "CUPS",
   },
   {
-    id: "calories",
-    numeric: true,
+    id: "address",
+    numeric: false,
     disablePadding: false,
-    label: "Calories",
+    label: "Dirección",
   },
   {
-    id: "fat",
+    id: "distributionCoefficient",
     numeric: true,
     disablePadding: false,
-    label: "Fat (g)",
+    label: "Coeficiente de reparto (%)",
   },
   {
-    id: "carbs",
-    numeric: true,
+    id: "owner",
+    numeric: false,
     disablePadding: false,
-    label: "Carbs (g)",
+    label: "Titular",
   },
   {
-    id: "protein",
-    numeric: true,
+    id: "status",
+    numeric: false,
     disablePadding: false,
-    label: "Protein (g)",
+    label: "",
+  },
+  {
+    id: "actions",
+    numeric: false,
+    disablePadding: false,
+    label: "",
   },
 ];
 
@@ -190,7 +215,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
-            align={headCell.numeric ? "right" : "left"}
+            align="left"
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
           >
@@ -249,9 +274,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           variant="h6"
           id="tableTitle"
           component="div"
-        >
-          Nutrition
-        </Typography>
+        ></Typography>
       )}
       {numSelected > 0 ? (
         <Tooltip title="Delete">
@@ -271,7 +294,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
 }
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<keyof Data>("calories");
+  const [orderBy, setOrderBy] = React.useState<keyof Data>("owner");
   const [selected, setSelected] = React.useState<readonly number[]>([]);
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(false);
@@ -378,7 +401,7 @@ export default function EnhancedTable() {
                     selected={isItemSelected}
                     sx={{ cursor: "pointer" }}
                   >
-                    <TableCell padding="checkbox">
+                    <TableCell padding="checkbox" align="left">
                       <Checkbox
                         color="primary"
                         checked={isItemSelected}
@@ -393,12 +416,21 @@ export default function EnhancedTable() {
                       scope="row"
                       padding="none"
                     >
-                      {row.name}
+                      {row.cups}
                     </TableCell>
-                    <TableCell align="right">{row.calories}</TableCell>
-                    <TableCell align="right">{row.fat}</TableCell>
-                    <TableCell align="right">{row.carbs}</TableCell>
-                    <TableCell align="right">{row.protein}</TableCell>
+                    <TableCell align="left">{row.address}</TableCell>
+                    <TableCell align="left">
+                      {row.distributionCoefficient}
+                    </TableCell>
+                    <TableCell align="left">{row.owner}</TableCell>
+                    <TableCell align="left">
+                      <Chip label={row.status} color="success" />
+                    </TableCell>
+                    <TableCell align="left">
+                      <IconButton aria-label="settings">
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 );
               })}

@@ -14,7 +14,6 @@ import Button from "@mui/material/Button";
 import CardContent from "@mui/material/CardContent";
 import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
-import { Box, Pagination } from "@mui/material";
 import TableSortingSelecting from "../tables/components/TableSortingSelecting";
 
 const Search = styled("div")(({ theme }) => ({
