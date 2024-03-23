@@ -4,7 +4,7 @@
 import * as React from "react";
 
 // ** MUI Imports
-import { styled } from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
@@ -16,7 +16,13 @@ import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PercentIcon from "@mui/icons-material/Percent";
-import { Chip, IconButton, Pagination } from "@mui/material";
+import {
+  Box,
+  Chip,
+  IconButton,
+  Pagination,
+  useMediaQuery,
+} from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const Search = styled("div")(({ theme }) => ({
@@ -70,6 +76,17 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 const MUITable = () => {
+  // ** Hook
+  const theme = useTheme();
+
+  const isMatch = useMediaQuery(theme.breakpoints.up(950));
+  const configBoxForHigherScreens = isMatch
+    ? { display: "block" }
+    : { display: "none" };
+  const configBoxForSmallerScreens = isMatch
+    ? { display: "none" }
+    : { display: "block" };
+
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
@@ -138,138 +155,242 @@ const MUITable = () => {
             </Grid>
 
             {/* Segunda fila con una columna */}
-            <Grid
-              container
-              my={5}
-              p={2}
-              justifyContent="center"
-              sx={{
-                border: "1px solid lightgray",
-                borderRadius: "10px",
-                backgroundColor: (theme) => theme.palette.grey[100],
-              }}
+            <Box
+              sx={configBoxForHigherScreens} // This Box is shown for screens > 600px
             >
               <Grid
-                item
-                xs={2}
+                container
+                my={5}
+                p={2}
+                justifyContent="center"
                 sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  border: "1px solid lightgray",
+                  borderRadius: "10px",
+                  backgroundColor: (theme) => theme.palette.grey[100],
                 }}
               >
                 <Grid
-                  container
-                  spacing={2}
-                  justifyContent="center"
-                  alignItems="center"
+                  item
+                  xs={2}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
                 >
-                  <Grid item xs={12}>
-                    <Typography variant="h4" align="center">
-                      15 kWh
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body1" align="center">
-                      (Hace 2 horas)
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Grid>
-              <Grid
-                item
-                xs={5}
-                sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                <Grid
-                  container
-                  spacing={2}
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  <Grid item xs={12}>
-                    <Typography variant="h4" align="center">
-                      Mi Casa
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body1" align="center">
-                      ES00333333333333333333333333A0A
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Grid>
-              <Grid
-                item
-                xs={2}
-                sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                <Grid
-                  container
-                  justifyContent="center"
-                  alignItems="center"
-                  height="100%"
-                >
-                  <Grid item xs={12}>
-                    <Grid container>
-                      <Grid item xs={1}>
-                        <LocationOnIcon />
-                      </Grid>
-                      <Grid item xs={11}>
-                        <Typography variant="body1" align="center">
-                          Calle Falsa 123
-                        </Typography>
-                      </Grid>
+                  <Grid
+                    container
+                    spacing={2}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Grid item xs={12}>
+                      <Typography variant="h4" align="center">
+                        15 kWh
+                      </Typography>
                     </Grid>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Grid container>
-                      <Grid item xs={1}>
-                        <PercentIcon />
-                      </Grid>
-                      <Grid item xs={11}>
-                        <Typography variant="body1" align="center">
-                          5,6824
-                        </Typography>
-                      </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body1" align="center">
+                        (Hace 2 horas)
+                      </Typography>
                     </Grid>
                   </Grid>
                 </Grid>
+                <Grid
+                  item
+                  xs={5}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  <Grid
+                    container
+                    spacing={2}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Grid item xs={12}>
+                      <Typography variant="h4" align="center">
+                        Mi Casa
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body1" align="center">
+                        ES00333333333333333333333333A0A
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={2}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  <Grid
+                    container
+                    justifyContent="center"
+                    alignItems="center"
+                    height="100%"
+                  >
+                    <Grid item xs={12}>
+                      <Grid container>
+                        <Grid item xs={1}>
+                          <LocationOnIcon />
+                        </Grid>
+                        <Grid item xs={11}>
+                          <Typography variant="body1" align="center">
+                            Calle Falsa 123
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Grid container>
+                        <Grid item xs={1}>
+                          <PercentIcon />
+                        </Grid>
+                        <Grid item xs={11}>
+                          <Typography variant="body1" align="center">
+                            5,6824
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={2}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Chip label="activo" color="success" />
+                </Grid>
+                <Grid
+                  item
+                  xs={1}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <IconButton aria-label="settings">
+                    <MoreVertIcon />
+                  </IconButton>
+                </Grid>
               </Grid>
+            </Box>
+            <Box
+              sx={configBoxForSmallerScreens} // This Box is shown for screens < 600px
+            >
               <Grid
-                item
-                xs={2}
+                container
+                my={5}
+                p={2}
+                justifyContent="center"
                 sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  border: "1px solid lightgray",
+                  borderRadius: "10px",
+                  backgroundColor: (theme) => theme.palette.grey[100],
                 }}
               >
-                <Chip label="activo" color="success" />
+                <Grid
+                  item
+                  xs={7}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  <Grid
+                    container
+                    spacing={2}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Grid item xs={12}>
+                      <Typography variant="h4" align="center">
+                        Mi Casa
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography
+                        variant="body1"
+                        align="center"
+                        sx={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          maxWidth: "100%",
+                        }}
+                      >
+                        ES00333333333333333333333333A0A
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={4}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  <Grid
+                    container
+                    spacing={2}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Grid
+                      item
+                      xs={12}
+                      sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Chip label="activo" color="success" />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body1" align="center">
+                        15 kWh
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={1}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <IconButton aria-label="settings">
+                    <MoreVertIcon />
+                  </IconButton>
+                </Grid>
               </Grid>
-              <Grid
-                item
-                xs={1}
-                sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <IconButton aria-label="settings">
-                  <MoreVertIcon />
-                </IconButton>
-              </Grid>
-            </Grid>
+            </Box>
 
             {/* Tercera fila con una columna */}
             <Grid container marginTop={5} justifyContent="center">
