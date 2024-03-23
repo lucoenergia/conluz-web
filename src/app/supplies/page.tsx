@@ -15,6 +15,7 @@ import CardContent from "@mui/material/CardContent";
 import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
 import { Box, Pagination } from "@mui/material";
+import TableSortingSelecting from "../tables/components/TableSortingSelecting";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -135,32 +136,7 @@ const MUITable = () => {
             </Grid>
 
             {/* Segunda fila con una columna */}
-
-            {/* Tercera fila con una columna */}
-            <Box
-              sx={{ display: { xs: "none", sm: "block" } }} // This Box is shown for screens > 600px
-            >
-              <Grid container marginTop={5} justifyContent="center">
-                <Pagination
-                  count={10}
-                  variant="outlined"
-                  shape="rounded"
-                  color="primary"
-                />
-              </Grid>
-            </Box>
-            <Box
-              sx={{ display: { xs: "block", sm: "none" } }} // This Box is shown for screens < 600px
-            >
-              <Grid container marginTop={5} justifyContent="center">
-                <Pagination
-                  count={3}
-                  variant="outlined"
-                  shape="rounded"
-                  color="primary"
-                />
-              </Grid>
-            </Box>
+            <TableSortingSelecting></TableSortingSelecting>
           </CardContent>
         </Card>
       </Grid>
