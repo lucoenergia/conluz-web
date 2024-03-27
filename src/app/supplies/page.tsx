@@ -132,9 +132,8 @@ const MUITable = () => {
             </Grid>
 
             {/* Segunda fila con una columna */}
-            <TableSortingSelecting></TableSortingSelecting>
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              <TableSortingSelecting></TableSortingSelecting>
+              <TableSortingSelecting />
             </Box>
             <Box sx={{ display: { xs: "block", sm: "none" } }}>
               <TableCollapsible />
