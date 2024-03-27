@@ -15,38 +15,29 @@ import TableCell from "@mui/material/TableCell";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import TableContainer from "@mui/material/TableContainer";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 // ** Icons Imports
 import ChevronUp from "mdi-material-ui/ChevronUp";
 import ChevronDown from "mdi-material-ui/ChevronDown";
 
 const createData = (
-  name: string,
-  calories: number,
-  fat: number,
-  carbs: number,
-  protein: number,
-  price: number
+  id: number,
+  cups: string,
+  address: string,
+  distributionCoefficient: number,
+  owner: string,
+  status: string,
+  actions: string
 ) => {
   return {
-    name,
-    calories,
-    fat,
-    carbs,
-    protein,
-    price,
-    history: [
-      {
-        date: "2020-01-05",
-        customerId: "11091700",
-        amount: 3,
-      },
-      {
-        date: "2020-01-02",
-        customerId: "Anonymous",
-        amount: 1,
-      },
-    ],
+    id,
+    cups,
+    address,
+    distributionCoefficient,
+    owner,
+    status,
+    actions,
   };
 };
 
@@ -70,42 +61,34 @@ const Row = (props: { row: ReturnType<typeof createData> }) => {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          {row.name}
+          {row.cups}
         </TableCell>
-        <TableCell align="right">{row.calories}</TableCell>
-        <TableCell align="right">{row.fat}</TableCell>
-        <TableCell align="right">{row.carbs}</TableCell>
-        <TableCell align="right">{row.protein}</TableCell>
+        <TableCell align="left">
+          <IconButton aria-label="settings">
+            <MoreVertIcon />
+          </IconButton>
+        </TableCell>
       </TableRow>
       <TableRow>
         <TableCell colSpan={6} sx={{ py: "0 !important" }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
+            <Typography variant="h6" gutterBottom component="div">
+              Otros Datos
+            </Typography>
             <Box sx={{ m: 2 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                History
-              </Typography>
               <Table size="small" aria-label="purchases">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="right">Total price ($)</TableCell>
-                  </TableRow>
-                </TableHead>
                 <TableBody>
-                  {row.history.map((historyRow) => (
-                    <TableRow key={historyRow.date}>
-                      <TableCell component="th" scope="row">
-                        {historyRow.date}
-                      </TableCell>
-                      <TableCell>{historyRow.customerId}</TableCell>
-                      <TableCell align="right">{historyRow.amount}</TableCell>
-                      <TableCell align="right">
-                        {Math.round(historyRow.amount * row.price * 100) / 100}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableRow key={row.id}>
+                    <TableCell align="left">Dirección: {row.address}</TableCell>
+                  </TableRow>
+                  <TableRow key={row.id}>
+                    <TableCell align="left">
+                      Coef.Reparto: {row.distributionCoefficient}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow key={row.id}>
+                    <TableCell align="left">Titular:{row.owner}</TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </Box>
@@ -117,11 +100,33 @@ const Row = (props: { row: ReturnType<typeof createData> }) => {
 };
 
 const rows = [
-  createData("Frozen yoghurt", 159, 6.0, 24, 4.0, 3.99),
-  createData("Ice cream sandwich", 237, 9.0, 37, 4.3, 4.99),
-  createData("Eclair", 262, 16.0, 24, 6.0, 3.79),
-  createData("Cupcake", 305, 3.7, 67, 4.3, 2.5),
-  createData("Gingerbread", 356, 16.0, 49, 3.9, 1.5),
+  createData(
+    1,
+    "ES00333",
+    "Calle Falsa 123",
+    3.076,
+    "Marco Botton",
+    "activo",
+    ""
+  ),
+  createData(
+    2,
+    "ES00333",
+    "Calle Falsa 123",
+    3.076,
+    "Marco Botton",
+    "inactivo",
+    ""
+  ),
+  createData(
+    3,
+    "ES00333",
+    "Calle Falsa 123",
+    3.076,
+    "Marco Botton",
+    "inactivo",
+    ""
+  ),
 ];
 
 const TableCollapsible = () => {
@@ -131,16 +136,13 @@ const TableCollapsible = () => {
         <TableHead>
           <TableRow>
             <TableCell />
-            <TableCell>Dessert (100g serving)</TableCell>
-            <TableCell align="right">Calories</TableCell>
-            <TableCell align="right">Fat (g)</TableCell>
-            <TableCell align="right">Carbs (g)</TableCell>
-            <TableCell align="right">Protein (g)</TableCell>
+            <TableCell>CUPS</TableCell>
+            <TableCell align="left"></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {rows.map((row) => (
-            <Row key={row.name} row={row} />
+            <Row key={row.id} row={row} />
           ))}
         </TableBody>
       </Table>
