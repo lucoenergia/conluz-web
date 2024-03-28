@@ -1,6 +1,8 @@
 "use client";
+
 // ** React Imports
 import * as React from "react";
+
 // ** MUI Imports
 import { styled } from "@mui/material/styles";
 import Grid from "@mui/material/Grid";
@@ -15,6 +17,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import TableSortingSelecting from "../tables/components/TableSortingSelecting";
 import { Box } from "@mui/material";
 import TableCollapsible from "../tables/components/TableCollapsible";
+
+// ** Other Imports
+import SearchBar from "../shared/components/search-bar/SearchBar";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -107,15 +112,7 @@ const MUITable = () => {
                 mx="2"
                 sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
               >
-                <Search>
-                  <SearchIconWrapper>
-                    <SearchIcon />
-                  </SearchIconWrapper>
-                  <StyledInputBase
-                    placeholder="Search…"
-                    inputProps={{ "aria-label": "search" }}
-                  />
-                </Search>
+                <SearchBar />
               </Grid>
               <Grid
                 item
@@ -123,11 +120,7 @@ const MUITable = () => {
                 sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
                 mx="2"
               >
-                <Search>
-                  <SearchIconWrapper>
-                    <SearchIcon />
-                  </SearchIconWrapper>
-                </Search>
+                <SearchBar />
               </Grid>
             </Grid>
 
