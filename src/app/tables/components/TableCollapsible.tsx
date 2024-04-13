@@ -112,9 +112,15 @@ const TableCollapsible = ({ rows }: { rows: Data[] }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
-            <Row key={row.id} row={row} />
-          ))}
+          {rows.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} align="center">
+                No hay datos disponibles
+              </TableCell>
+            </TableRow>
+          ) : (
+            rows.map((row) => <Row key={row.id} row={row} />)
+          )}
         </TableBody>
       </Table>
     </TableContainer>

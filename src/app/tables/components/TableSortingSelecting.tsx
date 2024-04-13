@@ -355,54 +355,62 @@ export default function EnhancedTable({ rows }: { rows: Data[] }) {
               rowCount={rows.length}
             />
             <TableBody>
-              {visibleRows.map((row, index) => {
-                const isItemSelected = isSelected(row.id);
-                const labelId = `enhanced-table-checkbox-${index}`;
+              {visibleRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    No hay datos disponibles
+                  </TableCell>
+                </TableRow>
+              ) : (
+                visibleRows.map((row, index) => {
+                  const isItemSelected = isSelected(row.id);
+                  const labelId = `enhanced-table-checkbox-${index}`;
 
-                return (
-                  <TableRow
-                    hover
-                    onClick={(event) => handleClick(event, row.id)}
-                    role="checkbox"
-                    aria-checked={isItemSelected}
-                    tabIndex={-1}
-                    key={row.id}
-                    selected={isItemSelected}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <TableCell padding="checkbox" align="left">
-                      <Checkbox
-                        color="primary"
-                        checked={isItemSelected}
-                        inputProps={{
-                          "aria-labelledby": labelId,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell
-                      component="th"
-                      id={labelId}
-                      scope="row"
-                      padding="none"
+                  return (
+                    <TableRow
+                      hover
+                      onClick={(event) => handleClick(event, row.id)}
+                      role="checkbox"
+                      aria-checked={isItemSelected}
+                      tabIndex={-1}
+                      key={row.id}
+                      selected={isItemSelected}
+                      sx={{ cursor: "pointer" }}
                     >
-                      {row.cups}
-                    </TableCell>
-                    <TableCell align="left">{row.address}</TableCell>
-                    <TableCell align="left">
-                      {row.distributionCoefficient}
-                    </TableCell>
-                    <TableCell align="left">{row.owner}</TableCell>
-                    <TableCell align="left">
-                      <Chip label={row.status} color="success" />
-                    </TableCell>
-                    <TableCell align="left">
-                      <IconButton aria-label="settings">
-                        <MoreVertIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      <TableCell padding="checkbox" align="left">
+                        <Checkbox
+                          color="primary"
+                          checked={isItemSelected}
+                          inputProps={{
+                            "aria-labelledby": labelId,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        id={labelId}
+                        scope="row"
+                        padding="none"
+                      >
+                        {row.cups}
+                      </TableCell>
+                      <TableCell align="left">{row.address}</TableCell>
+                      <TableCell align="left">
+                        {row.distributionCoefficient}
+                      </TableCell>
+                      <TableCell align="left">{row.owner}</TableCell>
+                      <TableCell align="left">
+                        <Chip label={row.status} color="success" />
+                      </TableCell>
+                      <TableCell align="left">
+                        <IconButton aria-label="settings">
+                          <MoreVertIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
               {emptyRows > 0 && (
                 <TableRow
                   style={{
