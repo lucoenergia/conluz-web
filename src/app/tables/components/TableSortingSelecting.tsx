@@ -331,6 +331,11 @@ export default function EnhancedTable({ rows }: { rows: Data[] }) {
     [order, orderBy, page, rowsPerPage, rows]
   );
 
+  // Reset number of page when searching some data
+  React.useEffect(() => {
+    setPage(0);
+  }, [rows]);
+
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>

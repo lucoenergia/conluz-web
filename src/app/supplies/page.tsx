@@ -22,9 +22,12 @@ import SearchBar from "../shared/components/search-bar/SearchBar";
 import { useState } from "react";
 
 const rows = [
-  createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alexa", "activo", ""),
+  createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
   createData(2, "ES00222", "Calle Falsa 222", 3.076, "Marco ", "inactivo", ""),
   createData(3, "ES00333", "Calle Falsa 333", 3.076, "Juan", "inactivo", ""),
+  createData(4, "ES00444", "Calle Falsa 444", 3.076, "María", "inactivo", ""),
+  createData(5, "ES00555", "Calle Falsa 555", 3.076, "Teresa", "inactivo", ""),
+  createData(6, "ES00666", "Calle Falsa 666", 3.076, "Ana", "inactivo", ""),
 ];
 
 const MUITable = () => {
@@ -37,6 +40,11 @@ const MUITable = () => {
       )
     );
     setFilteredRows(filtered);
+
+    console.log("+++ Inside handleSearch - searchText => " + searchText);
+    console.log(
+      "+++ Inside handleSearch - filtered => " + JSON.stringify(filtered)
+    );
   };
 
   const handleClearSearchInput = () => {
