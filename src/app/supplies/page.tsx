@@ -70,13 +70,35 @@ const MUITable = () => {
           <CardContent>
             {/* Primera fila con dos columnas */}
             <Grid container marginBottom={5}>
-              <Grid item xs={10} sm={6}>
+              <Grid
+                item
+                sm={6}
+                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
+              >
                 <Button variant="contained">
                   <Typography
                     variant="button"
-                    sx={{ fontSize: { xs: 10, sm: 10 } }}
+                    sx={{
+                      fontSize: { xs: 10, sm: 10 },
+                    }}
                   >
                     Nuevo punto de suministro
+                  </Typography>
+                </Button>
+              </Grid>
+              <Grid
+                item
+                xs={4}
+                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
+              >
+                <Button variant="contained">
+                  <Typography
+                    variant="button"
+                    sx={{
+                      fontSize: { xs: 10, sm: 10 },
+                    }}
+                  >
+                    N
                   </Typography>
                 </Button>
               </Grid>
@@ -93,10 +115,15 @@ const MUITable = () => {
               </Grid>
               <Grid
                 item
-                xs={2}
+                xs={8}
                 sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
                 mx="2"
-              ></Grid>
+              >
+                <SearchBar
+                  onSearch={handleSearch}
+                  onClearInput={handleClearSearchInput}
+                />
+              </Grid>
             </Grid>
 
             {/* Segunda fila con una columna */}
@@ -104,7 +131,7 @@ const MUITable = () => {
               <TableSortingSelecting rows={filteredRows} />
             </Box>
             <Box sx={{ display: { xs: "block", sm: "none" } }}>
-              <TableCollapsible />
+              <TableCollapsible rows={filteredRows} />
             </Box>
           </CardContent>
         </Card>
