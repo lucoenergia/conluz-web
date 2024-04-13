@@ -15,15 +15,14 @@ import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
-import { Chip, Grid } from "@mui/material";
+import { Chip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { ro } from "@faker-js/faker";
 
-interface Data {
+export interface Data {
   id: number;
   cups: string;
   address: string;
@@ -33,7 +32,7 @@ interface Data {
   actions: string;
 }
 
-function createData(
+export function createData(
   id: number,
   cups: string,
   address: string,
@@ -52,36 +51,6 @@ function createData(
     actions,
   };
 }
-
-const rows = [
-  createData(
-    1,
-    "ES00333",
-    "Calle Falsa 123",
-    3.076,
-    "Marco Botton",
-    "activo",
-    ""
-  ),
-  createData(
-    2,
-    "ES00333",
-    "Calle Falsa 123",
-    3.076,
-    "Marco Botton",
-    "inactivo",
-    ""
-  ),
-  createData(
-    3,
-    "ES00333",
-    "Calle Falsa 123",
-    3.076,
-    "Marco Botton",
-    "inactivo",
-    ""
-  ),
-];
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -292,12 +261,11 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     </Toolbar>
   );
 }
-export default function EnhancedTable() {
+export default function EnhancedTable({ rows }: { rows: Data[] }) {
   const [order, setOrder] = React.useState<Order>("asc");
   const [orderBy, setOrderBy] = React.useState<keyof Data>("owner");
   const [selected, setSelected] = React.useState<readonly number[]>([]);
   const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const handleRequestSort = (
@@ -348,10 +316,6 @@ export default function EnhancedTable() {
     setPage(0);
   };
 
-  const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDense(event.target.checked);
-  };
-
   const isSelected = (id: number) => selected.indexOf(id) !== -1;
 
   // Avoid a layout jump when reaching the last page with empty rows.
@@ -364,7 +328,7 @@ export default function EnhancedTable() {
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage
       ),
-    [order, orderBy, page, rowsPerPage]
+    [order, orderBy, page, rowsPerPage, rows]
   );
 
   return (
@@ -375,7 +339,7 @@ export default function EnhancedTable() {
           <Table
             sx={{ minWidth: 750 }}
             aria-labelledby="tableTitle"
-            size={dense ? "small" : "medium"}
+            size={"medium"}
           >
             <EnhancedTableHead
               numSelected={selected.length}
@@ -437,7 +401,7 @@ export default function EnhancedTable() {
               {emptyRows > 0 && (
                 <TableRow
                   style={{
-                    height: (dense ? 33 : 53) * emptyRows,
+                    height: 53 * emptyRows,
                   }}
                 >
                   <TableCell colSpan={6} />

@@ -4,7 +4,6 @@
 import * as React from "react";
 
 // ** MUI Imports
-import { styled } from "@mui/material/styles";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
@@ -12,63 +11,38 @@ import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Card from "@mui/material/Card";
 import Button from "@mui/material/Button";
 import CardContent from "@mui/material/CardContent";
-import InputBase from "@mui/material/InputBase";
-import SearchIcon from "@mui/icons-material/Search";
-import TableSortingSelecting from "../tables/components/TableSortingSelecting";
+import TableSortingSelecting, {
+  createData,
+} from "../tables/components/TableSortingSelecting";
 import { Box } from "@mui/material";
 import TableCollapsible from "../tables/components/TableCollapsible";
 
 // ** Other Imports
 import SearchBar from "../shared/components/search-bar/SearchBar";
+import { useState } from "react";
 
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  marginLeft: 0,
-  width: "100%",
-  height: "100%",
-  display: "flex",
-  justifyContent: "right",
-  [theme.breakpoints.up("sm")]: {
-    border: `1px solid ${theme.palette.primary.main}`,
-    display: "flex",
-    justifyContent: "left",
-    marginLeft: theme.spacing(1),
-    width: "auto",
-  },
-}));
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 1),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  [theme.breakpoints.up("sm")]: {
-    padding: theme.spacing(0, 2),
-    marginLeft: theme.spacing(2),
-    width: "auto",
-  },
-}));
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  width: "100%",
-  height: "100%",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(8)})`,
-    transition: theme.transitions.create("width"),
-    [theme.breakpoints.up("sm")]: {
-      width: "12ch",
-      "&:focus": {
-        width: "20ch",
-      },
-    },
-  },
-}));
+const rows = [
+  createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alexa", "activo", ""),
+  createData(2, "ES00222", "Calle Falsa 222", 3.076, "Marco ", "inactivo", ""),
+  createData(3, "ES00333", "Calle Falsa 333", 3.076, "Juan", "inactivo", ""),
+];
+
 const MUITable = () => {
+  const [filteredRows, setFilteredRows] = useState(rows);
+
+  const handleSearch = (searchText: string) => {
+    const filtered = rows.filter((row) =>
+      Object.values(row).some(
+        (value) => value && value.toString().toLowerCase().includes(searchText)
+      )
+    );
+    setFilteredRows(filtered);
+  };
+
+  const handleClearSearchInput = () => {
+    setFilteredRows(rows);
+  };
+
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
@@ -112,21 +86,22 @@ const MUITable = () => {
                 mx="2"
                 sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
               >
-                <SearchBar />
+                <SearchBar
+                  onSearch={handleSearch}
+                  onClearInput={handleClearSearchInput}
+                />
               </Grid>
               <Grid
                 item
                 xs={2}
                 sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
                 mx="2"
-              >
-                <SearchBar />
-              </Grid>
+              ></Grid>
             </Grid>
 
             {/* Segunda fila con una columna */}
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              <TableSortingSelecting />
+              <TableSortingSelecting rows={filteredRows} />
             </Box>
             <Box sx={{ display: { xs: "block", sm: "none" } }}>
               <TableCollapsible />
