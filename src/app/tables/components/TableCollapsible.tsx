@@ -20,6 +20,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 // ** Icons Imports
 import ChevronUp from "mdi-material-ui/ChevronUp";
 import ChevronDown from "mdi-material-ui/ChevronDown";
+import { Data } from "./TableSortingSelecting";
 
 const createData = (
   id: number,
@@ -99,37 +100,7 @@ const Row = (props: { row: ReturnType<typeof createData> }) => {
   );
 };
 
-const rows = [
-  createData(
-    1,
-    "ES00333",
-    "Calle Falsa 123",
-    3.076,
-    "Marco Botton",
-    "activo",
-    ""
-  ),
-  createData(
-    2,
-    "ES00333",
-    "Calle Falsa 123",
-    3.076,
-    "Marco Botton",
-    "inactivo",
-    ""
-  ),
-  createData(
-    3,
-    "ES00333",
-    "Calle Falsa 123",
-    3.076,
-    "Marco Botton",
-    "inactivo",
-    ""
-  ),
-];
-
-const TableCollapsible = () => {
+const TableCollapsible = ({ rows }: { rows: Data[] }) => {
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
@@ -141,9 +112,15 @@ const TableCollapsible = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
-            <Row key={row.id} row={row} />
-          ))}
+          {rows.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} align="center">
+                No hay datos disponibles
+              </TableCell>
+            </TableRow>
+          ) : (
+            rows.map((row) => <Row key={row.id} row={row} />)
+          )}
         </TableBody>
       </Table>
     </TableContainer>

@@ -1,8 +1,6 @@
 "use client";
-// ** React Imports
-import * as React from "react";
+
 // ** MUI Imports
-import { styled } from "@mui/material/styles";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
@@ -10,60 +8,41 @@ import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Card from "@mui/material/Card";
 import Button from "@mui/material/Button";
 import CardContent from "@mui/material/CardContent";
-import InputBase from "@mui/material/InputBase";
-import SearchIcon from "@mui/icons-material/Search";
-import TableSortingSelecting from "../tables/components/TableSortingSelecting";
+import TableSortingSelecting, {
+  createData,
+} from "../tables/components/TableSortingSelecting";
 import { Box } from "@mui/material";
 import TableCollapsible from "../tables/components/TableCollapsible";
 
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  marginLeft: 0,
-  width: "100%",
-  height: "100%",
-  display: "flex",
-  justifyContent: "right",
-  [theme.breakpoints.up("sm")]: {
-    border: `1px solid ${theme.palette.primary.main}`,
-    display: "flex",
-    justifyContent: "left",
-    marginLeft: theme.spacing(1),
-    width: "auto",
-  },
-}));
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 1),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  [theme.breakpoints.up("sm")]: {
-    padding: theme.spacing(0, 2),
-    marginLeft: theme.spacing(2),
-    width: "auto",
-  },
-}));
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  width: "100%",
-  height: "100%",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(8)})`,
-    transition: theme.transitions.create("width"),
-    [theme.breakpoints.up("sm")]: {
-      width: "12ch",
-      "&:focus": {
-        width: "20ch",
-      },
-    },
-  },
-}));
+// ** Other Imports
+import SearchBar from "../shared/components/search-bar/SearchBar";
+import { useState } from "react";
+
+const rows = [
+  createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
+  createData(2, "ES00222", "Calle Falsa 222", 3.076, "Marco ", "inactivo", ""),
+  createData(3, "ES00333", "Calle Falsa 333", 3.076, "Juan", "inactivo", ""),
+  createData(4, "ES00444", "Calle Falsa 444", 3.076, "María", "inactivo", ""),
+  createData(5, "ES00555", "Calle Falsa 555", 3.076, "Teresa", "inactivo", ""),
+  createData(6, "ES00666", "Calle Falsa 666", 3.076, "Ana", "inactivo", ""),
+];
+
 const MUITable = () => {
+  const [filteredRows, setFilteredRows] = useState(rows);
+
+  const handleSearch = (searchText: string) => {
+    const filtered = rows.filter((row) =>
+      Object.values(row).some(
+        (value) => value && value.toString().toLowerCase().includes(searchText)
+      )
+    );
+    setFilteredRows(filtered);
+  };
+
+  const handleClearSearchInput = () => {
+    setFilteredRows(rows);
+  };
+
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
@@ -89,15 +68,36 @@ const MUITable = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            {/* Primera fila con dos columnas */}
             <Grid container marginBottom={5}>
-              <Grid item xs={10} sm={6}>
+              <Grid
+                item
+                sm={6}
+                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
+              >
                 <Button variant="contained">
                   <Typography
                     variant="button"
-                    sx={{ fontSize: { xs: 10, sm: 10 } }}
+                    sx={{
+                      fontSize: { xs: 10, sm: 10 },
+                    }}
                   >
                     Nuevo punto de suministro
+                  </Typography>
+                </Button>
+              </Grid>
+              <Grid
+                item
+                xs={4}
+                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
+              >
+                <Button variant="contained">
+                  <Typography
+                    variant="button"
+                    sx={{
+                      fontSize: { xs: 10, sm: 10 },
+                    }}
+                  >
+                    N
                   </Typography>
                 </Button>
               </Grid>
@@ -107,36 +107,28 @@ const MUITable = () => {
                 mx="2"
                 sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
               >
-                <Search>
-                  <SearchIconWrapper>
-                    <SearchIcon />
-                  </SearchIconWrapper>
-                  <StyledInputBase
-                    placeholder="Search…"
-                    inputProps={{ "aria-label": "search" }}
-                  />
-                </Search>
+                <SearchBar
+                  onSearch={handleSearch}
+                  onClearInput={handleClearSearchInput}
+                />
               </Grid>
               <Grid
                 item
-                xs={2}
+                xs={8}
                 sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
                 mx="2"
               >
-                <Search>
-                  <SearchIconWrapper>
-                    <SearchIcon />
-                  </SearchIconWrapper>
-                </Search>
+                <SearchBar
+                  onSearch={handleSearch}
+                  onClearInput={handleClearSearchInput}
+                />
               </Grid>
             </Grid>
-
-            {/* Segunda fila con una columna */}
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              <TableSortingSelecting />
+              <TableSortingSelecting rows={filteredRows} />
             </Box>
             <Box sx={{ display: { xs: "block", sm: "none" } }}>
-              <TableCollapsible />
+              <TableCollapsible rows={filteredRows} />
             </Box>
           </CardContent>
         </Card>
