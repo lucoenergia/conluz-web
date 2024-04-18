@@ -1,7 +1,6 @@
 "use client";
 
 // ** React Imports
-import * as React from "react";
 
 // ** MUI Imports
 import Grid from "@mui/material/Grid";
@@ -40,11 +39,6 @@ const MUITable = () => {
       )
     );
     setFilteredRows(filtered);
-
-    console.log("+++ Inside handleSearch - searchText => " + searchText);
-    console.log(
-      "+++ Inside handleSearch - filtered => " + JSON.stringify(filtered)
-    );
   };
 
   const handleClearSearchInput = () => {
@@ -76,7 +70,6 @@ const MUITable = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            {/* Primera fila con dos columnas */}
             <Grid container marginBottom={5}>
               <Grid
                 item
@@ -133,8 +126,6 @@ const MUITable = () => {
                 />
               </Grid>
             </Grid>
-
-            {/* Segunda fila con una columna */}
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
               <TableSortingSelecting rows={filteredRows} />
             </Box>

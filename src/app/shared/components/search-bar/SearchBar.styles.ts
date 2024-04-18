@@ -1,7 +1,7 @@
-import { InputBase, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
-export const StyledTextField = styled(TextField)(({ theme }) => ({
-  width: "100%",
-  maxHeight: "100%",
-}));
+export const StyledTextField = styled(TextField)`
+  width: 100%;
+  max-height: 100%;
+`;
