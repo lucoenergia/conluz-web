@@ -1,7 +1,5 @@
 "use client";
 
-// ** React Imports
-
 // ** MUI Imports
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
