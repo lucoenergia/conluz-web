@@ -17,6 +17,9 @@ import TableCollapsible from "../tables/components/TableCollapsible";
 // ** Other Imports
 import SearchBar from "../shared/components/search-bar/SearchBar";
 import { useState } from "react";
+import SimpleDataGrid from "../tables/components/simple-datagrid/SimpleDataGrid";
+import ExpandedRowDataGrid from "../tables/components/simple-datagrid/CollapsibleDataGrid";
+import MUIDataTableView from "../tables/components/simple-datagrid/MUIDataTable";
 
 const rows = [
   createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
@@ -68,67 +71,12 @@ const MUITable = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Grid container marginBottom={5}>
-              <Grid
-                item
-                sm={6}
-                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
-              >
-                <Button variant="contained">
-                  <Typography
-                    variant="button"
-                    sx={{
-                      fontSize: { xs: 10, sm: 10 },
-                    }}
-                  >
-                    Nuevo punto de suministro
-                  </Typography>
-                </Button>
-              </Grid>
-              <Grid
-                item
-                xs={4}
-                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
-              >
-                <Button variant="contained">
-                  <Typography
-                    variant="button"
-                    sx={{
-                      fontSize: { xs: 10, sm: 10 },
-                    }}
-                  >
-                    N
-                  </Typography>
-                </Button>
-              </Grid>
-              <Grid
-                item
-                sm={6}
-                mx="2"
-                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
-              >
-                <SearchBar
-                  onSearch={handleSearch}
-                  onClearInput={handleClearSearchInput}
-                />
-              </Grid>
-              <Grid
-                item
-                xs={8}
-                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
-                mx="2"
-              >
-                <SearchBar
-                  onSearch={handleSearch}
-                  onClearInput={handleClearSearchInput}
-                />
-              </Grid>
-            </Grid>
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              <TableSortingSelecting rows={filteredRows} />
+              <SimpleDataGrid rows={filteredRows} />
+              <MUIDataTableView rows={filteredRows} />
             </Box>
             <Box sx={{ display: { xs: "block", sm: "none" } }}>
-              <TableCollapsible rows={filteredRows} />
+              <ExpandedRowDataGrid rows={filteredRows} />
             </Box>
           </CardContent>
         </Card>
