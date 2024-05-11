@@ -6,19 +6,13 @@ import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Card from "@mui/material/Card";
-import Button from "@mui/material/Button";
 import CardContent from "@mui/material/CardContent";
-import TableSortingSelecting, {
-  createData,
-} from "../tables/components/TableSortingSelecting";
+import { createData } from "../tables/components/TableSortingSelecting";
 import { Box } from "@mui/material";
-import TableCollapsible from "../tables/components/TableCollapsible";
 
 // ** Other Imports
-import SearchBar from "../shared/components/search-bar/SearchBar";
 import { useState } from "react";
-import SimpleDataGrid from "../tables/components/simple-datagrid/SimpleDataGrid";
-import ExpandedRowDataGrid from "../tables/components/simple-datagrid/CollapsibleDataGrid";
+import CollapsibleDataTable from "../tables/components/simple-datagrid/CollapsibleDataTable";
 import MUIDataTableView from "../tables/components/simple-datagrid/MUIDataTable";
 
 const rows = [
@@ -72,11 +66,10 @@ const MUITable = () => {
         <Card>
           <CardContent>
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              <SimpleDataGrid rows={filteredRows} />
               <MUIDataTableView rows={filteredRows} />
             </Box>
             <Box sx={{ display: { xs: "block", sm: "none" } }}>
-              <ExpandedRowDataGrid rows={filteredRows} />
+              <CollapsibleDataTable rows={filteredRows} />
             </Box>
           </CardContent>
         </Card>

@@ -43,7 +43,7 @@ export function createData(
   };
 }
 
-const ExpandableRowTable = ({ rows }: { rows: Data[] }) => {
+const CollabsibleDataTable = ({ rows }: { rows: Data[] }) => {
   const columns: MUIDataTableColumn[] = [
     {
       name: "cups",
@@ -164,4 +164,4 @@ const ExpandableRowTable = ({ rows }: { rows: Data[] }) => {
   );
 };
 
-export default ExpandableRowTable;
+export default CollabsibleDataTable;
