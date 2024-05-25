@@ -68,44 +68,14 @@ const MUITable = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Grid container marginBottom={5}>
-              <Grid
-                item
-                sm={6}
-                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
-              >
-                <Button variant="contained">
-                  <Typography
-                    variant="button"
-                    sx={{
-                      fontSize: { xs: 10, sm: 10 },
-                    }}
-                  >
-                    Nuevo punto de suministro
-                  </Typography>
-                </Button>
-              </Grid>
-              <Grid
-                item
-                xs={4}
-                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
-              >
-                <Button variant="contained">
-                  <Typography
-                    variant="button"
-                    sx={{
-                      fontSize: { xs: 10, sm: 10 },
-                    }}
-                  >
-                    N
-                  </Typography>
-                </Button>
-              </Grid>
+            <Grid container marginBottom={5} justifyContent="flex-end">
               <Grid
                 item
                 sm={6}
                 mx="2"
-                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                }} // This search bar is shown for screens > 600px
               >
                 <SearchBar
                   onSearch={handleSearch}

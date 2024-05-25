@@ -19,6 +19,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import AddIcon from "@mui/icons-material/Add";
 import { visuallyHidden } from "@mui/utils";
 import { Button, Chip, Grid } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -239,12 +240,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           {numSelected} selected
         </Typography>
       ) : (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        ></Typography>
+        <Typography variant="h6" id="tableTitle" component="div"></Typography>
       )}
       {numSelected > 0 ? (
         <Tooltip title="Delete">
@@ -253,76 +249,89 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           </IconButton>
         </Tooltip>
       ) : (
-        <Grid
-          container
-          spacing={2}
-          alignItems="center"
-          justifyContent="flex-end"
-          sx={{ pr: { lg: 1 } }}
-        >
-          <Grid item sm={3} md={2} lg={3}>
-            <Tooltip title="Filter list">
-              <React.Fragment>
+        <Grid container spacing={2} alignItems="center">
+          {/* Grupo de botones "Nuevo" */}
+          <Grid item sm={4} md={4} lg={6}>
+            <Grid container spacing={2}>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  fullWidth
+                  sx={{ display: { sm: "none", md: "inline" } }}
+                >
+                  Nuevo
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{
+                    display: { sm: "inline", md: "none" },
+                  }}
+                >
+                  <AddIcon />
+                </IconButton>
+              </Grid>
+            </Grid>
+          </Grid>
+
+          {/* Grupo de botones "Filtrar", "Exportar" e "Importar" */}
+          <Grid item sm={8} md={8} lg={6}>
+            <Grid container spacing={2} justifyContent="flex-end">
+              <Grid item>
                 <Button
                   variant="outlined"
                   startIcon={<FilterListIcon />}
                   fullWidth
-                  sx={{
-                    display: { xs: "none", lg: "inline" },
-                  }}
+                  sx={{ display: { sm: "none", md: "inline" } }}
                 >
                   Filtrar
                 </Button>
                 <IconButton
                   color="primary"
                   sx={{
-                    display: { xs: "inline", lg: "none" },
+                    display: { sm: "inline", md: "none" },
                   }}
                 >
                   <FilterListIcon />
                 </IconButton>
-              </React.Fragment>
-            </Tooltip>
-          </Grid>
-          <Grid item sm={3} md={2} lg={3}>
-            <Tooltip title="Upload">
-              <React.Fragment>
-                <Button
-                  variant="outlined"
-                  startIcon={<CloudUploadIcon />}
-                  fullWidth
-                  sx={{ display: { xs: "none", lg: "inline" } }}
-                >
-                  Importar
-                </Button>
-                <IconButton
-                  color="primary"
-                  sx={{ display: { xs: "inline", lg: "none" } }}
-                >
-                  <CloudUploadIcon />
-                </IconButton>
-              </React.Fragment>
-            </Tooltip>
-          </Grid>
-          <Grid item sm={3} md={2} lg={3}>
-            <Tooltip title="Export">
-              <React.Fragment>
+              </Grid>
+              <Grid item>
                 <Button
                   variant="outlined"
                   startIcon={<FileDownloadIcon />}
                   fullWidth
-                  sx={{ display: { xs: "none", lg: "inline" } }}
+                  sx={{ display: { sm: "none", md: "inline" } }}
                 >
                   Exportar
                 </Button>
                 <IconButton
                   color="primary"
-                  sx={{ display: { xs: "inline", lg: "none" } }}
+                  sx={{
+                    display: { sm: "inline", md: "none" },
+                  }}
                 >
                   <FileDownloadIcon />
                 </IconButton>
-              </React.Fragment>
-            </Tooltip>
+              </Grid>
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  startIcon={<CloudUploadIcon />}
+                  fullWidth
+                  sx={{ display: { sm: "none", md: "inline" } }}
+                >
+                  Importar
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{
+                    display: { sm: "inline", md: "none" },
+                  }}
+                >
+                  <CloudUploadIcon />
+                </IconButton>
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
       )}
