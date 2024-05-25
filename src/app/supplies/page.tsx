@@ -12,7 +12,8 @@ import CardContent from "@mui/material/CardContent";
 import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
 import TableSortingSelecting from "../tables/components/TableSortingSelecting";
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
+import TableCollapsible from "../tables/components/TableCollapsible";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
