@@ -17,10 +17,11 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { visuallyHidden } from "@mui/utils";
-import { Chip } from "@mui/material";
+import { Button, Chip, Grid } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { ro } from "@faker-js/faker";
 
 export interface Data {
   id: number;
@@ -252,11 +253,78 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           </IconButton>
         </Tooltip>
       ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
+        <Grid
+          container
+          spacing={2}
+          alignItems="center"
+          justifyContent="flex-end"
+          sx={{ pr: { lg: 1 } }}
+        >
+          <Grid item sm={3} md={2} lg={3}>
+            <Tooltip title="Filter list">
+              <React.Fragment>
+                <Button
+                  variant="outlined"
+                  startIcon={<FilterListIcon />}
+                  fullWidth
+                  sx={{
+                    display: { xs: "none", lg: "inline" },
+                  }}
+                >
+                  Filtrar
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{
+                    display: { xs: "inline", lg: "none" },
+                  }}
+                >
+                  <FilterListIcon />
+                </IconButton>
+              </React.Fragment>
+            </Tooltip>
+          </Grid>
+          <Grid item sm={3} md={2} lg={3}>
+            <Tooltip title="Upload">
+              <React.Fragment>
+                <Button
+                  variant="outlined"
+                  startIcon={<CloudUploadIcon />}
+                  fullWidth
+                  sx={{ display: { xs: "none", lg: "inline" } }}
+                >
+                  Importar
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{ display: { xs: "inline", lg: "none" } }}
+                >
+                  <CloudUploadIcon />
+                </IconButton>
+              </React.Fragment>
+            </Tooltip>
+          </Grid>
+          <Grid item sm={3} md={2} lg={3}>
+            <Tooltip title="Export">
+              <React.Fragment>
+                <Button
+                  variant="outlined"
+                  startIcon={<FileDownloadIcon />}
+                  fullWidth
+                  sx={{ display: { xs: "none", lg: "inline" } }}
+                >
+                  Exportar
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{ display: { xs: "inline", lg: "none" } }}
+                >
+                  <FileDownloadIcon />
+                </IconButton>
+              </React.Fragment>
+            </Tooltip>
+          </Grid>
+        </Grid>
       )}
     </Toolbar>
   );
