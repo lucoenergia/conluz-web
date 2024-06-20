@@ -15,7 +15,8 @@ import TableCollapsible from "../tables/components/TableCollapsible";
 
 // ** Other Imports
 import SearchBar from "../shared/components/search-bar/SearchBar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const rows = [
   createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
@@ -41,6 +42,53 @@ const MUITable = () => {
   const handleClearSearchInput = () => {
     setFilteredRows(rows);
   };
+
+  const initAPIConfiguration = async () => {
+    try {
+      const response = await axios.post("http://localhost:8443/api/v1/init", {
+        defaultAdminUser: {
+          personalId: "01234567Z",
+          password: "admin",
+          fullName: "Energy Community Acme",
+          email: "adminemail@email.com",
+          address: "Fake Street 123 66633 Teruel (Spain)",
+        },
+      });
+
+      console.log(
+        "Inside initAPIConfiguration - data received => " + response.data
+      );
+    } catch (error) {
+      console.error("Error de configuración:", error);
+    }
+  };
+
+  const login = async () => {
+    try {
+      const response = await axios.post("http://localhost:8443/api/v1/login", {
+        username: "01234567Z",
+        password: "admin",
+      });
+
+      console.log("Inside login - token received => " + response.data);
+
+      const token = response.data.token;
+      localStorage.setItem("authToken", token);
+      console.log("Autenticación exitosa. Token guardado.");
+    } catch (error) {
+      console.error("Error de autenticación:", error);
+    }
+  };
+
+  const fetchAvailableSupplyData = () => {};
+
+  useEffect(() => {
+    const initializeAPI = async () => {
+      await initAPIConfiguration();
+    };
+
+    initializeAPI();
+  }, []);
 
   return (
     <Grid container spacing={6}>

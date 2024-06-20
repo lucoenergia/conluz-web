@@ -1,6 +1,7 @@
 {
   "name": "con-luz-web",
   "version": "0.1.0",
+  "proxy": "http://localhost:8443",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -20,6 +21,7 @@
     "@mui/x-data-grid": "^6.18.7",
     "@popperjs/core": "^2.11.8",
     "apexcharts-clevision": "^3.28.5",
+    "axios": "^1.7.2",
     "clsx": "^2.0.0",
     "mdi-material-ui": "^7.7.0",
     "next": "14.0.4",
