@@ -16,7 +16,9 @@ import TableCollapsible from "../tables/components/TableCollapsible";
 
 // ** Other Imports
 import SearchBar from "../shared/components/search-bar/SearchBar";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import apiClient from "../shared/restApi/apiClient";
 
 const rows = [
   createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
@@ -42,6 +44,54 @@ const MUITable = () => {
   const handleClearSearchInput = () => {
     setFilteredRows(rows);
   };
+
+  const initAPIConfiguration = async () => {
+    try {
+      const response = await apiClient.post("/init", {
+        defaultAdminUser: {
+          personalId: "01234567Z",
+          password: "admin",
+          fullName: "Energy Community Acme",
+          email: "adminemail@email.com",
+          address: "Fake Street 123 66633 Teruel (Spain)",
+        },
+      });
+
+      console.log(
+        "Inside initAPIConfiguration - data received => " + response.data
+      );
+    } catch (error) {
+      console.error("Error de configuración:", error);
+    }
+  };
+
+  const login = async () => {
+    try {
+      const response = await apiClient.post("/login", {
+        username: "01234567Z",
+        password: "admin",
+      });
+
+      console.log("Inside login - token received => " + response.data);
+
+      const token = response.data.token;
+      localStorage.setItem("authToken", token);
+      console.log("Autenticación exitosa. Token guardado.");
+    } catch (error) {
+      console.error("Error de autenticación:", error);
+    }
+  };
+
+  const fetchAvailableSupplyData = () => {};
+
+  useEffect(() => {
+    console.log('useEffect has been run');
+    const initializeAPI = async () => {
+      await initAPIConfiguration();
+    };
+
+    initializeAPI();
+  }, []);
 
   return (
     <Grid container spacing={6}>
