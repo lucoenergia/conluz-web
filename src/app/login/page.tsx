@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 // ** MUI Components
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
 import Checkbox from "@mui/material/Checkbox";
 import TextField from "@mui/material/TextField";
 import InputLabel from "@mui/material/InputLabel";
@@ -94,25 +93,16 @@ const LoginPage = () => {
     const personalId = formData.get('personalId')
     const password = formData.get('password')
 
-    console.log("personalId -> " + personalId)
-    console.log("password -> " + password)
-
     try {
       const response = await apiClient.post("/login", {
         username: personalId,
         password: password,
       });
 
-      console.log("Inside login - token received => " + response.data);
-
-      const token = response.data.token;
-      localStorage.setItem("authToken", token);
-      console.log("Autenticación exitosa. Token guardado. -> " + token);
-
-      router.push('/')
+      router.push('/dashboard')
       
     } catch (error) {
-      console.error("Error de autenticación:", error);
+      console.error("Authentication failed:", error);
     }
   }
 

@@ -45,52 +45,18 @@ const MUITable = () => {
     setFilteredRows(rows);
   };
 
-  const initAPIConfiguration = async () => {
+  const fetchAvailableSupplyData = async () => {
     try {
-      const response = await apiClient.post("/init", {
-        defaultAdminUser: {
-          personalId: "01234567Z",
-          password: "admin",
-          fullName: "Energy Community Acme",
-          email: "adminemail@email.com",
-          address: "Fake Street 123 66633 Teruel (Spain)",
-        },
+      const response = await apiClient.get("/supplies", {
+        withCredentials: true
       });
-
-      console.log(
-        "Inside initAPIConfiguration - data received => " + response.data
-      );
     } catch (error) {
-      console.error("Error de configuración:", error);
+      console.error("Error retrieving supplies:", error);
     }
   };
-
-  const login = async () => {
-    try {
-      const response = await apiClient.post("/login", {
-        username: "01234567Z",
-        password: "admin",
-      });
-
-      console.log("Inside login - token received => " + response.data);
-
-      const token = response.data.token;
-      localStorage.setItem("authToken", token);
-      console.log("Autenticación exitosa. Token guardado.");
-    } catch (error) {
-      console.error("Error de autenticación:", error);
-    }
-  };
-
-  const fetchAvailableSupplyData = () => {};
 
   useEffect(() => {
-    console.log('useEffect has been run');
-    const initializeAPI = async () => {
-      await initAPIConfiguration();
-    };
-
-    initializeAPI();
+    fetchAvailableSupplyData();
   }, []);
 
   return (
