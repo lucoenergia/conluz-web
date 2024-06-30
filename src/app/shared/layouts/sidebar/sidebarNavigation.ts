@@ -11,6 +11,7 @@ import CreditCardOutline from "mdi-material-ui/CreditCardOutline";
 import AccountPlusOutline from "mdi-material-ui/AccountPlusOutline";
 import AlertCircleOutline from "mdi-material-ui/AlertCircleOutline";
 import GoogleCirclesExtended from "mdi-material-ui/GoogleCirclesExtended";
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 
 // ** Type import
 import { VerticalNavItemsType } from "@/app/shared/layouts/types";
@@ -75,6 +76,11 @@ const sidebarNavigation = (): VerticalNavItemsType => {
       icon: CubeOutline,
       title: "Form Layouts",
       path: "form-layouts",
+    },
+    {
+      icon: LeaderboardIcon,
+      title: "Charts",
+      path: "charts",
     },
   ];
 };
