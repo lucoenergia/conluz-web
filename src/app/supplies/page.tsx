@@ -16,7 +16,9 @@ import TableCollapsible from "../tables/components/TableCollapsible";
 
 // ** Other Imports
 import SearchBar from "../shared/components/search-bar/SearchBar";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import apiClient from "../shared/restApi/apiClient";
 
 const rows = [
   createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
@@ -42,6 +44,20 @@ const MUITable = () => {
   const handleClearSearchInput = () => {
     setFilteredRows(rows);
   };
+
+  const fetchAvailableSupplyData = async () => {
+    try {
+      const response = await apiClient.get("/supplies", {
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error("Error retrieving supplies:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableSupplyData();
+  }, []);
 
   return (
     <Grid container spacing={6}>
