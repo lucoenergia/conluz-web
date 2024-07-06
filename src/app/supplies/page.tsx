@@ -18,6 +18,16 @@ import SearchBar from "../shared/components/search-bar/SearchBar";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+interface SupplyDTO {
+  id: number;
+  cups: string;
+  address: string;
+  distributionCoefficient: number;
+  owner: string;
+  status: string;
+  actions: string;
+}
+
 const rows = [
   createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
   createData(2, "ES00222", "Calle Falsa 222", 3.076, "Marco ", "inactivo", ""),
@@ -43,51 +53,82 @@ const MUITable = () => {
     setFilteredRows(rows);
   };
 
-  const initAPIConfiguration = async () => {
-    try {
-      const response = await axios.post("http://localhost:8443/api/v1/init", {
-        defaultAdminUser: {
-          personalId: "01234567Z",
-          password: "admin",
-          fullName: "Energy Community Acme",
-          email: "adminemail@email.com",
-          address: "Fake Street 123 66633 Teruel (Spain)",
-        },
-      });
-
-      console.log(
-        "Inside initAPIConfiguration - data received => " + response.data
-      );
-    } catch (error) {
-      console.error("Error de configuración:", error);
-    }
-  };
-
   const login = async () => {
     try {
-      const response = await axios.post("http://localhost:8443/api/v1/login", {
-        username: "01234567Z",
-        password: "admin",
-      });
+      const response = await axios.post(
+        "http://localhost:8443/api/v1/login",
+        {
+          username: "01234567Z",
+          password: "admin",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       console.log("Inside login - token received => " + response.data);
 
       const token = response.data.token;
-      localStorage.setItem("authToken", token);
-      console.log("Autenticación exitosa. Token guardado.");
+      console.log("Autenticación exitosa. Token guardado. => " + token);
+
+      return token;
     } catch (error) {
       console.error("Error de autenticación:", error);
     }
   };
 
-  const fetchAvailableSupplyData = () => {};
+  const getSupplies = async (_bearerToken: string) => {
+    try {
+      const response = await axios.get(
+        "http://localhost:8443/api/v1/supplies",
+        {
+          headers: {
+            Authorization: `Bearer ${_bearerToken}`,
+            "Content-Type": "application/json",
+          },
+          data: {}, // Añadir cuerpo vacío para solucionar error de "Content-Type vacío"
+        }
+      );
+      console.log("Response data:", response.data);
+      const supplies = transformToRows(response.data.items);
+      setFilteredRows(supplies);
+    } catch (error: any) {
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error status:", error.response.status);
+        console.error("Error headers:", error.response.headers);
+      } else if (error.request) {
+        console.error("Error request:", error.request);
+      } else {
+        console.error("Error message:", error.message);
+      }
+      console.error("Error config:", error.config);
+    }
+  };
+
+  const transformToRows = (_supplies: any[]): SupplyDTO[] => {
+    return _supplies.map((supply) =>
+      createData(
+        supply.id,
+        supply.code,
+        supply.address,
+        supply.partitionCoefficient,
+        supply.user.fullName,
+        "active",
+        ""
+      )
+    );
+  };
 
   useEffect(() => {
-    const initializeAPI = async () => {
-      await initAPIConfiguration();
+    const initSupplies = async () => {
+      const token = await login();
+      const supplies = await getSupplies(token);
     };
 
-    initializeAPI();
+    initSupplies();
   }, []);
 
   return (
