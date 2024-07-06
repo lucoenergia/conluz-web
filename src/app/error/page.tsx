@@ -1,8 +1,8 @@
 "use client";
 
 // ** Component Import
-import Error401 from "./components/401";
+import Error500 from "./components/500";
 
-const ErrorPage = () => <Error401 />;
+const ErrorPage = () => <Error500 />;
 
 export default ErrorPage;

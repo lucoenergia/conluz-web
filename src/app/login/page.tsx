@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 // ** MUI Components
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
 import Checkbox from "@mui/material/Checkbox";
 import TextField from "@mui/material/TextField";
 import InputLabel from "@mui/material/InputLabel";
@@ -35,6 +34,8 @@ import themeConfig from "@/app/shared/configs/themeConfig";
 
 // ** Demo Imports
 import FooterIllustrationsV1 from "@/app/shared/components/footer-illustrations/auth/FooterIllustration";
+
+import apiClient from "../shared/restApi/apiClient";
 
 interface State {
   password: string;
@@ -84,6 +85,26 @@ const LoginPage = () => {
   const handleMouseDownPassword = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
   };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+ 
+    const formData = new FormData(event.currentTarget)
+    const personalId = formData.get('personalId')
+    const password = formData.get('password')
+
+    try {
+      const response = await apiClient.post("/login", {
+        username: personalId,
+        password: password,
+      });
+
+      router.push('/dashboard')
+      
+    } catch (error) {
+      console.error("Authentication failed:", error);
+    }
+  }
 
   return (
     <Box className="content-center">
@@ -185,12 +206,13 @@ const LoginPage = () => {
           <form
             noValidate
             autoComplete="off"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={handleSubmit}
           >
             <TextField
               autoFocus
               fullWidth
-              id="email"
+              id="personalId"
+              name="personalId"
               label="Usuario"
               placeholder="Escribe aquí tu número de DNI/NIF"
               sx={{ marginBottom: 4 }}
@@ -199,6 +221,7 @@ const LoginPage = () => {
               <InputLabel htmlFor="auth-login-password">Contraseña</InputLabel>
               <OutlinedInput
                 label="Password"
+                name="password"
                 placeholder="Introduce aquí tu contraseña"
                 value={values.password}
                 id="auth-login-password"
@@ -238,7 +261,7 @@ const LoginPage = () => {
               size="large"
               variant="contained"
               sx={{ marginBottom: 7 }}
-              onClick={() => router.push("/")}
+              type="submit"
             >
               Entrar
             </Button>
