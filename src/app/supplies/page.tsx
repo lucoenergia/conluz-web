@@ -18,6 +18,8 @@ import SearchBar from "../shared/components/search-bar/SearchBar";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+import apiClient from "../shared/restApi/apiClient";
+
 interface SupplyDTO {
   id: number;
   cups: string;
@@ -53,44 +55,15 @@ const MUITable = () => {
     setFilteredRows(rows);
   };
 
-  const login = async () => {
+  const fetchSupplyPointsData = async () => {
     try {
-      const response = await axios.post(
-        "http://localhost:8443/api/v1/login",
-        {
-          username: "01234567Z",
-          password: "admin",
+      const response = await apiClient.get("/supplies", {
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+        data: {}, // Añadir cuerpo vacío para solucionar error de "Content-Type vacío"
+      });
 
-      console.log("Inside login - token received => " + response.data);
-
-      const token = response.data.token;
-      console.log("Autenticación exitosa. Token guardado. => " + token);
-
-      return token;
-    } catch (error) {
-      console.error("Error de autenticación:", error);
-    }
-  };
-
-  const getSupplies = async (_bearerToken: string) => {
-    try {
-      const response = await axios.get(
-        "http://localhost:8443/api/v1/supplies",
-        {
-          headers: {
-            Authorization: `Bearer ${_bearerToken}`,
-            "Content-Type": "application/json",
-          },
-          data: {}, // Añadir cuerpo vacío para solucionar error de "Content-Type vacío"
-        }
-      );
       console.log("Response data:", response.data);
       const supplies = transformToRows(response.data.items);
       setFilteredRows(supplies);
@@ -124,8 +97,7 @@ const MUITable = () => {
 
   useEffect(() => {
     const initSupplies = async () => {
-      const token = await login();
-      const supplies = await getSupplies(token);
+      const supplies = await fetchSupplyPointsData();
     };
 
     initSupplies();
