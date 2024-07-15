@@ -64,20 +64,10 @@ const MUITable = () => {
         data: {}, // Añadir cuerpo vacío para solucionar error de "Content-Type vacío"
       });
 
-      console.log("Response data:", response.data);
       const supplies = transformToRows(response.data.items);
       setFilteredRows(supplies);
     } catch (error: any) {
-      if (error.response) {
-        console.error("Error response data:", error.response.data);
-        console.error("Error status:", error.response.status);
-        console.error("Error headers:", error.response.headers);
-      } else if (error.request) {
-        console.error("Error request:", error.request);
-      } else {
-        console.error("Error message:", error.message);
-      }
-      console.error("Error config:", error.config);
+      //Add the code associated with error handling
     }
   };
 
