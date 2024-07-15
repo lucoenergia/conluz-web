@@ -1,7 +1,7 @@
 "use client";
 
 // ** React Imports
-import { ChangeEvent, MouseEvent, ReactNode, useState } from "react";
+import { ChangeEvent, FormEvent, MouseEvent, ReactNode, useState } from "react";
 
 // ** Next Imports
 import Link from "next/link";
@@ -87,11 +87,11 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
- 
-    const formData = new FormData(event.currentTarget)
-    const personalId = formData.get('personalId')
-    const password = formData.get('password')
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const personalId = formData.get("personalId");
+    const password = formData.get("password");
 
     try {
       const response = await apiClient.post("/login", {
@@ -99,12 +99,11 @@ const LoginPage = () => {
         password: password,
       });
 
-      router.push('/dashboard')
-      
+      router.push("/dashboard");
     } catch (error) {
       console.error("Authentication failed:", error);
     }
-  }
+  };
 
   return (
     <Box className="content-center">
@@ -200,14 +199,10 @@ const LoginPage = () => {
               Bienvenido a {themeConfig.templateName}! 👋🏻
             </Typography>
             <Typography variant="body2">
-            Accede a tu cuenta introduciendo tu DNI/NIF y contraseña.
+              Accede a tu cuenta introduciendo tu DNI/NIF y contraseña.
             </Typography>
           </Box>
-          <form
-            noValidate
-            autoComplete="off"
-            onSubmit={handleSubmit}
-          >
+          <form noValidate autoComplete="off" onSubmit={handleSubmit}>
             <TextField
               autoFocus
               fullWidth
@@ -253,7 +248,6 @@ const LoginPage = () => {
               <FormControlLabel control={<Checkbox />} label="Recuérdame" />
               <LinkStyled href="forgot-password">
                 ¿Olvidaste tu contraseña?
-
               </LinkStyled>
             </Box>
             <Button
@@ -277,9 +271,7 @@ const LoginPage = () => {
                 ¿No puedes acceder?
               </Typography>
               <Typography variant="body2">
-                <LinkStyled href="help">
-                  Contacta con nosotros
-                </LinkStyled>
+                <LinkStyled href="help">Contacta con nosotros</LinkStyled>
               </Typography>
             </Box>
           </form>

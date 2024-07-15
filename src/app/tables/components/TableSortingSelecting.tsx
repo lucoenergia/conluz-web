@@ -17,10 +17,12 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import AddIcon from "@mui/icons-material/Add";
 import { visuallyHidden } from "@mui/utils";
-import { Chip } from "@mui/material";
+import { Button, Chip, Grid } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { ro } from "@faker-js/faker";
 
 export interface Data {
   id: number;
@@ -238,12 +240,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           {numSelected} selected
         </Typography>
       ) : (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        ></Typography>
+        <Typography variant="h6" id="tableTitle" component="div"></Typography>
       )}
       {numSelected > 0 ? (
         <Tooltip title="Delete">
@@ -252,11 +249,91 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           </IconButton>
         </Tooltip>
       ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
+        <Grid container spacing={2} alignItems="center">
+          {/* Button group: 'New' */}
+          <Grid item sm={4} md={4} lg={6}>
+            <Grid container spacing={2}>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  fullWidth
+                  sx={{ display: { sm: "none", md: "inline" } }}
+                >
+                  Nuevo
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{
+                    display: { sm: "inline", md: "none" },
+                  }}
+                >
+                  <AddIcon />
+                </IconButton>
+              </Grid>
+            </Grid>
+          </Grid>
+
+          {/* Button group: 'Filter', 'Export', and 'Import' */}
+          <Grid item sm={8} md={8} lg={6}>
+            <Grid container spacing={2} justifyContent="flex-end">
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  startIcon={<FilterListIcon />}
+                  fullWidth
+                  sx={{ display: { sm: "none", md: "inline" } }}
+                >
+                  Filtrar
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{
+                    display: { sm: "inline", md: "none" },
+                  }}
+                >
+                  <FilterListIcon />
+                </IconButton>
+              </Grid>
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  startIcon={<FileDownloadIcon />}
+                  fullWidth
+                  sx={{ display: { sm: "none", md: "inline" } }}
+                >
+                  Exportar
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{
+                    display: { sm: "inline", md: "none" },
+                  }}
+                >
+                  <FileDownloadIcon />
+                </IconButton>
+              </Grid>
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  startIcon={<CloudUploadIcon />}
+                  fullWidth
+                  sx={{ display: { sm: "none", md: "inline" } }}
+                >
+                  Importar
+                </Button>
+                <IconButton
+                  color="primary"
+                  sx={{
+                    display: { sm: "inline", md: "none" },
+                  }}
+                >
+                  <CloudUploadIcon />
+                </IconButton>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
       )}
     </Toolbar>
   );
