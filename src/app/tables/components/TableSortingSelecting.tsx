@@ -250,7 +250,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
         </Tooltip>
       ) : (
         <Grid container spacing={2} alignItems="center">
-          {/* Grupo de botones "Nuevo" */}
+          {/* Button group: 'New' */}
           <Grid item sm={4} md={4} lg={6}>
             <Grid container spacing={2}>
               <Grid item>
@@ -274,7 +274,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
             </Grid>
           </Grid>
 
-          {/* Grupo de botones "Filtrar", "Exportar" e "Importar" */}
+          {/* Button group: 'Filter', 'Export', and 'Import' */}
           <Grid item sm={8} md={8} lg={6}>
             <Grid container spacing={2} justifyContent="flex-end">
               <Grid item>
