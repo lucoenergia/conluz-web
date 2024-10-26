@@ -65,14 +65,12 @@ export function BasicChart() {
           setOption(options);
         }
       } catch (error) {
-        console.error("Failed to fetch data from API: ", error);
+        console.error("Failed to fetch prices: ", error);
       }
     };
 
     fetchPrices();
   }, []);
-
-  console.log("series: " + series)
 
   return option && series.length > 0 ? (
     <ApexChart type="line" options={option} series={[{ data: series }]} height={200} width={500} />
