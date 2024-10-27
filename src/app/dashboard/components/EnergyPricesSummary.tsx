@@ -107,10 +107,8 @@ const EnergyPricesSummary = () => {
 
         const response = await apiClient.get("/prices", {
           params: {
-            // startDate: startDate,
-            // endDate: endDate
-            startDate: "2024-06-15T00:00:00.000+02:00",
-            endDate: "2024-06-15T23:59:00.000+02:00"
+            startDate: startDate, // Example: "2024-06-15T00:00:00.000+02:00"
+            endDate: endDate // Example: "2024-06-15T23:59:00.000+02:00"
           }
         });
 
