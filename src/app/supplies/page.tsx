@@ -6,7 +6,6 @@ import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Card from "@mui/material/Card";
-import Button from "@mui/material/Button";
 import CardContent from "@mui/material/CardContent";
 import TableSortingSelecting, {
   createData,
@@ -16,9 +15,20 @@ import TableCollapsible from "../tables/components/TableCollapsible";
 
 // ** Other Imports
 import SearchBar from "../shared/components/search-bar/SearchBar";
-
 import { useEffect, useState } from "react";
+import axios from "axios";
+
 import apiClient from "../shared/restApi/apiClient";
+
+interface SupplyDTO {
+  id: number;
+  cups: string;
+  address: string;
+  distributionCoefficient: number;
+  owner: string;
+  status: string;
+  actions: string;
+}
 
 const rows = [
   createData(1, "ES00111", "Calle Falsa 111", 3.076, "Alex", "activo", ""),
@@ -45,18 +55,42 @@ const MUITable = () => {
     setFilteredRows(rows);
   };
 
-  const fetchAvailableSupplyData = async () => {
+  const fetchSupplyPointsData = async () => {
     try {
       const response = await apiClient.get("/supplies", {
-        withCredentials: true
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: {}, // Añadir cuerpo vacío para solucionar error de "Content-Type vacío"
       });
-    } catch (error) {
-      console.error("Error retrieving supplies:", error);
+
+      const supplies = transformToRows(response.data.items);
+      setFilteredRows(supplies);
+    } catch (error: any) {
+      //Add the code associated with error handling
     }
   };
 
+  const transformToRows = (_supplies: any[]): SupplyDTO[] => {
+    return _supplies.map((supply) =>
+      createData(
+        supply.id,
+        supply.code,
+        supply.address,
+        supply.partitionCoefficient,
+        supply.user.fullName,
+        "active",
+        ""
+      )
+    );
+  };
+
   useEffect(() => {
-    fetchAvailableSupplyData();
+    const initSupplies = async () => {
+      const supplies = await fetchSupplyPointsData();
+    };
+
+    initSupplies();
   }, []);
 
   return (
@@ -84,44 +118,14 @@ const MUITable = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Grid container marginBottom={5}>
-              <Grid
-                item
-                sm={6}
-                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
-              >
-                <Button variant="contained">
-                  <Typography
-                    variant="button"
-                    sx={{
-                      fontSize: { xs: 10, sm: 10 },
-                    }}
-                  >
-                    Nuevo punto de suministro
-                  </Typography>
-                </Button>
-              </Grid>
-              <Grid
-                item
-                xs={4}
-                sx={{ display: { xs: "block", sm: "none" } }} // This search bar is shown for screens < 600px
-              >
-                <Button variant="contained">
-                  <Typography
-                    variant="button"
-                    sx={{
-                      fontSize: { xs: 10, sm: 10 },
-                    }}
-                  >
-                    N
-                  </Typography>
-                </Button>
-              </Grid>
+            <Grid container marginBottom={5} justifyContent="flex-end">
               <Grid
                 item
                 sm={6}
                 mx="2"
-                sx={{ display: { xs: "none", sm: "block" } }} // This search bar is shown for screens > 600px
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                }} // This search bar is shown for screens > 600px
               >
                 <SearchBar
                   onSearch={handleSearch}

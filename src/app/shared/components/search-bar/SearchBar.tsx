@@ -3,7 +3,8 @@ import * as S from "./SearchBar.styles";
 import CloseIcon from "@mui/icons-material/Close";
 import InputAdornment from "@mui/material/InputAdornment";
 import SearchIcon from "@mui/icons-material/Search";
-import { IconButton } from "@mui/material";
+import { Box, IconButton, TextField } from "@mui/material";
+import Magnify from "mdi-material-ui/Magnify";
 
 interface SearchProps {
   onSearch: (searchText: string) => void;
@@ -26,26 +27,28 @@ const Search: React.FC<SearchProps> = ({ onSearch, onClearInput }) => {
   };
 
   return (
-    <S.StyledTextField
-      value={searchText}
-      onChange={handleSearch}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon />
-          </InputAdornment>
-        ),
-        endAdornment: searchText ? (
-          <InputAdornment position="end">
-            <IconButton onClick={handleClear} edge="end">
-              <CloseIcon />
-            </IconButton>
-          </InputAdornment>
-        ) : null,
-      }}
-      variant="standard"
-      fullWidth
-    />
+    <S.StyledBox>
+      <S.StyledTextField
+        size="small"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+          endAdornment: searchText ? (
+            <InputAdornment position="end">
+              <IconButton onClick={handleClear} edge="end">
+                <CloseIcon />
+              </IconButton>
+            </InputAdornment>
+          ) : null,
+        }}
+        value={searchText}
+        onChange={handleSearch}
+        fullWidth
+      />
+    </S.StyledBox>
   );
 };
 
