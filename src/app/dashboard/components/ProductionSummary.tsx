@@ -14,6 +14,7 @@ import apiClient from "../../shared/restApi/apiClient";
 
 import dynamic from 'next/dynamic';
 import { ApexOptions } from "apexcharts";
+import chartI18nLocale from '../../shared/charts/apexcharts/i18n/es.json';
 // Dynamically import ApexCharts with SSR disabled for Next.js compatibility
 const ApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -24,7 +25,8 @@ const ProductionSummary = () => {
   const chartOptions: ApexOptions = {
     chart: {
       id: "chart-prices",
-      defaultLocale: 'en',
+      locales: [chartI18nLocale],
+      defaultLocale: 'es',
       dropShadow: {
         enabled: true,
         color: '#000',
@@ -70,7 +72,6 @@ const ProductionSummary = () => {
       type: 'category',
       labels: {
         formatter: function (value) {
-          console.log("vcm: " + value)
           const date = new Date(value);
 
           // Format the date and time
