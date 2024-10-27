@@ -21,7 +21,7 @@ import chartI18nLocale from '../../shared/charts/apexcharts/i18n/es.json';
 // Dynamically import ApexCharts with SSR disabled for Next.js compatibility
 const ApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
-const ProductionSummary = () => {
+const EnergyPricesSummary = () => {
   // ** Hook
   // const theme = useTheme();
 
@@ -107,11 +107,10 @@ const ProductionSummary = () => {
 
         const response = await apiClient.get("/prices", {
           params: {
-            startDate: startDate,
-            endDate: endDate
-            // startDate: "2024-06-15T00:00:00.000+02:00",
-            // endDate: "2024-06-15T23:59:00.000+02:00"
-
+            // startDate: startDate,
+            // endDate: endDate
+            startDate: "2024-06-15T00:00:00.000+02:00",
+            endDate: "2024-06-15T23:59:00.000+02:00"
           }
         });
 
@@ -146,7 +145,7 @@ const ProductionSummary = () => {
         <CardContent
           sx={{ "& .apexcharts-xcrosshairs.apexcharts-active": { opacity: 0 } }}
         >
-          <ApexChart type="line" options={chartOptions} series={[{ name: 'Producción', data: series }]} height={350} width={700} />
+          <ApexChart type="line" options={chartOptions} series={[{ name: 'Precio por kWh', data: series }]} height={350} width={700} />
           <Box sx={{ mb: 7, display: "flex", alignItems: "center" }}>
           </Box>
           <Button fullWidth variant="contained">
@@ -158,4 +157,4 @@ const ProductionSummary = () => {
   );
 };
 
-export default ProductionSummary;
+export default EnergyPricesSummary;
