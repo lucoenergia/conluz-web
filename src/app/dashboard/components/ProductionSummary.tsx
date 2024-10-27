@@ -8,9 +8,12 @@ import Card from "@mui/material/Card";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import CardContent from "@mui/material/CardContent";
+import Link from "@mui/material/Link";
 import { styled, useTheme } from "@mui/material/styles";
 
 import apiClient from "../../shared/restApi/apiClient";
+import { getTodayStartOfDay, getTodayEndOfDay, formatDate } from "../../shared/date/dateUtil";
+
 
 import dynamic from 'next/dynamic';
 import { ApexOptions } from "apexcharts";
@@ -51,9 +54,9 @@ const ProductionSummary = () => {
       row: {
         colors: ['#e5e5e5', 'transparent'],
         opacity: 0.5
-      }, 
+      },
       column: {
-          colors: ['#f8f8f8', 'transparent'],
+        colors: ['#f8f8f8', 'transparent'],
       },
       xaxis: {
         lines: {
@@ -73,12 +76,7 @@ const ProductionSummary = () => {
       labels: {
         formatter: function (value) {
           const date = new Date(value);
-
-          // Format the date and time
-          const dateString = date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-          const timeString = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-          return dateString + ' ' + timeString;
+          return formatDate(date, 'DD/MM HH:mm');
         }
       },
       tooltip: {
@@ -88,7 +86,7 @@ const ProductionSummary = () => {
     yaxis: {
       type: 'category',
       title: {
-        text: 'Precio'
+        text: 'Precio por kWh'
       },
       min: 0,
       labels: {
@@ -104,10 +102,16 @@ const ProductionSummary = () => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
+        const startDate = getTodayStartOfDay();
+        const endDate = getTodayEndOfDay();
+
         const response = await apiClient.get("/prices", {
           params: {
-            startDate: "2024-06-15T00:00:00.000+02:00",
-            endDate: "2024-06-15T23:59:00.000+02:00"
+            startDate: startDate,
+            endDate: endDate
+            // startDate: "2024-06-15T00:00:00.000+02:00",
+            // endDate: "2024-06-15T23:59:00.000+02:00"
+
           }
         });
 
@@ -131,9 +135,13 @@ const ProductionSummary = () => {
   return (
     <Card sx={{ position: "relative" }}>
       <CardContent>
-        <Typography variant="h6">Producción</Typography>
+        <Typography variant="h6">Precios de la energía hoy {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</Typography>
         <Typography variant="body2" sx={{ letterSpacing: "0.25px" }}>
-          Energía generada por la comunidad energética.
+        {`Precios por hora para hoy establecidos por `}
+          <Link target="_blank" href="https://www.omie.es">
+            OMIE
+          </Link>
+          .
         </Typography>
         <CardContent
           sx={{ "& .apexcharts-xcrosshairs.apexcharts-active": { opacity: 0 } }}
@@ -142,7 +150,7 @@ const ProductionSummary = () => {
           <Box sx={{ mb: 7, display: "flex", alignItems: "center" }}>
           </Box>
           <Button fullWidth variant="contained">
-            Ver todos los datos de producción
+            Ver precios de la energía
           </Button>
         </CardContent>
       </CardContent>
