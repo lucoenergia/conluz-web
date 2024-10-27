@@ -9,7 +9,6 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import CardContent from "@mui/material/CardContent";
 import Link from "@mui/material/Link";
-import { styled, useTheme } from "@mui/material/styles";
 
 import apiClient from "../../shared/restApi/apiClient";
 import { getTodayStartOfDay, getTodayEndOfDay, formatDate } from "../../shared/date/dateUtil";
@@ -30,6 +29,8 @@ const EnergyPricesSummary = () => {
       id: "chart-prices",
       locales: [chartI18nLocale],
       defaultLocale: 'es',
+      width: '100%',
+      height: 350,
       dropShadow: {
         enabled: true,
         color: '#000',
@@ -76,7 +77,7 @@ const EnergyPricesSummary = () => {
       labels: {
         formatter: function (value) {
           const date = new Date(value);
-          return formatDate(date, 'DD/MM HH:mm');
+          return formatDate(date, 'H') + 'h';
         }
       },
       tooltip: {
@@ -143,7 +144,7 @@ const EnergyPricesSummary = () => {
         <CardContent
           sx={{ "& .apexcharts-xcrosshairs.apexcharts-active": { opacity: 0 } }}
         >
-          <ApexChart type="line" options={chartOptions} series={[{ name: 'Precio por kWh', data: series }]} height={350} width={700} />
+          <ApexChart type="line" options={chartOptions} series={[{ name: 'Precio por kWh', data: series }]}/>
           <Box sx={{ mb: 7, display: "flex", alignItems: "center" }}>
           </Box>
           <Button fullWidth variant="contained">
