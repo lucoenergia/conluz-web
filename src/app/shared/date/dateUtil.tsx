@@ -13,3 +13,7 @@ export const getTodayStartOfDay = () => {
 export const formatDate = (date: Date, format: string): string => {
     return moment(date).format(format);
 };
+
+export const getHourFromStringDatetime = (dateTime: string): number => {
+    return parseInt(moment.tz(dateTime, 'UTC').format('HH'));
+};

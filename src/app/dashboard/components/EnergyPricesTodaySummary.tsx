@@ -20,7 +20,7 @@ import chartI18nLocale from '../../shared/charts/apexcharts/i18n/es.json';
 // Dynamically import ApexCharts with SSR disabled for Next.js compatibility
 const ApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
-const EnergyPricesSummary = () => {
+const EnergyPricesTodaySummary = () => {
   // ** Hook
   // const theme = useTheme();
 
@@ -29,8 +29,6 @@ const EnergyPricesSummary = () => {
       id: "chart-prices",
       locales: [chartI18nLocale],
       defaultLocale: 'es',
-      width: '100%',
-      height: 350,
       dropShadow: {
         enabled: true,
         color: '#000',
@@ -144,7 +142,7 @@ const EnergyPricesSummary = () => {
         <CardContent
           sx={{ "& .apexcharts-xcrosshairs.apexcharts-active": { opacity: 0 } }}
         >
-          <ApexChart type="line" options={chartOptions} series={[{ name: 'Precio por kWh', data: series }]}/>
+          <ApexChart type="line" options={chartOptions} series={[{ name: 'Precio por kWh', data: series }]} width={"100%"} height={350}/>
           <Box sx={{ mb: 7, display: "flex", alignItems: "center" }}>
           </Box>
           <Button fullWidth variant="contained">
@@ -156,4 +154,4 @@ const EnergyPricesSummary = () => {
   );
 };
 
-export default EnergyPricesSummary;
+export default EnergyPricesTodaySummary;
