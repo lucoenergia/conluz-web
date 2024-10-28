@@ -119,9 +119,7 @@ const EnergyProductionTodaySummary = () => {
           setSeries(
             response.data.map((item: any) => {
               const power = (item.power < 0) ? 0.0 : parseFloat(parseFloat(item.power)).toFixed(2);
-              console.log("item.time -> " + item.time)
               const time = getHourFromStringDatetime(item.time)
-              console.log("time -> " + time)
               return [time, power]
             })
           );
