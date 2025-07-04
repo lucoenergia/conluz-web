@@ -45,6 +45,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
       <Divider />
       <MenuLinkItem to="/profile">
         <LabeledIcon
+          variant="compact"
           justify="between"
           iconPosition="right"
           icon={PersonIcon}
@@ -53,6 +54,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
       </MenuLinkItem>
       <MenuItem>
         <LabeledIcon
+          variant="compact"
           justify="between"
           iconPosition="right"
           icon={KeyIcon}
@@ -62,6 +64,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
       <Divider />
       <MenuLinkItem to="/contact">
         <LabeledIcon
+          variant="compact"
           justify="between"
           iconPosition="right"
           icon={HelpOutlineIcon}
@@ -71,6 +74,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
       <Divider />
       <MenuItem>
         <LabeledIcon
+          variant="compact"
           justify="between"
           iconPosition="right"
           icon={LogoutIcon}
