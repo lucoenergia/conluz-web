@@ -1,8 +1,8 @@
-import { AppBar, Box, IconButton, Toolbar } from "@mui/material";
+import { AppBar, IconButton, Toolbar } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
-import { ProfileMenu } from "./ProfileMenu";
 import { Logo } from "./Logo";
 import type { FC } from "react";
+import { ProfileMenu } from "../menu/ProfileMenu";
 
 interface HeaderProps {
   onMenuClick: Function
@@ -10,9 +10,8 @@ interface HeaderProps {
 
 export const Header: FC<HeaderProps> = ({ onMenuClick }) => {
 
- 
-  return <Box >
-    <AppBar>
+    // zIndex is required to make SideMenu render under AppBar
+   return <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar className="gap-2">
         <IconButton
           size="large"
@@ -27,5 +26,4 @@ export const Header: FC<HeaderProps> = ({ onMenuClick }) => {
       <ProfileMenu username="Remy Sharp"/>
       </Toolbar>
     </AppBar>
-  </Box>
 }
