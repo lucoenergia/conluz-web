@@ -6,6 +6,7 @@ interface LabeledIconProps {
   iconPosition?: 'left' | 'right'
   justify?: 'start' | 'end' | 'between'
   label: string
+  variant?: 'normal' | 'compact'
 }
 
 const contentJustification = {
@@ -14,8 +15,8 @@ const contentJustification = {
   between: "justify-between"
 }
 
-export const LabeledIcon: FC<LabeledIconProps> = ({ label, icon: Icon, iconPosition='left', justify='start' }) => {
-  return <div className={`grid grid-flow-col w-full ${contentJustification[justify]} gap-2`}>
+export const LabeledIcon: FC<LabeledIconProps> = ({ label, icon: Icon, iconPosition='left', justify='start', variant='normal' }) => {
+  return <div className={`grid grid-flow-col w-full ${contentJustification[justify]} gap-2 ${variant === 'compact' ? '' : 'p-2'}`}>
     { iconPosition==='left' && <Icon/> }
     <span>{ label }</span>
     { iconPosition==='right' && <Icon/> }
