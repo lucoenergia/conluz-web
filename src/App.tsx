@@ -1,6 +1,7 @@
 import './App.css'
 import { Route, Routes } from 'react-router'
 import { AuthenticatedLayout } from './layouts/authenticated.layout'
+import ContactPage from './pages/contact/Contact.page'
 
 function App() {
 
@@ -9,6 +10,7 @@ function App() {
       <Routes>
         <Route element={<AuthenticatedLayout/>}>
           <Route index />
+          <Route path="contacto" element={<ContactPage />}/> 
         </Route>
       </Routes>
     </>
