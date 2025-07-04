@@ -7,7 +7,8 @@ function App() {
   return (
     <>
       <Routes>
-        <Route index element={<AuthenticatedLayout/>}>
+        <Route element={<AuthenticatedLayout/>}>
+          <Route index />
         </Route>
       </Routes>
     </>

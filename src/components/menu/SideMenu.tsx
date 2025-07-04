@@ -9,7 +9,7 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import useWindowDimensions from "../../utils/useWindowDimensions";
-import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
+import { MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../../utils/constants";
 
 const MENU_ITEMS = [
   { to: "/", icon: HomeRoundedIcon, label: "Inicio" },
@@ -31,7 +31,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose }) => {
 
   //The toolbar is required so the menu doesn't colide with the app bar 
   return <Drawer variant={drawerVariant} open={isMenuOpened} onClose={() => onMenuClose(false)} >
-    <Box className="min-w-xs max-w-full">
+    <Box className="max-w-full" sx={{ width: SIDEMENU_WIDTH}}>
       <Toolbar />
       { MENU_ITEMS.map(menuItem => 
         <MenuLinkItem to={menuItem.to}><LabeledIcon icon={menuItem.icon} label={menuItem.label} /></MenuLinkItem>
