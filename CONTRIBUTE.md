@@ -46,7 +46,7 @@ All contributions must be submitted via pull request — **no direct pushes to `
 Branches for new features must follow this pattern:
 
 ```
-feature/conluz-XXX
+feature/conluzweb-XXX
 ```
 
 
@@ -59,13 +59,13 @@ feature/conluz-XXX
 All commits must follow this format:
 
 ```
-[conluz-XXX] Your commit message
+[conluzweb-XXX] Your commit message
 ```
 
 **Examples:**
 
-- `[conluz-101] Add login page`
-- `[conluz-205] Fix energy consumption bug`
+- `[conluzweb-101] Add login page`
+- `[conluzweb-205] Fix energy consumption bug`
 
 > This format helps maintain traceability between commits and issues.
 
