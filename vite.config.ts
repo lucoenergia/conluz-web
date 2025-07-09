@@ -8,5 +8,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true
-  }
+  },
+  envPrefix: "CONLUZ_"
 } as UserConfig)
