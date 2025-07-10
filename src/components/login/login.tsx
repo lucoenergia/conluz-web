@@ -2,9 +2,13 @@ import type { FC } from "react"
 import { Box, Button, Checkbox, FormControlLabel, FormGroup,InputLabel,Link,TextField, Typography } from "@mui/material"
 import { LabeledIcon } from "../labeled-icon/LabeledIcon";
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
+import { Link as RouterLink } from 'react-router'
 
 export const Login: FC = () => {
   const label = 'Bienvenide a ConLuz';
+  const passwordErrorMessage = 'Por favor, introduce tu contraseña'
+  const idErrorMessage = 'Por favor, introduce tu DNI/NIF'
+
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -17,8 +21,8 @@ return <Box component="form" className="p-7" onSubmit={handleSubmit}>
         <FormGroup>
             <InputLabel className="mt-10">DNI/NIF</InputLabel>
             <TextField
-                // error={emailError}
-                // helperText={emailErrorMessage}
+                // error={dniNifError}
+                helperText={idErrorMessage}
                 id="id"
                 type="id"
                 name="id"
@@ -27,12 +31,12 @@ return <Box component="form" className="p-7" onSubmit={handleSubmit}>
                 required
                 fullWidth
                 variant="filled"
-                // color={emailError ? 'error' : 'primary'}
-            ></TextField>
+                // color={dniNifError ? 'error' : 'primary'}
+            />
             <InputLabel className="mt-4">Contraseña</InputLabel>
             <TextField
                 // error={passwordError}
-                // helperText={passwordErrorMessage}
+                helperText={passwordErrorMessage}
                 id="password"
                 type="password"
                 name="password"
@@ -42,23 +46,20 @@ return <Box component="form" className="p-7" onSubmit={handleSubmit}>
                 required
                 fullWidth
                 variant="filled"
-                // color={passwordError ? 'error' : 'primary.light'}
-                color="primary"
-            ></TextField>
+                // color={passwordError ? 'error' : 'primary'}
+                // color="primary"
+            />
             <Box className="flex flex-row justify-between items-center w-full">
               <FormControlLabel control={<Checkbox color="success"/>} label="Recordarme" className="mt-2"/>
-              <Link href="/forgot-password" underline="always" color="info">
+              <Link component={RouterLink} to='/forgotpassword' underline="always" color="info">
                   {'¿Olvidaste tu contraseña?'}
               </Link>
             </Box>
-
             <Button type="submit" variant="contained" fullWidth className="mt-4">
                 Entrar
             </Button>
             <Typography className="mt-7">¿No puedes acceder a la plataforma?</Typography>
-            <Link href="/contact" underline="always" color="info">{'Contacta con nosotres'}</Link>
+            <Link component={RouterLink} to='/contact' underline="always" color="info">{'Contacta con nosotres'}</Link>
         </FormGroup>
-
     </Box>
-
 }

@@ -3,6 +3,8 @@ import { Route, Routes } from 'react-router'
 import { AuthenticatedLayout } from './layouts/authenticated.layout'
 import { LoginLayout } from './layouts/login.layout'
 import { Login } from './components/login/login'
+import { ForgotPassword } from './components/ForgotPassword/ForgotPassword'
+import { NewPassword } from './components/NewPassword/NewPassword'
 
 function App() {
 
@@ -11,13 +13,14 @@ function App() {
       <Routes>
         <Route element={<LoginLayout/>}>
           <Route path='login' element={<Login/>}></Route>
-        </Route>
+          <Route path='forgotpassword' element={<ForgotPassword/>}></Route>
+          <Route path='newpassword' element={<NewPassword/>}></Route>
+        </Route> 
         <Route element={<AuthenticatedLayout/>}>
           <Route index />
         </Route>
       </Routes>
     </>
-  )
-}
+)}
 
 export default App
