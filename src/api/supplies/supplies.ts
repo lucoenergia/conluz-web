@@ -24,13 +24,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   CreateSuppliesInBulkResponse,
   CreateSuppliesWithFileBody,
@@ -41,6 +34,8 @@ import type {
   UpdateSupplyBody
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -57,28 +52,30 @@ If you don't provide some of the optional parameters, they will be considered as
  */
 export const updateSupply = (
     id: string,
-    updateSupplyBody: UpdateSupplyBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<SupplyResponse>> => {
-    
-    
-    return axios.default.put(
-      `/api/v1/supplies/${id}`,
-      updateSupplyBody,options
-    );
-  }
+    updateSupplyBody: UpdateSupplyBody,
+ ) => {
+      
+      
+      return customInstance<SupplyResponse>(
+      {url: `/api/v1/supplies/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateSupplyBody
+    },
+      );
+    }
+  
 
 
-
-export const getUpdateSupplyMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{id: string;data: UpdateSupplyBody}, TContext>, axios?: AxiosRequestConfig}
+export const getUpdateSupplyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{id: string;data: UpdateSupplyBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{id: string;data: UpdateSupplyBody}, TContext> => {
 
 const mutationKey = ['updateSupply'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -86,7 +83,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSupply>>, {id: string;data: UpdateSupplyBody}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateSupply(id,data,axiosOptions)
+          return  updateSupply(id,data,)
         }
 
         
@@ -96,13 +93,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type UpdateSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof updateSupply>>>
     export type UpdateSupplyMutationBody = UpdateSupplyBody
-    export type UpdateSupplyMutationError = AxiosError<unknown>
+    export type UpdateSupplyMutationError = ErrorType<unknown>
 
     /**
  * @summary Updates supply information
  */
-export const useUpdateSupply = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{id: string;data: UpdateSupplyBody}, TContext>, axios?: AxiosRequestConfig}
+export const useUpdateSupply = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{id: string;data: UpdateSupplyBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateSupply>>,
         TError,
@@ -119,33 +116,34 @@ export const useUpdateSupply = <TError = AxiosError<unknown>,
  * @summary Retrieves all registered supplies in the system with support for pagination, filtering, and sorting.
  */
 export const getAllSupplies = (
-    params?: GetAllSuppliesParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<PagedResultSupplyResponse>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/supplies`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params?: GetAllSuppliesParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PagedResultSupplyResponse>(
+      {url: `/api/v1/supplies`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetAllSuppliesQueryKey = (params?: GetAllSuppliesParams,) => {
     return [`/api/v1/supplies`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = AxiosError<unknown>>(params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetAllSuppliesQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllSupplies>>> = ({ signal }) => getAllSupplies(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllSupplies>>> = ({ signal }) => getAllSupplies(params, signal);
 
       
 
@@ -155,39 +153,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetAllSuppliesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllSupplies>>>
-export type GetAllSuppliesQueryError = AxiosError<unknown>
+export type GetAllSuppliesQueryError = ErrorType<unknown>
 
 
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = AxiosError<unknown>>(
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
  params: undefined |  GetAllSuppliesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllSupplies>>,
           TError,
           Awaited<ReturnType<typeof getAllSupplies>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = AxiosError<unknown>>(
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
  params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllSupplies>>,
           TError,
           Awaited<ReturnType<typeof getAllSupplies>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = AxiosError<unknown>>(
- params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+ params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieves all registered supplies in the system with support for pagination, filtering, and sorting.
  */
 
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = AxiosError<unknown>>(
- params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+ params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -207,28 +205,31 @@ export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSuppli
  * @summary Creates a new supply within the system.
  */
 export const createSupply = (
-    createSupplyBody: CreateSupplyBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/supplies`,
-      createSupplyBody,options
-    );
-  }
+    createSupplyBody: CreateSupplyBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/supplies`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createSupplyBody, signal
+    },
+      );
+    }
+  
 
 
-
-export const getCreateSupplyMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, axios?: AxiosRequestConfig}
+export const getCreateSupplyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext> => {
 
 const mutationKey = ['createSupply'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -236,7 +237,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSupply>>, {data: CreateSupplyBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  createSupply(data,axiosOptions)
+          return  createSupply(data,)
         }
 
         
@@ -246,13 +247,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type CreateSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof createSupply>>>
     export type CreateSupplyMutationBody = CreateSupplyBody
-    export type CreateSupplyMutationError = AxiosError<unknown>
+    export type CreateSupplyMutationError = ErrorType<unknown>
 
     /**
  * @summary Creates a new supply within the system.
  */
-export const useCreateSupply = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, axios?: AxiosRequestConfig}
+export const useCreateSupply = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSupply>>,
         TError,
@@ -278,30 +279,33 @@ In cases where the creation process encounters errors, the server responds with 
  * @summary Creates supplies in bulk importing a CSV file.
  */
 export const createSuppliesWithFile = (
-    createSuppliesWithFileBody: CreateSuppliesWithFileBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<CreateSuppliesInBulkResponse>> => {
-    
-    const formData = new FormData();
+    createSuppliesWithFileBody: CreateSuppliesWithFileBody,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`file`, createSuppliesWithFileBody.file)
 
-    return axios.default.post(
-      `/api/v1/supplies/import`,
-      formData,options
-    );
-  }
+      return customInstance<CreateSuppliesInBulkResponse>(
+      {url: `/api/v1/supplies/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
+  
 
 
-
-export const getCreateSuppliesWithFileMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext>, axios?: AxiosRequestConfig}
+export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext> => {
 
 const mutationKey = ['createSuppliesWithFile'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -309,7 +313,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  createSuppliesWithFile(data,axiosOptions)
+          return  createSuppliesWithFile(data,)
         }
 
         
@@ -319,13 +323,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type CreateSuppliesWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createSuppliesWithFile>>>
     export type CreateSuppliesWithFileMutationBody = CreateSuppliesWithFileBody
-    export type CreateSuppliesWithFileMutationError = AxiosError<unknown>
+    export type CreateSuppliesWithFileMutationError = ErrorType<unknown>
 
     /**
  * @summary Creates supplies in bulk importing a CSV file.
  */
-export const useCreateSuppliesWithFile = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext>, axios?: AxiosRequestConfig}
+export const useCreateSuppliesWithFile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSuppliesWithFile>>,
         TError,
@@ -342,27 +346,29 @@ export const useCreateSuppliesWithFile = <TError = AxiosError<unknown>,
  * @summary Synchronize supplies retrieving the information from datadis.es.
  */
 export const syncDatadisSupplies = (
-     options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
     
-    
-    return axios.default.post(
-      `/api/v1/supplies/datadis/sync`,undefined,options
-    );
-  }
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/supplies/datadis/sync`, method: 'POST', signal
+    },
+      );
+    }
+  
 
 
-
-export const getSyncDatadisSuppliesMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext> => {
 
 const mutationKey = ['syncDatadisSupplies'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -370,7 +376,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisSupplies>>, void> = () => {
           
 
-          return  syncDatadisSupplies(axiosOptions)
+          return  syncDatadisSupplies()
         }
 
         
@@ -380,13 +386,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type SyncDatadisSuppliesMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisSupplies>>>
     
-    export type SyncDatadisSuppliesMutationError = AxiosError<unknown>
+    export type SyncDatadisSuppliesMutationError = ErrorType<unknown>
 
     /**
  * @summary Synchronize supplies retrieving the information from datadis.es.
  */
-export const useSyncDatadisSupplies = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncDatadisSupplies>>,
         TError,

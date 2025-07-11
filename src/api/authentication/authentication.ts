@@ -15,18 +15,13 @@ import type {
   UseMutationResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   LoginRequest,
   Token
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -36,28 +31,31 @@ import type {
  * @summary User authentication
  */
 export const login = (
-    loginRequest: LoginRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<Token>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/login`,
-      loginRequest,options
-    );
-  }
+    loginRequest: LoginRequest,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Token>(
+      {url: `/api/v1/login`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: loginRequest, signal
+    },
+      );
+    }
+  
 
 
-
-export const getLoginMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, axios?: AxiosRequestConfig}
+export const getLoginMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext> => {
 
 const mutationKey = ['login'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -65,7 +63,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: LoginRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  login(data,axiosOptions)
+          return  login(data,)
         }
 
         
@@ -75,13 +73,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
     export type LoginMutationBody = LoginRequest
-    export type LoginMutationError = AxiosError<unknown>
+    export type LoginMutationError = ErrorType<unknown>
 
     /**
  * @summary User authentication
  */
-export const useLogin = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, axios?: AxiosRequestConfig}
+export const useLogin = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof login>>,
         TError,

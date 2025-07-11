@@ -15,6 +15,7 @@ export const AuthenticatedLayout: FC = () => {
     return isMenuOpened && width > MIN_DESKTOP_WIDTH ? SIDEMENU_WIDTH : 0;
   }, [isMenuOpened, width])
 
+  
   return <>
     <Header onMenuClick={() => {setIsMenuOpened(!isMenuOpened)}}/>
     <SideMenu isMenuOpened={isMenuOpened} onMenuClose={setIsMenuOpened}/>
