@@ -24,13 +24,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   CreateUserBody,
   CreateUsersInBulkResponse,
@@ -41,6 +34,8 @@ import type {
   UserResponse
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -57,28 +52,30 @@ If you don't provide some of the optional parameters, they will be considered as
  */
 export const updateUser = (
     id: string,
-    updateUserBody: UpdateUserBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<UserResponse>> => {
-    
-    
-    return axios.default.put(
-      `/api/v1/users/${id}`,
-      updateUserBody,options
-    );
-  }
+    updateUserBody: UpdateUserBody,
+ ) => {
+      
+      
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateUserBody
+    },
+      );
+    }
+  
 
 
-
-export const getUpdateUserMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{id: string;data: UpdateUserBody}, TContext>, axios?: AxiosRequestConfig}
+export const getUpdateUserMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{id: string;data: UpdateUserBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{id: string;data: UpdateUserBody}, TContext> => {
 
 const mutationKey = ['updateUser'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -86,7 +83,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUser>>, {id: string;data: UpdateUserBody}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateUser(id,data,axiosOptions)
+          return  updateUser(id,data,)
         }
 
         
@@ -96,13 +93,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type UpdateUserMutationResult = NonNullable<Awaited<ReturnType<typeof updateUser>>>
     export type UpdateUserMutationBody = UpdateUserBody
-    export type UpdateUserMutationError = AxiosError<unknown>
+    export type UpdateUserMutationError = ErrorType<unknown>
 
     /**
  * @summary Updates user information
  */
-export const useUpdateUser = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{id: string;data: UpdateUserBody}, TContext>, axios?: AxiosRequestConfig}
+export const useUpdateUser = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{id: string;data: UpdateUserBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateUser>>,
         TError,
@@ -126,27 +123,28 @@ export const useUpdateUser = <TError = AxiosError<unknown>,
  * @summary Removes a user by ID
  */
 export const deleteUser = (
-    id: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    
-    
-    return axios.default.delete(
-      `/api/v1/users/${id}`,options
-    );
-  }
+    id: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${id}`, method: 'DELETE'
+    },
+      );
+    }
+  
 
 
-
-export const getDeleteUserMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const getDeleteUserMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['deleteUser'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -154,7 +152,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  deleteUser(id,axiosOptions)
+          return  deleteUser(id,)
         }
 
         
@@ -164,13 +162,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type DeleteUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUser>>>
     
-    export type DeleteUserMutationError = AxiosError<unknown>
+    export type DeleteUserMutationError = ErrorType<unknown>
 
     /**
  * @summary Removes a user by ID
  */
-export const useDeleteUser = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const useDeleteUser = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteUser>>,
         TError,
@@ -187,33 +185,34 @@ export const useDeleteUser = <TError = AxiosError<unknown>,
  * @summary Retrieves all registered users in the system with support for pagination, filtering, and sorting.
  */
 export const getAllUsers = (
-    params?: GetAllUsersParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<PagedResultUserResponse>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/users`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params?: GetAllUsersParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PagedResultUserResponse>(
+      {url: `/api/v1/users`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetAllUsersQueryKey = (params?: GetAllUsersParams,) => {
     return [`/api/v1/users`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetAllUsersQueryOptions = <TData = Awaited<ReturnType<typeof getAllUsers>>, TError = AxiosError<unknown>>(params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetAllUsersQueryOptions = <TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<unknown>>(params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetAllUsersQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllUsers>>> = ({ signal }) => getAllUsers(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllUsers>>> = ({ signal }) => getAllUsers(params, signal);
 
       
 
@@ -223,39 +222,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetAllUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getAllUsers>>>
-export type GetAllUsersQueryError = AxiosError<unknown>
+export type GetAllUsersQueryError = ErrorType<unknown>
 
 
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = AxiosError<unknown>>(
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<unknown>>(
  params: undefined |  GetAllUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllUsers>>,
           TError,
           Awaited<ReturnType<typeof getAllUsers>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = AxiosError<unknown>>(
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<unknown>>(
  params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllUsers>>,
           TError,
           Awaited<ReturnType<typeof getAllUsers>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = AxiosError<unknown>>(
- params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<unknown>>(
+ params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieves all registered users in the system with support for pagination, filtering, and sorting.
  */
 
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = AxiosError<unknown>>(
- params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<unknown>>(
+ params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -284,28 +283,31 @@ In cases where the creation process encounters errors, the server responds with 
  * @summary Creates a new user within the system.
  */
 export const createUser = (
-    createUserBody: CreateUserBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<UserResponse>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/users`,
-      createUserBody,options
-    );
-  }
+    createUserBody: CreateUserBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createUserBody, signal
+    },
+      );
+    }
+  
 
 
-
-export const getCreateUserMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, axios?: AxiosRequestConfig}
+export const getCreateUserMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext> => {
 
 const mutationKey = ['createUser'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -313,7 +315,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUser>>, {data: CreateUserBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  createUser(data,axiosOptions)
+          return  createUser(data,)
         }
 
         
@@ -323,13 +325,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>
     export type CreateUserMutationBody = CreateUserBody
-    export type CreateUserMutationError = AxiosError<unknown>
+    export type CreateUserMutationError = ErrorType<unknown>
 
     /**
  * @summary Creates a new user within the system.
  */
-export const useCreateUser = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, axios?: AxiosRequestConfig}
+export const useCreateUser = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUser>>,
         TError,
@@ -354,27 +356,29 @@ In situations where the enabling process encounters errors, the server responds 
  * @summary Enables a user by ID
  */
 export const disableUser = (
-    id: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/users/${id}/enable`,undefined,options
-    );
-  }
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${id}/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
 
 
-
-export const getDisableUserMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const getDisableUserMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{id: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['disableUser'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -382,7 +386,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableUser>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  disableUser(id,axiosOptions)
+          return  disableUser(id,)
         }
 
         
@@ -392,13 +396,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type DisableUserMutationResult = NonNullable<Awaited<ReturnType<typeof disableUser>>>
     
-    export type DisableUserMutationError = AxiosError<unknown>
+    export type DisableUserMutationError = ErrorType<unknown>
 
     /**
  * @summary Enables a user by ID
  */
-export const useDisableUser = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const useDisableUser = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{id: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof disableUser>>,
         TError,
@@ -424,27 +428,29 @@ export const useDisableUser = <TError = AxiosError<unknown>,
  * @summary Disables a user by ID
  */
 export const disableUser1 = (
-    id: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/users/${id}/disable`,undefined,options
-    );
-  }
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${id}/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
 
 
-
-export const getDisableUser1MutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const getDisableUser1MutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['disableUser1'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -452,7 +458,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableUser1>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  disableUser1(id,axiosOptions)
+          return  disableUser1(id,)
         }
 
         
@@ -462,13 +468,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type DisableUser1MutationResult = NonNullable<Awaited<ReturnType<typeof disableUser1>>>
     
-    export type DisableUser1MutationError = AxiosError<unknown>
+    export type DisableUser1MutationError = ErrorType<unknown>
 
     /**
  * @summary Disables a user by ID
  */
-export const useDisableUser1 = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const useDisableUser1 = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof disableUser1>>,
         TError,
@@ -494,30 +500,33 @@ In cases where the creation process encounters errors, the server responds with 
  * @summary Creates users in bulk importing a CSV file.
  */
 export const createUsersWithFile = (
-    createUsersWithFileBody: CreateUsersWithFileBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<CreateUsersInBulkResponse>> => {
-    
-    const formData = new FormData();
+    createUsersWithFileBody: CreateUsersWithFileBody,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`file`, createUsersWithFileBody.file)
 
-    return axios.default.post(
-      `/api/v1/users/import`,
-      formData,options
-    );
-  }
+      return customInstance<CreateUsersInBulkResponse>(
+      {url: `/api/v1/users/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
+  
 
 
-
-export const getCreateUsersWithFileMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext>, axios?: AxiosRequestConfig}
+export const getCreateUsersWithFileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext> => {
 
 const mutationKey = ['createUsersWithFile'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -525,7 +534,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUsersWithFile>>, {data: CreateUsersWithFileBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  createUsersWithFile(data,axiosOptions)
+          return  createUsersWithFile(data,)
         }
 
         
@@ -535,13 +544,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type CreateUsersWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createUsersWithFile>>>
     export type CreateUsersWithFileMutationBody = CreateUsersWithFileBody
-    export type CreateUsersWithFileMutationError = AxiosError<unknown>
+    export type CreateUsersWithFileMutationError = ErrorType<unknown>
 
     /**
  * @summary Creates users in bulk importing a CSV file.
  */
-export const useCreateUsersWithFile = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext>, axios?: AxiosRequestConfig}
+export const useCreateUsersWithFile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUsersWithFile>>,
         TError,

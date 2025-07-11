@@ -15,17 +15,12 @@ import type {
   UseMutationResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   InitBody
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -35,28 +30,31 @@ import type {
  * @summary Sets up the initial configuration for the app.
  */
 export const init = (
-    initBody: InitBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/init`,
-      initBody,options
-    );
-  }
+    initBody: InitBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/init`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: initBody, signal
+    },
+      );
+    }
+  
 
 
-
-export const getInitMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof init>>, TError,{data: InitBody}, TContext>, axios?: AxiosRequestConfig}
+export const getInitMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof init>>, TError,{data: InitBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof init>>, TError,{data: InitBody}, TContext> => {
 
 const mutationKey = ['init'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -64,7 +62,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof init>>, {data: InitBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  init(data,axiosOptions)
+          return  init(data,)
         }
 
         
@@ -74,13 +72,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type InitMutationResult = NonNullable<Awaited<ReturnType<typeof init>>>
     export type InitMutationBody = InitBody
-    export type InitMutationError = AxiosError<unknown>
+    export type InitMutationError = ErrorType<unknown>
 
     /**
  * @summary Sets up the initial configuration for the app.
  */
-export const useInit = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof init>>, TError,{data: InitBody}, TContext>, axios?: AxiosRequestConfig}
+export const useInit = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof init>>, TError,{data: InitBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof init>>,
         TError,

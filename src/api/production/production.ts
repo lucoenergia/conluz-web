@@ -24,13 +24,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   ConfigureHuaweiBody,
   GetDailyProductionParams,
@@ -40,6 +33,8 @@ import type {
   GetYearlyProductionParams
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -54,28 +49,30 @@ In cases where the creation process encounters errors, the server responds with 
  * @summary Sets up the configuration to be able to connect with Huawei.
  */
 export const configureHuawei = (
-    configureHuaweiBody: ConfigureHuaweiBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.put(
-      `/api/v1/production/huawei/config`,
-      configureHuaweiBody,options
-    );
-  }
+    configureHuaweiBody: ConfigureHuaweiBody,
+ ) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/huawei/config`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: configureHuaweiBody
+    },
+      );
+    }
+  
 
 
-
-export const getConfigureHuaweiMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext>, axios?: AxiosRequestConfig}
+export const getConfigureHuaweiMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext> => {
 
 const mutationKey = ['configureHuawei'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -83,7 +80,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureHuawei>>, {data: ConfigureHuaweiBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  configureHuawei(data,axiosOptions)
+          return  configureHuawei(data,)
         }
 
         
@@ -93,13 +90,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type ConfigureHuaweiMutationResult = NonNullable<Awaited<ReturnType<typeof configureHuawei>>>
     export type ConfigureHuaweiMutationBody = ConfigureHuaweiBody
-    export type ConfigureHuaweiMutationError = AxiosError<unknown>
+    export type ConfigureHuaweiMutationError = ErrorType<unknown>
 
     /**
  * @summary Sets up the configuration to be able to connect with Huawei.
  */
-export const useConfigureHuawei = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext>, axios?: AxiosRequestConfig}
+export const useConfigureHuawei = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureHuawei>>,
         TError,
@@ -116,33 +113,34 @@ export const useConfigureHuawei = <TError = AxiosError<unknown>,
  * @summary Delivers real-time energy production details for a specific power plant supply.
  */
 export const getInstantProduction = (
-    params?: GetInstantProductionParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/production`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params?: GetInstantProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetInstantProductionQueryKey = (params?: GetInstantProductionParams,) => {
     return [`/api/v1/production`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetInstantProductionQueryOptions = <TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = AxiosError<unknown>>(params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetInstantProductionQueryOptions = <TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetInstantProductionQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInstantProduction>>> = ({ signal }) => getInstantProduction(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInstantProduction>>> = ({ signal }) => getInstantProduction(params, signal);
 
       
 
@@ -152,39 +150,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetInstantProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getInstantProduction>>>
-export type GetInstantProductionQueryError = AxiosError<unknown>
+export type GetInstantProductionQueryError = ErrorType<unknown>
 
 
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = AxiosError<unknown>>(
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
  params: undefined |  GetInstantProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getInstantProduction>>,
           TError,
           Awaited<ReturnType<typeof getInstantProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = AxiosError<unknown>>(
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
  params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getInstantProduction>>,
           TError,
           Awaited<ReturnType<typeof getInstantProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = AxiosError<unknown>>(
- params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
+ params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Delivers real-time energy production details for a specific power plant supply.
  */
 
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = AxiosError<unknown>>(
- params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
+ params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -204,33 +202,34 @@ export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getIns
  * @summary Retrieves yearly energy production data for a specified power plant supply within a given date interval.
  */
 export const getYearlyProduction = (
-    params: GetYearlyProductionParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/production/yearly`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params: GetYearlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/yearly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetYearlyProductionQueryKey = (params: GetYearlyProductionParams,) => {
     return [`/api/v1/production/yearly`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetYearlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = AxiosError<unknown>>(params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetYearlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetYearlyProductionQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getYearlyProduction>>> = ({ signal }) => getYearlyProduction(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getYearlyProduction>>> = ({ signal }) => getYearlyProduction(params, signal);
 
       
 
@@ -240,39 +239,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetYearlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getYearlyProduction>>>
-export type GetYearlyProductionQueryError = AxiosError<unknown>
+export type GetYearlyProductionQueryError = ErrorType<unknown>
 
 
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = AxiosError<unknown>>(
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
  params: GetYearlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getYearlyProduction>>,
           TError,
           Awaited<ReturnType<typeof getYearlyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = AxiosError<unknown>>(
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
  params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getYearlyProduction>>,
           TError,
           Awaited<ReturnType<typeof getYearlyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = AxiosError<unknown>>(
- params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
+ params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieves yearly energy production data for a specified power plant supply within a given date interval.
  */
 
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = AxiosError<unknown>>(
- params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
+ params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -292,33 +291,34 @@ export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYear
  * @summary Retrieves monthly energy production data for a specified power plant supply within a given date interval.
  */
 export const getMonthlyProduction = (
-    params: GetMonthlyProductionParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/production/monthly`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params: GetMonthlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetMonthlyProductionQueryKey = (params: GetMonthlyProductionParams,) => {
     return [`/api/v1/production/monthly`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = AxiosError<unknown>>(params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetMonthlyProductionQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMonthlyProduction>>> = ({ signal }) => getMonthlyProduction(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMonthlyProduction>>> = ({ signal }) => getMonthlyProduction(params, signal);
 
       
 
@@ -328,39 +328,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getMonthlyProduction>>>
-export type GetMonthlyProductionQueryError = AxiosError<unknown>
+export type GetMonthlyProductionQueryError = ErrorType<unknown>
 
 
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = AxiosError<unknown>>(
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
  params: GetMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMonthlyProduction>>,
           TError,
           Awaited<ReturnType<typeof getMonthlyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = AxiosError<unknown>>(
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
  params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMonthlyProduction>>,
           TError,
           Awaited<ReturnType<typeof getMonthlyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = AxiosError<unknown>>(
- params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
+ params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieves monthly energy production data for a specified power plant supply within a given date interval.
  */
 
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = AxiosError<unknown>>(
- params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
+ params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -380,33 +380,34 @@ export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMon
  * @summary Retrieves hourly energy production data for a specified power plant supply within a given date interval.
  */
 export const getHourlyProduction = (
-    params: GetHourlyProductionParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/production/hourly`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params: GetHourlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetHourlyProductionQueryKey = (params: GetHourlyProductionParams,) => {
     return [`/api/v1/production/hourly`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = AxiosError<unknown>>(params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetHourlyProductionQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHourlyProduction>>> = ({ signal }) => getHourlyProduction(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHourlyProduction>>> = ({ signal }) => getHourlyProduction(params, signal);
 
       
 
@@ -416,39 +417,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getHourlyProduction>>>
-export type GetHourlyProductionQueryError = AxiosError<unknown>
+export type GetHourlyProductionQueryError = ErrorType<unknown>
 
 
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = AxiosError<unknown>>(
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
  params: GetHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHourlyProduction>>,
           TError,
           Awaited<ReturnType<typeof getHourlyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = AxiosError<unknown>>(
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
  params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHourlyProduction>>,
           TError,
           Awaited<ReturnType<typeof getHourlyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = AxiosError<unknown>>(
- params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
+ params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieves hourly energy production data for a specified power plant supply within a given date interval.
  */
 
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = AxiosError<unknown>>(
- params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
+ params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -468,33 +469,34 @@ export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHour
  * @summary Retrieves daily energy production data for a specified power plant supply within a given date interval.
  */
 export const getDailyProduction = (
-    params: GetDailyProductionParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/production/daily`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params: GetDailyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetDailyProductionQueryKey = (params: GetDailyProductionParams,) => {
     return [`/api/v1/production/daily`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = AxiosError<unknown>>(params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetDailyProductionQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyProduction>>> = ({ signal }) => getDailyProduction(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyProduction>>> = ({ signal }) => getDailyProduction(params, signal);
 
       
 
@@ -504,39 +506,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDailyProduction>>>
-export type GetDailyProductionQueryError = AxiosError<unknown>
+export type GetDailyProductionQueryError = ErrorType<unknown>
 
 
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = AxiosError<unknown>>(
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
  params: GetDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDailyProduction>>,
           TError,
           Awaited<ReturnType<typeof getDailyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = AxiosError<unknown>>(
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
  params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDailyProduction>>,
           TError,
           Awaited<ReturnType<typeof getDailyProduction>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = AxiosError<unknown>>(
- params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
+ params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieves daily energy production data for a specified power plant supply within a given date interval.
  */
 
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = AxiosError<unknown>>(
- params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
+ params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

@@ -15,17 +15,12 @@ import type {
   UseMutationResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   ConfigureDatadisBody
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -40,28 +35,30 @@ In cases where the creation process encounters errors, the server responds with 
  * @summary Sets up the configuration to be able to connect with Datadis.
  */
 export const configureDatadis = (
-    configureDatadisBody: ConfigureDatadisBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.put(
-      `/api/v1/consumption/datadis/config`,
-      configureDatadisBody,options
-    );
-  }
+    configureDatadisBody: ConfigureDatadisBody,
+ ) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/datadis/config`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: configureDatadisBody
+    },
+      );
+    }
+  
 
 
-
-export const getConfigureDatadisMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext>, axios?: AxiosRequestConfig}
+export const getConfigureDatadisMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext> => {
 
 const mutationKey = ['configureDatadis'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -69,7 +66,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureDatadis>>, {data: ConfigureDatadisBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  configureDatadis(data,axiosOptions)
+          return  configureDatadis(data,)
         }
 
         
@@ -79,13 +76,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type ConfigureDatadisMutationResult = NonNullable<Awaited<ReturnType<typeof configureDatadis>>>
     export type ConfigureDatadisMutationBody = ConfigureDatadisBody
-    export type ConfigureDatadisMutationError = AxiosError<unknown>
+    export type ConfigureDatadisMutationError = ErrorType<unknown>
 
     /**
  * @summary Sets up the configuration to be able to connect with Datadis.
  */
-export const useConfigureDatadis = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext>, axios?: AxiosRequestConfig}
+export const useConfigureDatadis = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureDatadis>>,
         TError,
@@ -102,27 +99,29 @@ export const useConfigureDatadis = <TError = AxiosError<unknown>,
  * @summary Synchronize the consumptions of all active supplies retrieving the information from datadis.es.
  */
 export const syncDatadisConsumptions = (
-     options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
     
-    
-    return axios.default.post(
-      `/api/v1/consumption/datadis/sync`,undefined,options
-    );
-  }
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/datadis/sync`, method: 'POST', signal
+    },
+      );
+    }
+  
 
 
-
-export const getSyncDatadisConsumptionsMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+export const getSyncDatadisConsumptionsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext> => {
 
 const mutationKey = ['syncDatadisConsumptions'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -130,7 +129,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisConsumptions>>, void> = () => {
           
 
-          return  syncDatadisConsumptions(axiosOptions)
+          return  syncDatadisConsumptions()
         }
 
         
@@ -140,13 +139,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type SyncDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisConsumptions>>>
     
-    export type SyncDatadisConsumptionsMutationError = AxiosError<unknown>
+    export type SyncDatadisConsumptionsMutationError = ErrorType<unknown>
 
     /**
  * @summary Synchronize the consumptions of all active supplies retrieving the information from datadis.es.
  */
-export const useSyncDatadisConsumptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+export const useSyncDatadisConsumptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncDatadisConsumptions>>,
         TError,
