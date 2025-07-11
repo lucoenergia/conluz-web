@@ -7,14 +7,14 @@ event.preventDefault();
 // const idErrorMessage = 'Por favor, introduce tu DNI/NIF'
 
 export const ForgotPassword: FC = () => {
-return <Box component="form" className="md:p-7" onSubmit={handleSubmit}>
-        <Typography  gutterBottom className="text-xl text-center md:text-left">¿No recuerdas tu contraseña?</Typography>
+return <Box component="form" className="p-7 w-full" onSubmit={handleSubmit}>
+        <Typography  gutterBottom className="text-xl">¿No recuerdas tu contraseña?</Typography>
         <Typography  gutterBottom className="text-base">Introduce tu DNI y te enviaremos un correo</Typography>
-        <FormGroup className="md:w-[431px]  mt-6">
+        <FormGroup className="mt-6">
             <TextField                // error={emailError}
                 // helperText={idErrorMessage}
                 id="id"
-                type="id"
+                type="text"
                 name="id"
                 placeholder="Escribe aquí tu DNI/NIF"
                 autoFocus

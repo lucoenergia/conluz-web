@@ -13,7 +13,7 @@ export const Login: FC = () => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
   };
-return <Box component="form" className="p-7" onSubmit={handleSubmit}>
+return <Box component="form" className="p-7 w-full" onSubmit={handleSubmit}>
       <LabeledIcon label={label} icon={WavingHandOutlinedIcon} iconPosition="right" justify="start" variant="compact" labelSize="text-xl"></LabeledIcon>
       <Typography variant="subtitle2" gutterBottom>
         Por favor, accede a tu cuenta introduciendo tu DNI/NIF y contraseña
@@ -24,7 +24,7 @@ return <Box component="form" className="p-7" onSubmit={handleSubmit}>
                 // error={dniNifError}
                 helperText={idErrorMessage}
                 id="id"
-                type="id"
+                type="text"
                 name="id"
                 placeholder="Escribe aquí tu DNI/NIF"
                 autoFocus
