@@ -2,18 +2,29 @@ import type { FC } from "react"
 import { Box, Button, Checkbox, FormControlLabel, FormGroup,InputLabel,Link,TextField, Typography } from "@mui/material"
 import { LabeledIcon } from "../labeled-icon/LabeledIcon";
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
-import { Link as RouterLink } from 'react-router'
+import { Link as RouterLink, useNavigate } from 'react-router'
+import { login } from "../../api/authentication/authentication";
+import { useAuthDispatch } from "../../api/auth.context";
 
 export const Login: FC = () => {
   const label = 'Bienvenide a ConLuz';
   const passwordErrorMessage = 'Por favor, introduce tu contraseña'
   const idErrorMessage = 'Por favor, introduce tu DNI/NIF'
+  const dispatchAuth = useAuthDispatch();
+  const navigate = useNavigate();
 
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (data: FormData) => {
+    try {
+      const response = await login({username: data.get('id'), password: data.get('password')});
+      if (response && response.token) {
+        dispatchAuth(response.token);
+        navigate('/');    
+      }
+    } catch(error) {
+      console.log(error)
+    }
   };
-return <Box component="form" className="p-7 w-full" onSubmit={handleSubmit}>
+return <Box component="form" className="p-7 w-full" action={handleSubmit}>
       <LabeledIcon label={label} icon={WavingHandOutlinedIcon} iconPosition="right" justify="start" variant="compact" labelSize="text-xl"></LabeledIcon>
       <Typography variant="subtitle2" gutterBottom>
         Por favor, accede a tu cuenta introduciendo tu DNI/NIF y contraseña
