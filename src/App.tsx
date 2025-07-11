@@ -14,8 +14,11 @@ function App() {
       <Routes>
         <Route element={<LoginLayout/>}>
           <Route path='login' element={<Login/>}></Route>
-          <Route path='forgotpassword' element={<ForgotPassword/>}></Route>
-          <Route path='newpassword' element={<NewPassword/>}></Route>
+          <Route path='forgot-password'>
+            <Route index element={<ForgotPassword/>}></Route>
+            <Route path=':token' element={<NewPassword/>}></Route>
+
+          </Route>
         </Route> 
         <Route element={<AuthenticatedLayout/>}>
           <Route index />
