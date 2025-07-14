@@ -1,4 +1,4 @@
-import type { FC } from "react"
+import { useState, type FC } from "react"
 import { Box, Button, Checkbox, FormControlLabel, FormGroup,InputLabel,Link,TextField, Typography } from "@mui/material"
 import { LabeledIcon } from "../labeled-icon/LabeledIcon";
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
@@ -7,6 +7,12 @@ import { login } from "../../api/authentication/authentication";
 import { useAuthDispatch } from "../../api/auth.context";
 
 export const Login: FC = () => {
+  const [loginError, setLoginError] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ id: boolean; password: boolean }>({
+    id: false,
+    password: false,
+  });
+
   const label = 'Bienvenide a ConLuz';
   const passwordErrorMessage = 'Por favor, introduce tu contraseña'
   const idErrorMessage = 'Por favor, introduce tu DNI/NIF'
@@ -14,13 +20,28 @@ export const Login: FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (data: FormData) => {
+    const id = data.get('id')?.toString().trim();
+    const password = data.get('password')?.toString().trim();
+    const newErrors = {
+      id: !id,
+      password: !password,
+    };
+    
+    setFormErrors(newErrors);
+
+    if (newErrors.id || newErrors.password) return;
+
     try {
       const response = await login({username: data.get('id'), password: data.get('password')});
       if (response && response.token) {
+        setLoginError(false); 
         dispatchAuth(response.token);
         navigate('/');    
+      } else {
+        setLoginError(true); 
       }
     } catch(error) {
+      setLoginError(true); 
       console.log(error)
     }
   };
@@ -29,11 +50,16 @@ return <Box component="form" className="p-7 w-full" action={handleSubmit}>
       <Typography variant="subtitle2" gutterBottom>
         Por favor, accede a tu cuenta introduciendo tu DNI/NIF y contraseña
       </Typography>
-        <FormGroup>
+      {loginError && (
+        <Typography color="error">
+          DNI/NIF o contraseña incorrectos
+        </Typography>
+      )}        
+      <FormGroup>
             <InputLabel className="mt-10">DNI/NIF</InputLabel>
             <TextField
-                // error={dniNifError}
-                helperText={idErrorMessage}
+                error={formErrors.id}
+                helperText={formErrors.id ? idErrorMessage : ''}
                 id="id"
                 type="text"
                 name="id"
@@ -42,12 +68,11 @@ return <Box component="form" className="p-7 w-full" action={handleSubmit}>
                 required
                 fullWidth
                 variant="filled"
-                // color={dniNifError ? 'error' : 'primary'}
             />
             <InputLabel className="mt-4">Contraseña</InputLabel>
             <TextField
-                // error={passwordError}
-                helperText={passwordErrorMessage}
+                error={formErrors.password}
+                helperText={formErrors.password ? passwordErrorMessage : ''}
                 id="password"
                 type="password"
                 name="password"
@@ -57,12 +82,10 @@ return <Box component="form" className="p-7 w-full" action={handleSubmit}>
                 required
                 fullWidth
                 variant="filled"
-                // color={passwordError ? 'error' : 'primary'}
-                // color="primary"
             />
             <Box className="flex flex-row justify-between items-center w-full">
               <FormControlLabel control={<Checkbox color="success"/>} label="Recordarme" className="mt-2"/>
-              <Link component={RouterLink} to='/forgotpassword' underline="always" color="info">
+              <Link component={RouterLink} to='/forgot-password' underline="always" color="info">
                   {'¿Olvidaste tu contraseña?'}
               </Link>
             </Box>
