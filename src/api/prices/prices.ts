@@ -20,17 +20,12 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   GetPriceByRangeOfDatesParams
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -40,33 +35,34 @@ import type {
  * @summary Retrieve hourly energy prices within a specified date interval.
  */
 export const getPriceByRangeOfDates = (
-    params: GetPriceByRangeOfDatesParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/prices`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params: GetPriceByRangeOfDatesParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/prices`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetPriceByRangeOfDatesQueryKey = (params: GetPriceByRangeOfDatesParams,) => {
     return [`/api/v1/prices`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetPriceByRangeOfDatesQueryOptions = <TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = AxiosError<unknown>>(params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetPriceByRangeOfDatesQueryOptions = <TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetPriceByRangeOfDatesQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPriceByRangeOfDates>>> = ({ signal }) => getPriceByRangeOfDates(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPriceByRangeOfDates>>> = ({ signal }) => getPriceByRangeOfDates(params, signal);
 
       
 
@@ -76,39 +72,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetPriceByRangeOfDatesQueryResult = NonNullable<Awaited<ReturnType<typeof getPriceByRangeOfDates>>>
-export type GetPriceByRangeOfDatesQueryError = AxiosError<unknown>
+export type GetPriceByRangeOfDatesQueryError = ErrorType<unknown>
 
 
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = AxiosError<unknown>>(
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
  params: GetPriceByRangeOfDatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPriceByRangeOfDates>>,
           TError,
           Awaited<ReturnType<typeof getPriceByRangeOfDates>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = AxiosError<unknown>>(
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
  params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPriceByRangeOfDates>>,
           TError,
           Awaited<ReturnType<typeof getPriceByRangeOfDates>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = AxiosError<unknown>>(
- params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
+ params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieve hourly energy prices within a specified date interval.
  */
 
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = AxiosError<unknown>>(
- params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
+ params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

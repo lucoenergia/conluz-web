@@ -24,13 +24,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import * as axios from 'axios';
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 import type {
   CreatePlantBody,
   GetAllPlantsParams,
@@ -38,6 +31,8 @@ import type {
   UpdatePlantBody
 } from '.././models';
 
+import { customInstance } from '.././custom-instance';
+import type { ErrorType } from '.././custom-instance';
 
 
 
@@ -54,28 +49,30 @@ If you don't provide some of the optional parameters, they will be considered as
  */
 export const updatePlant = (
     id: string,
-    updatePlantBody: UpdatePlantBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<PlantResponse>> => {
-    
-    
-    return axios.default.put(
-      `/api/v1/plants/${id}`,
-      updatePlantBody,options
-    );
-  }
+    updatePlantBody: UpdatePlantBody,
+ ) => {
+      
+      
+      return customInstance<PlantResponse>(
+      {url: `/api/v1/plants/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updatePlantBody
+    },
+      );
+    }
+  
 
 
-
-export const getUpdatePlantMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext>, axios?: AxiosRequestConfig}
+export const getUpdatePlantMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext> => {
 
 const mutationKey = ['updatePlant'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -83,7 +80,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePlant>>, {id: string;data: UpdatePlantBody}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updatePlant(id,data,axiosOptions)
+          return  updatePlant(id,data,)
         }
 
         
@@ -93,13 +90,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type UpdatePlantMutationResult = NonNullable<Awaited<ReturnType<typeof updatePlant>>>
     export type UpdatePlantMutationBody = UpdatePlantBody
-    export type UpdatePlantMutationError = AxiosError<unknown>
+    export type UpdatePlantMutationError = ErrorType<unknown>
 
     /**
  * @summary Updates plant information
  */
-export const useUpdatePlant = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext>, axios?: AxiosRequestConfig}
+export const useUpdatePlant = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updatePlant>>,
         TError,
@@ -123,27 +120,28 @@ export const useUpdatePlant = <TError = AxiosError<unknown>,
  * @summary Removes a plant by ID
  */
 export const deletePlant = (
-    id: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    
-    
-    return axios.default.delete(
-      `/api/v1/plants/${id}`,options
-    );
-  }
+    id: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/plants/${id}`, method: 'DELETE'
+    },
+      );
+    }
+  
 
 
-
-export const getDeletePlantMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const getDeletePlantMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['deletePlant'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -151,7 +149,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlant>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  deletePlant(id,axiosOptions)
+          return  deletePlant(id,)
         }
 
         
@@ -161,13 +159,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type DeletePlantMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlant>>>
     
-    export type DeletePlantMutationError = AxiosError<unknown>
+    export type DeletePlantMutationError = ErrorType<unknown>
 
     /**
  * @summary Removes a plant by ID
  */
-export const useDeletePlant = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext>, axios?: AxiosRequestConfig}
+export const useDeletePlant = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePlant>>,
         TError,
@@ -184,33 +182,34 @@ export const useDeletePlant = <TError = AxiosError<unknown>,
  * @summary Retrieves all registered plants in the system with support for pagination, filtering, and sorting.
  */
 export const getAllPlants = (
-    params?: GetAllPlantsParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.get(
-      `/api/v1/plants`,{
-    ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-
+    params?: GetAllPlantsParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/plants`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
 
 export const getGetAllPlantsQueryKey = (params?: GetAllPlantsParams,) => {
     return [`/api/v1/plants`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = AxiosError<unknown>>(params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, axios: axiosOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetAllPlantsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllPlants>>> = ({ signal }) => getAllPlants(params, { signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllPlants>>> = ({ signal }) => getAllPlants(params, signal);
 
       
 
@@ -220,39 +219,39 @@ const {query: queryOptions, axios: axiosOptions} = options ?? {};
 }
 
 export type GetAllPlantsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllPlants>>>
-export type GetAllPlantsQueryError = AxiosError<unknown>
+export type GetAllPlantsQueryError = ErrorType<unknown>
 
 
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = AxiosError<unknown>>(
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
  params: undefined |  GetAllPlantsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllPlants>>,
           TError,
           Awaited<ReturnType<typeof getAllPlants>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = AxiosError<unknown>>(
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
  params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllPlants>>,
           TError,
           Awaited<ReturnType<typeof getAllPlants>>
         > , 'initialData'
-      >, axios?: AxiosRequestConfig}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = AxiosError<unknown>>(
- params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+ params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Retrieves all registered plants in the system with support for pagination, filtering, and sorting.
  */
 
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = AxiosError<unknown>>(
- params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, axios?: AxiosRequestConfig}
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+ params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -272,28 +271,31 @@ export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>
  * @summary Creates a new plant within the system.
  */
 export const createPlant = (
-    createPlantBody: CreatePlantBody, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<unknown>> => {
-    
-    
-    return axios.default.post(
-      `/api/v1/plants`,
-      createPlantBody,options
-    );
-  }
+    createPlantBody: CreatePlantBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/plants`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createPlantBody, signal
+    },
+      );
+    }
+  
 
 
-
-export const getCreatePlantMutationOptions = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, axios?: AxiosRequestConfig}
+export const getCreatePlantMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext> => {
 
 const mutationKey = ['createPlant'];
-const {mutation: mutationOptions, axios: axiosOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, axios: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -301,7 +303,7 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPlant>>, {data: CreatePlantBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  createPlant(data,axiosOptions)
+          return  createPlant(data,)
         }
 
         
@@ -311,13 +313,13 @@ const {mutation: mutationOptions, axios: axiosOptions} = options ?
 
     export type CreatePlantMutationResult = NonNullable<Awaited<ReturnType<typeof createPlant>>>
     export type CreatePlantMutationBody = CreatePlantBody
-    export type CreatePlantMutationError = AxiosError<unknown>
+    export type CreatePlantMutationError = ErrorType<unknown>
 
     /**
  * @summary Creates a new plant within the system.
  */
-export const useCreatePlant = <TError = AxiosError<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, axios?: AxiosRequestConfig}
+export const useCreatePlant = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createPlant>>,
         TError,

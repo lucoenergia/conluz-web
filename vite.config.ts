@@ -8,5 +8,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true
+  },
+  server: {
+    port: 3001
   }
 } as UserConfig)
