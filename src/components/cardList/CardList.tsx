@@ -9,7 +9,7 @@ interface ItemListProps {
 
 export const CardList: FC<ItemListProps> = ({ itemList }) => {
   return (
-    <Box>
+    <Box className="mt-5">
       <ul>
         {itemList.map((item: SupplyPointData, index:number) => (
           <li key={index}>
