@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import type { SupplyPointData } from "../../utils/types";
 import { CardList } from "../cardList/CardList"
-import { Box } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 
 export const SupplyPointsPage: FC = () => {
     const responseFromApi = [{
@@ -16,6 +16,31 @@ export const SupplyPointsPage: FC = () => {
     // const itemsList: SupplyPointData[] = responseFromApi as SupplyPointData[]; 
     const itemsList: SupplyPointData[] = responseFromApi;
 return <Box>
-        <CardList itemList={itemsList}/>
+        <Typography className="text-2xl font-bold">Puntos de suministro</Typography>
+        <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
+            <Button 
+                type="link" 
+                variant="outlined" 
+                href="#new-supply-point" 
+                size="small" 
+                sx={{
+                    textTransform: 'none',
+                    lineHeight: 'normal',
+                    fontSize: '0.875rem', 
+                    paddingY: '4px', 
+                    minHeight: 'auto',
+                    alignItems: 'center',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    width: 'fit-content',
+                    boxShadow: 'none',
+                    '&:hover': {
+                        boxShadow: 3,
+                    },                    
+                }}
+            >
+            Nuevo punto de suministro
+            </Button>
+        <CardList itemList={itemsList} />
     </Box>
 }
