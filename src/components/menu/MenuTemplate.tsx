@@ -5,10 +5,18 @@ interface MenuTemplateProps {
     children: ReactNode,
     anchorElement: HTMLElement | null
     onClose: () => void;
+    compactPadding?: boolean;
 }
-export const MenuTemplate: FC<MenuTemplateProps> = ({anchorElement, onClose, children}) => {
+export const MenuTemplate: FC<MenuTemplateProps> = ({anchorElement, onClose, compactPadding = false, children}) => {
     return <Menu
-      sx={{ mt: '45px' }}
+      sx={{ mt: '45px', 
+        ...(compactPadding && {
+          '& .MuiMenu-list': {
+            paddingTop: 0,
+            paddingBottom: 0,
+          },
+        }),}}
+ 
       anchorOrigin={{
         vertical: 'top',
         horizontal: 'right',
