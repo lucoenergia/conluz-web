@@ -6,7 +6,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import KeyIcon from '@mui/icons-material/Key';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { MenuTemplate } from "../templateMenu/TemplateMenu";
+import { MenuTemplate } from "./MenuTemplate";
 
 interface ProfileMenuProps {
   username: string

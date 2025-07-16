@@ -1,9 +1,9 @@
 export type SupplyPointData = {
-    supplyPointId: number,
-    kWh: number,
+    supplyPointId: string,
+    kWh: string,
     lastCheckTime: string,
     supplyPointName: string,
     address: string,
-    average: number,
+    average: string,
     status: string,
 }
