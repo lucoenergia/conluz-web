@@ -1,7 +1,8 @@
 import type { FC } from "react";
 import { CardTemplate } from "../cardTemplate/CardTemplate";
-import { Box, Chip, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Typography } from "@mui/material";
 import type { SupplyPointData } from "../../utils/types";
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 
 export const SupplyCard: FC<SupplyPointData> = ({
@@ -35,9 +36,8 @@ return <CardTemplate className={'grid grid-flow-col grid-cols-3 items-center jus
         }
     </Box>
     <Box>
-        {/* <button>
-            <i class="fas fa-ellipsis-vertical"></i>
-        </button> */}
+        <IconButton><MoreVertIcon/></IconButton>
+
     </Box>
 </CardTemplate>
 }
