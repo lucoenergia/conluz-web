@@ -22,8 +22,8 @@ export const Header: FC<HeaderProps> = ({ onMenuClick }) => {
       >
         <MenuIcon />
       </IconButton>
-      <Logo responsive />
-      <ProfileMenu username="Remy Sharp" />
+        <Logo responsive />
+        <ProfileMenu username="Remy Sharp" />
     </Toolbar>
   </AppBar>
 }

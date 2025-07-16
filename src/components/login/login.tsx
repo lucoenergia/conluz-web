@@ -19,17 +19,22 @@ export const Login: FC = () => {
   const dispatchAuth = useAuthDispatch();
   const navigate = useNavigate();
 
-  const handleSubmit = async (data: FormData) => {
-    const id = data.get('id')?.toString().trim();
-    const password = data.get('password')?.toString().trim();
+  const validateInput = (username?: string, password?: string): boolean => {
     const newErrors = {
-      id: !id,
+      id: !username,
       password: !password,
     };
     
     setFormErrors(newErrors);
 
-    if (newErrors.id || newErrors.password) return;
+    return !newErrors.id && !newErrors.password;
+  }
+  
+  const handleSubmit = async (data: FormData) => {
+    const id = data.get('id')?.toString().trim();
+    const password = data.get('password')?.toString().trim();
+    
+    if (!validateInput(id,password)) return;
 
     try {
       const response = await login({username: data.get('id'), password: data.get('password')});

@@ -22,7 +22,7 @@ export const ForgotPassword: FC = () => {
   return <>
     <Box component="form" className="p-7 w-full" action={handleSubmit}>
       <LabeledIcon label={"¿Olvidaste tu contraseña?"} icon={LockIcon} iconPosition="right" justify="start" variant="compact" labelSize="text-xl" />
-      <Typography gutterBottom className="text-base">Introduce tu email y te reenviamos instrucciones para restaurar tu contraseña</Typography>
+      <Typography gutterBottom className="text-base">Introduce tu email y te enviaremos instrucciones para restaurar tu contraseña</Typography>
       <FormGroup className="mt-6">
         <TextField
           error={formError}
