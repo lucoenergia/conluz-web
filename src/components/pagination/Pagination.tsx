@@ -12,7 +12,7 @@ export default function PaginationOutlined() {
         showLastButton
         siblingCount={0}
         boundaryCount={0}
-        className='ml-auto md:mt-15'/>
+        className='mx-auto mt-5 md:mt-15'/>
     </>
   );
 }
