@@ -31,7 +31,7 @@ export const SupplyCard: FC<SupplyPointData> = ({
     const handleCloseUserMenu = () => {
     setAnchorElement(null);
     };
-return <CardTemplate className={'grid grid-flow-col grid-cols-3 items-center justify-items-center grow md:grid-cols-10 gap-4'}>
+return <CardTemplate className={'grid grid-flow-col grid-cols-3 items-center justify-items-center grow md:grid-cols-10 gap-4 mt-5'}>
     <Box className="col-span-2 justify-center">
         <Typography className="text-2xl font-semibold">{kWh} kWh</Typography>
         <Typography className="text-sm text-gray-500 justify-center" >(Hace {lastCheckTime})</Typography>
@@ -61,8 +61,8 @@ return <CardTemplate className={'grid grid-flow-col grid-cols-3 items-center jus
         <Chip
             label={status === 'activo' ? 'Activo' : 'Inactivo'}
             className={status === 'activo'
-                ? 'bg-green-600 text-white ' 
-                : 'bg-red-600 text-white '}
+                ? 'bg-green-600 text-white md:w-[75px] md:h-8 text-sm leading-8 flex items-center' 
+                : 'bg-red-600 text-white md:w-[75px] md:h-8 text-sm leading-8 flex items-center'}
         />
         }
     </Box>
