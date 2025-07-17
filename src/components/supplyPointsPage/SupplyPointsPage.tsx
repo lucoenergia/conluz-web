@@ -3,20 +3,37 @@ import type { SupplyPointData } from "../../utils/types";
 import { CardList } from "../cardList/CardList"
 import { Box, Button, Typography } from "@mui/material";
 import { BreadCrumb }from "../breadCrumb/BreadCrumb";
+import PaginationOutlined from "../pagination/Pagination";
 
 export const SupplyPointsPage: FC = () => {
     const responseFromApi = [{
-        supplyPointId: 1,
-        kWh: 15,
+        supplyPointId: 'E01234567876543',
+        kWh: '15',
         lastCheckTime: '2 horas',
         supplyPointName: 'Casa',
         address: 'c/ Mayor, 1',
         average: 4.5,
-        status: 'Activo',        
+        status: 'activo',        
+    }, {
+        supplyPointId: 'E01234567876547',
+        kWh: '8',
+        lastCheckTime: '7 horas',
+        supplyPointName: 'Corral',
+        address: 'c/ Mayor, 4',
+        average: 2.5,
+        status: 'inactivo', 
+    },{
+        supplyPointId: 'E01234567876549',
+        kWh: '5',
+        lastCheckTime: '3 horas',
+        supplyPointName: 'Garaje',
+        address: 'c/ Mayor, 3',
+        average: 0.5,
+        status: 'activo', 
     }]
     // const itemsList: SupplyPointData[] = responseFromApi as SupplyPointData[]; 
     const itemsList: SupplyPointData[] = responseFromApi;
-return <Box>
+return <Box className='flex flex-col'>
         <BreadCrumb className="mt-5 mb-10"></BreadCrumb>
         <Typography className="text-2xl font-bold">Puntos de suministro</Typography>
         <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
@@ -43,6 +60,7 @@ return <Box>
             >
             Nuevo punto de suministro
             </Button>
-        <CardList itemList={itemsList} />
+            <CardList itemList={itemsList} />
+            <PaginationOutlined/>
     </Box>
 }
