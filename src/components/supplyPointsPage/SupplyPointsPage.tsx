@@ -34,8 +34,8 @@ export const SupplyPointsPage: FC = () => {
     // const itemsList: SupplyPointData[] = responseFromApi as SupplyPointData[]; 
     const itemsList: SupplyPointData[] = responseFromApi;
 return <Box className='flex flex-col'>
-        <BreadCrumb className="mt-5 mb-10"></BreadCrumb>
-        <Typography className="text-2xl font-bold">Puntos de suministro</Typography>
+        <BreadCrumb className="mt-5 mb-10 hidden md:block"></BreadCrumb>
+        <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
         <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
             <Button 
                 type="link" 
@@ -56,9 +56,8 @@ return <Box className='flex flex-col'>
                     '&:hover': {
                         boxShadow: 3,
                     },                    
-                }}
-            >
-            Nuevo punto de suministro
+                }}>
+                Nuevo punto de suministro
             </Button>
             <CardList itemList={itemsList} />
             <PaginationOutlined/>
