@@ -12,6 +12,7 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import NotInterestedOutlinedIcon from '@mui/icons-material/NotInterestedOutlined';
 
 import { MenuLinkItem } from "../menu/MenuLinkItem";
+import useWindowDimensions from "../../utils/useWindowDimensions";
 
 export const SupplyCard: FC<SupplyPointData> = ({
     supplyPointId, 
@@ -23,7 +24,7 @@ export const SupplyCard: FC<SupplyPointData> = ({
     status }) => {
 
     const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-
+    const windowDimensions = useWindowDimensions();
     const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
     };
@@ -71,8 +72,8 @@ return <CardTemplate className={'grid grid-flow-col grid-cols-3 items-center jus
         <MenuTemplate 
           anchorElement={anchorElement}
           onClose={handleCloseUserMenu}
-          compactPadding>   
-            <MenuLinkItem to="/track">
+          compactPadding>  
+            <MenuLinkItem to="/track" className="hidden md:block" >
                 <LabeledIcon 
                     variant="compact"
                     justify="between"
