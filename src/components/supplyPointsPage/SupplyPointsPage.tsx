@@ -4,6 +4,8 @@ import { CardList } from "../cardList/CardList"
 import { Box, Button, Typography } from "@mui/material";
 import { BreadCrumb }from "../breadCrumb/BreadCrumb";
 import PaginationOutlined from "../pagination/Pagination";
+import { Search } from "@mui/icons-material";
+import { SearchBar } from "../searchBar/SearchBar";
 
 export const SupplyPointsPage: FC = () => {
     const responseFromApi = [{
@@ -37,15 +39,22 @@ return <Box className='flex flex-col'>
         <BreadCrumb className="mt-5 mb-10 hidden md:block"></BreadCrumb>
         <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
         <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
+        {/* <Box className='flex flex-row justify-between gap-4'>  */}
+        <Box className='grid grid-flow-col grid-cols-6 md:grid-cols-4 gap-4'>
+        {/* <Box className='grid grid-flow-col grid-cols-6 md:grid-cols-4'> */}
             <Button 
                 type="link" 
                 variant="outlined" 
                 href="#new-supply-point" 
                 size="small" 
+
                 sx={{
+                    gridColumn: { xs: 'span 3', sm: 'span 1' },
+                    // gridColumn: { xs: 'span 4', sm: 'span 1' },
+                    textAlign: 'center',
                     textTransform: 'none',
                     lineHeight: 'normal',
-                    fontSize: '0.875rem', 
+                    fontSize: { xs: 'small', sm: '0.875rem'}, 
                     paddingY: '4px', 
                     minHeight: 'auto',
                     alignItems: 'center',
@@ -59,7 +68,11 @@ return <Box className='flex flex-col'>
                 }}>
                 Nuevo punto de suministro
             </Button>
-            <CardList itemList={itemsList} />
-            <PaginationOutlined/>
+            <SearchBar className='col-span-3 md:col-span-1 md:col-start-4 justify-end'></SearchBar>
+            {/* <SearchBar className='col-span-2 md:col-span-1 md:col-start-4 justify-end'></SearchBar> */}
+
+        </Box>    
+        <CardList itemList={itemsList} />
+        <PaginationOutlined/>
     </Box>
 }
