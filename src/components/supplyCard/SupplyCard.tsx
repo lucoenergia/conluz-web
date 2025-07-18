@@ -29,7 +29,8 @@ export const SupplyCard: FC<SupplyPointData> = ({
     const handleCloseUserMenu = () => {
     setAnchorElement(null);
     };
-return <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-center justify-items-center md:grid-cols-10 gap-4 mt-5'}>
+
+return <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-center justify-items-center md:content-center md:grid-cols-10 gap-4 mt-5'}>
     <Box className="col-span-2 justify-center hidden md:block">
         <Typography className="text-2xl font-semibold">{kWh} kWh</Typography>
         <Typography className="text-sm text-gray-500 justify-center" >(Hace {lastCheckTime})</Typography>
