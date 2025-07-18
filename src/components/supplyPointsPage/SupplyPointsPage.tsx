@@ -1,40 +1,48 @@
-import type { FC } from "react";
+import { useMemo, useState, type FC } from "react";
 import type { SupplyPointData } from "../../utils/types";
 import { CardList } from "../cardList/CardList"
 import { Box, Button, Typography } from "@mui/material";
 import { BreadCrumb }from "../breadCrumb/BreadCrumb";
 import PaginationOutlined from "../pagination/Pagination";
-import { Search } from "@mui/icons-material";
 import { SearchBar } from "../searchBar/SearchBar";
 
 export const SupplyPointsPage: FC = () => {
-    const responseFromApi = [{
-        supplyPointId: 'E01234567876543',
-        kWh: '15',
-        lastCheckTime: '2 horas',
-        supplyPointName: 'Casa',
-        address: 'c/ Mayor, 1',
-        average: 4.5,
-        status: 'activo',        
-    }, {
-        supplyPointId: 'E01234567876547',
-        kWh: '8',
-        lastCheckTime: '7 horas',
-        supplyPointName: 'Corral',
-        address: 'c/ Mayor, 4',
-        average: 2.5,
-        status: 'inactivo', 
-    },{
-        supplyPointId: 'E01234567876549',
-        kWh: '5',
-        lastCheckTime: '3 horas',
-        supplyPointName: 'Garaje',
-        address: 'c/ Mayor, 3',
-        average: 0.5,
-        status: 'activo', 
-    }]
-    // const itemsList: SupplyPointData[] = responseFromApi as SupplyPointData[]; 
-    const itemsList: SupplyPointData[] = responseFromApi;
+const [searchText, setSearchText] = useState('');
+
+const responseFromApi = [{
+    supplyPointId: 'E01234567876543',
+    kWh: '15',
+    lastCheckTime: '2 horas',
+    supplyPointName: 'Casa',
+    address: 'c/ Mayor, 1',
+    average: '4.5',
+    status: 'activo',        
+}, {
+    supplyPointId: 'E01234567876547',
+    kWh: '8',
+    lastCheckTime: '7 horas',
+    supplyPointName: 'Corral',
+    address: 'c/ Mayor, 4',
+    average: '2.5',
+    status: 'inactivo', 
+},{
+    supplyPointId: 'E01234567876549',
+    kWh: '5',
+    lastCheckTime: '3 horas',
+    supplyPointName: 'Garaje',
+    address: 'c/ Mayor, 3',
+    average: '0.5',
+    status: 'activo', 
+}]
+// const itemsList: SupplyPointData[] = responseFromApi as SupplyPointData[]; 
+const itemsList: SupplyPointData[] = responseFromApi;
+
+const filteredItems: SupplyPointData[] = useMemo(() => {
+return responseFromApi.filter((item) =>
+    item.supplyPointName.toLowerCase().includes(searchText.toLowerCase())
+);
+}, [searchText]);
+
 return <Box className='flex flex-col'>
         <BreadCrumb className="mt-5 mb-10 hidden md:block"></BreadCrumb>
         <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
@@ -68,11 +76,14 @@ return <Box className='flex flex-col'>
                 }}>
                 Nuevo punto de suministro
             </Button>
-            <SearchBar className='col-span-3 md:col-span-1 md:col-start-4 justify-end'></SearchBar>
+            <SearchBar 
+                className='col-span-3 md:col-span-1 md:col-start-4 justify-end'
+                value={searchText} 
+                onChange={setSearchText}>
+            </SearchBar>
             {/* <SearchBar className='col-span-2 md:col-span-1 md:col-start-4 justify-end'></SearchBar> */}
 
         </Box>    
-        <CardList itemList={itemsList} />
-        <PaginationOutlined/>
+        <CardList itemList={searchText.trim() ? filteredItems : itemsList} />           <PaginationOutlined/>
     </Box>
 }
