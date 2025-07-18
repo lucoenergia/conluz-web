@@ -3,10 +3,16 @@ import type { FC } from "react"
 import SearchIcon from '@mui/icons-material/Search';
 
 interface SearchBarProps {
-    className? : string
+    className? : string;
+    value?: string;
+    onChange?: (value: string) => void;
 }
 
-export const SearchBar: FC<SearchBarProps> = ({className}) => {
+export const SearchBar: FC<SearchBarProps> = ({className, onChange, value}) => {
+
+const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onChange?.(event.target.value);
+};
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -15,7 +21,7 @@ const Search = styled('div')(({ theme }) => ({
     backgroundColor: alpha(theme.palette.common.white, 0.15),
     '&:hover': {
         border: `1px solid ${theme.palette.primary.main}`,
-        backgroundColor: alpha(theme.palette.primary.main, 0.04)
+        backgroundColor: alpha(theme.palette.primary.main, 0.0)
       },
     marginLeft: 0,
     width: '100%',
@@ -58,8 +64,11 @@ return <Search className={className}>
     <SearchIcon />
     </SearchIconWrapper>
     <StyledInputBase
-    placeholder="Search…"
-    inputProps={{ 'aria-label': 'search' }}
+      placeholder="Buscar"
+      value={value}
+      onChange={handleChange}
+      inputProps={{ 'aria-label': 'search' }}
     />
+
 </Search>    
 }
