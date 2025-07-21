@@ -1,45 +1,44 @@
 import { useMemo, useState, type FC } from "react";
-import type { SupplyPointData } from "../../utils/types";
 import { CardList } from "../cardList/CardList"
 import { Box, Button, Typography } from "@mui/material";
 import { BreadCrumb }from "../breadCrumb/BreadCrumb";
 import PaginationOutlined from "../pagination/Pagination";
 import { SearchBar } from "../searchBar/SearchBar";
+import type { SupplyResponse } from "../../api/models";
 
 export const SupplyPointsPage: FC = () => {
 const [searchText, setSearchText] = useState('');
 
 const responseFromApi = [{
-    supplyPointId: 'E01234567876543',
-    kWh: '15',
-    lastCheckTime: '2 horas',
-    supplyPointName: 'Casa',
+    id: 'E01234567876543',
+    name: 'Casa',
     address: 'c/ Mayor, 1',
-    average: '4.5',
-    status: 'activo',        
+    partitionCoefficient: '15',
+    enabled: 'activo',        
+    datadisValidDateFrom: '2 horas',
+    datadisPointType: '4.5',
 }, {
-    supplyPointId: 'E01234567876547',
-    kWh: '8',
-    lastCheckTime: '7 horas',
-    supplyPointName: 'Corral',
-    address: 'c/ Mayor, 4',
-    average: '2.5',
-    status: 'inactivo', 
+    id: 'E01234567876547',
+    name: 'Corral', 
+    address: 'c/ Mayor, 1',
+    partitionCoefficient: '4',
+    enabled: 'inactivo',        
+    datadisValidDateFrom: '7 horas',
+    datadisPointType: '2.5',
 },{
-    supplyPointId: 'E01234567876549',
-    kWh: '5',
-    lastCheckTime: '3 horas',
-    supplyPointName: 'Garaje',
-    address: 'c/ Mayor, 3',
-    average: '0.5',
-    status: 'activo', 
+    id: 'E01234567876549',
+    name: 'Garaje',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
 }]
-// const itemsList: SupplyPointData[] = responseFromApi as SupplyPointData[]; 
-const itemsList: SupplyPointData[] = responseFromApi;
+const itemsList: SupplyResponse[] = responseFromApi;
 
-const filteredItems: SupplyPointData[] = useMemo(() => {
+const filteredItems: SupplyResponse[] = useMemo(() => {
 return responseFromApi.filter((item) =>
-    item.supplyPointName.toLowerCase().includes(searchText.toLowerCase())
+    item.name.toLowerCase().includes(searchText.toLowerCase())
 );
 }, [searchText]);
 
@@ -84,6 +83,7 @@ return <Box className='flex flex-col'>
             {/* <SearchBar className='col-span-2 md:col-span-1 md:col-start-4 justify-end'></SearchBar> */}
 
         </Box>    
-        <CardList itemList={searchText.trim() ? filteredItems : itemsList} />           <PaginationOutlined/>
+        <CardList itemList={searchText.trim() ? filteredItems : itemsList} />
+        <PaginationOutlined/>
     </Box>
 }

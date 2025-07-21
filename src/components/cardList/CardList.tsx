@@ -1,26 +1,26 @@
 import type { FC } from "react";
 import { SupplyCard } from "../supplyCard/SupplyCard";
 import { Box } from "@mui/material";
-import type { SupplyPointData } from "../../utils/types";
+import type { SupplyResponse } from "../../api/models";
 
 interface ItemListProps {
-  itemList: SupplyPointData[];
+  itemList: SupplyResponse[];
 }
 
 export const CardList: FC<ItemListProps> = ({ itemList }) => {
   return (
     <Box className="mt-5">
       <ul>
-        {itemList.map((item: SupplyPointData, index:number) => (
+        {itemList.map((item: SupplyResponse, index:number) => (
           <li key={index}>
             <SupplyCard
-              supplyPointId={item.supplyPointId}
-              kWh={item.kWh}
-              lastCheckTime={item.lastCheckTime}
-              supplyPointName={item.supplyPointName}
+              id={item.id}
+              partitionCoefficient={item.partitionCoefficient}
+              datadisValidDateFrom={item.datadisValidDateFrom}
+              name={item.name}
               address={item.address}
-              average={item.average}
-              status={item.status}
+              datadisPointType={item.datadisPointType}
+              enabled={item.enabled}
             />
           </li>
         ))}
