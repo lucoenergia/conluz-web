@@ -1,10 +1,10 @@
 import { useState, type FC } from "react"
 import { Box, Button, Checkbox, FormControlLabel, FormGroup,InputLabel,Link,TextField, Typography } from "@mui/material"
-import { LabeledIcon } from "../labeled-icon/LabeledIcon";
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
 import { Link as RouterLink, useNavigate } from 'react-router'
 import { login } from "../../api/authentication/authentication";
 import { useAuthDispatch } from "../../api/auth.context";
+import { LabeledIcon } from "../../components/labeled-icon/LabeledIcon";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState(false);

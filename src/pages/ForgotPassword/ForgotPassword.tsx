@@ -1,9 +1,9 @@
 import { Box, Button, FormGroup, Link, TextField, Typography } from "@mui/material"
 import { useState, type FC } from "react"
-import { LabeledIcon } from "../labeled-icon/LabeledIcon";
 import LockIcon from '@mui/icons-material/Lock';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Link as RouterLink } from "react-router";
+import { LabeledIcon } from "../../components/labeled-icon/LabeledIcon";
 
 export const ForgotPassword: FC = () => {
   const [formError, setFormError] = useState<boolean>(false);

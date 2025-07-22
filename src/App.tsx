@@ -3,9 +3,9 @@ import { Route, Routes } from 'react-router'
 import { AuthenticatedLayout } from './layouts/authenticated.layout'
 import ContactPage from './pages/contact/Contact.page'
 import { LoginLayout } from './layouts/login.layout'
-import { Login } from './components/login/login'
-import { ForgotPassword } from './components/ForgotPassword/ForgotPassword'
-import { NewPassword } from './components/NewPassword/NewPassword'
+import { Login } from './pages/login/login'
+import { ForgotPassword } from './pages/ForgotPassword/ForgotPassword'
+import { NewPassword } from './pages/NewPassword/NewPassword'
 
 function App() {
 

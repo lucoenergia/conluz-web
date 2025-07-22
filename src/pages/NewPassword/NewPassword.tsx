@@ -41,6 +41,7 @@ return <Box component="form" className="p-7 w-full" action={handleSubmit}>
                 id="newPassword"
                 type="password"
                 name="newPassword"
+                className="mt-4"
                 placeholder="Escribe aquí tu nueva contraseña"
                 autoFocus
                 required
@@ -54,6 +55,7 @@ return <Box component="form" className="p-7 w-full" action={handleSubmit}>
                 id="repeatNewPassword"
                 type="password"
                 name="repeatNewPassword"
+                className="mt-4"
                 placeholder="Repite aquí tu nueva contraseña"
                 autoFocus
                 required
