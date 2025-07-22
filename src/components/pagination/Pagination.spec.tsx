@@ -1,25 +1,42 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SupplyPointsPage } from '../supplyPointsPage/SupplyPointsPage';
+import PaginationOutlined from './Pagination';
 import '@testing-library/jest-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-describe('PaginationOutlined inside SupplyPointsPage', () => {
-  it('renders the pagination component', () => {
-    render(<SupplyPointsPage />);
+// Helper para aplicar el theme de MUI
+const renderWithTheme = (ui: React.ReactElement) => {
+  const theme = createTheme();
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+};
 
-    // Asegura que se renderiza el componente de paginación
-    expect(screen.getByRole('navigation')).toBeInTheDocument();
-    expect(screen.getByLabelText('Go to first page')).toBeInTheDocument();
-    expect(screen.getByLabelText('Go to last page')).toBeInTheDocument();
+describe('PaginationOutlined (unit)', () => {
+  it('renders pagination and starts on page 1', () => {
+    renderWithTheme(<PaginationOutlined />);
+
+    const currentPage = screen.getByRole('button', {
+      name: /page 1/i,
+    });
+
+    expect(currentPage).toHaveAttribute('aria-current', 'page');
   });
 
-  it('can click on a specific page', () => {
-    render(<SupplyPointsPage />);
+  it('updates to page 2 when clicked', () => {
+    renderWithTheme(<PaginationOutlined />);
 
-    const pageButton = screen.getByRole('button', { name: '2' });
-    fireEvent.click(pageButton);
+    const page2Button = screen.getByRole('button', {
+      name: /go to page 2/i,
+    });
 
-    // No hay efecto visible porque PaginationOutlined no tiene un handler de cambio de página aún.
-    // Pero verificamos que el botón está activo después del clic
-    expect(pageButton).toHaveAttribute('aria-current', 'true');
+    fireEvent.click(page2Button);
+
+    const newCurrentPage = screen.getByRole('button', {
+      name: /page 2/i,
+    });
+
+    expect(newCurrentPage).toHaveAttribute('aria-current', 'page');
   });
 });
+
+
+
