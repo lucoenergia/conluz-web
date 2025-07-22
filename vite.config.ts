@@ -9,5 +9,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true
   },
-  envPrefix: "CONLUZ_"
+  envPrefix: "CONLUZ_",
+  server: {
+    port: 3001
+  }
 } as UserConfig)
