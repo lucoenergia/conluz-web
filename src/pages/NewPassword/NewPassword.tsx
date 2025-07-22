@@ -1,5 +1,6 @@
 import { Box, Button, FormGroup, TextField, Typography } from "@mui/material"
 import { useState, type FC } from "react"
+import { PasswordInput } from "../../components/forms/PasswordInput";
 
 
 export const NewPassword: FC = () => {
@@ -35,7 +36,7 @@ export const NewPassword: FC = () => {
 return <Box component="form" className="p-7 w-full" action={handleSubmit}>
         <Typography  gutterBottom className="text-base">Introduce tu nueva contraseña</Typography>
         <FormGroup >
-            <TextField                
+            <PasswordInput                
                 error={formErrors.newPassword}
                 helperText={formErrors.newPassword ? newPasswordMessage : ''}
                 id="newPassword"
@@ -49,7 +50,7 @@ return <Box component="form" className="p-7 w-full" action={handleSubmit}>
                 variant="filled"
                 // color={emailError ? 'error' : 'primary'}
                 />
-                <TextField                
+                <PasswordInput                
                 error={formErrors.repeatNewPassword || formErrors.differentPasswords}
                 helperText={formErrors.differentPasswords ? differentPasswordMessage : passwordReminder}
                 id="repeatNewPassword"

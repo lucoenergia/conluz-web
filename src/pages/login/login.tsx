@@ -5,6 +5,7 @@ import { Link as RouterLink, useNavigate } from 'react-router'
 import { login } from "../../api/authentication/authentication";
 import { useAuthDispatch } from "../../api/auth.context";
 import { LabeledIcon } from "../../components/labeled-icon/LabeledIcon";
+import { PasswordInput } from "../../components/forms/PasswordInput";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState(false);
@@ -75,7 +76,7 @@ return <Box component="form" className="p-7 w-full" action={handleSubmit}>
                 variant="filled"
             />
             <InputLabel className="mt-4">Contraseña</InputLabel>
-            <TextField
+            <PasswordInput
                 error={formErrors.password}
                 helperText={formErrors.password ? passwordErrorMessage : ''}
                 id="password"
