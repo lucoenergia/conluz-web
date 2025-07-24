@@ -8,7 +8,7 @@ import { LabeledIcon } from "../../components/labeled-icon/LabeledIcon";
 export const ForgotPassword: FC = () => {
   const [formError, setFormError] = useState<boolean>(false);
   const missingEmail = 'El DNI/NIF debe tener 7 dígitos y una letra';
-  const emailErrorMessage = 'Este email no se encuentra en nuestra base de datos. Por favor, introdúcelo de nuevo. Si el problema persiste ponte en contacto con nosotres.';
+  // const emailErrorMessage = 'Este email no se encuentra en nuestra base de datos. Por favor, introdúcelo de nuevo. Si el problema persiste ponte en contacto con nosotres.';
 
 
   const handleSubmit = async (data: FormData) => {
@@ -40,7 +40,7 @@ export const ForgotPassword: FC = () => {
       </FormGroup>
     </Box>
     <Link to="/login" underline="always" color="info" component={RouterLink}>
-      <LabeledIcon label="Volver al inicio" icon={ChevronLeftIcon} iconPosition="left"/>
+      <LabeledIcon label="Volver al inicio" icon={ChevronLeftIcon} iconPosition="left" />
     </Link>
   </>
 
