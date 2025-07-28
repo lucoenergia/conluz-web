@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 import { AXIOS_INSTANCE } from './custom-instance';
-type Dispatch = (Auth: string) => void;
+type Dispatch = (Auth: string | null) => void;
 
 type AuthProviderProps = { children: ReactNode; initialState?: string | null };
 
@@ -16,6 +16,15 @@ const AuthDispatchContext = createContext<Dispatch | null>(null);
 const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
   const [token, setToken] = useState(initialState);
 
+  const updateToken: Dispatch = (token: string | null) => {
+    if(token) {
+      window.localStorage.setItem('token', token)
+    } else {
+      window.localStorage.removeItem('token')
+    }
+    setToken(token)
+  }
+  
   useEffect(() => {
     const interceptorId = AXIOS_INSTANCE.interceptors.request.use((config) => {
       if (config.headers && token) {
@@ -35,7 +44,7 @@ const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
 
   return (
     <AuthContext.Provider value={token}>
-      <AuthDispatchContext.Provider value={setToken}>
+      <AuthDispatchContext.Provider value={updateToken}>
         {children}
       </AuthDispatchContext.Provider>
     </AuthContext.Provider>
