@@ -12,6 +12,10 @@ import NotInterestedOutlinedIcon from '@mui/icons-material/NotInterestedOutlined
 import { MenuLinkItem } from "../menu/MenuLinkItem";
 import type { SupplyResponse } from "../../api/models";
 
+
+// generar unas props propias, pq no necesita todos los campos del supplresponse 
+// y tb por aislar las dependencias -> ahora mismo lo hacemos depender de orval
+// apañar para que si viene undefined de supplyresponse pongamos un string vacío
 export const SupplyCard: FC<SupplyResponse> = ({
     id, 
     name,
@@ -57,17 +61,23 @@ return <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-cente
             labelSize="text-sm"
         />
     </Box>
-    <Box className='justify-self-end md:self-center'>{
+    <Box className='justify-self-end md:self-center'>
+        {/* //estaría guay extraer este componente a uno genérico (y así no hay que volverle a poner estos estilos, lo tenemos encapsulado) */}
         <Chip
             label={enabled ? 'Activo' : 'Inactivo'}
-            className={enabled
+            className={enabled // por qué no poner w-6xl ? Evitar poner número en píxeles concretos.
+                //eliminar duplicación fijandome en el logo (conluzweb-main)
                 ? 'bg-green-600 text-white w-[65.17px] md:w-[75px] h-6 md:h-8 text-xs md:text-sm leading-6 md:leading-8 flex items-center justify-center mb-2 md:mb-0' 
                 : 'bg-red-600 text-white w-[65.17px] md:w-[75px] h-6 md:h-8 text-xs md:text-sm leading-6 md:leading-8 flex items-center justify-center mb-2 md:mb-0'}
         />
-        }
+        
         <Typography className="text-sm text-gray-500 text-center md:hidden">{partitionCoefficient} kWh</Typography>
     </Box>
+
+                    {/* coger todo este box con menutemplate y el iconbutton a un componente aparte */}
+
     <Box>
+
         <IconButton onClick={handleOpenUserMenu}><MoreVertIcon/></IconButton>
         <MenuTemplate 
           anchorElement={anchorElement}

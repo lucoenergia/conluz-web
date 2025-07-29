@@ -1,13 +1,17 @@
 import * as React from 'react';
-import Breadcrumbs, { type BreadcrumbsProps } from '@mui/material/Breadcrumbs';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
+interface BreadCrumbsProps {
+  className?: string,
+  linkName: string,
+  href: string
+}
 
-export const BreadCrumb: React.FC<BreadcrumbsProps> = (props) => {
+export const BreadCrumb: React.FC<BreadCrumbsProps> = ({linkName, href}) => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
   const open = Boolean(anchorEl);
 
@@ -28,24 +32,14 @@ export const BreadCrumb: React.FC<BreadcrumbsProps> = (props) => {
         open={open}
         onClose={handleClose}
         aria-labelledby="with-menu-demo-breadcrumbs"
-      >
-        <MenuItem onClick={handleClose}>Breadcrumb 2</MenuItem>
-        <MenuItem onClick={handleClose}>Breadcrumb 3</MenuItem>
-        <MenuItem onClick={handleClose}>Breadcrumb 4</MenuItem>
-      </Menu>
-      <Breadcrumbs aria-label="breadcrumbs" {...props}>
-        <Link color="primary" href="#consumption">
-          Consumo
+      ></Menu>
+      <Breadcrumbs aria-label="breadcrumbs">
+        <Link color="primary" href={href}>
+          {linkName} 
         </Link>
         <IconButton color="primary" size="small" onClick={handleClick}>
           <MoreHorizIcon />
         </IconButton>
-        {/* <Link color="primary" href="#condensed-with-menu">
-          Breadcrumb 5
-        </Link>
-        <Link color="primary" href="#condensed-with-menu">
-          Breadcrumb 6
-        </Link> */}
       </Breadcrumbs>
     </React.Fragment>
   );

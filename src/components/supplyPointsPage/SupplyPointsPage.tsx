@@ -6,8 +6,20 @@ import PaginationOutlined from "../pagination/Pagination";
 import { SearchBar } from "../searchBar/SearchBar";
 import type { SupplyResponse } from "../../api/models";
 
+interface responseFromApiType{
+    id: string,
+    name: string,
+    address: string,
+    partitionCoefficient: string,
+    enabled: string,
+    datadisValidDdateFrom: string,
+    datadisPointType: string
+} 
+
 export const SupplyPointsPage: FC = () => {
 const [searchText, setSearchText] = useState('');
+const linkName = 'Consumo';
+const href = '#consumption'
 
 const responseFromApi = [{
     id: 'E01234567876543',
@@ -34,7 +46,7 @@ const responseFromApi = [{
     datadisValidDateFrom: '3 horas',
     datadisPointType: '0.5',
 }]
-const itemsList: SupplyResponse[] = responseFromApi;
+const itemsList: responseFromApiType = responseFromApi;
 
 const filteredItems: SupplyResponse[] = useMemo(() => {
 return responseFromApi.filter((item) =>
@@ -43,21 +55,19 @@ return responseFromApi.filter((item) =>
 }, [searchText]);
 
 return <Box className='flex flex-col'>
-        <BreadCrumb className="mt-5 mb-10 hidden md:block"></BreadCrumb>
+        <BreadCrumb className="mt-5 mb-10 hidden md:block" linkName={linkName} href={href}></BreadCrumb>
         <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
         <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
         {/* <Box className='flex flex-row justify-between gap-4'>  */}
-        <Box className='grid grid-flow-col grid-cols-6 md:grid-cols-4 gap-4'>
-        {/* <Box className='grid grid-flow-col grid-cols-6 md:grid-cols-4'> */}
+        {/* <Box className='grid grid-flow-col grid-cols-6 md:grid-cols-4 gap-4'> */}
+        <Box className='grid grid-flow-col grid-cols-2 justify-between gap-4'>
             <Button 
                 type="link" 
                 variant="outlined" 
                 href="#new-supply-point" 
                 size="small" 
-
+// CAMBIAR ESTO A TAILWIND: AÑADIR LO MÍNIMO INDISPENSABLE
                 sx={{
-                    gridColumn: { xs: 'span 3', sm: 'span 1' },
-                    // gridColumn: { xs: 'span 4', sm: 'span 1' },
                     textAlign: 'center',
                     textTransform: 'none',
                     lineHeight: 'normal',
@@ -76,7 +86,7 @@ return <Box className='flex flex-col'>
                 Nuevo punto de suministro
             </Button>
             <SearchBar 
-                className='col-span-3 md:col-span-1 md:col-start-4 justify-end'
+                className="justify-self-end"
                 value={searchText} 
                 onChange={setSearchText}>
             </SearchBar>
