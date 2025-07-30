@@ -6,6 +6,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import KeyIcon from '@mui/icons-material/Key';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuthDispatch } from "../../api/auth.context";
+import { useNavigate } from "react-router";
 
 interface ProfileMenuProps {
   username: string
@@ -13,6 +15,8 @@ interface ProfileMenuProps {
 
 export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+  const dispatchAuth = useAuthDispatch();
+  const navigate = useNavigate();
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
@@ -21,6 +25,12 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
   const handleCloseUserMenu = () => {
     setAnchorElement(null);
   };
+  
+
+  const logout = () => {
+    dispatchAuth(null);
+    navigate('/login');
+  }
   
   return <>
     <IconButton sx={{ p: 0 }} onClick={handleOpenUserMenu}>
@@ -72,7 +82,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
         />
       </MenuLinkItem>
       <Divider />
-      <MenuItem>
+      <MenuItem onClick={logout}>
         <LabeledIcon
           variant="compact"
           justify="between"
