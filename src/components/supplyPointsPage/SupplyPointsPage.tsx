@@ -2,17 +2,17 @@ import { useMemo, useState, type FC } from "react";
 import { CardList } from "../cardList/CardList"
 import { Box, Button, Typography } from "@mui/material";
 import { BreadCrumb }from "../breadCrumb/BreadCrumb";
-import PaginationOutlined from "../pagination/Pagination";
 import { SearchBar } from "../searchBar/SearchBar";
-import type { SupplyResponse } from "../../api/models";
+import { SupplyCard } from "../supplyCard/SupplyCard";
+// import type { SupplyResponse } from "../../api/models";
 
-interface responseFromApiType{
+export interface itemListType {
     id: string,
     name: string,
     address: string,
     partitionCoefficient: string,
     enabled: string,
-    datadisValidDdateFrom: string,
+    datadisValidDateFrom: string,
     datadisPointType: string
 } 
 
@@ -46,20 +46,31 @@ const responseFromApi = [{
     datadisValidDateFrom: '3 horas',
     datadisPointType: '0.5',
 }]
-const itemsList: responseFromApiType = responseFromApi;
 
-const filteredItems: SupplyResponse[] = useMemo(() => {
+// DESARROLLO PARA CUANDO RECIBAMOS LA DATA DE LA API
+// const interestingFields = ["id", "name", "address", "partitionCoefficient", "enabled", "datadisValidDateFrom", "datadisPointType"];
+// const responseFromApiBis:SupplyResponse[];
+// const itemsListBis = responseFromApiBis.map(obj => {
+//   const filteredSupplyPointData = {};
+//   interestingFields.forEach(field => {
+//     filteredSupplyPointData[field] = obj[field];
+//   });
+//   return filteredSupplyPointData;
+// });
+
+
+const itemsList: itemListType[] = responseFromApi;
+
+const filteredItems: itemListType[] = useMemo(() => {
 return responseFromApi.filter((item) =>
     item.name.toLowerCase().includes(searchText.toLowerCase())
 );
-}, [searchText]);
+}, [searchText, responseFromApi]);
 
 return <Box className='flex flex-col'>
         <BreadCrumb className="mt-5 mb-10 hidden md:block" linkName={linkName} href={href}></BreadCrumb>
         <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
         <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
-        {/* <Box className='flex flex-row justify-between gap-4'>  */}
-        {/* <Box className='grid grid-flow-col grid-cols-6 md:grid-cols-4 gap-4'> */}
         <Box className='grid grid-flow-col grid-cols-2 justify-between gap-4'>
             <Button 
                 type="link" 
@@ -67,33 +78,59 @@ return <Box className='flex flex-col'>
                 href="#new-supply-point" 
                 size="small" 
 // CAMBIAR ESTO A TAILWIND: AÑADIR LO MÍNIMO INDISPENSABLE
-                sx={{
-                    textAlign: 'center',
-                    textTransform: 'none',
-                    lineHeight: 'normal',
-                    fontSize: { xs: 'small', sm: '0.875rem'}, 
-                    paddingY: '4px', 
-                    minHeight: 'auto',
-                    alignItems: 'center',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    width: 'fit-content',
-                    boxShadow: 'none',
-                    '&:hover': {
-                        boxShadow: 3,
-                    },                    
-                }}>
+                // sx={{
+                //     textAlign: 'center',
+                //     textTransform: 'none',
+                //     lineHeight: 'normal',
+                //     fontSize: { xs: 'small', sm: '0.875rem'}, 
+                //     paddingY: '4px', 
+                //     minHeight: 'auto',
+                //     alignItems: 'center',
+                //     display: 'flex',
+                //     justifyContent: 'center',
+                //     width: 'fit-content',
+                //     boxShadow: 'none',
+                //     '&:hover': {
+                //         boxShadow: 3,
+                //     },                    
+                // }}
+                className="
+                    text-center 
+                    normal-case 
+                    leading-normal 
+                    text-[0.875rem] sm:text-sm
+                    py-1 
+                    min-h-0 
+                    flex items-center justify-center 
+                    w-fit 
+                    shadow-none 
+                    hover:shadow-md
+                    ">
                 Nuevo punto de suministro
             </Button>
             <SearchBar 
-                className="justify-self-end"
+                className="justify-self-end align-text"
                 value={searchText} 
                 onChange={setSearchText}>
             </SearchBar>
             {/* <SearchBar className='col-span-2 md:col-span-1 md:col-start-4 justify-end'></SearchBar> */}
 
         </Box>    
-        <CardList itemList={searchText.trim() ? filteredItems : itemsList} />
-        <PaginationOutlined/>
+        <CardList 
+            itemList={searchText.trim() ? filteredItems : itemsList} 
+            itemListLength={(searchText.trim() ? filteredItems : itemsList).length}>
+                {(item) => (    
+                    <SupplyCard
+                        key={item.id}
+                        id={item.id}
+                        partitionCoefficient={item.partitionCoefficient}
+                        datadisValidDateFrom={item.datadisValidDateFrom}
+                        name={item.name}
+                        address={item.address}
+                        datadisPointType={item.datadisPointType}
+                        enabled={item.enabled}
+                    />)}
+                
+        </CardList>
     </Box>
 }
