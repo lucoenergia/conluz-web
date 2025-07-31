@@ -25,6 +25,7 @@ export const CardList: FC<ItemListProps> = ({ children, itemList, itemListLength
     <Box className="mt-5">
       <ul>{
           itemList.map((item: itemListType, index:number) => (
+            console.log(item.enabled),
           <li key={index}>
             {children(item, index)}
 

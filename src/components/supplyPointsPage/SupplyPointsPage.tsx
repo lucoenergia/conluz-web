@@ -77,23 +77,6 @@ return <Box className='flex flex-col'>
                 variant="outlined" 
                 href="#new-supply-point" 
                 size="small" 
-// CAMBIAR ESTO A TAILWIND: AÑADIR LO MÍNIMO INDISPENSABLE
-                // sx={{
-                //     textAlign: 'center',
-                //     textTransform: 'none',
-                //     lineHeight: 'normal',
-                //     fontSize: { xs: 'small', sm: '0.875rem'}, 
-                //     paddingY: '4px', 
-                //     minHeight: 'auto',
-                //     alignItems: 'center',
-                //     display: 'flex',
-                //     justifyContent: 'center',
-                //     width: 'fit-content',
-                //     boxShadow: 'none',
-                //     '&:hover': {
-                //         boxShadow: 3,
-                //     },                    
-                // }}
                 className="
                     text-center 
                     normal-case 
@@ -113,8 +96,6 @@ return <Box className='flex flex-col'>
                 value={searchText} 
                 onChange={setSearchText}>
             </SearchBar>
-            {/* <SearchBar className='col-span-2 md:col-span-1 md:col-start-4 justify-end'></SearchBar> */}
-
         </Box>    
         <CardList 
             itemList={searchText.trim() ? filteredItems : itemsList} 

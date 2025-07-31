@@ -66,6 +66,7 @@ return <Search className={className}>
     <StyledInputBase
       placeholder="Buscar"
       value={value}
+      // className="pt-3.5 md:pt-0"
       onChange={handleChange}
       inputProps={{ 'aria-label': 'search' }}
     />
