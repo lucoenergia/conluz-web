@@ -66,12 +66,10 @@ export const SupplyPointsPage: FC = () => {
         {filteredItems.map((item) => (
           <SupplyCard
             key={item.id}
-            id={item.code}
-            partitionCoefficient={(item.partitionCoefficient * 100).toFixed(4)}
-            datadisValidDateFrom={item.datadisValidDateFrom}
+            code={item.code}
+            partitionCoefficient={item.partitionCoefficient ? item.partitionCoefficient * 100 : undefined}
             name={item.name}
             address={item.address}
-            datadisPointType={item.datadisPointType}
             enabled={item.enabled}
           />))}
 

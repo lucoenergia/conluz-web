@@ -1,15 +1,16 @@
+import '@testing-library/jest-dom'
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { SupplyCard } from './SupplyCard';
+import userEvent from '@testing-library/user-event';
 
 const mockSupply = {
   id: '123',
+  code: 'ES123',
   name: 'Suministro Principal',
   address: 'Calle Falsa 123',
   partitionCoefficient: 10,
   enabled: true,
-  datadisValidDateFrom: 'hace 2 días',
-  datadisPointType: 1,
 };
 
 describe('SupplyCard', () => {
@@ -20,10 +21,10 @@ describe('SupplyCard', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Suministro Principal/i)).toBeInTheDocument();
-    expect(screen.getByText(/123/)).toBeInTheDocument();
-    expect(screen.getByText(/10 kWh/i)).toBeInTheDocument();
-    expect(screen.getByText(/Activo/i)).toBeInTheDocument();
+    expect(screen.getByText("Suministro Principal")).toBeInTheDocument();
+    expect(screen.getByText("ES123")).toBeInTheDocument();
+    expect(screen.getByText("10 kWh")).toBeInTheDocument();
+    expect(screen.getByText("Activo")).toBeInTheDocument();
   });
 
   it('renders "Inactivo" chip when enabled is false', () => {
@@ -32,23 +33,24 @@ describe('SupplyCard', () => {
         <SupplyCard {...mockSupply} enabled={false} />
       </MemoryRouter>
     );
-    expect(screen.getByText(/Inactivo/i)).toBeInTheDocument();
+    expect(screen.getByText("Inactivo")).toBeInTheDocument();
   });
 
-  it('opens and closes the menu on icon button click', () => {
+  it('opens and closes the menu on icon button click', async () => {
     render(
       <MemoryRouter>
         <SupplyCard {...mockSupply} />
       </MemoryRouter>
     );
 
-    const button = screen.getByRole('button', { name: /moreverticon/i });
-    fireEvent.click(button);
 
-    expect(screen.getByText(/Ver/i)).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button'));
 
-    fireEvent.click(document.body);
+    expect(screen.getByText("Ver")).toBeVisible();
 
-    expect(screen.queryByText(/Ver/i)).not.toBeInTheDocument();
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByText("Ver")).not.toBeVisible();
   });
 });

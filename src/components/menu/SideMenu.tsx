@@ -14,7 +14,7 @@ import { MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../../utils/constants";
 const MENU_ITEMS = [
   { to: "/", icon: HomeRoundedIcon, label: "Inicio" },
   { to: "/production", icon: SolarPowerRoundedIcon, label: "Producción" },
-  { to: "/consumptio", icon: ElectricBoltRoundedIcon, label: "Consumo" },
+  { to: "/supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo" },
   { to: "/memebers", icon: GroupsRoundedIcon, label: "Socios" },
   { to: "/contact", icon: SupportAgentRoundedIcon, label: "Contacto" },
   { to: "/help", icon: InfoRoundedIcon, label: "Ayuda" },

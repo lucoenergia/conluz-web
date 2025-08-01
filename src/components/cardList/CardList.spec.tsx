@@ -1,8 +1,8 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { CardList } from './CardList';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { SupplyCard } from '../supplyCard/SupplyCard';
 
 // Mock de los datos de ejemplo
 const mockItemList = [
@@ -10,19 +10,19 @@ const mockItemList = [
     id: '1',
     name: 'Casa',
     address: 'Calle Mayor 1',
-    partitionCoefficient: '10',
+    partitionCoefficient: 10,
     enabled: 'activo',
     datadisValidDateFrom: 'hoy',
-    datadisPointType: '4.5',
+    datadisPointType: "4.5",
   },
   {
     id: '2',
     name: 'Garaje',
     address: 'Calle Segunda',
-    partitionCoefficient: '5',
+    partitionCoefficient: 5,
     enabled: 'inactivo',
     datadisValidDateFrom: 'ayer',
-    datadisPointType: '2.5',
+    datadisPointType: "2.5",
   },
 ];
 
@@ -32,7 +32,19 @@ vi.mock('../supplyCard/SupplyCard', () => ({
 
 describe('CardList (unit)', () => {
   it('renders a list of SupplyCards based on itemList', () => {
-    render(<CardList itemList={mockItemList} />);
+    render(<CardList>
+        {mockItemList.map((item) => (
+          <SupplyCard
+            key={item.id}
+            id={item.id}
+            partitionCoefficient={(item.partitionCoefficient * 100).toFixed(4)}
+            datadisValidDateFrom={item.datadisValidDateFrom}
+            name={item.name}
+            address={item.address}
+            datadisPointType={item.datadisPointType}
+            enabled={item.enabled}
+          />))}
+    </CardList>);
 
     // Verifica que los nombres estén presentes
     expect(screen.getByText('Casa')).toBeInTheDocument();
@@ -44,7 +56,7 @@ describe('CardList (unit)', () => {
   });
 
   it('renders nothing if itemList is empty', () => {
-    render(<CardList itemList={[]} />);
+    render(<CardList />);
 
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });

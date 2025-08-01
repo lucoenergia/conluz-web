@@ -4,7 +4,7 @@ import {PaginationOutlined} from "../pagination/Pagination";
 import React from "react";
 
 interface CardListProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const ITEMS_PER_PAGE = 5
