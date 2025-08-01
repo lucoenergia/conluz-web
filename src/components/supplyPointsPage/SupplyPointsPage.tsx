@@ -21,6 +21,7 @@ const [searchText, setSearchText] = useState('');
 const linkName = 'Consumo';
 const href = '#consumption'
 
+
 const responseFromApi = [{
     id: 'E01234567876543',
     name: 'Casa',
@@ -37,9 +38,113 @@ const responseFromApi = [{
     enabled: 'inactivo',        
     datadisValidDateFrom: '7 horas',
     datadisPointType: '2.5',
-},{
+}, {
     id: 'E01234567876549',
     name: 'Garaje',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876541',
+    name: 'Cochera',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876550',
+    name: 'Nave',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876551',
+    name: 'Cooperativa de aceite',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876552',
+    name: 'Sala de fiestas',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876553',
+    name: 'Iglesia',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876554',
+    name: 'Ermita',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'inactivo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876555',
+    name: 'Ayuntamiento',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876556',
+    name: 'Centro de Salud',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876557',
+    name: 'Casa de la vecina',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876558',
+    name: 'Casa de mujeres',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'inactivo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876559',
+    name: 'Residencia de mayores',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876560',
+    name: 'Jardín de infancia',
+    address: 'c/ Mayor, 8',
+    partitionCoefficient: '5',
+    enabled: 'activo', 
+    datadisValidDateFrom: '3 horas',
+    datadisPointType: '0.5',
+}, {
+    id: 'E01234567876565',
+    name: 'Colegio',
     address: 'c/ Mayor, 8',
     partitionCoefficient: '5',
     enabled: 'activo', 
@@ -66,6 +171,7 @@ return responseFromApi.filter((item) =>
     item.name.toLowerCase().includes(searchText.toLowerCase())
 );
 }, [searchText, responseFromApi]);
+
 
 return <Box className='flex flex-col'>
         <BreadCrumb className="mt-5 mb-10 hidden md:block" linkName={linkName} href={href}></BreadCrumb>
