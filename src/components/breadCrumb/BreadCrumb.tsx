@@ -1,45 +1,29 @@
 import * as React from 'react';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
-import Menu from '@mui/material/Menu';
-import IconButton from '@mui/material/IconButton';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import { Link as RouterLink } from 'react-router'
 
-interface BreadCrumbsProps {
-  className?: string,
-  linkName: string,
+interface BreadCrumbStep {
+  label: string,
   href: string
 }
 
-export const BreadCrumb: React.FC<BreadCrumbsProps> = ({linkName, href}) => {
-  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
-  const open = Boolean(anchorEl);
+interface BreadCrumbsProps {
+  steps: BreadCrumbStep[]
+}
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement> | null) => {
-    if (event) {
-      setAnchorEl(event.currentTarget);
-    }
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+export const BreadCrumb: React.FC<BreadCrumbsProps> = ({ steps }) => {
 
   return (
     <React.Fragment>
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="with-menu-demo-breadcrumbs"
-      ></Menu>
       <Breadcrumbs aria-label="breadcrumbs">
-        <Link color="primary" href={href}>
-          {linkName} 
-        </Link>
-        <IconButton color="primary" size="small" onClick={handleClick}>
-          <MoreHorizIcon />
-        </IconButton>
+        {
+          steps.map(step => (
+            <Link color="primary" component={RouterLink} to={step.href}>
+              {step.label} 
+            </Link>
+          ))
+        }
       </Breadcrumbs>
     </React.Fragment>
   );

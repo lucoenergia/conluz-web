@@ -20,8 +20,6 @@ export interface itemListType {
 
 export const SupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState('');
-  const linkName = 'Consumo';
-  const href = '#consumption'
 
   const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllSupplies({});
 
@@ -33,7 +31,7 @@ export const SupplyPointsPage: FC = () => {
 
 
   return <Box className='flex flex-col'>
-    <BreadCrumb className="mt-5 mb-10 hidden md:block" linkName={linkName} href={href}></BreadCrumb>
+    <BreadCrumb steps={[{label: "Consumo", href:"/supply-points"}]}/>
     <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
     <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
     <Box className='grid grid-flow-col grid-cols-2 justify-between gap-4'>
