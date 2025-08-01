@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import PaginationOutlined from './Pagination';
 import '@testing-library/jest-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { PaginationOutlined } from './Pagination';
 
 // Helper para aplicar el theme de MUI
 const renderWithTheme = (ui: React.ReactElement) => {
@@ -12,7 +12,7 @@ const renderWithTheme = (ui: React.ReactElement) => {
 
 describe('PaginationOutlined (unit)', () => {
   it('renders pagination and starts on page 1', () => {
-    renderWithTheme(<PaginationOutlined />);
+    renderWithTheme(<PaginationOutlined count={10} page={1} handleChange={() => {}} />);
 
     const currentPage = screen.getByRole('button', {
       name: /page 1/i,
@@ -22,19 +22,15 @@ describe('PaginationOutlined (unit)', () => {
   });
 
   it('updates to page 2 when clicked', () => {
-    renderWithTheme(<PaginationOutlined />);
+    let page = 1
+    renderWithTheme(<PaginationOutlined count={10} page={page} handleChange={(_event: React.ChangeEvent<unknown>, value: number) => {page = value}} />);
 
     const page2Button = screen.getByRole('button', {
       name: /go to page 2/i,
     });
 
     fireEvent.click(page2Button);
-
-    const newCurrentPage = screen.getByRole('button', {
-      name: /page 2/i,
-    });
-
-    expect(newCurrentPage).toHaveAttribute('aria-current', 'page');
+    expect(page).toBe(2);
   });
 });
 
