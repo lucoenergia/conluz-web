@@ -77,11 +77,9 @@ export const SupplyPointsPage: FC = () => {
     }
     {isLoading &&
       <CardList>
-        <LoadingSupplyCard />
-        <LoadingSupplyCard />
-        <LoadingSupplyCard />
-        <LoadingSupplyCard />
-        <LoadingSupplyCard />
+        {
+          Array.from({ length: 5}).map(() => <LoadingSupplyCard/>)
+        }
       </CardList>
     }
   </Box>

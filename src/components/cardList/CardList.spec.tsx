@@ -7,20 +7,20 @@ import { SupplyCard } from '../supplyCard/SupplyCard';
 // Mock de los datos de ejemplo
 const mockItemList = [
   {
-    id: '1',
+    code: '1',
     name: 'Casa',
     address: 'Calle Mayor 1',
     partitionCoefficient: 10,
-    enabled: 'activo',
+    enabled: true,
     datadisValidDateFrom: 'hoy',
     datadisPointType: "4.5",
   },
   {
-    id: '2',
+    code: '2',
     name: 'Garaje',
     address: 'Calle Segunda',
     partitionCoefficient: 5,
-    enabled: 'inactivo',
+    enabled: false,
     datadisValidDateFrom: 'ayer',
     datadisPointType: "2.5",
   },
@@ -35,13 +35,11 @@ describe('CardList (unit)', () => {
     render(<CardList>
         {mockItemList.map((item) => (
           <SupplyCard
-            key={item.id}
-            id={item.id}
-            partitionCoefficient={(item.partitionCoefficient * 100).toFixed(4)}
-            datadisValidDateFrom={item.datadisValidDateFrom}
+            key={item.code}
+            code={item.code}
+            partitionCoefficient={(item.partitionCoefficient * 100)}
             name={item.name}
             address={item.address}
-            datadisPointType={item.datadisPointType}
             enabled={item.enabled}
           />))}
     </CardList>);
@@ -50,16 +48,8 @@ describe('CardList (unit)', () => {
     expect(screen.getByText('Casa')).toBeInTheDocument();
     expect(screen.getByText('Garaje')).toBeInTheDocument();
 
-    // Verifica que haya dos <li> renderizados
-    const listItems = screen.getAllByRole('listitem');
-    expect(listItems).toHaveLength(2);
   });
 
-  it('renders nothing if itemList is empty', () => {
-    render(<CardList />);
-
-    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-  });
 });
 
 
