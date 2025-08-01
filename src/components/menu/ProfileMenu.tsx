@@ -7,6 +7,8 @@ import KeyIcon from '@mui/icons-material/Key';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { MenuTemplate } from "./MenuTemplate";
+import { useAuthDispatch } from "../../api/auth.context";
+import { useNavigate } from "react-router";
 
 interface ProfileMenuProps {
   username: string

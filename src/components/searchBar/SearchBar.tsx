@@ -1,5 +1,5 @@
 import { alpha, InputBase, styled } from "@mui/material";
-import type { FC } from "react"
+import { type FC } from "react"
 import SearchIcon from '@mui/icons-material/Search';
 
 interface SearchBarProps {
@@ -7,12 +7,6 @@ interface SearchBarProps {
     value?: string;
     onChange?: (value: string) => void;
 }
-
-export const SearchBar: FC<SearchBarProps> = ({className, onChange, value}) => {
-
-const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  onChange?.(event.target.value);
-};
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -59,6 +53,13 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
   },
 }));
+
+export const SearchBar: FC<SearchBarProps> = ({className, onChange, value}) => {
+
+const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onChange?.(event.target.value);
+};
+
 return <Search className={className}>
     <SearchIconWrapper>
     <SearchIcon />

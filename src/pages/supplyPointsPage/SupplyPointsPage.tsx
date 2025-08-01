@@ -1,9 +1,9 @@
 import { useMemo, useState, type FC } from "react";
-import { CardList } from "../cardList/CardList"
+import { CardList } from "../../components/cardList/CardList"
 import { Box, Button, Typography } from "@mui/material";
-import { BreadCrumb }from "../breadCrumb/BreadCrumb";
-import { SearchBar } from "../searchBar/SearchBar";
-import { SupplyCard } from "../supplyCard/SupplyCard";
+import { BreadCrumb }from "../../components/breadCrumb/BreadCrumb";
+import { SearchBar } from "../../components/searchBar/SearchBar";
+import { SupplyCard } from "../../components/supplyCard/SupplyCard";
 // import type { SupplyResponse } from "../../api/models";
 
 export interface itemListType {
@@ -200,9 +200,11 @@ return <Box className='flex flex-col'>
             <SearchBar 
                 className="justify-self-end align-text"
                 value={searchText} 
-                onChange={setSearchText}>
+                onChange={setSearchText}
+            >
             </SearchBar>
-        </Box>    
+        </Box>   
+            {/* 1ªOPCIÓN */}
         <CardList 
             itemList={searchText.trim() ? filteredItems : itemsList} 
             itemListLength={(searchText.trim() ? filteredItems : itemsList).length}>

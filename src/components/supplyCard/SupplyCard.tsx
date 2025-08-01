@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import { LabeledIcon } from "../labeled-icon/LabeledIcon";
 import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
 import WhereToVoteOutlinedIcon from '@mui/icons-material/WhereToVoteOutlined';
-import type { itemListType } from "../supplyPointsPage/SupplyPointsPage";
+import type { itemListType } from "../../pages/supplyPointsPage/SupplyPointsPage";
 import { TagComponent } from "../tag/Tag";
 import { DisplayMenu } from "../menu/DisplayMenu";
 

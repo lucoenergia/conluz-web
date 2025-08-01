@@ -1,7 +1,7 @@
 import { useEffect, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import {PaginationOutlined} from "../pagination/Pagination";
-import type { itemListType } from "../supplyPointsPage/SupplyPointsPage";
+import type { itemListType } from "../../pages/supplyPointsPage/SupplyPointsPage";
 
 interface ItemListProps {
   itemList: itemListType[],
@@ -29,6 +29,7 @@ export const CardList: FC<ItemListProps> = ({ children, itemList, itemListLength
 
   return (
     <Box className="mt-5">
+      {/* OPCIÓN INICIAL */}
       <ul>
         {paginatedItems.map((item, index) => (
           <li key={startIndex + index}>
@@ -36,6 +37,8 @@ export const CardList: FC<ItemListProps> = ({ children, itemList, itemListLength
           </li>
         ))}
       </ul>
+
+
       <PaginationOutlined
         count={Math.ceil(itemListLength / itemsPerPage)}
         page={currentPage}
@@ -44,3 +47,4 @@ export const CardList: FC<ItemListProps> = ({ children, itemList, itemListLength
     </Box>
   );
 };
+
