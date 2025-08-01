@@ -1,4 +1,4 @@
-import { useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import {PaginationOutlined} from "../pagination/Pagination";
 import React from "react";
@@ -15,6 +15,10 @@ const calculateStartIndex = (currentPage: number): number => {
 
 export const CardList: FC<CardListProps> = ({ children }) => {
   const [currentPage, setCurrentPage] = useState(1); 
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [children])
   
   const handleChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
