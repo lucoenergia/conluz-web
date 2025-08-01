@@ -1,189 +1,48 @@
 import { useMemo, useState, type FC } from "react";
-import { CardList } from "../../components/cardList/CardList"
 import { Box, Button, Typography } from "@mui/material";
-import { BreadCrumb }from "../../components/breadCrumb/BreadCrumb";
+import { useGetAllSupplies } from "../../api/supplies/supplies";
+import type { SupplyResponse } from "../../api/models";
+import { BreadCrumb } from "../../components/breadCrumb/BreadCrumb";
 import { SearchBar } from "../../components/searchBar/SearchBar";
+import { CardList } from "../../components/cardList/CardList";
 import { SupplyCard } from "../../components/supplyCard/SupplyCard";
-// import type { SupplyResponse } from "../../api/models";
+import { LoadingSupplyCard } from "../../components/supplyCard/LoadingSupplyCard";
 
 export interface itemListType {
-    id: string,
-    name: string,
-    address: string,
-    partitionCoefficient: string,
-    enabled: string,
-    datadisValidDateFrom: string,
-    datadisPointType: string
-} 
+  id: string,
+  name: string,
+  address: string,
+  partitionCoefficient: string,
+  enabled: string,
+  datadisValidDateFrom: string,
+  datadisPointType: string
+}
 
 export const SupplyPointsPage: FC = () => {
-const [searchText, setSearchText] = useState('');
-const linkName = 'Consumo';
-const href = '#consumption'
+  const [searchText, setSearchText] = useState('');
+  const linkName = 'Consumo';
+  const href = '#consumption'
+
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllSupplies({});
+  
+  const filteredItems: SupplyResponse[] = useMemo(() => {
+    return responseFromApi.filter((item) =>
+      item.name?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [searchText, responseFromApi]);
 
 
-const responseFromApi = [{
-    id: 'E01234567876543',
-    name: 'Casa',
-    address: 'c/ Mayor, 1',
-    partitionCoefficient: '15',
-    enabled: 'activo',        
-    datadisValidDateFrom: '2 horas',
-    datadisPointType: '4.5',
-}, {
-    id: 'E01234567876547',
-    name: 'Corral', 
-    address: 'c/ Mayor, 1',
-    partitionCoefficient: '4',
-    enabled: 'inactivo',        
-    datadisValidDateFrom: '7 horas',
-    datadisPointType: '2.5',
-}, {
-    id: 'E01234567876549',
-    name: 'Garaje',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876541',
-    name: 'Cochera',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876550',
-    name: 'Nave',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876551',
-    name: 'Cooperativa de aceite',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876552',
-    name: 'Sala de fiestas',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876553',
-    name: 'Iglesia',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876554',
-    name: 'Ermita',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'inactivo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876555',
-    name: 'Ayuntamiento',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876556',
-    name: 'Centro de Salud',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876557',
-    name: 'Casa de la vecina',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876558',
-    name: 'Casa de mujeres',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'inactivo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876559',
-    name: 'Residencia de mayores',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876560',
-    name: 'Jardín de infancia',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}, {
-    id: 'E01234567876565',
-    name: 'Colegio',
-    address: 'c/ Mayor, 8',
-    partitionCoefficient: '5',
-    enabled: 'activo', 
-    datadisValidDateFrom: '3 horas',
-    datadisPointType: '0.5',
-}]
-
-// DESARROLLO PARA CUANDO RECIBAMOS LA DATA DE LA API
-// const interestingFields = ["id", "name", "address", "partitionCoefficient", "enabled", "datadisValidDateFrom", "datadisPointType"];
-// const responseFromApiBis:SupplyResponse[];
-// const itemsListBis = responseFromApiBis.map(obj => {
-//   const filteredSupplyPointData = {};
-//   interestingFields.forEach(field => {
-//     filteredSupplyPointData[field] = obj[field];
-//   });
-//   return filteredSupplyPointData;
-// });
-
-
-const itemsList: itemListType[] = responseFromApi;
-
-const filteredItems: itemListType[] = useMemo(() => {
-return responseFromApi.filter((item) =>
-    item.name.toLowerCase().includes(searchText.toLowerCase())
-);
-}, [searchText, responseFromApi]);
-
-
-return <Box className='flex flex-col'>
-        <BreadCrumb className="mt-5 mb-10 hidden md:block" linkName={linkName} href={href}></BreadCrumb>
-        <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
-        <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
-        <Box className='grid grid-flow-col grid-cols-2 justify-between gap-4'>
-            <Button 
-                type="link" 
-                variant="outlined" 
-                href="#new-supply-point" 
-                size="small" 
-                className="
+  return <Box className='flex flex-col'>
+    <BreadCrumb className="mt-5 mb-10 hidden md:block" linkName={linkName} href={href}></BreadCrumb>
+    <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
+    <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
+    <Box className='grid grid-flow-col grid-cols-2 justify-between gap-4'>
+      <Button
+        type="link"
+        variant="outlined"
+        href="#new-supply-point"
+        size="small"
+        className="
                     text-center 
                     normal-case 
                     leading-normal 
@@ -204,22 +63,35 @@ return <Box className='flex flex-col'>
             >
             </SearchBar>
         </Box>   
-            {/* 1ªOPCIÓN */}
-        <CardList 
-            itemList={searchText.trim() ? filteredItems : itemsList} 
-            itemListLength={(searchText.trim() ? filteredItems : itemsList).length}>
-                {(item) => (    
-                    <SupplyCard
-                        key={item.id}
-                        id={item.id}
-                        partitionCoefficient={item.partitionCoefficient}
-                        datadisValidDateFrom={item.datadisValidDateFrom}
-                        name={item.name}
-                        address={item.address}
-                        datadisPointType={item.datadisPointType}
-                        enabled={item.enabled}
-                    />)}
-                
-        </CardList>
-    </Box>
+    {!isLoading && !error &&
+      <CardList
+        itemList={searchText.trim() ? filteredItems : responseFromApi}
+        itemListLength={(searchText.trim() ? filteredItems : responseFromApi).length}>
+        {(item) => (
+          <SupplyCard
+            key={item.id}
+            id={item.code}
+            partitionCoefficient={(item.partitionCoefficient*100).toFixed(4)}
+            datadisValidDateFrom={item.datadisValidDateFrom}
+            name={item.name}
+            address={item.address}
+            datadisPointType={item.datadisPointType}
+            enabled={item.enabled}
+          />)}
+
+      </CardList>
+    }
+    { isLoading &&
+      <CardList
+        itemList={[{},{},{},{},{}]}
+        itemListLength={5}
+      >
+      {
+      () => (
+        <LoadingSupplyCard/>
+      )
+    }
+      </CardList>
+  }
+  </Box>
 }

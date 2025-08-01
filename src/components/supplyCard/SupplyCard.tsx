@@ -44,7 +44,7 @@ return <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-cente
             icon={PercentOutlinedIcon}
             iconPosition="left"
             justify="start"
-            label={datadisPointType}
+            label={partitionCoefficient}
             labelSize="text-sm"
         />
     </Box>

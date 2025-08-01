@@ -72,7 +72,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             />
           </MenuLinkItem>
           <Divider />
-          <MenuItem>
+          <MenuItem onClick={logout}>
             <LabeledIcon
               variant="compact"
               justify="between"

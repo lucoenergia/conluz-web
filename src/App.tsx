@@ -22,6 +22,7 @@ function App() {
           </Route>
         </Route> 
         <Route element={<AuthenticatedLayout/>}>
+          <Route index />
           <Route path='supply-points' element={<SupplyPointsPage/>}/>          
           <Route path="contact" element={<ContactPage />}/> 
         </Route>
