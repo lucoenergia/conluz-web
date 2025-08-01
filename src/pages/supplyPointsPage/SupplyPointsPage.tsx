@@ -24,10 +24,10 @@ export const SupplyPointsPage: FC = () => {
   const href = '#consumption'
 
   const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllSupplies({});
-  
+
   const filteredItems: SupplyResponse[] = useMemo(() => {
     return responseFromApi.filter((item) =>
-      item.name?.toLowerCase().includes(searchText.toLowerCase())
+      !searchText || item.name?.toLowerCase().includes(searchText.toLowerCase())
     );
   }, [searchText, responseFromApi]);
 
@@ -54,44 +54,39 @@ export const SupplyPointsPage: FC = () => {
                     shadow-none 
                     hover:shadow-md
                     ">
-                Nuevo punto de suministro
-            </Button>
-            <SearchBar 
-                className="justify-self-end align-text"
-                value={searchText} 
-                onChange={setSearchText}
-            >
-            </SearchBar>
-        </Box>   
+        Nuevo punto de suministro
+      </Button>
+      <SearchBar
+        className="justify-self-end align-text"
+        value={searchText}
+        onChange={setSearchText}
+      >
+      </SearchBar>
+    </Box>
     {!isLoading && !error &&
-      <CardList
-        itemList={searchText.trim() ? filteredItems : responseFromApi}
-        itemListLength={(searchText.trim() ? filteredItems : responseFromApi).length}>
-        {(item) => (
+      <CardList>
+        {filteredItems.map((item) => (
           <SupplyCard
             key={item.id}
             id={item.code}
-            partitionCoefficient={(item.partitionCoefficient*100).toFixed(4)}
+            partitionCoefficient={(item.partitionCoefficient * 100).toFixed(4)}
             datadisValidDateFrom={item.datadisValidDateFrom}
             name={item.name}
             address={item.address}
             datadisPointType={item.datadisPointType}
             enabled={item.enabled}
-          />)}
+          />))}
 
       </CardList>
     }
-    { isLoading &&
-      <CardList
-        itemList={[{},{},{},{},{}]}
-        itemListLength={5}
-      >
-      {
-      () => (
-        <LoadingSupplyCard/>
-      )
-    }
+    {isLoading &&
+      <CardList>
+        <LoadingSupplyCard />
+        <LoadingSupplyCard />
+        <LoadingSupplyCard />
+        <LoadingSupplyCard />
+        <LoadingSupplyCard />
       </CardList>
-  }
+    }
   </Box>
 }

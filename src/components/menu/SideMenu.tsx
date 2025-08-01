@@ -34,7 +34,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose }) => {
     <Box className="max-w-full" sx={{ width: SIDEMENU_WIDTH}}>
       <Toolbar />
       { MENU_ITEMS.map(menuItem => 
-        <MenuLinkItem to={menuItem.to}><LabeledIcon icon={menuItem.icon} label={menuItem.label} /></MenuLinkItem>
+        <MenuLinkItem key={menuItem.to} to={menuItem.to}><LabeledIcon icon={menuItem.icon} label={menuItem.label} /></MenuLinkItem>
       )}
     </Box>
   </Drawer>

@@ -1,45 +1,35 @@
-import { useEffect, useState, type FC } from "react";
+import { useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import {PaginationOutlined} from "../pagination/Pagination";
-import type { itemListType } from "../../pages/supplyPointsPage/SupplyPointsPage";
+import React from "react";
 
-interface ItemListProps {
-  itemList: any[],
-  itemListLength: number,
-  children: (item: any, index: number) => React.ReactNode;
+interface CardListProps {
+  children: React.ReactNode;
 }
 
-export const CardList: FC<ItemListProps> = ({ children, itemList, itemListLength }) => {
-  const [currentPage, setCurrentPage] = useState(1); 
-  const itemsPerPage = 5;
-  
-  useEffect(() => {
-  const lastPage = Math.max(1, Math.ceil(itemListLength / itemsPerPage));
-  if (currentPage > lastPage) {
-    setCurrentPage(1);
-  }
-}, [currentPage, itemListLength]);
+const ITEMS_PER_PAGE = 5
 
+const calculateStartIndex = (currentPage: number): number => {
+  return (currentPage-1)*ITEMS_PER_PAGE;
+}
+
+export const CardList: FC<CardListProps> = ({ children }) => {
+  const [currentPage, setCurrentPage] = useState(1); 
+  
   const handleChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
   };
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedItems = itemList.slice(startIndex, startIndex + itemsPerPage);
+  const listItems = useMemo(() => React.Children.toArray(children), [children])
+  const startIndex = useMemo(() => calculateStartIndex(currentPage), [currentPage]);
 
   return (
     <Box className="mt-5 grid content-center">
       <ul>
-        {paginatedItems.map((item, index) => (
-          <li key={startIndex + index}>
-            {children(item, startIndex + index)}
-          </li>
-        ))}
+        {listItems.slice(startIndex, startIndex+ITEMS_PER_PAGE)}
       </ul>
-
-
       <PaginationOutlined
-        count={Math.ceil(itemListLength / itemsPerPage)}
+        count={Math.ceil(React.Children.toArray(children).length / ITEMS_PER_PAGE)}
         page={currentPage}
         handleChange={handleChange}
       />
