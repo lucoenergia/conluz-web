@@ -14,7 +14,7 @@ import { MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../../utils/constants";
 const MENU_ITEMS = [
   { to: "/", icon: HomeRoundedIcon, label: "Inicio" },
   { to: "/production", icon: SolarPowerRoundedIcon, label: "Producción" },
-  { to: "/consumptio", icon: ElectricBoltRoundedIcon, label: "Consumo" },
+  { to: "/supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo" },
   { to: "/memebers", icon: GroupsRoundedIcon, label: "Socios" },
   { to: "/contact", icon: SupportAgentRoundedIcon, label: "Contacto" },
   { to: "/help", icon: InfoRoundedIcon, label: "Ayuda" },
@@ -34,7 +34,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose }) => {
     <Box className="max-w-full" sx={{ width: SIDEMENU_WIDTH}}>
       <Toolbar />
       { MENU_ITEMS.map(menuItem => 
-        <MenuLinkItem to={menuItem.to}><LabeledIcon icon={menuItem.icon} label={menuItem.label} /></MenuLinkItem>
+        <MenuLinkItem key={menuItem.to} to={menuItem.to}><LabeledIcon icon={menuItem.icon} label={menuItem.label} /></MenuLinkItem>
       )}
     </Box>
   </Drawer>
