@@ -61,7 +61,7 @@ export const SupplyPointsPage: FC = () => {
       </SearchBar>
     </Box>
     {!isLoading && !error &&
-      <CardList>
+      <CardList className="mt-5 grid content-center">
         {filteredItems.map((item) => (
           <SupplyCard
             key={item.id}
