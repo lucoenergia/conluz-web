@@ -1,13 +1,14 @@
-import type { FC } from "react"
+import { useState, type FC } from "react"
 import { Box } from "@mui/material"
 import { useParams } from "react-router";
 import { CardList } from "../../components/cardList/CardList";
 import { GraphCard } from "../../components/graphCard/GraphCard";
-import { LoadingGraphCard } from "../../components/graphCard/LoadingGraphCard";
+// import { LoadingGraphCard } from "../../components/graphCard/LoadingGraphCard";
+import { GraphBar } from "../../components/graph/GraphBar";
 
 export const SupplyDetailPage: FC = () => {
   let { supplyPointId } = useParams();
-
+const timeRangeData:string = 'year';
 
 
 const measurementData = [
@@ -47,8 +48,8 @@ return <Box className='flex flex-col'>
             item.name === 'Autoconsumo' ? selfConsumption :
             item.name === 'Excedente' ? excedent : ''
           }
-          className="w-full md:w-1/2 h-64 m-[20px] p-2">
-            <Box className="">GRÁFICA</Box>
+          className="flex flex-col w-full md:w-1/2 h-80 m-[20px] p-2">
+            <GraphBar className="mt-auto" timeRangeData={timeRangeData}></GraphBar>            
         </GraphCard>
       ))}
     </CardList>
