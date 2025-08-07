@@ -127,17 +127,6 @@ const config: Partial<BarChartProps> = {
 };
 
 return <Box className={className}>
-    
-    {/* <ChartContainer
-    //A lo mejor hay que quitar este comonente de chartContainer
-        // The configuration of the chart
-        series={[{ type: 'bar', data: [100, 200] }]}
-        xAxis={[{ scaleType: 'band', data: ['A', 'B'] }]}
-        width={500}
-        height={300}
-        // Ref is forwarded internally to the ChartsSurface
-        ref={mySvgRef}
-    > */}
         <BarChart
             dataset={dataset}
             //aquí ver cómo viene la data y quizá hacer un map para seleccionar la datakey
@@ -154,6 +143,5 @@ return <Box className={className}>
             ]}
             {...config}
         />
-    {/* </ChartContainer> */}
 </Box>
 }

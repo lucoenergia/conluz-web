@@ -37,7 +37,7 @@ const excedent:string = 'Cantidad de energía no consumida'
 
 return <Box className='flex flex-col'>
       {/* <CardList className='flex flex-row flex-wrap'> */}
-      <CardList className='flex flex-row'>
+      <CardList className='flex flex-row w-full' pagination='hidden' ulStyles='w-full'>
 
       {measurementData.map((item) => (
         <GraphCard 
@@ -48,7 +48,7 @@ return <Box className='flex flex-col'>
             item.name === 'Autoconsumo' ? selfConsumption :
             item.name === 'Excedente' ? excedent : ''
           }
-          className="flex flex-col w-full md:w-1/2 h-80 m-[20px] p-2">
+          className="flex flex-col md:w-1/2 h-80 m-[20px] p-2">
             <GraphBar className="mt-auto" timeRangeData={timeRangeData}></GraphBar>            
         </GraphCard>
       ))}
