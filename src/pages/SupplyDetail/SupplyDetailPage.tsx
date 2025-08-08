@@ -8,7 +8,7 @@ import { GraphBar } from "../../components/graph/GraphBar";
 
 export const SupplyDetailPage: FC = () => {
   let { supplyPointId } = useParams();
-const timeRangeData:string = 'year';
+const timeRangeData:string = 'month';
 
 
 const measurementData = [
