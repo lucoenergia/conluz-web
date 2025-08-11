@@ -59,7 +59,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         label={enabled ? 'Activo' : 'Inactivo'}
         className={`w-19 md:w-20 h-6 md:h-8 text-xs md:text-sm leading-6 md:leading-8 flex items-center justify-center mb-2 md:mb-0 text-white 
                 ${enabled ? 'bg-green-600' : 'bg-red-600'}`} />
-      <Typography className="text-sm text-gray-500 text-center md:hidden">{partitionCoefficient.toFixed(4)} kWh</Typography>
+      <Typography className="text-sm text-gray-500 text-center md:hidden">{lastMeassurement} kWh</Typography>
     </Box>
     <Box>
       <DisplayMenu />
