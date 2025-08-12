@@ -8,7 +8,13 @@ import { ThemeProvider } from '@emotion/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './api/auth.context.tsx'
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      throwOnError: (error: any) => error.response?.status === 401
+    }
+  }
+});
 
 
 const theme = createTheme({
