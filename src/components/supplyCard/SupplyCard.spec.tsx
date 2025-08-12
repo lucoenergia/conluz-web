@@ -9,8 +9,10 @@ const mockSupply = {
   code: 'ES123',
   name: 'Suministro Principal',
   address: 'Calle Falsa 123',
-  partitionCoefficient: 10,
+  partitionCoefficient: 4.234859,
   enabled: true,
+  lastMeassurement: 10,
+  lastConnection: '6 días'
 };
 
 describe('SupplyCard', () => {
@@ -23,7 +25,7 @@ describe('SupplyCard', () => {
 
     expect(screen.getByText("Suministro Principal")).toBeInTheDocument();
     expect(screen.getByText("ES123")).toBeInTheDocument();
-    expect(screen.getByText("10 kWh")).toBeInTheDocument();
+    expect(screen.getAllByText("10 kWh").length).toBe(2);
     expect(screen.getByText("Activo")).toBeInTheDocument();
   });
 
