@@ -2,7 +2,7 @@ import { Pagination } from '@mui/material';
 import type { FC } from 'react';
 
 interface PaginationOutlinedProps {
-  className: string,
+  className?: string,
   count: number,
   page: number,
   handleChange: (event: React.ChangeEvent<unknown>, value: number) => void
