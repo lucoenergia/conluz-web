@@ -6,8 +6,6 @@ import React from "react";
 interface CardListProps {
   children?: React.ReactNode;
   className?: string;
-  ulStyles?: string;
-  pagination?: string;
 }
 
 const ITEMS_PER_PAGE = 5
@@ -16,7 +14,7 @@ const calculateStartIndex = (currentPage: number): number => {
   return (currentPage-1)*ITEMS_PER_PAGE;
 }
 
-export const CardList: FC<CardListProps> = ({ children, className, pagination, ulStyles }) => {
+export const CardList: FC<CardListProps> = ({ children, className }) => {
   const [currentPage, setCurrentPage] = useState(1); 
 
   useEffect(() => {
@@ -33,7 +31,7 @@ export const CardList: FC<CardListProps> = ({ children, className, pagination, u
   return (
     <Box className='mt-5 grid content-center'>
       <Box className={className}>
-        <ul className={ulStyles}>
+        <ul>
           {listItems.slice(startIndex, startIndex+ITEMS_PER_PAGE)}
         </ul>
       </Box>
@@ -41,7 +39,6 @@ export const CardList: FC<CardListProps> = ({ children, className, pagination, u
         count={Math.ceil(React.Children.toArray(children).length / ITEMS_PER_PAGE)}
         page={currentPage}
         handleChange={handleChange}
-        className={pagination}
       />
     </Box>
   );
