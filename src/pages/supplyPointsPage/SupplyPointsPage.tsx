@@ -29,9 +29,8 @@ export const SupplyPointsPage: FC = () => {
     );
   }, [searchText, responseFromApi]);
 
-
   return <Box className='flex flex-col'>
-    <BreadCrumb steps={[{label: "Consumo", href:"/supply-points"}]}/>
+    <BreadCrumb steps={[{ label: "Consumo", href: "/supply-points" }]} />
     <Typography className="text-2xl font-bold mt-10 md:mt-0">Puntos de suministro</Typography>
     <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
     <Box className='grid grid-flow-col grid-cols-2 justify-between gap-4'>
@@ -78,7 +77,7 @@ export const SupplyPointsPage: FC = () => {
     {isLoading &&
       <CardList>
         {
-          Array.from({ length: 5}).map(() => <LoadingSupplyCard/>)
+          Array.from({ length: 5 }).map((_, i) => <LoadingSupplyCard key={i} />)
         }
       </CardList>
     }
