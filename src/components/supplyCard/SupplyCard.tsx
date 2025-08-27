@@ -31,6 +31,11 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   lastMeassurement = 0
 }) => {
 
+  const disableSupplyPoint = (supplyCode:string) => {
+    //con el code, llamada a la API para deshabilitarlo
+    console.log('punto de suministro deshabilitado: ', supplyCode)
+  }
+
   return <Link to={`/supply-points/${id}`}>
      <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-center justify-items-center md:content-center md:grid-cols-10 gap-4 mt-5'}>
       <Box className="col-span-2 justify-center hidden md:block">
@@ -66,7 +71,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         <Typography className="text-sm text-gray-500 text-center md:hidden">{lastMeassurement} kWh</Typography>
       </Box>
       <Box>
-        <DisplayMenu supplyPointId={id} />
+        <DisplayMenu supplyPointId={id} code={code} disableSupplyPoint={disableSupplyPoint}/>
       </Box>
   </CardTemplate>
     </Link>
