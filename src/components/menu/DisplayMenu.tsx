@@ -8,6 +8,7 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 import NotInterestedOutlinedIcon from '@mui/icons-material/NotInterestedOutlined';
 import { DisablePointModal } from "../modals/DisablePointModal"
+import { DisableConfirmationModal } from "../modals/DisableConfirmationModal"
 
 interface DisplayMenuProps {
     code: string,
@@ -20,7 +21,10 @@ interface DisplayMenuProps {
 
 export const DisplayMenu: FC<DisplayMenuProps><DisplayMenuProps> = ({ supplyPointId }{code, disableSupplyPoint}) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-const [isModalOpen, setIsModalOpen] = useState(false);  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+const [isModalOpen, setIsModalOpen] = useState(false);  
+const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+
+const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     setAnchorElement(event.currentTarget);
   };
@@ -31,15 +35,18 @@ const [isModalOpen, setIsModalOpen] = useState(false);  const handleOpenUserMenu
   };
 
 const handleOpen = () => {
-console.log('click en deshabilitar');
-console.log('code ', code);
-setIsModalOpen(true);
-handleCloseUserMenu();
+    setIsModalOpen(true);
+    handleCloseUserMenu();
 }
 
-const handleCloseModal = () => {
-setIsModalOpen(false);
+const handleCloseDisableModal = () => {
+    setIsModalOpen(false);
+    setIsConfirmationModalOpen(true);
 };
+
+const handleCloseConfirModal = () => {
+    setIsConfirmationModalOpen(false);
+}
 
 
   return <>
@@ -78,7 +85,8 @@ setIsModalOpen(false);
                 isOpen={isModalOpen} 
                 code={code} 
                 disableSupplyPoint={disableSupplyPoint}
-                onClose={handleCloseModal}/>
+                onClose={handleCloseDisableModal}/>
+            <DisableConfirmationModal isOpen={isConfirmationModalOpen} onClose={handleCloseConfirModal} code={code}/>
     </MenuTemplate>
   </>
 }
