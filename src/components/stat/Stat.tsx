@@ -9,12 +9,6 @@ interface StatProps {
   className?: string
 }
 
-const textAlign = {
-  left: 'text-left',
-  right: 'text-right',
-  center: 'text-center'
-} as const
-
 export const Stat: FC<StatProps> = ({ label, value, variant='normal', className}) => {
   return (
     <div className={className}>

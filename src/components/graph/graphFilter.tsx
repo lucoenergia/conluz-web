@@ -67,8 +67,8 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
   }, [range, startDate, endDate] )
 
   return (
-    <Box className="grid grid-flow-col gap-2 justify-start">
-    <ToggleButtonGroup value={range} onChange={(_, value) => setRange(value)} exclusive>
+    <Box className="grid md:grid-flow-col gap-2 justify-center md:justify-start">
+    <ToggleButtonGroup size="small" value={range} onChange={(_, value) => setRange(value)} exclusive>
       <ToggleButton value={GraphFilterRangeValues.DAY}><Typography>Día</Typography></ToggleButton>
       <ToggleButton value={GraphFilterRangeValues.MONTH}><Typography>Mes</Typography></ToggleButton>
       <ToggleButton value={GraphFilterRangeValues.YEAR}><Typography>Año</Typography></ToggleButton>

@@ -4,7 +4,7 @@ import { type FC, type ReactNode } from "react"
 interface MenuTemplateProps {
     children: ReactNode,
     anchorElement: HTMLElement | null
-    onClose: () => void;
+    onClose: (event: object) => void;
     compactPadding?: boolean;
 }
 export const MenuTemplate: FC<MenuTemplateProps> = ({anchorElement, onClose, compactPadding = false, children}) => {
