@@ -1,5 +1,5 @@
 import { useState, type FC } from "react"
-import { Divider, IconButton } from "@mui/material"
+import { Divider, IconButton, MenuItem } from "@mui/material"
 import { MenuTemplate } from "./MenuTemplate"
 import { MenuLinkItem } from "./MenuLinkItem"
 import { LabeledIcon } from "../labeled-icon/LabeledIcon"
@@ -7,9 +7,18 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 import NotInterestedOutlinedIcon from '@mui/icons-material/NotInterestedOutlined';
+import { DisablePointModal } from "../modals/DisablePointModal"
+import { DisableConfirmationModal } from "../modals/DisableConfirmationModal"
 
-export const DisplayMenu: FC = () => {
+interface DisplayMenuProps {
+    code: string,
+    disableSupplyPoint: (code:string) => void
+}
+
+export const DisplayMenu: FC<DisplayMenuProps> = ({code, disableSupplyPoint}) => {
 const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
 
 const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
 setAnchorElement(event.currentTarget);
@@ -18,6 +27,21 @@ setAnchorElement(event.currentTarget);
 const handleCloseUserMenu = () => {
 setAnchorElement(null);
 };
+
+const handleOpen = () => {
+    setIsModalOpen(true);
+    handleCloseUserMenu();
+}
+
+const handleCloseDisableModal = () => {
+    setIsModalOpen(false);
+    setIsConfirmationModalOpen(true);
+};
+
+const handleCloseConfirModal = () => {
+    setIsConfirmationModalOpen(false);
+}
+
 
 return <>
         <IconButton onClick={handleOpenUserMenu}><MoreVertIcon/></IconButton>
@@ -43,14 +67,20 @@ return <>
                     label="Editar"/>
             </MenuLinkItem>
             <Divider />
-            <MenuLinkItem to="/disable">
+            <MenuItem onClick={handleOpen}>
                 <LabeledIcon 
                     variant="compact"
                     justify="between"
                     iconPosition="right"
                     icon={NotInterestedOutlinedIcon}
                     label="Deshabilitar"/>
-            </MenuLinkItem>
+            </MenuItem>
+            <DisablePointModal 
+                isOpen={isModalOpen} 
+                code={code} 
+                disableSupplyPoint={disableSupplyPoint}
+                onClose={handleCloseDisableModal}/>
+            <DisableConfirmationModal isOpen={isConfirmationModalOpen} onClose={handleCloseConfirModal} code={code}/>
        </MenuTemplate>
 </>    
 }
