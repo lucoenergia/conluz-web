@@ -6,7 +6,7 @@ interface AuthErrorBoundryProps {
 }
 
 interface AuthErrorBoundryState {
-  error: Error | undefined
+  error: any | undefined
 }
 
 export class AuthErrorBoundry extends React.Component<AuthErrorBoundryProps, AuthErrorBoundryState> {
@@ -15,16 +15,20 @@ export class AuthErrorBoundry extends React.Component<AuthErrorBoundryProps, Aut
     this.state = {error: undefined};
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return {error};
+  static getDerivedStateFromError(error: any) {
+    if (error.status === 401)
+      return {error};
+    throw error;
   }
   
-  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo): void {
-      this.props.onError(error);
+  componentDidCatch(error: any, _errorInfo: React.ErrorInfo): void {
+      if (error.status && error.status === 401) {
+        this.props.onError(error);
+      }
   }
 
   render() {
-    if (this.state.error) {
+    if (this.state.error?.status === 401) {
       return <div>Sesión expirada, por favor vuelve al login</div>
     }
     return this.props.children;

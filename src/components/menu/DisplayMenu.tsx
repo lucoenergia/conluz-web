@@ -8,49 +8,55 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 import NotInterestedOutlinedIcon from '@mui/icons-material/NotInterestedOutlined';
 
-export const DisplayMenu: FC = () => {
-const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+interface DisplayMenuProps {
+  supplyPointId: string
+}
 
-const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-setAnchorElement(event.currentTarget);
-};
+export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId }) => {
+  const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 
-const handleCloseUserMenu = () => {
-setAnchorElement(null);
-};
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    setAnchorElement(event.currentTarget);
+  };
 
-return <>
-        <IconButton onClick={handleOpenUserMenu}><MoreVertIcon/></IconButton>
-        <MenuTemplate 
-          anchorElement={anchorElement}
-          onClose={handleCloseUserMenu}
-          compactPadding>  
-            <MenuLinkItem to="/track" className="hidden md:block" >
-                <LabeledIcon 
-                    variant="compact"
-                    justify="between"
-                    iconPosition="right"
-                    icon={AssessmentOutlinedIcon}
-                    label="Ver"/>
-            </MenuLinkItem>
-            <Divider/>
-            <MenuLinkItem to="/edit">
-                <LabeledIcon 
-                    variant="compact"
-                    justify="between"
-                    iconPosition="right"
-                    icon={ModeEditOutlineOutlinedIcon}
-                    label="Editar"/>
-            </MenuLinkItem>
-            <Divider />
-            <MenuLinkItem to="/disable">
-                <LabeledIcon 
-                    variant="compact"
-                    justify="between"
-                    iconPosition="right"
-                    icon={NotInterestedOutlinedIcon}
-                    label="Deshabilitar"/>
-            </MenuLinkItem>
-       </MenuTemplate>
-</>    
+  const handleCloseUserMenu = (event: any) => {
+    event.preventDefault();
+    setAnchorElement(null);
+  };
+
+  return <>
+    <IconButton onClick={handleOpenUserMenu}><MoreVertIcon /></IconButton>
+    <MenuTemplate
+      anchorElement={anchorElement}
+      onClose={handleCloseUserMenu}
+      compactPadding>
+      <MenuLinkItem to={`/supply-points/${supplyPointId}`} className="hidden md:block" >
+        <LabeledIcon
+          variant="compact"
+          justify="between"
+          iconPosition="right"
+          icon={AssessmentOutlinedIcon}
+          label="Ver" />
+      </MenuLinkItem>
+      <Divider />
+      <MenuLinkItem to="/edit">
+        <LabeledIcon
+          variant="compact"
+          justify="between"
+          iconPosition="right"
+          icon={ModeEditOutlineOutlinedIcon}
+          label="Editar" />
+      </MenuLinkItem>
+      <Divider />
+      <MenuLinkItem to="/disable">
+        <LabeledIcon
+          variant="compact"
+          justify="between"
+          iconPosition="right"
+          icon={NotInterestedOutlinedIcon}
+          label="Deshabilitar" />
+      </MenuLinkItem>
+    </MenuTemplate>
+  </>
 }
