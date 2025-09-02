@@ -27,6 +27,81 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
+ * This endpoint handles user logout operations, invalidating the current user session.
+
+ Upon successful logout, the server invalidates the existing authentication token (JWT)
+ and removes the associated authentication cookie from the client.
+
+ This ensures that subsequent requests can no longer access protected resources
+ using the invalidated credentials.
+
+ The server responds with an HTTP status code of 200 to indicate successful logout.
+
+ In case of any errors during the logout process, the server returns an appropriate
+ error status code along with a descriptive error message.
+
+ * @summary User de-authentication
+ */
+export const logout = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/logout`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getLogoutMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext> => {
+
+const mutationKey = ['logout'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logout>>, void> = () => {
+          
+
+          return  logout()
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogoutMutationResult = NonNullable<Awaited<ReturnType<typeof logout>>>
+    
+    export type LogoutMutationError = ErrorType<unknown>
+
+    /**
+ * @summary User de-authentication
+ */
+export const useLogout = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logout>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getLogoutMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * This endpoint is dedicated to user authentication, requiring clients to provide a valid username and password in the request body. Upon successful authentication, the server generates and returns an authentication token, utilizing JSON Web Tokens (JWT). This token serves as a secure means for subsequent authorized access to protected resources within the system. The server responds with an HTTP status code of 200, along with the generated token. In case of authentication failure or invalid credentials, the server issues an appropriate error status code, accompanied by a descriptive error message.
  * @summary User authentication
  */

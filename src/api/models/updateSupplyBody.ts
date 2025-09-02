@@ -7,8 +7,10 @@
  */
 
 export interface UpdateSupplyBody {
+  /** @minLength 1 */
   code: string;
   name?: string;
+  /** @minLength 1 */
   address: string;
   partitionCoefficient: number;
   enabled?: boolean;

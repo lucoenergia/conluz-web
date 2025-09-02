@@ -16,18 +16,43 @@ import {
 } from 'msw';
 
 import type {
-  CreateSuppliesInBulkResponse,
+  CreationInBulkResponse,
   PagedResultSupplyResponse,
+  SharingAgreementResponse,
   SupplyResponse
 } from '.././models';
 
 
-export const getUpdateSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN','OBSERVER'] as const), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), datadisValidDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), datadisDistributor: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisDistributorCode: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisPointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), datadisIsThirdParty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), shellyMac: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyMqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
+export const getGetSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), datadisValidDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), datadisDistributor: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisDistributorCode: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisPointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), datadisIsThirdParty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), shellyMac: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyMqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
-export const getGetAllSuppliesResponseMock = (overrideResponse: Partial< PagedResultSupplyResponse > = {}): PagedResultSupplyResponse => ({items: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN','OBSERVER'] as const), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), datadisValidDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), datadisDistributor: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisDistributorCode: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisPointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), datadisIsThirdParty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), shellyMac: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyMqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})), undefined]), size: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), totalElements: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), totalPages: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined}), undefined]), ...overrideResponse})
+export const getUpdateSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), datadisValidDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), datadisDistributor: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisDistributorCode: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisPointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), datadisIsThirdParty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), shellyMac: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyMqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
-export const getCreateSuppliesWithFileResponseMock = (overrideResponse: Partial< CreateSuppliesInBulkResponse > = {}): CreateSuppliesInBulkResponse => ({created: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), errors: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({supply: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), errorMessage: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})), undefined]), ...overrideResponse})
+export const getGetSharingAgreementResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), startDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), endDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), ...overrideResponse})
 
+export const getUpdateSharingAgreementResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), startDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), endDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), ...overrideResponse})
+
+export const getGetAllSuppliesResponseMock = (overrideResponse: Partial< PagedResultSupplyResponse > = {}): PagedResultSupplyResponse => ({items: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), datadisValidDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), datadisDistributor: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisDistributorCode: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisPointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), datadisIsThirdParty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), shellyMac: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyMqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})), undefined]), size: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalElements: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalPages: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), ...overrideResponse})
+
+export const getCreateSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), datadisValidDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), datadisDistributor: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisDistributorCode: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), datadisPointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), datadisIsThirdParty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), shellyMac: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), shellyMqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
+
+export const getImportSuppliesPartitionsWithFileResponseMock = (overrideResponse: Partial< CreationInBulkResponse > = {}): CreationInBulkResponse => ({created: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({})), undefined]), errors: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({item: faker.helpers.arrayElement([{}, undefined]), errorMessage: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})), undefined]), ...overrideResponse})
+
+export const getCreateSuppliesWithFileResponseMock = (overrideResponse: Partial< CreationInBulkResponse > = {}): CreationInBulkResponse => ({created: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({})), undefined]), errors: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({item: faker.helpers.arrayElement([{}, undefined]), errorMessage: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})), undefined]), ...overrideResponse})
+
+export const getCreateSharingAgreementResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), startDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), endDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), ...overrideResponse})
+
+
+export const getGetSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
+  return http.get('*/api/v1/supplies/:id', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
 
 export const getUpdateSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
   return http.put('*/api/v1/supplies/:id', async (info) => {await delay(1000);
@@ -37,6 +62,40 @@ export const getUpdateSupplyMockHandler = (overrideResponse?: SupplyResponse | (
     : getUpdateSupplyResponseMock()),
       { status: 200,
         headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGetSharingAgreementMockHandler = (overrideResponse?: SharingAgreementResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SharingAgreementResponse> | SharingAgreementResponse)) => {
+  return http.get('*/api/v1/sharing-agreements/:id', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSharingAgreementResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getUpdateSharingAgreementMockHandler = (overrideResponse?: SharingAgreementResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<SharingAgreementResponse> | SharingAgreementResponse)) => {
+  return http.put('*/api/v1/sharing-agreements/:id', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getUpdateSharingAgreementResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getDeleteSharingAgreementMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void)) => {
+  return http.delete('*/api/v1/sharing-agreements/:id', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
       })
   })
 }
@@ -53,17 +112,31 @@ export const getGetAllSuppliesMockHandler = (overrideResponse?: PagedResultSuppl
   })
 }
 
-export const getCreateSupplyMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
+export const getCreateSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
   return http.post('*/api/v1/supplies', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getCreateSupplyResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
 
-export const getCreateSuppliesWithFileMockHandler = (overrideResponse?: CreateSuppliesInBulkResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CreateSuppliesInBulkResponse> | CreateSuppliesInBulkResponse)) => {
+export const getImportSuppliesPartitionsWithFileMockHandler = (overrideResponse?: CreationInBulkResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CreationInBulkResponse> | CreationInBulkResponse)) => {
+  return http.post('*/api/v1/supplies/partitions/import', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getImportSuppliesPartitionsWithFileResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getCreateSuppliesWithFileMockHandler = (overrideResponse?: CreationInBulkResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CreationInBulkResponse> | CreationInBulkResponse)) => {
   return http.post('*/api/v1/supplies/import', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
@@ -84,10 +157,28 @@ export const getSyncDatadisSuppliesMockHandler = (overrideResponse?: unknown | (
       })
   })
 }
+
+export const getCreateSharingAgreementMockHandler = (overrideResponse?: SharingAgreementResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SharingAgreementResponse> | SharingAgreementResponse)) => {
+  return http.post('*/api/v1/sharing-agreements', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getCreateSharingAgreementResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
 export const getSuppliesMock = () => [
+  getGetSupplyMockHandler(),
   getUpdateSupplyMockHandler(),
+  getGetSharingAgreementMockHandler(),
+  getUpdateSharingAgreementMockHandler(),
+  getDeleteSharingAgreementMockHandler(),
   getGetAllSuppliesMockHandler(),
   getCreateSupplyMockHandler(),
+  getImportSuppliesPartitionsWithFileMockHandler(),
   getCreateSuppliesWithFileMockHandler(),
-  getSyncDatadisSuppliesMockHandler()
+  getSyncDatadisSuppliesMockHandler(),
+  getCreateSharingAgreementMockHandler()
 ]

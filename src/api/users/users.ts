@@ -44,6 +44,7 @@ import type { ErrorType } from '.././custom-instance';
  * This endpoint enables the update of user information by specifying the user's unique identifier in the endpoint path.
 
 Clients send a request containing the updated user details, and authentication, through an authentication token, is required for secure access.
+**Required Role: ADMIN**
 
 A successful update results in an HTTP status code of 200, indicating that the user information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
 
@@ -115,6 +116,7 @@ export const useUpdateUser = <TError = ErrorType<unknown>,
  *     This endpoint enables the removal of a user from the system by specifying the user's unique identifier within the endpoint path.
 
     To utilize this endpoint, clients send a DELETE request with the targeted user's ID, requiring authentication for secure access.
+    **Required Role: ADMIN**
 
     Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the user has been successfully removed.
 
@@ -181,7 +183,19 @@ export const useDeleteUser = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a comprehensive list of user details. Users can include optional query parameters, such as page to specify the page number, limit to determine the number of users per page, filter for selective retrieval based on specific criteria, and sort to define the order of the results. Proper authentication, through an authentication token, is required for secure access to this endpoint. A successful request returns an HTTP status code of 200, along with a paginated list of user details, providing valuable information such as unique identifiers, usernames, and creation timestamps. In case of issues, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing any problems encountered during the retrieval process.
+ * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a
+comprehensive list of user details.
+
+**Required Role: ADMIN**
+
+Features:
+- Pagination support through page and limit parameters
+- Sorting options for customized result ordering
+
+Authentication:
+- Requires valid authentication token
+- Bearer token authorization
+
  * @summary Retrieves all registered users in the system with support for pagination, filtering, and sorting.
  */
 export const getAllUsers = (
@@ -275,6 +289,7 @@ export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, 
 This endpoint requires clients to send a request containing essential user details, including username, password, and any additional relevant information.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required Role: ADMIN**
 
 Upon successful user creation, the server responds with an HTTP status code of 200, along with comprehensive details about the newly created user, such as a unique identifier and username.
 
@@ -347,6 +362,7 @@ export const useCreateUser = <TError = ErrorType<unknown>,
  * This endpoint serves the purpose of enabling a previously disabled user within the system, with the user's unique identifier specified in the endpoint path.
 
 Proper authentication, through an authentication token, is required for secure access.
+**Required Role: ADMIN**
 
 Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been successfully enabled.
 
@@ -418,6 +434,7 @@ export const useDisableUser = <TError = ErrorType<unknown>,
  *     This endpoint is designed to disable a user within the system by specifying the user's unique identifier in the endpoint path.
 
     This operation requires proper authentication, through an authentication token, to ensure secure access.
+    **Required Role: ADMIN**
 
     Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been disabled.
 
@@ -492,6 +509,7 @@ export const useDisableUser1 = <TError = ErrorType<unknown>,
 This endpoint requires clients to send a request containing a file with essential details for each user, including username, password, and any additional relevant information.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required Role: ADMIN**
 
 Upon successful file processing, the server responds with an HTTP status code of 200, along with comprehensive details about the result of the bulk operation, including what users have been created or any potential error.
 

@@ -10,7 +10,9 @@ import type { UpdateUserBodyRole } from './updateUserBodyRole';
 export interface UpdateUserBody {
   /** @minimum 0 */
   number: number;
+  /** @minLength 1 */
   personalId: string;
+  /** @minLength 1 */
   fullName: string;
   address?: string;
   email?: string;

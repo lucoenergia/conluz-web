@@ -12,6 +12,7 @@ export interface SupplyResponse {
   id?: string;
   /** Code that identifies the supply */
   code?: string;
+  /** Owner of the supply */
   user?: UserResponse;
   /** Name of the supply */
   name?: string;

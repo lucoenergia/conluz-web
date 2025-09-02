@@ -7,8 +7,12 @@
  */
 
 export interface CreateSupplyBody {
+  /** @minLength 1 */
   code: string;
+  /** @minLength 1 */
   personalId: string;
+  /** @minLength 1 */
   address: string;
   partitionCoefficient: number;
+  name?: string;
 }

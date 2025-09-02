@@ -38,13 +38,19 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
- * This endpoint enables the update of plant information by specifying the plant's unique identifier in the endpoint path.
+ * This endpoint enables the update of plant information by specifying the plant's unique identifier in the
+endpoint path.
 
-Clients send a request containing the updated plant details, and authentication, through an authentication token, is required for secure access.
+Clients send a request containing the updated plant details, and authentication, through an
+authentication token, is required for secure access.
+**Required Role: ADMIN**
 
-A successful update results in an HTTP status code of 200, indicating that the plant information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
+A successful update results in an HTTP status code of 200, indicating that the plant information has
+been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
 
-If you don't provide some of the optional parameters, they will be considered as null value so their values will be updated with a null value.
+If you don't provide some of the optional parameters, they will be considered as null value so their
+values will be updated with a null value.
+
  * @summary Updates plant information
  */
 export const updatePlant = (
@@ -109,13 +115,19 @@ export const useUpdatePlant = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- *     This endpoint enables the removal of a plant from the system by specifying the plant's unique identifier within the endpoint path.
+ *     This endpoint enables the removal of a plant from the system by specifying the plant's unique
+    identifier within the endpoint path.
 
-    To utilize this endpoint, clients send a DELETE request with the targeted plant's ID, requiring authentication for secure access.
+    To utilize this endpoint, clients send a DELETE request with the targeted plant's ID, requiring
+    authentication for secure access.
+    **Required Role: ADMIN**
 
-    Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the plant has been successfully removed.
+    Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the
+    plant has been successfully removed.
 
-    In cases where the deletion process encounters errors, the server returns an appropriate error status code, along with a descriptive error message to guide clients in diagnosing and addressing the issue.
+    In cases where the deletion process encounters errors, the server returns an appropriate error
+    status code, along with a descriptive error message to guide clients in diagnosing and addressing
+    the issue.
 
  * @summary Removes a plant by ID
  */
@@ -267,7 +279,20 @@ export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>
 
 
 /**
- * This endpoint is designed to create a new plant within the system. To utilize this endpoint, a client sends a request containing essential details such as the plants's address, its code and any relevant parameters. Proper authentication, through authentication tokens, is required to access this endpoint. Upon successful creation, the server responds with a status code of 200, providing comprehensive details about the newly created plant, including its unique identifier. In case of failure, the server returns an appropriate error status code along with a descriptive error message, aiding the client in diagnosing and addressing the issue.
+ * This endpoint facilitates the creation of a new plant within the system.
+
+To utilize this endpoint, a client sends a request containing essential details such as the plants's
+address, its code and any relevant parameters.
+
+Proper authentication, through authentication tokens, is required to access this endpoint.
+**Required Role: ADMIN**
+
+Upon successful creation, the server responds with a status code of 200, providing comprehensive
+details about the newly created plant, including its unique identifier.
+
+In case of failure, the server returns an appropriate error status code along with a descriptiv
+error message, aiding the client in diagnosing and addressing the issue.
+
  * @summary Creates a new plant within the system.
  */
 export const createPlant = (
@@ -276,7 +301,7 @@ export const createPlant = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<PlantResponse>(
       {url: `/api/v1/plants`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createPlantBody, signal
