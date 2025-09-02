@@ -8,6 +8,7 @@ import { Login } from './pages/login/login'
 import { ForgotPassword } from './pages/ForgotPassword/ForgotPassword'
 import { NewPassword } from './pages/NewPassword/NewPassword'
 import { SupplyDetailPage } from './pages/SupplyDetail/SupplyDetailPage'
+import { CreateSupplyPage } from './pages/CreateSupply'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route index />
           <Route path='supply-points/'>
             <Route index element={<SupplyPointsPage/>}></Route>
+            <Route path='new' element={<CreateSupplyPage/>}/>      
             <Route path=':supplyPointId' element={<SupplyDetailPage/>}/>      
           </Route>    
           <Route path="contact" element={<ContactPage />}/> 

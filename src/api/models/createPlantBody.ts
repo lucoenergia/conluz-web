@@ -8,12 +8,16 @@
 import type { CreatePlantBodyInverterProvider } from './createPlantBodyInverterProvider';
 
 export interface CreatePlantBody {
+  /** @minLength 1 */
   code: string;
+  /** @minLength 1 */
   name: string;
   description?: string;
+  /** @minLength 1 */
   supplyCode: string;
   inverterProvider: CreatePlantBodyInverterProvider;
   connectionDate?: string;
+  /** @minLength 1 */
   address: string;
   totalPower: number;
 }

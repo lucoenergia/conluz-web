@@ -13,5 +13,4 @@ export type CreateUserBodyRole = typeof CreateUserBodyRole[keyof typeof CreateUs
 export const CreateUserBodyRole = {
   PARTNER: 'PARTNER',
   ADMIN: 'ADMIN',
-  OBSERVER: 'OBSERVER',
 } as const;

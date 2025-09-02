@@ -23,6 +23,16 @@ import type {
 export const getLoginResponseMock = (overrideResponse: Partial< Token > = {}): Token => ({token: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
 
+export const getLogoutMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void)) => {
+  return http.post('*/api/v1/logout', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
 export const getLoginMockHandler = (overrideResponse?: Token | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Token> | Token)) => {
   return http.post('*/api/v1/login', async (info) => {await delay(1000);
   
@@ -35,5 +45,6 @@ export const getLoginMockHandler = (overrideResponse?: Token | ((info: Parameter
   })
 }
 export const getAuthenticationMock = () => [
+  getLogoutMockHandler(),
   getLoginMockHandler()
 ]

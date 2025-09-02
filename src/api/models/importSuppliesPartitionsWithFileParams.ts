@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UpdateUserBodyRole = typeof UpdateUserBodyRole[keyof typeof UpdateUserBodyRole];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const UpdateUserBodyRole = {
-  PARTNER: 'PARTNER',
-  ADMIN: 'ADMIN',
-} as const;
+export type ImportSuppliesPartitionsWithFileParams = {
+/**
+ * Identifier of the sharing agreement
+ */
+sharingAgreementId: string;
+};

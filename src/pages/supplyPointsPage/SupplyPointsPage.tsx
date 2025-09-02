@@ -7,6 +7,7 @@ import { SearchBar } from "../../components/searchBar/SearchBar";
 import { CardList } from "../../components/cardList/CardList";
 import { SupplyCard } from "../../components/supplyCard/SupplyCard";
 import { LoadingSupplyCard } from "../../components/supplyCard/LoadingSupplyCard";
+import { Link } from "react-router";
 
 export interface itemListType {
   id: string,
@@ -35,9 +36,9 @@ export const SupplyPointsPage: FC = () => {
     <Typography className="text-base mb-5" >Puntos de suministros registrados en la comunidad energética</Typography>
     <Box className='grid grid-flow-col grid-cols-2 justify-between gap-4'>
       <Button
-        type="link"
+        component={Link}
         variant="outlined"
-        href="#new-supply-point"
+        to="/supply-points/new"
         size="small"
         className="
                     text-center 

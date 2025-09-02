@@ -41,10 +41,17 @@ import type { ErrorType } from '.././custom-instance';
 
 /**
  * This endpoint allows to configure the app to connect with huawei.com.
+
 This configuration is a mandatory step to be able to retrieve production data from huawei.com.
+
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-Upon successful request, the server responds with an HTTP status code of 200, along with details about the configuration already set.
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
+**Required Role: ADMIN**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with details
+about the configuration already set.
+
+In cases where the creation process encounters errors, the server responds with an appropriate error
+status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
 
  * @summary Sets up the configuration to be able to connect with Huawei.
  */

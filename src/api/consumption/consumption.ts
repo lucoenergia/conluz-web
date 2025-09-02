@@ -27,10 +27,18 @@ import type { ErrorType } from '.././custom-instance';
 
 /**
  * This endpoint allows to configure the app to connect with datadis.es.
+
 This configuration is a mandatory step to be able to retrieve consumption data from datadis.es.
+
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-Upon successful request, the server responds with an HTTP status code of 200, along with details about the configuration already set.
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
+**Required Role: ADMIN**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with details
+about the configuration already set.
+
+In cases where the creation process encounters errors, the server responds with an appropriate error
+status code, accompanied by a descriptive error message to guide clients in addressing and resolving
+the issue.
 
  * @summary Sets up the configuration to be able to connect with Datadis.
  */
@@ -95,7 +103,16 @@ export const useConfigureDatadis = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint enables users to synchronize the consumptions of all active supplies retrieving the information from datadis.es. Proper authentication, through an authentication token, is required for secure access to this endpoint. A successful request returns an HTTP status code of 200. In cases of errors, the server responds with an appropriate error status code accompanied by a descriptive message to guide users in resolving any issues.
+ * This endpoint enables users to synchronize the consumptions of all active supplies retrieving the information from datadis.es.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required Role: ADMIN**
+
+A successful request returns an HTTP status code of 200.
+
+In cases of errors, the server responds with an appropriate error status code accompanied by a
+descriptive message to guide users in resolving any issues.",
+
  * @summary Synchronize the consumptions of all active supplies retrieving the information from datadis.es.
  */
 export const syncDatadisConsumptions = (

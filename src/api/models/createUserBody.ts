@@ -8,13 +8,17 @@
 import type { CreateUserBodyRole } from './createUserBodyRole';
 
 export interface CreateUserBody {
+  /** @minLength 1 */
   personalId: string;
   /** @minimum 0 */
   number: number;
+  /** @minLength 1 */
   fullName: string;
   address?: string;
+  /** @minLength 1 */
   email: string;
   phoneNumber?: string;
+  /** @minLength 1 */
   password: string;
   role: CreateUserBodyRole;
 }

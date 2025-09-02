@@ -6,11 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './bulkErrorObject';
 export * from './configureDatadisBody';
 export * from './configureHuaweiBody';
 export * from './createDefaultAdminUserBody';
 export * from './createPlantBody';
 export * from './createPlantBodyInverterProvider';
+export * from './createSharingAgreementBody';
 export * from './createSuppliesInBulkError';
 export * from './createSuppliesInBulkResponse';
 export * from './createSuppliesWithFileBody';
@@ -20,6 +22,7 @@ export * from './createUserBodyRole';
 export * from './createUsersInBulkError';
 export * from './createUsersInBulkResponse';
 export * from './createUsersWithFileBody';
+export * from './creationInBulkResponse';
 export * from './getAllPlantsParams';
 export * from './getAllSuppliesParams';
 export * from './getAllUsersParams';
@@ -29,16 +32,20 @@ export * from './getInstantProductionParams';
 export * from './getMonthlyProductionParams';
 export * from './getPriceByRangeOfDatesParams';
 export * from './getYearlyProductionParams';
+export * from './importSuppliesPartitionsWithFileBody';
+export * from './importSuppliesPartitionsWithFileParams';
 export * from './initBody';
 export * from './loginRequest';
 export * from './pagedResultSupplyResponse';
 export * from './pagedResultUserResponse';
 export * from './plantResponse';
 export * from './plantResponseInverterProvider';
+export * from './sharingAgreementResponse';
 export * from './supplyResponse';
 export * from './token';
 export * from './updatePlantBody';
 export * from './updatePlantBodyInverterProvider';
+export * from './updateSharingAgreementBody';
 export * from './updateSupplyBody';
 export * from './updateUserBody';
 export * from './updateUserBodyRole';
