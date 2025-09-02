@@ -37,23 +37,29 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
     }
     setPartitionCoefficient(e.target.value);
   }
+
+  const validateForm = (data: CreateSupplyBody): boolean => {
+    return partitionCoefficientIsValid(data.partitionCoefficient.toString())
+  }
   
   const onSubmit = async (data: FormData) => {
     const newSupplyPoint = {
       name: data.get('name') as string,
       code: data.get('cups') as string,
       address: data.get('address') as string,
-      partitionCoefficient: Number(data.get('partitionCoefficient') as string),
+      partitionCoefficient: Number((data.get('partitionCoefficient') as string).replaceAll(',','.')),
       personalId: '01234567Z' // TODO: correct this mapping once we have the endpoint to get logged user data
+      // TODO: endpoint not accepting cadastralReference. Once its update it must be included
     } as CreateSupplyBody
-    console.log(newSupplyPoint);
-    handleSubmit(newSupplyPoint);
+    if (validateForm(newSupplyPoint)) {
+      handleSubmit(newSupplyPoint);
+    }
   }
   
   return (
       <Box component="form" action={onSubmit} className="md:max-w-100 grid gap-4">
         <FormGroup>
-          <InputLabel>Nombre</InputLabel>
+          <InputLabel htmlFor="name">Nombre</InputLabel>
           <TextField
             id="name"
             type="text"
@@ -68,7 +74,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel>CUPS</InputLabel>
+          <InputLabel htmlFor="cups">CUPS</InputLabel>
           <TextField
             id="cups"
             type="text"
@@ -83,7 +89,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel>Dirección</InputLabel>
+          <InputLabel htmlFor="address">Dirección</InputLabel>
           <TextField
             id="address"
             type="text"
@@ -98,7 +104,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel>Coeficiente de reparto (%)</InputLabel>
+          <InputLabel htmlFor="partitionCoefficient">Coeficiente de reparto (%)</InputLabel>
           <TextField
             id="partitionCoefficient"
             type="text"
@@ -114,7 +120,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel>Referencia catastral</InputLabel>
+          <InputLabel htmlFor="cadastralReference">Referencia catastral</InputLabel>
           <TextField
             id="cadastralReference"
             type="text"
