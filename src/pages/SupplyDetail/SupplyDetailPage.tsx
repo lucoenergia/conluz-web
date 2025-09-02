@@ -8,8 +8,7 @@ import { SupplyDetailCard } from "../../components/supplyDetailCard/SupplyDetail
 import { SupplyStatsCard } from "../../components/supplyStatsCard/SupplyStatsCard";
 import { GraphFilter } from "../../components/graph/graphFilter";
 import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
-import { useGetAllSupplies } from "../../api/supplies/supplies";
-import type { SupplyResponse } from "../../api/models";
+import { useGetSupply } from "../../api/supplies/supplies";
 import { LoadingSupplyDetailCard } from "../../components/supplyDetailCard/loadingSupplyDetailCard";
 import { getTimeRange } from "../../utils/getTimeRange";
 
@@ -26,9 +25,7 @@ export const SupplyDetailPage: FC = () => {
     setEndDate(endDate)
   }
 
-  // This is a workaround until we have an backend method that retrieves only one supply point by Id
-  const { data: supplyPoints, isLoading: supplyPointsLoading, error: supplyPointsError } = useGetAllSupplies({});
-  const supplyPoint: SupplyResponse | undefined = useMemo(() => supplyPoints?.items?.find(sp => sp.id === supplyPointId), [supplyPointId, supplyPoints]);
+  const { data: supplyPoint, isLoading: supplyPointLoading, error: supplyPointError } = useGetSupply(supplyPointId);
 
   // Since, in react, hook methos can't be inside conditional structures like 'if's we have to put all four calls at the top level of the componet and control wether the request actually gets triggered with the enabled parameter
   const { data: hourlyData, isLoading: hourlyIsLoading, error: hourlyError } = useGetHourlyProduction({ supplyId: supplyPointId, startDate: startDate.toISOString(), endDate: endDate.toISOString() }, { query: { enabled: timeRangeData == 'hour' } });
@@ -95,11 +92,11 @@ export const SupplyDetailPage: FC = () => {
 
   return <Box className='grid gap-4'>
     <BreadCrumb steps={[{ label: 'Suministros', href: '/supply-points' }, { label: supplyPoint?.code ? supplyPoint?.code : supplyPointId, href: '#' }]} />
-    {!supplyPointsLoading && !supplyPointsError &&
+    {!supplyPointLoading && !supplyPointError &&
       <SupplyDetailCard name={supplyPoint?.name} address={supplyPoint?.address} cups={supplyPoint?.code} partitionCoeficient={supplyPoint?.partitionCoefficient ? supplyPoint?.partitionCoefficient * 100 : 0} />
     }
     {
-      supplyPointsLoading &&
+      supplyPointLoading &&
       <LoadingSupplyDetailCard />
     }
     <GraphFilter handleChange={handleFilterChange} />
