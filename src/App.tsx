@@ -9,6 +9,7 @@ import { ForgotPassword } from './pages/ForgotPassword/ForgotPassword'
 import { NewPassword } from './pages/NewPassword/NewPassword'
 import { SupplyDetailPage } from './pages/SupplyDetail/SupplyDetailPage'
 import { CreateSupplyPage } from './pages/CreateSupply'
+import { EditSupplyPage } from './pages/EditSupply/EditSupply'
 
 function App() {
   return (
@@ -23,10 +24,13 @@ function App() {
         </Route> 
         <Route element={<AuthenticatedLayout/>}>
           <Route index />
-          <Route path='supply-points/'>
+          <Route path='supply-points'>
             <Route index element={<SupplyPointsPage/>}></Route>
             <Route path='new' element={<CreateSupplyPage/>}/>      
-            <Route path=':supplyPointId' element={<SupplyDetailPage/>}/>      
+            <Route path=':supplyPointId'>
+              <Route index element={<SupplyDetailPage/>}/>
+              <Route path="edit" element={<EditSupplyPage/>}/>
+            </Route>      
           </Route>    
           <Route path="contact" element={<ContactPage />}/> 
         </Route>

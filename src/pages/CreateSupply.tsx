@@ -4,13 +4,21 @@ import { Box, Typography } from "@mui/material";
 import { createSupply } from "../api/supplies/supplies";
 import type { CreateSupplyBody } from "../api/models";
 import { useNavigate } from "react-router";
-import { SupplyForm } from "../components/supplyForm/SupplyForm";
+import { SupplyForm, type SupplyFormValues } from "../components/supplyForm/SupplyForm";
 
 export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
 
-  const handleSubmit = async (data: CreateSupplyBody) => {
-    const response = await createSupply(data);
+  const handleSubmit = async ({name, cups, address, partitionCoefficient}: SupplyFormValues) => {
+    const newSupply = {
+      name,
+      code: cups,
+      address,
+      partitionCoefficient,
+      personalId: "01234567Z" //TODO: Subtitute for correct personalId when endpoint is ready
+      // TODO: endpoint not accepting cadastralReference. Once its update it must be included
+    } as CreateSupplyBody
+    const response = await createSupply(newSupply);
     if (response) {
       navigate('/supply-points');
     }
