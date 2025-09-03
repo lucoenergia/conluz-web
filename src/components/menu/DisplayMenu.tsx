@@ -40,7 +40,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId }) => {
           label="Ver" />
       </MenuLinkItem>
       <Divider />
-      <MenuLinkItem to="/edit">
+      <MenuLinkItem to={`/supply-points/${supplyPointId}/edit`}>
         <LabeledIcon
           variant="compact"
           justify="between"
