@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Crear los mocks
@@ -45,7 +45,14 @@ describe('Supply Form', () => {
     await user.type(screen.getByLabelText('Coeficiente de reparto (%)'), "0.002345");
     await user.type(screen.getByLabelText('Referencia catastral'), "AS35NB354223");
     await user.click(screen.getByRole('button'))
-    expect(mockHandleSubmit).toBeCalledWith({name: 'Mi casa', code: "ES002100823463", address: 'Calle Escuadra 3', partitionCoefficient: 0.002345, personalId: "01234567Z" }) //TODO: Set the correct personalId when endpoint is available
+    expect(mockHandleSubmit)
+      .toBeCalledWith({
+        name: 'Mi casa',
+        cups: "ES002100823463",
+        address: 'Calle Escuadra 3',
+        partitionCoefficient: 0.002345,
+        cadastralReference:"AS35NB354223"
+      });
   });
   
   it('Displays Partition Coeficient error', async () => {
@@ -61,5 +68,26 @@ describe('Supply Form', () => {
     expect(screen.getByText("Por favor, introduce un numero de 6 decimales")).toBeVisible();
   });
 
-
+  it('Loads inital values and shows correct button text', async () => {
+    render(
+      <MemoryRouter>
+        <SupplyForm
+          handleSubmit={mockHandleSubmit}
+          initialValues={{
+            name: "Mi casa",
+            cups: "ES002100823463",
+            address: "Calle Escuadra 3",
+            partitionCoefficient: 0.002345,
+            cadastralReference: "AS35NB354223"
+          }}
+        />
+      </MemoryRouter>
+    );
+    expect(screen.getByDisplayValue('Mi casa')).toBeVisible();
+    expect(screen.getByDisplayValue('ES002100823463')).toBeVisible();
+    expect(screen.getByDisplayValue('Calle Escuadra 3')).toBeVisible();
+    expect(screen.getByDisplayValue('0.002345')).toBeVisible();
+    expect(screen.getByDisplayValue('AS35NB354223')).toBeVisible();
+    expect(screen.getByText('Guardar cambios')).toBeVisible();
+  })
 });

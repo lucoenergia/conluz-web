@@ -1,18 +1,17 @@
 import { useState, type FC } from "react";
 import { Box, Button, FormGroup, InputLabel, TextField } from "@mui/material";
-import type { CreateSupplyBody } from "../../api/models";
 
-interface FormValues {
+export interface SupplyFormValues {
   name?: string,
   cups?: string,
   address?: string,
-  partitionCoefficient?: string,
+  partitionCoefficient?: number,
   cadastralReference?: string
 }
 
 interface SupplyFormProps {
-  initialValues?: FormValues,
-  handleSubmit: (values: CreateSupplyBody) => void
+  initialValues?: SupplyFormValues,
+  handleSubmit: (values: SupplyFormValues) => void
 }
 
 
@@ -38,19 +37,18 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
     setPartitionCoefficient(e.target.value);
   }
 
-  const validateForm = (data: CreateSupplyBody): boolean => {
-    return partitionCoefficientIsValid(data.partitionCoefficient.toString())
+  const validateForm = (data: SupplyFormValues): boolean => {
+    return data.partitionCoefficient !== undefined && partitionCoefficientIsValid(data.partitionCoefficient.toString())
   }
   
   const onSubmit = async (data: FormData) => {
     const newSupplyPoint = {
       name: data.get('name') as string,
-      code: data.get('cups') as string,
+      cups: data.get('cups') as string,
       address: data.get('address') as string,
       partitionCoefficient: Number((data.get('partitionCoefficient') as string).replaceAll(',','.')),
-      personalId: '01234567Z' // TODO: correct this mapping once we have the endpoint to get logged user data
-      // TODO: endpoint not accepting cadastralReference. Once its update it must be included
-    } as CreateSupplyBody
+      cadastralReference: data.get('cadastralReference') as string
+    } as SupplyFormValues
     if (validateForm(newSupplyPoint)) {
       handleSubmit(newSupplyPoint);
     }
@@ -135,7 +133,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <Button type="submit" variant="contained" className="w-fit justify-self-center">
-          Crear punto de suministro
+          { initialName ? "Guardar cambios" : "Crear punto de suministro"}
         </Button>
       </Box>
   )

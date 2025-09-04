@@ -5,10 +5,11 @@ import type { FC } from "react";
 import { ProfileMenu } from "../menu/ProfileMenu";
 
 interface HeaderProps {
+  username?: string,
   onMenuClick: Function
 }
 
-export const Header: FC<HeaderProps> = ({ onMenuClick }) => {
+export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
 
   // zIndex is required to make SideMenu render under AppBar
   return <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -23,7 +24,7 @@ export const Header: FC<HeaderProps> = ({ onMenuClick }) => {
         <MenuIcon />
       </IconButton>
         <Logo responsive />
-        <ProfileMenu username="Remy Sharp" />
+        <ProfileMenu username={username} />
     </Toolbar>
   </AppBar>
 }

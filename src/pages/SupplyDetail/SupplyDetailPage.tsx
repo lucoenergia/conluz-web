@@ -103,12 +103,12 @@ export const SupplyDetailPage: FC = () => {
     <SupplyStatsCard consumption={0} selfconstumptionRate={0} selfconsumption={0} surplus={0} utilizationRate={0} />
     <Box className='grid md:grid-cols-2 gap-4'>
       {!isLoading && !error &&
-        measurementData.map((item) => (
-          <Graph title={item.name} values={data?.length? data : getMockedData()} xAxis={categories} info={item.info} />
+        measurementData.map((item, index) => (
+          <Graph key={index} title={item.name} values={data?.length? data : getMockedData()} xAxis={categories} info={item.info} />
         ))
       }
       {isLoading &&
-        Array.from({ length: 4 }).map(() => <LoadingGraphCard />)
+        Array.from({ length: 4 }).map((_,i) => <LoadingGraphCard key={i} />)
       }
     </Box>
   </Box>
