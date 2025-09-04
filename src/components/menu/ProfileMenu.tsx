@@ -9,6 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { MenuTemplate } from "./MenuTemplate";
 import { useAuthDispatch } from "../../api/auth.context";
 import { useNavigate } from "react-router";
+import { useLoggedUserDispatch } from "../../api/logged-user.context";
 
 interface ProfileMenuProps {
   username: string
@@ -17,6 +18,7 @@ interface ProfileMenuProps {
 export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const dispatchAuth = useAuthDispatch();
+  const dispatchLoggedUser = useLoggedUserDispatch();
   const navigate = useNavigate();
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -30,6 +32,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
   const logout = () => {
     dispatchAuth(null);
+    dispatchLoggedUser(null);
     navigate('/login');
   }
   
