@@ -7,6 +7,7 @@ import { createTheme, GlobalStyles, StyledEngineProvider } from '@mui/material'
 import { ThemeProvider } from '@emotion/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './api/auth.context.tsx'
+import { LoggedUserProvider } from './api/logged-user.context.tsx'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,16 +32,18 @@ const theme = createTheme({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider initialState={window.localStorage.getItem('token')}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <StyledEngineProvider enableCssLayer>
-            <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-          </StyledEngineProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+      <LoggedUserProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider theme={theme}>
+            <StyledEngineProvider enableCssLayer>
+              <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </StyledEngineProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </LoggedUserProvider>
     </AuthProvider>
   </StrictMode>,
 )

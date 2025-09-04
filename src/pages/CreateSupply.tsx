@@ -5,17 +5,19 @@ import { createSupply } from "../api/supplies/supplies";
 import type { CreateSupplyBody } from "../api/models";
 import { useNavigate } from "react-router";
 import { SupplyForm, type SupplyFormValues } from "../components/supplyForm/SupplyForm";
+import { useLoggedUser } from "../api/logged-user.context";
 
 export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
-
+  const loggedUser = useLoggedUser();
+  
   const handleSubmit = async ({name, cups, address, partitionCoefficient}: SupplyFormValues) => {
     const newSupply = {
       name,
       code: cups,
       address,
       partitionCoefficient,
-      personalId: "01234567Z" //TODO: Subtitute for correct personalId when endpoint is ready
+      personalId: loggedUser?.personalId
       // TODO: endpoint not accepting cadastralReference. Once its update it must be included
     } as CreateSupplyBody
     const response = await createSupply(newSupply);
