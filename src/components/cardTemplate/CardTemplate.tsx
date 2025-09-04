@@ -7,5 +7,5 @@ interface CardTemplateProps {
 }
 
 export const CardTemplate: FC<CardTemplateProps> = ({children, className}) => {
- return <Card  className={`border-black rounded-xl focus:border-yellow-50 w-full ${className}`}>{children}</Card>
+ return <Card className={`border-black rounded-xl focus:border-yellow-50 w-full ${className}`}>{children}</Card>
 }
