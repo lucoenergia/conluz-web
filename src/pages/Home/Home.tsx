@@ -1,12 +1,15 @@
-import { useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import { StatsCard } from "../../components/StatsCard/StatsCard";
-import { Autocomplete, Box, TextField, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { BreadCrumb } from "../../components/breadCrumb/BreadCrumb";
 import { Graph } from "../../components/graph/Graph";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
+import { DropdownSelector } from "../../components/forms/DropdownSelector";
+
+// TODO: Set monitorig data methods when endpoints are ready
 
 export const HomePage: FC = () => {
-  const [selectedSupplyPoint, setSelectedSupplyPoint] = useState<string|undefined>();
+  const [selectedSupplyPoint, setSelectedSupplyPoint] = useState<string|null>(null);
 
   return (
     <Box className="grid md:grid-cols-2 gap-x-8 gap-y-4">
@@ -19,26 +22,21 @@ export const HomePage: FC = () => {
 };
 
 interface SupplyPointAutocompleteProps {
-  value?: string,
-  onChange: (newValue: string | undefined) => void
+  value: string | null,
+  onChange: (newValue: string | null) => void
 }
 
 const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({value, onChange}) => {
   const { data: supplyPoints, isLoading } = useGetAllSupplies({});
 
-  const options = useMemo(() => supplyPoints?.items ? supplyPoints.items.map((sp) => ({label: sp.name, value: sp.id})) : [], [supplyPoints])
-  const selectedValue = useMemo(() => options.find((option) => option.value === value), [options])
+  const options = useMemo(() => supplyPoints?.items ? supplyPoints.items.map((sp) => ({label: sp.name ? sp.name : "", value: sp.id ? sp.id : ''})) : [], [supplyPoints])
+  useEffect(() => { // Preselect the first supply point once is loaded
+    if (options.length && value === null) {
+      onChange(options[0].value)
+    }
+  }, [options, value])
   return (
-    <Autocomplete
-      className="md:col-span-2 justify-self-start min-w-100"
-      value={selectedValue}
-      onChange={(_: any, newValue) => {
-        onChange(newValue ? newValue.value : undefined);
-      }}
-      loading={isLoading}
-      options={options}
-      renderInput={(params) => <TextField key={params.id} {...params} label="Puntos de suministro" />}
-    />
+    <DropdownSelector options={options} value={value} onChange={onChange} isLoading={isLoading} label="Puntos de suministro"/>
   )
 }
 
