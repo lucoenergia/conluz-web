@@ -30,6 +30,8 @@ export const getCreateUserResponseMock = (overrideResponse: Partial< UserRespons
 
 export const getCreateUsersWithFileResponseMock = (overrideResponse: Partial< CreateUsersInBulkResponse > = {}): CreateUsersInBulkResponse => ({created: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), errors: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), errorMessage: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})), undefined]), ...overrideResponse})
 
+export const getGetCurrentUserResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined]), ...overrideResponse})
+
 
 export const getUpdateUserMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<UserResponse> | UserResponse)) => {
   return http.put('*/api/v1/users/:id', async (info) => {await delay(1000);
@@ -108,6 +110,18 @@ export const getCreateUsersWithFileMockHandler = (overrideResponse?: CreateUsers
       })
   })
 }
+
+export const getGetCurrentUserMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<UserResponse> | UserResponse)) => {
+  return http.get('*/api/v1/users/current', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetCurrentUserResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
 export const getUsersMock = () => [
   getUpdateUserMockHandler(),
   getDeleteUserMockHandler(),
@@ -115,5 +129,6 @@ export const getUsersMock = () => [
   getCreateUserMockHandler(),
   getDisableUserMockHandler(),
   getDisableUser1MockHandler(),
-  getCreateUsersWithFileMockHandler()
+  getCreateUsersWithFileMockHandler(),
+  getGetCurrentUserMockHandler()
 ]

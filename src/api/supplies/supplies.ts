@@ -612,6 +612,144 @@ export const useCreateSupply = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * This endpoint enables a supply by its unique identifier.
+
+Authentication via bearer token is required.
+Required Role: ADMIN
+
+The operation is idempotent: enabling an already enabled supply will not fail and will return the current state.
+
+ * @summary Enables a supply by ID
+ */
+export const enableSupply = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyResponse>(
+      {url: `/api/v1/supplies/${id}/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableSupplyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['enableSupply'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableSupply>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  enableSupply(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof enableSupply>>>
+    
+    export type EnableSupplyMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Enables a supply by ID
+ */
+export const useEnableSupply = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableSupply>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableSupplyMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint disables a supply by its unique identifier.
+
+Authentication via bearer token is required.
+Required Role: ADMIN
+
+The operation is idempotent: disabling an already disabled supply will not fail and will return the current state.
+
+ * @summary Disables a supply by ID
+ */
+export const disableSupply = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyResponse>(
+      {url: `/api/v1/supplies/${id}/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getDisableSupplyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['disableSupply'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableSupply>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  disableSupply(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof disableSupply>>>
+    
+    export type DisableSupplyMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Disables a supply by ID
+ */
+export const useDisableSupply = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableSupply>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDisableSupplyMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * This endpoint facilitates the creation of a set of supplies partitions within the system by
 importing a CSV file.
 
