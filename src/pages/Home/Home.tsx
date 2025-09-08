@@ -30,11 +30,11 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({value, onCha
   const { data: supplyPoints, isLoading } = useGetAllSupplies({});
 
   const options = useMemo(() => supplyPoints?.items ? supplyPoints.items.map((sp) => ({label: sp.name ? sp.name : "", value: sp.id ? sp.id : ''})) : [], [supplyPoints])
-  useEffect(() => { // Preselect the first supply point once is loaded
+  useEffect(() => { // Preselect the first supply point once options are loaded
     if (options.length && value === null) {
       onChange(options[0].value)
     }
-  }, [options, value])
+  }, [options])
   return (
     <DropdownSelector options={options} value={value} onChange={onChange} isLoading={isLoading} label="Puntos de suministro"/>
   )
