@@ -47,7 +47,6 @@ export const Login: FC = () => {
       }
     } catch (error) {
       setLoginError(true);
-      console.log(error)
     }
   };
   return <Box component="form" className="p-7 w-full" action={handleSubmit}>

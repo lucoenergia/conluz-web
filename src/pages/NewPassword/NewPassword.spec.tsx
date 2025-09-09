@@ -19,13 +19,11 @@ describe('NewPassword component', () => {
 
     const passwordInput = screen.getByPlaceholderText(/escribe aquí tu nueva contraseña/i);
     const repeatPasswordInput = screen.getByPlaceholderText(/repite aquí tu nueva contraseña/i);
-    const submitButton = screen.getByRole('button', { name: /enviar/i });
 
     await userEvent.type(passwordInput, 'clave123');
     await userEvent.type(repeatPasswordInput, 'otraClave123');
-    await userEvent.click(submitButton);
 
-    expect(await screen.findByText(/la contraseña no coincide/i)).toBeInTheDocument();
+    expect(await screen.findByText(/las contraseñas no coinciden/i)).toBeInTheDocument();
   });
 
   test('does not show errors if passwords are valid and match', async () => {
