@@ -12,15 +12,13 @@ import { DisableConfirmationModal } from "../modals/DisableConfirmationModal"
 
 interface DisplayMenuProps {
     code: string,
-    disableSupplyPoint: (code:string) => void
+    disableSupplyPoint: (code:string) => void,
+    supplyPointId: string,
+    disableSuccess: boolean
 }
 
-interface DisplayMenuProps {
-  supplyPointId: string
-}
-
-export const DisplayMenu: FC<DisplayMenuProps><DisplayMenuProps> = ({ supplyPointId }{code, disableSupplyPoint}) => {
-  const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+export const DisplayMenu: FC<DisplayMenuProps> = ({ disableSuccess, supplyPointId, code, disableSupplyPoint}) => {
+const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 const [isModalOpen, setIsModalOpen] = useState(false);  
 const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
 
@@ -29,12 +27,12 @@ const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
   };
 
-  const handleCloseUserMenu = (event: any) => {
-    event.preventDefault();
+  const handleCloseUserMenu = () => {
     setAnchorElement(null);
   };
 
-const handleOpen = () => {
+const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+      event.preventDefault();
     setIsModalOpen(true);
     handleCloseUserMenu();
 }
@@ -47,7 +45,6 @@ const handleCloseDisableModal = () => {
 const handleCloseConfirModal = () => {
     setIsConfirmationModalOpen(false);
 }
-
 
   return <>
     <IconButton onClick={handleOpenUserMenu}><MoreVertIcon /></IconButton>
@@ -86,7 +83,7 @@ const handleCloseConfirModal = () => {
                 code={code} 
                 disableSupplyPoint={disableSupplyPoint}
                 onClose={handleCloseDisableModal}/>
-            <DisableConfirmationModal isOpen={isConfirmationModalOpen} onClose={handleCloseConfirModal} code={code}/>
+            <DisableConfirmationModal isOpen={isConfirmationModalOpen && disableSuccess} onClose={handleCloseConfirModal} code={code}/>
     </MenuTemplate>
   </>
 }

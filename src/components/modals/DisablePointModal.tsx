@@ -25,7 +25,8 @@ export const DisablePointModal: React.FC<DisablePointModalProps> = ({
   disableSupplyPoint, 
   onClose}) => {
 
-  const handleDisable = () => {
+  const handleDisable = (event: React.MouseEvent<HTMLElement>) => {
+          event.preventDefault();
           disableSupplyPoint(code); 
           onClose();
         };
