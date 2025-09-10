@@ -7,6 +7,7 @@ import WhereToVoteOutlinedIcon from '@mui/icons-material/WhereToVoteOutlined';
 import { TagComponent } from "../tag/Tag";
 import { DisplayMenu } from "../menu/DisplayMenu";
 import { Link } from "react-router";
+import { useDisableSupply } from "../../api/supplies/supplies";
 
 
 interface SupplyCardProps {
@@ -31,10 +32,12 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   lastMeassurement = 0
 }) => {
 
-  const disableSupplyPoint = (supplyCode:string) => {
-    //con el code, llamada a la API para deshabilitarlo
-    console.log('punto de suministro deshabilitado: ', supplyCode)
+const disableSupply = useDisableSupply()
+  const disableSupplyPoint = () => {
+    disableSupply.mutate({id:id});
+    console.log('deshabilitando: ', id)
   }
+const disableSuccess = disableSupply.isSuccess
 
   return <Link to={`/supply-points/${id}`}>
      <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-center justify-items-center md:content-center md:grid-cols-10 gap-4 mt-5'}>
@@ -71,7 +74,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         <Typography className="text-sm text-gray-500 text-center md:hidden">{lastMeassurement} kWh</Typography>
       </Box>
       <Box>
-        <DisplayMenu supplyPointId={id} code={code} disableSupplyPoint={disableSupplyPoint}/>
+        <DisplayMenu supplyPointId={id} code={code} disableSupplyPoint={disableSupplyPoint} disableSuccess={disableSuccess}/>
       </Box>
   </CardTemplate>
     </Link>
