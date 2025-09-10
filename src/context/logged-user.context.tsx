@@ -4,7 +4,7 @@ import {
   useContext,
   useState,
 } from 'react';
-import type { UserResponse } from './models';
+import type { UserResponse } from '../api/models';
 
 type Dispatch = (User: UserResponse| null) => void;
 

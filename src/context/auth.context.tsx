@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { AXIOS_INSTANCE } from './custom-instance';
+import { AXIOS_INSTANCE } from '../api/custom-instance';
 type Dispatch = (Auth: string | null) => void;
 
 type AuthProviderProps = { children: ReactNode; initialState?: string | null };

@@ -1,14 +1,15 @@
-import { useState, type FC } from "react";
-import { Alert, Box, Slide, Snackbar, Typography } from "@mui/material";
+import { type FC } from "react";
+import { Box, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import type { UpdateSupplyBody } from "../../api/models";
 import { BreadCrumb } from "../../components/breadCrumb/BreadCrumb";
 import { SupplyForm, type SupplyFormValues } from "../../components/supplyForm/SupplyForm";
 import { updateSupply, useGetSupply } from "../../api/supplies/supplies";
+import { useErrorDispatch } from "../../context/error.context";
 
 export const EditSupplyPage: FC = () => {
   const { supplyPointId = '' } = useParams();
-  const [submitError, setSubmitError] = useState(false);
+  const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
 
   const { data: supplyPoint, isLoading, error } = useGetSupply(supplyPointId);
@@ -26,10 +27,10 @@ export const EditSupplyPage: FC = () => {
       if (response) {
         navigate('/supply-points');
       } else {
-        setSubmitError(true)
+        errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde")
       }
     } catch (e) {
-      setSubmitError(true);
+        errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde")
     }
   }
 
@@ -40,9 +41,6 @@ export const EditSupplyPage: FC = () => {
       {!isLoading && !error &&
         <SupplyForm initialValues={{ name: supplyPoint?.name, cups: supplyPoint?.code, address: supplyPoint?.address, partitionCoefficient: supplyPoint?.partitionCoefficient }} handleSubmit={handleSubmit} />
       }
-      <Snackbar open={submitError} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} slots={{ transition: Slide }}>
-        <Alert severity="error">Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde</Alert>
-      </Snackbar>
     </Box>
   )
 }

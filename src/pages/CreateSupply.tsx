@@ -1,16 +1,17 @@
-import { useState, type FC } from "react";
+import { type FC } from "react";
 import { BreadCrumb } from "../components/breadCrumb/BreadCrumb";
-import { Alert, Box, Slide, Snackbar, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { createSupply } from "../api/supplies/supplies";
 import type { CreateSupplyBody } from "../api/models";
 import { useNavigate } from "react-router";
 import { SupplyForm, type SupplyFormValues } from "../components/supplyForm/SupplyForm";
-import { useLoggedUser } from "../api/logged-user.context";
+import { useLoggedUser } from "../context/logged-user.context";
+import { useErrorDispatch } from "../context/error.context";
 
 export const CreateSupplyPage: FC = () => {
-  const [submitError, setSubmitError] = useState(false);
   const navigate = useNavigate();
   const loggedUser = useLoggedUser();
+  const errorDispatch = useErrorDispatch();
 
   const handleSubmit = async ({ name, cups, address, partitionCoefficient }: SupplyFormValues) => {
     try {
@@ -26,10 +27,10 @@ export const CreateSupplyPage: FC = () => {
       if (response) {
         navigate('/supply-points');
       } else {
-        setSubmitError(true)
+        errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde")
       }
     } catch (e) {
-      setSubmitError(true);
+        errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde")
     }
   }
 
@@ -38,9 +39,6 @@ export const CreateSupplyPage: FC = () => {
       <BreadCrumb steps={[{ label: 'Consumo', href: '/supply-points' }, { label: 'Nuevo', href: '#' }]} />
       <Typography variant="h1" className="text-3xl">Crear nuevo punto de suministro</Typography>
       <SupplyForm handleSubmit={handleSubmit} />
-      <Snackbar open={submitError} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} slots={{ transition: Slide }}>
-        <Alert severity="error">Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde</Alert>
-      </Snackbar>
     </Box>
   )
 }
