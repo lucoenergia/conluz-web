@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type FC } from "react"
-import { Box } from "@mui/material"
+import { Alert, Box, Slide, Snackbar } from "@mui/material"
 import { useParams } from "react-router";
 import { LoadingGraphCard } from "../../components/graph/LoadingGraphCard";
 import { Graph } from "../../components/graph/Graph";
@@ -111,5 +111,14 @@ export const SupplyDetailPage: FC = () => {
         Array.from({ length: 4 }).map((_,i) => <LoadingGraphCard key={i} />)
       }
     </Box>
+    <Snackbar open={error !== null} anchorOrigin={{ vertical: 'bottom', horizontal: 'right'}} slots={{ transition: Slide}}>
+      <Alert severity="error">Hay habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde</Alert>          
+    </Snackbar>
+    <Snackbar open={error !== null} anchorOrigin={{ vertical: 'bottom', horizontal: 'right'}} slots={{ transition: Slide}}>
+      <Alert severity="error">Hay habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde</Alert>          
+    </Snackbar>
+    <Snackbar open={error !== null} anchorOrigin={{ vertical: 'bottom', horizontal: 'right'}} slots={{ transition: Slide}}>
+      <Alert severity="error">Hay habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde</Alert>          
+    </Snackbar>
   </Box>
 }

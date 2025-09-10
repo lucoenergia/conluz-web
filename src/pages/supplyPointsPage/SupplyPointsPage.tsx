@@ -1,5 +1,5 @@
 import { useMemo, useState, type FC } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Alert, Box, Button, Slide, Snackbar, Typography } from "@mui/material";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/breadCrumb/BreadCrumb";
@@ -83,5 +83,8 @@ export const SupplyPointsPage: FC = () => {
         }
       </CardList>
     }
+    <Snackbar open={error !== null} anchorOrigin={{ vertical: 'bottom', horizontal: 'right'}} slots={{ transition: Slide}}>
+      <Alert severity="error">Hay habido un problema al cargar los puntos de suministro. Por favor, inténtalo más tarde</Alert>          
+    </Snackbar>
   </Box>
 }
