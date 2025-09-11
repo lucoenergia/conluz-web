@@ -9,6 +9,7 @@ import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutl
 import NotInterestedOutlinedIcon from '@mui/icons-material/NotInterestedOutlined';
 import { DisablePointModal } from "../modals/DisablePointModal"
 import { DisableConfirmationModal } from "../modals/DisableConfirmationModal"
+import { useNavigate } from "react-router"
 
 interface DisplayMenuProps {
     code: string,
@@ -18,6 +19,7 @@ interface DisplayMenuProps {
 }
 
 export const DisplayMenu: FC<DisplayMenuProps> = ({ disableSuccess, supplyPointId, code, disableSupplyPoint}) => {
+const navigate = useNavigate();
 const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 const [isModalOpen, setIsModalOpen] = useState(false);  
 const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
@@ -39,11 +41,18 @@ const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
 
 const handleCloseDisableModal = () => {
     setIsModalOpen(false);
-    setIsConfirmationModalOpen(true);
+    // setIsConfirmationModalOpen(true);
+    navigate("/supply-points");
+};
+
+const handleDisableConfirmed = () => {
+  setIsModalOpen(false);
+  setIsConfirmationModalOpen(true);
 };
 
 const handleCloseConfirModal = () => {
     setIsConfirmationModalOpen(false);
+    navigate("/supply-points");
 }
 
   return <>
@@ -82,7 +91,9 @@ const handleCloseConfirModal = () => {
                 isOpen={isModalOpen} 
                 code={code} 
                 disableSupplyPoint={disableSupplyPoint}
-                onClose={handleCloseDisableModal}/>
+                onCancel={handleCloseDisableModal}
+                onDisable={handleDisableConfirmed}/>
+
             <DisableConfirmationModal isOpen={isConfirmationModalOpen && disableSuccess} onClose={handleCloseConfirModal} code={code}/>
     </MenuTemplate>
   </>

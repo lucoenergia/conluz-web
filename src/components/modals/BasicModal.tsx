@@ -8,18 +8,6 @@ interface BasicModalProps {
   children: React.ReactNode; 
 }
 
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-};
-
 export const BasicModal: React.FC<BasicModalProps> = ({isOpen, onClose, children}) => {
 
   const onCloseModal = () => {
@@ -32,16 +20,9 @@ export const BasicModal: React.FC<BasicModalProps> = ({isOpen, onClose, children
         open={isOpen}
         onClose={onCloseModal}
         aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-descriptionimport Modal from '@mui/material/Modal';"
+        aria-describedby="modal-modal-description;"
       >
-        <Box sx={{
-          ...style,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          gap: 2, 
-        }}>
+        <Box className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] bg-white border-2 border-black shadow-2xl p-4 flex flex-col justify-center items-center gap-2">  
             {children}
         </Box>
       </Modal>
