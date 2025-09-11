@@ -8,30 +8,24 @@ interface DisablePointModalProps {
   isOpen: boolean,
   code: string,
   disableSupplyPoint: (code:string) => void,
-  onClose: () => void
+  onCancel: () => void;
+  onDisable: () => void;
 }
-
-const buttonStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  textAlign: 'center' as const,
-  lineHeight: 1
-};
 
 export const DisablePointModal: React.FC<DisablePointModalProps> = ({
   isOpen, 
   code, 
   disableSupplyPoint, 
-  onClose}) => {
+  onCancel,
+  onDisable}) => {
 
   const handleDisable = (event: React.MouseEvent<HTMLElement>) => {
           event.preventDefault();
           disableSupplyPoint(code); 
-          onClose();
+          onDisable();
         };
 
-  return <BasicModal isOpen={isOpen} onClose={onClose}>
+  return <BasicModal isOpen={isOpen} onClose={onCancel}>
           <Typography id="modal-modal-title" variant="h6" component="h2" >
             Deshabilitar punto de suministro
           </Typography>
@@ -44,9 +38,9 @@ export const DisablePointModal: React.FC<DisablePointModalProps> = ({
             <Button 
               variant="outlined" 
               color='error' 
-              sx={{buttonStyle}} 
-              onClick={handleDisable}>Deshabilitar</Button>
-            <Button variant="outlined" color='primary' onClick={onClose}>Cancelar</Button>
+              onClick={handleDisable}
+              className='flex items-center justify-center text-center leading-none'>Deshabilitar</Button>
+            <Button variant="outlined" color='primary' onClick={onCancel}>Cancelar</Button>
           </Box>
     </BasicModal>
 }
