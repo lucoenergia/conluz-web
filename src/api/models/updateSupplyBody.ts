@@ -12,6 +12,8 @@ export interface UpdateSupplyBody {
   name?: string;
   /** @minLength 1 */
   address: string;
+  /** @minLength 1 */
+  addressRef: string;
   partitionCoefficient: number;
   enabled?: boolean;
   datadisValidDateFrom?: string;

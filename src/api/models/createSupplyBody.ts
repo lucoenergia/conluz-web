@@ -13,6 +13,8 @@ export interface CreateSupplyBody {
   personalId: string;
   /** @minLength 1 */
   address: string;
+  /** @minLength 1 */
+  addressRef: string;
   partitionCoefficient: number;
   name?: string;
 }
