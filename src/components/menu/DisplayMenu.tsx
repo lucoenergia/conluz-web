@@ -1,5 +1,5 @@
 import { useState, type FC } from "react"
-import { Divider, IconButton } from "@mui/material"
+import { Divider, IconButton, MenuItem } from "@mui/material"
 import { MenuTemplate } from "./MenuTemplate"
 import { MenuLinkItem } from "./MenuLinkItem"
 import { LabeledIcon } from "../labeled-icon/LabeledIcon"
@@ -7,23 +7,53 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 import NotInterestedOutlinedIcon from '@mui/icons-material/NotInterestedOutlined';
+import { DisablePointModal } from "../modals/DisablePointModal"
+import { DisableConfirmationModal } from "../modals/DisableConfirmationModal"
+import { useNavigate } from "react-router"
 
 interface DisplayMenuProps {
-  supplyPointId: string
+    code: string,
+    disableSupplyPoint: (code:string) => void,
+    supplyPointId: string,
+    disableSuccess: boolean
 }
 
-export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId }) => {
-  const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+export const DisplayMenu: FC<DisplayMenuProps> = ({ disableSuccess, supplyPointId, code, disableSupplyPoint}) => {
+const navigate = useNavigate();
+const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+const [isModalOpen, setIsModalOpen] = useState(false);  
+const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
 
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     setAnchorElement(event.currentTarget);
   };
 
-  const handleCloseUserMenu = (event: any) => {
-    event.preventDefault();
+  const handleCloseUserMenu = () => {
     setAnchorElement(null);
   };
+
+const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+      event.preventDefault();
+    setIsModalOpen(true);
+    handleCloseUserMenu();
+}
+
+const handleCloseDisableModal = () => {
+    setIsModalOpen(false);
+    // setIsConfirmationModalOpen(true);
+    navigate("/supply-points");
+};
+
+const handleDisableConfirmed = () => {
+  setIsModalOpen(false);
+  setIsConfirmationModalOpen(true);
+};
+
+const handleCloseConfirModal = () => {
+    setIsConfirmationModalOpen(false);
+    navigate("/supply-points");
+}
 
   return <>
     <IconButton onClick={handleOpenUserMenu}><MoreVertIcon /></IconButton>
@@ -49,14 +79,22 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId }) => {
           label="Editar" />
       </MenuLinkItem>
       <Divider />
-      <MenuLinkItem to="/disable">
+      <MenuItem onClick={handleOpen}>
         <LabeledIcon
           variant="compact"
           justify="between"
           iconPosition="right"
           icon={NotInterestedOutlinedIcon}
           label="Deshabilitar" />
-      </MenuLinkItem>
+      </MenuItem>
+            <DisablePointModal 
+                isOpen={isModalOpen} 
+                code={code} 
+                disableSupplyPoint={disableSupplyPoint}
+                onCancel={handleCloseDisableModal}
+                onDisable={handleDisableConfirmed}/>
+
+            <DisableConfirmationModal isOpen={isConfirmationModalOpen && disableSuccess} onClose={handleCloseConfirModal} code={code}/>
     </MenuTemplate>
   </>
 }
