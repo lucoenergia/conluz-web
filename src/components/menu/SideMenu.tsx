@@ -2,30 +2,18 @@ import { Box, Drawer, Toolbar } from "@mui/material";
 import type { FC } from "react";
 import { MenuLinkItem } from "./MenuLinkItem";
 import { LabeledIcon } from "../labeled-icon/LabeledIcon";
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import SolarPowerRoundedIcon from '@mui/icons-material/SolarPowerRounded';
-import ElectricBoltRoundedIcon from '@mui/icons-material/ElectricBoltRounded';
-import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
-import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
-import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import useWindowDimensions from "../../utils/useWindowDimensions";
-import { MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../../utils/constants";
+import { MENU_ITEMS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../../utils/constants";
 
-const MENU_ITEMS = [
-  { to: "/", icon: HomeRoundedIcon, label: "Inicio" },
-  { to: "/production", icon: SolarPowerRoundedIcon, label: "Producción" },
-  { to: "/supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo" },
-  { to: "/memebers", icon: GroupsRoundedIcon, label: "Socios" },
-  { to: "/contact", icon: SupportAgentRoundedIcon, label: "Contacto" },
-  { to: "/help", icon: InfoRoundedIcon, label: "Ayuda" },
-]
 
 interface SideMenuProps {
   isMenuOpened: boolean
   onMenuClose: Function
+  menuItems: typeof MENU_ITEMS
+  selectedId?: string
 }
 
-export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose }) => {
+export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuItems, selectedId }) => {
   const { width } = useWindowDimensions();
   const drawerVariant = width < MIN_DESKTOP_WIDTH ? 'temporary' : 'persistent';
 
@@ -33,8 +21,8 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose }) => {
   return <Drawer variant={drawerVariant} open={isMenuOpened} onClose={() => onMenuClose(false)} >
     <Box className="max-w-full" sx={{ width: SIDEMENU_WIDTH}}>
       <Toolbar />
-      { MENU_ITEMS.map(menuItem => 
-        <MenuLinkItem key={menuItem.to} to={menuItem.to}><LabeledIcon icon={menuItem.icon} label={menuItem.label} /></MenuLinkItem>
+      { menuItems.map(menuItem => 
+        <MenuLinkItem key={menuItem.id} selected={selectedId === menuItem.id} to={menuItem.to}><LabeledIcon icon={menuItem.icon} label={menuItem.label} /></MenuLinkItem>
       )}
     </Box>
   </Drawer>
