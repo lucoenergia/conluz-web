@@ -6,7 +6,7 @@ export interface SupplyFormValues {
   cups?: string,
   address?: string,
   partitionCoefficient?: number,
-  cadastralReference?: string
+  addressRef?: string
 }
 
 interface SupplyFormProps {
@@ -15,12 +15,12 @@ interface SupplyFormProps {
 }
 
 
-export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initialName='', cups: initialCups='', address: initialAddress='', partitionCoefficient: initialPartitionCoefficient='', cadastralReference: initialCadastralReference='' } = {}, handleSubmit }) => {
+export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initialName='', cups: initialCups='', address: initialAddress='', partitionCoefficient: initialPartitionCoefficient='', addressRef: initialAddressRef='' } = {}, handleSubmit }) => {
   const [name, setName] = useState(initialName);
   const [cups, setCups] = useState(initialCups);
   const [address, setAddress] = useState(initialAddress);
   const [partitionCoefficient, setPartitionCoefficient] = useState(initialPartitionCoefficient);
-  const [cadastralReference, setCadastralReference] = useState(initialCadastralReference);
+  const [addressRef, setAddressRef] = useState(initialAddressRef);
 
   const [partitionCoefficientError, setPartitionCoefficientError] = useState<string | undefined>()
 
@@ -47,7 +47,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
       cups: data.get('cups') as string,
       address: data.get('address') as string,
       partitionCoefficient: Number((data.get('partitionCoefficient') as string).replaceAll(',','.')),
-      cadastralReference: data.get('cadastralReference') as string
+      addressRef: data.get('addressRef') as string
     } as SupplyFormValues
     if (validateForm(newSupplyPoint)) {
       handleSubmit(newSupplyPoint);
@@ -118,13 +118,13 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel htmlFor="cadastralReference">Referencia catastral</InputLabel>
+          <InputLabel htmlFor="addressRef">Referencia catastral</InputLabel>
           <TextField
-            id="cadastralReference"
+            id="addressRef"
             type="text"
-            name="cadastralReference"
-            value={cadastralReference}
-            onChange={(e) => setCadastralReference(e.target.value)}
+            name="addressRef"
+            value={addressRef}
+            onChange={(e) => setAddressRef(e.target.value)}
             slotProps={{ htmlInput: { maxLength: 50 }}}
             autoFocus
             required

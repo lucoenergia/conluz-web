@@ -13,15 +13,15 @@ export const CreateSupplyPage: FC = () => {
   const loggedUser = useLoggedUser();
   const errorDispatch = useErrorDispatch();
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient }: SupplyFormValues) => {
+  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
     try {
       const newSupply = {
         name,
         code: cups,
         address,
         partitionCoefficient,
-        personalId: loggedUser?.personalId
-        // TODO: endpoint not accepting cadastralReference. Once its update it must be included
+        personalId: loggedUser?.personalId,
+        addressRef
       } as CreateSupplyBody
       const response = await createSupply(newSupply);
       if (response) {

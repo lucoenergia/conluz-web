@@ -51,7 +51,7 @@ describe('Supply Form', () => {
         cups: "ES002100823463",
         address: 'Calle Escuadra 3',
         partitionCoefficient: 0.002345,
-        cadastralReference:"AS35NB354223"
+        addressRef:"AS35NB354223"
       });
   });
   
@@ -78,7 +78,7 @@ describe('Supply Form', () => {
             cups: "ES002100823463",
             address: "Calle Escuadra 3",
             partitionCoefficient: 0.002345,
-            cadastralReference: "AS35NB354223"
+            addressRef: "AS35NB354223"
           }}
         />
       </MemoryRouter>
