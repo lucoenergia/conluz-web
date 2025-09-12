@@ -18,6 +18,8 @@ export interface SupplyResponse {
   name?: string;
   /** Address of the supply */
   address?: string;
+  /** Reference ID of the address */
+  addressRef?: string;
   /** Address of the supply */
   partitionCoefficient?: number;
   /** Whether the supply is enabled or disabled */
