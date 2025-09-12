@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type FC } from "react"
+import { useCallback, useEffect, useMemo, useState, type FC } from "react"
 import { Box } from "@mui/material"
 import { useParams } from "react-router";
 import { LoadingGraphCard } from "../../components/graph/LoadingGraphCard";
@@ -11,13 +11,14 @@ import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction,
 import { useGetSupply } from "../../api/supplies/supplies";
 import { LoadingSupplyDetailCard } from "../../components/supplyDetailCard/loadingSupplyDetailCard";
 import { getTimeRange } from "../../utils/getTimeRange";
+import { useErrorDispatch } from "../../context/error.context";
 
 
 export const SupplyDetailPage: FC = () => {
   const { supplyPointId = '' } = useParams();
   const [startDate, setStartDate] = useState(new Date())
   const [endDate, setEndDate] = useState(new Date())
-
+  const errorDispatch = useErrorDispatch();
   const timeRangeData: string = useMemo(() => getTimeRange(startDate, endDate), [startDate, endDate]);
 
   const handleFilterChange = (startDate: Date, endDate: Date) => {
@@ -36,6 +37,10 @@ export const SupplyDetailPage: FC = () => {
   const isLoading = hourlyIsLoading || dailyIsLoading || monthlyIsLoading || yearlyIsLoading;
   const error = hourlyError || dailyError || montlyError || yearlyError;
 
+  useEffect(() => {
+    if(error)
+      errorDispatch("Hay habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde")
+  }, [error])
 
   const data = useMemo(() => {
     switch (timeRangeData) {

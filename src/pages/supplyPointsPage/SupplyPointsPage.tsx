@@ -1,4 +1,4 @@
-import { useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
@@ -8,6 +8,7 @@ import { CardList } from "../../components/cardList/CardList";
 import { SupplyCard } from "../../components/supplyCard/SupplyCard";
 import { LoadingSupplyCard } from "../../components/supplyCard/LoadingSupplyCard";
 import { Link } from "react-router";
+import { useErrorDispatch } from "../../context/error.context";
 
 export interface itemListType {
   id: string,
@@ -21,8 +22,14 @@ export interface itemListType {
 
 export const SupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState('');
-
+  const errorDispatch = useErrorDispatch();
   const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllSupplies({});
+
+  useEffect(() => {
+    if(error){
+      errorDispatch("Hay habido un problema al cargar los puntos de suministro. Por favor, inténtalo más tarde");
+    }
+  }, [error]);
 
   const filteredItems: SupplyResponse[] = useMemo(() => {
     return responseFromApi.filter((item) =>

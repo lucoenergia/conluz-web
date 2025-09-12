@@ -4,8 +4,8 @@ import { ProfileMenu } from "./ProfileMenu";
 import { screen, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from '@testing-library/user-event'
-import { AuthProvider } from '../../api/auth.context';
-import { LoggedUserProvider } from '../../api/logged-user.context';
+import { AuthProvider } from '../../context/auth.context';
+import { LoggedUserProvider } from '../../context/logged-user.context';
 
 function setup() {
   render(

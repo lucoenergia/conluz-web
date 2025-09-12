@@ -6,12 +6,13 @@ import { BrowserRouter } from 'react-router'
 import { createTheme, GlobalStyles, StyledEngineProvider } from '@mui/material'
 import { ThemeProvider } from '@emotion/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider } from './api/auth.context.tsx'
-import { LoggedUserProvider } from './api/logged-user.context.tsx'
+import { AuthProvider } from './context/auth.context.tsx'
+import { LoggedUserProvider } from './context/logged-user.context.tsx'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      // refetchOnWindowFocus: false,
       throwOnError: (error: any) => error.response?.status === 401
     }
   }

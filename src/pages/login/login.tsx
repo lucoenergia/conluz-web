@@ -3,9 +3,9 @@ import { Box, Button, Checkbox, FormControlLabel, FormGroup, InputLabel, Link, T
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
 import { Link as RouterLink, useNavigate } from 'react-router'
 import { login } from "../../api/authentication/authentication";
-import { useAuthDispatch } from "../../api/auth.context";
 import { LabeledIcon } from "../../components/labeled-icon/LabeledIcon";
 import { PasswordInput } from "../../components/forms/PasswordInput";
+import { useAuthDispatch } from "../../context/auth.context";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState(false);

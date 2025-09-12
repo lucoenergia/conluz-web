@@ -6,8 +6,9 @@ interface MenuLinkItemProps {
   to: string,
   children?: ReactNode,
   className? : string
+  selected?: boolean
 }
 
-export const MenuLinkItem: FC<MenuLinkItemProps> = ({ to, children, className }) => {
-  return <Link to={to} className={className}><MenuItem>{ children }</MenuItem></Link>
+export const MenuLinkItem: FC<MenuLinkItemProps> = ({ to, children, className, selected = false }) => {
+  return <Link to={to} className={className}><MenuItem selected={selected}>{ children }</MenuItem></Link>
 }

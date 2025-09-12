@@ -11,7 +11,7 @@ vi.mock('../../api/authentication/authentication', () => ({
   login: vi.fn(),
 }));
 
-vi.mock('../../api/auth.context', () => ({
+vi.mock('../../context/auth.context', () => ({
   useAuthDispatch: () => mockAuthDispatch,
 }));
 
