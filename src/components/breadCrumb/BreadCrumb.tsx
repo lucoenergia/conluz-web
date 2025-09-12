@@ -10,14 +10,15 @@ interface BreadCrumbStep {
 }
 
 interface BreadCrumbsProps {
-  steps: BreadCrumbStep[]
+  steps: BreadCrumbStep[],
+  className?: string
 }
 
-export const BreadCrumb: React.FC<BreadCrumbsProps> = ({ steps }) => {
+export const BreadCrumb: React.FC<BreadCrumbsProps> = ({ steps, className }) => {
 
   return (
     <React.Fragment>
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumbs">
+      <Breadcrumbs className={className} separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumbs">
         {
           steps.map(step => (
             <Link color="primary" component={RouterLink} to={step.href}>

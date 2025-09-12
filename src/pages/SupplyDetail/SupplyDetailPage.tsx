@@ -91,7 +91,7 @@ export const SupplyDetailPage: FC = () => {
   ]
 
   return <Box className='grid gap-4'>
-    <BreadCrumb steps={[{ label: 'Suministros', href: '/supply-points' }, { label: supplyPoint?.code ? supplyPoint?.code : supplyPointId, href: '#' }]} />
+    <BreadCrumb steps={[{ label: 'Consumo', href: '/supply-points' }, { label: supplyPoint?.code ? supplyPoint?.code : supplyPointId, href: '#' }]} />
     {!supplyPointLoading && !supplyPointError &&
       <SupplyDetailCard name={supplyPoint?.name} address={supplyPoint?.address} cups={supplyPoint?.code} partitionCoeficient={supplyPoint?.partitionCoefficient ? supplyPoint?.partitionCoefficient * 100 : 0} />
     }
