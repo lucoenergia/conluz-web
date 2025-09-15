@@ -1,4 +1,4 @@
-import { type FC } from "react";
+import { useState, type FC } from "react";
 import { CardTemplate } from "../cardTemplate/CardTemplate";
 import { Box, Typography } from "@mui/material";
 import { LabeledIcon } from "../labeled-icon/LabeledIcon";
@@ -7,7 +7,8 @@ import WhereToVoteOutlinedIcon from '@mui/icons-material/WhereToVoteOutlined';
 import { TagComponent } from "../tag/Tag";
 import { DisplayMenu } from "../menu/DisplayMenu";
 import { Link } from "react-router";
-import { useDisableSupply } from "../../api/supplies/supplies";
+import { DisablePointModal } from "../modals/DisablePointModal";
+import { DisableConfirmationModal } from "../modals/DisableConfirmationModal";
 
 
 interface SupplyCardProps {
@@ -18,7 +19,8 @@ interface SupplyCardProps {
   partitionCoefficient?: number,
   enabled?: boolean,
   lastConnection?: string,
-  lastMeassurement?: number
+  lastMeassurement?: number,
+  onDisable: (id: string) => boolean
 }
 
 export const SupplyCard: FC<SupplyCardProps> = ({
@@ -29,15 +31,29 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   partitionCoefficient = 0,
   enabled = false,
   lastConnection = "",
-  lastMeassurement = 0
+  lastMeassurement = 0,
+  onDisable
 }) => {
+  const [openDisableConfirmation, setOpenDisableConfirmation] = useState(false);
+  const [openDisableSuccess, setOpenDisableSuccess] = useState(false);
 
-const disableSupply = useDisableSupply()
-  const disableSupplyPoint = () => {
-    disableSupply.mutate({id:id});
-    console.log('deshabilitando: ', id)
+  const handleCloseDisableConfirmation = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setOpenDisableConfirmation(false);
   }
-const disableSuccess = disableSupply.isSuccess
+
+  const handleCloseDisableSuccess = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setOpenDisableSuccess(false);
+  }
+
+  const handleDisable = () => {
+    setOpenDisableConfirmation(false);
+    const result = onDisable(id);
+    if(result) {
+      setOpenDisableSuccess(true);
+    }
+  }
 
   return <Link to={`/supply-points/${id}`}>
      <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-center justify-items-center md:content-center md:grid-cols-10 gap-4 mt-5'}>
@@ -74,7 +90,19 @@ const disableSuccess = disableSupply.isSuccess
         <Typography className="text-sm text-gray-500 text-center md:hidden">{lastMeassurement} kWh</Typography>
       </Box>
       <Box>
-        <DisplayMenu supplyPointId={id} code={code} disableSupplyPoint={disableSupplyPoint} disableSuccess={disableSuccess}/>
+        <DisplayMenu supplyPointId={id} disableSupplyPoint={() => setOpenDisableConfirmation(true)}/>
+        <DisablePointModal
+          isOpen={openDisableConfirmation}
+          code={code}
+          onCancel={handleCloseDisableConfirmation}
+          onDisable={handleDisable}
+        />
+
+        <DisableConfirmationModal
+          isOpen={openDisableSuccess}
+          onClose={handleCloseDisableSuccess}
+          code={code}
+        />
       </Box>
   </CardTemplate>
     </Link>

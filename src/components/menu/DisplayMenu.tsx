@@ -7,50 +7,31 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 import NotInterestedOutlinedIcon from "@mui/icons-material/NotInterestedOutlined";
-import { DisablePointModal } from "../modals/DisablePointModal";
-import { DisableConfirmationModal } from "../modals/DisableConfirmationModal";
 
 interface DisplayMenuProps {
-  code: string;
-  disableSupplyPoint: (code: string) => void;
+  disableSupplyPoint: () => void;
   supplyPointId: string;
-  disableSuccess: boolean;
 }
 
-export const DisplayMenu: FC<DisplayMenuProps> = ({ disableSuccess, supplyPointId, code, disableSupplyPoint }) => {
+export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupplyPoint }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     setAnchorElement(event.currentTarget);
   };
 
-  const handleCloseUserMenu = () => {
+  const handleCloseUserMenu = (event?: React.MouseEvent) => {
+    event?.preventDefault();
     setAnchorElement(null);
   };
 
-  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+  const handleDisableSupplyPoint = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
-    setIsModalOpen(true);
     handleCloseUserMenu();
-  };
+    disableSupplyPoint();
+  }
 
-  const handleCloseDisableModal = (event: MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    setIsModalOpen(false);
-  };
-
-  const handleDisableConfirmed = () => {
-    setIsModalOpen(false);
-    setIsConfirmationModalOpen(true);
-  };
-
-  const handleCloseConfirmModal = (event: MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    setIsConfirmationModalOpen(false);
-  };
 
   return (
     <>
@@ -78,7 +59,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ disableSuccess, supplyPointI
           />
         </MenuLinkItem>
         <Divider />
-        <MenuItem onClick={handleOpen}>
+        <MenuItem onClick={handleDisableSupplyPoint}>
           <LabeledIcon
             variant="compact"
             justify="between"
@@ -87,19 +68,6 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ disableSuccess, supplyPointI
             label="Deshabilitar"
           />
         </MenuItem>
-        <DisablePointModal
-          isOpen={isModalOpen}
-          code={code}
-          disableSupplyPoint={disableSupplyPoint}
-          onCancel={handleCloseDisableModal}
-          onDisable={handleDisableConfirmed}
-        />
-
-        <DisableConfirmationModal
-          isOpen={isConfirmationModalOpen && disableSuccess}
-          onClose={handleCloseConfirmModal}
-          code={code}
-        />
       </MenuTemplate>
     </>
   );

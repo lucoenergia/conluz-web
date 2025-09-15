@@ -1,12 +1,10 @@
-import '@testing-library/jest-dom'
+import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { DisablePointModal } from "./DisablePointModal";
 import { vi } from "vitest";
+import { DisableConfirmationModal } from "./DisableConfirmationModal";
 
 describe("DisablePointModal", () => {
-  const mockDisableSupplyPoint = vi.fn();
-  const mockOnCancel = vi.fn();
-  const mockOnDisable = vi.fn();
+  const mockOnClose = vi.fn();
 
   const code = "POINT-123";
 
@@ -16,54 +14,28 @@ describe("DisablePointModal", () => {
 
   it("renders the modal content with code", () => {
     render(
-      <DisablePointModal
+      <DisableConfirmationModal
         isOpen={true}
         code={code}
-        disableSupplyPoint={mockDisableSupplyPoint}
-        onCancel={mockOnCancel}
-        onDisable={mockOnDisable}
-      />
+        onClose={mockOnClose}
+      />,
     );
 
-    expect(
-      screen.getByText("Deshabilitar punto de suministro")
-    ).toBeInTheDocument();
     expect(screen.getByText(code)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cerrar/i })).toBeInTheDocument();
   });
 
-  it("calls onCancel when Cancelar button is clicked", () => {
+  it("calls onClose when Cerrar button is clicked", () => {
     render(
-      <DisablePointModal
+      <DisableConfirmationModal
         isOpen={true}
         code={code}
-        disableSupplyPoint={mockDisableSupplyPoint}
-        onCancel={mockOnCancel}
-        onDisable={mockOnDisable}
-      />
+        onClose={mockOnClose}
+      />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Cancelar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Cerrar/i }));
 
-    expect(mockOnCancel).toHaveBeenCalledTimes(1);
-    expect(mockDisableSupplyPoint).not.toHaveBeenCalled();
-    expect(mockOnDisable).not.toHaveBeenCalled();
-  });
-
-  it("calls disableSupplyPoint and onDisable when Deshabilitar is clicked", () => {
-    render(
-      <DisablePointModal
-        isOpen={true}
-        code={code}
-        disableSupplyPoint={mockDisableSupplyPoint}
-        onCancel={mockOnCancel}
-        onDisable={mockOnDisable}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /Deshabilitar/i }));
-
-    expect(mockDisableSupplyPoint).toHaveBeenCalledWith(code);
-    expect(mockOnDisable).toHaveBeenCalledTimes(1);
-    expect(mockOnCancel).not.toHaveBeenCalled();
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 });
