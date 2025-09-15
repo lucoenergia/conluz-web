@@ -1,15 +1,17 @@
+import '@testing-library/jest-dom'
 import { render, screen, fireEvent } from "@testing-library/react";
 import { DisablePointModal } from "./DisablePointModal";
+import { vi } from "vitest";
 
 describe("DisablePointModal", () => {
-  const mockDisableSupplyPoint = jest.fn();
-  const mockOnCancel = jest.fn();
-  const mockOnDisable = jest.fn();
+  const mockDisableSupplyPoint = vi.fn();
+  const mockOnCancel = vi.fn();
+  const mockOnDisable = vi.fn();
 
   const code = "POINT-123";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders the modal content with code", () => {
