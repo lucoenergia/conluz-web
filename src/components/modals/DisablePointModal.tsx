@@ -36,11 +36,11 @@ export const DisablePointModal: FC<DisablePointModalProps> = ({
           </Typography>
           <Box className="flex justify-around pt-8 gap-5">
             <Button 
-              variant="outlined" 
+              variant="contained" 
               color='error' 
               onClick={handleDisable}
               className='flex items-center justify-center text-center leading-none'>Deshabilitar</Button>
-            <Button variant="outlined" color='primary' onClick={onCancel}>Cancelar</Button>
+            <Button variant="contained" color='primary' onClick={onCancel}>Cancelar</Button>
           </Box>
     </BasicModal>
 }

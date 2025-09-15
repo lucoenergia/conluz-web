@@ -16,8 +16,9 @@ export const BasicModal: React.FC<BasicModalProps> = ({ isOpen, onClose, childre
         onClose={onClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description;"
+        className="grid justify-center content-center"
       >
-        <Box className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] bg-white border-2 border-black shadow-2xl p-4 flex flex-col justify-center items-center gap-2">
+        <Box className="bg-white p-4 rounded-xl grid gap-2 shadow-2xl justify-items-center max-w-md min-w-sm">
           {children}
         </Box>
       </Modal>
