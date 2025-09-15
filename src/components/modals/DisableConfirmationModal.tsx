@@ -3,7 +3,7 @@ import { BasicModal } from "./BasicModal";
 import { Button, Typography } from "@mui/material";
 
 interface DisableConfirmationModalProps {
-    onClose: () => void,
+    onClose: (event: React.MouseEvent<HTMLElement>) => void,
     isOpen: boolean,
     code: string
 }

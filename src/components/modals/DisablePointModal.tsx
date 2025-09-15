@@ -1,25 +1,25 @@
-import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { BasicModal } from './BasicModal';
+import type { FC, MouseEvent } from 'react';
 
 interface DisablePointModalProps {
   isOpen: boolean,
   code: string,
   disableSupplyPoint: (code:string) => void,
-  onCancel: () => void;
+  onCancel: (event: MouseEvent<HTMLElement>) => void;
   onDisable: () => void;
 }
 
-export const DisablePointModal: React.FC<DisablePointModalProps> = ({
+export const DisablePointModal: FC<DisablePointModalProps> = ({
   isOpen, 
   code, 
   disableSupplyPoint, 
   onCancel,
   onDisable}) => {
 
-  const handleDisable = (event: React.MouseEvent<HTMLElement>) => {
+  const handleDisable = (event: MouseEvent<HTMLElement>) => {
           event.preventDefault();
           disableSupplyPoint(code); 
           onDisable();
