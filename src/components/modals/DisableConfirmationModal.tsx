@@ -1,24 +1,32 @@
-import type { FC } from "react";
-import { BasicModal } from "./BasicModal";
-import { Button, Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
+import type { FC, MouseEvent } from "react";
+import { ConfirmationModal } from "./ConfirmationModal";
 
 interface DisableConfirmationModalProps {
-  onClose: (event: React.MouseEvent<HTMLElement>) => void;
   isOpen: boolean;
   code: string;
+  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onDisable: () => void;
 }
 
-export const DisableConfirmationModal: FC<DisableConfirmationModalProps> = ({ onClose, isOpen, code }) => {
+export const DisableConfirmationModal: FC<DisableConfirmationModalProps> = ({
+  isOpen,
+  code,
+  onCancel,
+  onDisable,
+}) => {
+
+
   return (
-    <BasicModal isOpen={isOpen} onClose={onClose}>
-      <Typography className="flex flex-col items-center text-center">
-        El punto de suministro <br />
-        <span className="font-bold">{code}</span> <br />
-        ha sido deshabilitado
+    <ConfirmationModal isOpen={isOpen} onCancel={onCancel} confirmLabel="Deshabilitar" onConfirm={onDisable}>
+      <Typography id="modal-modal-title" variant="h6" component="h2">
+        Deshabilitar punto de suministro
       </Typography>
-      <Button variant="text" color="primary" onClick={onClose}>
-        Cerrar
-      </Button>
-    </BasicModal>
+      <Typography className="font-bold">{code}</Typography>
+      <Typography id="modal-modal-description" sx={{ mt: 2, pl: 2, pr: 2, textAlign: "justify" }}>
+        Al deshabilitar este punto de suministro sus datos no se mostrarán en la plataforma ni se contabilizarán para
+        los cálculos. Los datos producidos por este punto de suministro no se eliminarán.
+      </Typography>
+    </ConfirmationModal>
   );
 };

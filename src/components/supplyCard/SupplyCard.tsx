@@ -7,7 +7,7 @@ import WhereToVoteOutlinedIcon from '@mui/icons-material/WhereToVoteOutlined';
 import { TagComponent } from "../tag/Tag";
 import { DisplayMenu } from "../menu/DisplayMenu";
 import { Link } from "react-router";
-import { DisablePointModal } from "../modals/DisablePointModal";
+import { DisableSuccessModal } from "../modals/DisableSuccessModal";
 import { DisableConfirmationModal } from "../modals/DisableConfirmationModal";
 
 
@@ -20,7 +20,7 @@ interface SupplyCardProps {
   enabled?: boolean,
   lastConnection?: string,
   lastMeassurement?: number,
-  onDisable: (id: string) => boolean
+  onDisable: (id: string) => boolean,
 }
 
 export const SupplyCard: FC<SupplyCardProps> = ({
@@ -32,7 +32,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   enabled = false,
   lastConnection = "",
   lastMeassurement = 0,
-  onDisable
+  onDisable,
 }) => {
   const [openDisableConfirmation, setOpenDisableConfirmation] = useState(false);
   const [openDisableSuccess, setOpenDisableSuccess] = useState(false);
@@ -90,15 +90,15 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         <Typography className="text-sm text-gray-500 text-center md:hidden">{lastMeassurement} kWh</Typography>
       </Box>
       <Box>
-        <DisplayMenu supplyPointId={id} disableSupplyPoint={() => setOpenDisableConfirmation(true)}/>
-        <DisablePointModal
+        <DisplayMenu supplyPointId={id} disableSupplyPoint={() => setOpenDisableConfirmation(true)}  enabled={enabled}/>
+        <DisableConfirmationModal
           isOpen={openDisableConfirmation}
           code={code}
           onCancel={handleCloseDisableConfirmation}
           onDisable={handleDisable}
         />
 
-        <DisableConfirmationModal
+        <DisableSuccessModal
           isOpen={openDisableSuccess}
           onClose={handleCloseDisableSuccess}
           code={code}
