@@ -23,7 +23,7 @@ return <CardTemplate className={'grid grid-flow-col grid-cols-5 h-18 items-cente
         <Typography className="text-sm text-gray-500 text-center md:hidden"><Skeleton/></Typography>
     </Box>
     <Box>
-        <DisplayMenu supplyPointId=""/>
+        <DisplayMenu supplyPointId="" enabled={true} disableSupplyPoint={() => {}} enableSupplyPoint={() => {}}/>
     </Box>
 </CardTemplate>
 }

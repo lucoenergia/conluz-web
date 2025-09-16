@@ -12,7 +12,9 @@ const mockSupply = {
   partitionCoefficient: 4.234859,
   enabled: true,
   lastMeassurement: 10,
-  lastConnection: '6 días'
+  lastConnection: '6 días',
+  onDisable: () => true,
+  onEnable: () => true
 };
 
 describe('SupplyCard', () => {
