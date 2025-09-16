@@ -1,4 +1,4 @@
-import { useState, type FC, type MouseEvent } from "react";
+import { useState, type FC } from "react";
 import { Divider, IconButton, MenuItem } from "@mui/material";
 import { MenuTemplate } from "./MenuTemplate";
 import { MenuLinkItem } from "./MenuLinkItem";
@@ -7,13 +7,16 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 import NotInterestedOutlinedIcon from "@mui/icons-material/NotInterestedOutlined";
+import CheckIcon from '@mui/icons-material/Check';
 
 interface DisplayMenuProps {
   disableSupplyPoint: () => void;
+  enableSupplyPoint: () => void;
   supplyPointId: string;
+  enabled: boolean;
 }
 
-export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupplyPoint }) => {
+export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupplyPoint, enableSupplyPoint, enabled }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -30,6 +33,12 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupply
     event.preventDefault();
     handleCloseUserMenu();
     disableSupplyPoint();
+  }
+  
+  const handleEnableSupplyPoint = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    handleCloseUserMenu();
+    enableSupplyPoint();
   }
 
 
@@ -59,15 +68,27 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupply
           />
         </MenuLinkItem>
         <Divider />
-        <MenuItem onClick={handleDisableSupplyPoint}>
-          <LabeledIcon
-            variant="compact"
-            justify="between"
-            iconPosition="right"
-            icon={NotInterestedOutlinedIcon}
-            label="Deshabilitar"
-          />
-        </MenuItem>
+        { enabled ?
+          <MenuItem onClick={handleDisableSupplyPoint}>
+            <LabeledIcon
+              variant="compact"
+              justify="between"
+              iconPosition="right"
+              icon={NotInterestedOutlinedIcon}
+              label="Deshabilitar"
+            />
+          </MenuItem>
+          :
+          <MenuItem onClick={handleEnableSupplyPoint}>
+            <LabeledIcon
+              variant="compact"
+              justify="between"
+              iconPosition="right"
+              icon={CheckIcon}
+              label="Activar"
+            />
+          </MenuItem>
+        }
       </MenuTemplate>
     </>
   );

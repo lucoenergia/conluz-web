@@ -41,6 +41,8 @@ describe('CardList (unit)', () => {
             name={item.name}
             address={item.address}
             enabled={item.enabled}
+            onDisable={() => true}
+            onEnable={() => true}
           />))}
     </CardList>);
 

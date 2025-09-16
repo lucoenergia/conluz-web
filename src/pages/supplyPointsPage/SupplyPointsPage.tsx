@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Typography } from "@mui/material";
-import { useDisableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
+import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/breadCrumb/BreadCrumb";
 import { SearchBar } from "../../components/searchBar/SearchBar";
@@ -23,12 +23,32 @@ export interface itemListType {
 export const SupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
   const errorDispatch = useErrorDispatch();
-  const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllSupplies({});
-  const disableSupply = useDisableSupply()
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({});
+  const disableSupply = useDisableSupply();
+  const enableSupply = useEnableSupply();
 
-  const disableSupplyPoint = (id: string): boolean => {
-      disableSupply.mutate({id});
-      return disableSupply.isSuccess;
+  const disableSupplyPoint = (id: string, successCallback?: Function) => {
+    disableSupply.mutate({ id }, {
+      onSuccess: () => {
+        refetch();
+        if (successCallback)
+          successCallback();
+      }, onError: () => {
+        errorDispatch('Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde');
+      }
+    });
+  }
+
+  const enableSupplyPoint = (id: string, successCallback?: Function) => {
+    enableSupply.mutate({ id }, {
+      onSuccess: () => {
+        refetch();
+        if (successCallback)
+          successCallback();
+      }, onError: () => {
+        errorDispatch('Ha habido un problema al rehabilitar el punto de suministro. Por favor inténtalo más tarde');
+      }
+    });
   }
 
   useEffect(() => {
@@ -70,6 +90,7 @@ export const SupplyPointsPage: FC = () => {
               address={item.address}
               enabled={item.enabled}
               onDisable={disableSupplyPoint}
+              onEnable={enableSupplyPoint}
             />
           ))}
         </CardList>

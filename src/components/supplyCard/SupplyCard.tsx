@@ -8,6 +8,8 @@ import { TagComponent } from "../tag/Tag";
 import { DisplayMenu } from "../menu/DisplayMenu";
 import { Link } from "react-router";
 import { DisableSuccessModal } from "../modals/DisableSuccessModal";
+import { EnableConfirmationModal } from "../modals/EnableConfirmationModal";
+import { EnableSuccessModal } from "../modals/EnableSuccesModal";
 import { DisableConfirmationModal } from "../modals/DisableConfirmationModal";
 
 
@@ -20,7 +22,8 @@ interface SupplyCardProps {
   enabled?: boolean,
   lastConnection?: string,
   lastMeassurement?: number,
-  onDisable: (id: string) => boolean,
+  onDisable: (id: string, successCallback: Function) => void,
+  onEnable: (id: string, successCallback: Function) => void
 }
 
 export const SupplyCard: FC<SupplyCardProps> = ({
@@ -33,9 +36,12 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   lastConnection = "",
   lastMeassurement = 0,
   onDisable,
+  onEnable
 }) => {
   const [openDisableConfirmation, setOpenDisableConfirmation] = useState(false);
   const [openDisableSuccess, setOpenDisableSuccess] = useState(false);
+  const [openEnableConfirmation, setOpenEnableConfirmation] = useState(false);
+  const [openEnableSuccess, setOpenEnableSuccess] = useState(false);
 
   const handleCloseDisableConfirmation = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -49,10 +55,24 @@ export const SupplyCard: FC<SupplyCardProps> = ({
 
   const handleDisable = () => {
     setOpenDisableConfirmation(false);
-    const result = onDisable(id);
-    if(result) {
-      setOpenDisableSuccess(true);
-    }
+    onDisable(id, () => {
+      setOpenDisableSuccess(true)
+    });
+  }
+  
+  const handleCloseEnableConfirmation = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setOpenEnableConfirmation(false);
+  }
+
+  const handleCloseEnableSuccess = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setOpenEnableSuccess(false);
+  }
+
+  const handleEnable = () => {
+    setOpenEnableConfirmation(false);
+    onEnable(id, () => setOpenEnableSuccess(true));
   }
 
   return <Link to={`/supply-points/${id}`}>
@@ -90,7 +110,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         <Typography className="text-sm text-gray-500 text-center md:hidden">{lastMeassurement} kWh</Typography>
       </Box>
       <Box>
-        <DisplayMenu supplyPointId={id} disableSupplyPoint={() => setOpenDisableConfirmation(true)}  enabled={enabled}/>
+        <DisplayMenu supplyPointId={id} disableSupplyPoint={() => setOpenDisableConfirmation(true)} enableSupplyPoint={() => setOpenEnableConfirmation(true)} enabled={enabled}/>
         <DisableConfirmationModal
           isOpen={openDisableConfirmation}
           code={code}
@@ -101,6 +121,18 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         <DisableSuccessModal
           isOpen={openDisableSuccess}
           onClose={handleCloseDisableSuccess}
+          code={code}
+        />
+        <EnableConfirmationModal
+          isOpen={openEnableConfirmation}
+          code={code}
+          onCancel={handleCloseEnableConfirmation}
+          onEnable={handleEnable}
+        />
+
+        <EnableSuccessModal
+          isOpen={openEnableSuccess}
+          onClose={handleCloseEnableSuccess}
           code={code}
         />
       </Box>
