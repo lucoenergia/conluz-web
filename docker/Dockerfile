@@ -5,7 +5,7 @@ RUN npm install
 COPY . .
 
 # This is necessary to hotswap variables at container intialization
-ARG CONLUZ_APP_NAME="CONLUZ_APP_NAME"
+ARG CONLUZ_API_URL="CONLUZ_API_URL"
 
 RUN npm run build
 

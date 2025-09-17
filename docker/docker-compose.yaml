@@ -7,3 +7,5 @@ services:
     ports:
       - "3001:80" 
     restart: unless-stopped
+    environment:
+      - CONLUZ_API_URL=http://localhost:8443

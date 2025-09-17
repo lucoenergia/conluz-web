@@ -1,6 +1,6 @@
 import Axios, { AxiosError, type AxiosRequestConfig } from 'axios';
 
-export const AXIOS_INSTANCE = Axios.create({ baseURL: 'http://localhost:8443'});
+export const AXIOS_INSTANCE = Axios.create({ baseURL: import.meta.env.CONLUZ_API_URL ? import.meta.env.CONLUZ_API_URL : "http://localhost:8443" });
 
 export const customInstance = <T>(config: AxiosRequestConfig): Promise<T> => {
   const source = Axios.CancelToken.source();
