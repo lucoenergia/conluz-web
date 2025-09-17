@@ -47,7 +47,8 @@ export const AuthenticatedLayout: FC = () => {
 
   const selectedId = useMemo(() => {
     // reverse() is used since otherwise it would always match the index route '/' which is the first one and part of every other route
-    return MENU_ITEMS.reverse().find(menuItem => location.pathname.includes(menuItem.to))?.id
+    // slplice() is used before reverse because reverse modifies the array in place and we dont want the original array to be modified
+    return MENU_ITEMS.slice().reverse().find(menuItem => location.pathname.includes(menuItem.to))?.id
   }, [location.key])
 
   return (
