@@ -12,7 +12,7 @@ import { LoggedUserProvider } from './context/logged-user.context.tsx'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // refetchOnWindowFocus: false,
+      refetchOnWindowFocus: false,
       throwOnError: (error: any) => error.response?.status === 401
     }
   }
