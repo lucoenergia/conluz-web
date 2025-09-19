@@ -16,11 +16,11 @@ const contentJustification = {
   between: "justify-between"
 }
 
-export const LabeledIcon: FC<LabeledIconProps> = ({ label, icon: Icon, iconPosition='left', justify='start', variant='normal', labelSize }) => {
-  return <div className={`grid grid-flow-col w-full ${contentJustification[justify]} gap-2 ${variant === 'compact' ? '' : 'p-2'}`}>
-    { iconPosition==='left' && <Icon/> }
-    <span className={labelSize ?? 'text-base'}>{ label }</span>
-    { iconPosition==='right' && <Icon/> }
+export const LabeledIcon: FC<LabeledIconProps> = ({ label, icon: Icon, iconPosition='left', justify='start', variant='normal', labelSize='text-base' }) => {
+  return <div className={`grid grid-flow-col w-full ${contentJustification[justify]} items-center gap-2 ${variant === 'compact' ? '' : 'p-2'}`}>
+    { iconPosition==='left' && <Icon className={labelSize}/> }
+    <span className={labelSize}>{ label }</span>
+    { iconPosition==='right' && <Icon className={labelSize}/> }
   </div>
 }
 
