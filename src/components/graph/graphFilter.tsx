@@ -76,8 +76,8 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
       <ToggleButton value={GraphFilterRangeValues.DATES}><Typography>Fechas</Typography></ToggleButton>
     </ToggleButtonGroup>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        {displayStartDate(range) && <DatePicker value={startDate} onChange={(value) => setStartDate(dayjs(value))} views={startDateViews} /> }
-        {displayEndDate(range) && <DatePicker value={endDate} onChange={(value) => setEndDate(dayjs(value))}/>}
+        {displayStartDate(range) && <DatePicker value={startDate} maxDate={displayEndDate(range) ? endDate : undefined} onChange={(value) => setStartDate(dayjs(value))} views={startDateViews} /> }
+        {displayEndDate(range) && <DatePicker value={endDate} minDate={startDate} onChange={(value) => setEndDate(dayjs(value))}/>}
       </LocalizationProvider>
     </Box>
   )
