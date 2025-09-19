@@ -1,7 +1,6 @@
 import './App.css'
 import { Route, Routes } from 'react-router'
 import { AuthenticatedLayout } from './layouts/authenticated.layout'
-import ContactPage from './pages/contact/Contact.page'
 import { SupplyPointsPage } from './pages/supplyPointsPage/SupplyPointsPage'
 import { LoginLayout } from './layouts/login.layout'
 import { Login } from './pages/login/login'
@@ -11,6 +10,8 @@ import { SupplyDetailPage } from './pages/SupplyDetail/SupplyDetailPage'
 import { CreateSupplyPage } from './pages/CreateSupply'
 import { EditSupplyPage } from './pages/EditSupply/EditSupply'
 import { HomePage } from './pages/Home/Home'
+import { ContactPage } from './pages/contact/Contact.page'
+import { DynamicLayout } from './layouts/dynamic.layout'
 
 function App() {
   return (
@@ -33,6 +34,8 @@ function App() {
               <Route path="edit" element={<EditSupplyPage/>}/>
             </Route>      
           </Route>    
+        </Route>
+        <Route element={<DynamicLayout/>}>
           <Route path="contact" element={<ContactPage />}/> 
         </Route>
       </Routes>
