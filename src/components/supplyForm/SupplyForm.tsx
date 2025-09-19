@@ -43,7 +43,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
   
   const onSubmit = async (data: FormData) => {
     const newSupplyPoint = {
-      name: data.get('name') as string,
+      name: data.get('name') ? data.get('name') as string : null,
       cups: data.get('cups') as string,
       address: data.get('address') as string,
       partitionCoefficient: Number((data.get('partitionCoefficient') as string).replaceAll(',','.')),
@@ -66,13 +66,12 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
             onChange={(e) => setName(e.target.value)}
             slotProps={{ htmlInput: { maxLength: 50 }}}
             autoFocus
-            required
             fullWidth
             variant="filled"
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel htmlFor="cups">CUPS</InputLabel>
+          <InputLabel htmlFor="cups">CUPS<span className="text-red-600">*</span></InputLabel>
           <TextField
             id="cups"
             type="text"
@@ -87,7 +86,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel htmlFor="address">Dirección</InputLabel>
+          <InputLabel htmlFor="address">Dirección<span className="text-red-600">*</span></InputLabel>
           <TextField
             id="address"
             type="text"
@@ -102,7 +101,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel htmlFor="partitionCoefficient">Coeficiente de reparto (%)</InputLabel>
+          <InputLabel htmlFor="partitionCoefficient">Coeficiente de reparto (%)<span className="text-red-600">*</span></InputLabel>
           <TextField
             id="partitionCoefficient"
             type="text"
@@ -118,7 +117,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({ initialValues: {  name: initia
           />
         </FormGroup>
         <FormGroup>
-          <InputLabel htmlFor="addressRef">Referencia catastral</InputLabel>
+          <InputLabel htmlFor="addressRef">Referencia catastral<span className="text-red-600">*</span></InputLabel>
           <TextField
             id="addressRef"
             type="text"
