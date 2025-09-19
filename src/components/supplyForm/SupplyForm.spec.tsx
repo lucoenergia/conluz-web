@@ -40,10 +40,10 @@ describe('Supply Form', () => {
     const user = userEvent.setup()
     setup();
     await user.type(screen.getByLabelText('Nombre'), "Mi casa");
-    await user.type(screen.getByLabelText('CUPS'), "ES002100823463");
-    await user.type(screen.getByLabelText('Dirección'), "Calle Escuadra 3");
-    await user.type(screen.getByLabelText('Coeficiente de reparto (%)'), "0.002345");
-    await user.type(screen.getByLabelText('Referencia catastral'), "AS35NB354223");
+    await user.type(screen.getByLabelText('CUPS*'), "ES002100823463");
+    await user.type(screen.getByLabelText('Dirección*'), "Calle Escuadra 3");
+    await user.type(screen.getByLabelText('Coeficiente de reparto (%)*'), "0.002345");
+    await user.type(screen.getByLabelText('Referencia catastral*'), "AS35NB354223");
     await user.click(screen.getByRole('button'))
     expect(mockHandleSubmit)
       .toBeCalledWith({
@@ -59,10 +59,10 @@ describe('Supply Form', () => {
     const user = userEvent.setup()
     setup();
     await user.type(screen.getByLabelText('Nombre'), "Mi casa");
-    await user.type(screen.getByLabelText('CUPS'), "ES002100823463");
-    await user.type(screen.getByLabelText('Dirección'), "Calle Escuadra 3");
-    await user.type(screen.getByLabelText('Coeficiente de reparto (%)'), "0.02");
-    await user.type(screen.getByLabelText('Referencia catastral'), "AS35NB354223");
+    await user.type(screen.getByLabelText('CUPS*'), "ES002100823463");
+    await user.type(screen.getByLabelText('Dirección*'), "Calle Escuadra 3");
+    await user.type(screen.getByLabelText('Coeficiente de reparto (%)*'), "0.02");
+    await user.type(screen.getByLabelText('Referencia catastral*'), "AS35NB354223");
     await user.click(screen.getByRole('button'))
     expect(mockHandleSubmit).toBeCalledTimes(0);
     expect(screen.getByText("Por favor, introduce un numero de 6 decimales")).toBeVisible();

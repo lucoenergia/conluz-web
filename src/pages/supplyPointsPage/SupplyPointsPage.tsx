@@ -23,7 +23,7 @@ export interface itemListType {
 export const SupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
   const errorDispatch = useErrorDispatch();
-  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({});
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({ size: 10000 }); //TODO: Figure out a way to allways get all supplies
   const disableSupply = useDisableSupply();
   const enableSupply = useEnableSupply();
 
