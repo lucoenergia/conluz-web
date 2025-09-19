@@ -1,40 +1,32 @@
 import { Box, Button, FormGroup, Typography } from "@mui/material"
-import { useState, type FC } from "react"
+import { useMemo, useState, type FC } from "react"
 import { PasswordInput } from "../../components/forms/PasswordInput";
 
 
 export const NewPassword: FC = () => {
-  const [formErrors, setFormErrors] = useState<{
-    newPassword: boolean,
-    repeatNewPassword: boolean,
-    differentPasswords: boolean
-  }>({
-    newPassword: false,
-    repeatNewPassword: false,
-    differentPasswords: false
-  });
+  const [password, setPassword] = useState<string | null>(null);
+  const [repeatPassword, setRepeatPassword] = useState<string | null>(null);
 
 
-  const differentPasswordMessage = 'La contraseña no coincide';
+  const differentPasswordMessage = 'Las contraseñas no coinciden';
   const passwordReminder = 'Por favor, repite tu contraseña';
   const newPasswordMessage = 'Introduce tu nueva contraseña';
 
-
-  const handleSubmit = async (data: FormData) => {
-    const newPassword = data.get('newPassword')?.toString().trim();
-    const repeatNewPassword = data.get('repeatNewPassword')?.toString().trim();
-    const newErrors = {
-      newPassword: !newPassword,
-      repeatNewPassword: !repeatNewPassword,
-      differentPasswords: repeatNewPassword !== newPassword
+  const formErrors = useMemo(() => {
+    return {
+      newPassword: password === '',
+      repeatNewPassword: repeatPassword === '',
+      differentPasswords: password !== repeatPassword
     }
+  }, [password, repeatPassword])
 
-    setFormErrors(newErrors);
+  const handleSubmit = async (_data: FormData) => {
+    // const newPassword = data.get('newPassword')?.toString().trim();
+    // const repeatNewPassword = data.get('repeatNewPassword')?.toString().trim();
 
-    if (newErrors.newPassword || newErrors.repeatNewPassword || newErrors.differentPasswords) return;
-
-
+    if (formErrors.newPassword || formErrors.repeatNewPassword || formErrors.differentPasswords) return; //TODO: Add backend call when method exists
   };
+
   return <Box component="form" className="p-7 w-full" action={handleSubmit}>
     <Typography gutterBottom className="text-base">Introduce tu nueva contraseña</Typography>
     <FormGroup >
@@ -46,11 +38,12 @@ export const NewPassword: FC = () => {
         name="newPassword"
         className="mt-4"
         placeholder="Escribe aquí tu nueva contraseña"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
         autoFocus
         required
         fullWidth
         variant="filled"
-      // color={emailError ? 'error' : 'primary'}
       />
       <PasswordInput
         error={formErrors.repeatNewPassword || formErrors.differentPasswords}
@@ -60,13 +53,21 @@ export const NewPassword: FC = () => {
         name="repeatNewPassword"
         className="mt-4"
         placeholder="Repite aquí tu nueva contraseña"
+        value={repeatPassword}
+        onChange={(e) => setRepeatPassword(e.target.value)}
         autoFocus
         required
         fullWidth
         variant="filled"
-      // color={emailError ? 'error' : 'primary'}
       />
-      <Button type="submit" variant="contained" fullWidth className="mt-4">Enviar</Button>
+      <Button
+        type="submit"
+        variant="contained"
+        fullWidth
+        className="mt-4"
+        disabled={formErrors.newPassword || formErrors.repeatNewPassword || formErrors.differentPasswords}>
+          Enviar
+      </Button>
     </FormGroup>
   </Box>
 
