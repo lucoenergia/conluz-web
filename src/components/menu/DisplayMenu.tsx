@@ -48,7 +48,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupply
         <MoreVertIcon />
       </IconButton>
       <MenuTemplate anchorElement={anchorElement} onClose={handleCloseUserMenu} compactPadding>
-        <MenuLinkItem to={`/supply-points/${supplyPointId}`} className="hidden md:block">
+        <MenuLinkItem to={`/supply-points/${supplyPointId}`}>
           <LabeledIcon
             variant="compact"
             justify="between"
