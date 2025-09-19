@@ -5,6 +5,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { useEffect, useMemo, useState, type FC } from "react";
 import type { DateView } from "@mui/x-date-pickers/models";
 import dayjs from "dayjs";
+import 'dayjs/locale/es';
 
 const MAX_JS_DATE_TIMESTAMP = 8640000000000000; // Largest posible represented Date in JS https://stackoverflow.com/questions/11526504/minimum-and-maximum-date
 
@@ -75,7 +76,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
       <ToggleButton value={GraphFilterRangeValues.TOTALS}><Typography>Totales</Typography></ToggleButton>
       <ToggleButton value={GraphFilterRangeValues.DATES}><Typography>Fechas</Typography></ToggleButton>
     </ToggleButtonGroup>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         {displayStartDate(range) && <DatePicker value={startDate} maxDate={displayEndDate(range) ? endDate : undefined} onChange={(value) => setStartDate(dayjs(value))} views={startDateViews} /> }
         {displayEndDate(range) && <DatePicker value={endDate} minDate={startDate} onChange={(value) => setEndDate(dayjs(value))}/>}
       </LocalizationProvider>
