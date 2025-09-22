@@ -49,7 +49,6 @@ Branches for new features must follow this pattern:
 feature/conluzweb-XXX
 ```
 
-
 - `XXX` refers to the issue or ticket number (e.g., `feature/conluz-123`).
 
 ---

@@ -1,12 +1,7 @@
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useState,
-} from 'react';
-import type { UserResponse } from '../api/models';
+import { createContext, type ReactNode, useContext, useState } from "react";
+import type { UserResponse } from "../api/models";
 
-type Dispatch = (User: UserResponse| null) => void;
+type Dispatch = (User: UserResponse | null) => void;
 
 type LoggedUserProviderProps = { children: ReactNode };
 
@@ -15,12 +10,10 @@ const LoggedUserDispatchContext = createContext<Dispatch | null>(null);
 
 const LoggedUserProvider = ({ children }: LoggedUserProviderProps) => {
   const [user, setUser] = useState<UserResponse | null>(null);
-  
+
   return (
     <LoggedUserContext.Provider value={user}>
-      <LoggedUserDispatchContext.Provider value={setUser}>
-        {children}
-      </LoggedUserDispatchContext.Provider>
+      <LoggedUserDispatchContext.Provider value={setUser}>{children}</LoggedUserDispatchContext.Provider>
     </LoggedUserContext.Provider>
   );
 };
@@ -33,7 +26,7 @@ const useLoggedUserDispatch = (): Dispatch => {
   const context = useContext<Dispatch | null>(LoggedUserDispatchContext);
 
   if (context === null) {
-    throw new Error('useLoggedUserDispatch must be used within a LoggedUserProvider');
+    throw new Error("useLoggedUserDispatch must be used within a LoggedUserProvider");
   }
   return context;
 };

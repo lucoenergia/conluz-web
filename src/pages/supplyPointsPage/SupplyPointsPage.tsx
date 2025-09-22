@@ -29,35 +29,35 @@ export const SupplyPointsPage: FC = () => {
 
   const disableSupplyPoint = async (id: string) => {
     try {
-      const response = await disableSupply.mutateAsync({ id })
+      const response = await disableSupply.mutateAsync({ id });
       if (response) {
         refetch();
         return true;
       } else {
-        errorDispatch('Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde');
+        errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
         return false;
       }
     } catch (e) {
-      errorDispatch('Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde');
+      errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
       return false;
     }
-  }
+  };
 
   const enableSupplyPoint = async (id: string) => {
     try {
-      const response = await enableSupply.mutateAsync({ id })
+      const response = await enableSupply.mutateAsync({ id });
       if (response) {
         refetch();
         return true;
       } else {
-        errorDispatch('Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde');
+        errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
         return false;
       }
     } catch (e) {
-      errorDispatch('Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde');
+      errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
       return false;
     }
-  }
+  };
 
   useEffect(() => {
     if (error) {

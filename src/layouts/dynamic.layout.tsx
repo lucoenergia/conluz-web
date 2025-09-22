@@ -5,6 +5,5 @@ import { PublicLayout } from "./public.layout";
 
 export const DynamicLayout: FC = () => {
   const loggedUser = useLoggedUser();
-  return loggedUser ? <AuthenticatedLayout/> : <PublicLayout/>  
-}
- 
+  return loggedUser ? <AuthenticatedLayout /> : <PublicLayout />;
+};

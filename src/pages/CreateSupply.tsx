@@ -22,24 +22,31 @@ export const CreateSupplyPage: FC = () => {
         address,
         partitionCoefficient,
         personalId: loggedUser?.personalId,
-        addressRef
-      } as CreateSupplyBody
+        addressRef,
+      } as CreateSupplyBody;
       const response = await createSupply.mutateAsync({ data: newSupply });
       if (response) {
-        navigate('/supply-points');
+        navigate("/supply-points");
       } else {
-        errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde")
+        errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
       }
     } catch (e) {
-        errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde")
+      errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
     }
-  }
+  };
 
   return (
     <Box className="grid gap-4">
-      <BreadCrumb steps={[{ label: 'Consumo', href: '/supply-points' }, { label: 'Nuevo', href: '#' }]} />
-      <Typography variant="h1" className="text-3xl">Crear nuevo punto de suministro</Typography>
+      <BreadCrumb
+        steps={[
+          { label: "Consumo", href: "/supply-points" },
+          { label: "Nuevo", href: "#" },
+        ]}
+      />
+      <Typography variant="h1" className="text-3xl">
+        Crear nuevo punto de suministro
+      </Typography>
       <SupplyForm handleSubmit={handleSubmit} />
     </Box>
-  )
-}
+  );
+};

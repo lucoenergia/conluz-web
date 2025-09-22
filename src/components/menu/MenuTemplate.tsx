@@ -1,30 +1,32 @@
-import { Menu } from "@mui/material"
-import { type FC, type ReactNode } from "react"
+import { Menu } from "@mui/material";
+import { type FC, type ReactNode } from "react";
 
 interface MenuTemplateProps {
-    children: ReactNode,
-    anchorElement: HTMLElement | null
-    onClose: (event: React.MouseEvent) => void;
-    compactPadding?: boolean;
+  children: ReactNode;
+  anchorElement: HTMLElement | null;
+  onClose: (event: React.MouseEvent) => void;
+  compactPadding?: boolean;
 }
-export const MenuTemplate: FC<MenuTemplateProps> = ({anchorElement, onClose, compactPadding = false, children}) => {
-    return <Menu
-      sx={{ mt: '45px', 
+export const MenuTemplate: FC<MenuTemplateProps> = ({ anchorElement, onClose, compactPadding = false, children }) => {
+  return (
+    <Menu
+      sx={{
+        mt: "45px",
         ...(compactPadding && {
-          '& .MuiMenu-list': {
+          "& .MuiMenu-list": {
             paddingTop: 0,
             paddingBottom: 0,
           },
-        }),}}
- 
+        }),
+      }}
       anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
+        vertical: "top",
+        horizontal: "right",
       }}
       keepMounted
       transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
+        vertical: "top",
+        horizontal: "right",
       }}
       anchorEl={anchorElement}
       open={Boolean(anchorElement)}
@@ -32,4 +34,5 @@ export const MenuTemplate: FC<MenuTemplateProps> = ({anchorElement, onClose, com
     >
       {children}
     </Menu>
-}
+  );
+};

@@ -1,11 +1,5 @@
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import { AXIOS_INSTANCE } from '../api/custom-instance';
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import { AXIOS_INSTANCE } from "../api/custom-instance";
 type Dispatch = (Auth: string | null) => void;
 
 type AuthProviderProps = { children: ReactNode; initialState?: string | null };
@@ -17,14 +11,14 @@ const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
   const [token, setToken] = useState(initialState);
 
   const updateToken: Dispatch = (token: string | null) => {
-    if(token) {
-      window.localStorage.setItem('token', token)
+    if (token) {
+      window.localStorage.setItem("token", token);
     } else {
-      window.localStorage.removeItem('token')
+      window.localStorage.removeItem("token");
     }
-    setToken(token)
-  }
-  
+    setToken(token);
+  };
+
   useEffect(() => {
     const interceptorId = AXIOS_INSTANCE.interceptors.request.use((config) => {
       if (config.headers && token) {
@@ -44,9 +38,7 @@ const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
 
   return (
     <AuthContext.Provider value={token}>
-      <AuthDispatchContext.Provider value={updateToken}>
-        {children}
-      </AuthDispatchContext.Provider>
+      <AuthDispatchContext.Provider value={updateToken}>{children}</AuthDispatchContext.Provider>
     </AuthContext.Provider>
   );
 };
@@ -59,7 +51,7 @@ const useAuthDispatch = (): Dispatch => {
   const context = useContext<Dispatch | null>(AuthDispatchContext);
 
   if (context === null) {
-    throw new Error('useAuthDispatch must be used within a AuthProvider');
+    throw new Error("useAuthDispatch must be used within a AuthProvider");
   }
   return context;
 };

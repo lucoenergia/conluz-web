@@ -14,14 +14,9 @@ describe("ConfirmationModal", () => {
 
   function setup() {
     render(
-      <ConfirmationModal
-        isOpen={true}
-        confirmLabel="Deshabilitar"
-        onCancel={mockOnCancel}
-        onConfirm={mockOnConfirm}
-      >
+      <ConfirmationModal isOpen={true} confirmLabel="Deshabilitar" onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
         Deshabilitar punto de suministro
-      </ConfirmationModal>
+      </ConfirmationModal>,
     );
   }
 
@@ -32,7 +27,7 @@ describe("ConfirmationModal", () => {
 
   it("calls onCancel when Cancelar button is clicked", async () => {
     setup();
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /Cancelar/i }));
 
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
