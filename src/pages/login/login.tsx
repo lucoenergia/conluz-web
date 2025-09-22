@@ -2,7 +2,7 @@ import { useState, type FC } from "react"
 import { Box, Button, Checkbox, FormControlLabel, FormGroup, InputLabel, Link, TextField, Typography } from "@mui/material"
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
 import { Link as RouterLink, useNavigate } from 'react-router'
-import { login } from "../../api/authentication/authentication";
+import { useLogin } from "../../api/authentication/authentication";
 import { LabeledIcon } from "../../components/labeled-icon/LabeledIcon";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 import { useAuthDispatch } from "../../context/auth.context";
@@ -17,6 +17,7 @@ export const Login: FC = () => {
   const label = 'Bienvenide a ConLuz';
   const passwordErrorMessage = 'Por favor, introduce tu contraseña'
   const idErrorMessage = 'Por favor, introduce tu DNI/NIF'
+  const login = useLogin();
   const dispatchAuth = useAuthDispatch();
   const navigate = useNavigate();
 
@@ -37,7 +38,7 @@ export const Login: FC = () => {
 
     if (!validateInput(id, password)) return;
     try {
-      const response = await login({ username: id.trim(), password: password.trim() });
+      const response = await login.mutateAsync({ data: { username: id.trim(), password: password.trim() }});
       if (response && response.token) {
         setLoginError(false);
         dispatchAuth(response.token);

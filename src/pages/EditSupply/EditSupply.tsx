@@ -11,8 +11,8 @@ export const EditSupplyPage: FC = () => {
   const { supplyPointId = '' } = useParams();
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const updateSupplyMutation = useUpdateSupply();
-
+  const updateSupply = useUpdateSupply();
+  
   const { data: supplyPoint, isLoading, error, refetch } = useGetSupply(supplyPointId);
 
   const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
@@ -24,7 +24,7 @@ export const EditSupplyPage: FC = () => {
         partitionCoefficient,
         addressRef
       } as UpdateSupplyBody;
-      const response = await updateSupplyMutation.mutateAsync({ id: supplyPointId, data: updatedSupply}, { });
+      const response = await updateSupply.mutateAsync({ id: supplyPointId, data: updatedSupply}, { });
       if (response) {
         refetch();
         navigate('/supply-points');

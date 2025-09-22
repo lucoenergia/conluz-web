@@ -22,8 +22,8 @@ interface SupplyCardProps {
   enabled?: boolean,
   lastConnection?: string,
   lastMeassurement?: number,
-  onDisable: (id: string, successCallback: Function) => void,
-  onEnable: (id: string, successCallback: Function) => void
+  onDisable: (id: string) => Promise<boolean>,
+  onEnable: (id: string) => Promise<boolean>
 }
 
 export const SupplyCard: FC<SupplyCardProps> = ({
@@ -53,11 +53,12 @@ export const SupplyCard: FC<SupplyCardProps> = ({
     setOpenDisableSuccess(false);
   }
 
-  const handleDisable = () => {
+  const handleDisable = async () => {
     setOpenDisableConfirmation(false);
-    onDisable(id, () => {
-      setOpenDisableSuccess(true)
-    });
+    const disabled = await onDisable(id);
+    if(disabled) {
+      setOpenDisableSuccess(true);
+    }
   }
   
   const handleCloseEnableConfirmation = (event: React.MouseEvent) => {
@@ -70,9 +71,12 @@ export const SupplyCard: FC<SupplyCardProps> = ({
     setOpenEnableSuccess(false);
   }
 
-  const handleEnable = () => {
+  const handleEnable = async () => {
     setOpenEnableConfirmation(false);
-    onEnable(id, () => setOpenEnableSuccess(true));
+    const enabled = await onEnable(id);
+    if(enabled) {
+      setOpenEnableSuccess(true);
+    }
   }
 
   return <Link to={`/supply-points/${id}`}>

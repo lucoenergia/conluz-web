@@ -17,7 +17,7 @@ export const ForgotPassword: FC = () => {
 
     setFormError(newError);
     if (newError) return;
-
+    // TODO: Add backend call when method exists
   };
   return <>
     <Box component="form" className="p-7 w-full" action={handleSubmit}>

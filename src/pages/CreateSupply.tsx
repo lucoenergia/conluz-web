@@ -1,7 +1,7 @@
 import { type FC } from "react";
 import { BreadCrumb } from "../components/breadCrumb/BreadCrumb";
 import { Box, Typography } from "@mui/material";
-import { createSupply } from "../api/supplies/supplies";
+import { useCreateSupply } from "../api/supplies/supplies";
 import type { CreateSupplyBody } from "../api/models";
 import { useNavigate } from "react-router";
 import { SupplyForm, type SupplyFormValues } from "../components/supplyForm/SupplyForm";
@@ -12,6 +12,7 @@ export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
   const loggedUser = useLoggedUser();
   const errorDispatch = useErrorDispatch();
+  const createSupply = useCreateSupply();
 
   const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
     try {
@@ -23,7 +24,7 @@ export const CreateSupplyPage: FC = () => {
         personalId: loggedUser?.personalId,
         addressRef
       } as CreateSupplyBody
-      const response = await createSupply(newSupply);
+      const response = await createSupply.mutateAsync({ data: newSupply });
       if (response) {
         navigate('/supply-points');
       } else {
