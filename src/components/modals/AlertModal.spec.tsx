@@ -7,19 +7,15 @@ import userEvent from "@testing-library/user-event";
 describe("DisablePointModal", () => {
   const mockOnClose = vi.fn();
 
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   function setup() {
     render(
-      <AlertModal
-        isOpen={true}
-        onClose={mockOnClose}
-      >
+      <AlertModal isOpen={true} onClose={mockOnClose}>
         Texto del modal
-      </AlertModal>
+      </AlertModal>,
     );
   }
 

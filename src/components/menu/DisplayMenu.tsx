@@ -7,7 +7,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 import NotInterestedOutlinedIcon from "@mui/icons-material/NotInterestedOutlined";
-import CheckIcon from '@mui/icons-material/Check';
+import CheckIcon from "@mui/icons-material/Check";
 
 interface DisplayMenuProps {
   disableSupplyPoint: () => void;
@@ -16,7 +16,12 @@ interface DisplayMenuProps {
   enabled: boolean;
 }
 
-export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupplyPoint, enableSupplyPoint, enabled }) => {
+export const DisplayMenu: FC<DisplayMenuProps> = ({
+  supplyPointId,
+  disableSupplyPoint,
+  enableSupplyPoint,
+  enabled,
+}) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -33,14 +38,13 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupply
     event.preventDefault();
     handleCloseUserMenu();
     disableSupplyPoint();
-  }
-  
+  };
+
   const handleEnableSupplyPoint = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     handleCloseUserMenu();
     enableSupplyPoint();
-  }
-
+  };
 
   return (
     <>
@@ -68,7 +72,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupply
           />
         </MenuLinkItem>
         <Divider />
-        { enabled ?
+        {enabled ? (
           <MenuItem onClick={handleDisableSupplyPoint}>
             <LabeledIcon
               variant="compact"
@@ -78,17 +82,11 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({ supplyPointId, disableSupply
               label="Deshabilitar"
             />
           </MenuItem>
-          :
+        ) : (
           <MenuItem onClick={handleEnableSupplyPoint}>
-            <LabeledIcon
-              variant="compact"
-              justify="between"
-              iconPosition="right"
-              icon={CheckIcon}
-              label="Activar"
-            />
+            <LabeledIcon variant="compact" justify="between" iconPosition="right" icon={CheckIcon} label="Activar" />
           </MenuItem>
-        }
+        )}
       </MenuTemplate>
     </>
   );

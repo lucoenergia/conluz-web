@@ -3,19 +3,19 @@ import { Accordion, AccordionDetails, AccordionSummary, Skeleton, Typography } f
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface DropdownCardProps {
-  className?: string,
-  children: ReactNode
+  className?: string;
+  children: ReactNode;
 }
 
-export const LoadingDropdownCard: FC<DropdownCardProps> = ({ className, children}) => {
+export const LoadingDropdownCard: FC<DropdownCardProps> = ({ className, children }) => {
   return (
     <Accordion className={`rounded p-2 ${className}`}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-        <Typography className="text-2xl font-bold"><Skeleton/></Typography>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography className="text-2xl font-bold">
+          <Skeleton />
+        </Typography>
       </AccordionSummary>
-      <AccordionDetails className="grid gap-4">
-        {children}
-      </AccordionDetails>
+      <AccordionDetails className="grid gap-4">{children}</AccordionDetails>
     </Accordion>
-  )
-}
+  );
+};

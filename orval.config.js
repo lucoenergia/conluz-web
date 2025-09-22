@@ -1,18 +1,18 @@
 export const conluz = {
   output: {
-    mode: 'tags-split',
-    target: 'src/api',
-    schemas: './src/api/models',
-    client: 'react-query',
+    mode: "tags-split",
+    target: "src/api",
+    schemas: "./src/api/models",
+    client: "react-query",
     mock: true,
     override: {
       mutator: {
-        path: './src/api/custom-instance.ts',
-        name: 'customInstance',
-      }
-    }
+        path: "./src/api/custom-instance.ts",
+        name: "customInstance",
+      },
+    },
   },
   input: {
-    target: './api-docs.json',
+    target: "./api-docs.json",
   },
 };

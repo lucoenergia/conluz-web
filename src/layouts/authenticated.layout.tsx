@@ -23,48 +23,63 @@ export const AuthenticatedLayout: FC = () => {
   const loggedUser = useLoggedUser();
   const setLoggedUser = useLoggedUserDispatch();
   // For desktop view the menu starts open, for mobile view it starts collapsed
-  const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH)
+  const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
 
   const contentMargin = useMemo(() => {
     return isMenuOpened && width > MIN_DESKTOP_WIDTH ? SIDEMENU_WIDTH : 0;
-  }, [isMenuOpened, width])
+  }, [isMenuOpened, width]);
 
   // If there is no logged user in context we query the backend and retrieve it
-  const { data } = useGetCurrentUser({ query: { enabled: loggedUser === null } })
+  const { data } = useGetCurrentUser({ query: { enabled: loggedUser === null } });
 
   useEffect(() => {
     if (data) {
-      setLoggedUser(data)
+      setLoggedUser(data);
     }
-  }, [data])
+  }, [data]);
 
   const logout = async () => {
     queryClient.clear();
     dispatchAuth(null);
     setLoggedUser(null);
-    navigate('/login');
-  }
+    navigate("/login");
+  };
 
   const selectedId = useMemo(() => {
     // reverse() is used since otherwise it would always match the index route '/' which is the first one and part of every other route
     // slplice() is used before reverse because reverse modifies the array in place and we dont want the original array to be modified
-    return MENU_ITEMS.slice().reverse().find(menuItem => location.pathname.includes(menuItem.to))?.id
-  }, [location.key])
+    return MENU_ITEMS.slice()
+      .reverse()
+      .find((menuItem) => location.pathname.includes(menuItem.to))?.id;
+  }, [location.key]);
 
   return (
     <ProtectedRoute>
-      <Header onMenuClick={() => { setIsMenuOpened(!isMenuOpened) }} username={loggedUser?.fullName} />
-      <SideMenu isMenuOpened={isMenuOpened} onMenuClose={setIsMenuOpened} menuItems={MENU_ITEMS} selectedId={selectedId} />
-      <Box sx={{ marginLeft: `${contentMargin}px`, transition: 'margin 225ms cubic-bezier(0.0, 0, 0.2, 1) 0ms' }} className="p-4" component="main">
+      <Header
+        onMenuClick={() => {
+          setIsMenuOpened(!isMenuOpened);
+        }}
+        username={loggedUser?.fullName}
+      />
+      <SideMenu
+        isMenuOpened={isMenuOpened}
+        onMenuClose={setIsMenuOpened}
+        menuItems={MENU_ITEMS}
+        selectedId={selectedId}
+      />
+      <Box
+        sx={{ marginLeft: `${contentMargin}px`, transition: "margin 225ms cubic-bezier(0.0, 0, 0.2, 1) 0ms" }}
+        className="p-4"
+        component="main"
+      >
         <Toolbar />
         <AuthErrorBoundry onError={logout}>
           <ErrorProvider>
             <Outlet />
-            <ErrorDisplay/>
+            <ErrorDisplay />
           </ErrorProvider>
         </AuthErrorBoundry>
       </Box>
     </ProtectedRoute>
-  )
-}
- 
+  );
+};

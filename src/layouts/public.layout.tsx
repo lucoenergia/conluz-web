@@ -5,7 +5,7 @@ import { Outlet } from "react-router";
 export const PublicLayout: FC = () => {
   return (
     <Box className="p-4">
-      <Outlet/>
+      <Outlet />
     </Box>
-  )
-}
+  );
+};

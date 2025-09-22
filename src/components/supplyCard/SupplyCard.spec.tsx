@@ -1,28 +1,28 @@
-import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import { SupplyCard } from './SupplyCard';
-import userEvent from '@testing-library/user-event';
+import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { SupplyCard } from "./SupplyCard";
+import userEvent from "@testing-library/user-event";
 
 const mockSupply = {
-  id: '123',
-  code: 'ES123',
-  name: 'Suministro Principal',
-  address: 'Calle Falsa 123',
+  id: "123",
+  code: "ES123",
+  name: "Suministro Principal",
+  address: "Calle Falsa 123",
   partitionCoefficient: 4.234859,
   enabled: true,
   lastMeassurement: 10,
-  lastConnection: '6 días',
-  onDisable: () => true,
-  onEnable: () => true
+  lastConnection: "6 días",
+  onDisable: async () => true,
+  onEnable: async () => true,
 };
 
-describe('SupplyCard', () => {
-  it('renders correctly with required props', () => {
+describe("SupplyCard", () => {
+  it("renders correctly with required props", () => {
     render(
       <MemoryRouter>
         <SupplyCard {...mockSupply} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("Suministro Principal")).toBeInTheDocument();
@@ -35,25 +35,24 @@ describe('SupplyCard', () => {
     render(
       <MemoryRouter>
         <SupplyCard {...mockSupply} enabled={false} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.getByText("Inactivo")).toBeInTheDocument();
   });
 
-  it('opens and closes the menu on icon button click', async () => {
+  it("opens and closes the menu on icon button click", async () => {
     render(
       <MemoryRouter>
         <SupplyCard {...mockSupply} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
-
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole("button"));
 
     expect(screen.getByText("Ver")).toBeVisible();
 
-    await user.keyboard('{Escape}')
+    await user.keyboard("{Escape}");
 
     expect(screen.queryByText("Ver")).not.toBeVisible();
   });

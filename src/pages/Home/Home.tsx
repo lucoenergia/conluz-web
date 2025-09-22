@@ -9,12 +9,12 @@ import { DropdownSelector } from "../../components/forms/DropdownSelector";
 // TODO: Set monitorig data methods when endpoints are ready
 
 export const HomePage: FC = () => {
-  const [selectedSupplyPoint, setSelectedSupplyPoint] = useState<string|null>(null);
+  const [selectedSupplyPoint, setSelectedSupplyPoint] = useState<string | null>(null);
 
   return (
     <Box className="grid md:grid-cols-2 gap-x-8 gap-y-4">
       <BreadCrumb className="md:col-span-2" steps={[{ label: "Inicio", href: "#" }]} />
-      <SupplyPointAutocomplete value={selectedSupplyPoint} onChange={setSelectedSupplyPoint}/> 
+      <SupplyPointAutocomplete value={selectedSupplyPoint} onChange={setSelectedSupplyPoint} />
       <ProductionPanel />
       <ConsumptionPanel />
     </Box>
@@ -22,23 +22,36 @@ export const HomePage: FC = () => {
 };
 
 interface SupplyPointAutocompleteProps {
-  value: string | null,
-  onChange: (newValue: string | null) => void
+  value: string | null;
+  onChange: (newValue: string | null) => void;
 }
 
-const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({value, onChange}) => {
+const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onChange }) => {
   const { data: supplyPoints, isLoading } = useGetAllSupplies({});
 
-  const options = useMemo(() => supplyPoints?.items ? supplyPoints.items.map((sp) => ({label: sp.name ? sp.name : "", value: sp.id ? sp.id : ''})) : [], [supplyPoints])
-  useEffect(() => { // Preselect the first supply point once options are loaded
+  const options = useMemo(
+    () =>
+      supplyPoints?.items
+        ? supplyPoints.items.map((sp) => ({ label: sp.name ? sp.name : "", value: sp.id ? sp.id : "" }))
+        : [],
+    [supplyPoints],
+  );
+  useEffect(() => {
+    // Preselect the first supply point once options are loaded
     if (options.length && value === null) {
-      onChange(options[0].value)
+      onChange(options[0].value);
     }
-  }, [options])
+  }, [options]);
   return (
-    <DropdownSelector options={options} value={value} onChange={onChange} isLoading={isLoading} label="Puntos de suministro"/>
-  )
-}
+    <DropdownSelector
+      options={options}
+      value={value}
+      onChange={onChange}
+      isLoading={isLoading}
+      label="Puntos de suministro"
+    />
+  );
+};
 
 const ProductionPanel: FC = () => {
   const categories = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
@@ -65,8 +78,8 @@ const ProductionPanel: FC = () => {
         <Graph key={index} title={item.name} values={mockedData} xAxis={categories} info={item.info} />
       ))}
     </Box>
-  )
-}
+  );
+};
 
 const ConsumptionPanel: FC = () => {
   const categories = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
@@ -101,5 +114,5 @@ const ConsumptionPanel: FC = () => {
         <Graph key={index} title={item.name} values={mockedData} xAxis={categories} info={item.info} />
       ))}
     </Box>
-  )
-}
+  );
+};

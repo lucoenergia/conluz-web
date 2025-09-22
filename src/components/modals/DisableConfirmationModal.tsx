@@ -9,14 +9,7 @@ interface DisableConfirmationModalProps {
   onDisable: () => void;
 }
 
-export const DisableConfirmationModal: FC<DisableConfirmationModalProps> = ({
-  isOpen,
-  code,
-  onCancel,
-  onDisable,
-}) => {
-
-
+export const DisableConfirmationModal: FC<DisableConfirmationModalProps> = ({ isOpen, code, onCancel, onDisable }) => {
   return (
     <ConfirmationModal isOpen={isOpen} onCancel={onCancel} confirmLabel="Deshabilitar" onConfirm={onDisable}>
       <Typography id="modal-modal-title" variant="h6" component="h2">

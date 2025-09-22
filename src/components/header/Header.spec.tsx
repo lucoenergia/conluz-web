@@ -8,7 +8,7 @@ import { LoggedUserProvider } from "../../context/logged-user.context";
 
 test("Header gets render and menu fn triggered", async () => {
   const user = userEvent.setup();
-  const menuFn = vi.fn()
+  const menuFn = vi.fn();
   render(
     <AuthProvider>
       <LoggedUserProvider>
@@ -16,10 +16,10 @@ test("Header gets render and menu fn triggered", async () => {
           <Header onMenuClick={menuFn} />
         </MemoryRouter>
       </LoggedUserProvider>
-    </AuthProvider>
+    </AuthProvider>,
   );
 
-  await user.click(screen.getByLabelText('menu'));
+  await user.click(screen.getByLabelText("menu"));
 
-  expect(menuFn.mock.calls.length).toBe(1)
+  expect(menuFn.mock.calls.length).toBe(1);
 });

@@ -5,7 +5,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     ports:
-      - "3001:80" 
+      - "3001:80"
     restart: unless-stopped
     environment:
       - CONLUZ_API_URL=http://localhost:8443

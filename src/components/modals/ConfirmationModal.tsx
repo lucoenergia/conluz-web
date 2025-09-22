@@ -7,9 +7,9 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   onCancel: (event: MouseEvent<HTMLElement>) => void;
   onConfirm: () => void;
-  confirmLabel: string,
-  confirmColor?: 'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning', 
-  children: ReactNode
+  confirmLabel: string;
+  confirmColor?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
+  children: ReactNode;
 }
 
 export const ConfirmationModal: FC<ConfirmationModalProps> = ({
@@ -18,9 +18,8 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
   onConfirm,
   confirmLabel,
   confirmColor = "error",
-  children
+  children,
 }) => {
-
   const handleConfirm = (event: MouseEvent<HTMLElement>) => {
     event.preventDefault();
     onConfirm();
@@ -28,7 +27,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
 
   return (
     <BasicModal isOpen={isOpen} onClose={onCancel}>
-      { children }
+      {children}
       <Box className="flex justify-around pt-8 gap-5">
         <Button
           variant="contained"
@@ -36,7 +35,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
           onClick={handleConfirm}
           className="flex items-center justify-center text-center leading-none"
         >
-          { confirmLabel }
+          {confirmLabel}
         </Button>
         <Button variant="contained" color="primary" onClick={onCancel}>
           Cancelar
