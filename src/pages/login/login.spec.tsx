@@ -67,7 +67,7 @@ describe("Login component", () => {
           password: "securepass",
         },
       });
-      expect(mockAuthDispatch).toHaveBeenCalledWith(mockToken);
+      expect(mockAuthDispatch).toHaveBeenCalledWith({ token: mockToken, remember: false});
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
