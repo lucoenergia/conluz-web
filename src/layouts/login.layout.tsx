@@ -1,8 +1,8 @@
 import { Box, Container } from "@mui/material";
 import { type FC } from "react";
 import { Outlet } from "react-router";
-import { Logo } from "../components/header/Logo";
-import { AnonRoute } from "../components/auth/AnonRoute";
+import { Logo } from "../components/Header/Logo";
+import { AnonRoute } from "../components/Auth/AnonRoute";
 
 export const LoginLayout: FC = () => {
   return (

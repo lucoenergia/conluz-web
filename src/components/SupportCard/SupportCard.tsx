@@ -1,7 +1,7 @@
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { FC, ReactNode } from "react";
-import { CardTemplate } from "../cardTemplate/CardTemplate";
-import { LabeledIcon } from "../labeled-icon/LabeledIcon";
+import { CardTemplate } from "../CardTemplate/CardTemplate";
+import { LabeledIcon } from "../LabeledIcon/LabeledIcon";
 
 interface SupportCardProps {
   children: ReactNode;

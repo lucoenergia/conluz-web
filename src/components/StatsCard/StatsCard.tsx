@@ -1,6 +1,6 @@
 import { type FC } from "react";
-import { CardTemplate } from "../cardTemplate/CardTemplate";
-import { Stat } from "../stat/Stat";
+import { CardTemplate } from "../CardTemplate/CardTemplate";
+import { Stat } from "../Stat/Stat";
 
 interface Stat {
   label: string;
