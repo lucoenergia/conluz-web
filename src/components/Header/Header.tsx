@@ -1,0 +1,33 @@
+import { AppBar, IconButton, Toolbar } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import { Logo } from "./Logo";
+import type { FC } from "react";
+import { ProfileMenu } from "../Menu/ProfileMenu";
+
+interface HeaderProps {
+  username?: string;
+  onMenuClick: Function;
+}
+
+export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
+  // zIndex is required to make SideMenu render under AppBar
+  return (
+    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <Toolbar className="gap-2">
+        <IconButton
+          size="large"
+          edge="start"
+          color="inherit"
+          aria-label="menu"
+          onClick={() => {
+            onMenuClick();
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Logo responsive />
+        <ProfileMenu username={username} />
+      </Toolbar>
+    </AppBar>
+  );
+};

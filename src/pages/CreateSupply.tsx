@@ -1,10 +1,10 @@
 import { type FC } from "react";
-import { BreadCrumb } from "../components/breadCrumb/BreadCrumb";
+import { BreadCrumb } from "../components/Breadcrumb/BreadCrumb";
 import { Box, Typography } from "@mui/material";
 import { useCreateSupply } from "../api/supplies/supplies";
 import type { CreateSupplyBody } from "../api/models";
 import { useNavigate } from "react-router";
-import { SupplyForm, type SupplyFormValues } from "../components/supplyForm/SupplyForm";
+import { SupplyForm, type SupplyFormValues } from "../components/SupplyForm/SupplyForm";
 import { useLoggedUser } from "../context/logged-user.context";
 import { useErrorDispatch } from "../context/error.context";
 

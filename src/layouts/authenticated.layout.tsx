@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type FC } from "react";
-import { Header } from "../components/header/Header";
+import { Header } from "../components/Header/Header";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { SideMenu } from "../components/menu/SideMenu";
+import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
 import { MENU_ITEMS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
 import { Box, Toolbar } from "@mui/material";
-import { ProtectedRoute } from "../components/auth/ProtectedRoute";
+import { ProtectedRoute } from "../components/Auth/ProtectedRoute";
 import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetCurrentUser } from "../api/users/users";

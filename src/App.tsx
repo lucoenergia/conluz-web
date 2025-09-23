@@ -1,16 +1,16 @@
 import "./App.css";
 import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
-import { SupplyPointsPage } from "./pages/supplyPointsPage/SupplyPointsPage";
+import { SupplyPointsPage } from "./pages/SupplyPointsPage";
 import { LoginLayout } from "./layouts/login.layout";
-import { Login } from "./pages/login/login";
-import { ForgotPassword } from "./pages/ForgotPassword/ForgotPassword";
-import { NewPassword } from "./pages/NewPassword/NewPassword";
-import { SupplyDetailPage } from "./pages/SupplyDetail/SupplyDetailPage";
+import { Login } from "./pages/Login";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import { NewPassword } from "./pages/NewPassword";
+import { SupplyDetailPage } from "./pages/SupplyDetailPage";
 import { CreateSupplyPage } from "./pages/CreateSupply";
-import { EditSupplyPage } from "./pages/EditSupply/EditSupply";
-import { HomePage } from "./pages/Home/Home";
-import { ContactPage } from "./pages/contact/Contact.page";
+import { EditSupplyPage } from "./pages/EditSupply";
+import { HomePage } from "./pages/Home";
+import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
 
 function App() {
