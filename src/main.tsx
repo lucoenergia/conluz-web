@@ -8,6 +8,7 @@ import { ThemeProvider } from "@emotion/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/auth.context.tsx";
 import { LoggedUserProvider } from "./context/logged-user.context.tsx";
+import { getFromStorage } from "./utils/getFromStorage.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +32,7 @@ const theme = createTheme({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider initialState={window.localStorage.getItem("token")}>
+    <AuthProvider initialState={getFromStorage("token")}>
       <LoggedUserProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>

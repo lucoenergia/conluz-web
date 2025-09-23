@@ -45,13 +45,14 @@ export const Login: FC = () => {
   const handleSubmit = async (data: FormData) => {
     const id = data.get("id") as string;
     const password = data.get("password") as string;
+    const remember = data.get('remember') ? true : false;
 
     if (!validateInput(id, password)) return;
     try {
       const response = await login.mutateAsync({ data: { username: id.trim(), password: password.trim() } });
       if (response && response.token) {
         setLoginError(false);
-        dispatchAuth(response.token);
+        dispatchAuth({ token: response.token, remember });
         navigate("/");
       } else {
         setLoginError(true);
@@ -103,7 +104,7 @@ export const Login: FC = () => {
           variant="filled"
         />
         <Box className="flex flex-row justify-between items-center w-full">
-          <FormControlLabel control={<Checkbox color="success" />} label="Recordarme" className="mt-2" />
+          <FormControlLabel control={<Checkbox name="remember" color="success" />} label="Recordarme" className="mt-2" />
           <Link component={RouterLink} to="/forgot-password" underline="always" color="info">
             {"¿Olvidaste tu contraseña?"}
           </Link>

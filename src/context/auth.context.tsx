@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { AXIOS_INSTANCE } from "../api/custom-instance";
-type Dispatch = (Auth: string | null) => void;
+type Dispatch = (Auth: {token: string, remember: boolean } | null) => void;
 
 type AuthProviderProps = { children: ReactNode; initialState?: string | null };
 
@@ -10,13 +10,16 @@ const AuthDispatchContext = createContext<Dispatch | null>(null);
 const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
   const [token, setToken] = useState(initialState);
 
-  const updateToken: Dispatch = (token: string | null) => {
-    if (token) {
-      window.localStorage.setItem("token", token);
+  const updateToken: Dispatch = (token: null | { token: string, remember: boolean }) => {
+    if (token && token.remember) {
+      window.localStorage.setItem("token", token.token);
+    } else if (token) {
+      window.sessionStorage.setItem('token', token.token )
     } else {
       window.localStorage.removeItem("token");
+      window.sessionStorage.removeItem('token');
     }
-    setToken(token);
+    setToken(token ? token.token : token);
   };
 
   useEffect(() => {
