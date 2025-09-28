@@ -1,6 +1,8 @@
 services:
   conluzweb:
-    image: conluzweb
+    # Uncomment this and comment the build block if you want to build the last image pushed to GitHub Container Registry
+    # image: ghcr.io/lucoenergia/conluz-web:latest
+    container_name: conluzweb
     build:
       context: ..
       dockerfile: docker/Dockerfile
