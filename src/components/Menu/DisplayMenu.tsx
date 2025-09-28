@@ -48,7 +48,17 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
 
   return (
     <>
-      <IconButton onClick={handleOpenUserMenu}>
+      <IconButton
+        onClick={handleOpenUserMenu}
+        sx={{
+          color: "white",
+          minWidth: 40,
+          minHeight: 40,
+          "&:hover": {
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+          },
+        }}
+      >
         <MoreVertIcon />
       </IconButton>
       <MenuTemplate anchorElement={anchorElement} onClose={handleCloseUserMenu} compactPadding>

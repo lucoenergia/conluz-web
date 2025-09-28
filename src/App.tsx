@@ -1,7 +1,7 @@
 import "./App.css";
 import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
-import { SupplyPointsPage } from "./pages/SupplyPointsPage";
+import { EnhancedSupplyPointsPage } from "./pages/EnhancedSupplyPointsPage";
 import { LoginLayout } from "./layouts/login.layout";
 import { Login } from "./pages/Login";
 import { ForgotPassword } from "./pages/ForgotPassword";
@@ -27,7 +27,7 @@ function App() {
         <Route element={<AuthenticatedLayout />}>
           <Route index element={<HomePage />} />
           <Route path="supply-points">
-            <Route index element={<SupplyPointsPage />}></Route>
+            <Route index element={<EnhancedSupplyPointsPage />}></Route>
             <Route path="new" element={<CreateSupplyPage />} />
             <Route path=":supplyPointId">
               <Route index element={<SupplyDetailPage />} />
