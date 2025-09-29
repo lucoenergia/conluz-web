@@ -3,6 +3,7 @@ import { useState, type FC } from "react";
 import { Link } from "react-router";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
+import KeyIcon from "@mui/icons-material/Key";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { MenuTemplate } from "./MenuTemplate";
@@ -100,6 +101,23 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             </Typography>
           </MenuItem>
 
+          <MenuItem
+            sx={{
+              px: 3,
+              py: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              width: '100%',
+              '&:hover': { backgroundColor: '#f8fafc' }
+            }}
+          >
+            <KeyIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
+              Cambiar contraseña
+            </Typography>
+          </MenuItem>
+
           <Link to="/contact" style={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem
               sx={{
@@ -139,7 +157,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
               }
             }}
           >
-            Logout
+            Salir
           </Button>
         </Box>
       </MenuTemplate>
