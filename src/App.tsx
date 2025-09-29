@@ -12,6 +12,7 @@ import { EditSupplyPage } from "./pages/EditSupply";
 import { HomePage } from "./pages/Home";
 import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
+import { PartnersPage } from "./pages/Partners.page";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
               <Route path="edit" element={<EditSupplyPage />} />
             </Route>
           </Route>
+          <Route path="partners" element={<PartnersPage />} />
         </Route>
         <Route element={<DynamicLayout />}>
           <Route path="contact" element={<ContactPage />} />
