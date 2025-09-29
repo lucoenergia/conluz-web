@@ -6,7 +6,7 @@ import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 
 export const MIN_DESKTOP_WIDTH = 768;
-export const SIDEMENU_WIDTH = 320;
+export const SIDEMENU_WIDTH = 260;
 
 export const MENU_ITEMS = [
   { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio" },
