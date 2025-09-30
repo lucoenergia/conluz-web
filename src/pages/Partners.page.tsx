@@ -33,9 +33,14 @@ import EditIcon from "@mui/icons-material/Edit";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import BlockIcon from "@mui/icons-material/Block";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-import { useGetAllUsers } from "../api/users/users";
+import { useGetAllUsers, useDisableUser1, useDisableUser } from "../api/users/users";
 import { useDebounce } from "../utils/useDebounce";
+import { DisablePartnerConfirmationModal } from "../components/Modals/DisablePartnerConfirmationModal";
+import { EnablePartnerConfirmationModal } from "../components/Modals/EnablePartnerConfirmationModal";
+import { DisablePartnerSuccessModal } from "../components/Modals/DisablePartnerSuccessModal";
+import { useErrorDispatch } from "../context/error.context";
 
 type OrderDirection = 'asc' | 'desc';
 type OrderBy = 'number' | 'fullName' | 'personalId';
@@ -55,12 +60,19 @@ export const PartnersPage: FC = () => {
     status: 'all',
   });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; enabled: boolean } | null>(null);
+  const [showDisableConfirmation, setShowDisableConfirmation] = useState(false);
+  const [showDisableSuccess, setShowDisableSuccess] = useState(false);
+  const [wasEnabled, setWasEnabled] = useState(false);
 
   const debouncedSearch = useDebounce(filters.search, 500);
+  const errorDispatch = useErrorDispatch();
+  const disableUserMutation = useDisableUser1();
+  const enableUserMutation = useDisableUser();
 
   // Fetch users data - using large size to get all users and handle pagination client-side
   // TODO: Backend CORS configuration needed for proper server-side pagination with sort parameters
-  const { data, isLoading, error } = useGetAllUsers({
+  const { data, isLoading, error, refetch } = useGetAllUsers({
     size: 10000,
   });
 
@@ -127,12 +139,54 @@ export const PartnersPage: FC = () => {
     setPage(0);
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, _userId: string) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, userId: string, userName: string, enabled: boolean) => {
     setAnchorEl(event.currentTarget);
+    setSelectedUser({ id: userId, name: userName, enabled });
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleToggleStatusClick = () => {
+    handleMenuClose();
+    setShowDisableConfirmation(true);
+  };
+
+  const handleDisableConfirm = async () => {
+    if (!selectedUser) return;
+
+    try {
+      if (selectedUser.enabled) {
+        // Disable user
+        await disableUserMutation.mutateAsync({ id: selectedUser.id });
+        setWasEnabled(false);
+      } else {
+        // Enable user
+        await enableUserMutation.mutateAsync({ id: selectedUser.id });
+        setWasEnabled(true);
+      }
+      setShowDisableConfirmation(false);
+      setShowDisableSuccess(true);
+      refetch();
+    } catch (error) {
+      errorDispatch(
+        selectedUser.enabled
+          ? "Error al deshabilitar el socio. Por favor, inténtalo de nuevo."
+          : "Error al habilitar el socio. Por favor, inténtalo de nuevo."
+      );
+      setShowDisableConfirmation(false);
+      console.error("Error toggling user status:", error);
+    }
+  };
+
+  const handleDisableCancel = () => {
+    setShowDisableConfirmation(false);
+  };
+
+  const handleDisableSuccessClose = () => {
+    setShowDisableSuccess(false);
+    setSelectedUser(null);
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -481,7 +535,7 @@ export const PartnersPage: FC = () => {
                           <TableCell align="center">
                             <IconButton
                               size="small"
-                              onClick={(e) => handleMenuOpen(e, user.id || '')}
+                              onClick={(e) => handleMenuOpen(e, user.id || '', user.fullName || 'Sin nombre', user.enabled || false)}
                               sx={{
                                 color: "#6b7280",
                                 "&:hover": { backgroundColor: "#f3f4f6" },
@@ -572,13 +626,47 @@ export const PartnersPage: FC = () => {
           <ListItemText>Reestablecer contraseña</ListItemText>
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleMenuClose}>
-          <ListItemIcon>
-            <BlockIcon fontSize="small" sx={{ color: "#ef4444" }} />
-          </ListItemIcon>
-          <ListItemText sx={{ color: "#ef4444" }}>Deshabilitar</ListItemText>
-        </MenuItem>
+        {selectedUser?.enabled ? (
+          <MenuItem onClick={handleToggleStatusClick}>
+            <ListItemIcon>
+              <BlockIcon fontSize="small" sx={{ color: "#ef4444" }} />
+            </ListItemIcon>
+            <ListItemText sx={{ color: "#ef4444" }}>Deshabilitar</ListItemText>
+          </MenuItem>
+        ) : (
+          <MenuItem onClick={handleToggleStatusClick}>
+            <ListItemIcon>
+              <CheckCircleIcon fontSize="small" sx={{ color: "#10b981" }} />
+            </ListItemIcon>
+            <ListItemText sx={{ color: "#10b981" }}>Habilitar</ListItemText>
+          </MenuItem>
+        )}
       </Menu>
+
+      {/* Disable/Enable Confirmation Modal */}
+      {selectedUser?.enabled ? (
+        <DisablePartnerConfirmationModal
+          isOpen={showDisableConfirmation}
+          partnerName={selectedUser?.name || ''}
+          onCancel={handleDisableCancel}
+          onDisable={handleDisableConfirm}
+        />
+      ) : (
+        <EnablePartnerConfirmationModal
+          isOpen={showDisableConfirmation}
+          partnerName={selectedUser?.name || ''}
+          onCancel={handleDisableCancel}
+          onEnable={handleDisableConfirm}
+        />
+      )}
+
+      {/* Disable/Enable Success Modal */}
+      <DisablePartnerSuccessModal
+        isOpen={showDisableSuccess}
+        partnerName={selectedUser?.name || ''}
+        wasEnabled={wasEnabled}
+        onClose={handleDisableSuccessClose}
+      />
     </Box>
   );
 };
