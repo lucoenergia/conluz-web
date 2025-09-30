@@ -1,6 +1,7 @@
-import { Card, CardContent, Typography, Box, IconButton, Tooltip } from "@mui/material";
+import { Card, CardContent, Typography, Box, IconButton, Tooltip, useMediaQuery, useTheme, ClickAwayListener } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { FC, ReactNode } from "react";
+import { useState } from "react";
 
 interface EnhancedGraphCardProps {
   title: string;
@@ -19,6 +20,21 @@ export const EnhancedGraphCard: FC<EnhancedGraphCardProps> = ({
   className,
   variant = "default"
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [open, setOpen] = useState(false);
+
+  const handleTooltipToggle = () => {
+    if (isMobile) {
+      setOpen(!open);
+    }
+  };
+
+  const handleClickAway = () => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
   const getHeaderStyles = () => {
     switch (variant) {
       case "production":
@@ -72,20 +88,32 @@ export const EnhancedGraphCard: FC<EnhancedGraphCardProps> = ({
             </Typography>
           )}
         </Box>
-        <Tooltip title={infoText} placement="left">
-          <IconButton
-            size="small"
-            sx={{
-              color: "white",
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
-              },
-            }}
-          >
-            <InfoOutlinedIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <ClickAwayListener onClickAway={handleClickAway}>
+          <div>
+            <Tooltip
+              title={infoText}
+              placement="left"
+              open={isMobile ? open : undefined}
+              disableFocusListener={isMobile}
+              disableHoverListener={isMobile}
+              disableTouchListener={isMobile}
+            >
+              <IconButton
+                size="small"
+                onClick={handleTooltipToggle}
+                sx={{
+                  color: "white",
+                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.3)",
+                  },
+                }}
+              >
+                <InfoOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </div>
+        </ClickAwayListener>
       </Box>
 
       <CardContent

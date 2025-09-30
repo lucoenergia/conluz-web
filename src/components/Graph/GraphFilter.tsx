@@ -91,14 +91,19 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
           variant="contained"
           sx={{
             boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+            width: { xs: "100%", sm: "auto" },
+            flexDirection: { xs: "column", sm: "row" },
+            "& .MuiButtonGroup-grouped": {
+              width: { xs: "100%", sm: "auto" },
+            },
             "& .MuiButton-root": {
               textTransform: "none",
-              fontSize: "0.9375rem",
+              fontSize: { xs: "0.875rem", sm: "0.9375rem" },
               fontWeight: 500,
               fontFamily: "Inter, sans-serif",
               lineHeight: 1.46667,
-              padding: "0.4375rem 1.0625rem",
-              minWidth: "64px",
+              padding: { xs: "0.5rem 1rem", sm: "0.4375rem 1.0625rem" },
+              minWidth: { xs: "100%", sm: "64px" },
               transition: "all 0.2s",
               bgcolor: range === GraphFilterRangeValues.DAY ? "#667eea" : "white",
               color: range === GraphFilterRangeValues.DAY ? "white" : "#667eea",
