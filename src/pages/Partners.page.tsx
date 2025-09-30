@@ -40,6 +40,7 @@ import { useDebounce } from "../utils/useDebounce";
 import { DisablePartnerConfirmationModal } from "../components/Modals/DisablePartnerConfirmationModal";
 import { EnablePartnerConfirmationModal } from "../components/Modals/EnablePartnerConfirmationModal";
 import { DisablePartnerSuccessModal } from "../components/Modals/DisablePartnerSuccessModal";
+import { ResetPasswordConfirmationModal } from "../components/Modals/ResetPasswordConfirmationModal";
 import { useErrorDispatch } from "../context/error.context";
 
 type OrderDirection = 'asc' | 'desc';
@@ -63,6 +64,7 @@ export const PartnersPage: FC = () => {
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; enabled: boolean } | null>(null);
   const [showDisableConfirmation, setShowDisableConfirmation] = useState(false);
   const [showDisableSuccess, setShowDisableSuccess] = useState(false);
+  const [showResetPasswordConfirmation, setShowResetPasswordConfirmation] = useState(false);
   const [wasEnabled, setWasEnabled] = useState(false);
 
   const debouncedSearch = useDebounce(filters.search, 500);
@@ -187,6 +189,31 @@ export const PartnersPage: FC = () => {
   const handleDisableSuccessClose = () => {
     setShowDisableSuccess(false);
     setSelectedUser(null);
+  };
+
+  const handleResetPasswordClick = () => {
+    handleMenuClose();
+    setShowResetPasswordConfirmation(true);
+  };
+
+  const handleResetPasswordConfirm = async () => {
+    if (!selectedUser) return;
+
+    try {
+      // TODO: Call reset password API endpoint when available
+      // await resetPasswordMutation.mutateAsync({ id: selectedUser.id });
+      setShowResetPasswordConfirmation(false);
+      // Show success message or notification
+      console.log("Reset password email sent to:", selectedUser.name);
+    } catch (error) {
+      errorDispatch("Error al enviar el email de reestablecimiento. Por favor, inténtalo de nuevo.");
+      setShowResetPasswordConfirmation(false);
+      console.error("Error resetting password:", error);
+    }
+  };
+
+  const handleResetPasswordCancel = () => {
+    setShowResetPasswordConfirmation(false);
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -619,7 +646,7 @@ export const PartnersPage: FC = () => {
           </ListItemIcon>
           <ListItemText>Puntos de suministro</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={handleResetPasswordClick}>
           <ListItemIcon>
             <LockResetIcon fontSize="small" sx={{ color: "#667eea" }} />
           </ListItemIcon>
@@ -666,6 +693,14 @@ export const PartnersPage: FC = () => {
         partnerName={selectedUser?.name || ''}
         wasEnabled={wasEnabled}
         onClose={handleDisableSuccessClose}
+      />
+
+      {/* Reset Password Confirmation Modal */}
+      <ResetPasswordConfirmationModal
+        isOpen={showResetPasswordConfirmation}
+        partnerName={selectedUser?.name || ''}
+        onCancel={handleResetPasswordCancel}
+        onReset={handleResetPasswordConfirm}
       />
     </Box>
   );
