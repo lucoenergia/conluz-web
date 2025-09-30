@@ -13,6 +13,7 @@ import { HomePage } from "./pages/Home";
 import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
 import { PartnersPage } from "./pages/Partners.page";
+import { ChangePasswordPage } from "./pages/ChangePassword";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             </Route>
           </Route>
           <Route path="partners" element={<PartnersPage />} />
+          <Route path="change-password" element={<ChangePasswordPage />} />
         </Route>
         <Route element={<DynamicLayout />}>
           <Route path="contact" element={<ContactPage />} />
