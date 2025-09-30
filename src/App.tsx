@@ -14,6 +14,7 @@ import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
 import { PartnersPage } from "./pages/Partners.page";
 import { ChangePasswordPage } from "./pages/ChangePassword";
+import { ProfilePage } from "./pages/Profile";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             </Route>
           </Route>
           <Route path="partners" element={<PartnersPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
         </Route>
         <Route element={<DynamicLayout />}>

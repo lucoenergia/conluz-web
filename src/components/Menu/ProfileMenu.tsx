@@ -66,6 +66,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
         <Box sx={{ py: 1 }}>
           <Link to="/profile" style={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem
+              onClick={handleCloseUserMenu}
               sx={{
                 px: 3,
                 py: 1.5,
@@ -85,6 +86,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
           <Link to="/change-password" style={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem
+              onClick={handleCloseUserMenu}
               sx={{
                 px: 3,
                 py: 1.5,
@@ -104,6 +106,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
           <Link to="/contact" style={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem
+              onClick={handleCloseUserMenu}
               sx={{
                 px: 3,
                 py: 1.5,
