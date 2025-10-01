@@ -16,6 +16,7 @@ import { PartnersPage } from "./pages/Partners.page";
 import { ChangePasswordPage } from "./pages/ChangePassword";
 import { ProfilePage } from "./pages/Profile";
 import { EditPartnerPage } from "./pages/EditPartner";
+import { PartnerSupplyPointsPage } from "./pages/PartnerSupplyPointsPage";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
           <Route path="partners">
             <Route index element={<PartnersPage />} />
             <Route path=":partnerId/edit" element={<EditPartnerPage />} />
+            <Route path=":partnerId/supply-points" element={<PartnerSupplyPointsPage />} />
           </Route>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />

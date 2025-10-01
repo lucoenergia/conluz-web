@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedGraph } from "../components/Graph";
+import { useGetSuppliesByUserId } from "../api/users/users";
 import { useGetAllSupplies } from "../api/supplies/supplies";
 import { EnhancedDropdownSelector } from "../components/Forms/EnhancedDropdownSelector";
 import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
@@ -11,6 +12,8 @@ import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 import EvStationIcon from "@mui/icons-material/EvStation";
+import { useLoggedUser } from "../context/logged-user.context";
+import { UserResponseRole } from "../api/models";
 
 // TODO: Set monitorig data methods when endpoints are ready
 
@@ -64,12 +67,33 @@ interface SupplyPointAutocompleteProps {
 }
 
 const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onChange }) => {
-  const { data: supplyPoints, isLoading } = useGetAllSupplies({});
+  const loggedUser = useLoggedUser();
+  const isAdmin = loggedUser?.role === UserResponseRole.ADMIN;
+
+  const { data: userSupplies, isLoading: isLoadingUserSupplies } = useGetSuppliesByUserId(
+    loggedUser?.id || "",
+    {
+      query: { enabled: !!loggedUser?.id && !isAdmin },
+    },
+  );
+
+  const { data: allSupplies, isLoading: isLoadingAllSupplies } = useGetAllSupplies(
+    {},
+    {
+      query: { enabled: isAdmin },
+    },
+  );
+
+  const supplyPoints = isAdmin ? allSupplies?.items : userSupplies;
+  const isLoading = isAdmin ? isLoadingAllSupplies : isLoadingUserSupplies;
 
   const options = useMemo(
     () =>
-      supplyPoints?.items
-        ? supplyPoints.items.map((sp) => ({ label: sp.name ? sp.name : "", value: sp.id ? sp.id : "" }))
+      supplyPoints
+        ? supplyPoints.map((sp) => ({
+            label: [sp.name, sp.address].filter(Boolean).join(" - ") || "",
+            value: sp.id ? sp.id : "",
+          }))
         : [],
     [supplyPoints],
   );

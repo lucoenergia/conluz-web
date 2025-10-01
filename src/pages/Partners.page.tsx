@@ -648,7 +648,12 @@ export const PartnersPage: FC = () => {
           </ListItemIcon>
           <ListItemText>Editar datos</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={() => {
+          if (selectedUser) {
+            navigate(`/partners/${selectedUser.id}/supply-points`);
+            handleMenuClose();
+          }
+        }}>
           <ListItemIcon>
             <ElectricBoltIcon fontSize="small" sx={{ color: "#667eea" }} />
           </ListItemIcon>
