@@ -3,8 +3,7 @@ import { Box } from "@mui/material";
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedGraph } from "../components/Graph";
 import { useGetSuppliesByUserId } from "../api/users/users";
-import { useGetAllSupplies } from "../api/supplies/supplies";
-import { useGetDailyProduction } from "../api/production/production";
+import { useGetAllSupplies, useGetSupplyDailyProduction } from "../api/supplies/supplies";
 import { EnhancedDropdownSelector } from "../components/Forms/EnhancedDropdownSelector";
 import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -55,7 +54,7 @@ export const HomePage: FC = () => {
           },
         }}
       >
-        <ProductionPanel />
+        <ProductionPanel supplyId={selectedSupplyPoint} />
         <ConsumptionPanel />
       </Box>
     </Box>
@@ -115,7 +114,11 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
   );
 };
 
-const ProductionPanel: FC = () => {
+interface ProductionPanelProps {
+  supplyId: string | null;
+}
+
+const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
   // Calculate date range for last 7 days including today
   const { startDate, endDate } = useMemo(() => {
     const end = new Date();
@@ -143,14 +146,15 @@ const ProductionPanel: FC = () => {
     };
   }, []);
 
-  // Fetch production data
-  const { data: productionData } = useGetDailyProduction(
+  // Fetch production data for specific supply
+  const { data: productionData } = useGetSupplyDailyProduction(
+    supplyId || "",
     {
       startDate,
       endDate,
     },
     {
-      query: { enabled: true },
+      query: { enabled: !!supplyId },
     },
   );
 

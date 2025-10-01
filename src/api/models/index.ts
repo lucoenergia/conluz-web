@@ -31,6 +31,7 @@ export * from './getHourlyProductionParams';
 export * from './getInstantProductionParams';
 export * from './getMonthlyProductionParams';
 export * from './getPriceByRangeOfDatesParams';
+export * from './getSupplyDailyProductionParams';
 export * from './getYearlyProductionParams';
 export * from './importSuppliesPartitionsWithFileBody';
 export * from './importSuppliesPartitionsWithFileParams';

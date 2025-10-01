@@ -30,9 +30,11 @@ import type {
   CreateSupplyBody,
   CreationInBulkResponse,
   GetAllSuppliesParams,
+  GetSupplyDailyProductionParams,
   ImportSuppliesPartitionsWithFileBody,
   ImportSuppliesPartitionsWithFileParams,
   PagedResultSupplyResponse,
+  ProductionByTime,
   SharingAgreementResponse,
   SupplyResponse,
   UpdateSharingAgreementBody,
@@ -1082,4 +1084,99 @@ export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
 
       return useMutation(mutationOptions , queryClient);
     }
+    /**
+ * This endpoint retrieves daily energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
+ * @summary Retrieves daily production data assigned to a specific supply
+ */
+export const getSupplyDailyProduction = (
+    id: string,
+    params: GetSupplyDailyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ProductionByTime[]>(
+      {url: `/api/v1/supplies/${id}/production/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyDailyProductionQueryKey = (id: string,
+    params: GetSupplyDailyProductionParams,) => {
+    return [`/api/v1/supplies/${id}/production/daily`, ...(params ? [params]: [])] as const;
+    }
+
     
+export const getGetSupplyDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(id: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyDailyProductionQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyDailyProduction>>> = ({ signal }) => getSupplyDailyProduction(id,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyProduction>>>
+export type GetSupplyDailyProductionQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves daily production data assigned to a specific supply
+ */
+
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyDailyProductionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
