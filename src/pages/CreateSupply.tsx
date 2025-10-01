@@ -15,14 +15,14 @@ export const CreateSupplyPage: FC = () => {
   const errorDispatch = useErrorDispatch();
   const createSupply = useCreateSupply();
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
+  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef, personalId }: SupplyFormValues) => {
     try {
       const newSupply = {
         name,
         code: cups,
         address,
         partitionCoefficient,
-        personalId: loggedUser?.personalId,
+        personalId: personalId || loggedUser?.personalId,
         addressRef,
       } as CreateSupplyBody;
       const response = await createSupply.mutateAsync({ data: newSupply });
@@ -106,7 +106,7 @@ export const CreateSupplyPage: FC = () => {
             width: "100%",
           }}
         >
-          <SupplyForm handleSubmit={handleSubmit} />
+          <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} />
         </Paper>
       </Box>
     </Box>

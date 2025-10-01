@@ -16,7 +16,7 @@ export const EditSupplyPage: FC = () => {
 
   const { data: supplyPoint, isLoading, error, refetch } = useGetSupply(supplyPointId);
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
+  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef, personalId }: SupplyFormValues) => {
     try {
       const updatedSupply = {
         name,
@@ -115,8 +115,12 @@ export const EditSupplyPage: FC = () => {
                 address: supplyPoint?.address,
                 partitionCoefficient: supplyPoint?.partitionCoefficient,
                 addressRef: supplyPoint?.addressRef,
+                personalId: supplyPoint?.user?.personalId,
               }}
               handleSubmit={handleSubmit}
+              showUserSelector={true}
+              selectedUserId={supplyPoint?.user?.id}
+              disableUserSelector={true}
             />
           )}
         </Paper>

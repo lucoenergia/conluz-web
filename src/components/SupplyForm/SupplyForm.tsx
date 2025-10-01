@@ -1,5 +1,7 @@
-import { useState, type FC } from "react";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { useState, useEffect, type FC } from "react";
+import { Box, Button, TextField, Typography, Autocomplete, CircularProgress } from "@mui/material";
+import { useGetAllUsers } from "../../api/users/users";
+import type { UserResponse } from "../../api/models";
 
 export interface SupplyFormValues {
   name?: string;
@@ -7,11 +9,15 @@ export interface SupplyFormValues {
   address?: string;
   partitionCoefficient?: number;
   addressRef?: string;
+  personalId?: string;
 }
 
 interface SupplyFormProps {
   initialValues?: SupplyFormValues;
   handleSubmit: (values: SupplyFormValues) => void;
+  showUserSelector?: boolean;
+  selectedUserId?: string;
+  disableUserSelector?: boolean;
 }
 
 export const SupplyForm: FC<SupplyFormProps> = ({
@@ -21,14 +27,32 @@ export const SupplyForm: FC<SupplyFormProps> = ({
     address: initialAddress = "",
     partitionCoefficient: initialPartitionCoefficient = "",
     addressRef: initialAddressRef = "",
+    personalId: initialPersonalId = "",
   } = {},
   handleSubmit,
+  showUserSelector = false,
+  selectedUserId,
+  disableUserSelector = false,
 }) => {
   const [name, setName] = useState(initialName);
   const [cups, setCups] = useState(initialCups);
   const [address, setAddress] = useState(initialAddress);
   const [partitionCoefficient, setPartitionCoefficient] = useState(initialPartitionCoefficient);
   const [addressRef, setAddressRef] = useState(initialAddressRef);
+  const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
+
+  // Fetch users for the selector
+  const { data: usersData, isLoading: usersLoading } = useGetAllUsers({ size: 10000 });
+
+  // Set initial selected user when editing
+  useEffect(() => {
+    if (selectedUserId && usersData?.items) {
+      const user = usersData.items.find((u) => u.id === selectedUserId);
+      if (user) {
+        setSelectedUser(user);
+      }
+    }
+  }, [selectedUserId, usersData]);
 
   const [partitionCoefficientError, setPartitionCoefficientError] = useState<string | undefined>();
 
@@ -56,6 +80,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
       address: data.get("address") as string,
       partitionCoefficient: Number((data.get("partitionCoefficient") as string).replaceAll(",", ".")),
       addressRef: data.get("addressRef") as string,
+      personalId: selectedUser?.personalId || initialPersonalId,
     } as SupplyFormValues;
     if (validateForm(newSupplyPoint)) {
       handleSubmit(newSupplyPoint);
@@ -90,6 +115,49 @@ export const SupplyForm: FC<SupplyFormProps> = ({
             },
           }}
         />
+
+        {showUserSelector && (
+          <Autocomplete
+            options={usersData?.items || []}
+            getOptionLabel={(option) => `${option.fullName} (${option.personalId})`}
+            value={selectedUser}
+            onChange={(_, newValue) => setSelectedUser(newValue)}
+            loading={usersLoading}
+            disabled={disableUserSelector}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Propietario"
+                required
+                variant="outlined"
+                slotProps={{
+                  input: {
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  },
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    "&:hover fieldset": {
+                      borderColor: disableUserSelector ? undefined : "#667eea",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: disableUserSelector ? undefined : "#667eea",
+                    },
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: disableUserSelector ? undefined : "#667eea",
+                  },
+                }}
+              />
+            )}
+          />
+        )}
 
         <TextField
           id="cups"
