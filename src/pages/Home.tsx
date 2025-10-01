@@ -4,6 +4,7 @@ import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedGraph } from "../components/Graph";
 import { useGetSuppliesByUserId } from "../api/users/users";
 import { useGetAllSupplies } from "../api/supplies/supplies";
+import { useGetDailyProduction } from "../api/production/production";
 import { EnhancedDropdownSelector } from "../components/Forms/EnhancedDropdownSelector";
 import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -115,14 +116,64 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
 };
 
 const ProductionPanel: FC = () => {
-  const categories = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  // Calculate date range for last 7 days including today
+  const { startDate, endDate } = useMemo(() => {
+    const end = new Date();
+    end.setDate(end.getDate() + 1); // Include today by setting end to tomorrow
+    const start = new Date();
+    start.setDate(start.getDate() - 6); // 6 days ago + today = 7 days
 
-  const mockedData = [30, 40, 45, 50, 49, 60, 70, 91, 35, 45, 55, 65]; //mocked data para 12 meses
+    // Format: 2025-09-24T00:00:00.000+02:00
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const offset = date.getTimezoneOffset();
+      const absOffset = Math.abs(offset);
+      const offsetHours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+      const offsetMinutes = String(absOffset % 60).padStart(2, '0');
+      const offsetSign = offset <= 0 ? '+' : '-';
+
+      return `${year}-${month}-${day}T00:00:00.000${offsetSign}${offsetHours}:${offsetMinutes}`;
+    };
+
+    return {
+      startDate: formatDate(start),
+      endDate: formatDate(end),
+    };
+  }, []);
+
+  // Fetch production data
+  const { data: productionData } = useGetDailyProduction(
+    {
+      startDate,
+      endDate,
+    },
+    {
+      query: { enabled: true },
+    },
+  );
+
+  // Process data for chart
+  const { categories, values } = useMemo(() => {
+    if (!productionData || productionData.length === 0) {
+      return { categories: [], values: [] };
+    }
+
+    const cats = productionData.map((item) => {
+      const date = new Date(item.time || "");
+      return date.toLocaleDateString("es-ES", { day: "2-digit", month: "short" });
+    });
+
+    const vals = productionData.map((item) => item.power || 0);
+
+    return { categories: cats, values: vals };
+  }, [productionData]);
 
   const measurementData = [
     {
       name: "Producción Asignada",
-      value: [],
+      value: values,
       info: "Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto",
     },
   ];
@@ -173,8 +224,8 @@ const ProductionPanel: FC = () => {
         <EnhancedGraph
           key={index}
           title={item.name}
-          subtitle="Últimos 12 meses"
-          values={mockedData}
+          subtitle="Últimos 7 días"
+          values={item.value}
           xAxis={categories}
           info={item.info}
           variant="production"
