@@ -22,6 +22,8 @@ import type {
 } from '.././models';
 
 
+export const getGetUserByIdResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined]), ...overrideResponse})
+
 export const getUpdateUserResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined]), ...overrideResponse})
 
 export const getGetAllUsersResponseMock = (overrideResponse: Partial< PagedResultUserResponse > = {}): PagedResultUserResponse => ({items: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined])})), undefined]), size: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalElements: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalPages: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), ...overrideResponse})
@@ -32,6 +34,18 @@ export const getCreateUsersWithFileResponseMock = (overrideResponse: Partial< Cr
 
 export const getGetCurrentUserResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), role: faker.helpers.arrayElement([faker.helpers.arrayElement(['PARTNER','ADMIN'] as const), undefined]), ...overrideResponse})
 
+
+export const getGetUserByIdMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<UserResponse> | UserResponse)) => {
+  return http.get('*/api/v1/users/:id', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetUserByIdResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
 
 export const getUpdateUserMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<UserResponse> | UserResponse)) => {
   return http.put('*/api/v1/users/:id', async (info) => {await delay(1000);
@@ -123,6 +137,7 @@ export const getGetCurrentUserMockHandler = (overrideResponse?: UserResponse | (
   })
 }
 export const getUsersMock = () => [
+  getGetUserByIdMockHandler(),
   getUpdateUserMockHandler(),
   getDeleteUserMockHandler(),
   getGetAllUsersMockHandler(),

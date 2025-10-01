@@ -21,7 +21,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetPriceByRangeOfDatesParams
+  GetPriceByRangeOfDatesParams,
+  PriceByHour
 } from '.././models';
 
 import { customInstance } from '.././custom-instance';
@@ -40,7 +41,7 @@ export const getPriceByRangeOfDates = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<PriceByHour[]>(
       {url: `/api/v1/prices`, method: 'GET',
         params, signal
     },

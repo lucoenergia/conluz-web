@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router";
 import {
   Box,
   Typography,
@@ -69,6 +70,7 @@ export const PartnersPage: FC = () => {
 
   const debouncedSearch = useDebounce(filters.search, 500);
   const errorDispatch = useErrorDispatch();
+  const navigate = useNavigate();
   const disableUserMutation = useDisableUser1();
   const enableUserMutation = useDisableUser();
 
@@ -214,6 +216,12 @@ export const PartnersPage: FC = () => {
 
   const handleResetPasswordCancel = () => {
     setShowResetPasswordConfirmation(false);
+  };
+
+  const handleEditClick = () => {
+    if (!selectedUser) return;
+    handleMenuClose();
+    navigate(`/partners/${selectedUser.id}/edit`);
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -634,7 +642,7 @@ export const PartnersPage: FC = () => {
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={handleEditClick}>
           <ListItemIcon>
             <EditIcon fontSize="small" sx={{ color: "#667eea" }} />
           </ListItemIcon>

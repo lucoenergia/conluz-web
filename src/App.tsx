@@ -15,6 +15,7 @@ import { DynamicLayout } from "./layouts/dynamic.layout";
 import { PartnersPage } from "./pages/Partners.page";
 import { ChangePasswordPage } from "./pages/ChangePassword";
 import { ProfilePage } from "./pages/Profile";
+import { EditPartnerPage } from "./pages/EditPartner";
 
 function App() {
   return (
@@ -37,7 +38,10 @@ function App() {
               <Route path="edit" element={<EditSupplyPage />} />
             </Route>
           </Route>
-          <Route path="partners" element={<PartnersPage />} />
+          <Route path="partners">
+            <Route index element={<PartnersPage />} />
+            <Route path=":partnerId/edit" element={<EditPartnerPage />} />
+          </Route>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
         </Route>
