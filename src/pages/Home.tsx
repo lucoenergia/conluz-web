@@ -2,8 +2,14 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedGraph } from "../components/Graph";
+import { EnhancedGraphCard } from "../components/Graph/EnhancedGraphCard";
+import { EnhancedMultiSeriesBar } from "../components/Graph/EnhancedMultiSeriesBar";
 import { useGetSuppliesByUserId } from "../api/users/users";
-import { useGetAllSupplies, useGetSupplyDailyProduction } from "../api/supplies/supplies";
+import {
+  useGetAllSupplies,
+  useGetSupplyDailyProduction,
+  useGetSupplyDailyConsumption,
+} from "../api/supplies/supplies";
 import { EnhancedDropdownSelector } from "../components/Forms/EnhancedDropdownSelector";
 import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -55,7 +61,7 @@ export const HomePage: FC = () => {
         }}
       >
         <ProductionPanel supplyId={selectedSupplyPoint} />
-        <ConsumptionPanel />
+        <ConsumptionPanel supplyId={selectedSupplyPoint} />
       </Box>
     </Box>
   );
@@ -78,7 +84,7 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
   );
 
   const { data: allSupplies, isLoading: isLoadingAllSupplies } = useGetAllSupplies(
-    {},
+    { size: 100 },
     {
       query: { enabled: isAdmin },
     },
@@ -165,8 +171,13 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
     }
 
     const cats = productionData.map((item) => {
-      const date = new Date(item.time || "");
-      return date.toLocaleDateString("es-ES", { day: "2-digit", month: "short" });
+      const dateStr = item.time || "";
+      if (!dateStr) return "";
+
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleDateString("es-ES", { month: "short" });
+      return `${day} ${month}`;
     });
 
     const vals = productionData.map((item) => item.power || 0);
@@ -239,18 +250,90 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
   );
 };
 
-const ConsumptionPanel: FC = () => {
-  const categories = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+interface ConsumptionPanelProps {
+  supplyId: string | null;
+}
 
-  const mockedData = [30, 40, 45, 50, 49, 60, 70, 91, 35, 45, 55, 65]; //mocked data para 12 meses
+const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
+  // Calculate date range for last 7 days including today
+  const { startDate, endDate } = useMemo(() => {
+    const end = new Date();
+    end.setDate(end.getDate() + 1); // Include today by setting end to tomorrow
+    const start = new Date();
+    start.setDate(start.getDate() - 6); // 6 days ago + today = 7 days
 
-  const measurementData = [
+    // Format: 2025-09-24T00:00:00.000+02:00
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const offset = date.getTimezoneOffset();
+      const absOffset = Math.abs(offset);
+      const offsetHours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+      const offsetMinutes = String(absOffset % 60).padStart(2, '0');
+      const offsetSign = offset <= 0 ? '+' : '-';
+
+      return `${year}-${month}-${day}T00:00:00.000${offsetSign}${offsetHours}:${offsetMinutes}`;
+    };
+
+    return {
+      startDate: formatDate(start),
+      endDate: formatDate(end),
+    };
+  }, []);
+
+  // Fetch consumption data for specific supply
+  const { data: consumptionData } = useGetSupplyDailyConsumption(
+    supplyId || "",
     {
-      name: "Consumo Asignado",
-      value: [],
-      info: "Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto",
+      startDate,
+      endDate,
     },
-  ];
+    {
+      query: { enabled: !!supplyId },
+    },
+  );
+
+  // Process data for multi-series chart
+  const { categories, series } = useMemo(() => {
+    if (!consumptionData || consumptionData.length === 0) {
+      return { categories: [], series: [] };
+    }
+
+    const cats = consumptionData.map((item) => {
+      // Use the date field directly if available, or parse from time
+      const dateStr = item.date || item.time || "";
+      if (!dateStr) return "";
+
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleDateString("es-ES", { month: "short" });
+      return `${day} ${month}`;
+    });
+
+    const seriesData = [
+      {
+        name: "Consumo Total",
+        data: consumptionData.map((item) => item.consumptionKWh || 0),
+        color: "#ef4444", // Red
+      },
+      {
+        name: "Autoconsumo",
+        data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
+        color: "#10b981", // Green
+      },
+      {
+        name: "Excedentes",
+        data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
+        color: "#f59e0b", // Amber
+      },
+    ];
+
+    return {
+      categories: cats,
+      series: seriesData,
+    };
+  }, [consumptionData]);
 
   return (
     <Box
@@ -295,17 +378,18 @@ const ConsumptionPanel: FC = () => {
         ]}
       />
 
-      {measurementData.map((item, index) => (
-        <EnhancedGraph
-          key={index}
-          title={item.name}
-          subtitle="Últimos 12 meses"
-          values={mockedData}
-          xAxis={categories}
-          info={item.info}
+      <EnhancedGraphCard
+        title="Consumo Asignado"
+        subtitle="Últimos 7 días"
+        infoText="Visualización del consumo total, autoconsumo y excedentes del punto de suministro"
+        variant="consumption"
+      >
+        <EnhancedMultiSeriesBar
+          categories={categories}
+          series={series}
           variant="consumption"
         />
-      ))}
+      </EnhancedGraphCard>
     </Box>
   );
 };

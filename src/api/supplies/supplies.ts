@@ -29,7 +29,9 @@ import type {
   CreateSuppliesWithFileBody,
   CreateSupplyBody,
   CreationInBulkResponse,
+  DatadisConsumption,
   GetAllSuppliesParams,
+  GetSupplyDailyConsumptionParams,
   GetSupplyDailyProductionParams,
   ImportSuppliesPartitionsWithFileBody,
   ImportSuppliesPartitionsWithFileParams,
@@ -1170,6 +1172,115 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSupplyDailyProductionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * This endpoint retrieves daily consumption data from Datadis for a specific supply within a given date range.
+
+**Authorization Rules:**
+- Users with role ADMIN can retrieve consumption data for any supply
+- Users with role PARTNER can only retrieve consumption data for their own supplies
+
+The consumption data includes:
+- Total consumption in kWh
+- Surplus energy (energy sent to grid)
+- Self-consumption energy
+- Obtain method (Real/Estimated)
+
+Data is aggregated by day within the specified date range.
+
+ * @summary Retrieves daily consumption data for a specific supply
+ */
+export const getSupplyDailyConsumption = (
+    id: string,
+    params: GetSupplyDailyConsumptionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisConsumption[]>(
+      {url: `/api/v1/supplies/${id}/consumption/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyDailyConsumptionQueryKey = (id: string,
+    params: GetSupplyDailyConsumptionParams,) => {
+    return [`/api/v1/supplies/${id}/consumption/daily`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetSupplyDailyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(id: string,
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyDailyConsumptionQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyDailyConsumption>>> = ({ signal }) => getSupplyDailyConsumption(id,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyDailyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyConsumption>>>
+export type GetSupplyDailyConsumptionQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves daily consumption data for a specific supply
+ */
+
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyDailyConsumptionQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
