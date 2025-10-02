@@ -214,7 +214,7 @@ export const SupplyDetailPage: FC = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
               gap: 2,
             }}
           >
@@ -263,6 +263,22 @@ export const SupplyDetailPage: FC = () => {
               </Typography>
               <Typography variant="body1" fontWeight="bold">
                 {supplyPoint?.partitionCoefficient ? `${(supplyPoint.partitionCoefficient * 100).toFixed(2)}%` : "-"}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                bgcolor: "rgba(255, 255, 255, 0.15)",
+                backdropFilter: "blur(10px)",
+                borderRadius: 2,
+                p: 2,
+              }}
+            >
+              <Typography variant="caption" sx={{ opacity: 0.8, display: "block", mb: 0.5 }}>
+                Propietario
+              </Typography>
+              <Typography variant="body1" fontWeight="bold">
+                {supplyPoint?.user?.fullName || "-"}
               </Typography>
             </Box>
           </Box>
