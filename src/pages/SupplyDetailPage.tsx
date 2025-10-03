@@ -121,6 +121,39 @@ export const SupplyDetailPage: FC = () => {
     return data;
   }, [data]);
 
+  // Calculate consumption metrics
+  const consumptionMetrics = useMemo(() => {
+    if (!consumptionData || consumptionData.length === 0) {
+      return {
+        totalConsumption: 0,
+        totalSelfConsumption: 0,
+        totalSurplus: 0,
+        selfConsumptionPercentage: 0,
+        utilizationPercentage: 0,
+      };
+    }
+
+    const totalConsumption = consumptionData.reduce((sum, item) => sum + (item.consumptionKWh || 0), 0);
+    const totalSelfConsumption = consumptionData.reduce((sum, item) => sum + (item.selfConsumptionEnergyKWh || 0), 0);
+    const totalSurplus = consumptionData.reduce((sum, item) => sum + (item.surplusEnergyKWh || 0), 0);
+
+    // Porcentaje de autoconsumo: SUM(selfConsumptionEnergyKWh) / (SUM(consumptionKWh) + SUM(surplusEnergyKWh))
+    const denominator1 = totalConsumption + totalSurplus;
+    const selfConsumptionPercentage = denominator1 > 0 ? (totalSelfConsumption / denominator1) * 100 : 0;
+
+    // Porcentaje de aprovechamiento: SUM(selfConsumptionEnergyKWh) / (SUM(surplusEnergyKWh) + SUM(selfConsumptionEnergyKWh))
+    const denominator2 = totalSurplus + totalSelfConsumption;
+    const utilizationPercentage = denominator2 > 0 ? (totalSelfConsumption / denominator2) * 100 : 0;
+
+    return {
+      totalConsumption,
+      totalSelfConsumption,
+      totalSurplus,
+      selfConsumptionPercentage,
+      utilizationPercentage,
+    };
+  }, [consumptionData]);
+
   // Process consumption data for multi-series chart
   const { consumptionCategories, consumptionSeries } = useMemo(() => {
     if (!consumptionData || consumptionData.length === 0) {
@@ -331,19 +364,19 @@ export const SupplyDetailPage: FC = () => {
           stats={[
             {
               label: "Consumo",
-              value: "0 kWh",
+              value: `${consumptionMetrics.totalConsumption.toFixed(2)} kWh`,
               icon: <PowerIcon sx={{ fontSize: 24 }} />,
               color: "#ef4444",
             },
             {
               label: "Autoconsumo",
-              value: "0 kWh",
+              value: `${consumptionMetrics.totalSelfConsumption.toFixed(2)} kWh`,
               icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
               color: "#10b981",
             },
             {
               label: "Excedentes",
-              value: "0 kWh",
+              value: `${consumptionMetrics.totalSurplus.toFixed(2)} kWh`,
               icon: <EvStationIcon sx={{ fontSize: 24 }} />,
               color: "#f59e0b",
             },
@@ -358,13 +391,13 @@ export const SupplyDetailPage: FC = () => {
           stats={[
             {
               label: "Porcentaje de autoconsumo",
-              value: "0%",
+              value: `${consumptionMetrics.selfConsumptionPercentage.toFixed(2)}%`,
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
               color: "#8b5cf6",
             },
             {
               label: "Porcentaje de aprovechamiento",
-              value: "0%",
+              value: `${consumptionMetrics.utilizationPercentage.toFixed(2)}%`,
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
               color: "#3b82f6",
             },
