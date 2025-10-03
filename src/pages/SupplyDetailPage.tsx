@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Paper, Typography, Avatar, Chip } from "@mui/material";
 import { useParams } from "react-router";
 import { LoadingGraphCard } from "../components/Graph/LoadingGraphCard";
@@ -8,7 +8,7 @@ import { EnhancedMultiSeriesBar } from "../components/Graph/EnhancedMultiSeriesB
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
 import { GraphFilter } from "../components/Graph/GraphFilter";
-import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption } from "../api/supplies/supplies";
+import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption } from "../api/supplies/supplies";
 import { getTimeRange } from "../utils/getTimeRange";
 import { useErrorDispatch } from "../context/error.context";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -23,6 +23,34 @@ export const SupplyDetailPage: FC = () => {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const errorDispatch = useErrorDispatch();
+
+  // Detect which filter button was clicked based on date patterns
+  const filterType = useMemo(() => {
+    const difference = Math.abs(endDate.getTime() - startDate.getTime());
+    const daysInRange = difference / (1000 * 60 * 60 * 24);
+
+    // DAY: same day (start and end are within the same calendar day)
+    if (daysInRange < 1.5) {
+      return "day";
+    }
+
+    // MONTH: spans 27-32 days and starts at day 1
+    if (daysInRange >= 27 && daysInRange <= 32 &&
+        startDate.getDate() === 1 &&
+        startDate.getMonth() !== endDate.getMonth()) {
+      return "month";
+    }
+
+    // YEAR: spans more than 300 days
+    if (daysInRange >= 300) {
+      return "year";
+    }
+
+    // DATES: custom range
+    return "dates";
+  }, [startDate, endDate]);
+
+  // Calculate time range for display and x-axis formatting
   const timeRangeData: string = useMemo(() => {
     const difference = Math.abs(endDate.getTime() - startDate.getTime());
     const daysInRange = difference / (1000 * 60 * 60 * 24);
@@ -44,32 +72,68 @@ export const SupplyDetailPage: FC = () => {
 
   const { data: supplyPoint, isLoading: supplyPointLoading, error: supplyPointError } = useGetSupply(supplyPointId);
 
-  // Fetch production data for specific supply using daily endpoint
-  // This endpoint returns daily data for any date range (day, month, year)
+  // Fetch hourly production data when DAY filter is selected
   const {
-    data: supplyProductionData,
-    isLoading: supplyProductionIsLoading,
-    error: supplyProductionError,
+    data: supplyHourlyProductionData,
+    isLoading: supplyHourlyProductionIsLoading,
+    error: supplyHourlyProductionError,
+  } = useGetSupplyHourlyProduction(
+    supplyPointId,
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: !!supplyPointId && filterType === "day" } },
+  );
+
+  // Fetch daily production data for month, year, and custom date ranges
+  const {
+    data: supplyDailyProductionData,
+    isLoading: supplyDailyProductionIsLoading,
+    error: supplyDailyProductionError,
   } = useGetSupplyDailyProduction(
     supplyPointId,
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!supplyPointId && (timeRangeData === "day" || timeRangeData === "month" || timeRangeData === "year") } },
+    { query: { enabled: !!supplyPointId && (filterType === "month" || filterType === "year" || filterType === "dates") } },
   );
 
-  // Fetch consumption data for specific supply
-  // Always use daily consumption endpoint regardless of time range
+  // Fetch hourly consumption data when DAY filter is selected
   const {
-    data: consumptionData,
-    isLoading: consumptionIsLoading,
-    error: consumptionError,
+    data: hourlyConsumptionData,
+    isLoading: hourlyConsumptionIsLoading,
+    error: hourlyConsumptionError,
+  } = useGetSupplyHourlyConsumption(
+    supplyPointId,
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: !!supplyPointId && filterType === "day" } },
+  );
+
+  // Fetch daily consumption data for month, year, and custom date ranges
+  const {
+    data: dailyConsumptionData,
+    isLoading: dailyConsumptionIsLoading,
+    error: dailyConsumptionError,
   } = useGetSupplyDailyConsumption(
     supplyPointId,
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!supplyPointId && (timeRangeData === "day" || timeRangeData === "month" || timeRangeData === "year") } },
+    { query: { enabled: !!supplyPointId && (filterType === "month" || filterType === "year" || filterType === "dates") } },
   );
 
-  const isLoading = supplyProductionIsLoading || consumptionIsLoading || supplyPointLoading;
-  const error = supplyProductionError || consumptionError || supplyPointError;
+  // Unified data sources - use hourly for "day" filter, daily for others
+  const supplyProductionData = filterType === "day" ? supplyHourlyProductionData : supplyDailyProductionData;
+  const consumptionData = filterType === "day" ? hourlyConsumptionData : dailyConsumptionData;
+
+  // Unified loading and error states
+  const isLoading =
+    supplyHourlyProductionIsLoading ||
+    supplyDailyProductionIsLoading ||
+    hourlyConsumptionIsLoading ||
+    dailyConsumptionIsLoading ||
+    supplyPointLoading;
+
+  const error =
+    supplyHourlyProductionError ||
+    supplyDailyProductionError ||
+    hourlyConsumptionError ||
+    dailyConsumptionError ||
+    supplyPointError;
 
   useEffect(() => {
     if (error)
@@ -94,26 +158,29 @@ export const SupplyDetailPage: FC = () => {
 
       const date = new Date(dateStr);
 
-      // For month view, show day number
-      if (timeRangeData === "month") {
+      // For day filter with hourly data, show hour in HH:mm format
+      if (filterType === "day") {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+
+      // For month filter, show day number
+      if (filterType === "month") {
         return date.getDate().toString();
       }
 
-      // For day view, show abbreviated month and day
-      if (timeRangeData === "day") {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = date.toLocaleDateString("es-ES", { month: "short" });
-        return `${day} ${month}`;
-      }
-
-      // For year view, show month name
-      if (timeRangeData === "year") {
+      // For year filter, show month name
+      if (filterType === "year") {
         return date.toLocaleDateString("es-ES", { month: "short" });
       }
 
-      return "";
+      // For custom dates, show day and month
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleDateString("es-ES", { month: "short" });
+      return `${day} ${month}`;
     });
-  }, [supplyProductionData, timeRangeData]);
+  }, [supplyProductionData, filterType]);
 
   // Process production data for chart
   const productionValues = useMemo(() => {
@@ -165,6 +232,25 @@ export const SupplyDetailPage: FC = () => {
       if (!dateStr) return "";
 
       const date = new Date(dateStr);
+
+      // For day filter with hourly data, show hour in HH:mm format
+      if (filterType === "day") {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+
+      // For month filter, show day number
+      if (filterType === "month") {
+        return date.getDate().toString();
+      }
+
+      // For year filter, show month name
+      if (filterType === "year") {
+        return date.toLocaleDateString("es-ES", { month: "short" });
+      }
+
+      // For custom dates, show day and month
       const day = String(date.getDate()).padStart(2, '0');
       const month = date.toLocaleDateString("es-ES", { month: "short" });
       return `${day} ${month}`;
@@ -192,7 +278,7 @@ export const SupplyDetailPage: FC = () => {
       consumptionCategories: cats,
       consumptionSeries: seriesData,
     };
-  }, [consumptionData]);
+  }, [consumptionData, filterType]);
 
   return (
     <Box

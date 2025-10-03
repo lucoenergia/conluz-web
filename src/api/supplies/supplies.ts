@@ -33,6 +33,8 @@ import type {
   GetAllSuppliesParams,
   GetSupplyDailyConsumptionParams,
   GetSupplyDailyProductionParams,
+  GetSupplyHourlyConsumptionParams,
+  GetSupplyHourlyProductionParams,
   ImportSuppliesPartitionsWithFileBody,
   ImportSuppliesPartitionsWithFileParams,
   PagedResultSupplyResponse,
@@ -1087,6 +1089,102 @@ export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * This endpoint retrieves hourly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
+ * @summary Retrieves hourly production data assigned to a specific supply
+ */
+export const getSupplyHourlyProduction = (
+    id: string,
+    params: GetSupplyHourlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ProductionByTime[]>(
+      {url: `/api/v1/supplies/${id}/production/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyHourlyProductionQueryKey = (id: string,
+    params: GetSupplyHourlyProductionParams,) => {
+    return [`/api/v1/supplies/${id}/production/hourly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetSupplyHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(id: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyHourlyProductionQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyHourlyProduction>>> = ({ signal }) => getSupplyHourlyProduction(id,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyProduction>>>
+export type GetSupplyHourlyProductionQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves hourly production data assigned to a specific supply
+ */
+
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyHourlyProductionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * This endpoint retrieves daily energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
  * @summary Retrieves daily production data assigned to a specific supply
  */
@@ -1172,6 +1270,115 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSupplyDailyProductionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * This endpoint retrieves hourly consumption data from Datadis for a specific supply within a given date range.
+
+**Authorization Rules:**
+- Users with role ADMIN can retrieve consumption data for any supply
+- Users with role PARTNER can only retrieve consumption data for their own supplies
+
+The consumption data includes:
+- Total consumption in kWh
+- Surplus energy (energy sent to grid)
+- Self-consumption energy
+- Obtain method (Real/Estimated)
+
+Data is aggregated by hour within the specified date range.
+
+ * @summary Retrieves hourly consumption data for a specific supply
+ */
+export const getSupplyHourlyConsumption = (
+    id: string,
+    params: GetSupplyHourlyConsumptionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisConsumption[]>(
+      {url: `/api/v1/supplies/${id}/consumption/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyHourlyConsumptionQueryKey = (id: string,
+    params: GetSupplyHourlyConsumptionParams,) => {
+    return [`/api/v1/supplies/${id}/consumption/hourly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetSupplyHourlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(id: string,
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyHourlyConsumptionQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>> = ({ signal }) => getSupplyHourlyConsumption(id,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyHourlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>>
+export type GetSupplyHourlyConsumptionQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves hourly consumption data for a specific supply
+ */
+
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyHourlyConsumptionQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
