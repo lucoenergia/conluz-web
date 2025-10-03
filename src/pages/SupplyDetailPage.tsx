@@ -3,16 +3,12 @@ import { Box, Paper, Typography, Avatar, Chip } from "@mui/material";
 import { useParams } from "react-router";
 import { LoadingGraphCard } from "../components/Graph/LoadingGraphCard";
 import { EnhancedGraph } from "../components/Graph";
+import { EnhancedGraphCard } from "../components/Graph/EnhancedGraphCard";
+import { EnhancedMultiSeriesBar } from "../components/Graph/EnhancedMultiSeriesBar";
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
 import { GraphFilter } from "../components/Graph/GraphFilter";
-import {
-  useGetDailyProduction,
-  useGetHourlyProduction,
-  useGetMonthlyProduction,
-  useGetYearlyProduction,
-} from "../api/production/production";
-import { useGetSupply } from "../api/supplies/supplies";
+import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption } from "../api/supplies/supplies";
 import { getTimeRange } from "../utils/getTimeRange";
 import { useErrorDispatch } from "../context/error.context";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -27,7 +23,19 @@ export const SupplyDetailPage: FC = () => {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const errorDispatch = useErrorDispatch();
-  const timeRangeData: string = useMemo(() => getTimeRange(startDate, endDate), [startDate, endDate]);
+  const timeRangeData: string = useMemo(() => {
+    const difference = Math.abs(endDate.getTime() - startDate.getTime());
+    const daysInRange = difference / (1000 * 60 * 60 * 24);
+
+    // Check if this is a single month range (28-31 days) and both dates are in the same month
+    if (daysInRange >= 27 && daysInRange <= 32 &&
+        startDate.getDate() === 1 &&
+        startDate.getMonth() !== endDate.getMonth()) {
+      return "month";
+    }
+
+    return getTimeRange(startDate, endDate);
+  }, [startDate, endDate]);
 
   const handleFilterChange = (startDate: Date, endDate: Date) => {
     setStartDate(startDate);
@@ -36,42 +44,32 @@ export const SupplyDetailPage: FC = () => {
 
   const { data: supplyPoint, isLoading: supplyPointLoading, error: supplyPointError } = useGetSupply(supplyPointId);
 
-  // Since, in react, hook methos can't be inside conditional structures like 'if's we have to put all four calls at the top level of the componet and control wether the request actually gets triggered with the enabled parameter
+  // Fetch production data for specific supply using daily endpoint
+  // This endpoint returns daily data for any date range (day, month, year)
   const {
-    data: hourlyData,
-    isLoading: hourlyIsLoading,
-    error: hourlyError,
-  } = useGetHourlyProduction(
-    { supplyId: supplyPointId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: timeRangeData == "hour" } },
-  );
-  const {
-    data: dailyData,
-    isLoading: dailyIsLoading,
-    error: dailyError,
-  } = useGetDailyProduction(
-    { supplyId: supplyPointId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: timeRangeData == "day" } },
-  );
-  const {
-    data: monthlyData,
-    isLoading: monthlyIsLoading,
-    error: montlyError,
-  } = useGetMonthlyProduction(
-    { supplyId: supplyPointId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: timeRangeData == "month" } },
-  );
-  const {
-    data: yearlyData,
-    isLoading: yearlyIsLoading,
-    error: yearlyError,
-  } = useGetYearlyProduction(
-    { supplyId: supplyPointId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: timeRangeData == "year" } },
+    data: supplyProductionData,
+    isLoading: supplyProductionIsLoading,
+    error: supplyProductionError,
+  } = useGetSupplyDailyProduction(
+    supplyPointId,
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: !!supplyPointId && (timeRangeData === "day" || timeRangeData === "month" || timeRangeData === "year") } },
   );
 
-  const isLoading = hourlyIsLoading || dailyIsLoading || monthlyIsLoading || yearlyIsLoading;
-  const error = hourlyError || dailyError || montlyError || yearlyError;
+  // Fetch consumption data for specific supply
+  // Always use daily consumption endpoint regardless of time range
+  const {
+    data: consumptionData,
+    isLoading: consumptionIsLoading,
+    error: consumptionError,
+  } = useGetSupplyDailyConsumption(
+    supplyPointId,
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: !!supplyPointId && (timeRangeData === "day" || timeRangeData === "month" || timeRangeData === "year") } },
+  );
+
+  const isLoading = supplyProductionIsLoading || consumptionIsLoading || supplyPointLoading;
+  const error = supplyProductionError || consumptionError || supplyPointError;
 
   useEffect(() => {
     if (error)
@@ -80,63 +78,88 @@ export const SupplyDetailPage: FC = () => {
       );
   }, [error]);
 
+  // Process production data from the API response
   const data = useMemo(() => {
-    switch (timeRangeData) {
-      case "hour":
-        return hourlyData as number[];
-      case "day":
-        return dailyData as number[];
-      case "month":
-        return monthlyData as number[];
-      case "year":
-        return yearlyData as number[];
+    if (!supplyProductionData) return [];
+    return supplyProductionData.map((item) => item.power ?? 0);
+  }, [supplyProductionData]);
+
+  // Generate categories (x-axis labels) from production data
+  const categories = useMemo(() => {
+    if (!supplyProductionData || supplyProductionData.length === 0) return [];
+
+    return supplyProductionData.map((item) => {
+      const dateStr = item.time || "";
+      if (!dateStr) return "";
+
+      const date = new Date(dateStr);
+
+      // For month view, show day number
+      if (timeRangeData === "month") {
+        return date.getDate().toString();
+      }
+
+      // For day view, show abbreviated month and day
+      if (timeRangeData === "day") {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = date.toLocaleDateString("es-ES", { month: "short" });
+        return `${day} ${month}`;
+      }
+
+      // For year view, show month name
+      if (timeRangeData === "year") {
+        return date.toLocaleDateString("es-ES", { month: "short" });
+      }
+
+      return "";
+    });
+  }, [supplyProductionData, timeRangeData]);
+
+  // Process production data for chart
+  const productionValues = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return data;
+  }, [data]);
+
+  // Process consumption data for multi-series chart
+  const { consumptionCategories, consumptionSeries } = useMemo(() => {
+    if (!consumptionData || consumptionData.length === 0) {
+      return { consumptionCategories: [], consumptionSeries: [] };
     }
-  }, [hourlyData, dailyData, monthlyData, yearlyData, timeRangeData]);
 
-  // This is all for mocking the graph data until we can get actual data
-  const categories =
-    timeRangeData === "day"
-      ? ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-      : timeRangeData === "month"
-        ? ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-        : ["2021", "2022", "2023", "2024", "2025"];
+    const cats = consumptionData.map((item) => {
+      const dateStr = item.date || item.time || "";
+      if (!dateStr) return "";
 
-  const getMockedData = useCallback(() => {
-    if (timeRangeData === "day") {
-      return [30, 40, 45, 50, 49, 60, 70]; // mocked data para 7 días
-    } else if (timeRangeData === "month") {
-      return [30, 40, 45, 50, 49, 60, 70, 91, 35, 45, 55, 65]; //mocked data para 12 meses
-    } else {
-      return [30, 40, 45, 50, 49]; // mocked data para 5 años
-    }
-  }, [timeRangeData]);
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleDateString("es-ES", { month: "short" });
+      return `${day} ${month}`;
+    });
 
-  const measurementData = [
-    {
-      name: "Producción Asignada",
-      value: [],
-      info: "Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto",
-      variant: "production" as const,
-    },
-    {
-      name: "Consumo de red",
-      value: [],
-      info: "Cantidad de energía consumida de la red",
-      variant: "consumption" as const,
-    },
-    {
-      name: "Autoconsumo",
-      value: [],
-      info: "Cantidad de energía autoconsumida",
-      variant: "production" as const,
-    },
-    {
-      name: "Excedente",
-      value: [],
-      info: "Cantidad de energía no consumida",
-      variant: "default" as const,
-    },
-  ];
+    const seriesData = [
+      {
+        name: "Consumo Total",
+        data: consumptionData.map((item) => item.consumptionKWh || 0),
+        color: "#ef4444", // Red
+      },
+      {
+        name: "Autoconsumo",
+        data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
+        color: "#10b981", // Green
+      },
+      {
+        name: "Excedentes",
+        data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
+        color: "#f59e0b", // Amber
+      },
+    ];
+
+    return {
+      consumptionCategories: cats,
+      consumptionSeries: seriesData,
+    };
+  }, [consumptionData]);
 
   return (
     <Box
@@ -362,20 +385,34 @@ export const SupplyDetailPage: FC = () => {
             width: "100%",
           }}
         >
-          {!isLoading &&
-            !error &&
-            measurementData.map((item, index) => (
+          {!isLoading && !error && (
+            <>
+              {/* Production Chart */}
               <EnhancedGraph
-                key={index}
-                title={item.name}
+                title="Producción Asignada"
                 subtitle={`Rango: ${timeRangeData}`}
-                values={data?.length ? data : getMockedData()}
+                values={productionValues}
                 xAxis={categories}
-                info={item.info}
-                variant={item.variant}
+                info="Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto"
+                variant="production"
               />
-            ))}
-          {isLoading && Array.from({ length: 4 }).map((_, i) => <LoadingGraphCard key={i} />)}
+
+              {/* Consumption Multi-Series Chart */}
+              <EnhancedGraphCard
+                title="Consumo Asignado"
+                subtitle={`Rango: ${timeRangeData}`}
+                infoText="Visualización del consumo total, autoconsumo y excedentes del punto de suministro"
+                variant="consumption"
+              >
+                <EnhancedMultiSeriesBar
+                  categories={consumptionCategories}
+                  series={consumptionSeries}
+                  variant="consumption"
+                />
+              </EnhancedGraphCard>
+            </>
+          )}
+          {isLoading && Array.from({ length: 2 }).map((_, i) => <LoadingGraphCard key={i} />)}
         </Box>
       </Box>
     </Box>
