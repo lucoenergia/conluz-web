@@ -176,7 +176,7 @@ export const EnhancedGraphBar: FC<EnhancedGraphBarProps> = ({
       tooltip: {
         enabled: true,
         y: {
-          formatter: (value: number) => `${value} kWh`
+          formatter: (value: number) => `${value.toFixed(2)} kWh`
         },
         style: {
           fontSize: "12px",
@@ -189,7 +189,7 @@ export const EnhancedGraphBar: FC<EnhancedGraphBarProps> = ({
             '<div class="custom-tooltip" style="padding: 10px; background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">' +
             '<p style="margin: 0 0 4px 0; font-weight: 600; color: #1e293b;">' + category + '</p>' +
             '<p style="margin: 0; color: #64748b; font-size: 14px;">' +
-            '<span style="color:' + chartColors.colors[0] + '; font-weight: 600;">' + value + ' kWh</span>' +
+            '<span style="color:' + chartColors.colors[0] + '; font-weight: 600;">' + value.toFixed(2) + ' kWh</span>' +
             '</p>' +
             '</div>'
           );

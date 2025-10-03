@@ -126,13 +126,7 @@ interface ProductionPanelProps {
 
 const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
   // Calculate date range for last 7 days including today
-  const { startDate, endDate } = useMemo(() => {
-    const end = new Date();
-    end.setDate(end.getDate() + 1); // Include today by setting end to tomorrow
-    const start = new Date();
-    start.setDate(start.getDate() - 6); // 6 days ago + today = 7 days
-
-    // Format: 2025-09-24T00:00:00.000+02:00
+  const { startDate, endDate, prevStartDate, prevEndDate } = useMemo(() => {
     const formatDate = (date: Date) => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -146,13 +140,27 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
       return `${year}-${month}-${day}T00:00:00.000${offsetSign}${offsetHours}:${offsetMinutes}`;
     };
 
+    // Current period: last 7 days including today
+    const end = new Date();
+    end.setDate(end.getDate() + 1); // Include today by setting end to tomorrow
+    const start = new Date();
+    start.setDate(start.getDate() - 6); // 6 days ago + today = 7 days
+
+    // Previous period: 7 days before the current period
+    const prevEnd = new Date();
+    prevEnd.setDate(prevEnd.getDate() - 6); // Start of current period
+    const prevStart = new Date();
+    prevStart.setDate(prevStart.getDate() - 13); // 7 days before that
+
     return {
       startDate: formatDate(start),
       endDate: formatDate(end),
+      prevStartDate: formatDate(prevStart),
+      prevEndDate: formatDate(prevEnd),
     };
   }, []);
 
-  // Fetch production data for specific supply
+  // Fetch production data for current period
   const { data: productionData } = useGetSupplyDailyProduction(
     supplyId || "",
     {
@@ -163,6 +171,38 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
       query: { enabled: !!supplyId },
     },
   );
+
+  // Fetch production data for previous period
+  const { data: prevProductionData } = useGetSupplyDailyProduction(
+    supplyId || "",
+    {
+      startDate: prevStartDate,
+      endDate: prevEndDate,
+    },
+    {
+      query: { enabled: !!supplyId },
+    },
+  );
+
+  // Calculate statistics from production data
+  const { totalProduction, peakPower, productionTrend } = useMemo(() => {
+    if (!productionData || productionData.length === 0) {
+      return { totalProduction: 0, peakPower: 0, productionTrend: undefined };
+    }
+
+    const total = productionData.reduce((sum, item) => sum + (item.power || 0), 0);
+    const peak = Math.max(...productionData.map((item) => item.power || 0));
+
+    let trend: number | undefined = undefined;
+    if (prevProductionData && prevProductionData.length > 0) {
+      const prevTotal = prevProductionData.reduce((sum, item) => sum + (item.power || 0), 0);
+      if (prevTotal > 0) {
+        trend = ((total - prevTotal) / prevTotal) * 100;
+      }
+    }
+
+    return { totalProduction: total, peakPower: peak, productionTrend: trend };
+  }, [productionData, prevProductionData]);
 
   // Process data for chart
   const { categories, values } = useMemo(() => {
@@ -214,24 +254,17 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
         stats={[
           {
             label: "Producción Total",
-            value: "25 kWh",
-            trend: 12,
-            trendLabel: "vs mes anterior",
+            value: `${totalProduction.toFixed(2)} kWh`,
+            trend: productionTrend !== undefined ? Math.round(productionTrend) : undefined,
+            trendLabel: "vs 7 días anteriores",
             icon: <BoltIcon sx={{ fontSize: 24 }} />,
             color: "#8b5cf6",
           },
           {
             label: "Pico Máximo",
-            value: "3.2 kW",
+            value: `${peakPower.toFixed(2)} kW`,
             icon: <ElectricMeterIcon sx={{ fontSize: 24 }} />,
             color: "#3b82f6",
-          },
-          {
-            label: "Horas Pico",
-            value: "7.8 h",
-            trend: 5,
-            icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
-            color: "#10b981",
           },
         ]}
       />
@@ -256,13 +289,7 @@ interface ConsumptionPanelProps {
 
 const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
   // Calculate date range for last 7 days including today
-  const { startDate, endDate } = useMemo(() => {
-    const end = new Date();
-    end.setDate(end.getDate() + 1); // Include today by setting end to tomorrow
-    const start = new Date();
-    start.setDate(start.getDate() - 6); // 6 days ago + today = 7 days
-
-    // Format: 2025-09-24T00:00:00.000+02:00
+  const { startDate, endDate, prevStartDate, prevEndDate } = useMemo(() => {
     const formatDate = (date: Date) => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -276,13 +303,27 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
       return `${year}-${month}-${day}T00:00:00.000${offsetSign}${offsetHours}:${offsetMinutes}`;
     };
 
+    // Current period: last 7 days including today
+    const end = new Date();
+    end.setDate(end.getDate() + 1); // Include today by setting end to tomorrow
+    const start = new Date();
+    start.setDate(start.getDate() - 6); // 6 days ago + today = 7 days
+
+    // Previous period: 7 days before the current period
+    const prevEnd = new Date();
+    prevEnd.setDate(prevEnd.getDate() - 6); // Start of current period
+    const prevStart = new Date();
+    prevStart.setDate(prevStart.getDate() - 13); // 7 days before that
+
     return {
       startDate: formatDate(start),
       endDate: formatDate(end),
+      prevStartDate: formatDate(prevStart),
+      prevEndDate: formatDate(prevEnd),
     };
   }, []);
 
-  // Fetch consumption data for specific supply
+  // Fetch consumption data for current period
   const { data: consumptionData } = useGetSupplyDailyConsumption(
     supplyId || "",
     {
@@ -293,6 +334,65 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
       query: { enabled: !!supplyId },
     },
   );
+
+  // Fetch consumption data for previous period
+  const { data: prevConsumptionData } = useGetSupplyDailyConsumption(
+    supplyId || "",
+    {
+      startDate: prevStartDate,
+      endDate: prevEndDate,
+    },
+    {
+      query: { enabled: !!supplyId },
+    },
+  );
+
+  // Calculate statistics from consumption data
+  const { totalConsumption, totalSelfConsumption, totalSurplus, consumptionTrend, selfConsumptionTrend, surplusTrend } = useMemo(() => {
+    if (!consumptionData || consumptionData.length === 0) {
+      return {
+        totalConsumption: 0,
+        totalSelfConsumption: 0,
+        totalSurplus: 0,
+        consumptionTrend: undefined,
+        selfConsumptionTrend: undefined,
+        surplusTrend: undefined,
+      };
+    }
+
+    const consumption = consumptionData.reduce((sum, item) => sum + (item.consumptionKWh || 0), 0);
+    const selfConsumption = consumptionData.reduce((sum, item) => sum + (item.selfConsumptionEnergyKWh || 0), 0);
+    const surplus = consumptionData.reduce((sum, item) => sum + (item.surplusEnergyKWh || 0), 0);
+
+    let cTrend: number | undefined = undefined;
+    let scTrend: number | undefined = undefined;
+    let sTrend: number | undefined = undefined;
+
+    if (prevConsumptionData && prevConsumptionData.length > 0) {
+      const prevConsumption = prevConsumptionData.reduce((sum, item) => sum + (item.consumptionKWh || 0), 0);
+      const prevSelfConsumption = prevConsumptionData.reduce((sum, item) => sum + (item.selfConsumptionEnergyKWh || 0), 0);
+      const prevSurplus = prevConsumptionData.reduce((sum, item) => sum + (item.surplusEnergyKWh || 0), 0);
+
+      if (prevConsumption > 0) {
+        cTrend = ((consumption - prevConsumption) / prevConsumption) * 100;
+      }
+      if (prevSelfConsumption > 0) {
+        scTrend = ((selfConsumption - prevSelfConsumption) / prevSelfConsumption) * 100;
+      }
+      if (prevSurplus > 0) {
+        sTrend = ((surplus - prevSurplus) / prevSurplus) * 100;
+      }
+    }
+
+    return {
+      totalConsumption: consumption,
+      totalSelfConsumption: selfConsumption,
+      totalSurplus: surplus,
+      consumptionTrend: cTrend,
+      selfConsumptionTrend: scTrend,
+      surplusTrend: sTrend,
+    };
+  }, [consumptionData, prevConsumptionData]);
 
   // Process data for multi-series chart
   const { categories, series } = useMemo(() => {
@@ -356,22 +456,25 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
         stats={[
           {
             label: "Consumo Total",
-            value: "25 kWh",
-            trend: -8,
-            trendLabel: "vs mes anterior",
+            value: `${totalConsumption.toFixed(2)} kWh`,
+            trend: consumptionTrend !== undefined ? Math.round(consumptionTrend) : undefined,
+            trendLabel: "vs 7 días anteriores",
             icon: <PowerIcon sx={{ fontSize: 24 }} />,
             color: "#ef4444",
           },
           {
             label: "Autoconsumo",
-            value: "25 kWh",
-            trend: 15,
+            value: `${totalSelfConsumption.toFixed(2)} kWh`,
+            trend: selfConsumptionTrend !== undefined ? Math.round(selfConsumptionTrend) : undefined,
+            trendLabel: "vs 7 días anteriores",
             icon: <EvStationIcon sx={{ fontSize: 24 }} />,
             color: "#10b981",
           },
           {
             label: "Excedentes",
-            value: "25 kWh",
+            value: `${totalSurplus.toFixed(2)} kWh`,
+            trend: surplusTrend !== undefined ? Math.round(surplusTrend) : undefined,
+            trendLabel: "vs 7 días anteriores",
             icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
             color: "#f59e0b",
           },
