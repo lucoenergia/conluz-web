@@ -356,7 +356,7 @@ export const SupplyDetailPage: FC = () => {
 
     const seriesData = [
       {
-        name: "Consumo Total",
+        name: "Consumo de Red",
         data: consumptionData.map((item) => item.consumptionKWh || 0),
         color: "#ef4444", // Red
       },
@@ -626,9 +626,9 @@ export const SupplyDetailPage: FC = () => {
 
               {/* Consumption Multi-Series Chart */}
               <EnhancedGraphCard
-                title="Consumo Asignado"
+                title="Consumo"
                 subtitle={`Rango: ${timeRangeData}`}
-                infoText="Visualización del consumo total, autoconsumo y excedentes del punto de suministro"
+                infoText="Visualización del consumo de red, autoconsumo y excedentes del punto de suministro"
                 variant="consumption"
               >
                 <EnhancedMultiSeriesBar

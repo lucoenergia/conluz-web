@@ -508,7 +508,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               },
             }}
           >
-            {/* Consumo Total */}
+            {/* Consumo de REd */}
             <Box className="text-center">
               <Box className="flex justify-center mb-2" sx={{ color: "#ef4444" }}>
                 <PowerIcon sx={{ fontSize: 24 }} />
