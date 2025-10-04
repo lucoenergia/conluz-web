@@ -67,8 +67,6 @@ export const Login: FC = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         p: { xs: 2, sm: 3 },
       }}
     >
