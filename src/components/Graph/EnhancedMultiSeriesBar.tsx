@@ -156,13 +156,40 @@ export const EnhancedMultiSeriesBar: FC<EnhancedMultiSeriesBarProps> = ({
           horizontal: 10,
           vertical: 5,
         },
+        onItemClick: {
+          toggleDataSeries: true,
+        },
       },
       tooltip: {
         enabled: true,
         shared: true,
         intersect: false,
-        y: {
-          formatter: (value: number) => `${value.toFixed(2)} kWh`
+        custom: function({ series: seriesData, seriesIndex, dataPointIndex, w }: any) {
+          const category = w.globals.labels[dataPointIndex];
+          let tooltipContent = `<div style="padding: 8px 12px; background: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">`;
+          tooltipContent += `<div style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${category}</div>`;
+
+          // Only show visible series (not hidden by legend click)
+          w.config.series.forEach((s: any, index: number) => {
+            // Check if series is visible using globals.collapsedSeriesIndices
+            const isHidden = w.globals.collapsedSeriesIndices.includes(index);
+            if (isHidden) return;
+
+            const value = seriesData[index][dataPointIndex];
+            const color = w.config.colors[index];
+            const seriesName = s.name;
+
+            tooltipContent += `
+              <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+                <span style="color: #64748b; font-size: 12px;">${seriesName}:</span>
+                <span style="font-weight: 600; color: #1f2937; font-size: 12px;">${value !== undefined && value !== null ? value.toFixed(2) : '0.00'} kWh</span>
+              </div>
+            `;
+          });
+
+          tooltipContent += `</div>`;
+          return tooltipContent;
         },
         style: {
           fontSize: "12px",
