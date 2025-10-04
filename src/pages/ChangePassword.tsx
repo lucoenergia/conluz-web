@@ -54,7 +54,6 @@ export const ChangePasswordPage: FC = () => {
 
     try {
       // TODO: Add API call to change password when backend endpoint is ready
-      console.log("Change password request", { currentPassword, newPassword });
       // On success, navigate back to profile or home
       // navigate("/profile");
     } catch (error) {

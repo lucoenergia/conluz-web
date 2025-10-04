@@ -206,7 +206,6 @@ export const PartnersPage: FC = () => {
       // await resetPasswordMutation.mutateAsync({ id: selectedUser.id });
       setShowResetPasswordConfirmation(false);
       // Show success message or notification
-      console.log("Reset password email sent to:", selectedUser.name);
     } catch (error) {
       errorDispatch("Error al enviar el email de reestablecimiento. Por favor, inténtalo de nuevo.");
       setShowResetPasswordConfirmation(false);

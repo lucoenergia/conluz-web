@@ -70,6 +70,22 @@ export const SupplyDetailPage: FC = () => {
     setEndDate(endDate);
   };
 
+  // Calculate previous period dates for trend comparison
+  const { prevStartDate, prevEndDate } = useMemo(() => {
+    const difference = Math.abs(endDate.getTime() - startDate.getTime());
+
+    const prevEnd = new Date(startDate);
+    prevEnd.setMilliseconds(-1); // End of previous period is 1ms before current start
+
+    const prevStart = new Date(prevEnd);
+    prevStart.setTime(prevStart.getTime() - difference); // Same duration as current period
+
+    return {
+      prevStartDate: prevStart,
+      prevEndDate: prevEnd,
+    };
+  }, [startDate, endDate]);
+
   const { data: supplyPoint, isLoading: supplyPointLoading, error: supplyPointError } = useGetSupply(supplyPointId);
 
   // Fetch hourly production data when DAY filter is selected
@@ -116,9 +132,28 @@ export const SupplyDetailPage: FC = () => {
     { query: { enabled: !!supplyPointId && (filterType === "month" || filterType === "year" || filterType === "dates") } },
   );
 
+  // Fetch previous period hourly consumption data when DAY filter is selected
+  const {
+    data: prevHourlyConsumptionData,
+  } = useGetSupplyHourlyConsumption(
+    supplyPointId,
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { query: { enabled: !!supplyPointId && filterType === "day" } },
+  );
+
+  // Fetch previous period daily consumption data for month, year, and custom date ranges
+  const {
+    data: prevDailyConsumptionData,
+  } = useGetSupplyDailyConsumption(
+    supplyPointId,
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { query: { enabled: !!supplyPointId && (filterType === "month" || filterType === "year" || filterType === "dates") } },
+  );
+
   // Unified data sources - use hourly for "day" filter, daily for others
   const supplyProductionData = filterType === "day" ? supplyHourlyProductionData : supplyDailyProductionData;
   const consumptionData = filterType === "day" ? hourlyConsumptionData : dailyConsumptionData;
+  const prevConsumptionData = filterType === "day" ? prevHourlyConsumptionData : prevDailyConsumptionData;
 
   // Unified loading and error states
   const isLoading =
@@ -188,7 +223,7 @@ export const SupplyDetailPage: FC = () => {
     return data;
   }, [data]);
 
-  // Calculate consumption metrics
+  // Calculate consumption metrics with trends
   const consumptionMetrics = useMemo(() => {
     if (!consumptionData || consumptionData.length === 0) {
       return {
@@ -197,6 +232,11 @@ export const SupplyDetailPage: FC = () => {
         totalSurplus: 0,
         selfConsumptionPercentage: 0,
         utilizationPercentage: 0,
+        consumptionTrend: undefined,
+        selfConsumptionTrend: undefined,
+        surplusTrend: undefined,
+        selfConsumptionPercentageTrend: undefined,
+        utilizationPercentageTrend: undefined,
       };
     }
 
@@ -212,14 +252,72 @@ export const SupplyDetailPage: FC = () => {
     const denominator2 = totalSurplus + totalSelfConsumption;
     const utilizationPercentage = denominator2 > 0 ? (totalSelfConsumption / denominator2) * 100 : 0;
 
+    // Calculate trends compared to previous period
+    let consumptionTrend: number | undefined = undefined;
+    let selfConsumptionTrend: number | undefined = undefined;
+    let surplusTrend: number | undefined = undefined;
+    let selfConsumptionPercentageTrend: number | undefined = undefined;
+    let utilizationPercentageTrend: number | undefined = undefined;
+
+    if (prevConsumptionData && prevConsumptionData.length > 0) {
+      const prevTotalConsumption = prevConsumptionData.reduce((sum, item) => sum + (item.consumptionKWh || 0), 0);
+      const prevTotalSelfConsumption = prevConsumptionData.reduce((sum, item) => sum + (item.selfConsumptionEnergyKWh || 0), 0);
+      const prevTotalSurplus = prevConsumptionData.reduce((sum, item) => sum + (item.surplusEnergyKWh || 0), 0);
+
+      // Calculate previous percentages
+      const prevDenominator1 = prevTotalConsumption + prevTotalSurplus;
+      const prevSelfConsumptionPercentage = prevDenominator1 > 0 ? (prevTotalSelfConsumption / prevDenominator1) * 100 : 0;
+
+      const prevDenominator2 = prevTotalSurplus + prevTotalSelfConsumption;
+      const prevUtilizationPercentage = prevDenominator2 > 0 ? (prevTotalSelfConsumption / prevDenominator2) * 100 : 0;
+
+      // Calculate trends as percentage change
+      // Only calculate if previous value exists (even if 0)
+      if (prevTotalConsumption > 0) {
+        consumptionTrend = ((totalConsumption - prevTotalConsumption) / prevTotalConsumption) * 100;
+      } else if (totalConsumption > 0) {
+        // If previous was 0 but current is positive, show as 100% increase
+        consumptionTrend = 100;
+      }
+
+      if (prevTotalSelfConsumption > 0) {
+        selfConsumptionTrend = ((totalSelfConsumption - prevTotalSelfConsumption) / prevTotalSelfConsumption) * 100;
+      } else if (totalSelfConsumption > 0) {
+        selfConsumptionTrend = 100;
+      }
+
+      if (prevTotalSurplus > 0) {
+        surplusTrend = ((totalSurplus - prevTotalSurplus) / prevTotalSurplus) * 100;
+      } else if (totalSurplus > 0) {
+        surplusTrend = 100;
+      }
+
+      if (prevSelfConsumptionPercentage > 0) {
+        selfConsumptionPercentageTrend = ((selfConsumptionPercentage - prevSelfConsumptionPercentage) / prevSelfConsumptionPercentage) * 100;
+      } else if (selfConsumptionPercentage > 0) {
+        selfConsumptionPercentageTrend = 100;
+      }
+
+      if (prevUtilizationPercentage > 0) {
+        utilizationPercentageTrend = ((utilizationPercentage - prevUtilizationPercentage) / prevUtilizationPercentage) * 100;
+      } else if (utilizationPercentage > 0) {
+        utilizationPercentageTrend = 100;
+      }
+    }
+
     return {
       totalConsumption,
       totalSelfConsumption,
       totalSurplus,
       selfConsumptionPercentage,
       utilizationPercentage,
+      consumptionTrend,
+      selfConsumptionTrend,
+      surplusTrend,
+      selfConsumptionPercentageTrend,
+      utilizationPercentageTrend,
     };
-  }, [consumptionData]);
+  }, [consumptionData, prevConsumptionData]);
 
   // Process consumption data for multi-series chart
   const { consumptionCategories, consumptionSeries } = useMemo(() => {
@@ -451,18 +549,24 @@ export const SupplyDetailPage: FC = () => {
             {
               label: "Consumo",
               value: `${consumptionMetrics.totalConsumption.toFixed(2)} kWh`,
+              trend: consumptionMetrics.consumptionTrend !== undefined ? Math.round(consumptionMetrics.consumptionTrend) : undefined,
+              trendLabel: "vs período anterior",
               icon: <PowerIcon sx={{ fontSize: 24 }} />,
               color: "#ef4444",
             },
             {
               label: "Autoconsumo",
               value: `${consumptionMetrics.totalSelfConsumption.toFixed(2)} kWh`,
+              trend: consumptionMetrics.selfConsumptionTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionTrend) : undefined,
+              trendLabel: "vs período anterior",
               icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
               color: "#10b981",
             },
             {
               label: "Excedentes",
               value: `${consumptionMetrics.totalSurplus.toFixed(2)} kWh`,
+              trend: consumptionMetrics.surplusTrend !== undefined ? Math.round(consumptionMetrics.surplusTrend) : undefined,
+              trendLabel: "vs período anterior",
               icon: <EvStationIcon sx={{ fontSize: 24 }} />,
               color: "#f59e0b",
             },
@@ -478,12 +582,16 @@ export const SupplyDetailPage: FC = () => {
             {
               label: "Porcentaje de autoconsumo",
               value: `${consumptionMetrics.selfConsumptionPercentage.toFixed(2)}%`,
+              trend: consumptionMetrics.selfConsumptionPercentageTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionPercentageTrend) : undefined,
+              trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
               color: "#8b5cf6",
             },
             {
               label: "Porcentaje de aprovechamiento",
               value: `${consumptionMetrics.utilizationPercentage.toFixed(2)}%`,
+              trend: consumptionMetrics.utilizationPercentageTrend !== undefined ? Math.round(consumptionMetrics.utilizationPercentageTrend) : undefined,
+              trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
               color: "#3b82f6",
             },
