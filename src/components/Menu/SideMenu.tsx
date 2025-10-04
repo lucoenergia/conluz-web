@@ -1,4 +1,4 @@
-import { Box, Drawer, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, Divider } from "@mui/material";
+import { Box, Drawer, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import type { FC } from "react";
 import { Link, useLocation } from "react-router";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -8,10 +8,9 @@ interface SideMenuProps {
   isMenuOpened: boolean;
   onMenuClose: Function;
   menuItems: typeof MENU_ITEMS;
-  selectedId?: string;
 }
 
-export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuItems, selectedId }) => {
+export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuItems }) => {
   const { width } = useWindowDimensions();
   const location = useLocation();
   const drawerVariant = width < MIN_DESKTOP_WIDTH ? "temporary" : "persistent";

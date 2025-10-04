@@ -16,7 +16,7 @@ export const EditSupplyPage: FC = () => {
 
   const { data: supplyPoint, isLoading, error, refetch } = useGetSupply(supplyPointId);
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef, personalId }: SupplyFormValues) => {
+  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
     try {
       const updatedSupply = {
         name,

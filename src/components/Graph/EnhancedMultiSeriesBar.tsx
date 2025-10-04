@@ -149,9 +149,8 @@ export const EnhancedMultiSeriesBar: FC<EnhancedMultiSeriesBarProps> = ({
         fontSize: "12px",
         fontWeight: 500,
         markers: {
-          width: 12,
-          height: 12,
-          radius: 3,
+          size: 6,
+          offsetX: -2,
         },
         itemMargin: {
           horizontal: 10,

@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC } from "react";
-import { Box, Button, TextField, Typography, Autocomplete, CircularProgress } from "@mui/material";
+import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { useGetAllUsers } from "../../api/users/users";
 import type { UserResponse } from "../../api/models";
 

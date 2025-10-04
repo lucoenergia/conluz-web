@@ -3,7 +3,6 @@ import { Card, CardContent, Box, Typography, Chip, Avatar } from "@mui/material"
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PercentIcon from "@mui/icons-material/Percent";
 import BoltIcon from "@mui/icons-material/Bolt";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PowerIcon from "@mui/icons-material/Power";
 import PowerOffIcon from "@mui/icons-material/PowerOff";

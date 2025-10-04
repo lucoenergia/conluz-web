@@ -82,13 +82,13 @@ export const ProfilePage: FC = () => {
 
     try {
       const updatedUserData = {
-        number: currentUser.number,
+        number: currentUser.number || 0,
         personalId: formData.dni,
         fullName: formData.name,
-        address: formData.address || null,
+        address: formData.address || undefined,
         email: formData.email,
-        phoneNumber: formData.phone || null,
-        role: currentUser.role,
+        phoneNumber: formData.phone || undefined,
+        role: currentUser.role!,
       };
 
       await updateUser.mutateAsync(

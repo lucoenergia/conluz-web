@@ -1,4 +1,4 @@
-import { Box, InputBase, Paper, InputAdornment, IconButton } from "@mui/material";
+import { InputBase, Paper, InputAdornment, IconButton } from "@mui/material";
 import { useState, type FC } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";

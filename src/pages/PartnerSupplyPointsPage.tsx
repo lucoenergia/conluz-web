@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Box, Button, Typography, Paper, Skeleton, Fade, Grow, Chip, IconButton } from "@mui/material";
+import { Box, Typography, Paper, Skeleton, Fade, Grow, Chip, IconButton } from "@mui/material";
 import { useDisableSupply, useEnableSupply } from "../api/supplies/supplies";
 import { useGetSuppliesByUserId, useGetUserById } from "../api/users/users";
 import type { SupplyResponse } from "../api/models";
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedSearchBar } from "../components/SearchBar/EnhancedSearchBar";
 import { EnhancedSupplyCard } from "../components/SupplyCard/EnhancedSupplyCard";
-import { Link } from "react-router";
 import { useErrorDispatch } from "../context/error.context";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
