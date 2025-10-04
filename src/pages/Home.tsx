@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type FC } from "react";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
-import { EnhancedGraph } from "../components/Graph";
 import { EnhancedGraphCard } from "../components/Graph/EnhancedGraphCard";
+import { EnhancedGraphBar } from "../components/Graph/EnhancedGraphBar";
 import { EnhancedMultiSeriesBar } from "../components/Graph/EnhancedMultiSeriesBar";
 import { useGetSuppliesByUserId } from "../api/users/users";
 import {
@@ -11,13 +11,13 @@ import {
   useGetSupplyDailyConsumption,
 } from "../api/supplies/supplies";
 import { EnhancedDropdownSelector } from "../components/Forms/EnhancedDropdownSelector";
-import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
 import BoltIcon from "@mui/icons-material/Bolt";
 import PowerIcon from "@mui/icons-material/Power";
-import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 import EvStationIcon from "@mui/icons-material/EvStation";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useLoggedUser } from "../context/logged-user.context";
 import { UserResponseRole } from "../api/models";
 
@@ -205,7 +205,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
   }, [productionData, prevProductionData]);
 
   // Process data for chart
-  const { categories, values } = useMemo(() => {
+  const { categories, values: productionValues } = useMemo(() => {
     if (!productionData || productionData.length === 0) {
       return { categories: [], values: [] };
     }
@@ -225,14 +225,6 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
     return { categories: cats, values: vals };
   }, [productionData]);
 
-  const measurementData = [
-    {
-      name: "Producción Asignada",
-      value: values,
-      info: "Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto",
-    },
-  ];
-
   return (
     <Box
       sx={{
@@ -246,39 +238,89 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
-      <EnhancedStatsCard
-        title="Producción"
-        subtitle="Energía generada por la comunidad energética"
+      <EnhancedGraphCard
+        title="Producción Asignada"
+        subtitle="Energía asignada al punto de suministro seleccionado - Últimos 7 días"
+        infoText="Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto"
         variant="production"
-        icon={<SolarPowerIcon sx={{ fontSize: 32 }} />}
-        stats={[
-          {
-            label: "Producción Total",
-            value: `${totalProduction.toFixed(2)} kWh`,
-            trend: productionTrend !== undefined ? Math.round(productionTrend) : undefined,
-            trendLabel: "vs 7 días anteriores",
-            icon: <BoltIcon sx={{ fontSize: 24 }} />,
-            color: "#8b5cf6",
-          },
-          {
-            label: "Pico Máximo",
-            value: `${peakPower.toFixed(2)} kW`,
-            icon: <ElectricMeterIcon sx={{ fontSize: 24 }} />,
-            color: "#3b82f6",
-          },
-        ]}
-      />
-      {measurementData.map((item, index) => (
-        <EnhancedGraph
-          key={index}
-          title={item.name}
-          subtitle="Últimos 7 días"
-          values={item.value}
-          xAxis={categories}
-          info={item.info}
-          variant="production"
-        />
-      ))}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {/* Stats Section */}
+          <Box
+            sx={{
+              display: "grid",
+              gap: { xs: 2, sm: 3, md: 4 },
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, minmax(0, 1fr))",
+              },
+            }}
+          >
+            {/* Producción Total */}
+            <Box className="text-center">
+              <Box className="flex justify-center mb-2" sx={{ color: "#8b5cf6" }}>
+                <BoltIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ color: "#8b5cf6", mb: 0.5 }}
+              >
+                {totalProduction.toFixed(2)} kWh
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Producción Total
+              </Typography>
+              {productionTrend !== undefined && (
+                <Box className="flex items-center justify-center gap-1">
+                  {productionTrend > 0 ? (
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                  ) : (
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: productionTrend > 0 ? "#10b981" : "#ef4444",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {Math.abs(Math.round(productionTrend))}% vs 7 días anteriores
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Pico Máximo */}
+            <Box className="text-center">
+              <Box className="flex justify-center mb-2" sx={{ color: "#3b82f6" }}>
+                <ElectricMeterIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ color: "#3b82f6", mb: 0.5 }}
+              >
+                {peakPower.toFixed(2)} kW
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Pico Máximo
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Chart Section */}
+          <Box sx={{ mt: 4}}>
+            <EnhancedGraphBar
+              title="Producción Asignada"
+              categories={categories}
+              data={productionValues}
+              variant="production"
+              height={400}
+            />
+          </Box>
+        </Box>
+      </EnhancedGraphCard>
     </Box>
   );
 };
@@ -413,7 +455,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
 
     const seriesData = [
       {
-        name: "Consumo Total",
+        name: "Consumo de Red",
         data: consumptionData.map((item) => item.consumptionKWh || 0),
         color: "#ef4444", // Red
       },
@@ -448,50 +490,140 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
-      <EnhancedStatsCard
-        title="Consumo"
-        subtitle="Energía consumida por la comunidad energética"
-        variant="consumption"
-        icon={<PowerIcon sx={{ fontSize: 32 }} />}
-        stats={[
-          {
-            label: "Consumo Total",
-            value: `${totalConsumption.toFixed(2)} kWh`,
-            trend: consumptionTrend !== undefined ? Math.round(consumptionTrend) : undefined,
-            trendLabel: "vs 7 días anteriores",
-            icon: <PowerIcon sx={{ fontSize: 24 }} />,
-            color: "#ef4444",
-          },
-          {
-            label: "Autoconsumo",
-            value: `${totalSelfConsumption.toFixed(2)} kWh`,
-            trend: selfConsumptionTrend !== undefined ? Math.round(selfConsumptionTrend) : undefined,
-            trendLabel: "vs 7 días anteriores",
-            icon: <EvStationIcon sx={{ fontSize: 24 }} />,
-            color: "#10b981",
-          },
-          {
-            label: "Excedentes",
-            value: `${totalSurplus.toFixed(2)} kWh`,
-            trend: surplusTrend !== undefined ? Math.round(surplusTrend) : undefined,
-            trendLabel: "vs 7 días anteriores",
-            icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
-            color: "#f59e0b",
-          },
-        ]}
-      />
-
       <EnhancedGraphCard
-        title="Consumo Asignado"
-        subtitle="Últimos 7 días"
-        infoText="Visualización del consumo total, autoconsumo y excedentes del punto de suministro"
+        title="Consumo"
+        subtitle="Uso de la energía asociada al punto de suministro seleccionado - Últimos 7 días"
+        infoText="Visualización del consumo de red, autoconsumo y excedentes del punto de suministro"
         variant="consumption"
       >
-        <EnhancedMultiSeriesBar
-          categories={categories}
-          series={series}
-          variant="consumption"
-        />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {/* Stats Section */}
+          <Box
+            sx={{
+              display: "grid",
+              gap: { xs: 2, sm: 3, md: 4 },
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(3, minmax(0, 1fr))",
+              },
+            }}
+          >
+            {/* Consumo Total */}
+            <Box className="text-center">
+              <Box className="flex justify-center mb-2" sx={{ color: "#ef4444" }}>
+                <PowerIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ color: "#ef4444", mb: 0.5 }}
+              >
+                {totalConsumption.toFixed(2)} kWh
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Consumo de Red
+              </Typography>
+              {consumptionTrend !== undefined && (
+                <Box className="flex items-center justify-center gap-1">
+                  {consumptionTrend > 0 ? (
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                  ) : (
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: consumptionTrend > 0 ? "#10b981" : "#ef4444",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {Math.abs(Math.round(consumptionTrend))}% vs 7 días anteriores
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Autoconsumo */}
+            <Box className="text-center">
+              <Box className="flex justify-center mb-2" sx={{ color: "#10b981" }}>
+                <EvStationIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ color: "#10b981", mb: 0.5 }}
+              >
+                {totalSelfConsumption.toFixed(2)} kWh
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Autoconsumo
+              </Typography>
+              {selfConsumptionTrend !== undefined && (
+                <Box className="flex items-center justify-center gap-1">
+                  {selfConsumptionTrend > 0 ? (
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                  ) : (
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: selfConsumptionTrend > 0 ? "#10b981" : "#ef4444",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {Math.abs(Math.round(selfConsumptionTrend))}% vs 7 días anteriores
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Excedentes */}
+            <Box className="text-center">
+              <Box className="flex justify-center mb-2" sx={{ color: "#f59e0b" }}>
+                <BatteryChargingFullIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ color: "#f59e0b", mb: 0.5 }}
+              >
+                {totalSurplus.toFixed(2)} kWh
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Excedentes
+              </Typography>
+              {surplusTrend !== undefined && (
+                <Box className="flex items-center justify-center gap-1">
+                  {surplusTrend > 0 ? (
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                  ) : (
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: surplusTrend > 0 ? "#10b981" : "#ef4444",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {Math.abs(Math.round(surplusTrend))}% vs 7 días anteriores
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+
+          {/* Chart Section */}
+          <Box sx={{ mt: 4 }}>
+            <EnhancedMultiSeriesBar
+              categories={categories}
+              series={series}
+              variant="consumption"
+              height={400}
+            />
+          </Box>
+        </Box>
       </EnhancedGraphCard>
     </Box>
   );
