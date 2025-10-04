@@ -14,7 +14,7 @@ export const ContactPage: FC = () => {
     {
       icon: LocalPhoneIcon,
       title: "Teléfono",
-      gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      gradient: "#667eea",
       items: [
         { label: "Bob", value: "666 777 888" },
         { label: "John", value: "666 555 444" },
@@ -60,7 +60,7 @@ export const ContactPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 2, sm: 3, md: 4 },
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "#f5f7fa",
       }}
     >
       {/* Breadcrumb */}
@@ -78,7 +78,7 @@ export const ContactPage: FC = () => {
           sx={{
             p: { xs: 3, sm: 4 },
             borderRadius: 3,
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "#667eea",
             color: "white",
             position: "relative",
             overflow: "hidden",

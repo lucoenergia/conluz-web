@@ -110,20 +110,16 @@ export const EnhancedSupplyCard: FC<EnhancedSupplyCardProps> = ({
           minWidth: 0,
           "&:hover": {
             "& .card-header": {
-              background: enabled
-                ? "linear-gradient(135deg, #52c234 0%, #20b2aa 100%)"
-                : "linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)",
+              background: "#667eea",
             },
           },
         }}
       >
-        {/* Header with gradient */}
+        {/* Header */}
         <Box
           className="card-header"
           sx={{
-            background: enabled
-              ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-              : "linear-gradient(135deg, #eb3349 0%, #f45c43 100%)",
+            background: "#667eea",
             p: 2,
             color: "white",
             display: "flex",
@@ -156,7 +152,7 @@ export const EnhancedSupplyCard: FC<EnhancedSupplyCardProps> = ({
               label={enabled ? "Activo" : "Inactivo"}
               size="small"
               sx={{
-                backgroundColor: "rgba(255, 255, 255, 0.25)",
+                backgroundColor: enabled ? "#10b981" : "#ef4444",
                 color: "white",
                 fontWeight: 600,
                 display: { xs: "none", sm: "flex" },

@@ -69,7 +69,7 @@ export const ChangePasswordPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "#f5f7fa",
         width: "100%",
         maxWidth: "100%",
         overflow: "hidden",
@@ -92,7 +92,7 @@ export const ChangePasswordPage: FC = () => {
         sx={{
           p: { xs: 2, sm: 3 },
           borderRadius: { xs: 0, sm: 3 },
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "#667eea",
           color: "white",
           mx: { xs: 0, sm: 0 },
           width: { xs: "100%", sm: "auto" },
@@ -281,7 +281,7 @@ export const ChangePasswordPage: FC = () => {
                   fontSize: "0.9375rem",
                   fontWeight: 600,
                   borderRadius: "6px",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "#667eea",
                   boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
                   px: 3,
                   "&:hover": {

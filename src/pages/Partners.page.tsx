@@ -252,7 +252,7 @@ export const PartnersPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 2, sm: 3, md: 4 },
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "#f5f7fa",
       }}
     >
       {/* Breadcrumb */}
@@ -269,7 +269,7 @@ export const PartnersPage: FC = () => {
         sx={{
           p: { xs: 2, sm: 3 },
           borderRadius: { xs: 0, sm: 3 },
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "#667eea",
           color: "white",
           mx: { xs: 0, sm: 0 },
           width: { xs: "100%", sm: "auto" },
@@ -386,7 +386,7 @@ export const PartnersPage: FC = () => {
                 size="small"
                 sx={{
                   background: filters.status === 'all'
-                    ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    ? "#667eea"
                     : undefined,
                 }}
               />

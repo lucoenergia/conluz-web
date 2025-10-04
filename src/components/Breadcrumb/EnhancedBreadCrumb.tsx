@@ -28,7 +28,7 @@ export const EnhancedBreadCrumb: React.FC<EnhancedBreadCrumbProps> = ({ steps, c
       className={className}
       sx={{
         p: { xs: 1.5, sm: 2 },
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "#ffffff",
         borderRadius: 2,
         boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)",
         width: "100%",
@@ -66,7 +66,7 @@ export const EnhancedBreadCrumb: React.FC<EnhancedBreadCrumbProps> = ({ steps, c
                   </Box>
                 }
                 sx={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "#667eea",
                   color: "white",
                   height: 28,
                   "& .MuiChip-label": {

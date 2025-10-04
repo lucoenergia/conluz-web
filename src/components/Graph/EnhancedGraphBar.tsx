@@ -36,45 +36,15 @@ export const EnhancedGraphBar: FC<EnhancedGraphBarProps> = ({
     switch (variant) {
       case "production":
         return {
-          colors: ["#8b5cf6"],
-          gradient: {
-            shade: "light",
-            type: "vertical",
-            shadeIntensity: 0.5,
-            gradientToColors: ["#667eea"],
-            inverseColors: false,
-            opacityFrom: 0.85,
-            opacityTo: 0.65,
-            stops: [0, 100]
-          }
+          colors: ["#667eea"]
         };
       case "consumption":
         return {
-          colors: ["#ec4899"],
-          gradient: {
-            shade: "light",
-            type: "vertical",
-            shadeIntensity: 0.5,
-            gradientToColors: ["#f5576c"],
-            inverseColors: false,
-            opacityFrom: 0.85,
-            opacityTo: 0.65,
-            stops: [0, 100]
-          }
+          colors: ["#667eea"]
         };
       default:
         return {
-          colors: ["#3b82f6"],
-          gradient: {
-            shade: "light",
-            type: "vertical",
-            shadeIntensity: 0.5,
-            gradientToColors: ["#60a5fa"],
-            inverseColors: false,
-            opacityFrom: 0.85,
-            opacityTo: 0.65,
-            stops: [0, 100]
-          }
+          colors: ["#667eea"]
         };
     }
   };
@@ -122,8 +92,7 @@ export const EnhancedGraphBar: FC<EnhancedGraphBarProps> = ({
       },
       colors: chartColors.colors,
       fill: {
-        type: "gradient",
-        gradient: chartColors.gradient
+        type: "solid"
       },
       grid: {
         show: true,

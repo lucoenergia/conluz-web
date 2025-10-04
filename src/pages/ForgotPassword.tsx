@@ -23,8 +23,6 @@ export const ForgotPassword: FC = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         p: { xs: 2, sm: 3 },
       }}
     >
@@ -40,7 +38,7 @@ export const ForgotPassword: FC = () => {
       >
         <Box
           sx={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "#667eea",
             color: "white",
             p: { xs: 3, sm: 4 },
             textAlign: "center",
@@ -134,7 +132,7 @@ export const ForgotPassword: FC = () => {
                 fontWeight: 600,
                 padding: "12px",
                 borderRadius: "6px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "#667eea",
                 boxShadow: "0 4px 12px 0 rgba(102, 126, 234, 0.4)",
                 transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {

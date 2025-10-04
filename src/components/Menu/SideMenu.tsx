@@ -66,7 +66,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuIte
                       py: 1.5,
                       transition: 'all 0.2s ease',
                       '&.Mui-selected': {
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: '#667eea',
                         '& .MuiListItemIcon-root': {
                           color: '#ffffff',
                         },

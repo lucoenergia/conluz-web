@@ -268,7 +268,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           type="submit"
           variant="contained"
           sx={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "#667eea",
             textTransform: "none",
             px: 3,
             py: 1.5,
