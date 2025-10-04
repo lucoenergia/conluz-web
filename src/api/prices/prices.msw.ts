@@ -6,19 +6,31 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  faker
+} from '@faker-js/faker';
+
+import {
   HttpResponse,
   delay,
   http
 } from 'msw';
 
+import type {
+  PriceByHour
+} from '.././models';
 
 
-export const getGetPriceByRangeOfDatesMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
+export const getGetPriceByRangeOfDatesResponseMock = (): PriceByHour[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({price: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), hour: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})))
+
+
+export const getGetPriceByRangeOfDatesMockHandler = (overrideResponse?: PriceByHour[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PriceByHour[]> | PriceByHour[])) => {
   return http.get('*/api/v1/prices', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetPriceByRangeOfDatesResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }

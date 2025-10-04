@@ -34,3 +34,6 @@ npm-debug.log*
 
 # Helix Editor
 .ignore
+
+# Playwright MCP screenshots folder
+/.playwright-mcp

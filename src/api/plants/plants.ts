@@ -27,6 +27,7 @@ import type {
 import type {
   CreatePlantBody,
   GetAllPlantsParams,
+  PagedResultPlantResponse,
   PlantResponse,
   UpdatePlantBody
 } from '.././models';
@@ -199,7 +200,7 @@ export const getAllPlants = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<PagedResultPlantResponse>(
       {url: `/api/v1/plants`, method: 'GET',
         params, signal
     },
