@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Header } from "../components/Header/Header";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
 import { MENU_ITEMS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
@@ -18,7 +18,6 @@ export const AuthenticatedLayout: FC = () => {
   const { width } = useWindowDimensions();
   const dispatchAuth = useAuthDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const loggedUser = useLoggedUser();
   const setLoggedUser = useLoggedUserDispatch();
@@ -45,13 +44,6 @@ export const AuthenticatedLayout: FC = () => {
     navigate("/login");
   };
 
-  const selectedId = useMemo(() => {
-    // reverse() is used since otherwise it would always match the index route '/' which is the first one and part of every other route
-    // slplice() is used before reverse because reverse modifies the array in place and we dont want the original array to be modified
-    return MENU_ITEMS.slice()
-      .reverse()
-      .find((menuItem) => location.pathname.includes(menuItem.to))?.id;
-  }, [location.key]);
 
   return (
     <ProtectedRoute>
@@ -65,7 +57,6 @@ export const AuthenticatedLayout: FC = () => {
         isMenuOpened={isMenuOpened}
         onMenuClose={setIsMenuOpened}
         menuItems={MENU_ITEMS}
-        selectedId={selectedId}
       />
       <Box
         sx={{ marginLeft: `${contentMargin}px`, transition: "margin 225ms cubic-bezier(0.0, 0, 0.2, 1) 0ms" }}

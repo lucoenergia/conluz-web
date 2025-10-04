@@ -30,6 +30,7 @@ import type {
   CreateUsersWithFileBody,
   GetAllUsersParams,
   PagedResultUserResponse,
+  SupplyResponse,
   UpdateUserBody,
   UserResponse
 } from '.././models';
@@ -37,6 +38,99 @@ import type {
 import { customInstance } from '.././custom-instance';
 import type { ErrorType } from '.././custom-instance';
 
+
+
+
+/**
+ * This endpoint retrieves detailed information about a specific user by their unique identifier.
+
+**Required Role: ADMIN**
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves a single user by ID
+ */
+export const getUserById = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/${id}`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetUserByIdQueryKey = (id: string,) => {
+    return [`/api/v1/users/${id}`] as const;
+    }
+
+    
+export const getGetUserByIdQueryOptions = <TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserByIdQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserById>>> = ({ signal }) => getUserById(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUserById>>>
+export type GetUserByIdQueryError = ErrorType<unknown>
+
+
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserById>>,
+          TError,
+          Awaited<ReturnType<typeof getUserById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserById>>,
+          TError,
+          Awaited<ReturnType<typeof getUserById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves a single user by ID
+ */
+
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserByIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
 
 
 
@@ -581,6 +675,101 @@ export const useCreateUsersWithFile = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * This endpoint retrieves all supplies associated with a specific user by their unique identifier.
+
+**Authorization Rules:**
+- Users with role ADMIN can retrieve supplies for any user
+- Users with role PARTNER can only retrieve their own supplies
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves all supplies for a specific user
+ */
+export const getSuppliesByUserId = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyResponse[]>(
+      {url: `/api/v1/users/${id}/supplies`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetSuppliesByUserIdQueryKey = (id: string,) => {
+    return [`/api/v1/users/${id}/supplies`] as const;
+    }
+
+    
+export const getGetSuppliesByUserIdQueryOptions = <TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSuppliesByUserIdQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSuppliesByUserId>>> = ({ signal }) => getSuppliesByUserId(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSuppliesByUserIdQueryResult = NonNullable<Awaited<ReturnType<typeof getSuppliesByUserId>>>
+export type GetSuppliesByUserIdQueryError = ErrorType<unknown>
+
+
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSuppliesByUserId>>,
+          TError,
+          Awaited<ReturnType<typeof getSuppliesByUserId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSuppliesByUserId>>,
+          TError,
+          Awaited<ReturnType<typeof getSuppliesByUserId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves all supplies for a specific user
+ */
+
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSuppliesByUserIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * Returns basic information about the currently authenticated user.
  * @summary Get current authenticated user
  */

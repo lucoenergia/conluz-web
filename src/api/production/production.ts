@@ -30,7 +30,9 @@ import type {
   GetHourlyProductionParams,
   GetInstantProductionParams,
   GetMonthlyProductionParams,
-  GetYearlyProductionParams
+  GetYearlyProductionParams,
+  InstantProduction,
+  ProductionByTime
 } from '.././models';
 
 import { customInstance } from '.././custom-instance';
@@ -125,7 +127,7 @@ export const getInstantProduction = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<InstantProduction>(
       {url: `/api/v1/production`, method: 'GET',
         params, signal
     },
@@ -214,7 +216,7 @@ export const getYearlyProduction = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<ProductionByTime[]>(
       {url: `/api/v1/production/yearly`, method: 'GET',
         params, signal
     },
@@ -303,7 +305,7 @@ export const getMonthlyProduction = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<ProductionByTime[]>(
       {url: `/api/v1/production/monthly`, method: 'GET',
         params, signal
     },
@@ -392,7 +394,7 @@ export const getHourlyProduction = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<ProductionByTime[]>(
       {url: `/api/v1/production/hourly`, method: 'GET',
         params, signal
     },
@@ -481,7 +483,7 @@ export const getDailyProduction = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<ProductionByTime[]>(
       {url: `/api/v1/production/daily`, method: 'GET',
         params, signal
     },

@@ -6,11 +6,30 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  faker
+} from '@faker-js/faker';
+
+import {
   HttpResponse,
   delay,
   http
 } from 'msw';
 
+import type {
+  InstantProduction,
+  ProductionByTime
+} from '.././models';
+
+
+export const getGetInstantProductionResponseMock = (overrideResponse: Partial< InstantProduction > = {}): InstantProduction => ({power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), ...overrideResponse})
+
+export const getGetYearlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+
+export const getGetMonthlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+
+export const getGetHourlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+
+export const getGetDailyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
 
 export const getConfigureHuaweiMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<unknown> | unknown)) => {
@@ -23,52 +42,62 @@ export const getConfigureHuaweiMockHandler = (overrideResponse?: unknown | ((inf
   })
 }
 
-export const getGetInstantProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
+export const getGetInstantProductionMockHandler = (overrideResponse?: InstantProduction | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<InstantProduction> | InstantProduction)) => {
   return http.get('*/api/v1/production', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetInstantProductionResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
 
-export const getGetYearlyProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
+export const getGetYearlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
   return http.get('*/api/v1/production/yearly', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetYearlyProductionResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
 
-export const getGetMonthlyProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
+export const getGetMonthlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
   return http.get('*/api/v1/production/monthly', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetMonthlyProductionResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
 
-export const getGetHourlyProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
+export const getGetHourlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
   return http.get('*/api/v1/production/hourly', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetHourlyProductionResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
 
-export const getGetDailyProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
+export const getGetDailyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
   return http.get('*/api/v1/production/daily', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetDailyProductionResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
