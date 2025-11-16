@@ -23,12 +23,13 @@ import {
   Divider,
   TableSortLabel,
 } from "@mui/material";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
-import { EnhancedSearchBar } from "../components/SearchBar/EnhancedSearchBar";
+import { BreadCrumb } from "../components/Breadcrumb";
+import { SearchBar } from "../components/SearchBar";
+import { PageHeaderWithStats } from "../components/PageHeader";
+import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
 import type { FC } from "react";
 
 import PeopleIcon from "@mui/icons-material/People";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
@@ -49,7 +50,7 @@ type OrderBy = 'number' | 'fullName' | 'personalId';
 
 interface FilterState {
   search: string;
-  status: 'all' | 'active' | 'inactive';
+  status: FilterStatus;
 }
 
 export const PartnersPage: FC = () => {
@@ -250,13 +251,16 @@ export const PartnersPage: FC = () => {
         display: "flex",
         flexDirection: "column",
         gap: { xs: 2, sm: 3 },
-        p: { xs: 2, sm: 3, md: 4 },
+        p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
         background: "#f5f7fa",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
       }}
     >
       {/* Breadcrumb */}
-      <EnhancedBreadCrumb
+      <BreadCrumb
         steps={[
           { label: "Inicio", href: "/" },
           { label: "Socios", href: "/partners" },
@@ -264,88 +268,16 @@ export const PartnersPage: FC = () => {
       />
 
       {/* Header Section */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2, sm: 3 },
-          borderRadius: { xs: 0, sm: 3 },
-          background: "#667eea",
-          color: "white",
-          mx: { xs: 0, sm: 0 },
-          width: { xs: "100%", sm: "auto" },
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-          <PeopleIcon sx={{ fontSize: 40 }} />
-          <Box>
-            <Typography variant="h4" fontWeight="bold">
-              Gestión de Socios
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Administra los miembros de tu comunidad energética
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Statistics */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-            gap: 2,
-            mt: 3,
-          }}
-        >
-          <Box
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
-              borderRadius: 2,
-              p: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h3" fontWeight="bold">
-              {stats.total}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Total
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
-              borderRadius: 2,
-              p: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#10b981" }}>
-              {stats.active}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Activos
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
-              borderRadius: 2,
-              p: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#ef4444" }}>
-              {stats.inactive}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Inactivos
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+      <PageHeaderWithStats
+        icon={PeopleIcon}
+        title="Gestión de Socios"
+        subtitle="Administra los miembros de tu comunidad energética"
+        stats={[
+          { value: stats.total, label: "Total" },
+          { value: stats.active, label: "Activos", color: "#10b981" },
+          { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
+        ]}
+      />
 
       {/* Search and Filters Section */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
@@ -356,7 +288,6 @@ export const PartnersPage: FC = () => {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "white",
             boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-            width: "100%",
           }}
         >
           <Box
@@ -369,44 +300,13 @@ export const PartnersPage: FC = () => {
             }}
           >
             {/* Filter Chips */}
-            <Box sx={{
-              display: "flex",
-              gap: 1,
-              alignItems: "center",
-              flexWrap: "wrap",
-              justifyContent: { xs: "center", sm: "flex-start" }
-            }}>
-              <FilterListIcon sx={{ color: "#64748b", display: { xs: "none", sm: "block" } }} />
-
-              {/* Status Filter */}
-              <Chip
-                label="Todos"
-                onClick={() => handleFilterChange('status', 'all')}
-                color={filters.status === 'all' ? 'primary' : 'default'}
-                size="small"
-                sx={{
-                  background: filters.status === 'all'
-                    ? "#667eea"
-                    : undefined,
-                }}
-              />
-              <Chip
-                label="Activos"
-                onClick={() => handleFilterChange('status', 'active')}
-                color={filters.status === 'active' ? 'success' : 'default'}
-                size="small"
-              />
-              <Chip
-                label="Inactivos"
-                onClick={() => handleFilterChange('status', 'inactive')}
-                color={filters.status === 'inactive' ? 'error' : 'default'}
-                size="small"
-              />
-
-            </Box>
+            <FilterChipsBar
+              value={filters.status}
+              onChange={(value) => handleFilterChange('status', value)}
+            />
 
             {/* Search Bar */}
-            <EnhancedSearchBar
+            <SearchBar
               value={filters.search}
               onChange={(value) => handleSearchChange({ target: { value }} as React.ChangeEvent<HTMLInputElement>)}
               placeholder="Buscar por nombre, NIF/CIF o email..."

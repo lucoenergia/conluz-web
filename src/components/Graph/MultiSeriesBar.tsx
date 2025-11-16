@@ -8,14 +8,14 @@ interface SeriesData {
   color?: string;
 }
 
-interface EnhancedMultiSeriesBarProps {
+interface MultiSeriesBarProps {
   categories: string[] | number[];
   series: SeriesData[];
   variant?: "production" | "consumption" | "default";
   height?: number | string;
 }
 
-export const EnhancedMultiSeriesBar: FC<EnhancedMultiSeriesBarProps> = ({
+export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
   categories,
   series,
   variant = "default",

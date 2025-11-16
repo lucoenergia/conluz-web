@@ -1,5 +1,4 @@
 export { Graph } from "./Graph";
-export { EnhancedGraph } from "./EnhancedGraph";
-export { EnhancedGraphBar } from "./EnhancedGraphBar";
-export { EnhancedGraphCard } from "./EnhancedGraphCard";
-export { EnhancedMultiSeriesBar } from "./EnhancedMultiSeriesBar";
+export { GraphBar } from "./GraphBar";
+export { GraphCard } from "./GraphCard";
+export { MultiSeriesBar } from "./MultiSeriesBar";

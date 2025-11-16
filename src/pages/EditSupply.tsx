@@ -2,7 +2,7 @@ import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import type { UpdateSupplyBody } from "../api/models";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
+import { BreadCrumb } from "../components/Breadcrumb";
 import { SupplyForm, type SupplyFormValues } from "../components/SupplyForm/SupplyForm";
 import { useGetSupply, useUpdateSupply } from "../api/supplies/supplies";
 import { useErrorDispatch } from "../context/error.context";
@@ -45,14 +45,13 @@ export const EditSupplyPage: FC = () => {
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
         background: "#f5f7fa",
-        width: "100%",
         maxWidth: "100%",
         overflow: "hidden",
       }}
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Puntos de Suministro", href: "/supply-points" },
@@ -104,7 +103,6 @@ export const EditSupplyPage: FC = () => {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "white",
             boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-            width: "100%",
           }}
         >
           {!isLoading && !error && (

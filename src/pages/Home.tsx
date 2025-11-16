@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Typography } from "@mui/material";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
-import { EnhancedGraphCard } from "../components/Graph/EnhancedGraphCard";
-import { EnhancedGraphBar } from "../components/Graph/EnhancedGraphBar";
-import { EnhancedMultiSeriesBar } from "../components/Graph/EnhancedMultiSeriesBar";
+import { BreadCrumb } from "../components/Breadcrumb";
+import { GraphCard } from "../components/Graph/GraphCard";
+import { GraphBar } from "../components/Graph/GraphBar";
+import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
 import { useGetSuppliesByUserId } from "../api/users/users";
 import {
   useGetAllSupplies,
   useGetSupplyDailyProduction,
   useGetSupplyDailyConsumption,
 } from "../api/supplies/supplies";
-import { EnhancedDropdownSelector } from "../components/Forms/EnhancedDropdownSelector";
+import { DropdownSelector } from "../components/Forms/DropdownSelector";
 import BoltIcon from "@mui/icons-material/Bolt";
 import PowerIcon from "@mui/icons-material/Power";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -33,14 +33,15 @@ export const HomePage: FC = () => {
         flexDirection: "column",
         gap: { xs: 2, sm: 2.5, md: 3 },
         p: { xs: 1, sm: 2, md: 3 },
-        width: "100%",
         maxWidth: "100%",
         minWidth: 0,
-        overflow: "visible",
+        background: "#f5f7fa",
+        boxSizing: "border-box",
+        overflow: "hidden",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
-      <EnhancedBreadCrumb steps={[{ label: "Inicio", href: "/" }]} />
+      <BreadCrumb steps={[{ label: "Inicio", href: "/" }]} />
       <SupplyPointAutocomplete value={selectedSupplyPoint} onChange={setSelectedSupplyPoint} />
 
       <Box
@@ -110,7 +111,7 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
     }
   }, [options]);
   return (
-    <EnhancedDropdownSelector
+    <DropdownSelector
       options={options}
       value={value}
       onChange={onChange}
@@ -238,7 +239,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
-      <EnhancedGraphCard
+      <GraphCard
         title="Producción Asignada"
         subtitle="Energía asignada al punto de suministro seleccionado - Últimos 7 días"
         infoText="Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto"
@@ -257,8 +258,8 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
             }}
           >
             {/* Producción Total */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#8b5cf6" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#8b5cf6" }}>
                 <BoltIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -272,7 +273,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
                 Producción Total
               </Typography>
               {productionTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {productionTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -292,8 +293,8 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
             </Box>
 
             {/* Pico Máximo */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#3b82f6" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#3b82f6" }}>
                 <ElectricMeterIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -311,7 +312,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
 
           {/* Chart Section */}
           <Box sx={{ mt: 4}}>
-            <EnhancedGraphBar
+            <GraphBar
               title="Producción Asignada"
               categories={categories}
               data={productionValues}
@@ -320,7 +321,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
             />
           </Box>
         </Box>
-      </EnhancedGraphCard>
+      </GraphCard>
     </Box>
   );
 };
@@ -490,7 +491,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
-      <EnhancedGraphCard
+      <GraphCard
         title="Consumo"
         subtitle="Uso de la energía asociada al punto de suministro seleccionado - Últimos 7 días"
         infoText="Visualización del consumo de red, autoconsumo y excedentes del punto de suministro"
@@ -509,8 +510,8 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             }}
           >
             {/* Consumo de REd */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#ef4444" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#ef4444" }}>
                 <PowerIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -524,7 +525,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
                 Consumo de Red
               </Typography>
               {consumptionTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {consumptionTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -544,8 +545,8 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             </Box>
 
             {/* Autoconsumo */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#10b981" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#10b981" }}>
                 <EvStationIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -559,7 +560,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
                 Autoconsumo
               </Typography>
               {selfConsumptionTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {selfConsumptionTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -579,8 +580,8 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             </Box>
 
             {/* Excedentes */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#f59e0b" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#f59e0b" }}>
                 <BatteryChargingFullIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -594,7 +595,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
                 Excedentes
               </Typography>
               {surplusTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {surplusTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -616,7 +617,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
 
           {/* Chart Section */}
           <Box sx={{ mt: 4 }}>
-            <EnhancedMultiSeriesBar
+            <MultiSeriesBar
               categories={categories}
               series={series}
               variant="consumption"
@@ -624,7 +625,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             />
           </Box>
         </Box>
-      </EnhancedGraphCard>
+      </GraphCard>
     </Box>
   );
 };
