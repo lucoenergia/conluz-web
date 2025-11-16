@@ -1,5 +1,5 @@
 import { Box, Typography, Paper, Avatar, Grow, Fade } from "@mui/material";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
+import { BreadCrumb } from "../components/Breadcrumb";
 import type { FC } from "react";
 
 import LocalPhoneIcon from "@mui/icons-material/LocalPhone";
@@ -64,7 +64,7 @@ export const ContactPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <EnhancedBreadCrumb
+      <BreadCrumb
         steps={[
           { label: "Inicio", href: "/" },
           { label: "Contacto", href: "/contact" },

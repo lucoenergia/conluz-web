@@ -23,8 +23,8 @@ import {
   Divider,
   TableSortLabel,
 } from "@mui/material";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
-import { EnhancedSearchBar } from "../components/SearchBar/EnhancedSearchBar";
+import { BreadCrumb } from "../components/Breadcrumb";
+import { SearchBar } from "../components/SearchBar/SearchBar";
 import type { FC } from "react";
 
 import PeopleIcon from "@mui/icons-material/People";
@@ -256,7 +256,7 @@ export const PartnersPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <EnhancedBreadCrumb
+      <BreadCrumb
         steps={[
           { label: "Inicio", href: "/" },
           { label: "Socios", href: "/partners" },
@@ -406,7 +406,7 @@ export const PartnersPage: FC = () => {
             </Box>
 
             {/* Search Bar */}
-            <EnhancedSearchBar
+            <SearchBar
               value={filters.search}
               onChange={(value) => handleSearchChange({ target: { value }} as React.ChangeEvent<HTMLInputElement>)}
               placeholder="Buscar por nombre, NIF/CIF o email..."

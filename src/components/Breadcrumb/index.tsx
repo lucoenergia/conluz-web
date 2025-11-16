@@ -1,2 +1,2 @@
 export { BreadCrumb } from "./BreadCrumb";
-export { EnhancedBreadCrumb } from "./EnhancedBreadCrumb";
+export type { BreadCrumbProps } from "./BreadCrumb";

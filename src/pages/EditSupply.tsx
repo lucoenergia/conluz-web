@@ -2,7 +2,7 @@ import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import type { UpdateSupplyBody } from "../api/models";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
+import { BreadCrumb } from "../components/Breadcrumb";
 import { SupplyForm, type SupplyFormValues } from "../components/SupplyForm/SupplyForm";
 import { useGetSupply, useUpdateSupply } from "../api/supplies/supplies";
 import { useErrorDispatch } from "../context/error.context";
@@ -52,7 +52,7 @@ export const EditSupplyPage: FC = () => {
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Puntos de Suministro", href: "/supply-points" },

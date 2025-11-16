@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Paper, Typography, Avatar, Chip } from "@mui/material";
 import { useParams } from "react-router";
 import { LoadingGraphCard } from "../components/Graph/LoadingGraphCard";
-import { EnhancedGraph } from "../components/Graph";
-import { EnhancedGraphCard } from "../components/Graph/EnhancedGraphCard";
-import { EnhancedMultiSeriesBar } from "../components/Graph/EnhancedMultiSeriesBar";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
-import { EnhancedStatsCard } from "../components/EnhancedStatsCard";
+import { Graph } from "../components/Graph";
+import { GraphCard } from "../components/Graph/GraphCard";
+import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
+import { BreadCrumb } from "../components/Breadcrumb";
+import { StatsCard } from "../components/StatsCard";
 import { GraphFilter } from "../components/Graph/GraphFilter";
 import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption } from "../api/supplies/supplies";
 import { getTimeRange } from "../utils/getTimeRange";
@@ -394,7 +394,7 @@ export const SupplyDetailPage: FC = () => {
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Puntos de Suministro", href: "/supply-points" },
@@ -540,7 +540,7 @@ export const SupplyDetailPage: FC = () => {
           gap: { xs: 2, sm: 3 },
         }}
       >
-        <EnhancedStatsCard
+        <StatsCard
           title="Consumo"
           subtitle="Consumo energético del punto de suministro"
           variant="consumption"
@@ -573,7 +573,7 @@ export const SupplyDetailPage: FC = () => {
           ]}
         />
 
-        <EnhancedStatsCard
+        <StatsCard
           title="Eficiencia"
           subtitle="Indicadores de rendimiento energético"
           variant="production"
@@ -615,7 +615,7 @@ export const SupplyDetailPage: FC = () => {
           {!isLoading && !error && (
             <>
               {/* Production Chart */}
-              <EnhancedGraph
+              <Graph
                 title="Producción Asignada"
                 subtitle={`Rango: ${timeRangeData}`}
                 values={productionValues}
@@ -625,18 +625,18 @@ export const SupplyDetailPage: FC = () => {
               />
 
               {/* Consumption Multi-Series Chart */}
-              <EnhancedGraphCard
+              <GraphCard
                 title="Consumo"
                 subtitle={`Rango: ${timeRangeData}`}
                 infoText="Visualización del consumo de red, autoconsumo y excedentes del punto de suministro"
                 variant="consumption"
               >
-                <EnhancedMultiSeriesBar
+                <MultiSeriesBar
                   categories={consumptionCategories}
                   series={consumptionSeries}
                   variant="consumption"
                 />
-              </EnhancedGraphCard>
+              </GraphCard>
             </>
           )}
           {isLoading && Array.from({ length: 2 }).map((_, i) => <LoadingGraphCard key={i} />)}

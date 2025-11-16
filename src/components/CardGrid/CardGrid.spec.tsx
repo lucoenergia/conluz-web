@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { EnhancedCardGrid } from "./EnhancedCardGrid";
+import { CardGrid } from "./CardGrid";
 
 interface TestItem {
   id: string;
   name: string;
 }
 
-describe("EnhancedCardGrid", () => {
+describe("CardGrid", () => {
   const mockItems: TestItem[] = [
     { id: "1", name: "Item 1" },
     { id: "2", name: "Item 2" },
@@ -20,7 +20,7 @@ describe("EnhancedCardGrid", () => {
 
   it("renders all items", () => {
     render(
-      <EnhancedCardGrid
+      <CardGrid
         items={mockItems}
         renderCard={renderCard}
         getKey={getKey}
@@ -34,7 +34,7 @@ describe("EnhancedCardGrid", () => {
 
   it("renders empty grid when no items", () => {
     const { container } = render(
-      <EnhancedCardGrid items={[]} renderCard={renderCard} getKey={getKey} />
+      <CardGrid items={[]} renderCard={renderCard} getKey={getKey} />
     );
 
     const boxes = container.querySelectorAll(".MuiBox-root");
@@ -51,7 +51,7 @@ describe("EnhancedCardGrid", () => {
     };
 
     render(
-      <EnhancedCardGrid
+      <CardGrid
         items={mockItems}
         renderCard={customRenderCard}
         getKey={getKey}
@@ -69,7 +69,7 @@ describe("EnhancedCardGrid", () => {
     };
 
     render(
-      <EnhancedCardGrid
+      <CardGrid
         items={mockItems}
         renderCard={customRenderCard}
         getKey={getKey}
@@ -81,7 +81,7 @@ describe("EnhancedCardGrid", () => {
 
   it("applies custom gap", () => {
     const { container } = render(
-      <EnhancedCardGrid
+      <CardGrid
         items={mockItems}
         renderCard={renderCard}
         getKey={getKey}
@@ -96,7 +96,7 @@ describe("EnhancedCardGrid", () => {
 
   it("applies responsive gap", () => {
     const { container } = render(
-      <EnhancedCardGrid
+      <CardGrid
         items={mockItems}
         renderCard={renderCard}
         getKey={getKey}
@@ -110,7 +110,7 @@ describe("EnhancedCardGrid", () => {
 
   it("applies custom columns configuration", () => {
     const { container } = render(
-      <EnhancedCardGrid
+      <CardGrid
         items={mockItems}
         renderCard={renderCard}
         getKey={getKey}

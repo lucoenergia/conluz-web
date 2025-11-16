@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { Box, Fade, Grow } from "@mui/material";
 
-export interface EnhancedCardGridProps<T> {
+export interface CardGridProps<T> {
   items: T[];
   renderCard: (item: T, index: number) => ReactNode;
   getKey: (item: T) => string | number;
@@ -16,7 +16,7 @@ export interface EnhancedCardGridProps<T> {
   fadeTimeout?: number;
 }
 
-export const EnhancedCardGrid = <T,>({
+export const CardGrid = <T,>({
   items,
   renderCard,
   getKey,
@@ -29,7 +29,7 @@ export const EnhancedCardGrid = <T,>({
   },
   animationDelay = 50,
   fadeTimeout = 500,
-}: EnhancedCardGridProps<T>): ReturnType<FC> => {
+}: CardGridProps<T>): ReturnType<FC> => {
   const gridTemplateColumns = {
     xs: columns.xs ? `repeat(${columns.xs}, 1fr)` : "1fr",
     sm: columns.sm ? `repeat(${columns.sm}, 1fr)` : "1fr",

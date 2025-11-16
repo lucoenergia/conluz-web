@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Typography } from "@mui/material";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
-import { EnhancedGraphCard } from "../components/Graph/EnhancedGraphCard";
-import { EnhancedGraphBar } from "../components/Graph/EnhancedGraphBar";
-import { EnhancedMultiSeriesBar } from "../components/Graph/EnhancedMultiSeriesBar";
+import { BreadCrumb } from "../components/Breadcrumb";
+import { GraphCard } from "../components/Graph/GraphCard";
+import { GraphBar } from "../components/Graph/GraphBar";
+import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
 import { useGetSuppliesByUserId } from "../api/users/users";
 import {
   useGetAllSupplies,
   useGetSupplyDailyProduction,
   useGetSupplyDailyConsumption,
 } from "../api/supplies/supplies";
-import { EnhancedDropdownSelector } from "../components/Forms/EnhancedDropdownSelector";
+import { DropdownSelector } from "../components/Forms/DropdownSelector";
 import BoltIcon from "@mui/icons-material/Bolt";
 import PowerIcon from "@mui/icons-material/Power";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -40,7 +40,7 @@ export const HomePage: FC = () => {
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
-      <EnhancedBreadCrumb steps={[{ label: "Inicio", href: "/" }]} />
+      <BreadCrumb steps={[{ label: "Inicio", href: "/" }]} />
       <SupplyPointAutocomplete value={selectedSupplyPoint} onChange={setSelectedSupplyPoint} />
 
       <Box
@@ -110,7 +110,7 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
     }
   }, [options]);
   return (
-    <EnhancedDropdownSelector
+    <DropdownSelector
       options={options}
       value={value}
       onChange={onChange}
@@ -238,7 +238,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
-      <EnhancedGraphCard
+      <GraphCard
         title="Producción Asignada"
         subtitle="Energía asignada al punto de suministro seleccionado - Últimos 7 días"
         infoText="Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto"
@@ -311,7 +311,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
 
           {/* Chart Section */}
           <Box sx={{ mt: 4}}>
-            <EnhancedGraphBar
+            <GraphBar
               title="Producción Asignada"
               categories={categories}
               data={productionValues}
@@ -320,7 +320,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
             />
           </Box>
         </Box>
-      </EnhancedGraphCard>
+      </GraphCard>
     </Box>
   );
 };
@@ -490,7 +490,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
-      <EnhancedGraphCard
+      <GraphCard
         title="Consumo"
         subtitle="Uso de la energía asociada al punto de suministro seleccionado - Últimos 7 días"
         infoText="Visualización del consumo de red, autoconsumo y excedentes del punto de suministro"
@@ -616,7 +616,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
 
           {/* Chart Section */}
           <Box sx={{ mt: 4 }}>
-            <EnhancedMultiSeriesBar
+            <MultiSeriesBar
               categories={categories}
               series={series}
               variant="consumption"
@@ -624,7 +624,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             />
           </Box>
         </Box>
-      </EnhancedGraphCard>
+      </GraphCard>
     </Box>
   );
 };

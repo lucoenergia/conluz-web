@@ -6,7 +6,7 @@ import { useNavigate } from "react-router";
 import { SupplyForm, type SupplyFormValues } from "../components/SupplyForm/SupplyForm";
 import { useLoggedUser } from "../context/logged-user.context";
 import { useErrorDispatch } from "../context/error.context";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
+import { BreadCrumb } from "../components/Breadcrumb";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
 export const CreateSupplyPage: FC = () => {
@@ -52,7 +52,7 @@ export const CreateSupplyPage: FC = () => {
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Puntos de Suministro", href: "/supply-points" },

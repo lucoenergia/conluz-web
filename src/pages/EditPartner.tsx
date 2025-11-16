@@ -2,7 +2,7 @@ import { type FC, useState, useEffect } from "react";
 import { Box, Typography, Paper, Avatar, TextField, Button, CircularProgress, Alert } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import type { UpdateUserBody } from "../api/models";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
+import { BreadCrumb } from "../components/Breadcrumb";
 import { useGetUserById, useUpdateUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
 import PersonIcon from "@mui/icons-material/Person";
@@ -92,7 +92,7 @@ export const EditPartnerPage: FC = () => {
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Socios", href: "/partners" },

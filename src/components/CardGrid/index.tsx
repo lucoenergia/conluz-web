@@ -1,4 +1,4 @@
-export { EnhancedCardGrid } from "./EnhancedCardGrid";
-export type { EnhancedCardGridProps } from "./EnhancedCardGrid";
+export { CardGrid } from "./CardGrid";
+export type { CardGridProps } from "./CardGrid";
 export { LoadingCardGrid } from "./LoadingCardGrid";
 export type { LoadingCardGridProps } from "./LoadingCardGrid";

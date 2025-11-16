@@ -2,7 +2,7 @@ import { useState, type FC } from "react";
 import { Box, Button, Typography, Paper, Avatar } from "@mui/material";
 import KeyIcon from "@mui/icons-material/Key";
 import { useNavigate } from "react-router";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
+import { BreadCrumb } from "../components/Breadcrumb";
 import { PasswordInput } from "../components/Forms/PasswordInput";
 
 export const ChangePasswordPage: FC = () => {
@@ -77,7 +77,7 @@ export const ChangePasswordPage: FC = () => {
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Mi perfil", href: "/profile" },

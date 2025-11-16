@@ -3,7 +3,7 @@ import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Ch
 import PersonIcon from "@mui/icons-material/Person";
 import BadgeIcon from "@mui/icons-material/Badge";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
+import { BreadCrumb } from "../components/Breadcrumb";
 import { useGetCurrentUser, useUpdateUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
 
@@ -129,7 +129,7 @@ export const ProfilePage: FC = () => {
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Mi perfil", href: "#" },

@@ -4,12 +4,12 @@ import { Box, Paper } from "@mui/material";
 import { useDisableSupply, useEnableSupply } from "../api/supplies/supplies";
 import { useGetSuppliesByUserId, useGetUserById } from "../api/users/users";
 import type { SupplyResponse } from "../api/models";
-import { EnhancedBreadCrumb } from "../components/Breadcrumb";
-import { EnhancedSearchBar } from "../components/SearchBar/EnhancedSearchBar";
-import { EnhancedSupplyCard } from "../components/SupplyCard/EnhancedSupplyCard";
+import { BreadCrumb } from "../components/Breadcrumb";
+import { SearchBar } from "../components/SearchBar/SearchBar";
+import { SupplyCard } from "../components/SupplyCard/SupplyCard";
 import { PageHeaderWithStats } from "../components/PageHeader";
 import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
-import { EnhancedCardGrid } from "../components/CardGrid";
+import { CardGrid } from "../components/CardGrid";
 import { LoadingCardGrid } from "../components/CardGrid";
 import { EmptyState } from "../components/EmptyState";
 import { useErrorDispatch } from "../context/error.context";
@@ -119,7 +119,7 @@ export const PartnerSupplyPointsPage: FC = () => {
     >
       {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
-        <EnhancedBreadCrumb
+        <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Socios", href: "/partners" },
@@ -168,7 +168,7 @@ export const PartnerSupplyPointsPage: FC = () => {
             <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
 
             {/* Search Bar */}
-            <EnhancedSearchBar value={searchText} onChange={setSearchText} />
+            <SearchBar value={searchText} onChange={setSearchText} />
           </Box>
         </Paper>
       </Box>
@@ -176,11 +176,11 @@ export const PartnerSupplyPointsPage: FC = () => {
       {/* Supply Cards Grid */}
       {!isLoading && !error && filteredItems.length > 0 && (
         <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
-          <EnhancedCardGrid
+          <CardGrid
             items={filteredItems}
             getKey={(item) => item.id || ""}
             renderCard={(item) => (
-              <EnhancedSupplyCard
+              <SupplyCard
                 id={item.id}
                 code={item.code}
                 partitionCoefficient={item.partitionCoefficient ? item.partitionCoefficient * 100 : undefined}
