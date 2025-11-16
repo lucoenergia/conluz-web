@@ -59,8 +59,11 @@ export const AuthenticatedLayout: FC = () => {
         menuItems={MENU_ITEMS}
       />
       <Box
-        sx={{ marginLeft: `${contentMargin}px`, transition: "margin 225ms cubic-bezier(0.0, 0, 0.2, 1) 0ms" }}
-        className="p-4"
+        sx={{
+          marginLeft: `${contentMargin}px`,
+          transition: "margin 225ms cubic-bezier(0.0, 0, 0.2, 1) 0ms",
+          boxSizing: "border-box",
+        }}
         component="main"
       >
         <Toolbar />

@@ -251,9 +251,12 @@ export const PartnersPage: FC = () => {
         display: "flex",
         flexDirection: "column",
         gap: { xs: 2, sm: 3 },
-        p: { xs: 2, sm: 3, md: 4 },
+        p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
         background: "#f5f7fa",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
       }}
     >
       {/* Breadcrumb */}
@@ -285,7 +288,6 @@ export const PartnersPage: FC = () => {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "white",
             boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-            width: "100%",
           }}
         >
           <Box

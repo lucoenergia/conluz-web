@@ -144,7 +144,6 @@ export const EditPartnerPage: FC = () => {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "white",
             boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-            width: "100%",
           }}
         >
           <form onSubmit={handleSubmit}>

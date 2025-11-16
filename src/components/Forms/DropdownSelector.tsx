@@ -36,7 +36,6 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
   return (
     <Box
       sx={{
-        width: "100%",
         background: "white",
         borderRadius: 2,
         boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",

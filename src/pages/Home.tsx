@@ -33,10 +33,11 @@ export const HomePage: FC = () => {
         flexDirection: "column",
         gap: { xs: 2, sm: 2.5, md: 3 },
         p: { xs: 1, sm: 2, md: 3 },
-        width: "100%",
         maxWidth: "100%",
         minWidth: 0,
-        overflow: "visible",
+        background: "#f5f7fa",
+        boxSizing: "border-box",
+        overflow: "hidden",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
@@ -257,8 +258,8 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
             }}
           >
             {/* Producción Total */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#8b5cf6" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#8b5cf6" }}>
                 <BoltIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -272,7 +273,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
                 Producción Total
               </Typography>
               {productionTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {productionTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -292,8 +293,8 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
             </Box>
 
             {/* Pico Máximo */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#3b82f6" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#3b82f6" }}>
                 <ElectricMeterIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -509,8 +510,8 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             }}
           >
             {/* Consumo de REd */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#ef4444" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#ef4444" }}>
                 <PowerIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -524,7 +525,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
                 Consumo de Red
               </Typography>
               {consumptionTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {consumptionTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -544,8 +545,8 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             </Box>
 
             {/* Autoconsumo */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#10b981" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#10b981" }}>
                 <EvStationIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -559,7 +560,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
                 Autoconsumo
               </Typography>
               {selfConsumptionTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {selfConsumptionTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -579,8 +580,8 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
             </Box>
 
             {/* Excedentes */}
-            <Box className="text-center">
-              <Box className="flex justify-center mb-2" sx={{ color: "#f59e0b" }}>
+            <Box sx={{ textAlign: "center" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#f59e0b" }}>
                 <BatteryChargingFullIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
@@ -594,7 +595,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
                 Excedentes
               </Typography>
               {surplusTrend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {surplusTrend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (

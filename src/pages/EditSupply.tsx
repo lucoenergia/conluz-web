@@ -45,7 +45,6 @@ export const EditSupplyPage: FC = () => {
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
         background: "#f5f7fa",
-        width: "100%",
         maxWidth: "100%",
         overflow: "hidden",
       }}
@@ -104,7 +103,6 @@ export const EditSupplyPage: FC = () => {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "white",
             boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-            width: "100%",
           }}
         >
           {!isLoading && !error && (

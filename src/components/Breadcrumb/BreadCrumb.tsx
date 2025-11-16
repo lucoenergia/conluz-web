@@ -31,7 +31,6 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
         background: "#ffffff",
         borderRadius: 2,
         boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)",
-        width: "100%",
         overflow: "auto",
       }}
     >

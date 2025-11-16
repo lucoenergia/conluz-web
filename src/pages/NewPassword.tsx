@@ -26,8 +26,8 @@ export const NewPassword: FC = () => {
   };
 
   return (
-    <Box component="form" className="p-7 w-full" action={handleSubmit}>
-      <Typography gutterBottom className="text-base">
+    <Box component="form" sx={{ p: 7, width: "100%" }} action={handleSubmit}>
+      <Typography gutterBottom>
         Introduce tu nueva contraseña
       </Typography>
       <FormGroup>
@@ -37,7 +37,7 @@ export const NewPassword: FC = () => {
           id="newPassword"
           type="password"
           name="newPassword"
-          className="mt-4"
+          sx={{ mt: 4 }}
           placeholder="Escribe aquí tu nueva contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -52,7 +52,7 @@ export const NewPassword: FC = () => {
           id="repeatNewPassword"
           type="password"
           name="repeatNewPassword"
-          className="mt-4"
+          sx={{ mt: 4 }}
           placeholder="Repite aquí tu nueva contraseña"
           value={repeatPassword}
           onChange={(e) => setRepeatPassword(e.target.value)}
@@ -65,7 +65,7 @@ export const NewPassword: FC = () => {
           type="submit"
           variant="contained"
           fullWidth
-          className="mt-4"
+          sx={{ mt: 4 }}
           disabled={formErrors.newPassword || formErrors.repeatNewPassword || formErrors.differentPasswords}
         >
           Enviar

@@ -387,7 +387,6 @@ export const SupplyDetailPage: FC = () => {
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
         background: "#f5f7fa",
-        width: "100%",
         maxWidth: "100%",
         overflow: "hidden",
       }}

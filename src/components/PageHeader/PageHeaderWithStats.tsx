@@ -32,7 +32,8 @@ export const PageHeaderWithStats: FC<PageHeaderWithStatsProps> = ({
         background: bgColor,
         color: "white",
         mx: { xs: 0, sm: 0 },
-        width: { xs: "100%", sm: "auto" },
+        width: "100%",
+        boxSizing: "border-box",
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>

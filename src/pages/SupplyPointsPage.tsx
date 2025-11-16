@@ -102,11 +102,12 @@ export const SupplyPointsPage: FC = () => {
         background: "#f5f7fa",
         width: "100%",
         maxWidth: "100%",
+        boxSizing: "border-box",
         overflow: "hidden",
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -116,19 +117,21 @@ export const SupplyPointsPage: FC = () => {
       </Box>
 
       {/* Header Section */}
-      <PageHeaderWithStats
-        icon={ElectricMeterIcon}
-        title="Puntos de Suministro"
-        subtitle="Gestiona los puntos de suministro de la comunidad energética"
-        stats={[
-          { value: stats.total, label: "Total" },
-          { value: stats.active, label: "Activos", color: "#10b981" },
-          { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
-        ]}
-      />
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        <PageHeaderWithStats
+          icon={ElectricMeterIcon}
+          title="Puntos de Suministro"
+          subtitle="Gestiona los puntos de suministro de la comunidad energética"
+          stats={[
+            { value: stats.total, label: "Total" },
+            { value: stats.active, label: "Activos", color: "#10b981" },
+            { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
+          ]}
+        />
+      </Box>
 
       {/* Controls Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
         <Paper
           elevation={0}
           sx={{
@@ -136,7 +139,6 @@ export const SupplyPointsPage: FC = () => {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "white",
             boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-            width: "100%",
           }}
         >
           <Box
@@ -182,10 +184,10 @@ export const SupplyPointsPage: FC = () => {
 
       {/* Supply Cards Grid */}
       {!isLoading && !error && filteredItems.length > 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <CardGrid
             items={filteredItems}
-            getKey={(item) => item.id}
+            getKey={(item) => item.id || ""}
             renderCard={(item) => (
               <SupplyCard
                 id={item.id}
@@ -206,14 +208,14 @@ export const SupplyPointsPage: FC = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <LoadingCardGrid />
         </Box>
       )}
 
       {/* Empty State */}
       {!isLoading && !error && filteredItems.length === 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <EmptyState
             icon={ElectricMeterIcon}
             title="No se encontraron puntos de suministro"
