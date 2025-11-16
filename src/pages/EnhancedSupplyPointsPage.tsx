@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState, type FC } from "react";
-import { Box, Button, Typography, Paper, Skeleton, Fade, Grow, Chip } from "@mui/material";
+import { Box, Button, Paper } from "@mui/material";
 import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../api/supplies/supplies";
 import type { SupplyResponse } from "../api/models";
 import { EnhancedBreadCrumb } from "../components/Breadcrumb";
 import { EnhancedSearchBar } from "../components/SearchBar/EnhancedSearchBar";
 import { EnhancedSupplyCard } from "../components/SupplyCard/EnhancedSupplyCard";
-import { Link } from "react-router";
+import { PageHeaderWithStats } from "../components/PageHeader";
+import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
+import { EnhancedCardGrid } from "../components/CardGrid";
+import { LoadingCardGrid } from "../components/CardGrid";
+import { EmptyState } from "../components/EmptyState";
+import { Link, useNavigate } from "react-router";
 import { useErrorDispatch } from "../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
-import FilterListIcon from "@mui/icons-material/FilterList";
 
 export const EnhancedSupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({ size: 10000 });
   const disableSupply = useDisableSupply();
@@ -111,88 +116,16 @@ export const EnhancedSupplyPointsPage: FC = () => {
       </Box>
 
       {/* Header Section */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2, sm: 3 },
-          borderRadius: { xs: 0, sm: 3 },
-          background: "#667eea",
-          color: "white",
-          mx: { xs: 0, sm: 0 },
-          width: { xs: "100%", sm: "auto" },
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-          <ElectricMeterIcon sx={{ fontSize: 40 }} />
-          <Box>
-            <Typography variant="h4" fontWeight="bold">
-              Puntos de Suministro
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Gestiona los puntos de suministro de la comunidad energética
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Statistics */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-            gap: 2,
-            mt: 3,
-          }}
-        >
-          <Box
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
-              borderRadius: 2,
-              p: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h3" fontWeight="bold">
-              {stats.total}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Total
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
-              borderRadius: 2,
-              p: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#10b981" }}>
-              {stats.active}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Activos
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
-              borderRadius: 2,
-              p: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#ef4444" }}>
-              {stats.inactive}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Inactivos
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+      <PageHeaderWithStats
+        icon={ElectricMeterIcon}
+        title="Puntos de Suministro"
+        subtitle="Gestiona los puntos de suministro de la comunidad energética"
+        stats={[
+          { value: stats.total, label: "Total" },
+          { value: stats.active, label: "Activos", color: "#10b981" },
+          { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
+        ]}
+      />
 
       {/* Controls Section */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
@@ -239,38 +172,7 @@ export const EnhancedSupplyPointsPage: FC = () => {
           </Button>
 
           {/* Filter Chips */}
-          <Box sx={{
-            display: "flex",
-            gap: 1,
-            alignItems: "center",
-            flexWrap: "wrap",
-            justifyContent: { xs: "center", sm: "flex-start" }
-          }}>
-            <FilterListIcon sx={{ color: "#64748b", display: { xs: "none", sm: "block" } }} />
-            <Chip
-              label="Todos"
-              onClick={() => setFilterStatus("all")}
-              color={filterStatus === "all" ? "primary" : "default"}
-              size="small"
-              sx={{
-                background: filterStatus === "all"
-                  ? "#667eea"
-                  : undefined,
-              }}
-            />
-            <Chip
-              label="Activos"
-              onClick={() => setFilterStatus("active")}
-              color={filterStatus === "active" ? "success" : "default"}
-              size="small"
-            />
-            <Chip
-              label="Inactivos"
-              onClick={() => setFilterStatus("inactive")}
-              color={filterStatus === "inactive" ? "error" : "default"}
-              size="small"
-            />
-          </Box>
+          <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
 
           {/* Search Bar */}
           <EnhancedSearchBar value={searchText} onChange={setSearchText} />
@@ -279,122 +181,57 @@ export const EnhancedSupplyPointsPage: FC = () => {
       </Box>
 
       {/* Supply Cards Grid */}
-      {!isLoading && !error && (
+      {!isLoading && !error && filteredItems.length > 0 && (
         <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
-          <Fade in timeout={500}>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "1fr",
-                  md: "repeat(2, 1fr)",
-                  lg: "repeat(3, 1fr)",
-                },
-                gap: { xs: 2, sm: 3 },
-                width: "100%",
-              }}
-            >
-            {filteredItems.map((item, index) => (
-              <Grow in timeout={300 + index * 50} key={item.id}>
-                <Box>
-                  <EnhancedSupplyCard
-                    id={item.id}
-                    code={item.code}
-                    partitionCoefficient={item.partitionCoefficient ? item.partitionCoefficient * 100 : undefined}
-                    name={item.name}
-                    address={item.address}
-                    enabled={item.enabled}
-                    lastConnection="Hace 2 horas"
-                    lastMeasurement={Math.floor(Math.random() * 100)}
-                    onDisable={disableSupplyPoint}
-                    onEnable={enableSupplyPoint}
-                  />
-                </Box>
-              </Grow>
-            ))}
-            </Box>
-          </Fade>
+          <EnhancedCardGrid
+            items={filteredItems}
+            getKey={(item) => item.id}
+            renderCard={(item) => (
+              <EnhancedSupplyCard
+                id={item.id}
+                code={item.code}
+                partitionCoefficient={item.partitionCoefficient ? item.partitionCoefficient * 100 : undefined}
+                name={item.name}
+                address={item.address}
+                enabled={item.enabled}
+                lastConnection="Hace 2 horas"
+                lastMeasurement={Math.floor(Math.random() * 100)}
+                onDisable={disableSupplyPoint}
+                onEnable={enableSupplyPoint}
+              />
+            )}
+          />
         </Box>
       )}
 
       {/* Loading State */}
       {isLoading && (
         <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "1fr",
-                md: "repeat(2, 1fr)",
-                lg: "repeat(3, 1fr)",
-              },
-              gap: { xs: 2, sm: 3 },
-              width: "100%",
-            }}
-          >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Paper
-              key={i}
-              elevation={0}
-              sx={{
-                borderRadius: 2,
-                overflow: "hidden",
-                boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-              }}
-            >
-              <Skeleton variant="rectangular" height={120} />
-              <Box sx={{ p: 2 }}>
-                <Skeleton variant="text" sx={{ fontSize: "1.5rem" }} />
-                <Skeleton variant="text" />
-                <Skeleton variant="text" width="60%" />
-              </Box>
-            </Paper>
-          ))}
-          </Box>
+          <LoadingCardGrid />
         </Box>
       )}
 
       {/* Empty State */}
       {!isLoading && !error && filteredItems.length === 0 && (
         <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 6,
-              textAlign: "center",
-              borderRadius: 3,
-              boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-              width: "100%",
-            }}
-          >
-          <ElectricMeterIcon sx={{ fontSize: 64, color: "#94a3b8", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No se encontraron puntos de suministro
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {searchText
-              ? `No hay resultados para "${searchText}"`
-              : "Comienza agregando tu primer punto de suministro"}
-          </Typography>
-          {!searchText && (
-            <Button
-              component={Link}
-              to="/supply-points/new"
-              variant="contained"
-              startIcon={<AddCircleOutlineIcon />}
-              sx={{
-                mt: 3,
-                background: "#667eea",
-                borderRadius: 2,
-                textTransform: "none",
-              }}
-            >
-              Crear Punto de Suministro
-            </Button>
-          )}
-          </Paper>
+          <EmptyState
+            icon={ElectricMeterIcon}
+            title="No se encontraron puntos de suministro"
+            subtitle={
+              searchText
+                ? `No hay resultados para "${searchText}"`
+                : "Comienza agregando tu primer punto de suministro"
+            }
+            actionButton={
+              !searchText
+                ? {
+                    label: "Crear Punto de Suministro",
+                    onClick: () => navigate("/supply-points/new"),
+                    startIcon: <AddCircleOutlineIcon />,
+                  }
+                : undefined
+            }
+          />
         </Box>
       )}
     </Box>
