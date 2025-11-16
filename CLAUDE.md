@@ -71,7 +71,7 @@ components/ComponentName/
 
 ### Key Development Patterns
 1. **TypeScript-first**: Full type coverage with auto-generated API types
-2. **Hybrid styling**: Material-UI components + Tailwind CSS utilities
+2. **Styling**: Material-UI components
 3. **Mobile-responsive**: MIN_DESKTOP_WIDTH = 768px breakpoint
 4. **Error boundaries**: Global error handling with automatic 401 processing
 5. **Code splitting**: Manual chunk configuration in `vite.config.ts` for optimization
