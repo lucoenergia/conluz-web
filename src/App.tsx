@@ -17,6 +17,10 @@ import { ChangePasswordPage } from "./pages/ChangePassword";
 import { ProfilePage } from "./pages/Profile";
 import { EditPartnerPage } from "./pages/EditPartner";
 import { PartnerSupplyPointsPage } from "./pages/PartnerSupplyPointsPage";
+import { PlantsPage } from "./pages/PlantsPage";
+import { CreatePlantPage } from "./pages/CreatePlantPage";
+import { EditPlantPage } from "./pages/EditPlantPage";
+import { PlantDetailPage } from "./pages/PlantDetailPage";
 
 function App() {
   return (
@@ -37,6 +41,14 @@ function App() {
             <Route path=":supplyPointId">
               <Route index element={<SupplyDetailPage />} />
               <Route path="edit" element={<EditSupplyPage />} />
+            </Route>
+          </Route>
+          <Route path="production">
+            <Route index element={<PlantsPage />}></Route>
+            <Route path="new" element={<CreatePlantPage />} />
+            <Route path=":plantId">
+              <Route index element={<PlantDetailPage />} />
+              <Route path="edit" element={<EditPlantPage />} />
             </Route>
           </Route>
           <Route path="partners">
