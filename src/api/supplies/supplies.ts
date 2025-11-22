@@ -35,6 +35,7 @@ import type {
   GetSupplyDailyProductionParams,
   GetSupplyHourlyConsumptionParams,
   GetSupplyHourlyProductionParams,
+  GetSupplyMonthlyProductionParams,
   ImportSuppliesPartitionsWithFileBody,
   ImportSuppliesPartitionsWithFileParams,
   PagedResultSupplyResponse,
@@ -1089,6 +1090,102 @@ export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * This endpoint retrieves monthly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
+ * @summary Retrieves monthly production data assigned to a specific supply
+ */
+export const getSupplyMonthlyProduction = (
+    id: string,
+    params: GetSupplyMonthlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ProductionByTime[]>(
+      {url: `/api/v1/supplies/${id}/production/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyMonthlyProductionQueryKey = (id: string,
+    params: GetSupplyMonthlyProductionParams,) => {
+    return [`/api/v1/supplies/${id}/production/monthly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetSupplyMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(id: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyMonthlyProductionQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>> = ({ signal }) => getSupplyMonthlyProduction(id,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>>
+export type GetSupplyMonthlyProductionQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves monthly production data assigned to a specific supply
+ */
+
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyMonthlyProductionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * This endpoint retrieves hourly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
  * @summary Retrieves hourly production data assigned to a specific supply
  */
