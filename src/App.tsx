@@ -1,26 +1,26 @@
 import "./App.css";
 import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
-import { SupplyPointsPage } from "./pages/SupplyPointsPage";
+import { SupplyPointsPage } from "./pages/supply-points/SupplyPointsPage";
 import { LoginLayout } from "./layouts/login.layout";
-import { Login } from "./pages/Login";
-import { ForgotPassword } from "./pages/ForgotPassword";
-import { NewPassword } from "./pages/NewPassword";
-import { SupplyDetailPage } from "./pages/SupplyDetailPage";
-import { CreateSupplyPage } from "./pages/CreateSupply";
-import { EditSupplyPage } from "./pages/EditSupply";
+import { Login } from "./pages/auth/Login";
+import { ForgotPassword } from "./pages/auth/ForgotPassword";
+import { NewPassword } from "./pages/auth/NewPassword";
+import { SupplyDetailPage } from "./pages/supply-points/SupplyDetailPage";
+import { CreateSupplyPage } from "./pages/supply-points/CreateSupply";
+import { EditSupplyPage } from "./pages/supply-points/EditSupply";
 import { HomePage } from "./pages/Home";
 import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
-import { PartnersPage } from "./pages/Partners.page";
+import { PartnersPage } from "./pages/partners/Partners.page";
 import { ChangePasswordPage } from "./pages/ChangePassword";
 import { ProfilePage } from "./pages/Profile";
-import { EditPartnerPage } from "./pages/EditPartner";
-import { PartnerSupplyPointsPage } from "./pages/PartnerSupplyPointsPage";
-import { PlantsPage } from "./pages/PlantsPage";
-import { CreatePlantPage } from "./pages/CreatePlantPage";
-import { EditPlantPage } from "./pages/EditPlantPage";
-import { PlantDetailPage } from "./pages/PlantDetailPage";
+import { EditPartnerPage } from "./pages/partners/EditPartner";
+import { PartnerSupplyPointsPage } from "./pages/partners/PartnerSupplyPointsPage";
+import { PlantsPage } from "./pages/production/PlantsPage";
+import { CreatePlantPage } from "./pages/production/CreatePlantPage";
+import { EditPlantPage } from "./pages/production/EditPlantPage";
+import { PlantDetailPage } from "./pages/production/PlantDetailPage";
 
 function App() {
   return (
