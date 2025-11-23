@@ -36,6 +36,7 @@ export * from './getSupplyDailyConsumptionParams';
 export * from './getSupplyDailyProductionParams';
 export * from './getSupplyHourlyConsumptionParams';
 export * from './getSupplyHourlyProductionParams';
+export * from './getSupplyMonthlyProductionParams';
 export * from './getYearlyProductionParams';
 export * from './importSuppliesPartitionsWithFileBody';
 export * from './importSuppliesPartitionsWithFileParams';

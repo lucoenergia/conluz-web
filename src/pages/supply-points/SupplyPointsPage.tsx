@@ -1,39 +1,26 @@
 import { useEffect, useMemo, useState, type FC } from "react";
-import { useParams } from "react-router";
-import { Box, Paper } from "@mui/material";
-import { useDisableSupply, useEnableSupply } from "../api/supplies/supplies";
-import { useGetSuppliesByUserId, useGetUserById } from "../api/users/users";
-import type { SupplyResponse } from "../api/models";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { SearchBar } from "../components/SearchBar/SearchBar";
-import { SupplyCard } from "../components/SupplyCard/SupplyCard";
-import { PageHeaderWithStats } from "../components/PageHeader";
-import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
-import { CardGrid } from "../components/CardGrid";
-import { LoadingCardGrid } from "../components/CardGrid";
-import { EmptyState } from "../components/EmptyState";
-import { useErrorDispatch } from "../context/error.context";
+import { Box, Button, Paper } from "@mui/material";
+import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
+import type { SupplyResponse } from "../../api/models";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { SearchBar } from "../../components/SearchBar/SearchBar";
+import { SupplyCard } from "../../components/SupplyCard/SupplyCard";
+import { PageHeaderWithStats } from "../../components/PageHeader";
+import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
+import { CardGrid } from "../../components/CardGrid";
+import { LoadingCardGrid } from "../../components/CardGrid";
+import { EmptyState } from "../../components/EmptyState";
+import { Link, useNavigate } from "react-router";
+import { useErrorDispatch } from "../../context/error.context";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
-export const PartnerSupplyPointsPage: FC = () => {
-  const { partnerId } = useParams<{ partnerId: string }>();
+export const SupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-
-  const { data: partner, isLoading: isLoadingPartner } = useGetUserById(partnerId || "", {
-    query: { enabled: !!partnerId },
-  });
-
-  const {
-    data: responseFromApi = [],
-    isLoading,
-    error,
-    refetch,
-  } = useGetSuppliesByUserId(partnerId || "", {
-    query: { enabled: !!partnerId },
-  });
-
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({ size: 10000 });
   const disableSupply = useDisableSupply();
   const enableSupply = useEnableSupply();
 
@@ -80,17 +67,18 @@ export const PartnerSupplyPointsPage: FC = () => {
 
     // Filter by search text
     if (searchText) {
-      items = items.filter(
-        (item) =>
-          item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.code?.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.address?.toLowerCase().includes(searchText.toLowerCase()),
+      items = items.filter((item) =>
+        item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.code?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.address?.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
     // Filter by status
     if (filterStatus !== "all") {
-      items = items.filter((item) => (filterStatus === "active" ? item.enabled : !item.enabled));
+      items = items.filter((item) =>
+        filterStatus === "active" ? item.enabled : !item.enabled
+      );
     }
 
     return items;
@@ -98,7 +86,7 @@ export const PartnerSupplyPointsPage: FC = () => {
 
   const stats = useMemo(() => {
     const total = responseFromApi.length;
-    const active = responseFromApi.filter((item) => item.enabled).length;
+    const active = responseFromApi.filter(item => item.enabled).length;
     const inactive = total - active;
     return { total, active, inactive };
   }, [responseFromApi]);
@@ -114,27 +102,26 @@ export const PartnerSupplyPointsPage: FC = () => {
         background: "#f5f7fa",
         width: "100%",
         maxWidth: "100%",
+        boxSizing: "border-box",
         overflow: "hidden",
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Socios", href: "/partners" },
-            { label: partner?.fullName || "Socio", href: `/partners/${partnerId}/edit` },
-            { label: "Puntos de Suministro", href: `/partners/${partnerId}/supply-points` },
+            { label: "Puntos de Suministro", href: "/supply-points" }
           ]}
         />
       </Box>
 
       {/* Header Section */}
-      <Box sx={{ position: "relative" }}>
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
         <PageHeaderWithStats
           icon={ElectricMeterIcon}
           title="Puntos de Suministro"
-          subtitle={isLoadingPartner ? "Cargando..." : `Socio: ${partner?.fullName || "Desconocido"}`}
+          subtitle="Gestiona los puntos de suministro de la comunidad energética"
           stats={[
             { value: stats.total, label: "Total" },
             { value: stats.active, label: "Activos", color: "#10b981" },
@@ -144,7 +131,7 @@ export const PartnerSupplyPointsPage: FC = () => {
       </Box>
 
       {/* Controls Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
         <Paper
           elevation={0}
           sx={{
@@ -163,18 +150,41 @@ export const PartnerSupplyPointsPage: FC = () => {
               justifyContent: "space-between",
             }}
           >
-            {/* Filter Chips */}
-            <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
+          {/* New Supply Button */}
+          <Button
+            component={Link}
+            to="/supply-points/new"
+            variant="contained"
+            startIcon={<AddCircleOutlineIcon />}
+            sx={{
+              background: "#667eea",
+              borderRadius: 2,
+              textTransform: "none",
+              px: 3,
+              py: 1.5,
+              boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+              },
+              transition: "all 0.3s ease",
+            }}
+          >
+            Nuevo Punto de Suministro
+          </Button>
 
-            {/* Search Bar */}
-            <SearchBar value={searchText} onChange={setSearchText} />
+          {/* Filter Chips */}
+          <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
+
+          {/* Search Bar */}
+          <SearchBar value={searchText} onChange={setSearchText} />
           </Box>
         </Paper>
       </Box>
 
       {/* Supply Cards Grid */}
       {!isLoading && !error && filteredItems.length > 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <CardGrid
             items={filteredItems}
             getKey={(item) => item.id || ""}
@@ -198,21 +208,30 @@ export const PartnerSupplyPointsPage: FC = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <LoadingCardGrid />
         </Box>
       )}
 
       {/* Empty State */}
       {!isLoading && !error && filteredItems.length === 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <EmptyState
             icon={ElectricMeterIcon}
             title="No se encontraron puntos de suministro"
             subtitle={
               searchText
                 ? `No hay resultados para "${searchText}"`
-                : "Este socio no tiene puntos de suministro asignados"
+                : "Comienza agregando tu primer punto de suministro"
+            }
+            actionButton={
+              !searchText
+                ? {
+                    label: "Crear Punto de Suministro",
+                    onClick: () => navigate("/supply-points/new"),
+                    startIcon: <AddCircleOutlineIcon />,
+                  }
+                : undefined
             }
           />
         </Box>

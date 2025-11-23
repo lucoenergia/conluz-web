@@ -39,6 +39,99 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
+ * This endpoint retrieves detailed information about a specific plant by its unique identifier.
+
+**Required Role: ADMIN**
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves a single plant by ID
+ */
+export const getPlantById = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PlantResponse>(
+      {url: `/api/v1/plants/${id}`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetPlantByIdQueryKey = (id: string,) => {
+    return [`/api/v1/plants/${id}`] as const;
+    }
+
+    
+export const getGetPlantByIdQueryOptions = <TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantByIdQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantById>>> = ({ signal }) => getPlantById(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantById>>>
+export type GetPlantByIdQueryError = ErrorType<unknown>
+
+
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantById>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantById>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves a single plant by ID
+ */
+
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantByIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * This endpoint enables the update of plant information by specifying the plant's unique identifier in the
 endpoint path.
 

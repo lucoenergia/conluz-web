@@ -1,68 +1,44 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
-import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../api/supplies/supplies";
-import type { SupplyResponse } from "../api/models";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { SearchBar } from "../components/SearchBar/SearchBar";
-import { SupplyCard } from "../components/SupplyCard/SupplyCard";
-import { PageHeaderWithStats } from "../components/PageHeader";
-import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
-import { CardGrid } from "../components/CardGrid";
-import { LoadingCardGrid } from "../components/CardGrid";
-import { EmptyState } from "../components/EmptyState";
+import { useGetAllPlants, useDeletePlant } from "../../api/plants/plants";
+import type { PlantResponse } from "../../api/models";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { SearchBar } from "../../components/SearchBar/SearchBar";
+import { PlantCard } from "../../components/PlantCard/PlantCard";
+import { PageHeaderWithStats } from "../../components/PageHeader";
+import { CardGrid } from "../../components/CardGrid";
+import { LoadingCardGrid } from "../../components/CardGrid";
+import { EmptyState } from "../../components/EmptyState";
 import { Link, useNavigate } from "react-router";
-import { useErrorDispatch } from "../context/error.context";
+import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
-export const SupplyPointsPage: FC = () => {
+export const PlantsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({ size: 10000 });
-  const disableSupply = useDisableSupply();
-  const enableSupply = useEnableSupply();
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllPlants({ size: 10000 });
+  const deletePlant = useDeletePlant();
 
-  const disableSupplyPoint = async (id: string) => {
+  const deletePlantHandler = async (id: string) => {
     try {
-      const response = await disableSupply.mutateAsync({ id });
-      if (response) {
-        refetch();
-        return true;
-      } else {
-        errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
-        return false;
-      }
+      await deletePlant.mutateAsync({ id });
+      refetch();
+      return true;
     } catch (e) {
-      errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
-      return false;
-    }
-  };
-
-  const enableSupplyPoint = async (id: string) => {
-    try {
-      const response = await enableSupply.mutateAsync({ id });
-      if (response) {
-        refetch();
-        return true;
-      } else {
-        errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
-        return false;
-      }
-    } catch (e) {
-      errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
+      errorDispatch("Ha habido un problema al eliminar la planta. Por favor inténtalo más tarde");
       return false;
     }
   };
 
   useEffect(() => {
     if (error) {
-      errorDispatch("Hay habido un problema al cargar los puntos de suministro. Por favor, inténtalo más tarde");
+      errorDispatch("Ha habido un problema al cargar las plantas. Por favor, inténtalo más tarde");
     }
   }, [error, errorDispatch]);
 
-  const filteredItems: SupplyResponse[] = useMemo(() => {
+  const filteredItems: PlantResponse[] = useMemo(() => {
     let items = responseFromApi;
 
     // Filter by search text
@@ -74,21 +50,13 @@ export const SupplyPointsPage: FC = () => {
       );
     }
 
-    // Filter by status
-    if (filterStatus !== "all") {
-      items = items.filter((item) =>
-        filterStatus === "active" ? item.enabled : !item.enabled
-      );
-    }
-
     return items;
-  }, [searchText, responseFromApi, filterStatus]);
+  }, [searchText, responseFromApi]);
 
   const stats = useMemo(() => {
     const total = responseFromApi.length;
-    const active = responseFromApi.filter(item => item.enabled).length;
-    const inactive = total - active;
-    return { total, active, inactive };
+    const totalPower = responseFromApi.reduce((sum, item) => sum + (item.totalPower || 0), 0);
+    return { total, totalPower: totalPower.toFixed(2) };
   }, [responseFromApi]);
 
   return (
@@ -111,7 +79,7 @@ export const SupplyPointsPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Puntos de Suministro", href: "/supply-points" }
+            { label: "Producción", href: "/production" }
           ]}
         />
       </Box>
@@ -119,13 +87,12 @@ export const SupplyPointsPage: FC = () => {
       {/* Header Section */}
       <Box sx={{ px: { xs: 2, sm: 0 } }}>
         <PageHeaderWithStats
-          icon={ElectricMeterIcon}
-          title="Puntos de Suministro"
-          subtitle="Gestiona los puntos de suministro de la comunidad energética"
+          icon={SolarPowerIcon}
+          title="Producción"
+          subtitle="Gestiona las plantas de producción de la comunidad energética"
           stats={[
-            { value: stats.total, label: "Total" },
-            { value: stats.active, label: "Activos", color: "#10b981" },
-            { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
+            { value: stats.total, label: "Total plantas" },
+            { value: `${stats.totalPower} kW`, label: "Potencia total", color: "#10b981" },
           ]}
         />
       </Box>
@@ -150,10 +117,10 @@ export const SupplyPointsPage: FC = () => {
               justifyContent: "space-between",
             }}
           >
-          {/* New Supply Button */}
+          {/* New Plant Button */}
           <Button
             component={Link}
-            to="/supply-points/new"
+            to="/production/new"
             variant="contained"
             startIcon={<AddCircleOutlineIcon />}
             sx={{
@@ -170,11 +137,8 @@ export const SupplyPointsPage: FC = () => {
               transition: "all 0.3s ease",
             }}
           >
-            Nuevo Punto de Suministro
+            Nueva Planta
           </Button>
-
-          {/* Filter Chips */}
-          <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
 
           {/* Search Bar */}
           <SearchBar value={searchText} onChange={setSearchText} />
@@ -182,24 +146,22 @@ export const SupplyPointsPage: FC = () => {
         </Paper>
       </Box>
 
-      {/* Supply Cards Grid */}
+      {/* Plant Cards Grid */}
       {!isLoading && !error && filteredItems.length > 0 && (
         <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <CardGrid
             items={filteredItems}
             getKey={(item) => item.id || ""}
             renderCard={(item) => (
-              <SupplyCard
+              <PlantCard
                 id={item.id}
                 code={item.code}
-                partitionCoefficient={item.partitionCoefficient ? item.partitionCoefficient * 100 : undefined}
                 name={item.name}
                 address={item.address}
-                enabled={item.enabled}
-                lastConnection="Hace 2 horas"
-                lastMeasurement={Math.floor(Math.random() * 100)}
-                onDisable={disableSupplyPoint}
-                onEnable={enableSupplyPoint}
+                totalPower={item.totalPower}
+                connectionDate={item.connectionDate}
+                description={item.description}
+                onDelete={deletePlantHandler}
               />
             )}
           />
@@ -217,18 +179,18 @@ export const SupplyPointsPage: FC = () => {
       {!isLoading && !error && filteredItems.length === 0 && (
         <Box sx={{ px: { xs: 2, sm: 0 } }}>
           <EmptyState
-            icon={ElectricMeterIcon}
-            title="No se encontraron puntos de suministro"
+            icon={SolarPowerIcon}
+            title="No se encontraron plantas"
             subtitle={
               searchText
                 ? `No hay resultados para "${searchText}"`
-                : "Comienza agregando tu primer punto de suministro"
+                : "Comienza agregando tu primera planta de producción"
             }
             actionButton={
               !searchText
                 ? {
-                    label: "Crear Punto de Suministro",
-                    onClick: () => navigate("/supply-points/new"),
+                    label: "Crear Planta",
+                    onClick: () => navigate("/production/new"),
                     startIcon: <AddCircleOutlineIcon />,
                   }
                 : undefined

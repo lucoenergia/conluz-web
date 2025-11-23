@@ -1,41 +1,46 @@
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
-import type { UpdateSupplyBody } from "../api/models";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { SupplyForm, type SupplyFormValues } from "../components/SupplyForm/SupplyForm";
-import { useGetSupply, useUpdateSupply } from "../api/supplies/supplies";
-import { useErrorDispatch } from "../context/error.context";
-import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import type { UpdatePlantBody } from "../../api/models";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
+import { useGetPlantById, useUpdatePlant } from "../../api/plants/plants";
+import { useErrorDispatch } from "../../context/error.context";
+import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
-export const EditSupplyPage: FC = () => {
-  const { supplyPointId = "" } = useParams();
+export const EditPlantPage: FC = () => {
+  const { plantId = "" } = useParams();
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const updateSupply = useUpdateSupply();
+  const updatePlant = useUpdatePlant();
 
-  const { data: supplyPoint, isLoading, error, refetch } = useGetSupply(supplyPointId);
+  const { data: plant, isLoading, error, refetch } = useGetPlantById(plantId);
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
+  const handleSubmit = async (values: PlantFormValues) => {
     try {
-      const updatedSupply = {
-        name,
-        code: cups,
-        address,
-        partitionCoefficient,
-        addressRef,
-      } as UpdateSupplyBody;
-      const response = await updateSupply.mutateAsync({ id: supplyPointId, data: updatedSupply }, {});
+      const updatedPlant = {
+        code: values.code,
+        name: values.name,
+        address: values.address,
+        description: values.description || undefined,
+        totalPower: values.totalPower,
+        connectionDate: values.connectionDate || undefined,
+        supplyCode: values.supplyCode,
+        inverterProvider: "HUAWEI",
+      } as UpdatePlantBody;
+
+      const response = await updatePlant.mutateAsync({ id: plantId, data: updatedPlant }, {});
       if (response) {
         refetch();
-        navigate("/supply-points");
+        navigate("/production");
       } else {
-        errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
+        errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
       }
     } catch (e) {
-      errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
+      errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
     }
   };
+
   return (
     <Box
       sx={{
@@ -54,8 +59,8 @@ export const EditSupplyPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Puntos de Suministro", href: "/supply-points" },
-            { label: supplyPoint?.code ? supplyPoint.code : supplyPointId, href: `/supply-points/${supplyPointId}` },
+            { label: "Producción", href: "/production" },
+            { label: plant?.code ? plant.code : plantId, href: `/production/${plantId}` },
             { label: "Editar", href: "#" },
           ]}
         />
@@ -81,14 +86,14 @@ export const EditSupplyPage: FC = () => {
               height: 56,
             }}
           >
-            <ElectricMeterIcon sx={{ fontSize: 32 }} />
+            <SolarPowerIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
             <Typography variant="h4" fontWeight="bold">
-              Editar punto de suministro
+              Editar planta
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {supplyPoint?.name || "Cargando..."}
+              {plant?.name || "Cargando..."}
             </Typography>
           </Box>
         </Box>
@@ -106,19 +111,19 @@ export const EditSupplyPage: FC = () => {
           }}
         >
           {!isLoading && !error && (
-            <SupplyForm
+            <PlantForm
               initialValues={{
-                name: supplyPoint?.name,
-                cups: supplyPoint?.code,
-                address: supplyPoint?.address,
-                partitionCoefficient: supplyPoint?.partitionCoefficient,
-                addressRef: supplyPoint?.addressRef,
-                personalId: supplyPoint?.user?.personalId,
+                code: plant?.code,
+                name: plant?.name,
+                address: plant?.address,
+                description: plant?.description,
+                totalPower: plant?.totalPower,
+                connectionDate: plant?.connectionDate,
+                supplyCode: plant?.supply?.code,
               }}
               handleSubmit={handleSubmit}
-              showUserSelector={true}
-              selectedUserId={supplyPoint?.user?.id}
-              disableUserSelector={true}
+              selectedSupplyCode={plant?.supply?.code}
+              disableSupplySelector={true}
             />
           )}
         </Paper>

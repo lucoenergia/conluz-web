@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FC } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Autocomplete, TextField, CircularProgress } from "@mui/material";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
@@ -10,7 +10,6 @@ import {
   useGetSupplyDailyProduction,
   useGetSupplyDailyConsumption,
 } from "../api/supplies/supplies";
-import { DropdownSelector } from "../components/Forms/DropdownSelector";
 import BoltIcon from "@mui/icons-material/Bolt";
 import PowerIcon from "@mui/icons-material/Power";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -104,19 +103,57 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
         : [],
     [supplyPoints],
   );
+
+  const selectedOption = useMemo(
+    () => options.find((option) => option.value === value) || null,
+    [options, value]
+  );
+
   useEffect(() => {
     // Preselect the first supply point once options are loaded
     if (options.length && value === null) {
       onChange(options[0].value);
     }
   }, [options]);
+
   return (
-    <DropdownSelector
+    <Autocomplete
       options={options}
-      value={value}
-      onChange={onChange}
-      isLoading={isLoading}
-      label="Puntos de suministro"
+      getOptionLabel={(option) => option.label}
+      value={selectedOption}
+      onChange={(_, newValue) => onChange(newValue ? newValue.value : null)}
+      loading={isLoading}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Puntos de suministro"
+          variant="outlined"
+          slotProps={{
+            input: {
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {isLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              "&:hover fieldset": {
+                borderColor: "#667eea",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "#667eea",
+              },
+            },
+            "& .MuiInputLabel-root.Mui-focused": {
+              color: "#667eea",
+            },
+          }}
+        />
+      )}
     />
   );
 };

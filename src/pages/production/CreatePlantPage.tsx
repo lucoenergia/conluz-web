@@ -1,38 +1,39 @@
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import { useCreateSupply } from "../api/supplies/supplies";
-import type { CreateSupplyBody } from "../api/models";
+import { useCreatePlant } from "../../api/plants/plants";
+import type { CreatePlantBody } from "../../api/models";
 import { useNavigate } from "react-router";
-import { SupplyForm, type SupplyFormValues } from "../components/SupplyForm/SupplyForm";
-import { useLoggedUser } from "../context/logged-user.context";
-import { useErrorDispatch } from "../context/error.context";
-import { BreadCrumb } from "../components/Breadcrumb";
-import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
+import { useErrorDispatch } from "../../context/error.context";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
-export const CreateSupplyPage: FC = () => {
+export const CreatePlantPage: FC = () => {
   const navigate = useNavigate();
-  const loggedUser = useLoggedUser();
   const errorDispatch = useErrorDispatch();
-  const createSupply = useCreateSupply();
+  const createPlant = useCreatePlant();
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef, personalId }: SupplyFormValues) => {
+  const handleSubmit = async (values: PlantFormValues) => {
     try {
-      const newSupply = {
-        name,
-        code: cups,
-        address,
-        partitionCoefficient,
-        personalId: personalId || loggedUser?.personalId,
-        addressRef,
-      } as CreateSupplyBody;
-      const response = await createSupply.mutateAsync({ data: newSupply });
+      const newPlant = {
+        code: values.code,
+        name: values.name,
+        address: values.address,
+        description: values.description || undefined,
+        totalPower: values.totalPower,
+        connectionDate: values.connectionDate || undefined,
+        supplyCode: values.supplyCode,
+        inverterProvider: "HUAWEI",
+      } as CreatePlantBody;
+
+      const response = await createPlant.mutateAsync({ data: newPlant });
       if (response) {
-        navigate("/supply-points");
+        navigate("/production");
       } else {
-        errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
+        errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
       }
     } catch (e) {
-      errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
+      errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
     }
   };
 
@@ -55,8 +56,8 @@ export const CreateSupplyPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Puntos de Suministro", href: "/supply-points" },
-            { label: "Nuevo", href: "/supply-points/new" },
+            { label: "Producción", href: "/production" },
+            { label: "Nuevo", href: "/production/new" },
           ]}
         />
       </Box>
@@ -81,14 +82,14 @@ export const CreateSupplyPage: FC = () => {
               height: 56,
             }}
           >
-            <ElectricMeterIcon sx={{ fontSize: 32 }} />
+            <SolarPowerIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
             <Typography variant="h4" fontWeight="bold">
-              Crear nuevo punto de suministro
+              Crear nueva planta
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Registra un nuevo punto de suministro en la comunidad energética
+              Registra una nueva planta de producción en la comunidad energética
             </Typography>
           </Box>
         </Box>
@@ -106,7 +107,7 @@ export const CreateSupplyPage: FC = () => {
             width: "100%",
           }}
         >
-          <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} />
+          <PlantForm handleSubmit={handleSubmit} />
         </Paper>
       </Box>
     </Box>

@@ -8,11 +8,11 @@ const mockAuthDispatch = vi.fn();
 const mockLogin = vi.fn();
 
 // Mocks
-vi.mock("../api/authentication/authentication", () => ({
+vi.mock("../../api/authentication/authentication", () => ({
   useLogin: () => ({ mutateAsync: mockLogin }),
 }));
 
-vi.mock("../context/auth.context", () => ({
+vi.mock("../../context/auth.context", () => ({
   useAuthDispatch: () => mockAuthDispatch,
 }));
 

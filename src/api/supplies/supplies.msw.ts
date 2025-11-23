@@ -47,6 +47,8 @@ export const getCreateSuppliesWithFileResponseMock = (overrideResponse: Partial<
 
 export const getCreateSharingAgreementResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), startDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), endDate: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined]), ...overrideResponse})
 
+export const getGetSupplyMonthlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+
 export const getGetSupplyHourlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
 export const getGetSupplyDailyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
@@ -208,6 +210,18 @@ export const getCreateSharingAgreementMockHandler = (overrideResponse?: SharingA
   })
 }
 
+export const getGetSupplyMonthlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
+  return http.get('*/api/v1/supplies/:id/production/monthly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyMonthlyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
 export const getGetSupplyHourlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
   return http.get('*/api/v1/supplies/:id/production/hourly', async (info) => {await delay(1000);
   
@@ -269,6 +283,7 @@ export const getSuppliesMock = () => [
   getCreateSuppliesWithFileMockHandler(),
   getSyncDatadisSuppliesMockHandler(),
   getCreateSharingAgreementMockHandler(),
+  getGetSupplyMonthlyProductionMockHandler(),
   getGetSupplyHourlyProductionMockHandler(),
   getGetSupplyDailyProductionMockHandler(),
   getGetSupplyHourlyConsumptionMockHandler(),
