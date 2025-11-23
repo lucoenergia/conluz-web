@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
-import { LoadingGraphCard } from "../components/Graph/LoadingGraphCard";
-import { Graph } from "../components/Graph";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { StatsCard } from "../components/StatsCard";
-import { GraphFilter } from "../components/Graph/GraphFilter";
-import { PlantDetailHeader } from "../components/PlantDetailHeader";
-import { useGetPlantById } from "../api/plants/plants";
-import { useGetDailyProduction, useGetHourlyProduction } from "../api/production/production";
-import { getTimeRange } from "../utils/getTimeRange";
-import { useErrorDispatch } from "../context/error.context";
+import { LoadingGraphCard } from "../../components/Graph/LoadingGraphCard";
+import { Graph } from "../../components/Graph";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { StatsCard } from "../../components/StatsCard";
+import { GraphFilter } from "../../components/Graph/GraphFilter";
+import { PlantDetailHeader } from "../../components/PlantDetailHeader";
+import { useGetPlantById } from "../../api/plants/plants";
+import { useGetDailyProduction, useGetHourlyProduction } from "../../api/production/production";
+import { getTimeRange } from "../../utils/getTimeRange";
+import { useErrorDispatch } from "../../context/error.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
 export const PlantDetailPage: FC = () => {

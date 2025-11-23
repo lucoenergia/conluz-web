@@ -1,11 +1,11 @@
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import { useCreatePlant } from "../api/plants/plants";
-import type { CreatePlantBody } from "../api/models";
+import { useCreatePlant } from "../../api/plants/plants";
+import type { CreatePlantBody } from "../../api/models";
 import { useNavigate } from "react-router";
-import { PlantForm, type PlantFormValues } from "../components/PlantForm/PlantForm";
-import { useErrorDispatch } from "../context/error.context";
-import { BreadCrumb } from "../components/Breadcrumb";
+import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
+import { useErrorDispatch } from "../../context/error.context";
+import { BreadCrumb } from "../../components/Breadcrumb";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
 export const CreatePlantPage: FC = () => {

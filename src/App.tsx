@@ -13,7 +13,7 @@ import { HomePage } from "./pages/Home";
 import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
 import { PartnersPage } from "./pages/partners/Partners.page";
-import { ChangePasswordPage } from "./pages/ChangePassword";
+import { ChangePasswordPage } from "./pages/auth/ChangePassword";
 import { ProfilePage } from "./pages/Profile";
 import { EditPartnerPage } from "./pages/partners/EditPartner";
 import { PartnerSupplyPointsPage } from "./pages/partners/PartnerSupplyPointsPage";

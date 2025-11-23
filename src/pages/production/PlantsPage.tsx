@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
-import { useGetAllPlants, useDeletePlant } from "../api/plants/plants";
-import type { PlantResponse } from "../api/models";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { SearchBar } from "../components/SearchBar/SearchBar";
-import { PlantCard } from "../components/PlantCard/PlantCard";
-import { PageHeaderWithStats } from "../components/PageHeader";
-import { CardGrid } from "../components/CardGrid";
-import { LoadingCardGrid } from "../components/CardGrid";
-import { EmptyState } from "../components/EmptyState";
+import { useGetAllPlants, useDeletePlant } from "../../api/plants/plants";
+import type { PlantResponse } from "../../api/models";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { SearchBar } from "../../components/SearchBar/SearchBar";
+import { PlantCard } from "../../components/PlantCard/PlantCard";
+import { PageHeaderWithStats } from "../../components/PageHeader";
+import { CardGrid } from "../../components/CardGrid";
+import { LoadingCardGrid } from "../../components/CardGrid";
+import { EmptyState } from "../../components/EmptyState";
 import { Link, useNavigate } from "react-router";
-import { useErrorDispatch } from "../context/error.context";
+import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 

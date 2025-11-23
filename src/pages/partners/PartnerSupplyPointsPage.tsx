@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { useParams } from "react-router";
 import { Box, Paper } from "@mui/material";
-import { useDisableSupply, useEnableSupply } from "../api/supplies/supplies";
-import { useGetSuppliesByUserId, useGetUserById } from "../api/users/users";
-import type { SupplyResponse } from "../api/models";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { SearchBar } from "../components/SearchBar/SearchBar";
-import { SupplyCard } from "../components/SupplyCard/SupplyCard";
-import { PageHeaderWithStats } from "../components/PageHeader";
-import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
-import { CardGrid } from "../components/CardGrid";
-import { LoadingCardGrid } from "../components/CardGrid";
-import { EmptyState } from "../components/EmptyState";
-import { useErrorDispatch } from "../context/error.context";
+import { useDisableSupply, useEnableSupply } from "../../api/supplies/supplies";
+import { useGetSuppliesByUserId, useGetUserById } from "../../api/users/users";
+import type { SupplyResponse } from "../../api/models";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { SearchBar } from "../../components/SearchBar/SearchBar";
+import { SupplyCard } from "../../components/SupplyCard/SupplyCard";
+import { PageHeaderWithStats } from "../../components/PageHeader";
+import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
+import { CardGrid } from "../../components/CardGrid";
+import { LoadingCardGrid } from "../../components/CardGrid";
+import { EmptyState } from "../../components/EmptyState";
+import { useErrorDispatch } from "../../context/error.context";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
 export const PartnerSupplyPointsPage: FC = () => {

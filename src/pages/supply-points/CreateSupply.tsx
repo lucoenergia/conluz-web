@@ -1,12 +1,12 @@
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import { useCreateSupply } from "../api/supplies/supplies";
-import type { CreateSupplyBody } from "../api/models";
+import { useCreateSupply } from "../../api/supplies/supplies";
+import type { CreateSupplyBody } from "../../api/models";
 import { useNavigate } from "react-router";
-import { SupplyForm, type SupplyFormValues } from "../components/SupplyForm/SupplyForm";
-import { useLoggedUser } from "../context/logged-user.context";
-import { useErrorDispatch } from "../context/error.context";
-import { BreadCrumb } from "../components/Breadcrumb";
+import { SupplyForm, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
+import { useLoggedUser } from "../../context/logged-user.context";
+import { useErrorDispatch } from "../../context/error.context";
+import { BreadCrumb } from "../../components/Breadcrumb";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
 export const CreateSupplyPage: FC = () => {

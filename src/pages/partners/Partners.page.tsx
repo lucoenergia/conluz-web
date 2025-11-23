@@ -23,10 +23,10 @@ import {
   Divider,
   TableSortLabel,
 } from "@mui/material";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { SearchBar } from "../components/SearchBar";
-import { PageHeaderWithStats } from "../components/PageHeader";
-import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { SearchBar } from "../../components/SearchBar";
+import { PageHeaderWithStats } from "../../components/PageHeader";
+import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
 import type { FC } from "react";
 
 import PeopleIcon from "@mui/icons-material/People";
@@ -37,13 +37,13 @@ import LockResetIcon from "@mui/icons-material/LockReset";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-import { useGetAllUsers, useDisableUser1, useDisableUser } from "../api/users/users";
-import { useDebounce } from "../utils/useDebounce";
-import { DisablePartnerConfirmationModal } from "../components/Modals/DisablePartnerConfirmationModal";
-import { EnablePartnerConfirmationModal } from "../components/Modals/EnablePartnerConfirmationModal";
-import { DisablePartnerSuccessModal } from "../components/Modals/DisablePartnerSuccessModal";
-import { ResetPasswordConfirmationModal } from "../components/Modals/ResetPasswordConfirmationModal";
-import { useErrorDispatch } from "../context/error.context";
+import { useGetAllUsers, useDisableUser1, useDisableUser } from "../../api/users/users";
+import { useDebounce } from "../../utils/useDebounce";
+import { DisablePartnerConfirmationModal } from "../../components/Modals/DisablePartnerConfirmationModal";
+import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
+import { DisablePartnerSuccessModal } from "../../components/Modals/DisablePartnerSuccessModal";
+import { ResetPasswordConfirmationModal } from "../../components/Modals/ResetPasswordConfirmationModal";
+import { useErrorDispatch } from "../../context/error.context";
 
 type OrderDirection = 'asc' | 'desc';
 type OrderBy = 'number' | 'fullName' | 'personalId';

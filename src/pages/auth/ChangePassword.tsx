@@ -2,8 +2,8 @@ import { useState, type FC } from "react";
 import { Box, Button, Typography, Paper, Avatar } from "@mui/material";
 import KeyIcon from "@mui/icons-material/Key";
 import { useNavigate } from "react-router";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { PasswordInput } from "../components/Forms/PasswordInput";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { PasswordInput } from "../../components/Forms/PasswordInput";
 
 export const ChangePasswordPage: FC = () => {
   const [formErrors, setFormErrors] = useState<{

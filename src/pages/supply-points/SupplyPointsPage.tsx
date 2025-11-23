@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
-import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../api/supplies/supplies";
-import type { SupplyResponse } from "../api/models";
-import { BreadCrumb } from "../components/Breadcrumb";
-import { SearchBar } from "../components/SearchBar/SearchBar";
-import { SupplyCard } from "../components/SupplyCard/SupplyCard";
-import { PageHeaderWithStats } from "../components/PageHeader";
-import { FilterChipsBar, type FilterStatus } from "../components/FilterChips";
-import { CardGrid } from "../components/CardGrid";
-import { LoadingCardGrid } from "../components/CardGrid";
-import { EmptyState } from "../components/EmptyState";
+import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
+import type { SupplyResponse } from "../../api/models";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { SearchBar } from "../../components/SearchBar/SearchBar";
+import { SupplyCard } from "../../components/SupplyCard/SupplyCard";
+import { PageHeaderWithStats } from "../../components/PageHeader";
+import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
+import { CardGrid } from "../../components/CardGrid";
+import { LoadingCardGrid } from "../../components/CardGrid";
+import { EmptyState } from "../../components/EmptyState";
 import { Link, useNavigate } from "react-router";
-import { useErrorDispatch } from "../context/error.context";
+import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
