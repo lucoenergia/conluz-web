@@ -1,5 +1,10 @@
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs, { type Dayjs } from "dayjs";
+import "dayjs/locale/es";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 
@@ -40,7 +45,9 @@ export const PlantForm: FC<PlantFormProps> = ({
   const [address, setAddress] = useState(initialAddress);
   const [description, setDescription] = useState(initialDescription);
   const [totalPower, setTotalPower] = useState(initialTotalPower);
-  const [connectionDate, setConnectionDate] = useState(initialConnectionDate);
+  const [connectionDate, setConnectionDate] = useState<Dayjs | null>(
+    initialConnectionDate ? dayjs(initialConnectionDate) : null
+  );
   const [selectedSupply, setSelectedSupply] = useState<SupplyResponse | null>(null);
 
   // Fetch supplies for the selector
@@ -91,7 +98,7 @@ export const PlantForm: FC<PlantFormProps> = ({
       address: data.get("address") as string,
       description: data.get("description") as string,
       totalPower: Number(data.get("totalPower") as string),
-      connectionDate: data.get("connectionDate") as string,
+      connectionDate: connectionDate ? connectionDate.toISOString() : undefined,
       supplyCode: selectedSupply?.code || "",
       inverterProvider: "HUAWEI" as const,
     } as PlantFormValues;
@@ -284,34 +291,80 @@ export const PlantForm: FC<PlantFormProps> = ({
           }}
         />
 
-        <TextField
-          id="connectionDate"
-          label="Fecha de conexión"
-          type="date"
-          name="connectionDate"
-          value={connectionDate}
-          onChange={(e) => setConnectionDate(e.target.value)}
-          fullWidth
-          variant="outlined"
-          slotProps={{
-            inputLabel: {
-              shrink: true,
-            },
-          }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: "#667eea",
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+          <DatePicker
+            label="Fecha de conexión"
+            value={connectionDate}
+            onChange={(value) => setConnectionDate(value)}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                size: "small",
+                sx: {
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "6px",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "0.9375rem",
+                    height: "40px",
+                    "&:hover fieldset": {
+                      borderColor: "#667eea",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#667eea",
+                      borderWidth: "2px",
+                    },
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: "#667eea",
+                  },
+                },
               },
-              "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
+              popper: {
+                sx: {
+                  "& .MuiPickersYear-yearButton.Mui-selected": {
+                    backgroundColor: "#667eea !important",
+                    color: "white !important",
+                    "&:hover": {
+                      backgroundColor: "#5568d3 !important",
+                    },
+                    "&:focus": {
+                      backgroundColor: "#667eea !important",
+                    },
+                  },
+                  "& .MuiPickersMonth-monthButton.Mui-selected": {
+                    backgroundColor: "#667eea !important",
+                    color: "white !important",
+                    "&:hover": {
+                      backgroundColor: "#5568d3 !important",
+                    },
+                    "&:focus": {
+                      backgroundColor: "#667eea !important",
+                    },
+                  },
+                  "& .MuiPickersDay-root.Mui-selected": {
+                    backgroundColor: "#667eea !important",
+                    color: "white !important",
+                    "&:hover": {
+                      backgroundColor: "#5568d3 !important",
+                    },
+                    "&:focus": {
+                      backgroundColor: "#667eea !important",
+                    },
+                  },
+                  "& .MuiPickersYear-yearButton:hover": {
+                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                  },
+                  "& .MuiPickersMonth-monthButton:hover": {
+                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                  },
+                  "& .MuiPickersDay-root:hover": {
+                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                  },
+                },
               },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
-            },
-          }}
-        />
+            }}
+          />
+        </LocalizationProvider>
 
         <Button
           type="submit"
