@@ -1,81 +1,223 @@
-import { useEffect, type FC } from "react";
-import { Box, Paper, Typography, Grid, Chip, Avatar, Button } from "@mui/material";
-import { useParams, useNavigate, Link } from "react-router";
+import { useEffect, useMemo, useState, type FC } from "react";
+import { Box } from "@mui/material";
+import { useParams } from "react-router";
+import { LoadingGraphCard } from "../components/Graph/LoadingGraphCard";
+import { Graph } from "../components/Graph";
 import { BreadCrumb } from "../components/Breadcrumb";
+import { StatsCard } from "../components/StatsCard";
+import { GraphFilter } from "../components/Graph/GraphFilter";
+import { PlantDetailHeader } from "../components/PlantDetailHeader";
 import { useGetPlantById } from "../api/plants/plants";
+import { useGetDailyProduction, useGetHourlyProduction } from "../api/production/production";
+import { getTimeRange } from "../utils/getTimeRange";
 import { useErrorDispatch } from "../context/error.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import BoltIcon from "@mui/icons-material/Bolt";
-import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import BusinessIcon from "@mui/icons-material/Business";
 
 export const PlantDetailPage: FC = () => {
   const { plantId = "" } = useParams();
-  const navigate = useNavigate();
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const errorDispatch = useErrorDispatch();
 
-  const { data: plant, isLoading, error } = useGetPlantById(plantId);
+  // Detect which filter button was clicked based on date patterns
+  const filterType = useMemo(() => {
+    const difference = Math.abs(endDate.getTime() - startDate.getTime());
+    const daysInRange = difference / (1000 * 60 * 60 * 24);
 
-  useEffect(() => {
-    if (error) {
-      errorDispatch("Ha habido un problema al cargar la información de esta planta. Por favor, inténtalo más tarde");
+    // DAY: same day (start and end are within the same calendar day)
+    if (daysInRange < 1.5) {
+      return "day";
     }
-  }, [error, errorDispatch]);
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("es-ES", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      });
-    } catch {
-      return "N/A";
+    // MONTH: spans 27-32 days and starts at day 1
+    if (daysInRange >= 27 && daysInRange <= 32 &&
+        startDate.getDate() === 1 &&
+        startDate.getMonth() !== endDate.getMonth()) {
+      return "month";
     }
+
+    // YEAR: spans more than 300 days
+    if (daysInRange >= 300) {
+      return "year";
+    }
+
+    // DATES: custom range
+    return "dates";
+  }, [startDate, endDate]);
+
+  // Calculate time range for display and x-axis formatting
+  const timeRangeData: string = useMemo(() => {
+    const difference = Math.abs(endDate.getTime() - startDate.getTime());
+    const daysInRange = difference / (1000 * 60 * 60 * 24);
+
+    // Check if this is a single month range (28-31 days) and both dates are in the same month
+    if (daysInRange >= 27 && daysInRange <= 32 &&
+        startDate.getDate() === 1 &&
+        startDate.getMonth() !== endDate.getMonth()) {
+      return "month";
+    }
+
+    return getTimeRange(startDate, endDate);
+  }, [startDate, endDate]);
+
+  const handleFilterChange = (startDate: Date, endDate: Date) => {
+    setStartDate(startDate);
+    setEndDate(endDate);
   };
 
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: { xs: 2, sm: 3 },
-          p: { xs: 0, sm: 2, md: 3 },
-          minHeight: "100vh",
-          background: "#f5f7fa",
-        }}
-      >
-        <Box sx={{ px: { xs: 2, sm: 0 } }}>
-          <Typography>Cargando...</Typography>
-        </Box>
-      </Box>
-    );
-  }
+  // Calculate previous period dates for trend comparison
+  const { prevStartDate, prevEndDate } = useMemo(() => {
+    const difference = Math.abs(endDate.getTime() - startDate.getTime());
 
-  if (error || !plant) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: { xs: 2, sm: 3 },
-          p: { xs: 0, sm: 2, md: 3 },
-          minHeight: "100vh",
-          background: "#f5f7fa",
-        }}
-      >
-        <Box sx={{ px: { xs: 2, sm: 0 } }}>
-          <Typography>Error al cargar la planta</Typography>
-        </Box>
-      </Box>
-    );
-  }
+    const prevEnd = new Date(startDate);
+    prevEnd.setMilliseconds(-1); // End of previous period is 1ms before current start
+
+    const prevStart = new Date(prevEnd);
+    prevStart.setTime(prevStart.getTime() - difference); // Same duration as current period
+
+    return {
+      prevStartDate: prevStart,
+      prevEndDate: prevEnd,
+    };
+  }, [startDate, endDate]);
+
+  const { data: plant, isLoading: plantLoading, error: plantError } = useGetPlantById(plantId);
+
+    // Fetch hourly production data when DAY filter is selected
+  const {
+    data: hourlyProductionData,
+    isLoading: hourlyProductionIsLoading,
+    error: hourlyProductionError,
+  } = useGetHourlyProduction(
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: filterType === "day" } },
+  );
+
+  // Fetch daily production data for month, year, and custom date ranges
+  const {
+    data: dailyProductionData,
+    isLoading: dailyProductionIsLoading,
+    error: dailyProductionError,
+  } = useGetDailyProduction(
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString()},
+    { query: { enabled: (filterType === "month" || filterType === "year" || filterType === "dates") } },
+  );
+
+  // Fetch previous period hourly production data when DAY filter is selected
+  const {
+    data: prevHourlyProductionData,
+  } = useGetHourlyProduction(
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { query: { enabled: filterType === "day" } },
+  );
+
+  // Fetch previous period daily production data for month, year, and custom date ranges
+  const {
+    data: prevDailyProductionData,
+  } = useGetDailyProduction(
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString()},
+    { query: { enabled: (filterType === "month" || filterType === "year" || filterType === "dates") } },
+  );
+
+  // Unified data sources - use hourly for "day" filter, daily for others
+  const productionData = filterType === "day" ? hourlyProductionData : dailyProductionData;
+  const prevProductionData = filterType === "day" ? prevHourlyProductionData : prevDailyProductionData;
+
+  // Unified loading and error states
+  const isLoading =
+    hourlyProductionIsLoading ||
+    dailyProductionIsLoading ||
+    plantLoading;
+
+  const error =
+    hourlyProductionError ||
+    dailyProductionError ||
+    plantError;
+
+  useEffect(() => {
+    if (error)
+      errorDispatch(
+        "Ha habido un problema al cargar la información de esta planta. Por favor, inténtalo más tarde",
+      );
+  }, [error, errorDispatch]);
+
+  // Process production data from the API response
+  const data = useMemo(() => {
+    if (!productionData) return [];
+    return productionData.map((item) => item.power ?? 0);
+  }, [productionData]);
+
+  // Generate categories (x-axis labels) from production data
+  const categories = useMemo(() => {
+    if (!productionData || productionData.length === 0) return [];
+
+    return productionData.map((item) => {
+      const dateStr = item.time || "";
+      if (!dateStr) return "";
+
+      const date = new Date(dateStr);
+
+      // For day filter with hourly data, show hour in HH:mm format
+      if (filterType === "day") {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+
+      // For month filter, show day number
+      if (filterType === "month") {
+        return date.getDate().toString();
+      }
+
+      // For year filter, show month name
+      if (filterType === "year") {
+        return date.toLocaleDateString("es-ES", { month: "short" });
+      }
+
+      // For custom dates, show day and month
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleDateString("es-ES", { month: "short" });
+      return `${day} ${month}`;
+    });
+  }, [productionData, filterType]);
+
+  // Process production data for chart
+  const productionValues = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return data;
+  }, [data]);
+
+  // Calculate production metrics with trends
+  const productionMetrics = useMemo(() => {
+    if (!productionData || productionData.length === 0) {
+      return {
+        totalProduction: 0,
+        productionTrend: undefined,
+      };
+    }
+
+    const totalProduction = productionData.reduce((sum, item) => sum + (item.power || 0), 0);
+
+    // Calculate trend compared to previous period
+    let productionTrend: number | undefined = undefined;
+
+    if (prevProductionData && prevProductionData.length > 0) {
+      const prevTotalProduction = prevProductionData.reduce((sum, item) => sum + (item.power || 0), 0);
+
+      // Calculate trend as percentage change
+      if (prevTotalProduction > 0) {
+        productionTrend = ((totalProduction - prevTotalProduction) / prevTotalProduction) * 100;
+      } else if (totalProduction > 0) {
+        // If previous was 0 but current is positive, show as 100% increase
+        productionTrend = 100;
+      }
+    }
+
+    return {
+      totalProduction,
+      productionTrend,
+    };
+  }, [productionData, prevProductionData]);
 
   return (
     <Box
@@ -98,248 +240,74 @@ export const PlantDetailPage: FC = () => {
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Producción", href: "/production" },
-            { label: plant.code || plantId, href: "#" },
+            { label: plant?.code ? plant?.code : plantId, href: "#" },
           ]}
         />
       </Box>
 
       {/* Header Section */}
       <Box sx={{ px: { xs: 2, sm: 0 } }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
-            background: "#667eea",
-            color: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              gap: 2,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Avatar
-                sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                  width: 64,
-                  height: 64,
-                }}
-              >
-                <SolarPowerIcon sx={{ fontSize: 36 }} />
-              </Avatar>
-              <Box>
-                <Typography variant="h4" fontWeight="bold" gutterBottom>
-                  {plant.name || "Sin nombre"}
-                </Typography>
-                <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                  {plant.code}
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              component={Link}
-              to={`/production/${plantId}/edit`}
-              variant="contained"
-              startIcon={<EditOutlinedIcon />}
-              sx={{
-                bgcolor: "rgba(255, 255, 255, 0.2)",
-                color: "white",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.3)",
-                },
-              }}
-            >
-              Editar
-            </Button>
-          </Box>
-        </Paper>
+        <PlantDetailHeader
+          plant={plant}
+          isLoading={plantLoading}
+          error={plantError}
+        />
       </Box>
 
-      {/* Main Content */}
+      {/* Filter Section */}
       <Box sx={{ px: { xs: 2, sm: 0 } }}>
-        <Grid container spacing={3}>
-          {/* Specifications Card */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                bgcolor: "white",
-                boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-                height: "100%",
-              }}
-            >
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Especificaciones
-              </Typography>
-              <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-                {/* Total Power */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: "rgba(102, 126, 234, 0.08)",
-                  }}
-                >
-                  <BoltIcon sx={{ color: "#667eea", fontSize: 28 }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Potencia total
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold" color="#667eea">
-                      {plant.totalPower || 0} kW
-                    </Typography>
-                  </Box>
-                </Box>
+        <GraphFilter handleChange={handleFilterChange} />
+      </Box>
 
-                {/* Connection Date */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: "rgba(16, 185, 129, 0.08)",
-                  }}
-                >
-                  <CalendarTodayIcon sx={{ color: "#10b981", fontSize: 28 }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Fecha de conexión
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold" color="#10b981">
-                      {formatDate(plant.connectionDate)}
-                    </Typography>
-                  </Box>
-                </Box>
+      {/* Stats Card */}
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        <StatsCard
+          title="Producción"
+          subtitle="Producción energética de la planta"
+          variant="production"
+          icon={<SolarPowerIcon sx={{ fontSize: 32 }} />}
+          stats={[
+            {
+              label: "Producción total",
+              value: `${productionMetrics.totalProduction.toFixed(2)} kWh`,
+              trend: productionMetrics.productionTrend !== undefined ? Math.round(productionMetrics.productionTrend) : undefined,
+              trendLabel: "vs período anterior",
+              icon: <SolarPowerIcon sx={{ fontSize: 24 }} />,
+              color: "#667eea",
+            },
+          ]}
+        />
+      </Box>
 
-                {/* Inverter Provider */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: "rgba(236, 72, 153, 0.08)",
-                  }}
-                >
-                  <BusinessIcon sx={{ color: "#ec4899", fontSize: 28 }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Proveedor de inversor
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold" color="#ec4899">
-                      {plant.inverterProvider || "N/A"}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Location Card */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                bgcolor: "white",
-                boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-                height: "100%",
-              }}
-            >
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Ubicación y vinculación
-              </Typography>
-              <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-                {/* Address */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: "rgba(0, 0, 0, 0.02)",
-                  }}
-                >
-                  <LocationOnIcon sx={{ color: "#64748b", fontSize: 28, mt: 0.5 }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                      Dirección
-                    </Typography>
-                    <Typography variant="body1" color="text.primary">
-                      {plant.address || "Dirección no disponible"}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Linked Supply Point */}
-                {plant.supply && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 2,
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: "rgba(102, 126, 234, 0.08)",
-                    }}
-                  >
-                    <ElectricMeterIcon sx={{ color: "#667eea", fontSize: 28, mt: 0.5 }} />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                        Punto de suministro vinculado
-                      </Typography>
-                      <Typography variant="body1" fontWeight="600" color="#667eea">
-                        {plant.supply.name || plant.supply.code}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {plant.supply.code}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Description Card */}
-          {plant.description && (
-            <Grid item xs={12}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 3,
-                  bgcolor: "white",
-                  boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-                }}
-              >
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  Descripción
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 2, lineHeight: 1.8 }}>
-                  {plant.description}
-                </Typography>
-              </Paper>
-            </Grid>
-          )}
-        </Grid>
+      {/* Production Graph */}
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        {!isLoading && !error && productionValues.length > 0 && (
+          <Graph
+            title="Producción"
+            subtitle={`Rango: ${timeRangeData}`}
+            values={productionValues}
+            xAxis={categories}
+            info="Producción energética de la planta durante el período seleccionado"
+            variant="production"
+          />
+        )}
+        {isLoading && <LoadingGraphCard />}
+        {!isLoading && !error && productionValues.length === 0 && (
+          <Box
+            sx={{
+              p: 4,
+              textAlign: "center",
+              bgcolor: "white",
+              borderRadius: 3,
+              boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            }}
+          >
+            <SolarPowerIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 2 }} />
+            <Box sx={{ typography: "h6", color: "text.secondary" }}>
+              No hay datos de producción para el período seleccionado
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );
