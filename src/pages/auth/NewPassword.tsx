@@ -1,6 +1,6 @@
 import { Box, Button, FormGroup, Typography } from "@mui/material";
 import { useMemo, useState, type FC } from "react";
-import { PasswordInput } from "../components/Forms/PasswordInput";
+import { PasswordInput } from "../../components/Forms/PasswordInput";
 
 export const NewPassword: FC = () => {
   const [password, setPassword] = useState<string | null>(null);

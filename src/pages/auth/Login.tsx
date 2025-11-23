@@ -13,9 +13,9 @@ import {
 } from "@mui/material";
 import WavingHandOutlinedIcon from "@mui/icons-material/WavingHandOutlined";
 import { Link as RouterLink, useNavigate } from "react-router";
-import { useLogin } from "../api/authentication/authentication";
-import { PasswordInput } from "../components/Forms/PasswordInput";
-import { useAuthDispatch } from "../context/auth.context";
+import { useLogin } from "../../api/authentication/authentication";
+import { PasswordInput } from "../../components/Forms/PasswordInput";
+import { useAuthDispatch } from "../../context/auth.context";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState(false);
