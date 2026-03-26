@@ -6,13 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface UpdateSupplyBody {
-  /** @minLength 1 */
-  code: string;
-  name?: string;
-  /** @minLength 1 */
-  address: string;
-  /** @minLength 1 */
-  addressRef: string;
-  partitionCoefficient: number;
+export interface SyncMonthlyDatadisConsumptionsBody {
+  /**
+   * @minimum 2000
+   * @maximum 2100
+   */
+  year: number;
+  /**
+   * @minimum 1
+   * @maximum 12
+   */
+  month?: number;
+  supplyCode?: string;
 }

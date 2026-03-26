@@ -3,7 +3,7 @@ import { useState, type FC } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 
-interface SearchBarProps {
+export interface SearchBarProps {
   value?: string;
   onChange?: (value: string) => void;
   placeholder?: string;

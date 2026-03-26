@@ -6,11 +6,17 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  faker
+} from '@faker-js/faker';
+
+import {
   HttpResponse,
   delay,
   http
 } from 'msw';
 
+
+export const getGetDatadisConsumptionHourlyCsvReportResponseMock = (): string => (faker.word.sample())
 
 
 export const getConfigureDatadisMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<unknown> | unknown)) => {
@@ -32,7 +38,42 @@ export const getSyncDatadisConsumptionsMockHandler = (overrideResponse?: unknown
       })
   })
 }
+
+export const getSyncYearlyDatadisConsumptionsMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
+  return http.post('*/api/v1/consumption/datadis/sync/yearly', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
+export const getSyncMonthlyDatadisConsumptionsMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
+  return http.post('*/api/v1/consumption/datadis/sync/monthly', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
+export const getGetDatadisConsumptionHourlyCsvReportMockHandler = (overrideResponse?: string | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<string> | string)) => {
+  return http.get('*/api/v1/consumption/datadis/report/hourly/csv', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetDatadisConsumptionHourlyCsvReportResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
 export const getConsumptionMock = () => [
   getConfigureDatadisMockHandler(),
-  getSyncDatadisConsumptionsMockHandler()
+  getSyncDatadisConsumptionsMockHandler(),
+  getSyncYearlyDatadisConsumptionsMockHandler(),
+  getSyncMonthlyDatadisConsumptionsMockHandler(),
+  getGetDatadisConsumptionHourlyCsvReportMockHandler()
 ]

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import {
   Box,
   Typography,
@@ -22,6 +22,7 @@ import {
   Alert,
   Divider,
   TableSortLabel,
+  Button,
 } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar";
@@ -36,6 +37,7 @@ import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import { useGetAllUsers, useDisableUser1, useDisableUser } from "../../api/users/users";
 import { useDebounce } from "../../utils/useDebounce";
@@ -297,13 +299,37 @@ export const PartnersPage: FC = () => {
               gap: 2,
               alignItems: { xs: "stretch", sm: "center" },
               justifyContent: "space-between",
+              mb: 2,
             }}
           >
+            {/* New Partner Button */}
+            <Button
+              component={Link}
+              to="/partners/new"
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              sx={{
+                background: "#667eea",
+                borderRadius: 2,
+                textTransform: "none",
+                px: 3,
+                py: 1.5,
+                boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+                },
+                transition: "all 0.3s ease",
+              }}
+            >
+              Nuevo Socio
+            </Button>
+
             {/* Filter Chips */}
-            <FilterChipsBar
-              value={filters.status}
-              onChange={(value) => handleFilterChange('status', value)}
-            />
+          <FilterChipsBar
+            value={filters.status}
+            onChange={(value) => handleFilterChange('status', value)}
+          />
 
             {/* Search Bar */}
             <SearchBar
@@ -312,6 +338,8 @@ export const PartnersPage: FC = () => {
               placeholder="Buscar por nombre, NIF/CIF o email..."
             />
           </Box>
+
+          
         </Paper>
       </Box>
 

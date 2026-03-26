@@ -164,7 +164,7 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
         enabled: true,
         shared: true,
         intersect: false,
-        custom: function({ series: seriesData, seriesIndex, dataPointIndex, w }: any) {
+        custom: function({ series: seriesData, dataPointIndex, w }: any) {
           const category = w.globals.labels[dataPointIndex];
           let tooltipContent = `<div style="padding: 8px 12px; background: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">`;
           tooltipContent += `<div style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${category}</div>`;

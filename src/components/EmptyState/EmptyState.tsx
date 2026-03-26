@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from "react";
-import { Box, Button, Paper, Typography } from "@mui/material";
+import { Button, Paper, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 
 export interface EmptyStateProps {

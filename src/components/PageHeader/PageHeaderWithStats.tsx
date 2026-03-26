@@ -3,7 +3,7 @@ import { Box, Paper, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 
 export interface StatItem {
-  value: number;
+  value: number | string;
   label: string;
   color?: string;
 }

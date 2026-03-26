@@ -11,7 +11,7 @@ interface BreadCrumbStep {
   icon?: React.ReactNode;
 }
 
-interface BreadCrumbProps {
+export interface BreadCrumbProps {
   steps: BreadCrumbStep[];
   className?: string;
 }
