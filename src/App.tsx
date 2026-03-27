@@ -16,6 +16,7 @@ import { PartnersPage } from "./pages/partners/Partners.page";
 import { ChangePasswordPage } from "./pages/auth/ChangePassword";
 import { ProfilePage } from "./pages/Profile";
 import { EditPartnerPage } from "./pages/partners/EditPartner";
+import { CreatePartnerPage } from "./pages/partners/CreatePartner";
 import { PartnerSupplyPointsPage } from "./pages/partners/PartnerSupplyPointsPage";
 import { PlantsPage } from "./pages/production/PlantsPage";
 import { CreatePlantPage } from "./pages/production/CreatePlantPage";
@@ -53,6 +54,7 @@ function App() {
           </Route>
           <Route path="partners">
             <Route index element={<PartnersPage />} />
+            <Route path="new" element={<CreatePartnerPage />} />
             <Route path=":partnerId/edit" element={<EditPartnerPage />} />
             <Route path=":partnerId/supply-points" element={<PartnerSupplyPointsPage />} />
           </Route>
