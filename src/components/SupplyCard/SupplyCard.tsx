@@ -13,7 +13,7 @@ import { EnableConfirmationModal } from "../Modals/EnableConfirmationModal";
 import { EnableSuccessModal } from "../Modals/EnableSuccesModal";
 import { DisableConfirmationModal } from "../Modals/DisableConfirmationModal";
 
-interface SupplyCardProps {
+export interface SupplyCardProps {
   id?: string;
   code?: string;
   name?: string;

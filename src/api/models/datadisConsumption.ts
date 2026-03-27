@@ -15,4 +15,5 @@ export interface DatadisConsumption {
   surplusEnergyKWh?: number;
   generationEnergyKWh?: number;
   selfConsumptionEnergyKWh?: number;
+  empty?: boolean;
 }

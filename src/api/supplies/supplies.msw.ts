@@ -53,9 +53,13 @@ export const getGetSupplyHourlyProductionResponseMock = (): ProductionByTime[] =
 
 export const getGetSupplyDailyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
-export const getGetSupplyHourlyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+export const getGetSupplyYearlyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), empty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])})))
 
-export const getGetSupplyDailyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+export const getGetSupplyMonthlyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), empty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])})))
+
+export const getGetSupplyHourlyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), empty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])})))
+
+export const getGetSupplyDailyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), empty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])})))
 
 
 export const getGetSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
@@ -246,6 +250,30 @@ export const getGetSupplyDailyProductionMockHandler = (overrideResponse?: Produc
   })
 }
 
+export const getGetSupplyYearlyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
+  return http.get('*/api/v1/supplies/:id/consumption/yearly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyYearlyConsumptionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGetSupplyMonthlyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
+  return http.get('*/api/v1/supplies/:id/consumption/monthly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyMonthlyConsumptionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
 export const getGetSupplyHourlyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
   return http.get('*/api/v1/supplies/:id/consumption/hourly', async (info) => {await delay(1000);
   
@@ -286,6 +314,8 @@ export const getSuppliesMock = () => [
   getGetSupplyMonthlyProductionMockHandler(),
   getGetSupplyHourlyProductionMockHandler(),
   getGetSupplyDailyProductionMockHandler(),
+  getGetSupplyYearlyConsumptionMockHandler(),
+  getGetSupplyMonthlyConsumptionMockHandler(),
   getGetSupplyHourlyConsumptionMockHandler(),
   getGetSupplyDailyConsumptionMockHandler()
 ]

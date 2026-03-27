@@ -6,17 +6,30 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
-  ConfigureDatadisBody
+  ConfigureDatadisBody,
+  GetDatadisConsumptionHourlyCsvReportParams,
+  SyncDatadisConsumptionsBody,
+  SyncMonthlyDatadisConsumptionsBody,
+  SyncYearlyDatadisConsumptionsBody
 } from '.././models';
 
 import { customInstance } from '.././custom-instance';
@@ -103,7 +116,17 @@ export const useConfigureDatadis = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint enables users to synchronize the consumptions of all active supplies retrieving the information from datadis.es.
+ * This endpoint enables users to synchronize consumption data from datadis.es for a specific year.
+
+The request body must contain:
+- **year** (required, integer): The year for which to synchronize consumption data
+- **supplyCode** (optional, string): The supply code (CUPS) to synchronize. If not provided, all active supplies will be synchronized.
+
+The synchronization will retrieve data from January 1st to December 31st of the specified year.
+
+**Behavior:**
+- If supplyCode is provided: Synchronizes only that specific supply
+- If supplyCode is not provided or is empty: Synchronizes all active supplies
 
 Proper authentication, through an authentication token, is required for secure access to this endpoint.
 **Required Role: ADMIN**
@@ -111,18 +134,20 @@ Proper authentication, through an authentication token, is required for secure a
 A successful request returns an HTTP status code of 200.
 
 In cases of errors, the server responds with an appropriate error status code accompanied by a
-descriptive message to guide users in resolving any issues.",
+descriptive message to guide users in resolving any issues.
 
- * @summary Synchronize the consumptions of all active supplies retrieving the information from datadis.es.
+ * @summary Synchronize the consumptions for a specific year from datadis.es, optionally filtering by supply code.
  */
 export const syncDatadisConsumptions = (
-    
+    syncDatadisConsumptionsBody: SyncDatadisConsumptionsBody,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/consumption/datadis/sync`, method: 'POST', signal
+      {url: `/api/v1/consumption/datadis/sync`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncDatadisConsumptionsBody, signal
     },
       );
     }
@@ -130,8 +155,8 @@ export const syncDatadisConsumptions = (
 
 
 export const getSyncDatadisConsumptionsMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{data: SyncDatadisConsumptionsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{data: SyncDatadisConsumptionsBody}, TContext> => {
 
 const mutationKey = ['syncDatadisConsumptions'];
 const {mutation: mutationOptions} = options ?
@@ -143,10 +168,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisConsumptions>>, void> = () => {
-          
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisConsumptions>>, {data: SyncDatadisConsumptionsBody}> = (props) => {
+          const {data} = props ?? {};
 
-          return  syncDatadisConsumptions()
+          return  syncDatadisConsumptions(data,)
         }
 
         
@@ -155,18 +180,18 @@ const {mutation: mutationOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SyncDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisConsumptions>>>
-    
+    export type SyncDatadisConsumptionsMutationBody = SyncDatadisConsumptionsBody
     export type SyncDatadisConsumptionsMutationError = ErrorType<unknown>
 
     /**
- * @summary Synchronize the consumptions of all active supplies retrieving the information from datadis.es.
+ * @summary Synchronize the consumptions for a specific year from datadis.es, optionally filtering by supply code.
  */
 export const useSyncDatadisConsumptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{data: SyncDatadisConsumptionsBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncDatadisConsumptions>>,
         TError,
-        void,
+        {data: SyncDatadisConsumptionsBody},
         TContext
       > => {
 
@@ -174,4 +199,271 @@ export const useSyncDatadisConsumptions = <TError = ErrorType<unknown>,
 
       return useMutation(mutationOptions , queryClient);
     }
+    /**
+ * This endpoint enables admins to sync monthly consumption data into yearly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, all active supplies will be aggregated.
+
+**Behavior:**
+- If supplyCode is provided: Aggregates only that specific supply
+- If supplyCode is not provided or is empty: Aggregates all active supplies
+
+**Note:** This aggregation requires that monthly aggregations have already been performed
+for the specified year.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required Role: ADMIN**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Sync monthly Datadis consumption data into yearly totals
+ */
+export const syncYearlyDatadisConsumptions = (
+    syncYearlyDatadisConsumptionsBody: SyncYearlyDatadisConsumptionsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/datadis/sync/yearly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncYearlyDatadisConsumptionsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncYearlyDatadisConsumptionsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{data: SyncYearlyDatadisConsumptionsBody}, TContext> => {
+
+const mutationKey = ['syncYearlyDatadisConsumptions'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, {data: SyncYearlyDatadisConsumptionsBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  syncYearlyDatadisConsumptions(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncYearlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>>
+    export type SyncYearlyDatadisConsumptionsMutationBody = SyncYearlyDatadisConsumptionsBody
+    export type SyncYearlyDatadisConsumptionsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Sync monthly Datadis consumption data into yearly totals
+ */
+export const useSyncYearlyDatadisConsumptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>,
+        TError,
+        {data: SyncYearlyDatadisConsumptionsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncYearlyDatadisConsumptionsMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint enables admins to aggregate hourly consumption data into monthly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **month** (optional, integer 1-12): The month to aggregate. If not provided, all months of the year will be aggregated.
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, all active supplies will be aggregated.
+
+**Behavior:**
+- If both month and supplyCode are provided: Aggregates only that specific supply for that month
+- If only month is provided: Aggregates all supplies for that specific month
+- If only supplyCode is provided: Aggregates that supply for all months of the year
+- If neither month nor supplyCode is provided: Aggregates all supplies for all months of the year
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required Role: ADMIN**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Aggregate hourly Datadis consumption data into monthly totals
+ */
+export const syncMonthlyDatadisConsumptions = (
+    syncMonthlyDatadisConsumptionsBody: SyncMonthlyDatadisConsumptionsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/datadis/sync/monthly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncMonthlyDatadisConsumptionsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncMonthlyDatadisConsumptionsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{data: SyncMonthlyDatadisConsumptionsBody}, TContext> => {
+
+const mutationKey = ['syncMonthlyDatadisConsumptions'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, {data: SyncMonthlyDatadisConsumptionsBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  syncMonthlyDatadisConsumptions(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncMonthlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>>
+    export type SyncMonthlyDatadisConsumptionsMutationBody = SyncMonthlyDatadisConsumptionsBody
+    export type SyncMonthlyDatadisConsumptionsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Aggregate hourly Datadis consumption data into monthly totals
+ */
+export const useSyncMonthlyDatadisConsumptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>,
+        TError,
+        {data: SyncMonthlyDatadisConsumptionsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncMonthlyDatadisConsumptionsMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Retrieves hourly consumption data for all supplies within the specified date range
+and returns the result as a downloadable CSV file.
+
+**Authorization Rules:**
+- Only users with ADMIN role can access this endpoint.
+
+The CSV includes:
+- cups: Supply point identifier
+- date: Date of the consumption record
+- time: Time of the consumption record
+- consumptionKWh: Total consumption in kWh
+- obtainMethod: Real or Estimated
+- surplusEnergyKWh: Energy sent to the grid in kWh
+- generationEnergyKWh: Generated energy in kWh
+- selfConsumptionEnergyKWh: Self-consumed energy in kWh
+
+ * @summary Exports hourly consumption data for all supplies as a CSV file
+ */
+export const getDatadisConsumptionHourlyCsvReport = (
+    params: GetDatadisConsumptionHourlyCsvReportParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<string>(
+      {url: `/api/v1/consumption/datadis/report/hourly/csv`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetDatadisConsumptionHourlyCsvReportQueryKey = (params: GetDatadisConsumptionHourlyCsvReportParams,) => {
+    return [`/api/v1/consumption/datadis/report/hourly/csv`, ...(params ? [params]: [])] as const;
+    }
+
     
+export const getGetDatadisConsumptionHourlyCsvReportQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDatadisConsumptionHourlyCsvReportQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>> = ({ signal }) => getDatadisConsumptionHourlyCsvReport(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDatadisConsumptionHourlyCsvReportQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>>
+export type GetDatadisConsumptionHourlyCsvReportQueryError = ErrorType<unknown>
+
+
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+ params: GetDatadisConsumptionHourlyCsvReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+ params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+ params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Exports hourly consumption data for all supplies as a CSV file
+ */
+
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+ params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDatadisConsumptionHourlyCsvReportQueryOptions(params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+

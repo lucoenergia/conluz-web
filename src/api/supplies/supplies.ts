@@ -35,7 +35,9 @@ import type {
   GetSupplyDailyProductionParams,
   GetSupplyHourlyConsumptionParams,
   GetSupplyHourlyProductionParams,
+  GetSupplyMonthlyConsumptionParams,
   GetSupplyMonthlyProductionParams,
+  GetSupplyYearlyConsumptionParams,
   ImportSuppliesPartitionsWithFileBody,
   ImportSuppliesPartitionsWithFileParams,
   PagedResultSupplyResponse,
@@ -1367,6 +1369,224 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSupplyDailyProductionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * This endpoint retrieves yearly consumption data from Datadis for a specific supply within a given date range.
+
+**Authorization Rules:**
+- Users with role ADMIN can retrieve consumption data for any supply
+- Users with role PARTNER can only retrieve consumption data for their own supplies
+
+The consumption data includes:
+- Total consumption in kWh
+- Surplus energy (energy sent to grid)
+- Self-consumption energy
+- Obtain method (Real/Estimated)
+
+Data is aggregated by year within the specified date range.
+
+ * @summary Retrieves yearly consumption data for a specific supply
+ */
+export const getSupplyYearlyConsumption = (
+    id: string,
+    params: GetSupplyYearlyConsumptionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisConsumption[]>(
+      {url: `/api/v1/supplies/${id}/consumption/yearly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyYearlyConsumptionQueryKey = (id: string,
+    params: GetSupplyYearlyConsumptionParams,) => {
+    return [`/api/v1/supplies/${id}/consumption/yearly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetSupplyYearlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(id: string,
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyYearlyConsumptionQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>> = ({ signal }) => getSupplyYearlyConsumption(id,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyYearlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>>
+export type GetSupplyYearlyConsumptionQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyYearlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves yearly consumption data for a specific supply
+ */
+
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyYearlyConsumptionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * This endpoint retrieves monthly consumption data from Datadis for a specific supply within a given date range.
+
+**Authorization Rules:**
+- Users with role ADMIN can retrieve consumption data for any supply
+- Users with role PARTNER can only retrieve consumption data for their own supplies
+
+The consumption data includes:
+- Total consumption in kWh
+- Surplus energy (energy sent to grid)
+- Self-consumption energy
+- Obtain method (Real/Estimated)
+
+Data is aggregated by month within the specified date range.
+
+ * @summary Retrieves monthly consumption data for a specific supply
+ */
+export const getSupplyMonthlyConsumption = (
+    id: string,
+    params: GetSupplyMonthlyConsumptionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisConsumption[]>(
+      {url: `/api/v1/supplies/${id}/consumption/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyMonthlyConsumptionQueryKey = (id: string,
+    params: GetSupplyMonthlyConsumptionParams,) => {
+    return [`/api/v1/supplies/${id}/consumption/monthly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetSupplyMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(id: string,
+    params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyMonthlyConsumptionQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>> = ({ signal }) => getSupplyMonthlyConsumption(id,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyMonthlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>>
+export type GetSupplyMonthlyConsumptionQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves monthly consumption data for a specific supply
+ */
+
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyMonthlyConsumptionQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -1,39 +1,39 @@
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import { useCreatePlant } from "../../api/plants/plants";
-import type { CreatePlantBody } from "../../api/models";
 import { useNavigate } from "react-router";
-import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
+import type { CreateUserBody } from "../../api/models";
+import { useCreateUser } from "../../api/users/users";
 import { useErrorDispatch } from "../../context/error.context";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import SolarPowerIcon from "@mui/icons-material/SolarPower";
+import { PartnerForm, type PartnerFormValues } from "../../components/PartnerForm/PartnerForm";
+import PersonIcon from "@mui/icons-material/Person";
 
-export const CreatePlantPage: FC = () => {
+export const CreatePartnerPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const createPlant = useCreatePlant();
+  const createUser = useCreateUser();
 
-  const handleSubmit = async (values: PlantFormValues) => {
+  const handleSubmit = async ({ fullName, personalId, number, email, address, phoneNumber, password, role }: PartnerFormValues) => {
     try {
-      const newPlant = {
-        code: values.code,
-        name: values.name,
-        address: values.address,
-        description: values.description || undefined,
-        totalPower: values.totalPower,
-        connectionDate: values.connectionDate || undefined,
-        supplyCode: values.supplyCode,
-        inverterProvider: "HUAWEI",
-      } as CreatePlantBody;
+      const newUser = {
+        fullName,
+        personalId,
+        number: number ?? 0,
+        email,
+        address: address || undefined,
+        phoneNumber: phoneNumber || undefined,
+        password: password ?? "",
+        role,
+      } as CreateUserBody;
 
-      const response = await createPlant.mutateAsync({ data: newPlant });
+      const response = await createUser.mutateAsync({ data: newUser });
       if (response) {
-        navigate("/production");
+        navigate("/partners");
       } else {
-        errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
+        errorDispatch("Ha habido un problema al crear el socio. Por favor, inténtalo más tarde");
       }
     } catch (e) {
-      errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
+      errorDispatch("Ha habido un problema al crear el socio. Por favor, inténtalo más tarde");
     }
   };
 
@@ -48,7 +48,7 @@ export const CreatePlantPage: FC = () => {
         background: "#f5f7fa",
         width: "100%",
         maxWidth: "100%",
-        overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* Breadcrumb */}
@@ -56,8 +56,8 @@ export const CreatePlantPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Producción", href: "/production" },
-            { label: "Nuevo", href: "/production/new" },
+            { label: "Socios", href: "/partners" },
+            { label: "Nuevo", href: "/partners/new" },
           ]}
         />
       </Box>
@@ -70,7 +70,6 @@ export const CreatePlantPage: FC = () => {
           borderRadius: { xs: 0, sm: 3 },
           background: "#667eea",
           color: "white",
-          mx: { xs: 0, sm: 0 },
           width: { xs: "100%", sm: "auto" },
         }}
       >
@@ -82,14 +81,14 @@ export const CreatePlantPage: FC = () => {
               height: 56,
             }}
           >
-            <SolarPowerIcon sx={{ fontSize: 32 }} />
+            <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
             <Typography variant="h4" fontWeight="bold">
-              Crear nueva planta
+              Crear nuevo socio
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Registra una nueva planta de producción en la comunidad energética
+              Registra un nuevo socio en la comunidad energética
             </Typography>
           </Box>
         </Box>
@@ -104,10 +103,14 @@ export const CreatePlantPage: FC = () => {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "white",
             boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
-            width: { xs: "100%", sm: "auto" },
           }}
         >
-          <PlantForm handleSubmit={handleSubmit} />
+          <PartnerForm
+            mode="create"
+            handleSubmit={handleSubmit}
+            isPending={createUser.isPending}
+            submitLabel="Crear socio"
+          />
         </Paper>
       </Box>
     </Box>
