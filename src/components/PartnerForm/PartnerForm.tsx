@@ -90,7 +90,7 @@ export const PartnerForm: FC<PartnerFormProps> = ({
   };
 
   return (
-    <Box component="form" onSubmit={onSubmit}>
+    <Box component="form" onSubmit={onSubmit} noValidate>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         <TextField
           label="Nombre completo"
