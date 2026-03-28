@@ -7,8 +7,6 @@ import type { DateView } from "@mui/x-date-pickers/models";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 
-const MAX_JS_DATE_TIMESTAMP = 8640000000000000; // Largest posible represented Date in JS https://stackoverflow.com/questions/11526504/minimum-and-maximum-date
-
 const GraphFilterRangeValues = {
   DAY: "day",
   MONTH: "month",
@@ -63,7 +61,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
         handleChange(startDate.startOf("day").toDate(), endDate.endOf("day").toDate());
         break;
       case GraphFilterRangeValues.TOTALS:
-        handleChange(new Date(0), new Date(MAX_JS_DATE_TIMESTAMP));
+        handleChange(new Date('2000-01-01'), new Date());
     }
   }, [range, startDate, endDate]);
 

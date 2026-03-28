@@ -9,7 +9,7 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { StatsCard } from "../../components/StatsCard";
 import { GraphFilter } from "../../components/Graph/GraphFilter";
 import { SupplyDetailHeader } from "../../components/SupplyDetailHeader";
-import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption } from "../../api/supplies/supplies";
+import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption, useGetSupplyYearlyConsumption, useGetSupplyMonthlyProduction } from "../../api/supplies/supplies";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { useErrorDispatch } from "../../context/error.context";
 import PowerIcon from "@mui/icons-material/Power";
@@ -41,14 +41,28 @@ export const SupplyDetailPage: FC = () => {
       return "month";
     }
 
-    // YEAR: spans more than 300 days
-    if (daysInRange >= 300) {
+    // YEAR: spans a calendar year (300–730 days)
+    if (daysInRange >= 300 && daysInRange <= 730) {
       return "year";
+    }
+
+    // TOTALS: spans more than 730 days (multi-year range)
+    if (daysInRange > 730) {
+      return "totals";
     }
 
     // DATES: custom range
     return "dates";
   }, [startDate, endDate]);
+
+  // For "dates" filter, determine granularity based on range size
+  const datesGranularity = useMemo(() => {
+    if (filterType !== "dates") return null;
+    const days = Math.abs(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (days <= 60) return "daily";
+    if (days <= 730) return "monthly";
+    return "yearly";
+  }, [filterType, startDate, endDate]);
 
   // Calculate time range for display and x-axis formatting
   const timeRangeData: string = useMemo(() => {
@@ -99,7 +113,7 @@ export const SupplyDetailPage: FC = () => {
     { query: { enabled: !!supplyPointId && filterType === "day" } },
   );
 
-  // Fetch daily production data for month, year, and custom date ranges
+  // Fetch daily production data for month filter and dates filter with daily granularity
   const {
     data: supplyDailyProductionData,
     isLoading: supplyDailyProductionIsLoading,
@@ -107,7 +121,18 @@ export const SupplyDetailPage: FC = () => {
   } = useGetSupplyDailyProduction(
     supplyPointId,
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!supplyPointId && (filterType === "month" || filterType === "year" || filterType === "dates") } },
+    { query: { enabled: !!supplyPointId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
+  );
+
+  // Fetch monthly production data for year filter and dates filter with monthly/yearly granularity
+  const {
+    data: supplyMonthlyProductionData,
+    isLoading: supplyMonthlyProductionIsLoading,
+    error: supplyMonthlyProductionError,
+  } = useGetSupplyMonthlyProduction(
+    supplyPointId,
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: !!supplyPointId && (filterType === "year" || filterType === "totals" || (filterType === "dates" && datesGranularity !== "daily")) } },
   );
 
   // Fetch hourly consumption data when DAY filter is selected
@@ -121,7 +146,7 @@ export const SupplyDetailPage: FC = () => {
     { query: { enabled: !!supplyPointId && filterType === "day" } },
   );
 
-  // Fetch daily consumption data for month, year, and custom date ranges
+  // Fetch daily consumption data for month filter and dates filter with daily granularity
   const {
     data: dailyConsumptionData,
     isLoading: dailyConsumptionIsLoading,
@@ -129,7 +154,29 @@ export const SupplyDetailPage: FC = () => {
   } = useGetSupplyDailyConsumption(
     supplyPointId,
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!supplyPointId && (filterType === "month" || filterType === "year" || filterType === "dates") } },
+    { query: { enabled: !!supplyPointId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
+  );
+
+  // Fetch monthly consumption data for year filter and dates filter with monthly granularity
+  const {
+    data: monthlyConsumptionData,
+    isLoading: monthlyConsumptionIsLoading,
+    error: monthlyConsumptionError,
+  } = useGetSupplyMonthlyConsumption(
+    supplyPointId,
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: !!supplyPointId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
+  );
+
+  // Fetch yearly consumption data for totals filter
+  const {
+    data: yearlyConsumptionData,
+    isLoading: yearlyConsumptionIsLoading,
+    error: yearlyConsumptionError,
+  } = useGetSupplyYearlyConsumption(
+    supplyPointId,
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: !!supplyPointId && filterType === "totals" } },
   );
 
   // Fetch previous period hourly consumption data when DAY filter is selected
@@ -141,33 +188,72 @@ export const SupplyDetailPage: FC = () => {
     { query: { enabled: !!supplyPointId && filterType === "day" } },
   );
 
-  // Fetch previous period daily consumption data for month, year, and custom date ranges
+  // Fetch previous period daily consumption data for month filter and dates filter with daily granularity
   const {
     data: prevDailyConsumptionData,
   } = useGetSupplyDailyConsumption(
     supplyPointId,
     { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
-    { query: { enabled: !!supplyPointId && (filterType === "month" || filterType === "year" || filterType === "dates") } },
+    { query: { enabled: !!supplyPointId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
   );
 
-  // Unified data sources - use hourly for "day" filter, daily for others
-  const supplyProductionData = filterType === "day" ? supplyHourlyProductionData : supplyDailyProductionData;
-  const consumptionData = filterType === "day" ? hourlyConsumptionData : dailyConsumptionData;
-  const prevConsumptionData = filterType === "day" ? prevHourlyConsumptionData : prevDailyConsumptionData;
+  // Fetch previous period monthly consumption data for year filter and dates filter with monthly granularity
+  const {
+    data: prevMonthlyConsumptionData,
+  } = useGetSupplyMonthlyConsumption(
+    supplyPointId,
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { query: { enabled: !!supplyPointId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
+  );
+
+  // No previous period for totals (subtracting 25+ years yields meaningless dates)
+  const {
+    data: prevYearlyConsumptionData,
+  } = useGetSupplyYearlyConsumption(
+    supplyPointId,
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { query: { enabled: false } },
+  );
+
+  // Unified data sources - select endpoint based on filterType and datesGranularity
+  const supplyProductionData =
+    filterType === "day" ? supplyHourlyProductionData
+    : filterType === "year" || filterType === "totals" || (filterType === "dates" && datesGranularity !== "daily") ? supplyMonthlyProductionData
+    : supplyDailyProductionData;
+
+  const consumptionData =
+    filterType === "day" ? hourlyConsumptionData
+    : filterType === "totals" ? yearlyConsumptionData
+    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? monthlyConsumptionData
+    : filterType === "dates" && datesGranularity === "yearly" ? yearlyConsumptionData
+    : dailyConsumptionData;
+
+  const prevConsumptionData =
+    filterType === "day" ? prevHourlyConsumptionData
+    : filterType === "totals" ? prevYearlyConsumptionData
+    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? prevMonthlyConsumptionData
+    : filterType === "dates" && datesGranularity === "yearly" ? prevYearlyConsumptionData
+    : prevDailyConsumptionData;
 
   // Unified loading and error states
   const isLoading =
     supplyHourlyProductionIsLoading ||
     supplyDailyProductionIsLoading ||
+    supplyMonthlyProductionIsLoading ||
     hourlyConsumptionIsLoading ||
     dailyConsumptionIsLoading ||
+    monthlyConsumptionIsLoading ||
+    yearlyConsumptionIsLoading ||
     supplyPointLoading;
 
   const error =
     supplyHourlyProductionError ||
     supplyDailyProductionError ||
+    supplyMonthlyProductionError ||
     hourlyConsumptionError ||
     dailyConsumptionError ||
+    monthlyConsumptionError ||
+    yearlyConsumptionError ||
     supplyPointError;
 
   useEffect(() => {
@@ -177,14 +263,34 @@ export const SupplyDetailPage: FC = () => {
       );
   }, [error]);
 
+  // Aggregate monthly production data into yearly buckets for the totals filter
+  const yearlyProductionData = useMemo(() => {
+    if (filterType !== "totals" || !supplyMonthlyProductionData) return null;
+    const yearMap = new Map<number, number>();
+    supplyMonthlyProductionData.forEach((item) => {
+      if (!item.time) return;
+      const year = new Date(item.time).getFullYear();
+      yearMap.set(year, (yearMap.get(year) || 0) + (item.power ?? 0));
+    });
+    const sortedYears = Array.from(yearMap.keys()).sort((a, b) => a - b);
+    return sortedYears.map((year) => ({ year, power: yearMap.get(year) || 0 }));
+  }, [filterType, supplyMonthlyProductionData]);
+
   // Process production data from the API response
   const data = useMemo(() => {
+    if (filterType === "totals") {
+      return yearlyProductionData ? yearlyProductionData.map((item) => item.power) : [];
+    }
     if (!supplyProductionData) return [];
     return supplyProductionData.map((item) => item.power ?? 0);
-  }, [supplyProductionData]);
+  }, [supplyProductionData, yearlyProductionData, filterType]);
 
   // Generate categories (x-axis labels) from production data
   const categories = useMemo(() => {
+    if (filterType === "totals") {
+      return yearlyProductionData ? yearlyProductionData.map((item) => item.year.toString()) : [];
+    }
+
     if (!supplyProductionData || supplyProductionData.length === 0) return [];
 
     return supplyProductionData.map((item) => {
@@ -215,7 +321,7 @@ export const SupplyDetailPage: FC = () => {
       const month = date.toLocaleDateString("es-ES", { month: "short" });
       return `${day} ${month}`;
     });
-  }, [supplyProductionData, filterType]);
+  }, [supplyProductionData, yearlyProductionData, filterType]);
 
   // Process production data for chart
   const productionValues = useMemo(() => {
@@ -346,6 +452,11 @@ export const SupplyDetailPage: FC = () => {
       // For year filter, show month name
       if (filterType === "year") {
         return date.toLocaleDateString("es-ES", { month: "short" });
+      }
+
+      // For totals filter, show year
+      if (filterType === "totals") {
+        return date.getFullYear().toString();
       }
 
       // For custom dates, show day and month
