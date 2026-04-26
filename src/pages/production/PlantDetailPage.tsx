@@ -8,7 +8,7 @@ import { StatsCard } from "../../components/StatsCard";
 import { GraphFilter } from "../../components/Graph/GraphFilter";
 import { PlantDetailHeader } from "../../components/PlantDetailHeader";
 import { useGetPlantById } from "../../api/plants/plants";
-import { useGetDailyProduction, useGetHourlyProduction } from "../../api/production/production";
+import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { useErrorDispatch } from "../../context/error.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -36,14 +36,28 @@ export const PlantDetailPage: FC = () => {
       return "month";
     }
 
-    // YEAR: spans more than 300 days
-    if (daysInRange >= 300) {
+    // YEAR: spans 300-730 days
+    if (daysInRange >= 300 && daysInRange <= 730) {
       return "year";
+    }
+
+    // TOTALS: spans more than 730 days (multi-year range)
+    if (daysInRange > 730) {
+      return "totals";
     }
 
     // DATES: custom range
     return "dates";
   }, [startDate, endDate]);
+
+  // For "dates" filter, determine granularity based on range size
+  const datesGranularity = useMemo(() => {
+    if (filterType !== "dates") return null;
+    const days = Math.abs(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (days <= 60) return "daily";
+    if (days <= 730) return "monthly";
+    return "yearly";
+  }, [filterType, startDate, endDate]);
 
   // Calculate time range for display and x-axis formatting
   const timeRangeData: string = useMemo(() => {
@@ -93,14 +107,34 @@ export const PlantDetailPage: FC = () => {
     { query: { enabled: filterType === "day" } },
   );
 
-  // Fetch daily production data for month, year, and custom date ranges
+  // Fetch daily production data for month filter and dates filter with daily granularity
   const {
     data: dailyProductionData,
     isLoading: dailyProductionIsLoading,
     error: dailyProductionError,
   } = useGetDailyProduction(
     { startDate: startDate.toISOString(), endDate: endDate.toISOString()},
-    { query: { enabled: (filterType === "month" || filterType === "year" || filterType === "dates") } },
+    { query: { enabled: filterType === "month" || (filterType === "dates" && datesGranularity === "daily") } },
+  );
+
+  // Fetch monthly production data for year filter and dates filter with monthly granularity
+  const {
+    data: monthlyProductionData,
+    isLoading: monthlyProductionIsLoading,
+    error: monthlyProductionError,
+  } = useGetMonthlyProduction(
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") } },
+  );
+
+  // Fetch yearly production data for totals filter and dates filter with yearly granularity
+  const {
+    data: yearlyProductionData,
+    isLoading: yearlyProductionIsLoading,
+    error: yearlyProductionError,
+  } = useGetYearlyProduction(
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+    { query: { enabled: filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly") } },
   );
 
   // Fetch previous period hourly production data when DAY filter is selected
@@ -111,27 +145,56 @@ export const PlantDetailPage: FC = () => {
     { query: { enabled: filterType === "day" } },
   );
 
-  // Fetch previous period daily production data for month, year, and custom date ranges
+  // Fetch previous period daily production data for month filter and dates filter with daily granularity
   const {
     data: prevDailyProductionData,
   } = useGetDailyProduction(
     { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString()},
-    { query: { enabled: (filterType === "month" || filterType === "year" || filterType === "dates") } },
+    { query: { enabled: filterType === "month" || (filterType === "dates" && datesGranularity === "daily") } },
   );
 
-  // Unified data sources - use hourly for "day" filter, daily for others
-  const productionData = filterType === "day" ? hourlyProductionData : dailyProductionData;
-  const prevProductionData = filterType === "day" ? prevHourlyProductionData : prevDailyProductionData;
+  // Fetch previous period monthly production data
+  const {
+    data: prevMonthlyProductionData,
+  } = useGetMonthlyProduction(
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { query: { enabled: filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") } },
+  );
+
+  // No meaningful previous period for totals (multi-year range)
+  const {
+    data: prevYearlyProductionData,
+  } = useGetYearlyProduction(
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { query: { enabled: false } },
+  );
+
+  // Unified data sources - select endpoint based on filterType and datesGranularity
+  const productionData =
+    filterType === "day" ? hourlyProductionData
+    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? monthlyProductionData
+    : filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly") ? yearlyProductionData
+    : dailyProductionData;
+
+  const prevProductionData =
+    filterType === "day" ? prevHourlyProductionData
+    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? prevMonthlyProductionData
+    : filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly") ? prevYearlyProductionData
+    : prevDailyProductionData;
 
   // Unified loading and error states
   const isLoading =
     hourlyProductionIsLoading ||
     dailyProductionIsLoading ||
+    monthlyProductionIsLoading ||
+    yearlyProductionIsLoading ||
     plantLoading;
 
   const error =
     hourlyProductionError ||
     dailyProductionError ||
+    monthlyProductionError ||
+    yearlyProductionError ||
     plantError;
 
   useEffect(() => {
@@ -157,29 +220,43 @@ export const PlantDetailPage: FC = () => {
 
       const date = new Date(dateStr);
 
-      // For day filter with hourly data, show hour in HH:mm format
       if (filterType === "day") {
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${hours}:${minutes}`;
       }
 
-      // For month filter, show day number
       if (filterType === "month") {
         return date.getDate().toString();
       }
 
-      // For year filter, show month name
+      // monthly data → show month name
       if (filterType === "year") {
         return date.toLocaleDateString("es-ES", { month: "short" });
       }
 
-      // For custom dates, show day and month
+      // yearly data → show year number
+      if (filterType === "totals") {
+        return date.getFullYear().toString();
+      }
+
+      if (filterType === "dates") {
+        if (datesGranularity === "monthly") {
+          return date.toLocaleDateString("es-ES", { month: "short", year: "2-digit" });
+        }
+        if (datesGranularity === "yearly") {
+          return date.getFullYear().toString();
+        }
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = date.toLocaleDateString("es-ES", { month: "short" });
+        return `${day} ${month}`;
+      }
+
       const day = String(date.getDate()).padStart(2, '0');
       const month = date.toLocaleDateString("es-ES", { month: "short" });
       return `${day} ${month}`;
     });
-  }, [productionData, filterType]);
+  }, [productionData, filterType, datesGranularity]);
 
   // Process production data for chart
   const productionValues = useMemo(() => {
