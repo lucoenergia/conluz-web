@@ -32,7 +32,9 @@ import type {
   GetMonthlyProductionParams,
   GetYearlyProductionParams,
   InstantProduction,
-  ProductionByTime
+  ProductionByTime,
+  SyncMonthlyHuaweiProductionBody,
+  SyncYearlyHuaweiProductionBody
 } from '.././models';
 
 import { customInstance } from '.././custom-instance';
@@ -114,6 +116,170 @@ export const useConfigureHuawei = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getConfigureHuaweiMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint enables admins to aggregate monthly production data into yearly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **plantCode** (optional, string): The plant code to aggregate. If not provided, all plants will be aggregated.
+
+**Behavior:**
+- If plantCode is provided: Aggregates only that specific plant
+- If plantCode is not provided or is empty: Aggregates all plants
+
+**Note:** This aggregation requires that monthly aggregations have already been performed
+for the specified year.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required Role: ADMIN**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Aggregate monthly Huawei production data into yearly totals
+ */
+export const syncYearlyHuaweiProduction = (
+    syncYearlyHuaweiProductionBody: SyncYearlyHuaweiProductionBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/huawei/sync/yearly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncYearlyHuaweiProductionBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncYearlyHuaweiProductionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>, TError,{data: SyncYearlyHuaweiProductionBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>, TError,{data: SyncYearlyHuaweiProductionBody}, TContext> => {
+
+const mutationKey = ['syncYearlyHuaweiProduction'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>, {data: SyncYearlyHuaweiProductionBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  syncYearlyHuaweiProduction(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncYearlyHuaweiProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>>
+    export type SyncYearlyHuaweiProductionMutationBody = SyncYearlyHuaweiProductionBody
+    export type SyncYearlyHuaweiProductionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Aggregate monthly Huawei production data into yearly totals
+ */
+export const useSyncYearlyHuaweiProduction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>, TError,{data: SyncYearlyHuaweiProductionBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>,
+        TError,
+        {data: SyncYearlyHuaweiProductionBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncYearlyHuaweiProductionMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint enables admins to aggregate hourly production data into monthly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **month** (optional, integer 1-12): The month to aggregate. If not provided, all months of the year will be aggregated.
+- **plantCode** (optional, string): The plant code to aggregate. If not provided, all plants will be aggregated.
+
+**Behavior:**
+- If both month and plantCode are provided: Aggregates only that specific plant for that month
+- If only month is provided: Aggregates all plants for that specific month
+- If only plantCode is provided: Aggregates that plant for all months of the year
+- If neither month nor plantCode is provided: Aggregates all plants for all months of the year
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required Role: ADMIN**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Aggregate hourly Huawei production data into monthly totals
+ */
+export const syncMonthlyHuaweiProduction = (
+    syncMonthlyHuaweiProductionBody: SyncMonthlyHuaweiProductionBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/huawei/sync/monthly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncMonthlyHuaweiProductionBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncMonthlyHuaweiProductionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>, TError,{data: SyncMonthlyHuaweiProductionBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>, TError,{data: SyncMonthlyHuaweiProductionBody}, TContext> => {
+
+const mutationKey = ['syncMonthlyHuaweiProduction'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>, {data: SyncMonthlyHuaweiProductionBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  syncMonthlyHuaweiProduction(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncMonthlyHuaweiProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>>
+    export type SyncMonthlyHuaweiProductionMutationBody = SyncMonthlyHuaweiProductionBody
+    export type SyncMonthlyHuaweiProductionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Aggregate hourly Huawei production data into monthly totals
+ */
+export const useSyncMonthlyHuaweiProduction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>, TError,{data: SyncMonthlyHuaweiProductionBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>,
+        TError,
+        {data: SyncMonthlyHuaweiProductionBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncMonthlyHuaweiProductionMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

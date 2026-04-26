@@ -180,6 +180,29 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               mb: 3,
             }}
           >
+
+            {/* Partition Coefficient */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: "rgba(236, 72, 153, 0.08)",
+              }}
+            >
+              <PercentIcon sx={{ color: "#ec4899", fontSize: 24 }} />
+              <Box>
+                <Typography variant="h5" fontWeight="bold" color="#ec4899">
+                  {partitionCoefficient.toFixed(2)}%
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Coeficiente de reparto
+                </Typography>
+              </Box>
+            </Box>
+            
             {/* Last Measurement */}
             <Box
               sx={{
@@ -200,29 +223,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                   Último consumo
                 </Typography>
               </Box>
-            </Box>
-
-            {/* Partition Coefficient */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                p: 1.5,
-                borderRadius: 2,
-                bgcolor: "rgba(236, 72, 153, 0.08)",
-              }}
-            >
-              <PercentIcon sx={{ color: "#ec4899", fontSize: 24 }} />
-              <Box>
-                <Typography variant="h5" fontWeight="bold" color="#ec4899">
-                  {partitionCoefficient.toFixed(2)}%
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Coeficiente
-                </Typography>
-              </Box>
-            </Box>
+            </Box>            
 
             {/* Last Connection */}
             <Box

@@ -42,6 +42,26 @@ export const getConfigureHuaweiMockHandler = (overrideResponse?: unknown | ((inf
   })
 }
 
+export const getSyncYearlyHuaweiProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
+  return http.post('*/api/v1/production/huawei/sync/yearly', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
+export const getSyncMonthlyHuaweiProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
+  return http.post('*/api/v1/production/huawei/sync/monthly', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
 export const getGetInstantProductionMockHandler = (overrideResponse?: InstantProduction | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<InstantProduction> | InstantProduction)) => {
   return http.get('*/api/v1/production', async (info) => {await delay(1000);
   
@@ -103,6 +123,8 @@ export const getGetDailyProductionMockHandler = (overrideResponse?: ProductionBy
 }
 export const getProductionMock = () => [
   getConfigureHuaweiMockHandler(),
+  getSyncYearlyHuaweiProductionMockHandler(),
+  getSyncMonthlyHuaweiProductionMockHandler(),
   getGetInstantProductionMockHandler(),
   getGetYearlyProductionMockHandler(),
   getGetMonthlyProductionMockHandler(),
