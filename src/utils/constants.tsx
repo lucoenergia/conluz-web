@@ -3,6 +3,7 @@ import SolarPowerRoundedIcon from "@mui/icons-material/SolarPowerRounded";
 import ElectricBoltRoundedIcon from "@mui/icons-material/ElectricBoltRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import ExtensionRoundedIcon from "@mui/icons-material/ExtensionRounded";
 
 export const MIN_DESKTOP_WIDTH = 768;
 export const SIDEMENU_WIDTH = 260;
@@ -13,4 +14,5 @@ export const MENU_ITEMS = [
   { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo" },
   { to: "/partners", id: "partners", icon: GroupsRoundedIcon, label: "Socios" },
   { to: "/contact", id: "contact", icon: SupportAgentRoundedIcon, label: "Contacto" },
+  { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones" },
 ];

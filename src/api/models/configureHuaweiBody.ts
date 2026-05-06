@@ -11,4 +11,7 @@ export interface ConfigureHuaweiBody {
   username: string;
   /** @minLength 1 */
   password: string;
+  /** @minLength 1 */
+  baseUrl: string;
+  enabled: boolean;
 }

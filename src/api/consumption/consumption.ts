@@ -26,6 +26,7 @@ import type {
 
 import type {
   ConfigureDatadisBody,
+  ConfigureShellyBody,
   GetDatadisConsumptionHourlyCsvReportParams,
   SyncDatadisConsumptionsBody,
   SyncMonthlyDatadisConsumptionsBody,
@@ -39,6 +40,88 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
+ * This endpoint allows to enable or disable the Shelly integration for the energy community.
+
+The request body must contain:
+- **enabled** (required, boolean): Master switch for every Shelly-related
+  services. When `false`, scheduled jobs for processing MQTT messages and
+  aggregating hourly consumption are skipped. Set this to `false` for energy
+  communities that do not have Shelly meters installed.
+
+This configuration is a mandatory step to be able to process Shelly consumption data.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required Role: ADMIN**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with details
+about the configuration already set.
+
+In cases where the creation process encounters errors, the server responds with an appropriate error
+status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
+
+ * @summary Sets up the configuration for Shelly integration.
+ */
+export const configureShelly = (
+    configureShellyBody: ConfigureShellyBody,
+ ) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/shelly/config`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: configureShellyBody
+    },
+      );
+    }
+  
+
+
+export const getConfigureShellyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext> => {
+
+const mutationKey = ['configureShelly'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureShelly>>, {data: ConfigureShellyBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  configureShelly(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfigureShellyMutationResult = NonNullable<Awaited<ReturnType<typeof configureShelly>>>
+    export type ConfigureShellyMutationBody = ConfigureShellyBody
+    export type ConfigureShellyMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Sets up the configuration for Shelly integration.
+ */
+export const useConfigureShelly = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof configureShelly>>,
+        TError,
+        {data: ConfigureShellyBody},
+        TContext
+      > => {
+
+      const mutationOptions = getConfigureShellyMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * This endpoint allows to configure the app to connect with datadis.es.
 
 This configuration is a mandatory step to be able to retrieve consumption data from datadis.es.

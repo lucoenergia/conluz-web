@@ -9,6 +9,7 @@
 export * from './bulkErrorObject';
 export * from './configureDatadisBody';
 export * from './configureHuaweiBody';
+export * from './configureShellyBody';
 export * from './createDefaultAdminUserBody';
 export * from './createPlantBody';
 export * from './createPlantBodyInverterProvider';
@@ -30,6 +31,7 @@ export * from './getAllUsersParams';
 export * from './getDailyProductionParams';
 export * from './getDatadisConsumptionHourlyCsvReportParams';
 export * from './getHourlyProductionParams';
+export * from './getInfoResponse';
 export * from './getInstantProductionParams';
 export * from './getMonthlyProductionParams';
 export * from './getPriceByRangeOfDatesParams';

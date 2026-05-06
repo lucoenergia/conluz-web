@@ -6,12 +6,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ConfigureDatadisBody {
-  /** @minLength 1 */
-  username: string;
-  /** @minLength 1 */
-  password: string;
-  /** @minLength 1 */
-  baseUrl: string;
+export interface ConfigureShellyBody {
   enabled: boolean;
 }

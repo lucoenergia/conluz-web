@@ -44,9 +44,23 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
- * This endpoint allows to configure the app to connect with huawei.com.
+ * This endpoint allows to configure the app to connect with a Huawei FusionSolar
+Northbound API endpoint.
 
-This configuration is a mandatory step to be able to retrieve production data from huawei.com.
+The request body must contain:
+- **username** (required, string): API user.
+- **password** (required, string): API password / system code.
+- **baseUrl** (required, string): Base URL of the Huawei FusionSolar API
+  (for example `https://eu5.fusionsolar.huawei.com/thirdData`). Mock services
+  that emulate the SmartPVMS V6 Northbound Interface can be targeted by
+  providing their base URL here.
+- **enabled** (required, boolean): Master switch for every Huawei-related
+  service. When `false`, scheduled syncs and aggregation jobs are skipped and
+  the manual sync endpoints respond with `409 Conflict`. Set this to `false`
+  for energy communities that use a different inverter vendor (e.g. Greenheiss).
+
+This configuration is a mandatory step to be able to retrieve production data
+from the Huawei API.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
 **Required Role: ADMIN**
