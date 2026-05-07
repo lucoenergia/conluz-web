@@ -437,7 +437,7 @@ const PROVIDERS = [
     help: "Necesitas una cuenta dada de alta en datadis.es con permiso de consulta de los CUPS de la comunidad.",
   },
   {
-    id: "huawei", name: "Huawei FusionSolar", icon: "solar_power", color: "#dc2626",
+    id: "huawei", name: "Huawei", icon: "solar_power", color: "#dc2626",
     description: "Conexión con inversores Huawei para recoger datos de producción de las plantas fotovoltaicas.",
     fields: ["credentials"],
     urlPlaceholder: "https://eu5.fusionsolar.huawei.com/thirdData",
@@ -488,10 +488,7 @@ function IntegrationsPage({ accent, density }) {
               {Object.values(state).filter((v) => v.enabled).length} de {PROVIDERS.length} integraciones activas
             </Typography>
           </Box>
-          <Box sx={{ flex: 1 }} />
-          <Typography variant="caption" sx={{ color: "#6b7280" }}>
-            Última sincronización: hace 4 minutos
-          </Typography>
+          <Box sx={{ flex: 1 }} />          
         </Paper>
       </Box>
 

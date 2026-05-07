@@ -1,9 +1,12 @@
-import { useState, useCallback, type FC } from "react";
-import { Box, Typography, Paper, Snackbar, Alert, Avatar } from "@mui/material";
+import { useState, useCallback, useEffect, type FC } from "react";
+import { Box, Typography, Paper, Snackbar, Alert, Avatar, CircularProgress } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { useConfigureDatadis } from "../../api/consumption/consumption";
 import { useConfigureHuawei } from "../../api/production/production";
 import { useConfigureShelly } from "../../api/consumption/consumption";
+import { useGetDatadisConfig } from "../../api/consumption/consumption";
+import { useGetHuaweiConfig } from "../../api/production/production";
+import { useGetShellyConfig } from "../../api/consumption/consumption";
 import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -29,7 +32,7 @@ const PROVIDERS = [
   },
   {
     id: "huawei" as const,
-    name: "Huawei FusionSolar",
+    name: "Huawei",
     icon: "solar_power",
     color: "#dc2626",
     description: "Conexión con inversores Huawei para recoger datos de producción de las plantas fotovoltaicas.",
@@ -37,9 +40,9 @@ const PROVIDERS = [
     urlPlaceholder: "https://eu5.fusionsolar.huawei.com/thirdData",
     help: "Usa una cuenta de tipo Northbound API. Confirma con tu instalador la región correcta del endpoint.",
   },
-  {
+    {
     id: "shelly" as const,
-    name: "Shelly Cloud",
+    name: "Shelly",
     icon: "sensors",
     color: "#10b981",
     description:
@@ -57,12 +60,61 @@ export const IntegrationsPage: FC = () => {
     shelly: { enabled: false },
   });
 
+  const [configLoaded, setConfigLoaded] = useState<{ [key: string]: boolean }>({});
   const [snack, setSnack] = useState<string | null>(null);
   const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
+
+  const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig();
+  const { data: datadisConfig, isLoading: datadisLoading } = useGetDatadisConfig();
+  const { data: huaweiConfig, isLoading: huaweiLoading } = useGetHuaweiConfig();
 
   const configureDatadis = useConfigureDatadis();
   const configureHuawei = useConfigureHuawei();
   const configureShelly = useConfigureShelly();
+
+  // Prefill state when config data arrives
+  useEffect(() => {
+    if (shellyConfig && !configLoaded.shelly) {
+      const config = shellyConfig as ConfigureShellyBody;
+      setState(prev => ({
+        ...prev,
+        shelly: { enabled: config.enabled ?? false }
+      }));
+      setConfigLoaded(prev => ({ ...prev, shelly: true }));
+    }
+  }, [shellyConfig, configLoaded.shelly]);
+
+  useEffect(() => {
+    if (datadisConfig && !configLoaded.datadis) {
+      const config = datadisConfig as ConfigureDatadisBody;
+      setState(prev => ({
+        ...prev,
+        datadis: {
+          enabled: config.enabled ?? false,
+          username: config.username || "",
+          password: "", // Never prefill - security
+          baseUrl: config.baseUrl || "",
+        }
+      }));
+      setConfigLoaded(prev => ({ ...prev, datadis: true }));
+    }
+  }, [datadisConfig, configLoaded.datadis]);
+
+  useEffect(() => {
+    if (huaweiConfig && !configLoaded.huawei) {
+      const config = huaweiConfig as ConfigureHuaweiBody;
+      setState(prev => ({
+        ...prev,
+        huawei: {
+          enabled: config.enabled ?? false,
+          username: config.username || "",
+          password: "", // Never prefill - security
+          baseUrl: config.baseUrl || "",
+        }
+      }));
+      setConfigLoaded(prev => ({ ...prev, huawei: true }));
+    }
+  }, [huaweiConfig, configLoaded.huawei]);
 
   const update = useCallback((id: string, patch: Record<string, unknown>) => {
     setState((s) => ({
@@ -96,7 +148,7 @@ export const IntegrationsPage: FC = () => {
               baseUrl: val.baseUrl,
             } as ConfigureHuaweiBody,
           });
-          setSnack("Huawei FusionSolar guardado correctamente");
+          setSnack("Configuración de Huawei guardada correctamente");
         } else if (id === "shelly") {
           const val = state.shelly;
           await configureShelly.mutateAsync({
@@ -115,6 +167,15 @@ export const IntegrationsPage: FC = () => {
   );
 
   const activeCount = Object.values(state).filter((v) => v.enabled).length;
+  const isLoading = shellyLoading || datadisLoading || huaweiLoading;
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -186,9 +247,6 @@ export const IntegrationsPage: FC = () => {
             </Typography>
           </Box>
           <Box sx={{ flex: 1 }} />
-          <Typography variant="caption" sx={{ color: "#6b7280" }}>
-            Última sincronización: hace 4 minutos
-          </Typography>
         </Paper>
       </Box>
 
