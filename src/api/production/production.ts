@@ -44,9 +44,121 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
- * This endpoint allows to configure the app to connect with huawei.com.
+ * This endpoint returns the current Huawei FusionSolar API configuration.
 
-This configuration is a mandatory step to be able to retrieve production data from huawei.com.
+The password is never returned in the response. Instead, a boolean field
+`passwordSet` indicates whether a password has been configured.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required Role: ADMIN**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with
+the current configuration. If no configuration has been set yet, a 404 is returned.
+
+ * @summary Returns the current Huawei configuration.
+ */
+export const getHuaweiConfig = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/production/huawei/config`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetHuaweiConfigQueryKey = () => {
+    return [`/api/v1/production/huawei/config`] as const;
+    }
+
+    
+export const getGetHuaweiConfigQueryOptions = <TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetHuaweiConfigQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHuaweiConfig>>> = ({ signal }) => getHuaweiConfig(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetHuaweiConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getHuaweiConfig>>>
+export type GetHuaweiConfigQueryError = ErrorType<unknown>
+
+
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHuaweiConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getHuaweiConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHuaweiConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getHuaweiConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the current Huawei configuration.
+ */
+
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetHuaweiConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * This endpoint allows to configure the app to connect with a Huawei FusionSolar
+Northbound API endpoint.
+
+The request body must contain:
+- **username** (required, string): API user.
+- **password** (required, string): API password / system code.
+- **baseUrl** (required, string): Base URL of the Huawei FusionSolar API
+  (for example `https://eu5.fusionsolar.huawei.com/thirdData`). Mock services
+  that emulate the SmartPVMS V6 Northbound Interface can be targeted by
+  providing their base URL here.
+- **enabled** (required, boolean): Master switch for every Huawei-related
+  service. When `false`, scheduled syncs and aggregation jobs are skipped and
+  the manual sync endpoints respond with `409 Conflict`. Set this to `false`
+  for energy communities that use a different inverter vendor (e.g. Greenheiss).
+
+This configuration is a mandatory step to be able to retrieve production data
+from the Huawei API.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
 **Required Role: ADMIN**

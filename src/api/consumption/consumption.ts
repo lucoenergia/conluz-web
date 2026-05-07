@@ -26,6 +26,7 @@ import type {
 
 import type {
   ConfigureDatadisBody,
+  ConfigureShellyBody,
   GetDatadisConsumptionHourlyCsvReportParams,
   SyncDatadisConsumptionsBody,
   SyncMonthlyDatadisConsumptionsBody,
@@ -35,6 +36,281 @@ import type {
 import { customInstance } from '.././custom-instance';
 import type { ErrorType } from '.././custom-instance';
 
+
+
+
+/**
+ * This endpoint returns the current Shelly integration configuration.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required Role: ADMIN**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with
+the current configuration. If no configuration has been set yet, a 404 is returned.
+
+ * @summary Returns the current Shelly configuration.
+ */
+export const getShellyConfig = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/shelly/config`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetShellyConfigQueryKey = () => {
+    return [`/api/v1/consumption/shelly/config`] as const;
+    }
+
+    
+export const getGetShellyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetShellyConfigQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getShellyConfig>>> = ({ signal }) => getShellyConfig(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetShellyConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getShellyConfig>>>
+export type GetShellyConfigQueryError = ErrorType<unknown>
+
+
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getShellyConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getShellyConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getShellyConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getShellyConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the current Shelly configuration.
+ */
+
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetShellyConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * This endpoint allows to enable or disable the Shelly integration for the energy community.
+
+The request body must contain:
+- **enabled** (required, boolean): Master switch for every Shelly-related
+  services. When `false`, scheduled jobs for processing MQTT messages and
+  aggregating hourly consumption are skipped. Set this to `false` for energy
+  communities that do not have Shelly meters installed.
+
+This configuration is a mandatory step to be able to process Shelly consumption data.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required Role: ADMIN**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with details
+about the configuration already set.
+
+In cases where the creation process encounters errors, the server responds with an appropriate error
+status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
+
+ * @summary Sets up the configuration for Shelly integration.
+ */
+export const configureShelly = (
+    configureShellyBody: ConfigureShellyBody,
+ ) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/shelly/config`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: configureShellyBody
+    },
+      );
+    }
+  
+
+
+export const getConfigureShellyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext> => {
+
+const mutationKey = ['configureShelly'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureShelly>>, {data: ConfigureShellyBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  configureShelly(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfigureShellyMutationResult = NonNullable<Awaited<ReturnType<typeof configureShelly>>>
+    export type ConfigureShellyMutationBody = ConfigureShellyBody
+    export type ConfigureShellyMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Sets up the configuration for Shelly integration.
+ */
+export const useConfigureShelly = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof configureShelly>>,
+        TError,
+        {data: ConfigureShellyBody},
+        TContext
+      > => {
+
+      const mutationOptions = getConfigureShellyMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint returns the current Datadis connection configuration.
+
+The password is never returned in the response. Instead, a boolean field
+`passwordSet` indicates whether a password has been configured.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required Role: ADMIN**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with
+the current configuration. If no configuration has been set yet, a 404 is returned.
+
+ * @summary Returns the current Datadis configuration.
+ */
+export const getDatadisConfig = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/consumption/datadis/config`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetDatadisConfigQueryKey = () => {
+    return [`/api/v1/consumption/datadis/config`] as const;
+    }
+
+    
+export const getGetDatadisConfigQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDatadisConfigQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisConfig>>> = ({ signal }) => getDatadisConfig(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDatadisConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisConfig>>>
+export type GetDatadisConfigQueryError = ErrorType<unknown>
+
+
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the current Datadis configuration.
+ */
+
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDatadisConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
 
 
 

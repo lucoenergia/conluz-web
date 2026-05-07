@@ -32,6 +32,16 @@ export const getGetHourlyProductionResponseMock = (): ProductionByTime[] => (Arr
 export const getGetDailyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
 
+export const getGetHuaweiConfigMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
+  return http.get('*/api/v1/production/huawei/config', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
 export const getConfigureHuaweiMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<unknown> | unknown)) => {
   return http.put('*/api/v1/production/huawei/config', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
@@ -122,6 +132,7 @@ export const getGetDailyProductionMockHandler = (overrideResponse?: ProductionBy
   })
 }
 export const getProductionMock = () => [
+  getGetHuaweiConfigMockHandler(),
   getConfigureHuaweiMockHandler(),
   getSyncYearlyHuaweiProductionMockHandler(),
   getSyncMonthlyHuaweiProductionMockHandler(),

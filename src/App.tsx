@@ -22,6 +22,7 @@ import { PlantsPage } from "./pages/production/PlantsPage";
 import { CreatePlantPage } from "./pages/production/CreatePlantPage";
 import { EditPlantPage } from "./pages/production/EditPlantPage";
 import { PlantDetailPage } from "./pages/production/PlantDetailPage";
+import { IntegrationsPage } from "./pages/integrations/IntegrationsPage";
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
           </Route>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
+          <Route path="integrations" element={<IntegrationsPage />} />
         </Route>
         <Route element={<DynamicLayout />}>
           <Route path="contact" element={<ContactPage />} />
