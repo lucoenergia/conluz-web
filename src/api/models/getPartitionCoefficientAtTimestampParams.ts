@@ -6,8 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-}
+export type GetPartitionCoefficientAtTimestampParams = {
+/**
+ * ISO-8601 timestamp
+ */
+timestamp: string;
+};

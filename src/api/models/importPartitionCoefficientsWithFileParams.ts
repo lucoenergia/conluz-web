@@ -6,8 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-}
+export type ImportPartitionCoefficientsWithFileParams = {
+/**
+ * ISO-8601 instant from which the new coefficients are effective.
+ */
+effectiveAt: string;
+};

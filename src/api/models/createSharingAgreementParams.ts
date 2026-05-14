@@ -6,8 +6,17 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-}
+export type CreateSharingAgreementParams = {
+/**
+ * Start date of the agreement (yyyy-MM-dd)
+ */
+startDate: string;
+/**
+ * End date of the agreement (yyyy-MM-dd)
+ */
+endDate?: string;
+/**
+ * Notes for the agreement
+ */
+notes?: string;
+};

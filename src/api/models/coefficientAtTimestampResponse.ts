@@ -6,8 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  notes?: string;
+export interface CoefficientAtTimestampResponse {
+  /** Supply UUID */
+  supplyId?: string;
+  /** Queried timestamp */
+  timestamp?: string;
+  /** Coefficient active at the queried timestamp */
+  coefficient?: number;
 }

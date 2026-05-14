@@ -26,6 +26,8 @@ import type {
 
 import type {
   CreateSharingAgreementBody,
+  CreateSharingAgreementBodyOne,
+  CreateSharingAgreementParams,
   CreateSuppliesWithFileBody,
   CreateSupplyBody,
   CreationInBulkResponse,
@@ -38,11 +40,14 @@ import type {
   GetSupplyMonthlyConsumptionParams,
   GetSupplyMonthlyProductionParams,
   GetSupplyYearlyConsumptionParams,
+  ImportSharingAgreementPartitionsBody,
   ImportSuppliesPartitionsWithFileBody,
   ImportSuppliesPartitionsWithFileParams,
   PagedResultSupplyResponse,
   ProductionByTime,
+  SharingAgreementListResponse,
   SharingAgreementResponse,
+  SupplyPartitionWithComparisonResponse,
   SupplyResponse,
   UpdateSharingAgreementBody,
   UpdateSupplyBody
@@ -999,6 +1004,94 @@ export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * Returns a list of all sharing agreements ordered by start date descending, including counts of active and previous agreements and partition stats per agreement.
+ * @summary Gets all sharing agreements
+ */
+export const getAllSharingAgreements = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SharingAgreementListResponse>(
+      {url: `/api/v1/sharing-agreements`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetAllSharingAgreementsQueryKey = () => {
+    return [`/api/v1/sharing-agreements`] as const;
+    }
+
+    
+export const getGetAllSharingAgreementsQueryOptions = <TData = Awaited<ReturnType<typeof getAllSharingAgreements>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSharingAgreements>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAllSharingAgreementsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllSharingAgreements>>> = ({ signal }) => getAllSharingAgreements(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllSharingAgreements>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAllSharingAgreementsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllSharingAgreements>>>
+export type GetAllSharingAgreementsQueryError = ErrorType<unknown>
+
+
+export function useGetAllSharingAgreements<TData = Awaited<ReturnType<typeof getAllSharingAgreements>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSharingAgreements>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllSharingAgreements>>,
+          TError,
+          Awaited<ReturnType<typeof getAllSharingAgreements>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllSharingAgreements<TData = Awaited<ReturnType<typeof getAllSharingAgreements>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSharingAgreements>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllSharingAgreements>>,
+          TError,
+          Awaited<ReturnType<typeof getAllSharingAgreements>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllSharingAgreements<TData = Awaited<ReturnType<typeof getAllSharingAgreements>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSharingAgreements>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Gets all sharing agreements
+ */
+
+export function useGetAllSharingAgreements<TData = Awaited<ReturnType<typeof getAllSharingAgreements>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSharingAgreements>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAllSharingAgreementsQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * This endpoint creates a new sharing agreement with the specified start and end dates.
  * @summary This endpoint facilitates the creation of a new sharing agreement within the system.
 
@@ -1017,15 +1110,16 @@ the issue.
 
  */
 export const createSharingAgreement = (
-    createSharingAgreementBody: CreateSharingAgreementBody,
+    createSharingAgreementBody: CreateSharingAgreementBodyOne | CreateSharingAgreementBody,
+    params: CreateSharingAgreementParams,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<SharingAgreementResponse>(
+      return customInstance<string>(
       {url: `/api/v1/sharing-agreements`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createSharingAgreementBody, signal
+      data: createSharingAgreementBody,
+        params, signal
     },
       );
     }
@@ -1033,8 +1127,8 @@ export const createSharingAgreement = (
 
 
 export const getCreateSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}, TContext> => {
 
 const mutationKey = ['createSharingAgreement'];
 const {mutation: mutationOptions} = options ?
@@ -1046,10 +1140,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSharingAgreement>>, {data: CreateSharingAgreementBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSharingAgreement>>, {data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  createSharingAgreement(data,)
+          return  createSharingAgreement(data,params,)
         }
 
         
@@ -1058,7 +1152,7 @@ const {mutation: mutationOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof createSharingAgreement>>>
-    export type CreateSharingAgreementMutationBody = CreateSharingAgreementBody
+    export type CreateSharingAgreementMutationBody = CreateSharingAgreementBodyOne | CreateSharingAgreementBody
     export type CreateSharingAgreementMutationError = ErrorType<unknown>
 
     /**
@@ -1079,15 +1173,86 @@ the issue.
 
  */
 export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSharingAgreement>>,
         TError,
-        {data: CreateSharingAgreementBody},
+        {data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams},
         TContext
       > => {
 
       const mutationOptions = getCreateSharingAgreementMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Replaces or creates supply partitions on an existing agreement.
+File format: CUPS;coefficient (semicolon separator, fraction 0-1).
+**Required Role: ADMIN**
+
+ * @summary Imports supply partitions for a sharing agreement from a TXT file
+ */
+export const importSharingAgreementPartitions = (
+    id: string,
+    importSharingAgreementPartitionsBody: ImportSharingAgreementPartitionsBody,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+formData.append(`file`, importSharingAgreementPartitionsBody.file)
+
+      return customInstance<string>(
+      {url: `/api/v1/sharing-agreements/${id}/supply-partitions/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
+  
+
+
+export const getImportSharingAgreementPartitionsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSharingAgreementPartitions>>, TError,{id: string;data: ImportSharingAgreementPartitionsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof importSharingAgreementPartitions>>, TError,{id: string;data: ImportSharingAgreementPartitionsBody}, TContext> => {
+
+const mutationKey = ['importSharingAgreementPartitions'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importSharingAgreementPartitions>>, {id: string;data: ImportSharingAgreementPartitionsBody}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  importSharingAgreementPartitions(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportSharingAgreementPartitionsMutationResult = NonNullable<Awaited<ReturnType<typeof importSharingAgreementPartitions>>>
+    export type ImportSharingAgreementPartitionsMutationBody = ImportSharingAgreementPartitionsBody
+    export type ImportSharingAgreementPartitionsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Imports supply partitions for a sharing agreement from a TXT file
+ */
+export const useImportSharingAgreementPartitions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSharingAgreementPartitions>>, TError,{id: string;data: ImportSharingAgreementPartitionsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importSharingAgreementPartitions>>,
+        TError,
+        {id: string;data: ImportSharingAgreementPartitionsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getImportSharingAgreementPartitionsMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }
@@ -1805,6 +1970,182 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSupplyDailyConsumptionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Returns the supply partitions for a sharing agreement, including comparison with the previous agreement's coefficients.
+ * @summary Gets supply partitions for a sharing agreement
+ */
+export const getSharingAgreementPartitions = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyPartitionWithComparisonResponse[]>(
+      {url: `/api/v1/sharing-agreements/${id}/supply-partitions`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetSharingAgreementPartitionsQueryKey = (id: string,) => {
+    return [`/api/v1/sharing-agreements/${id}/supply-partitions`] as const;
+    }
+
+    
+export const getGetSharingAgreementPartitionsQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementPartitionsQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreementPartitions>>> = ({ signal }) => getSharingAgreementPartitions(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSharingAgreementPartitionsQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementPartitions>>>
+export type GetSharingAgreementPartitionsQueryError = ErrorType<unknown>
+
+
+export function useGetSharingAgreementPartitions<TData = Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSharingAgreementPartitions>>,
+          TError,
+          Awaited<ReturnType<typeof getSharingAgreementPartitions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSharingAgreementPartitions<TData = Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSharingAgreementPartitions>>,
+          TError,
+          Awaited<ReturnType<typeof getSharingAgreementPartitions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSharingAgreementPartitions<TData = Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Gets supply partitions for a sharing agreement
+ */
+
+export function useGetSharingAgreementPartitions<TData = Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitions>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSharingAgreementPartitionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Downloads the partition coefficients for a sharing agreement as a plain-text file with one line per supply in CUPS;coefficient format.
+ * @summary Exports supply partitions for a sharing agreement as a TXT file
+ */
+export const exportSharingAgreementPartitions = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<string>(
+      {url: `/api/v1/sharing-agreements/${id}/supply-partitions/export`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getExportSharingAgreementPartitionsQueryKey = (id: string,) => {
+    return [`/api/v1/sharing-agreements/${id}/supply-partitions/export`] as const;
+    }
+
+    
+export const getExportSharingAgreementPartitionsQueryOptions = <TData = Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportSharingAgreementPartitionsQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>> = ({ signal }) => exportSharingAgreementPartitions(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportSharingAgreementPartitionsQueryResult = NonNullable<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>>
+export type ExportSharingAgreementPartitionsQueryError = ErrorType<unknown>
+
+
+export function useExportSharingAgreementPartitions<TData = Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSharingAgreementPartitions>>,
+          TError,
+          Awaited<ReturnType<typeof exportSharingAgreementPartitions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportSharingAgreementPartitions<TData = Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSharingAgreementPartitions>>,
+          TError,
+          Awaited<ReturnType<typeof exportSharingAgreementPartitions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportSharingAgreementPartitions<TData = Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Exports supply partitions for a sharing agreement as a TXT file
+ */
+
+export function useExportSharingAgreementPartitions<TData = Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportSharingAgreementPartitions>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportSharingAgreementPartitionsQueryOptions(id,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

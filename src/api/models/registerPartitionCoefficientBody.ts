@@ -6,8 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  notes?: string;
+export interface RegisterPartitionCoefficientBody {
+  /** New partition coefficient value */
+  coefficient: number;
+  /** Instant from which this coefficient becomes effective (ISO-8601) */
+  effectiveAt: string;
 }

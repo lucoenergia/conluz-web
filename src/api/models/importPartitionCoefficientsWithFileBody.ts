@@ -6,8 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-}
+export type ImportPartitionCoefficientsWithFileBody = {
+  /** TXT file from the distribution company. Format: CUPS;coefficient (comma decimal separator). */
+  file: Blob;
+};

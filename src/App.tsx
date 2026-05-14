@@ -23,6 +23,8 @@ import { CreatePlantPage } from "./pages/production/CreatePlantPage";
 import { EditPlantPage } from "./pages/production/EditPlantPage";
 import { PlantDetailPage } from "./pages/production/PlantDetailPage";
 import { IntegrationsPage } from "./pages/integrations/IntegrationsPage";
+import { AgreementsPage } from "./pages/sharing-agreements/AgreementsPage";
+import { AgreementDetailPage } from "./pages/sharing-agreements/AgreementDetailPage";
 
 function App() {
   return (
@@ -58,6 +60,10 @@ function App() {
             <Route path="new" element={<CreatePartnerPage />} />
             <Route path=":partnerId/edit" element={<EditPartnerPage />} />
             <Route path=":partnerId/supply-points" element={<PartnerSupplyPointsPage />} />
+          </Route>
+          <Route path="sharing-agreements">
+            <Route index element={<AgreementsPage />}></Route>
+            <Route path=":agreementId" element={<AgreementDetailPage />} />
           </Route>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />

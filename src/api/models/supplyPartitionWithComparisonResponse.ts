@@ -6,8 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  notes?: string;
+export interface SupplyPartitionWithComparisonResponse {
+  supplyId?: string;
+  cups?: string;
+  supplyName?: string;
+  address?: string;
+  userFullName?: string;
+  coefficient?: number;
+  previousCoefficient?: number;
+  delta?: number;
 }
