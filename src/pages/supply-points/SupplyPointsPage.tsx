@@ -13,11 +13,14 @@ import { EmptyState } from "../../components/EmptyState";
 import { Link, useNavigate } from "react-router";
 import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import { ImportSuppliesModal } from "../../components/Modals/ImportSuppliesModal";
 
 export const SupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [showImportModal, setShowImportModal] = useState(false);
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({ size: 10000 });
@@ -91,6 +94,18 @@ export const SupplyPointsPage: FC = () => {
     return { total, active, inactive };
   }, [responseFromApi]);
 
+  const handleOpenImportModal = () => {
+    setShowImportModal(true);
+  };
+
+  const handleCloseImportModal = () => {
+    setShowImportModal(false);
+  };
+
+  const handleImportComplete = () => {
+    refetch();
+  };
+
   return (
     <Box
       sx={{
@@ -150,28 +165,51 @@ export const SupplyPointsPage: FC = () => {
               justifyContent: "space-between",
             }}
           >
-          {/* New Supply Button */}
-          <Button
-            component={Link}
-            to="/supply-points/new"
-            variant="contained"
-            startIcon={<AddCircleOutlineIcon />}
-            sx={{
-              background: "#667eea",
-              borderRadius: 2,
-              textTransform: "none",
-              px: 3,
-              py: 1.5,
-              boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
-              "&:hover": {
-                transform: "translateY(-2px)",
-                boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Nuevo Punto de Suministro
-          </Button>
+          {/* Action Buttons */}
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Button
+              component={Link}
+              to="/supply-points/new"
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              sx={{
+                background: "#667eea",
+                borderRadius: 2,
+                textTransform: "none",
+                px: 3,
+                py: 1.5,
+                boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+                },
+                transition: "all 0.3s ease",
+              }}
+            >
+              Nuevo Punto de Suministro
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<CloudUploadIcon />}
+              onClick={handleOpenImportModal}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                px: 3,
+                py: 1.5,
+                borderColor: "#667eea",
+                color: "#667eea",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  borderColor: "#5568d3",
+                  backgroundColor: "rgba(102, 126, 234, 0.04)",
+                },
+                transition: "all 0.3s ease",
+              }}
+            >
+              Importar CSV
+            </Button>
+          </Box>
 
           {/* Filter Chips */}
           <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
@@ -236,6 +274,13 @@ export const SupplyPointsPage: FC = () => {
           />
         </Box>
       )}
+
+      {/* Import Supplies Modal */}
+      <ImportSuppliesModal
+        isOpen={showImportModal}
+        onClose={handleCloseImportModal}
+        onImportComplete={handleImportComplete}
+      />
     </Box>
   );
 };
