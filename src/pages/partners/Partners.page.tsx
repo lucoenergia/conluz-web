@@ -38,6 +38,7 @@ import LockResetIcon from "@mui/icons-material/LockReset";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
 import { useGetAllUsers, useDisableUser1, useDisableUser } from "../../api/users/users";
 import { useDebounce } from "../../utils/useDebounce";
@@ -45,6 +46,7 @@ import { DisablePartnerConfirmationModal } from "../../components/Modals/Disable
 import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
 import { DisablePartnerSuccessModal } from "../../components/Modals/DisablePartnerSuccessModal";
 import { ResetPasswordConfirmationModal } from "../../components/Modals/ResetPasswordConfirmationModal";
+import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 import { useErrorDispatch } from "../../context/error.context";
 
 type OrderDirection = 'asc' | 'desc';
@@ -69,6 +71,7 @@ export const PartnersPage: FC = () => {
   const [showDisableConfirmation, setShowDisableConfirmation] = useState(false);
   const [showDisableSuccess, setShowDisableSuccess] = useState(false);
   const [showResetPasswordConfirmation, setShowResetPasswordConfirmation] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [wasEnabled, setWasEnabled] = useState(false);
 
   const debouncedSearch = useDebounce(filters.search, 500);
@@ -220,6 +223,18 @@ export const PartnersPage: FC = () => {
     setShowResetPasswordConfirmation(false);
   };
 
+  const handleOpenImportModal = () => {
+    setShowImportModal(true);
+  };
+
+  const handleCloseImportModal = () => {
+    setShowImportModal(false);
+  };
+
+  const handleImportComplete = () => {
+    refetch();
+  };
+
   const handleEditClick = () => {
     if (!selectedUser) return;
     handleMenuClose();
@@ -302,28 +317,51 @@ export const PartnersPage: FC = () => {
               mb: 2,
             }}
           >
-            {/* New Partner Button */}
-            <Button
-              component={Link}
-              to="/partners/new"
-              variant="contained"
-              startIcon={<AddCircleOutlineIcon />}
-              sx={{
-                background: "#667eea",
-                borderRadius: 2,
-                textTransform: "none",
-                px: 3,
-                py: 1.5,
-                boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
-                },
-                transition: "all 0.3s ease",
-              }}
-            >
-              Nuevo Socio
-            </Button>
+            {/* Action Buttons */}
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              <Button
+                component={Link}
+                to="/partners/new"
+                variant="contained"
+                startIcon={<AddCircleOutlineIcon />}
+                sx={{
+                  background: "#667eea",
+                  borderRadius: 2,
+                  textTransform: "none",
+                  px: 3,
+                  py: 1.5,
+                  boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              >
+                Nuevo Socio
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<CloudUploadIcon />}
+                onClick={handleOpenImportModal}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  px: 3,
+                  py: 1.5,
+                  borderColor: "#667eea",
+                  color: "#667eea",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    borderColor: "#5568d3",
+                    backgroundColor: "rgba(102, 126, 234, 0.04)",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              >
+                Importar CSV
+              </Button>
+            </Box>
 
             {/* Filter Chips */}
           <FilterChipsBar
@@ -641,6 +679,13 @@ export const PartnersPage: FC = () => {
         partnerName={selectedUser?.name || ''}
         onCancel={handleResetPasswordCancel}
         onReset={handleResetPasswordConfirm}
+      />
+
+      {/* Import Partners Modal */}
+      <ImportPartnersModal
+        isOpen={showImportModal}
+        onClose={handleCloseImportModal}
+        onImportComplete={handleImportComplete}
       />
     </Box>
   );
