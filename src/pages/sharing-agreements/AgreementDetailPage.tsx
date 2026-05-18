@@ -163,7 +163,7 @@ export const AgreementDetailPage: FC = () => {
     partitions.forEach((p) => {
       if (p.supplyId) {
         map[p.supplyId] = {
-          name: p.supplyName ?? "",
+        name: p.supplyName || p.cups || "",
           address: p.address ?? "",
           cups: p.cups ?? "",
           user: p.userFullName ?? "",
@@ -188,7 +188,7 @@ export const AgreementDetailPage: FC = () => {
         const meta = partitionMeta[sid];
         return {
           id: sid,
-          name: meta?.name ?? sid,
+          name: meta?.name || meta?.cups || sid,
           address: meta?.address ?? "",
           cups: meta?.cups ?? "",
           user: meta?.user ?? "",
@@ -208,7 +208,7 @@ export const AgreementDetailPage: FC = () => {
       .filter((p) => p.supplyId && coefs[p.supplyId] === undefined && p.previousCoefficient != null && p.previousCoefficient > 0)
       .map((p) => ({
         id: p.supplyId!,
-        name: p.supplyName ?? "",
+        name: p.supplyName || p.cups || "",
         address: p.address ?? "",
         cups: p.cups ?? "",
         user: p.userFullName ?? "",

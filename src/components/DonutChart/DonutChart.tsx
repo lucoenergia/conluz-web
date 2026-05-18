@@ -1,4 +1,5 @@
-import type { FC } from "react";
+import { useMemo, type FC } from "react";
+import Chart from "react-apexcharts";
 
 export interface DonutSegment {
   name: string;
@@ -24,56 +25,92 @@ export const DonutChart: FC<DonutChartProps> = ({
   size = 220,
   colors = DEFAULT_COLORS,
 }) => {
-  const r = 80;
-  const cx = size / 2;
-  const cy = size / 2;
-  let cum = 0;
-  const segments = data.map((d, i) => {
-    const start = cum / total;
-    cum += d.value;
-    const end = cum / total;
-    const startAngle = start * Math.PI * 2 - Math.PI / 2;
-    const endAngle = end * Math.PI * 2 - Math.PI / 2;
-    const large = end - start > 0.5 ? 1 : 0;
-    const x1 = cx + r * Math.cos(startAngle);
-    const y1 = cy + r * Math.sin(startAngle);
-    const x2 = cx + r * Math.cos(endAngle);
-    const y2 = cy + r * Math.sin(endAngle);
-    const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
-    return { ...d, path, color: d.color || colors[i % colors.length] };
-  });
+  const { series, labels, chartColors, activeTotal } = useMemo(() => {
+    const filtered = data.filter((d) => d.value > 0);
+    return {
+      series: filtered.map((d) => d.value),
+      labels: filtered.map((d) => d.name),
+      chartColors: filtered.map((d, i) => d.color || colors[i % colors.length]),
+      activeTotal: filtered.reduce((s, d) => s + d.value, 0),
+    };
+  }, [data, colors]);
 
-  const activeTotal = data.reduce((s, d) => s + d.value, 0);
+  const options = useMemo(
+    () => ({
+      chart: {
+        toolbar: { show: false },
+        animations: {
+          enabled: true,
+          easing: "easeinout" as const,
+          speed: 800,
+        },
+      },
+      colors: chartColors,
+      labels,
+      plotOptions: {
+        pie: {
+          donut: {
+            size: "65%",
+            labels: {
+              show: true,
+              total: {
+                show: activeTotal > 0,
+                showAlways: activeTotal > 0,
+                label: "Total",
+                formatter: () => `${(total * 100).toFixed(2)}%`,
+                color: "#1f2937",
+                fontSize: "20px",
+                fontWeight: 800,
+                fontFamily: "'JetBrains Mono', monospace",
+              },
+            },
+          },
+        },
+      },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+      stroke: { width: 2, colors: ["white"] },
+      tooltip: {
+        enabled: activeTotal > 0,
+        y: {
+          formatter: (value: number) =>
+            `${((value / activeTotal) * 100).toFixed(2)}%`,
+        },
+      },
+      states: {
+        hover: {
+          filter: { type: "darken" as const, value: 0.15 },
+        },
+        active: {
+          filter: { type: "darken" as const, value: 0.35 },
+        },
+      },
+    }),
+    [labels, chartColors, activeTotal, total],
+  );
+
+  if (activeTotal === 0) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          display: "grid",
+          placeItems: "center",
+        }}
+      >
+        <span style={{ color: "#6b7280", fontSize: 13 }}>Sin datos</span>
+      </div>
+    );
+  }
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {segments.map((s, i) => (
-        <path key={i} d={s.path} fill={s.color} stroke="white" strokeWidth="2">
-          <title>{`${s.name}: ${activeTotal > 0 ? ((s.value / activeTotal) * 100).toFixed(2) : "0.00"}%`}</title>
-        </path>
-      ))}
-      <circle cx={cx} cy={cy} r={50} fill="white" />
-      <text
-        x={cx}
-        y={cy - 4}
-        textAnchor="middle"
-        fontSize="11"
-        fill="#6b7280"
-        fontFamily="Inter, system-ui, sans-serif"
-      >
-        Total
-      </text>
-      <text
-        x={cx}
-        y={cy + 16}
-        textAnchor="middle"
-        fontSize="20"
-        fontWeight="800"
-        fill="#1f2937"
-        fontFamily="'JetBrains Mono', monospace"
-      >
-        {(total * 100).toFixed(2)}%
-      </text>
-    </svg>
+    <Chart
+      options={options}
+      series={series}
+      type="donut"
+      width={size}
+      height={size}
+    />
   );
 };
