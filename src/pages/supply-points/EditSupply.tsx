@@ -88,7 +88,7 @@ export const EditSupplyPage: FC = () => {
               Editar punto de suministro
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {supplyPoint?.name || "Cargando..."}
+              {supplyPoint?.name || supplyPoint?.code || "Cargando..."}
             </Typography>
           </Box>
         </Box>

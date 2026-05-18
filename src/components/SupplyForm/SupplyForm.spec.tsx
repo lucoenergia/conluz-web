@@ -86,6 +86,22 @@ describe("Supply Form", () => {
     expect(screen.getByText("Por favor, introduce un numero de 6 decimales")).toBeVisible();
   });
 
+  it("Shows Guardar cambios when initialValues provided without name", async () => {
+    render(
+      <TestWrapper>
+        <SupplyForm
+          handleSubmit={mockHandleSubmit}
+          initialValues={{
+            cups: "ES002100823463",
+            address: "Calle Escuadra 3",
+            partitionCoefficient: 0.002345,
+          }}
+        />
+      </TestWrapper>,
+    );
+    expect(screen.getByText("Guardar cambios")).toBeVisible();
+  });
+
   it("Loads inital values and shows correct button text", async () => {
     render(
       <TestWrapper>

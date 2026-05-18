@@ -21,19 +21,21 @@ interface SupplyFormProps {
 }
 
 export const SupplyForm: FC<SupplyFormProps> = ({
-  initialValues: {
+  initialValues: initialValuesProp,
+  handleSubmit,
+  showUserSelector = false,
+  selectedUserId,
+  disableUserSelector = false,
+}) => {
+  const initialValues = initialValuesProp || {};
+  const {
     name: initialName = "",
     cups: initialCups = "",
     address: initialAddress = "",
     partitionCoefficient: initialPartitionCoefficient = "",
     addressRef: initialAddressRef = "",
     personalId: initialPersonalId = "",
-  } = {},
-  handleSubmit,
-  showUserSelector = false,
-  selectedUserId,
-  disableUserSelector = false,
-}) => {
+  } = initialValues;
   const [name, setName] = useState(initialName);
   const [cups, setCups] = useState(initialCups);
   const [address, setAddress] = useState(initialAddress);
@@ -246,7 +248,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           value={addressRef}
           onChange={(e) => setAddressRef(e.target.value)}
           slotProps={{ htmlInput: { maxLength: 50 } }}
-          required
           fullWidth
           variant="outlined"
           sx={{
@@ -281,7 +282,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
             transition: "all 0.3s ease",
           }}
         >
-          {initialName ? "Guardar cambios" : "Crear punto de suministro"}
+          {initialValuesProp ? "Guardar cambios" : "Crear punto de suministro"}
         </Button>
       </Box>
     </Box>
