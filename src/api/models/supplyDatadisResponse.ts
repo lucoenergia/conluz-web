@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CreateSharingAgreementBodyOne = {
-  /** TXT file with CUPS;coefficient rows */
-  file: Blob;
-};
+export interface SupplyDatadisResponse {
+  /** Whether is an authorized third party supply or not */
+  thirdParty?: boolean;
+}

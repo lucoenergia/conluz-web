@@ -15,7 +15,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DescriptionIcon from "@mui/icons-material/Description";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import { SumCheck } from "../../components/SumCheck";
-import { useGetAllSupplies, useCreateSharingAgreement } from "../../api/supplies/supplies";
+import { useGetAllSupplies, useCreateSharingAgreement, useImportSharingAgreementPartitions } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models/supplyResponse";
 import { SAMPLE_DISTRIBUTOR_TXT } from "./agreements.helpers";
 
@@ -49,6 +49,7 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
   const { data: suppliesData = { items: [] } } = useGetAllSupplies({ size: 10000 });
   const supplies = useMemo(() => suppliesData.items ?? [], [suppliesData]);
   const createMutation = useCreateSharingAgreement();
+  const importMutation = useImportSharingAgreementPartitions();
 
   const handleFile = (file: File | null) => {
     if (!file) return;
@@ -229,29 +230,6 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
             </Button>
           </Box>
 
-          <Typography
-            variant="caption"
-            sx={{ display: "block", mt: 1.5, mb: 0.5, color: "#6b7280" }}
-          >
-            o pega el contenido del fichero a continuación:
-          </Typography>
-
-          <TextField
-            multiline
-            rows={6}
-            value={txtContent}
-            onChange={(e) => setTxtContent(e.target.value)}
-            placeholder={`# Formato esperado: CUPS;COEFICIENTE\nES0021000004271234AB;0,145000\nES0021000004275678CD;0,132000\n…`}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 12,
-                bgcolor: "white",
-              },
-            }}
-            fullWidth
-          />
-
           {parsed && (
             <Box sx={{ mt: 2 }}>
               <SumCheck sum={parsed.sum} count={parsed.rows.filter((r) => !r.errors.length).length} />
@@ -310,14 +288,16 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
         </Button>
         <Button
           variant="contained"
-          disabled={!canCreate || createMutation.isPending}
+          disabled={!canCreate || createMutation.isPending || importMutation.isPending}
           onClick={async () => {
-            const blob = new Blob([txtContent], { type: "text/plain" });
             try {
-              const newId = await createMutation.mutateAsync({
-                data: { file: blob },
-                params: { startDate, endDate: endDate || undefined, notes: note || undefined },
+              const { id: newId } = await createMutation.mutateAsync({
+                data: { startDate, endDate: endDate || undefined, notes: note || undefined },
               });
+              if (txtContent.trim()) {
+                const file = new File([txtContent], fileName || "coeficientes.txt", { type: "text/plain" });
+                await importMutation.mutateAsync({ id: newId!, data: { file } });
+              }
               onCreated(newId);
             } catch {
               // Error handled by React Query global handler
@@ -330,7 +310,7 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
             "&:hover": { bgcolor: "#5568d3" },
           }}
         >
-          {createMutation.isPending ? "Creando..." : "Crear acuerdo"}
+          {createMutation.isPending ? "Creando acuerdo..." : importMutation.isPending ? "Importando coeficientes..." : "Crear acuerdo"}
         </Button>
       </DialogActions>
     </Dialog>

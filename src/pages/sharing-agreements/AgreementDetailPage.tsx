@@ -4,6 +4,11 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   Paper,
   Table,
@@ -30,6 +35,7 @@ import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutlineRounded";
 import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
+import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { DonutChart } from "../../components/DonutChart";
 import { SumCheck } from "../../components/SumCheck";
@@ -38,7 +44,9 @@ import {
   useGetSharingAgreement,
   useGetSharingAgreementPartitions,
   useImportSharingAgreementPartitions,
+  useDeleteSharingAgreement,
   getGetSharingAgreementPartitionsQueryKey,
+  getGetAllSharingAgreementsQueryKey,
 } from "../../api/supplies/supplies";
 import {
   fmtDate,
@@ -119,8 +127,10 @@ export const AgreementDetailPage: FC = () => {
   const { data: agreement, isLoading: agreementLoading, error: agreementError } = useGetSharingAgreement(agreementId);
   const { data: partitions = [] } = useGetSharingAgreementPartitions(agreementId);
   const importMutation = useImportSharingAgreementPartitions();
+  const deleteMutation = useDeleteSharingAgreement();
 
   const [editing, setEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [coefs, setCoefs] = useState<CoefficientMap>({});
   const [showBulk, setShowBulk] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -129,7 +139,7 @@ export const AgreementDetailPage: FC = () => {
     const map: CoefficientMap = {};
     partitions.forEach((p) => {
       if (p.supplyId && p.coefficient != null) {
-        map[p.supplyId] = p.coefficient;
+        map[p.supplyId] = p.coefficient / 100;
       }
     });
     return map;
@@ -157,7 +167,7 @@ export const AgreementDetailPage: FC = () => {
           address: p.address ?? "",
           cups: p.cups ?? "",
           user: p.userFullName ?? "",
-          prevCoef: p.previousCoefficient,
+          prevCoef: p.previousCoefficient != null ? p.previousCoefficient / 100 : undefined,
         };
       }
     });
@@ -202,7 +212,7 @@ export const AgreementDetailPage: FC = () => {
         address: p.address ?? "",
         cups: p.cups ?? "",
         user: p.userFullName ?? "",
-        value: p.previousCoefficient!,
+        value: p.previousCoefficient! / 100,
       }));
   }, [partitions, coefs]);
 
@@ -242,9 +252,9 @@ export const AgreementDetailPage: FC = () => {
         return `${cups};${v.toFixed(6).replace(".", ",")}`;
       })
       .join("\n");
-    const blob = new Blob([lines], { type: "text/plain" });
+    const file = new File([lines], `${agreementId}.txt`, { type: "text/plain" });
     importMutation.mutate(
-      { id: agreementId, data: { file: blob } },
+      { id: agreementId, data: { file } },
       {
         onSuccess: () => {
           setEditing(false);
@@ -684,6 +694,30 @@ export const AgreementDetailPage: FC = () => {
                   </Typography>
                 </Box>
               </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<DeleteForeverRoundedIcon />}
+                onClick={() => setShowDeleteConfirm(true)}
+                sx={{
+                  justifyContent: "flex-start",
+                  textTransform: "none",
+                  borderRadius: 1.5,
+                  p: "10px 14px",
+                  borderColor: "#fecaca",
+                  color: "#ef4444",
+                  "&:hover": { borderColor: "#ef4444", bgcolor: "#fef2f2" },
+                }}
+              >
+                <Box sx={{ textAlign: "left" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: 13 }}>
+                    Eliminar acuerdo
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#ef4444", fontSize: 12, display: "block" }}>
+                    Elimina permanentemente este acuerdo
+                  </Typography>
+                </Box>
+              </Button>
             </Box>
           </Paper>
         </Box>
@@ -1029,6 +1063,50 @@ export const AgreementDetailPage: FC = () => {
           initialCsv={initialCsv}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: 17 }}>
+          Eliminar acuerdo de reparto
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: 14, color: "#6b7280" }}>
+            ¿Estás seguro de que deseas eliminar este acuerdo de reparto?
+            Esta acción no se puede deshacer. Los coeficientes de reparto dejarán
+            de estar disponibles para cálculos de producción y consumo.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button
+            onClick={() => setShowDeleteConfirm(false)}
+            sx={{ textTransform: "none", borderRadius: 2 }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            disabled={deleteMutation.isPending}
+            onClick={() =>
+              deleteMutation.mutate(
+                { id: agreementId },
+                {
+                  onSuccess: () => {
+                    queryClient.invalidateQueries({ queryKey: getGetAllSharingAgreementsQueryKey() });
+                    navigate("/sharing-agreements");
+                  },
+                  onError: () => {
+                    errorDispatch("Error al eliminar el acuerdo de reparto");
+                    setShowDeleteConfirm(false);
+                  },
+                },
+              )
+            }
+            sx={{ bgcolor: "#ef4444", textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "#dc2626" } }}
+          >
+            {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

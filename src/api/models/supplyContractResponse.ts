@@ -6,17 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CreateSharingAgreementParams = {
-/**
- * Start date of the agreement (yyyy-MM-dd)
- */
-startDate: string;
-/**
- * End date of the agreement (yyyy-MM-dd)
- */
-endDate?: string;
-/**
- * Notes for the agreement
- */
-notes?: string;
-};
+export interface SupplyContractResponse {
+  /** Date on which the supply point was registered as valid */
+  validDateFrom?: string;
+}

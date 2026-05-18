@@ -26,8 +26,6 @@ import type {
 
 import type {
   CreateSharingAgreementBody,
-  CreateSharingAgreementBodyOne,
-  CreateSharingAgreementParams,
   CreateSuppliesWithFileBody,
   CreateSupplyBody,
   CreationInBulkResponse,
@@ -1110,16 +1108,15 @@ the issue.
 
  */
 export const createSharingAgreement = (
-    createSharingAgreementBody: CreateSharingAgreementBodyOne | CreateSharingAgreementBody,
-    params: CreateSharingAgreementParams,
+    createSharingAgreementBody: CreateSharingAgreementBody,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<string>(
+      return customInstance<SharingAgreementResponse>(
       {url: `/api/v1/sharing-agreements`, method: 'POST',
-      data: createSharingAgreementBody,
-        params, signal
+      headers: {'Content-Type': 'application/json', },
+      data: createSharingAgreementBody, signal
     },
       );
     }
@@ -1127,8 +1124,8 @@ export const createSharingAgreement = (
 
 
 export const getCreateSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext> => {
 
 const mutationKey = ['createSharingAgreement'];
 const {mutation: mutationOptions} = options ?
@@ -1140,10 +1137,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSharingAgreement>>, {data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSharingAgreement>>, {data: CreateSharingAgreementBody}> = (props) => {
+          const {data} = props ?? {};
 
-          return  createSharingAgreement(data,params,)
+          return  createSharingAgreement(data,)
         }
 
         
@@ -1152,7 +1149,7 @@ const {mutation: mutationOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof createSharingAgreement>>>
-    export type CreateSharingAgreementMutationBody = CreateSharingAgreementBodyOne | CreateSharingAgreementBody
+    export type CreateSharingAgreementMutationBody = CreateSharingAgreementBody
     export type CreateSharingAgreementMutationError = ErrorType<unknown>
 
     /**
@@ -1173,11 +1170,11 @@ the issue.
 
  */
 export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSharingAgreement>>,
         TError,
-        {data: CreateSharingAgreementBodyOne | CreateSharingAgreementBody;params: CreateSharingAgreementParams},
+        {data: CreateSharingAgreementBody},
         TContext
       > => {
 
