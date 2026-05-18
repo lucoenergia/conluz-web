@@ -10,6 +10,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs, { type Dayjs } from "dayjs";
+import "dayjs/locale/es";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -40,8 +45,8 @@ interface NewAgreementModalProps {
 }
 
 export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, onCreated }) => {
-  const [startDate, setStartDate] = useState("2026-06-01");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState<Dayjs>(dayjs("2026-06-01"));
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [note, setNote] = useState("");
   const [txtContent, setTxtContent] = useState("");
   const [fileName, setFileName] = useState("");
@@ -121,43 +126,120 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
           cerrará automáticamente el día previo a la fecha de inicio del nuevo.
         </Typography>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          <TextField
-            label="Fecha de inicio de vigencia"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-            fullWidth
-          />
-          <TextField
-            label="Fecha de fin"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-            fullWidth
-            helperText="Opcional — déjalo vacío para vigencia indefinida"
-          />
-          <TextField
-            label="Nota interna (opcional)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            size="small"
-            fullWidth
-            placeholder="Motivo del nuevo reparto, cambios respecto al anterior, etc."
-            sx={{ gridColumn: { xs: "1", sm: "1 / -1" } }}
-          />
-        </Box>
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              gap: 2,
+              mb: 2,
+            }}
+          >
+            <DatePicker
+              label="Fecha de inicio de vigencia"
+              value={startDate}
+              onChange={(value) => setStartDate(dayjs(value))}
+              slotProps={{
+                textField: {
+                  size: "small",
+                  sx: {
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "6px",
+                      fontFamily: "Inter, sans-serif",
+                      fontSize: "0.9375rem",
+                      height: "40px",
+                      "&:hover fieldset": { borderColor: "#667eea" },
+                      "&.Mui-focused fieldset": { borderColor: "#667eea", borderWidth: "2px" },
+                    },
+                    "& .MuiInputLabel-root.Mui-focused": { color: "#667eea" },
+                  },
+                },
+                popper: {
+                  sx: {
+                    "& .MuiPickersYear-yearButton.Mui-selected": {
+                      backgroundColor: "#667eea !important",
+                      color: "white !important",
+                      "&:hover": { backgroundColor: "#5568d3 !important" },
+                      "&:focus": { backgroundColor: "#667eea !important" },
+                    },
+                    "& .MuiPickersMonth-monthButton.Mui-selected": {
+                      backgroundColor: "#667eea !important",
+                      color: "white !important",
+                      "&:hover": { backgroundColor: "#5568d3 !important" },
+                      "&:focus": { backgroundColor: "#667eea !important" },
+                    },
+                    "& .MuiPickersDay-root.Mui-selected": {
+                      backgroundColor: "#667eea !important",
+                      color: "white !important",
+                      "&:hover": { backgroundColor: "#5568d3 !important" },
+                      "&:focus": { backgroundColor: "#667eea !important" },
+                    },
+                    "& .MuiPickersYear-yearButton:hover": { backgroundColor: "rgba(102, 126, 234, 0.1)" },
+                    "& .MuiPickersMonth-monthButton:hover": { backgroundColor: "rgba(102, 126, 234, 0.1)" },
+                    "& .MuiPickersDay-root:hover": { backgroundColor: "rgba(102, 126, 234, 0.1)" },
+                  },
+                },
+              }}
+            />
+            <DatePicker
+              label="Fecha de fin"
+              value={endDate}
+              onChange={(value) => setEndDate(value)}
+              minDate={startDate}
+              slotProps={{
+                textField: {
+                  size: "small",
+                  helperText: "Opcional — déjalo vacío para vigencia indefinida",
+                  sx: {
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "6px",
+                      fontFamily: "Inter, sans-serif",
+                      fontSize: "0.9375rem",
+                      height: "40px",
+                      "&:hover fieldset": { borderColor: "#667eea" },
+                      "&.Mui-focused fieldset": { borderColor: "#667eea", borderWidth: "2px" },
+                    },
+                    "& .MuiInputLabel-root.Mui-focused": { color: "#667eea" },
+                  },
+                },
+                popper: {
+                  sx: {
+                    "& .MuiPickersYear-yearButton.Mui-selected": {
+                      backgroundColor: "#667eea !important",
+                      color: "white !important",
+                      "&:hover": { backgroundColor: "#5568d3 !important" },
+                      "&:focus": { backgroundColor: "#667eea !important" },
+                    },
+                    "& .MuiPickersMonth-monthButton.Mui-selected": {
+                      backgroundColor: "#667eea !important",
+                      color: "white !important",
+                      "&:hover": { backgroundColor: "#5568d3 !important" },
+                      "&:focus": { backgroundColor: "#667eea !important" },
+                    },
+                    "& .MuiPickersDay-root.Mui-selected": {
+                      backgroundColor: "#667eea !important",
+                      color: "white !important",
+                      "&:hover": { backgroundColor: "#5568d3 !important" },
+                      "&:focus": { backgroundColor: "#667eea !important" },
+                    },
+                    "& .MuiPickersYear-yearButton:hover": { backgroundColor: "rgba(102, 126, 234, 0.1)" },
+                    "& .MuiPickersMonth-monthButton:hover": { backgroundColor: "rgba(102, 126, 234, 0.1)" },
+                    "& .MuiPickersDay-root:hover": { backgroundColor: "rgba(102, 126, 234, 0.1)" },
+                  },
+                },
+              }}
+            />
+            <TextField
+              label="Nota interna (opcional)"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              size="small"
+              fullWidth
+              placeholder="Motivo del nuevo reparto, cambios respecto al anterior, etc."
+              sx={{ gridColumn: { xs: "1", sm: "1 / -1" } }}
+            />
+          </Box>
+        </LocalizationProvider>
 
         <Typography
           variant="body2"
@@ -292,7 +374,7 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
           onClick={async () => {
             try {
               const { id: newId } = await createMutation.mutateAsync({
-                data: { startDate, endDate: endDate || undefined, notes: note || undefined },
+                data: { startDate: startDate.format("YYYY-MM-DD"), endDate: endDate?.format("YYYY-MM-DD") || undefined, notes: note || undefined },
               });
               if (txtContent.trim()) {
                 const file = new File([txtContent], fileName || "coeficientes.txt", { type: "text/plain" });
