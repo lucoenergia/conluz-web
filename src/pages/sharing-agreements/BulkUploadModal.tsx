@@ -106,7 +106,7 @@ export const BulkUploadModal: FC<BulkUploadModalProps> = ({ open, onClose, onApp
               rows={10}
               value={csv}
               onChange={(e) => setCsv(e.target.value)}
-              placeholder={`ES0021000004271234AB;0,150000\nES0021000004275678CD;0,130000\n\u2026`}
+              placeholder={`ES0021000004271234AB;0,150000\nES0021000004275678CD;0,130000\n…`}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   fontFamily: "'JetBrains Mono', monospace",
@@ -185,7 +185,7 @@ export const BulkUploadModal: FC<BulkUploadModalProps> = ({ open, onClose, onApp
                             variant="caption"
                             sx={{ color: "#9ca3af", fontStyle: "italic" }}
                           >
-                            \u2014
+                            —
                           </Typography>
                         )}
                       </TableCell>
@@ -196,7 +196,7 @@ export const BulkUploadModal: FC<BulkUploadModalProps> = ({ open, onClose, onApp
                           textAlign: "right",
                         }}
                       >
-                        {isNaN(r.value) ? "\u2014" : fmtCoef(r.value)}
+                        {isNaN(r.value) ? "—" : fmtCoef(r.value)}
                       </TableCell>
                       <TableCell sx={{ fontSize: 12 }}>
                         {r.errors.length === 0 ? (
@@ -241,13 +241,13 @@ export const BulkUploadModal: FC<BulkUploadModalProps> = ({ open, onClose, onApp
               "&:hover": { bgcolor: "#5568d3" },
             }}
           >
-            Revisar \u2192
+            Revisar →
           </Button>
         )}
         {step === "preview" && (
           <>
             <Button onClick={() => setStep("paste")} sx={{ textTransform: "none", borderRadius: 2 }}>
-              \u2190 Volver
+              ← Volver
             </Button>
             <Button
               variant="contained"

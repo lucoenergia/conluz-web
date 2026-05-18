@@ -145,7 +145,7 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
             InputLabelProps={{ shrink: true }}
             size="small"
             fullWidth
-            helperText="Opcional \u2014 d\u00e9jalo vacío para vigencia indefinida"
+            helperText="Opcional — déjalo vacío para vigencia indefinida"
           />
           <TextField
             label="Nota interna (opcional)"
@@ -233,7 +233,7 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
             variant="caption"
             sx={{ display: "block", mt: 1.5, mb: 0.5, color: "#6b7280" }}
           >
-            o pega el contenido del fichero a continuaci\u00f3n:
+            o pega el contenido del fichero a continuación:
           </Typography>
 
           <TextField
@@ -241,7 +241,7 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
             rows={6}
             value={txtContent}
             onChange={(e) => setTxtContent(e.target.value)}
-            placeholder={`# Formato esperado: CUPS;COEFICIENTE\nES0021000004271234AB;0,145000\nES0021000004275678CD;0,132000\n\u2026`}
+            placeholder={`# Formato esperado: CUPS;COEFICIENTE\nES0021000004271234AB;0,145000\nES0021000004275678CD;0,132000\n…`}
             sx={{
               "& .MuiOutlinedInput-root": {
                 fontFamily: "'JetBrains Mono', monospace",
@@ -277,7 +277,7 @@ export const NewAgreementModal: FC<NewAgreementModalProps> = ({ open, onClose, o
                       .slice(0, 5)
                       .map((r) => (
                         <li key={r.line}>
-                          Línea {r.line} \u2014{" "}
+                          Línea {r.line} —{" "}
                           <Typography
                             component="span"
                             variant="caption"

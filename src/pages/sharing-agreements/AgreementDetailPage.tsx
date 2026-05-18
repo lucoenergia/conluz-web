@@ -396,7 +396,7 @@ export const AgreementDetailPage: FC = () => {
             <Typography variant="caption" sx={{ color: "#6b7280", fontSize: 12, mt: 0.5, display: "block" }}>
               {agreement.status === "ACTIVE" ? (
                 <Typography component="span" variant="caption" sx={{ color: "#10b981", fontWeight: 600 }}>
-                  \u25cf Vigente actualmente
+                  ● Vigente actualmente
                 </Typography>
               ) : (
                 "Acuerdo finalizado"
@@ -485,7 +485,7 @@ export const AgreementDetailPage: FC = () => {
               {fmtDate(agreement.createdAt)}
             </Typography>
             <Typography variant="caption" sx={{ color: "#6b7280", fontSize: 12, mt: 0.5, display: "block" }}>
-              \u00daltima edici\u00f3n: {fmtDate(agreement.updatedAt)}
+              Última edición: {fmtDate(agreement.updatedAt)}
             </Typography>
           </Paper>
         </Box>
@@ -520,7 +520,7 @@ export const AgreementDetailPage: FC = () => {
                   Reparto
                 </Typography>
                 <Typography variant="body2" sx={{ color: "#6b7280", fontSize: 13 }}>
-                  Distribuci\u00f3n entre los {entries.length} puntos de suministro
+                  Distribución entre los {entries.length} puntos de suministro
                 </Typography>
               </Box>
             </Box>
@@ -629,7 +629,7 @@ export const AgreementDetailPage: FC = () => {
               >
                 <Box sx={{ textAlign: "left" }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, fontSize: 13 }}>
-                    {editing ? "Salir del modo edici\u00f3n" : "Editar coeficientes"}
+                    {editing ? "Salir del modo edición" : "Editar coeficientes"}
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#6b7280", fontSize: 12, display: "block" }}>
                     Modifica valores individualmente
@@ -793,7 +793,7 @@ export const AgreementDetailPage: FC = () => {
                             color: "#6b7280",
                           }}
                         >
-                          {e.prevCoef !== undefined ? fmtCoef(e.prevCoef) : "\u2014"}
+                          {e.prevCoef !== undefined ? fmtCoef(e.prevCoef) : "—"}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ textAlign: "right" }}>

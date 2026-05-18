@@ -10,8 +10,8 @@ export const DONUT_COLORS = [
 ];
 
 export const SAMPLE_DISTRIBUTOR_TXT = `# Fichero de reparto - Comunidad Energética Castellnovo
-# Distribuidora: i-DE Redes El\u00e9ctricas Inteligentes
-# Fecha de emisi\u00f3n: 2026-05-08
+# Distribuidora: i-DE Redes Eléctricas Inteligentes
+# Fecha de emisión: 2026-05-08
 # Formato: CUPS;COEFICIENTE
 ES0021000004271234AB;0,145000
 ES0021000004275678CD;0,132000

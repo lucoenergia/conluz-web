@@ -19,15 +19,15 @@ export const SumCheck: FC<SumCheckProps> = ({ sum, count }) => {
   let icon = ErrorIcon;
   if (diff < 0.0001) {
     tone = "ok";
-    msg = `Reparto válido \u00b7 ${count} puntos suman exactamente 100.00%`;
+    msg = `Reparto válido · ${count} puntos suman exactamente 100.00%`;
     icon = CheckCircleIcon;
   } else if (diff < 0.005) {
     tone = "warn";
-    msg = `Tolerable \u00b7 suma ${pct.toFixed(4)}% (desviaci\u00f3n ${(diff * 100).toFixed(4)} pp)`;
+    msg = `Tolerable · suma ${pct.toFixed(4)}% (desviación ${(diff * 100).toFixed(4)} pp)`;
     icon = WarningIcon;
   } else {
     tone = "bad";
-    msg = `Inválido \u00b7 suma ${pct.toFixed(4)}%, debe ser 100.00%`;
+    msg = `Inválido · suma ${pct.toFixed(4)}%, debe ser 100.00%`;
     icon = ErrorIcon;
   }
 
