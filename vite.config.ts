@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    // Scope to src/ only so Playwright specs in tests/visual/ are not picked up by vitest
+    include: ["src/**/*.spec.{ts,tsx}"],
   },
   envPrefix: "CONLUZ_",
   server: {

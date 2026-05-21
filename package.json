@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "generate-client": "orval",
-    "test": "vitest"
+    "test": "vitest",
+    "test:visual": "playwright test",
+    "test:visual:mobile": "playwright test --project=mobile",
+    "test:visual:desktop": "playwright test --project=desktop",
+    "test:visual:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -29,6 +33,7 @@
   "devDependencies": {
     "@eslint/js": "^9.29.0",
     "@faker-js/faker": "^9.9.0",
+    "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

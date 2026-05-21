@@ -118,3 +118,6 @@ docker compose up -d  # Runs on port 3001
 
 The Docker setup includes nginx configuration for proper SPA routing and dynamic environment variable injection.
 - never run the server after completing changes
+
+# Language
+All code and documentation must be in english.
