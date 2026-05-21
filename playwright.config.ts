@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/visual",
@@ -23,8 +23,16 @@ export default defineConfig({
     {
       name: "mobile",
       use: {
-        // Full iPhone 13 descriptor: realistic DPR (3x), touch, Safari user-agent
-        ...devices["iPhone 13"],
+        // iPhone 13 dimensions and touch using Chromium (not WebKit) for environment-agnostic rendering.
+        // WebKit's text rendering is tightly coupled to the host OS font stack, causing 2–13 px height
+        // differences between local Ubuntu and GitHub Actions Ubuntu. Chromium bundles its own renderer
+        // (installed via --with-deps) and produces identical screenshots across environments.
+        // The responsive sx breakpoints react to viewport width, not browser engine, so the mobile
+        // layouts (xs values) render correctly.
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
         reducedMotion: "reduce",
       },
     },
