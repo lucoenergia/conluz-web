@@ -39,12 +39,7 @@ export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOp
           <Typography
             variant="h6"
             component="h2"
-            sx={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "1.25rem",
-              fontWeight: 600,
-              color: "#1e293b",
-            }}
+            sx={{ color: "#1e293b" }}
           >
             Rehabilitar punto de suministro
           </Typography>
@@ -52,7 +47,6 @@ export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOp
       </Box>
       <Typography
         sx={{
-          fontFamily: "Inter, sans-serif",
           fontSize: "0.875rem",
           fontWeight: 600,
           color: "#475569",
@@ -66,7 +60,6 @@ export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOp
       </Typography>
       <Typography
         sx={{
-          fontFamily: "Inter, sans-serif",
           fontSize: "0.9375rem",
           color: "#64748b",
           lineHeight: 1.6,

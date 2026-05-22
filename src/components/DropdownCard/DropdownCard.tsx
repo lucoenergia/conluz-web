@@ -12,7 +12,7 @@ export const DropdownCard: FC<DropdownCardProps> = ({ title, className, children
   return (
     <Accordion className={`rounded p-2 ${className}`}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography className="text-2xl font-bold">{title}</Typography>
+        <Typography variant="h5">{title}</Typography>
       </AccordionSummary>
       <AccordionDetails className="grid gap-4">{children}</AccordionDetails>
     </Accordion>

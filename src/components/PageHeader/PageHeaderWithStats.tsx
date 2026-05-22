@@ -40,7 +40,7 @@ export const PageHeaderWithStats: FC<PageHeaderWithStatsProps> = ({
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
         <Icon sx={{ fontSize: 40 }} />
         <Box>
-          <Typography variant="h4" fontWeight="bold">
+          <Typography variant="h4">
             {title}
           </Typography>
           <Typography variant="body1" sx={{ opacity: 0.9 }}>
@@ -71,7 +71,6 @@ export const PageHeaderWithStats: FC<PageHeaderWithStatsProps> = ({
           >
             <Typography
               variant="h3"
-              fontWeight="bold"
               sx={{ color: stat.color || "inherit" }}
             >
               {stat.value}

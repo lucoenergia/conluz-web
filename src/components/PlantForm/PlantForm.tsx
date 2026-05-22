@@ -305,7 +305,6 @@ export const PlantForm: FC<PlantFormProps> = ({
                 sx: (theme) => ({
                   "& .MuiOutlinedInput-root": {
                     borderRadius: radii.default,
-                    fontFamily: "Inter, sans-serif",
                     fontSize: "0.9375rem",
                     height: "40px",
                     "&:hover fieldset": {

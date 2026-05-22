@@ -137,7 +137,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         <ProviderMark icon={provider.icon} color={provider.color} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: "#111827" }}>
+            <Typography variant="h6" sx={{ color: "#111827" }}>
               {provider.name}
             </Typography>
           </Box>

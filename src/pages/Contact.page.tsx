@@ -98,7 +98,7 @@ export const ContactPage: FC = () => {
               <HeadsetMicIcon sx={{ fontSize: 32 }} />
             </Avatar>
             <Box>
-              <Typography variant="h3" sx={{ fontWeight: 700, fontSize: { xs: "1.8rem", sm: "2.5rem" } }}>
+              <Typography variant="h3" sx={{ fontSize: { xs: "1.8rem", sm: "2.5rem" } }}>
                 Contacto
               </Typography>
               <Typography variant="body1" sx={{ opacity: 0.9 }}>
@@ -168,7 +168,6 @@ export const ContactPage: FC = () => {
                 <Typography
                   variant="h6"
                   sx={{
-                    fontWeight: 600,
                     color: "#2d3748",
                     mb: 2,
                   }}
@@ -234,7 +233,7 @@ export const ContactPage: FC = () => {
               <MessageIcon sx={{ color: "#f59e0b", fontSize: 24 }} />
             </Avatar>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: "#2d3748" }}>
+              <Typography variant="h6" sx={{ color: "#2d3748" }}>
                 ¿Prefieres escribirnos?
               </Typography>
               <Typography variant="body2" sx={{ color: "#718096" }}>

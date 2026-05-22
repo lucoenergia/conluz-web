@@ -95,13 +95,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
           <>
             <Typography
               variant="h6"
-              sx={{
-                fontFamily: "Inter, sans-serif",
-                fontSize: "1.25rem",
-                fontWeight: 600,
-                color: "#1e293b",
-                mb: 3,
-              }}
+              sx={{ color: "#1e293b", mb: 3 }}
             >
               Importar Socios desde CSV
             </Typography>
@@ -137,7 +131,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               {file ? (
                 <Typography
                   sx={{
-                    fontFamily: "Inter, sans-serif",
                     fontSize: "0.9375rem",
                     fontWeight: 600,
                     color: theme.palette.primary.main,
@@ -149,7 +142,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                 <>
                   <Typography
                     sx={{
-                      fontFamily: "Inter, sans-serif",
                       fontSize: "0.9375rem",
                       color: "#475569",
                       mb: 0.5,
@@ -159,7 +151,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   </Typography>
                   <Typography
                     sx={{
-                      fontFamily: "Inter, sans-serif",
                       fontSize: "0.8125rem",
                       color: "#9ca3af",
                     }}
@@ -181,7 +172,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
 
             <Typography
               sx={{
-                fontFamily: "Inter, sans-serif",
                 fontSize: "0.875rem",
                 fontWeight: 600,
                 color: "#475569",
@@ -226,7 +216,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                 <ErrorOutlineIcon sx={{ fontSize: 20, color: "#ef4444" }} />
                 <Typography
                   sx={{
-                    fontFamily: "Inter, sans-serif",
                     fontSize: "0.8125rem",
                     color: "#ef4444",
                   }}
@@ -251,7 +240,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   textTransform: "none",
                   minWidth: "100px",
                   padding: "8px 20px",
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
@@ -272,7 +260,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   textTransform: "none",
                   minWidth: "120px",
                   padding: "8px 20px",
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: radii.default,
                   backgroundColor: theme.palette.primary.main,
@@ -298,7 +285,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             <CircularProgress sx={{ color: theme.palette.primary.main, mb: 2 }} />
             <Typography
               sx={{
-                fontFamily: "Inter, sans-serif",
                 fontSize: "1rem",
                 color: "#475569",
               }}
@@ -337,9 +323,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               <Typography
                 variant="h6"
                 sx={{
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "1.125rem",
-                  fontWeight: 600,
                   color: "#1e293b",
                   mb: 1,
                 }}
@@ -349,7 +333,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
 
               <Typography
                 sx={{
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   color: "#475569",
                 }}
@@ -363,7 +346,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               <Box sx={{ mb: 3 }}>
                 <Typography
                   sx={{
-                    fontFamily: "Inter, sans-serif",
                     fontSize: "0.875rem",
                     fontWeight: 600,
                     color: "#ef4444",
@@ -401,7 +383,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                       />
                       <Typography
                         sx={{
-                          fontFamily: "Inter, sans-serif",
                           fontSize: "0.8125rem",
                           color: "#ef4444",
                         }}
@@ -431,7 +412,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   textTransform: "none",
                   minWidth: "140px",
                   padding: "8px 20px",
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
@@ -451,7 +431,6 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   textTransform: "none",
                   minWidth: "100px",
                   padding: "8px 20px",
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: radii.default,
                   backgroundColor: theme.palette.primary.main,

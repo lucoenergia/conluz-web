@@ -53,7 +53,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({
           <SolarPowerIcon sx={{ fontSize: 32 }} />
         </Avatar>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
+          <Typography variant="h4" gutterBottom>
             {plant?.name || "Planta de Producción"}
           </Typography>
           <Typography variant="body1" sx={{ opacity: 0.9 }}>

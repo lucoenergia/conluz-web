@@ -11,8 +11,8 @@ interface StatProps {
 export const Stat: FC<StatProps> = ({ label, value, variant = "normal", className }) => {
   return (
     <div className={className}>
-      <Typography className={variant === "normal" ? "font-semibold" : "font-light"}>{label}</Typography>
-      <Typography className={variant === "normal" ? "text-sm font-light" : "text-2xl font-bold"}>{value}</Typography>
+      <Typography sx={{ fontWeight: variant === "normal" ? 600 : 300 }}>{label}</Typography>
+      <Typography variant={variant === "normal" ? "body2" : "h5"} sx={variant === "normal" ? { fontWeight: 300 } : undefined}>{value}</Typography>
     </div>
   );
 };

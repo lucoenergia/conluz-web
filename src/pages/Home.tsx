@@ -301,7 +301,6 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
-                fontWeight="bold"
                 sx={{ color: "#8b5cf6", mb: 0.5 }}
               >
                 {totalProduction.toFixed(2)} kWh
@@ -336,7 +335,6 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
-                fontWeight="bold"
                 sx={{ color: "#3b82f6", mb: 0.5 }}
               >
                 {peakPower.toFixed(2)} kW
@@ -553,7 +551,6 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
-                fontWeight="bold"
                 sx={{ color: "#ef4444", mb: 0.5 }}
               >
                 {totalConsumption.toFixed(2)} kWh
@@ -588,7 +585,6 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
-                fontWeight="bold"
                 sx={{ color: "#10b981", mb: 0.5 }}
               >
                 {totalSelfConsumption.toFixed(2)} kWh
@@ -623,7 +619,6 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
-                fontWeight="bold"
                 sx={{ color: "#f59e0b", mb: 0.5 }}
               >
                 {totalSurplus.toFixed(2)} kWh
