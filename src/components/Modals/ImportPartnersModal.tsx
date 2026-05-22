@@ -9,6 +9,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import { BasicModal } from "./BasicModal";
 import { useCreateUsersWithFile } from "../../api/users/users";
 import type { CreateUsersInBulkResponse } from "../../api/models";
+import { radii, shadows } from "../../theme/tokens";
 
 interface ImportPartnersModalProps {
   isOpen: boolean;
@@ -111,7 +112,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               sx={{
                 border: "2px dashed",
                 borderColor: file ? theme.palette.primary.main : "#d1d5db",
-                borderRadius: 2,
+                borderRadius: radii.default,
                 p: 4,
                 textAlign: "center",
                 cursor: "pointer",
@@ -192,7 +193,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             <Box
               sx={{
                 backgroundColor: "#f8fafc",
-                borderRadius: 1,
+                borderRadius: radii.small,
                 p: 1.5,
                 mb: 2,
               }}
@@ -217,7 +218,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   alignItems: "center",
                   gap: 1,
                   backgroundColor: "rgba(239, 68, 68, 0.08)",
-                  borderRadius: 1,
+                  borderRadius: radii.small,
                   p: 1.5,
                   mb: 2,
                 }}
@@ -252,7 +253,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   padding: "8px 20px",
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
-                  borderRadius: "6px",
+                  borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
                   "&:hover": {
@@ -273,12 +274,12 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   padding: "8px 20px",
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
-                  borderRadius: "6px",
+                  borderRadius: radii.default,
                   backgroundColor: theme.palette.primary.main,
-                  boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+                  boxShadow: shadows.medium,
                   "&:hover": {
                     backgroundColor: theme.palette.primary.dark,
-                    boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
+                    boxShadow: shadows.strong,
                   },
                   "&.Mui-disabled": {
                     backgroundColor: "#e5e7eb",
@@ -376,7 +377,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                     maxHeight: 150,
                     overflowY: "auto",
                     backgroundColor: "#fef2f2",
-                    borderRadius: 1,
+                    borderRadius: radii.small,
                     p: 1.5,
                   }}
                 >
@@ -432,7 +433,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   padding: "8px 20px",
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
-                  borderRadius: "6px",
+                  borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
                   "&:hover": {
@@ -452,12 +453,12 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   padding: "8px 20px",
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
-                  borderRadius: "6px",
+                  borderRadius: radii.default,
                   backgroundColor: theme.palette.primary.main,
-                  boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+                  boxShadow: shadows.medium,
                   "&:hover": {
                     backgroundColor: theme.palette.primary.dark,
-                    boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
+                    boxShadow: shadows.strong,
                   },
                 }}
               >

@@ -1,4 +1,6 @@
 import { useState, type FC } from "react";
+import { alpha } from "@mui/material/styles";
+import { radii } from "../../theme/tokens";
 import {
   Box,
   Button,
@@ -75,7 +77,7 @@ export const Login: FC = () => {
         sx={{
           maxWidth: 480,
           width: "100%",
-          borderRadius: 3,
+          borderRadius: radii.large,
           boxShadow: "0 8px 32px 0 rgba(0,0,0,0.2)",
           overflow: "hidden",
         }}
@@ -132,7 +134,7 @@ export const Login: FC = () => {
               sx={{
                 mb: 3,
                 fontFamily: "Inter, sans-serif",
-                borderRadius: "6px",
+                borderRadius: radii.default,
               }}
             >
               DNI/NIF o contraseña incorrectos
@@ -166,7 +168,7 @@ export const Login: FC = () => {
                 sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
                     fontFamily: "Inter, sans-serif",
-                    borderRadius: "6px",
+                    borderRadius: radii.default,
                     "&:hover fieldset": {
                       borderColor: theme.palette.primary.main,
                     },
@@ -204,7 +206,7 @@ export const Login: FC = () => {
                 sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
                     fontFamily: "Inter, sans-serif",
-                    borderRadius: "6px",
+                    borderRadius: radii.default,
                     "&:hover fieldset": {
                       borderColor: theme.palette.primary.main,
                     },
@@ -275,13 +277,13 @@ export const Login: FC = () => {
                 fontFamily: "Inter, sans-serif",
                 fontSize: "1rem",
                 fontWeight: 600,
-                padding: "12px",
-                borderRadius: "6px",
+                padding: "12px", // 12px intentionally off-grid for button vertical rhythm
+                borderRadius: radii.default,
                 background: theme.palette.primary.main,
-                boxShadow: "0 4px 12px 0 rgba(102, 126, 234, 0.4)",
+                boxShadow: `0 4px 12px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                 transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
-                  boxShadow: "0 6px 16px 0 rgba(102, 126, 234, 0.5)",
+                  boxShadow: `0 6px 16px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                   transform: "translateY(-2px)",
                 },
               })}

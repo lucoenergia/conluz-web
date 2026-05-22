@@ -1,5 +1,6 @@
 import { Box, Typography, Paper, Avatar, Grow, Fade } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { radii, shadows } from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
 import type { FC } from "react";
 
@@ -79,7 +80,7 @@ export const ContactPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 3, sm: 4 },
-            borderRadius: 3,
+            borderRadius: radii.large,
             background: theme.palette.primary.main,
             color: "white",
             position: "relative",
@@ -136,9 +137,9 @@ export const ContactPage: FC = () => {
                 elevation={0}
                 sx={{
                   p: 3,
-                  borderRadius: 2,
+                  borderRadius: radii.default,
                   background: "white",
-                  boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+                  boxShadow: shadows.soft,
                   transition: "transform 0.3s ease, box-shadow 0.3s ease",
                   cursor: "pointer",
                   "&:hover": {
@@ -155,7 +156,7 @@ export const ContactPage: FC = () => {
                     justifyContent: "center",
                     width: 56,
                     height: 56,
-                    borderRadius: 2,
+                    borderRadius: radii.default,
                     background: method.gradient,
                     mb: 2,
                   }}
@@ -216,9 +217,9 @@ export const ContactPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 3, sm: 4 },
-            borderRadius: 3,
+            borderRadius: radii.large,
             background: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
             mt: 2,
           }}
         >
@@ -245,7 +246,7 @@ export const ContactPage: FC = () => {
           <Box
             sx={{
               p: 3,
-              borderRadius: 2,
+              borderRadius: radii.default,
               bgcolor: "#f7fafc",
               border: "1px solid #e2e8f0",
             }}

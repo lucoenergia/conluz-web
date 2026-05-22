@@ -1,6 +1,7 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Modal from "@mui/material/Modal";
+import { radii } from "../../theme/tokens";
 
 interface BasicModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ const modalContainerStyle = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   backgroundColor: 'white',
-  borderRadius: 3,
+  borderRadius: radii.large,
   boxShadow: 24,
   maxWidth: { xs: '90%', sm: 500 },
   minWidth: { xs: 280, sm: 400 },

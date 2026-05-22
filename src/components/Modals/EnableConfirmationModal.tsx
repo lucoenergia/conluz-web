@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { radii } from "../../theme/tokens";
 
 interface EnableConfirmationModalProps {
   isOpen: boolean;
@@ -58,7 +59,7 @@ export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOp
           mb: 2,
           backgroundColor: "rgba(16, 185, 129, 0.08)",
           padding: "8px 12px",
-          borderRadius: "6px",
+          borderRadius: radii.default,
         }}
       >
         {code}

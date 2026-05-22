@@ -1,6 +1,7 @@
 import { useState, type FC } from "react";
 import { Card, CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -113,8 +114,8 @@ export const PlantCard: FC<PlantCardProps> = ({
           cursor: "pointer",
           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           overflow: "hidden",
-          borderRadius: 2,
-          boxShadow: isHovered ? "0 8px 30px 0 rgba(0,0,0,0.12)" : "0 4px 20px 0 rgba(0,0,0,0.08)",
+          borderRadius: radii.default,
+          boxShadow: isHovered ? "0 8px 30px 0 rgba(0,0,0,0.12)" : shadows.soft,
           transform: isHovered ? "translateY(-4px)" : "translateY(0)",
           width: "100%",
           minWidth: 0,
@@ -256,7 +257,7 @@ export const PlantCard: FC<PlantCardProps> = ({
                 alignItems: "center",
                 gap: 1.5,
                 p: 1.5,
-                borderRadius: 2,
+                borderRadius: radii.default,
                 bgcolor: alpha(theme.palette.primary.main, 0.08),
               }}
             >
@@ -278,7 +279,7 @@ export const PlantCard: FC<PlantCardProps> = ({
                 alignItems: "center",
                 gap: 1.5,
                 p: 1.5,
-                borderRadius: 2,
+                borderRadius: radii.default,
                 bgcolor: "rgba(16, 185, 129, 0.08)",
               }}
             >
@@ -301,7 +302,7 @@ export const PlantCard: FC<PlantCardProps> = ({
                 mb: 2,
                 p: 2,
                 bgcolor: "rgba(0, 0, 0, 0.02)",
-                borderRadius: 2,
+                borderRadius: radii.default,
               }}
             >
               <Typography variant="body2" color="text.secondary">
@@ -318,7 +319,7 @@ export const PlantCard: FC<PlantCardProps> = ({
               gap: 1,
               p: 2,
               bgcolor: "rgba(0, 0, 0, 0.02)",
-              borderRadius: 2,
+              borderRadius: radii.default,
             }}
           >
             <LocationOnIcon sx={{ color: "#64748b", fontSize: 20 }} />

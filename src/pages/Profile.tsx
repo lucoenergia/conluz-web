@@ -1,3 +1,4 @@
+import { radii, shadows } from "../theme/tokens";
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Chip, Alert, Snackbar } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
@@ -124,7 +125,7 @@ export const ProfilePage: FC = () => {
         elevation={0}
         sx={(theme) => ({
           p: { xs: 2, sm: 3 },
-          borderRadius: { xs: 0, sm: 3 },
+          borderRadius: { xs: 0, sm: radii.large },
           background: theme.palette.primary.main,
           color: "white",
           mx: { xs: 0, sm: 0 },
@@ -147,9 +148,9 @@ export const ProfilePage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: radii.default, sm: radii.large },
             bgcolor: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
             width: "100%",
             maxWidth: 800,
             margin: "0 auto",
@@ -215,10 +216,10 @@ export const ProfilePage: FC = () => {
                     fontFamily: "Inter, sans-serif",
                     fontSize: "0.9375rem",
                     fontWeight: 600,
-                    borderRadius: "6px",
-                    boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+                    borderRadius: radii.default,
+                    boxShadow: shadows.medium,
                     px: 4,
-                    "&:hover": { boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)" },
+                    "&:hover": { boxShadow: shadows.strong },
                   }}
                 >
                   Guardar cambios
@@ -230,7 +231,7 @@ export const ProfilePage: FC = () => {
       </Box>
 
       <Snackbar open={successMessage} autoHideDuration={4000} onClose={handleCloseSuccessMessage} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", fontFamily: "Inter, sans-serif", borderRadius: "6px" }}>
+        <Alert onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", fontFamily: "Inter, sans-serif", borderRadius: radii.default }}>
           Perfil actualizado correctamente
         </Alert>
       </Snackbar>

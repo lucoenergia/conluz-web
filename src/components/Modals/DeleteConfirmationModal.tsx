@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { radii } from "../../theme/tokens";
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export const DeleteConfirmationModal: FC<DeleteConfirmationModalProps> = ({ isOp
           mb: 2,
           backgroundColor: "rgba(239, 68, 68, 0.08)",
           padding: "8px 12px",
-          borderRadius: "6px",
+          borderRadius: radii.default,
         }}
       >
         {code}

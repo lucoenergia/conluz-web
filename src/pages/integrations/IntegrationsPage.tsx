@@ -1,3 +1,4 @@
+import { radii } from "../../theme/tokens";
 import { useState, useCallback, useEffect, type FC } from "react";
 import { Box, Typography, Paper, Snackbar, Alert, Avatar, CircularProgress } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -205,7 +206,7 @@ export const IntegrationsPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: radii.default, sm: radii.large },
             background: ACCENT,
             color: "white",
           }}
@@ -232,7 +233,7 @@ export const IntegrationsPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 1.5, sm: 2 },
-            borderRadius: 2,
+            borderRadius: radii.default,
             bgcolor: "white",
             boxShadow: "0 2px 8px 0 rgba(0,0,0,0.06)",
             display: "flex",
@@ -286,7 +287,7 @@ export const IntegrationsPage: FC = () => {
         <Alert
           severity={snack?.includes("Error") ? "error" : "success"}
           onClose={() => setSnack(null)}
-          sx={{ borderRadius: "6px", fontWeight: 500 }}
+          sx={{ borderRadius: radii.default, fontWeight: 500 }}
         >
           {snack}
         </Alert>

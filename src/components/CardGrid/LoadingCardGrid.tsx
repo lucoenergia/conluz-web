@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { Box, Paper, Skeleton } from "@mui/material";
+import { radii, shadows } from "../../theme/tokens";
 
 export interface LoadingCardGridProps {
   skeletonCount?: number;
@@ -43,9 +44,9 @@ export const LoadingCardGrid: FC<LoadingCardGridProps> = ({
           key={i}
           elevation={0}
           sx={{
-            borderRadius: 2,
+            borderRadius: radii.default,
             overflow: "hidden",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
           }}
         >
           <Skeleton variant="rectangular" height={120} />

@@ -1,6 +1,7 @@
 import { useState, type FC } from "react";
 import { Box, Button, Typography, Paper, Avatar } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import KeyIcon from "@mui/icons-material/Key";
 import { useNavigate } from "react-router";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -50,7 +51,7 @@ export const ChangePasswordPage: FC = () => {
   const inputSx = (theme: any) => ({
     "& .MuiOutlinedInput-root": {
       fontFamily: "Inter, sans-serif",
-      borderRadius: "6px",
+      borderRadius: radii.default,
       "&:hover fieldset": { borderColor: theme.palette.primary.main },
       "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
     },
@@ -83,7 +84,7 @@ export const ChangePasswordPage: FC = () => {
         elevation={0}
         sx={(theme) => ({
           p: { xs: 2, sm: 3 },
-          borderRadius: { xs: 0, sm: 3 },
+          borderRadius: { xs: 0, sm: radii.large },
           background: theme.palette.primary.main,
           color: "white",
           mx: { xs: 0, sm: 0 },
@@ -106,9 +107,9 @@ export const ChangePasswordPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: radii.default, sm: radii.large },
             bgcolor: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
             width: "100%",
             maxWidth: 600,
             margin: "0 auto",
@@ -145,7 +146,7 @@ export const ChangePasswordPage: FC = () => {
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   fontWeight: 500,
-                  borderRadius: "6px",
+                  borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
                   px: 3,
@@ -165,10 +166,10 @@ export const ChangePasswordPage: FC = () => {
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   fontWeight: 600,
-                  borderRadius: "6px",
-                  boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+                  borderRadius: radii.default,
+                  boxShadow: shadows.medium,
                   px: 3,
-                  "&:hover": { boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)" },
+                  "&:hover": { boxShadow: shadows.strong },
                 }}
               >
                 Cambiar contraseña

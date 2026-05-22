@@ -1,3 +1,4 @@
+import { radii, shadows } from "../../theme/tokens";
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate } from "react-router";
@@ -67,7 +68,7 @@ export const CreatePartnerPage: FC = () => {
         elevation={0}
         sx={{
           p: { xs: 2, sm: 3 },
-          borderRadius: { xs: 0, sm: 3 },
+          borderRadius: { xs: 0, sm: radii.large },
           background: (theme) => theme.palette.primary.main,
           color: "white",
           width: { xs: "100%", sm: "auto" },
@@ -100,9 +101,9 @@ export const CreatePartnerPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: radii.default, sm: radii.large },
             bgcolor: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
           }}
         >
           <PartnerForm

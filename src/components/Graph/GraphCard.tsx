@@ -1,4 +1,5 @@
 import { Card, CardContent, Typography, Box, IconButton, Tooltip, useMediaQuery, useTheme, ClickAwayListener } from "@mui/material";
+import { radii } from "../../theme/tokens";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { FC, ReactNode } from "react";
 import { useState } from "react";
@@ -59,12 +60,12 @@ export const GraphCard: FC<GraphCardProps> = ({
       className={className}
       sx={{
         width: "100%",
-        borderRadius: 2,
+        borderRadius: radii.default,
         transition: "all 0.3s ease",
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)",
+        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)", // intentionally heavier than shadows.soft for data cards
         overflow: "hidden",
         "&:hover": {
-          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.15)",
+          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.15)", // unique card hover lift
         },
       }}
     >

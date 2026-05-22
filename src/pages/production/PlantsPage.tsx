@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import { useGetAllPlants, useDeletePlant } from "../../api/plants/plants";
 import type { PlantResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -15,6 +17,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
 export const PlantsPage: FC = () => {
+  const theme = useTheme();
   const [searchText, setSearchText] = useState("");
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
@@ -103,9 +106,9 @@ export const PlantsPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: radii.default, sm: radii.large },
             bgcolor: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
           }}
         >
           <Box
@@ -124,15 +127,15 @@ export const PlantsPage: FC = () => {
             variant="contained"
             startIcon={<AddCircleOutlineIcon />}
             sx={{
-              background: (theme) => theme.palette.primary.main,
-              borderRadius: 2,
+              background: theme.palette.primary.main,
+              borderRadius: radii.default,
               textTransform: "none",
               px: 3,
               py: 1.5,
-              boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+              boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
               "&:hover": {
                 transform: "translateY(-2px)",
-                boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+                boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
               },
               transition: "all 0.3s ease",
             }}

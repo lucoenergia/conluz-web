@@ -1,5 +1,6 @@
 import { Menu } from "@mui/material";
 import { type FC, type ReactNode } from "react";
+import { radii } from "../../theme/tokens";
 
 interface MenuTemplateProps {
   children: ReactNode;
@@ -11,9 +12,9 @@ export const MenuTemplate: FC<MenuTemplateProps> = ({ anchorElement, onClose, co
   return (
     <Menu
       sx={{
-        mt: "8px",
+        mt: 1,
         "& .MuiPaper-root": {
-          borderRadius: 2,
+          borderRadius: radii.default,
           minWidth: 280,
           boxShadow: "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
           border: "1px solid #e5e7eb",

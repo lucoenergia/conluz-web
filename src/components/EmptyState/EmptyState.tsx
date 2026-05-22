@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { Button, Paper, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
+import { radii, shadows } from "../../theme/tokens";
 
 export interface EmptyStateProps {
   icon: SvgIconComponent;
@@ -29,8 +30,8 @@ export const EmptyState: FC<EmptyStateProps> = ({
       sx={{
         p: 6,
         textAlign: "center",
-        borderRadius: 3,
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+        borderRadius: radii.large,
+        boxShadow: shadows.soft,
         width: "100%",
       }}
     >
@@ -51,7 +52,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
           sx={{
             mt: 3,
             background: (theme) => theme.palette.primary.main,
-            borderRadius: 2,
+            borderRadius: radii.default,
             textTransform: "none",
           }}
         >

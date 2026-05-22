@@ -1,3 +1,4 @@
+import { radii, shadows } from "../../theme/tokens";
 import { useEffect, useMemo, useState, type FC } from "react";
 import { useParams } from "react-router";
 import { Box, Paper } from "@mui/material";
@@ -149,9 +150,9 @@ export const PartnerSupplyPointsPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: radii.default, sm: radii.large },
             bgcolor: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
           }}
         >
           <Box

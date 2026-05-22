@@ -4,6 +4,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
+import { radii } from "../../theme/tokens";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
@@ -303,7 +304,7 @@ export const PlantForm: FC<PlantFormProps> = ({
                 size: "small",
                 sx: (theme) => ({
                   "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
+                    borderRadius: radii.default,
                     fontFamily: "Inter, sans-serif",
                     fontSize: "0.9375rem",
                     height: "40px",
@@ -376,10 +377,10 @@ export const PlantForm: FC<PlantFormProps> = ({
             px: 3,
             py: 1.5,
             fontSize: "1rem",
-            boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+            boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
             "&:hover": {
               transform: "translateY(-2px)",
-              boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+              boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
             },
             transition: "all 0.3s ease",
           })}

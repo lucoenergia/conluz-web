@@ -1,5 +1,6 @@
 import { Box, Drawer, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { radii } from "../../theme/tokens";
 import type { FC } from "react";
 import { Link, useLocation } from "react-router";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -63,7 +64,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuIte
                   <ListItemButton
                     selected={selected}
                     sx={{
-                      borderRadius: 2,
+                      borderRadius: radii.default,
                       px: 2.5,
                       py: 1.5,
                       transition: 'all 0.2s ease',

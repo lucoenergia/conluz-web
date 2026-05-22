@@ -3,6 +3,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import { useEffect, useMemo, useState, type FC } from "react";
 import type { DateView } from "@mui/x-date-pickers/models";
 import dayjs from "dayjs";
@@ -71,9 +72,9 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
       elevation={0}
       sx={{
         p: { xs: 2, sm: 3 },
-        borderRadius: { xs: 2, sm: 3 },
+        borderRadius: { xs: radii.default, sm: radii.large },
         bgcolor: "white",
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+        boxShadow: shadows.soft,
       }}
     >
       <Box
@@ -88,7 +89,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
         <ButtonGroup
           variant="contained"
           sx={(theme) => ({
-            boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+            boxShadow: shadows.medium,
             width: { xs: "100%", sm: "auto" },
             flexDirection: { xs: "column", sm: "row" },
             "& .MuiButtonGroup-grouped": {
@@ -107,7 +108,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               "&:hover": {
                 bgcolor: theme.palette.primary.main,
                 color: "white",
-                boxShadow: "0 4px 8px 0 rgba(102,126,234,0.3)",
+                boxShadow: `0 4px 8px 0 ${alpha(theme.palette.primary.main, 0.3)}`,
               },
             },
           })}
@@ -171,7 +172,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
                   size: "small",
                   sx: (theme) => ({
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: "6px",
+                      borderRadius: radii.default,
                       fontFamily: "Inter, sans-serif",
                       fontSize: "0.9375rem",
                       height: "40px",
@@ -244,7 +245,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
                   size: "small",
                   sx: (theme) => ({
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: "6px",
+                      borderRadius: radii.default,
                       fontFamily: "Inter, sans-serif",
                       fontSize: "0.9375rem",
                       height: "40px",

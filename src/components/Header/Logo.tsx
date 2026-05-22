@@ -1,4 +1,5 @@
 import { Box, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import type { FC } from "react";
 
@@ -18,7 +19,7 @@ export const Logo: FC<LogoProps> = ({ responsive: hide = false }) => {
     >
       {/* Logo Icon */}
       <Box
-        sx={{
+        sx={(theme) => ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -26,8 +27,8 @@ export const Logo: FC<LogoProps> = ({ responsive: hide = false }) => {
           height: 40,
           borderRadius: '50%',
           background: 'linear-gradient(135deg, #f59e0b 0%, #eab308 100%)',
-          boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
-        }}
+          boxShadow: `0 2px 8px ${alpha(theme.palette.warning.main, 0.3)}`,
+        })}
       >
         <WbSunnyIcon sx={{ color: 'white', fontSize: 24 }} />
       </Box>
