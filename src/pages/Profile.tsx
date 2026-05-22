@@ -137,7 +137,7 @@ export const ProfilePage: FC = () => {
             <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4" fontWeight="bold">Mi perfil</Typography>
+            <Typography variant="h4">Mi perfil</Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>Gestiona tu información personal</Typography>
           </Box>
         </Box>
@@ -175,7 +175,6 @@ export const ProfilePage: FC = () => {
                   icon={<BadgeIcon />}
                   label={`Socio #${currentUser?.number || 0}`}
                   sx={(theme) => ({
-                    fontFamily: "Inter, sans-serif",
                     fontSize: "0.875rem",
                     fontWeight: 600,
                     backgroundColor: theme.palette.primary.main,
@@ -189,7 +188,6 @@ export const ProfilePage: FC = () => {
                   icon={<AdminPanelSettingsIcon />}
                   label={currentUser?.role || ""}
                   sx={{
-                    fontFamily: "Inter, sans-serif",
                     fontSize: "0.875rem",
                     fontWeight: 600,
                     backgroundColor: "#10b981",
@@ -213,7 +211,6 @@ export const ProfilePage: FC = () => {
                   variant="contained"
                   sx={{
                     textTransform: "none",
-                    fontFamily: "Inter, sans-serif",
                     fontSize: "0.9375rem",
                     fontWeight: 600,
                     borderRadius: radii.default,
@@ -231,7 +228,7 @@ export const ProfilePage: FC = () => {
       </Box>
 
       <Snackbar open={successMessage} autoHideDuration={4000} onClose={handleCloseSuccessMessage} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", fontFamily: "Inter, sans-serif", borderRadius: radii.default }}>
+        <Alert onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", borderRadius: radii.default }}>
           Perfil actualizado correctamente
         </Alert>
       </Snackbar>

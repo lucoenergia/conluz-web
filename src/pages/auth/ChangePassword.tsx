@@ -50,7 +50,6 @@ export const ChangePasswordPage: FC = () => {
 
   const inputSx = (theme: any) => ({
     "& .MuiOutlinedInput-root": {
-      fontFamily: "Inter, sans-serif",
       borderRadius: radii.default,
       "&:hover fieldset": { borderColor: theme.palette.primary.main },
       "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
@@ -96,7 +95,7 @@ export const ChangePasswordPage: FC = () => {
             <KeyIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4" fontWeight="bold">Cambiar contraseña</Typography>
+            <Typography variant="h4">Cambiar contraseña</Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>Actualiza tu contraseña de acceso</Typography>
           </Box>
         </Box>
@@ -117,21 +116,21 @@ export const ChangePasswordPage: FC = () => {
         >
           <Box component="form" action={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <Box>
-              <Typography sx={{ fontFamily: "Inter, sans-serif", fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Contraseña actual
               </Typography>
               <PasswordInput error={formErrors.currentPassword} helperText={formErrors.currentPassword ? currentPasswordErrorMessage : ""} id="currentPassword" name="currentPassword" placeholder="Introduce tu contraseña actual" autoComplete="current-password" required fullWidth variant="outlined" sx={inputSx} />
             </Box>
 
             <Box>
-              <Typography sx={{ fontFamily: "Inter, sans-serif", fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Nueva contraseña
               </Typography>
               <PasswordInput error={formErrors.newPassword || passwordMismatch} helperText={formErrors.newPassword ? newPasswordErrorMessage : ""} id="newPassword" name="newPassword" placeholder="Introduce tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" sx={inputSx} />
             </Box>
 
             <Box>
-              <Typography sx={{ fontFamily: "Inter, sans-serif", fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Repite la nueva contraseña
               </Typography>
               <PasswordInput error={formErrors.confirmPassword || passwordMismatch} helperText={formErrors.confirmPassword ? confirmPasswordErrorMessage : passwordMismatch ? mismatchErrorMessage : ""} id="confirmPassword" name="confirmPassword" placeholder="Repite tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" sx={inputSx} />
@@ -143,7 +142,6 @@ export const ChangePasswordPage: FC = () => {
                 onClick={() => navigate(-1)}
                 sx={(theme) => ({
                   textTransform: "none",
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   fontWeight: 500,
                   borderRadius: radii.default,
@@ -163,7 +161,6 @@ export const ChangePasswordPage: FC = () => {
                 variant="contained"
                 sx={{
                   textTransform: "none",
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   fontWeight: 600,
                   borderRadius: radii.default,

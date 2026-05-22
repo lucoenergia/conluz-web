@@ -79,7 +79,7 @@ export const StatsCard: FC<StatsCardProps> = ({
         }}
       >
         <Box>
-          <Typography variant="h6" fontWeight="600">
+          <Typography variant="h6">
             {title}
           </Typography>
           {subtitle && (
@@ -126,7 +126,6 @@ export const StatsCard: FC<StatsCardProps> = ({
 
               <Typography
                 variant="h4"
-                fontWeight="bold"
                 sx={{ color: stat.color || "#1e293b", mb: 0.5 }}
               >
                 {stat.value}

@@ -40,7 +40,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
         </Avatar>
         <Box sx={{ flex: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
-            <Typography variant="h4" fontWeight="bold">
+            <Typography variant="h4">
               {supplyPoint?.name || "Punto de Suministro"}
             </Typography>
             {!isLoading && !error && (

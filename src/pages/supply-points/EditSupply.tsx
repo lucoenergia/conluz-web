@@ -85,7 +85,7 @@ export const EditSupplyPage: FC = () => {
             <ElectricMeterIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4" fontWeight="bold">
+            <Typography variant="h4">
               Editar punto de suministro
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>

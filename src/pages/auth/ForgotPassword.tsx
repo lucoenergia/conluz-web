@@ -48,10 +48,10 @@ export const ForgotPassword: FC = () => {
           <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 64, height: 64, margin: "0 auto 16px" }}>
             <LockResetIcon sx={{ fontSize: 36 }} />
           </Avatar>
-          <Typography variant="h4" sx={{ fontFamily: "Inter, sans-serif", fontWeight: 700, mb: 1 }}>
+          <Typography variant="h4" sx={{ mb: 1 }}>
             ¿Olvidaste tu contraseña?
           </Typography>
-          <Typography variant="body1" sx={{ fontFamily: "Inter, sans-serif", opacity: 0.95 }}>
+          <Typography variant="body1" sx={{ opacity: 0.95 }}>
             Introduce tu email y te enviaremos instrucciones para restaurar tu contraseña
           </Typography>
         </Box>
@@ -59,7 +59,7 @@ export const ForgotPassword: FC = () => {
         <Box component="form" action={handleSubmit} sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <Box>
-              <Typography sx={{ fontFamily: "Inter, sans-serif", fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Email
               </Typography>
               <TextField
@@ -75,7 +75,6 @@ export const ForgotPassword: FC = () => {
                 variant="outlined"
                 sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
-                    fontFamily: "Inter, sans-serif",
                     borderRadius: radii.default,
                     "&:hover fieldset": { borderColor: theme.palette.primary.main },
                     "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
@@ -90,7 +89,6 @@ export const ForgotPassword: FC = () => {
               fullWidth
               sx={(theme) => ({
                 textTransform: "none",
-                fontFamily: "Inter, sans-serif",
                 fontSize: "1rem",
                 fontWeight: 600,
                 padding: "12px", // 12px intentionally off-grid for button vertical rhythm
@@ -112,7 +110,6 @@ export const ForgotPassword: FC = () => {
                 to="/login"
                 underline="none"
                 sx={(theme) => ({
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
                   color: theme.palette.primary.main,
                   fontWeight: 600,

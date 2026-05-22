@@ -99,7 +99,6 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               textTransform: "none",
               fontSize: { xs: "0.875rem", sm: "0.9375rem" },
               fontWeight: 500,
-              fontFamily: "Inter, sans-serif",
               lineHeight: 1.46667,
               padding: { xs: "0.5rem 1rem", sm: "0.4375rem 1.0625rem" },
               minWidth: { xs: "100%", sm: "64px" },
@@ -173,7 +172,6 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
                   sx: (theme) => ({
                     "& .MuiOutlinedInput-root": {
                       borderRadius: radii.default,
-                      fontFamily: "Inter, sans-serif",
                       fontSize: "0.9375rem",
                       height: "40px",
                       "&:hover fieldset": {
@@ -246,7 +244,6 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
                   sx: (theme) => ({
                     "& .MuiOutlinedInput-root": {
                       borderRadius: radii.default,
-                      fontFamily: "Inter, sans-serif",
                       fontSize: "0.9375rem",
                       height: "40px",
                       "&:hover fieldset": {

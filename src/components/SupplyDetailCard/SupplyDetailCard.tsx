@@ -27,7 +27,7 @@ export const SupplyDetailCard: FC<SupplyDetailCardProps> = ({
         </DropdownCard>
       ) : (
         <CardTemplate className="p-4 grid grid-flow-col auto-cols-fr gap-2 content-center items-center w-full">
-          <Typography className="text-2xl font-extrabold">{name}</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>{name}</Typography>
           <SupplyDetailContent cups={cups} address={address} partitionCoeficient={partitionCoeficient} />
         </CardTemplate>
       )}

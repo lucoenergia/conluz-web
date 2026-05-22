@@ -39,7 +39,6 @@ export const DisablePartnerSuccessModal: FC<DisablePartnerSuccessModalProps> = (
         </Box>
         <Typography
           sx={{
-            fontFamily: "Inter, sans-serif",
             fontSize: "1.125rem",
             color: "#475569",
             lineHeight: 1.6,
@@ -50,7 +49,6 @@ export const DisablePartnerSuccessModal: FC<DisablePartnerSuccessModalProps> = (
         </Typography>
         <Typography
           sx={{
-            fontFamily: "Inter, sans-serif",
             fontSize: "0.9375rem",
             fontWeight: 600,
             color: "#1e293b",
@@ -64,7 +62,6 @@ export const DisablePartnerSuccessModal: FC<DisablePartnerSuccessModalProps> = (
         </Typography>
         <Typography
           sx={{
-            fontFamily: "Inter, sans-serif",
             fontSize: "1.125rem",
             color: "#475569",
             lineHeight: 1.6,
@@ -80,7 +77,7 @@ export const DisablePartnerSuccessModal: FC<DisablePartnerSuccessModalProps> = (
             textTransform: "none",
             minWidth: "120px",
             padding: "8px 24px",
-            fontFamily: "Inter, sans-serif",
+
             fontSize: "0.9375rem",
             borderRadius: radii.default,
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",

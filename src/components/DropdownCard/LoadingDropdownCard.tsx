@@ -11,7 +11,7 @@ export const LoadingDropdownCard: FC<DropdownCardProps> = ({ className, children
   return (
     <Accordion className={`rounded p-2 ${className}`}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography className="text-2xl font-bold">
+        <Typography variant="h5">
           <Skeleton />
         </Typography>
       </AccordionSummary>

@@ -150,7 +150,7 @@ export const PlantCard: FC<PlantCardProps> = ({
               <SolarPowerIcon />
             </Avatar>
             <Box>
-              <Typography variant="h6" fontWeight="600">
+              <Typography variant="h6">
                 {name || "Sin nombre"}
               </Typography>
               <Typography variant="caption" sx={{ opacity: 0.9 }}>
@@ -263,7 +263,7 @@ export const PlantCard: FC<PlantCardProps> = ({
             >
               <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main}>
+                <Typography variant="h5" color={theme.palette.primary.main}>
                   {totalPower || 0} kW
                 </Typography>
                 <Typography variant="caption" color="text.secondary">

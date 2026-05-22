@@ -49,7 +49,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
             textTransform: "none",
             minWidth: "64px",
             padding: "5px 15px",
-            fontFamily: "Inter, sans-serif",
+
             fontSize: "0.9375rem",
             borderRadius: radii.default,
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
@@ -71,7 +71,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
             textTransform: "none",
             minWidth: "64px",
             padding: "5px 15px",
-            fontFamily: "Inter, sans-serif",
+
             fontSize: "0.9375rem",
             borderRadius: radii.default,
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",

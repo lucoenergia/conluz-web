@@ -142,7 +142,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               {enabled ? <PowerIcon /> : <PowerOffIcon />}
             </Avatar>
             <Box>
-              <Typography variant="h6" fontWeight="600">
+              <Typography variant="h6">
                 {name || "Sin nombre"}
               </Typography>
               <Typography variant="caption" sx={{ opacity: 0.9 }}>
@@ -197,7 +197,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
             >
               <PercentIcon sx={{ color: "#ec4899", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" fontWeight="bold" color="#ec4899">
+                <Typography variant="h5" color="#ec4899">
                   {partitionCoefficient.toFixed(2)}%
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -219,7 +219,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
             >
               <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main}>
+                <Typography variant="h5" color={theme.palette.primary.main}>
                   {lastMeasurement || 0} kWh
                 </Typography>
                 <Typography variant="caption" color="text.secondary">

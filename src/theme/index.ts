@@ -8,6 +8,15 @@ export const theme = createTheme({
     // project; all call sites use explicit px strings from the radii token.
     borderRadius: 8,
   },
+  typography: {
+    fontFamily: '"Inter", sans-serif',
+    h3: { fontWeight: 700 },
+    h4: { fontWeight: 700 },
+    h5: { fontWeight: 700 },
+    // h6 = modal/card titles: 1.25rem matches MUI default; 600 replaces the
+    // inline triple (fontFamily + fontSize + fontWeight) that recurs in every modal.
+    h6: { fontSize: "1.25rem", fontWeight: 600 },
+  },
   palette: {
     primary: {
       main: colors.brand.main,

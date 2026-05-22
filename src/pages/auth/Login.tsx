@@ -102,18 +102,13 @@ export const Login: FC = () => {
           </Avatar>
           <Typography
             variant="h4"
-            sx={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 700,
-              mb: 1,
-            }}
+            sx={{ mb: 1 }}
           >
             Bienvenide a ConLuz
           </Typography>
           <Typography
             variant="body1"
             sx={{
-              fontFamily: "Inter, sans-serif",
               opacity: 0.95,
             }}
           >
@@ -133,7 +128,6 @@ export const Login: FC = () => {
               severity="error"
               sx={{
                 mb: 3,
-                fontFamily: "Inter, sans-serif",
                 borderRadius: radii.default,
               }}
             >
@@ -145,7 +139,6 @@ export const Login: FC = () => {
             <Box>
               <Typography
                 sx={{
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
                   fontWeight: 600,
                   color: "#1e293b",
@@ -167,7 +160,6 @@ export const Login: FC = () => {
                 variant="outlined"
                 sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
-                    fontFamily: "Inter, sans-serif",
                     borderRadius: radii.default,
                     "&:hover fieldset": {
                       borderColor: theme.palette.primary.main,
@@ -183,7 +175,6 @@ export const Login: FC = () => {
             <Box>
               <Typography
                 sx={{
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
                   fontWeight: 600,
                   color: "#1e293b",
@@ -205,7 +196,6 @@ export const Login: FC = () => {
                 variant="outlined"
                 sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
-                    fontFamily: "Inter, sans-serif",
                     borderRadius: radii.default,
                     "&:hover fieldset": {
                       borderColor: theme.palette.primary.main,
@@ -242,7 +232,6 @@ export const Login: FC = () => {
                 label={
                   <Typography
                     sx={{
-                      fontFamily: "Inter, sans-serif",
                       fontSize: "0.875rem",
                       color: "#475569",
                     }}
@@ -256,7 +245,6 @@ export const Login: FC = () => {
                 to="/forgot-password"
                 underline="hover"
                 sx={(theme) => ({
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
                   color: theme.palette.primary.main,
                   "&:hover": {
@@ -274,7 +262,6 @@ export const Login: FC = () => {
               fullWidth
               sx={(theme) => ({
                 textTransform: "none",
-                fontFamily: "Inter, sans-serif",
                 fontSize: "1rem",
                 fontWeight: 600,
                 padding: "12px", // 12px intentionally off-grid for button vertical rhythm
@@ -294,7 +281,6 @@ export const Login: FC = () => {
             <Box sx={{ textAlign: "center", mt: 2 }}>
               <Typography
                 sx={{
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
                   color: "#64748b",
                   mb: 1,
@@ -307,7 +293,6 @@ export const Login: FC = () => {
                 to="/contact"
                 underline="hover"
                 sx={(theme) => ({
-                  fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
                   color: theme.palette.primary.main,
                   fontWeight: 600,

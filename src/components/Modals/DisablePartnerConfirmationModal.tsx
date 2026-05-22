@@ -37,12 +37,7 @@ export const DisablePartnerConfirmationModal: FC<DisablePartnerConfirmationModal
           <Typography
             variant="h6"
             component="h2"
-            sx={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "1.25rem",
-              fontWeight: 600,
-              color: "#1e293b",
-            }}
+            sx={{ color: "#1e293b" }}
           >
             Deshabilitar a {partnerName}
           </Typography>
@@ -50,7 +45,6 @@ export const DisablePartnerConfirmationModal: FC<DisablePartnerConfirmationModal
       </Box>
       <Typography
         sx={{
-          fontFamily: "Inter, sans-serif",
           fontSize: "0.9375rem",
           color: "#64748b",
           lineHeight: 1.6,
