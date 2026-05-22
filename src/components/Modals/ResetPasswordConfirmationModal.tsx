@@ -1,6 +1,7 @@
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import type { FC, MouseEvent } from "react";
+import { useTheme, alpha } from "@mui/material/styles";
 import { ConfirmationModal } from "./ConfirmationModal";
 import LockResetIcon from "@mui/icons-material/LockReset";
 
@@ -17,6 +18,7 @@ export const ResetPasswordConfirmationModal: FC<ResetPasswordConfirmationModalPr
   onCancel,
   onReset,
 }) => {
+  const theme = useTheme();
   return (
     <ConfirmationModal
       isOpen={isOpen}
@@ -31,13 +33,13 @@ export const ResetPasswordConfirmationModal: FC<ResetPasswordConfirmationModalPr
             width: 48,
             height: 48,
             borderRadius: "50%",
-            backgroundColor: "rgba(102, 126, 234, 0.1)",
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <LockResetIcon sx={{ fontSize: 28, color: "#667eea" }} />
+          <LockResetIcon sx={{ fontSize: 28, color: "primary.main" }} />
         </Box>
         <Box sx={{ flex: 1 }}>
           <Typography

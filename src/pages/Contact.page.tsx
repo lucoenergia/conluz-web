@@ -1,4 +1,5 @@
 import { Box, Typography, Paper, Avatar, Grow, Fade } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { BreadCrumb } from "../components/Breadcrumb";
 import type { FC } from "react";
 
@@ -10,11 +11,12 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import MessageIcon from "@mui/icons-material/Message";
 
 export const ContactPage: FC = () => {
+  const theme = useTheme();
   const contactMethods = [
     {
       icon: LocalPhoneIcon,
       title: "Teléfono",
-      gradient: "#667eea",
+      gradient: theme.palette.primary.main,
       items: [
         { label: "Bob", value: "666 777 888" },
         { label: "John", value: "666 555 444" },
@@ -78,7 +80,7 @@ export const ContactPage: FC = () => {
           sx={{
             p: { xs: 3, sm: 4 },
             borderRadius: 3,
-            background: "#667eea",
+            background: theme.palette.primary.main,
             color: "white",
             position: "relative",
             overflow: "hidden",

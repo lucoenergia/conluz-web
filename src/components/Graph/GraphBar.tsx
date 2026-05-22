@@ -36,15 +36,15 @@ export const GraphBar: FC<GraphBarProps> = ({
     switch (variant) {
       case "production":
         return {
-          colors: ["#667eea"]
+          colors: [theme.palette.primary.main]
         };
       case "consumption":
         return {
-          colors: ["#667eea"]
+          colors: [theme.palette.primary.main]
         };
       default:
         return {
-          colors: ["#667eea"]
+          colors: [theme.palette.primary.main]
         };
     }
   };

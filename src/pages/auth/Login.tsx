@@ -81,12 +81,12 @@ export const Login: FC = () => {
         }}
       >
         <Box
-          sx={{
-            background: "#667eea",
+          sx={(theme) => ({
+            background: theme.palette.primary.main,
             color: "white",
             p: { xs: 3, sm: 4 },
             textAlign: "center",
-          }}
+          })}
         >
           <Avatar
             sx={{
@@ -163,18 +163,18 @@ export const Login: FC = () => {
                 required
                 fullWidth
                 variant="outlined"
-                sx={{
+                sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
                     fontFamily: "Inter, sans-serif",
                     borderRadius: "6px",
                     "&:hover fieldset": {
-                      borderColor: "#667eea",
+                      borderColor: theme.palette.primary.main,
                     },
                     "&.Mui-focused fieldset": {
-                      borderColor: "#667eea",
+                      borderColor: theme.palette.primary.main,
                     },
                   },
-                }}
+                })}
               />
             </Box>
 
@@ -201,18 +201,18 @@ export const Login: FC = () => {
                 required
                 fullWidth
                 variant="outlined"
-                sx={{
+                sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
                     fontFamily: "Inter, sans-serif",
                     borderRadius: "6px",
                     "&:hover fieldset": {
-                      borderColor: "#667eea",
+                      borderColor: theme.palette.primary.main,
                     },
                     "&.Mui-focused fieldset": {
-                      borderColor: "#667eea",
+                      borderColor: theme.palette.primary.main,
                     },
                   },
-                }}
+                })}
               />
             </Box>
 
@@ -229,12 +229,12 @@ export const Login: FC = () => {
                 control={
                   <Checkbox
                     name="remember"
-                    sx={{
-                      color: "#667eea",
+                    sx={(theme) => ({
+                      color: theme.palette.primary.main,
                       "&.Mui-checked": {
-                        color: "#667eea",
+                        color: theme.palette.primary.main,
                       },
-                    }}
+                    })}
                   />
                 }
                 label={
@@ -253,14 +253,14 @@ export const Login: FC = () => {
                 component={RouterLink}
                 to="/forgot-password"
                 underline="hover"
-                sx={{
+                sx={(theme) => ({
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
-                  color: "#667eea",
+                  color: theme.palette.primary.main,
                   "&:hover": {
-                    color: "#5568d3",
+                    color: theme.palette.primary.dark,
                   },
-                }}
+                })}
               >
                 ¿Olvidaste tu contraseña?
               </Link>
@@ -270,21 +270,21 @@ export const Login: FC = () => {
               type="submit"
               variant="contained"
               fullWidth
-              sx={{
+              sx={(theme) => ({
                 textTransform: "none",
                 fontFamily: "Inter, sans-serif",
                 fontSize: "1rem",
                 fontWeight: 600,
                 padding: "12px",
                 borderRadius: "6px",
-                background: "#667eea",
+                background: theme.palette.primary.main,
                 boxShadow: "0 4px 12px 0 rgba(102, 126, 234, 0.4)",
                 transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
                   boxShadow: "0 6px 16px 0 rgba(102, 126, 234, 0.5)",
                   transform: "translateY(-2px)",
                 },
-              }}
+              })}
             >
               Entrar
             </Button>
@@ -304,15 +304,15 @@ export const Login: FC = () => {
                 component={RouterLink}
                 to="/contact"
                 underline="hover"
-                sx={{
+                sx={(theme) => ({
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
-                  color: "#667eea",
+                  color: theme.palette.primary.main,
                   fontWeight: 600,
                   "&:hover": {
-                    color: "#5568d3",
+                    color: theme.palette.primary.dark,
                   },
-                }}
+                })}
               >
                 Contacta con nosotres
               </Link>

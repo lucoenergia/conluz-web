@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
+import { colors } from "../../theme/tokens";
 
 export interface StatItem {
   value: number | string;
@@ -21,7 +22,7 @@ export const PageHeaderWithStats: FC<PageHeaderWithStatsProps> = ({
   title,
   subtitle,
   stats,
-  bgColor = "#667eea",
+  bgColor = colors.brand.main,
 }) => {
   return (
     <Paper

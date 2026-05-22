@@ -39,15 +39,15 @@ export const GraphCard: FC<GraphCardProps> = ({
     switch (variant) {
       case "production":
         return {
-          background: "#667eea",
+          background: theme.palette.primary.main,
         };
       case "consumption":
         return {
-          background: "#667eea",
+          background: theme.palette.primary.main,
         };
       default:
         return {
-          background: "#667eea",
+          background: theme.palette.primary.main,
         };
     }
   };

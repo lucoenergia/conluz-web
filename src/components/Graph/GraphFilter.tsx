@@ -2,6 +2,7 @@ import { Box, Button, ButtonGroup, Paper } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { alpha } from "@mui/material/styles";
 import { useEffect, useMemo, useState, type FC } from "react";
 import type { DateView } from "@mui/x-date-pickers/models";
 import dayjs from "dayjs";
@@ -86,7 +87,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
       >
         <ButtonGroup
           variant="contained"
-          sx={{
+          sx={(theme) => ({
             boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
             width: { xs: "100%", sm: "auto" },
             flexDirection: { xs: "column", sm: "row" },
@@ -102,59 +103,57 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               padding: { xs: "0.5rem 1rem", sm: "0.4375rem 1.0625rem" },
               minWidth: { xs: "100%", sm: "64px" },
               transition: "all 0.2s",
-              bgcolor: range === GraphFilterRangeValues.DAY ? "#667eea" : "white",
-              color: range === GraphFilterRangeValues.DAY ? "white" : "#667eea",
-              border: "1px solid #667eea",
+              border: `1px solid ${theme.palette.primary.main}`,
               "&:hover": {
-                bgcolor: "#667eea",
+                bgcolor: theme.palette.primary.main,
                 color: "white",
                 boxShadow: "0 4px 8px 0 rgba(102,126,234,0.3)",
               },
             },
-          }}
+          })}
         >
           <Button
             onClick={() => setRange(GraphFilterRangeValues.DAY)}
-            sx={{
-              bgcolor: range === GraphFilterRangeValues.DAY ? "#667eea !important" : "white !important",
-              color: range === GraphFilterRangeValues.DAY ? "white !important" : "#667eea !important",
-            }}
+            sx={(theme) => ({
+              bgcolor: range === GraphFilterRangeValues.DAY ? theme.palette.primary.main : "white",
+              color: range === GraphFilterRangeValues.DAY ? "white" : theme.palette.primary.main,
+            })}
           >
             Día
           </Button>
           <Button
             onClick={() => setRange(GraphFilterRangeValues.MONTH)}
-            sx={{
-              bgcolor: range === GraphFilterRangeValues.MONTH ? "#667eea !important" : "white !important",
-              color: range === GraphFilterRangeValues.MONTH ? "white !important" : "#667eea !important",
-            }}
+            sx={(theme) => ({
+              bgcolor: range === GraphFilterRangeValues.MONTH ? theme.palette.primary.main : "white",
+              color: range === GraphFilterRangeValues.MONTH ? "white" : theme.palette.primary.main,
+            })}
           >
             Mes
           </Button>
           <Button
             onClick={() => setRange(GraphFilterRangeValues.YEAR)}
-            sx={{
-              bgcolor: range === GraphFilterRangeValues.YEAR ? "#667eea !important" : "white !important",
-              color: range === GraphFilterRangeValues.YEAR ? "white !important" : "#667eea !important",
-            }}
+            sx={(theme) => ({
+              bgcolor: range === GraphFilterRangeValues.YEAR ? theme.palette.primary.main : "white",
+              color: range === GraphFilterRangeValues.YEAR ? "white" : theme.palette.primary.main,
+            })}
           >
             Año
           </Button>
           <Button
             onClick={() => setRange(GraphFilterRangeValues.TOTALS)}
-            sx={{
-              bgcolor: range === GraphFilterRangeValues.TOTALS ? "#667eea !important" : "white !important",
-              color: range === GraphFilterRangeValues.TOTALS ? "white !important" : "#667eea !important",
-            }}
+            sx={(theme) => ({
+              bgcolor: range === GraphFilterRangeValues.TOTALS ? theme.palette.primary.main : "white",
+              color: range === GraphFilterRangeValues.TOTALS ? "white" : theme.palette.primary.main,
+            })}
           >
             Totales
           </Button>
           <Button
             onClick={() => setRange(GraphFilterRangeValues.DATES)}
-            sx={{
-              bgcolor: range === GraphFilterRangeValues.DATES ? "#667eea !important" : "white !important",
-              color: range === GraphFilterRangeValues.DATES ? "white !important" : "#667eea !important",
-            }}
+            sx={(theme) => ({
+              bgcolor: range === GraphFilterRangeValues.DATES ? theme.palette.primary.main : "white",
+              color: range === GraphFilterRangeValues.DATES ? "white" : theme.palette.primary.main,
+            })}
           >
             Fechas
           </Button>
@@ -170,67 +169,67 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               slotProps={{
                 textField: {
                   size: "small",
-                  sx: {
+                  sx: (theme) => ({
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "6px",
                       fontFamily: "Inter, sans-serif",
                       fontSize: "0.9375rem",
                       height: "40px",
                       "&:hover fieldset": {
-                        borderColor: "#667eea",
+                        borderColor: theme.palette.primary.main,
                       },
                       "&.Mui-focused fieldset": {
-                        borderColor: "#667eea",
+                        borderColor: theme.palette.primary.main,
                         borderWidth: "2px",
                       },
                     },
                     "& .MuiInputLabel-root.Mui-focused": {
-                      color: "#667eea",
+                      color: theme.palette.primary.main,
                     },
-                  },
+                  }),
                 },
                 popper: {
-                  sx: {
+                  sx: (theme) => ({
                     "& .MuiPickersYear-yearButton.Mui-selected": {
-                      backgroundColor: "#667eea !important",
-                      color: "white !important",
+                      backgroundColor: theme.palette.primary.main,
+                      color: "white",
                       "&:hover": {
-                        backgroundColor: "#5568d3 !important",
+                        backgroundColor: theme.palette.primary.dark,
                       },
                       "&:focus": {
-                        backgroundColor: "#667eea !important",
+                        backgroundColor: theme.palette.primary.main,
                       },
                     },
                     "& .MuiPickersMonth-monthButton.Mui-selected": {
-                      backgroundColor: "#667eea !important",
-                      color: "white !important",
+                      backgroundColor: theme.palette.primary.main,
+                      color: "white",
                       "&:hover": {
-                        backgroundColor: "#5568d3 !important",
+                        backgroundColor: theme.palette.primary.dark,
                       },
                       "&:focus": {
-                        backgroundColor: "#667eea !important",
+                        backgroundColor: theme.palette.primary.main,
                       },
                     },
                     "& .MuiPickersDay-root.Mui-selected": {
-                      backgroundColor: "#667eea !important",
-                      color: "white !important",
+                      backgroundColor: theme.palette.primary.main,
+                      color: "white",
                       "&:hover": {
-                        backgroundColor: "#5568d3 !important",
+                        backgroundColor: theme.palette.primary.dark,
                       },
                       "&:focus": {
-                        backgroundColor: "#667eea !important",
+                        backgroundColor: theme.palette.primary.main,
                       },
                     },
                     "& .MuiPickersYear-yearButton:hover": {
-                      backgroundColor: "rgba(102, 126, 234, 0.1)",
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
                     "& .MuiPickersMonth-monthButton:hover": {
-                      backgroundColor: "rgba(102, 126, 234, 0.1)",
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
                     "& .MuiPickersDay-root:hover": {
-                      backgroundColor: "rgba(102, 126, 234, 0.1)",
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
-                  },
+                  }),
                 },
               }}
             />
@@ -243,67 +242,67 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               slotProps={{
                 textField: {
                   size: "small",
-                  sx: {
+                  sx: (theme) => ({
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "6px",
                       fontFamily: "Inter, sans-serif",
                       fontSize: "0.9375rem",
                       height: "40px",
                       "&:hover fieldset": {
-                        borderColor: "#667eea",
+                        borderColor: theme.palette.primary.main,
                       },
                       "&.Mui-focused fieldset": {
-                        borderColor: "#667eea",
+                        borderColor: theme.palette.primary.main,
                         borderWidth: "2px",
                       },
                     },
                     "& .MuiInputLabel-root.Mui-focused": {
-                      color: "#667eea",
+                      color: theme.palette.primary.main,
                     },
-                  },
+                  }),
                 },
                 popper: {
-                  sx: {
+                  sx: (theme) => ({
                     "& .MuiPickersYear-yearButton.Mui-selected": {
-                      backgroundColor: "#667eea !important",
-                      color: "white !important",
+                      backgroundColor: theme.palette.primary.main,
+                      color: "white",
                       "&:hover": {
-                        backgroundColor: "#5568d3 !important",
+                        backgroundColor: theme.palette.primary.dark,
                       },
                       "&:focus": {
-                        backgroundColor: "#667eea !important",
+                        backgroundColor: theme.palette.primary.main,
                       },
                     },
                     "& .MuiPickersMonth-monthButton.Mui-selected": {
-                      backgroundColor: "#667eea !important",
-                      color: "white !important",
+                      backgroundColor: theme.palette.primary.main,
+                      color: "white",
                       "&:hover": {
-                        backgroundColor: "#5568d3 !important",
+                        backgroundColor: theme.palette.primary.dark,
                       },
                       "&:focus": {
-                        backgroundColor: "#667eea !important",
+                        backgroundColor: theme.palette.primary.main,
                       },
                     },
                     "& .MuiPickersDay-root.Mui-selected": {
-                      backgroundColor: "#667eea !important",
-                      color: "white !important",
+                      backgroundColor: theme.palette.primary.main,
+                      color: "white",
                       "&:hover": {
-                        backgroundColor: "#5568d3 !important",
+                        backgroundColor: theme.palette.primary.dark,
                       },
                       "&:focus": {
-                        backgroundColor: "#667eea !important",
+                        backgroundColor: theme.palette.primary.main,
                       },
                     },
                     "& .MuiPickersYear-yearButton:hover": {
-                      backgroundColor: "rgba(102, 126, 234, 0.1)",
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
                     "& .MuiPickersMonth-monthButton:hover": {
-                      backgroundColor: "rgba(102, 126, 234, 0.1)",
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
                     "& .MuiPickersDay-root:hover": {
-                      backgroundColor: "rgba(102, 126, 234, 0.1)",
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
-                  },
+                  }),
                 },
               }}
             />

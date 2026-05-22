@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
+import { useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
   Typography,
@@ -58,6 +59,7 @@ interface FilterState {
 }
 
 export const PartnersPage: FC = () => {
+  const theme = useTheme();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [orderBy, setOrderBy] = useState<OrderBy>('number');
@@ -325,7 +327,7 @@ export const PartnersPage: FC = () => {
                 variant="contained"
                 startIcon={<AddCircleOutlineIcon />}
                 sx={{
-                  background: "#667eea",
+                  background: theme.palette.primary.main,
                   borderRadius: 2,
                   textTransform: "none",
                   px: 3,
@@ -349,12 +351,12 @@ export const PartnersPage: FC = () => {
                   textTransform: "none",
                   px: 3,
                   py: 1.5,
-                  borderColor: "#667eea",
-                  color: "#667eea",
+                  borderColor: theme.palette.primary.main,
+                  color: theme.palette.primary.main,
                   "&:hover": {
                     transform: "translateY(-2px)",
-                    borderColor: "#5568d3",
-                    backgroundColor: "rgba(102, 126, 234, 0.04)",
+                    borderColor: theme.palette.primary.dark,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
                   },
                   transition: "all 0.3s ease",
                 }}
@@ -483,7 +485,7 @@ export const PartnersPage: FC = () => {
                           }}
                         >
                           <TableCell>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: "#667eea" }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
                               #{user.number || '-'}
                             </Typography>
                           </TableCell>
@@ -493,7 +495,7 @@ export const PartnersPage: FC = () => {
                                 sx={{
                                   width: 36,
                                   height: 36,
-                                  bgcolor: "#667eea",
+                                  bgcolor: theme.palette.primary.main,
                                   fontSize: "0.875rem",
                                 }}
                               >
@@ -609,7 +611,7 @@ export const PartnersPage: FC = () => {
       >
         <MenuItem onClick={handleEditClick}>
           <ListItemIcon>
-            <EditIcon fontSize="small" sx={{ color: "#667eea" }} />
+            <EditIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
           </ListItemIcon>
           <ListItemText>Editar datos</ListItemText>
         </MenuItem>
@@ -620,13 +622,13 @@ export const PartnersPage: FC = () => {
           }
         }}>
           <ListItemIcon>
-            <ElectricBoltIcon fontSize="small" sx={{ color: "#667eea" }} />
+            <ElectricBoltIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
           </ListItemIcon>
           <ListItemText>Puntos de suministro</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleResetPasswordClick}>
           <ListItemIcon>
-            <LockResetIcon fontSize="small" sx={{ color: "#667eea" }} />
+            <LockResetIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
           </ListItemIcon>
           <ListItemText>Reestablecer contraseña</ListItemText>
         </MenuItem>

@@ -34,7 +34,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({
       sx={{
         p: { xs: 2, sm: 3 },
         borderRadius: { xs: 0, sm: 3 },
-        background: "#667eea",
+        background: (theme) => theme.palette.primary.main,
         color: "white",
         mx: { xs: 0, sm: 0 },
         width: "100%",

@@ -3,6 +3,7 @@ import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/mat
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { alpha } from "@mui/material/styles";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
@@ -123,19 +124,19 @@ export const PlantForm: FC<PlantFormProps> = ({
           autoFocus
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
               "&:hover fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
               "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
             },
             "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
+              color: theme.palette.primary.main,
             },
-          }}
+          })}
         />
 
         <TextField
@@ -149,19 +150,19 @@ export const PlantForm: FC<PlantFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
               "&:hover fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
               "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
             },
             "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
+              color: theme.palette.primary.main,
             },
-          }}
+          })}
         />
 
         <Autocomplete
@@ -188,19 +189,19 @@ export const PlantForm: FC<PlantFormProps> = ({
                   ),
                 },
               }}
-              sx={{
+              sx={(theme) => ({
                 "& .MuiOutlinedInput-root": {
                   "&:hover fieldset": {
-                    borderColor: disableSupplySelector ? undefined : "#667eea",
+                    borderColor: disableSupplySelector ? undefined : theme.palette.primary.main,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: disableSupplySelector ? undefined : "#667eea",
+                    borderColor: disableSupplySelector ? undefined : theme.palette.primary.main,
                   },
                 },
                 "& .MuiInputLabel-root.Mui-focused": {
-                  color: disableSupplySelector ? undefined : "#667eea",
+                  color: disableSupplySelector ? undefined : theme.palette.primary.main,
                 },
-              }}
+              })}
             />
           )}
         />
@@ -216,19 +217,19 @@ export const PlantForm: FC<PlantFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
               "&:hover fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
               "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
             },
             "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
+              color: theme.palette.primary.main,
             },
-          }}
+          })}
         />
 
         <TextField
@@ -243,19 +244,19 @@ export const PlantForm: FC<PlantFormProps> = ({
           rows={3}
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
               "&:hover fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
               "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
             },
             "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
+              color: theme.palette.primary.main,
             },
-          }}
+          })}
         />
 
         <TextField
@@ -276,19 +277,19 @@ export const PlantForm: FC<PlantFormProps> = ({
               step: 0.01,
             },
           }}
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
               "&:hover fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
               "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
+                borderColor: theme.palette.primary.main,
               },
             },
             "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
+              color: theme.palette.primary.main,
             },
-          }}
+          })}
         />
 
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
@@ -300,67 +301,67 @@ export const PlantForm: FC<PlantFormProps> = ({
               textField: {
                 fullWidth: true,
                 size: "small",
-                sx: {
+                sx: (theme) => ({
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "6px",
                     fontFamily: "Inter, sans-serif",
                     fontSize: "0.9375rem",
                     height: "40px",
                     "&:hover fieldset": {
-                      borderColor: "#667eea",
+                      borderColor: theme.palette.primary.main,
                     },
                     "&.Mui-focused fieldset": {
-                      borderColor: "#667eea",
+                      borderColor: theme.palette.primary.main,
                       borderWidth: "2px",
                     },
                   },
                   "& .MuiInputLabel-root.Mui-focused": {
-                    color: "#667eea",
+                    color: theme.palette.primary.main,
                   },
-                },
+                }),
               },
               popper: {
-                sx: {
+                sx: (theme) => ({
                   "& .MuiPickersYear-yearButton.Mui-selected": {
-                    backgroundColor: "#667eea !important",
-                    color: "white !important",
+                    backgroundColor: theme.palette.primary.main,
+                    color: "white",
                     "&:hover": {
-                      backgroundColor: "#5568d3 !important",
+                      backgroundColor: theme.palette.primary.dark,
                     },
                     "&:focus": {
-                      backgroundColor: "#667eea !important",
+                      backgroundColor: theme.palette.primary.main,
                     },
                   },
                   "& .MuiPickersMonth-monthButton.Mui-selected": {
-                    backgroundColor: "#667eea !important",
-                    color: "white !important",
+                    backgroundColor: theme.palette.primary.main,
+                    color: "white",
                     "&:hover": {
-                      backgroundColor: "#5568d3 !important",
+                      backgroundColor: theme.palette.primary.dark,
                     },
                     "&:focus": {
-                      backgroundColor: "#667eea !important",
+                      backgroundColor: theme.palette.primary.main,
                     },
                   },
                   "& .MuiPickersDay-root.Mui-selected": {
-                    backgroundColor: "#667eea !important",
-                    color: "white !important",
+                    backgroundColor: theme.palette.primary.main,
+                    color: "white",
                     "&:hover": {
-                      backgroundColor: "#5568d3 !important",
+                      backgroundColor: theme.palette.primary.dark,
                     },
                     "&:focus": {
-                      backgroundColor: "#667eea !important",
+                      backgroundColor: theme.palette.primary.main,
                     },
                   },
                   "& .MuiPickersYear-yearButton:hover": {
-                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                   "& .MuiPickersMonth-monthButton:hover": {
-                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                   "& .MuiPickersDay-root:hover": {
-                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
-                },
+                }),
               },
             }}
           />
@@ -369,8 +370,8 @@ export const PlantForm: FC<PlantFormProps> = ({
         <Button
           type="submit"
           variant="contained"
-          sx={{
-            background: "#667eea",
+          sx={(theme) => ({
+            background: theme.palette.primary.main,
             textTransform: "none",
             px: 3,
             py: 1.5,
@@ -381,7 +382,7 @@ export const PlantForm: FC<PlantFormProps> = ({
               boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
             },
             transition: "all 0.3s ease",
-          }}
+          })}
         >
           {initialName ? "Guardar cambios" : "Crear planta"}
         </Button>

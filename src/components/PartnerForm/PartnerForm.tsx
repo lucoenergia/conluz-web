@@ -10,6 +10,8 @@ import {
   Select,
   TextField,
 } from "@mui/material";
+import type { Theme } from "@mui/material/styles";
+import { colors } from "../../theme/tokens";
 import { CreateUserBodyRole } from "../../api/models";
 
 export interface PartnerFormValues {
@@ -31,16 +33,16 @@ interface PartnerFormProps {
   submitLabel: string;
 }
 
-const fieldSx = {
+const fieldSx = (theme: Theme) => ({
   "& .MuiOutlinedInput-root": {
     "&.Mui-focused fieldset": {
-      borderColor: "#667eea",
+      borderColor: theme.palette.primary.main,
     },
   },
   "& .MuiInputLabel-root.Mui-focused": {
-    color: "#667eea",
+    color: theme.palette.primary.main,
   },
-};
+});
 
 export const PartnerForm: FC<PartnerFormProps> = ({
   mode,
@@ -210,12 +212,11 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           sx={{
             mt: 2,
             py: 1.5,
-            background: "#667eea",
             textTransform: "none",
             fontSize: "1rem",
             fontWeight: 600,
             "&:hover": {
-              background: "linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)",
+              background: `linear-gradient(135deg, ${colors.brand.dark} 0%, #6a3f8f 100%)`,
             },
           }}
         >
