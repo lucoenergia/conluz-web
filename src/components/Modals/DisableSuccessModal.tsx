@@ -82,11 +82,11 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
             fontSize: "0.9375rem",
             borderRadius: "6px",
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-            backgroundColor: "#667eea",
+            backgroundColor: (theme) => theme.palette.primary.main,
             color: "white",
             boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
             "&:hover": {
-              backgroundColor: "#5568d3",
+              backgroundColor: (theme) => theme.palette.primary.dark,
               boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
             },
           }}

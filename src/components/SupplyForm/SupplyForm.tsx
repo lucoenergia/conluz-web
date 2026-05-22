@@ -41,10 +41,8 @@ export const SupplyForm: FC<SupplyFormProps> = ({
   const [addressRef, setAddressRef] = useState(initialAddressRef);
   const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
 
-  // Fetch users for the selector
   const { data: usersData, isLoading: usersLoading } = useGetAllUsers({ size: 10000 });
 
-  // Set initial selected user when editing
   useEffect(() => {
     if (selectedUserId && usersData?.items) {
       const user = usersData.items.find((u) => u.id === selectedUserId);
@@ -101,19 +99,13 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           autoFocus
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: "#667eea",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
-              },
+              "&:hover fieldset": { borderColor: theme.palette.primary.main },
+              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
             },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
-            },
-          }}
+            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
+          })}
         />
 
         {showUserSelector && (
@@ -141,19 +133,13 @@ export const SupplyForm: FC<SupplyFormProps> = ({
                     ),
                   },
                 }}
-                sx={{
+                sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": {
-                      borderColor: disableUserSelector ? undefined : "#667eea",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: disableUserSelector ? undefined : "#667eea",
-                    },
+                    "&:hover fieldset": { borderColor: disableUserSelector ? undefined : theme.palette.primary.main },
+                    "&.Mui-focused fieldset": { borderColor: disableUserSelector ? undefined : theme.palette.primary.main },
                   },
-                  "& .MuiInputLabel-root.Mui-focused": {
-                    color: disableUserSelector ? undefined : "#667eea",
-                  },
-                }}
+                  "& .MuiInputLabel-root.Mui-focused": { color: disableUserSelector ? undefined : theme.palette.primary.main },
+                })}
               />
             )}
           />
@@ -170,19 +156,13 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: "#667eea",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
-              },
+              "&:hover fieldset": { borderColor: theme.palette.primary.main },
+              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
             },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
-            },
-          }}
+            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
+          })}
         />
 
         <TextField
@@ -196,19 +176,13 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: "#667eea",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
-              },
+              "&:hover fieldset": { borderColor: theme.palette.primary.main },
+              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
             },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
-            },
-          }}
+            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
+          })}
         />
 
         <TextField
@@ -223,19 +197,13 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: "#667eea",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
-              },
+              "&:hover fieldset": { borderColor: theme.palette.primary.main },
+              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
             },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
-            },
-          }}
+            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
+          })}
         />
 
         <TextField
@@ -249,26 +217,19 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={{
+          sx={(theme) => ({
             "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: "#667eea",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#667eea",
-              },
+              "&:hover fieldset": { borderColor: theme.palette.primary.main },
+              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
             },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#667eea",
-            },
-          }}
+            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
+          })}
         />
 
         <Button
           type="submit"
           variant="contained"
           sx={{
-            background: "#667eea",
             textTransform: "none",
             px: 3,
             py: 1.5,

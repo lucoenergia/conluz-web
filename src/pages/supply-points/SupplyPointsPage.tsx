@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -18,6 +19,7 @@ import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import { ImportSuppliesModal } from "../../components/Modals/ImportSuppliesModal";
 
 export const SupplyPointsPage: FC = () => {
+  const theme = useTheme();
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [showImportModal, setShowImportModal] = useState(false);
@@ -173,7 +175,7 @@ export const SupplyPointsPage: FC = () => {
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               sx={{
-                background: "#667eea",
+                background: theme.palette.primary.main,
                 borderRadius: 2,
                 textTransform: "none",
                 px: 3,
@@ -197,12 +199,12 @@ export const SupplyPointsPage: FC = () => {
                 textTransform: "none",
                 px: 3,
                 py: 1.5,
-                borderColor: "#667eea",
-                color: "#667eea",
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
                 "&:hover": {
                   transform: "translateY(-2px)",
-                  borderColor: "#5568d3",
-                  backgroundColor: "rgba(102, 126, 234, 0.04)",
+                  borderColor: theme.palette.primary.dark,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
                 },
                 transition: "all 0.3s ease",
               }}

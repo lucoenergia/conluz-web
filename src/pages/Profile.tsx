@@ -22,7 +22,6 @@ export const ProfilePage: FC = () => {
 
   const [successMessage, setSuccessMessage] = useState(false);
 
-  // Update form data when user data is loaded
   useEffect(() => {
     if (currentUser) {
       setFormData({
@@ -44,16 +43,9 @@ export const ProfilePage: FC = () => {
   });
 
   const handleChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [field]: event.target.value,
-    });
-    // Clear error when user starts typing
+    setFormData({ ...formData, [field]: event.target.value });
     if (formErrors[field as keyof typeof formErrors]) {
-      setFormErrors({
-        ...formErrors,
-        [field]: false,
-      });
+      setFormErrors({ ...formErrors, [field]: false });
     }
   };
 
@@ -65,21 +57,17 @@ export const ProfilePage: FC = () => {
       address: false,
       phone: false,
     };
-
     setFormErrors(newErrors);
     return !newErrors.name && !newErrors.dni && !newErrors.email;
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     if (!validateForm()) return;
-
     if (!currentUser?.id) {
       errorDispatch("No se pudo obtener el ID del usuario");
       return;
     }
-
     try {
       const updatedUserData = {
         number: currentUser.number || 0,
@@ -90,18 +78,9 @@ export const ProfilePage: FC = () => {
         phoneNumber: formData.phone || undefined,
         role: currentUser.role!,
       };
-
       await updateUser.mutateAsync(
-        {
-          id: currentUser.id,
-          data: updatedUserData,
-        },
-        {
-          onSuccess: () => {
-            setSuccessMessage(true);
-            refetch();
-          },
-        }
+        { id: currentUser.id, data: updatedUserData },
+        { onSuccess: () => { setSuccessMessage(true); refetch(); } }
       );
     } catch (error) {
       errorDispatch("Error al actualizar el perfil. Por favor, inténtalo de nuevo.");
@@ -109,9 +88,15 @@ export const ProfilePage: FC = () => {
     }
   };
 
-  const handleCloseSuccessMessage = () => {
-    setSuccessMessage(false);
-  };
+  const handleCloseSuccessMessage = () => { setSuccessMessage(false); };
+
+  const fieldSx = (theme: any) => ({
+    "& .MuiOutlinedInput-root": {
+      "&:hover fieldset": { borderColor: theme.palette.primary.main },
+      "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
+    },
+    "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
+  });
 
   return (
     <Box
@@ -126,7 +111,6 @@ export const ProfilePage: FC = () => {
         overflow: "hidden",
       }}
     >
-      {/* Breadcrumb */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
         <BreadCrumb
           steps={[
@@ -136,40 +120,28 @@ export const ProfilePage: FC = () => {
         />
       </Box>
 
-      {/* Header Section */}
       <Paper
         elevation={0}
-        sx={{
+        sx={(theme) => ({
           p: { xs: 2, sm: 3 },
           borderRadius: { xs: 0, sm: 3 },
-          background: "#667eea",
+          background: theme.palette.primary.main,
           color: "white",
           mx: { xs: 0, sm: 0 },
           width: { xs: "100%", sm: "auto" },
-        }}
+        })}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Avatar
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.2)",
-              width: 56,
-              height: 56,
-            }}
-          >
+          <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 56, height: 56 }}>
             <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4" fontWeight="bold">
-              Mi perfil
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Gestiona tu información personal
-            </Typography>
+            <Typography variant="h4" fontWeight="bold">Mi perfil</Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>Gestiona tu información personal</Typography>
           </Box>
         </Box>
       </Paper>
 
-      {/* Form Section */}
       <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
         <Paper
           elevation={0}
@@ -185,7 +157,7 @@ export const ProfilePage: FC = () => {
         >
           {isLoading && (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-              <CircularProgress sx={{ color: "#667eea" }} />
+              <CircularProgress sx={(theme) => ({ color: theme.palette.primary.main })} />
             </Box>
           )}
 
@@ -197,199 +169,68 @@ export const ProfilePage: FC = () => {
 
           {!isLoading && !error && (
             <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {/* Read-only fields as chips */}
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
-              <Chip
-                icon={<BadgeIcon />}
-                label={`Socio #${currentUser?.number || 0}`}
-                sx={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  backgroundColor: "#667eea",
-                  color: "white",
-                  px: 1,
-                  py: 2.5,
-                  "& .MuiChip-icon": {
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+                <Chip
+                  icon={<BadgeIcon />}
+                  label={`Socio #${currentUser?.number || 0}`}
+                  sx={(theme) => ({
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    backgroundColor: theme.palette.primary.main,
                     color: "white",
-                  },
-                }}
-              />
-              <Chip
-                icon={<AdminPanelSettingsIcon />}
-                label={currentUser?.role || ""}
-                sx={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  backgroundColor: "#10b981",
-                  color: "white",
-                  px: 1,
-                  py: 2.5,
-                  "& .MuiChip-icon": {
+                    px: 1,
+                    py: 2.5,
+                    "& .MuiChip-icon": { color: "white" },
+                  })}
+                />
+                <Chip
+                  icon={<AdminPanelSettingsIcon />}
+                  label={currentUser?.role || ""}
+                  sx={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    backgroundColor: "#10b981",
                     color: "white",
-                  },
-                }}
-              />
-            </Box>
+                    px: 1,
+                    py: 2.5,
+                    "& .MuiChip-icon": { color: "white" },
+                  }}
+                />
+              </Box>
 
-            <TextField
-              label="Nombre completo"
-              error={formErrors.name}
-              helperText={formErrors.name ? "Por favor, introduce tu nombre completo" : ""}
-              value={formData.name}
-              onChange={handleChange("name")}
-              required
-              fullWidth
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: "#667eea",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#667eea",
-                  },
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#667eea",
-                },
-              }}
-            />
+              <TextField label="Nombre completo" error={formErrors.name} helperText={formErrors.name ? "Por favor, introduce tu nombre completo" : ""} value={formData.name} onChange={handleChange("name")} required fullWidth variant="outlined" sx={fieldSx} />
+              <TextField label="DNI/NIF" error={formErrors.dni} helperText={formErrors.dni ? "Por favor, introduce tu DNI/NIF" : ""} value={formData.dni} onChange={handleChange("dni")} required fullWidth variant="outlined" sx={fieldSx} />
+              <TextField label="Email" error={formErrors.email} helperText={formErrors.email ? "Por favor, introduce tu email" : ""} type="email" value={formData.email} onChange={handleChange("email")} required fullWidth variant="outlined" sx={fieldSx} />
+              <TextField label="Dirección" value={formData.address} onChange={handleChange("address")} fullWidth variant="outlined" sx={fieldSx} />
+              <TextField label="Número de teléfono" value={formData.phone} onChange={handleChange("phone")} fullWidth variant="outlined" sx={fieldSx} />
 
-            <TextField
-              label="DNI/NIF"
-              error={formErrors.dni}
-              helperText={formErrors.dni ? "Por favor, introduce tu DNI/NIF" : ""}
-              value={formData.dni}
-              onChange={handleChange("dni")}
-              required
-              fullWidth
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: "#667eea",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#667eea",
-                  },
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#667eea",
-                },
-              }}
-            />
-
-            <TextField
-              label="Email"
-              error={formErrors.email}
-              helperText={formErrors.email ? "Por favor, introduce tu email" : ""}
-              type="email"
-              value={formData.email}
-              onChange={handleChange("email")}
-              required
-              fullWidth
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: "#667eea",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#667eea",
-                  },
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#667eea",
-                },
-              }}
-            />
-
-            <TextField
-              label="Dirección"
-              value={formData.address}
-              onChange={handleChange("address")}
-              fullWidth
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: "#667eea",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#667eea",
-                  },
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#667eea",
-                },
-              }}
-            />
-
-            <TextField
-              label="Número de teléfono"
-              value={formData.phone}
-              onChange={handleChange("phone")}
-              fullWidth
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: "#667eea",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#667eea",
-                  },
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#667eea",
-                },
-              }}
-            />
-
-            <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                sx={{
-                  textTransform: "none",
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: "0.9375rem",
-                  fontWeight: 600,
-                  borderRadius: "6px",
-                  background: "#667eea",
-                  boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
-                  px: 4,
-                  "&:hover": {
-                    boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
-                  },
-                }}
-              >
-                Guardar cambios
-              </Button>
-            </Box>
+              <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{
+                    textTransform: "none",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "0.9375rem",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+                    px: 4,
+                    "&:hover": { boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)" },
+                  }}
+                >
+                  Guardar cambios
+                </Button>
+              </Box>
             </Box>
           )}
         </Paper>
       </Box>
 
-      {/* Success Snackbar */}
-      <Snackbar
-        open={successMessage}
-        autoHideDuration={4000}
-        onClose={handleCloseSuccessMessage}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseSuccessMessage}
-          severity="success"
-          sx={{
-            width: "100%",
-            fontFamily: "Inter, sans-serif",
-            borderRadius: "6px",
-          }}
-        >
+      <Snackbar open={successMessage} autoHideDuration={4000} onClose={handleCloseSuccessMessage} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+        <Alert onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", fontFamily: "Inter, sans-serif", borderRadius: "6px" }}>
           Perfil actualizado correctamente
         </Alert>
       </Snackbar>

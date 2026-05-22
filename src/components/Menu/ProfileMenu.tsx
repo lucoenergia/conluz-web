@@ -47,7 +47,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             sx={{
               width: 48,
               height: 48,
-              bgcolor: '#667eea'
+              bgcolor: 'primary.main'
             }}
           >
             {username.charAt(0).toUpperCase()}

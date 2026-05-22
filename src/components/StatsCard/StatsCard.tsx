@@ -1,5 +1,6 @@
 import { type FC, type ReactNode } from "react";
 import { Card, CardContent, Typography, Box, Divider } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
@@ -29,21 +30,23 @@ export const StatsCard: FC<StatsCardProps> = ({
   accentColor = "#1976d2",
   variant = "default",
 }) => {
+  const theme = useTheme();
+
   const getVariantStyles = () => {
     switch (variant) {
       case "production":
         return {
-          background: "#667eea",
+          background: theme.palette.primary.main,
           iconBg: "rgba(255, 255, 255, 0.2)",
         };
       case "consumption":
         return {
-          background: "#667eea",
+          background: theme.palette.primary.main,
           iconBg: "rgba(255, 255, 255, 0.2)",
         };
       default:
         return {
-          background: "#667eea",
+          background: theme.palette.primary.main,
           iconBg: "rgba(255, 255, 255, 0.2)",
         };
     }

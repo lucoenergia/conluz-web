@@ -11,7 +11,6 @@ export const ForgotPassword: FC = () => {
   const handleSubmit = async (data: FormData) => {
     const id = data.get("email")?.toString().trim();
     const newError = !id;
-
     setFormError(newError);
     if (newError) return;
     // TODO: Add backend call when method exists
@@ -37,62 +36,28 @@ export const ForgotPassword: FC = () => {
         }}
       >
         <Box
-          sx={{
-            background: "#667eea",
+          sx={(theme) => ({
+            background: theme.palette.primary.main,
             color: "white",
             p: { xs: 3, sm: 4 },
             textAlign: "center",
-          }}
+          })}
         >
-          <Avatar
-            sx={{
-              bgcolor: "rgba(255, 255, 255, 0.2)",
-              width: 64,
-              height: 64,
-              margin: "0 auto 16px",
-            }}
-          >
+          <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 64, height: 64, margin: "0 auto 16px" }}>
             <LockResetIcon sx={{ fontSize: 36 }} />
           </Avatar>
-          <Typography
-            variant="h4"
-            sx={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 700,
-              mb: 1,
-            }}
-          >
+          <Typography variant="h4" sx={{ fontFamily: "Inter, sans-serif", fontWeight: 700, mb: 1 }}>
             ¿Olvidaste tu contraseña?
           </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              fontFamily: "Inter, sans-serif",
-              opacity: 0.95,
-            }}
-          >
+          <Typography variant="body1" sx={{ fontFamily: "Inter, sans-serif", opacity: 0.95 }}>
             Introduce tu email y te enviaremos instrucciones para restaurar tu contraseña
           </Typography>
         </Box>
 
-        <Box
-          component="form"
-          action={handleSubmit}
-          sx={{
-            p: { xs: 3, sm: 4 },
-          }}
-        >
+        <Box component="form" action={handleSubmit} sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <Box>
-              <Typography
-                sx={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  color: "#1e293b",
-                  mb: 1,
-                }}
-              >
+              <Typography sx={{ fontFamily: "Inter, sans-serif", fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Email
               </Typography>
               <TextField
@@ -106,18 +71,14 @@ export const ForgotPassword: FC = () => {
                 required
                 fullWidth
                 variant="outlined"
-                sx={{
+                sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
                     fontFamily: "Inter, sans-serif",
                     borderRadius: "6px",
-                    "&:hover fieldset": {
-                      borderColor: "#667eea",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#667eea",
-                    },
+                    "&:hover fieldset": { borderColor: theme.palette.primary.main },
+                    "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
                   },
-                }}
+                })}
               />
             </Box>
 
@@ -132,7 +93,6 @@ export const ForgotPassword: FC = () => {
                 fontWeight: 600,
                 padding: "12px",
                 borderRadius: "6px",
-                background: "#667eea",
                 boxShadow: "0 4px 12px 0 rgba(102, 126, 234, 0.4)",
                 transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
@@ -149,18 +109,16 @@ export const ForgotPassword: FC = () => {
                 component={RouterLink}
                 to="/login"
                 underline="none"
-                sx={{
+                sx={(theme) => ({
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.875rem",
-                  color: "#667eea",
+                  color: theme.palette.primary.main,
                   fontWeight: 600,
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 0.5,
-                  "&:hover": {
-                    color: "#5568d3",
-                  },
-                }}
+                  "&:hover": { color: theme.palette.primary.dark },
+                })}
               >
                 <ArrowBackIcon sx={{ fontSize: 18 }} />
                 Volver al inicio

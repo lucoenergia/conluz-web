@@ -1,4 +1,5 @@
 import { Box, Drawer, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import type { FC } from "react";
 import { Link, useLocation } from "react-router";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -11,6 +12,7 @@ interface SideMenuProps {
 }
 
 export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuItems }) => {
+  const theme = useTheme();
   const { width } = useWindowDimensions();
   const location = useLocation();
   const drawerVariant = width < MIN_DESKTOP_WIDTH ? "temporary" : "persistent";
@@ -66,7 +68,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuIte
                       py: 1.5,
                       transition: 'all 0.2s ease',
                       '&.Mui-selected': {
-                        background: '#667eea',
+                        background: theme.palette.primary.main,
                         '& .MuiListItemIcon-root': {
                           color: '#ffffff',
                         },

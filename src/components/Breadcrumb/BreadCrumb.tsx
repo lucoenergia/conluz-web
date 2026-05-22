@@ -65,7 +65,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
                   </Box>
                 }
                 sx={{
-                  background: "#667eea",
+                  background: (theme) => theme.palette.primary.main,
                   color: "white",
                   height: 28,
                   "& .MuiChip-label": {
@@ -88,7 +88,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
                 textDecoration: "none",
                 transition: "all 0.3s ease",
                 "&:hover": {
-                  color: "#667eea",
+                  color: "primary.main",
                   transform: "translateX(2px)",
                 },
               }}

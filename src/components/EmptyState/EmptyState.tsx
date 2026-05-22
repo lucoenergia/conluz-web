@@ -50,7 +50,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
           onClick={actionButton.onClick}
           sx={{
             mt: 3,
-            background: "#667eea",
+            background: (theme) => theme.palette.primary.main,
             borderRadius: 2,
             textTransform: "none",
           }}
