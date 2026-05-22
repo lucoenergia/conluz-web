@@ -1,5 +1,6 @@
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useGetAllUsers } from "../../api/users/users";
 import type { UserResponse } from "../../api/models";
 
@@ -229,18 +230,18 @@ export const SupplyForm: FC<SupplyFormProps> = ({
         <Button
           type="submit"
           variant="contained"
-          sx={{
+          sx={(theme) => ({
             textTransform: "none",
             px: 3,
             py: 1.5,
             fontSize: "1rem",
-            boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+            boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
             "&:hover": {
               transform: "translateY(-2px)",
-              boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+              boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
             },
             transition: "all 0.3s ease",
-          }}
+          })}
         >
           {initialName ? "Guardar cambios" : "Crear punto de suministro"}
         </Button>

@@ -1,5 +1,6 @@
 import { Autocomplete, TextField, Box, Paper, Chip, InputAdornment, CircularProgress } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import React, { useMemo, type FC } from "react";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -39,12 +40,12 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
     <Box
       sx={{
         background: "white",
-        borderRadius: 2,
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+        borderRadius: radii.default,
+        boxShadow: shadows.soft,
         p: { xs: 1.5, sm: 2 },
         transition: "all 0.3s ease",
         "&:hover": {
-          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.12)",
+          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.12)", // unique hover lift, not in canonical set
         },
       }}
     >
@@ -62,7 +63,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
             elevation={8}
             sx={{
               mt: 1,
-              borderRadius: 2,
+              borderRadius: radii.default,
               overflow: "hidden",
               "& .MuiAutocomplete-listbox": {
                 "& .MuiAutocomplete-option": {
@@ -139,7 +140,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                 </InputAdornment>
               ),
               sx: {
-                borderRadius: 2,
+                borderRadius: radii.default,
                 "& fieldset": {
                   borderColor: "#e2e8f0",
                   borderWidth: 2,

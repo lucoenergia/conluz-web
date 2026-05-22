@@ -1,3 +1,4 @@
+import { radii, shadows } from "../../theme/tokens";
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
@@ -375,8 +376,8 @@ export const PlantDetailPage: FC = () => {
               p: 4,
               textAlign: "center",
               bgcolor: "white",
-              borderRadius: 3,
-              boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+              borderRadius: radii.large,
+              boxShadow: shadows.soft,
             }}
           >
             <SolarPowerIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 2 }} />

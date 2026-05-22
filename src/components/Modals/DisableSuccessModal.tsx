@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { BasicModal } from "./BasicModal";
 import { Box, Button, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { radii, shadows } from "../../theme/tokens";
 
 interface DisableSuccessModalProps {
   onClose: (event: React.MouseEvent<HTMLElement>) => void;
@@ -55,7 +56,7 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
             mb: 2,
             backgroundColor: "rgba(16, 185, 129, 0.08)",
             padding: "10px 16px",
-            borderRadius: "6px",
+            borderRadius: radii.default,
           }}
         >
           {code}
@@ -80,14 +81,14 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
             padding: "8px 24px",
             fontFamily: "Inter, sans-serif",
             fontSize: "0.9375rem",
-            borderRadius: "6px",
+            borderRadius: radii.default,
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
             backgroundColor: (theme) => theme.palette.primary.main,
             color: "white",
-            boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+            boxShadow: shadows.medium,
             "&:hover": {
               backgroundColor: (theme) => theme.palette.primary.dark,
-              boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
+              boxShadow: shadows.strong,
             },
           }}
         >

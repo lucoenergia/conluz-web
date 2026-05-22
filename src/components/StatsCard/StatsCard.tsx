@@ -1,6 +1,7 @@
 import { type FC, type ReactNode } from "react";
 import { Card, CardContent, Typography, Box, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { radii } from "../../theme/tokens";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
@@ -58,12 +59,12 @@ export const StatsCard: FC<StatsCardProps> = ({
     <Card
       sx={{
         width: "100%",
-        borderRadius: 2,
+        borderRadius: radii.default,
         transition: "all 0.3s ease",
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)",
+        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)", // intentionally heavier than shadows.soft for data cards
         overflow: "hidden",
         "&:hover": {
-          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.15)",
+          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.15)", // unique card hover lift
         },
       }}
     >

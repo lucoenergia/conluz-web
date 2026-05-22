@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
-import { colors } from "../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 
 export interface StatItem {
   value: number | string;
@@ -29,7 +29,7 @@ export const PageHeaderWithStats: FC<PageHeaderWithStatsProps> = ({
       elevation={0}
       sx={{
         p: { xs: 2, sm: 3 },
-        borderRadius: { xs: 0, sm: 3 },
+        borderRadius: { xs: 0, sm: radii.large },
         background: bgColor,
         color: "white",
         mx: { xs: 0, sm: 0 },
@@ -64,7 +64,7 @@ export const PageHeaderWithStats: FC<PageHeaderWithStatsProps> = ({
             sx={{
               bgcolor: "rgba(255, 255, 255, 0.15)",
               backdropFilter: "blur(10px)",
-              borderRadius: 2,
+              borderRadius: radii.default,
               p: 2,
               textAlign: "center",
             }}

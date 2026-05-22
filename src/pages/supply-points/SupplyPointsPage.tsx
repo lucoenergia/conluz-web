@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -153,9 +154,9 @@ export const SupplyPointsPage: FC = () => {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 3 },
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: radii.default, sm: radii.large },
             bgcolor: "white",
-            boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+            boxShadow: shadows.soft,
           }}
         >
           <Box
@@ -176,14 +177,14 @@ export const SupplyPointsPage: FC = () => {
               startIcon={<AddCircleOutlineIcon />}
               sx={{
                 background: theme.palette.primary.main,
-                borderRadius: 2,
+                borderRadius: radii.default,
                 textTransform: "none",
                 px: 3,
                 py: 1.5,
-                boxShadow: "0 4px 15px 0 rgba(102,126,234,0.4)",
+                boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                 "&:hover": {
                   transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px 0 rgba(102,126,234,0.5)",
+                  boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                 },
                 transition: "all 0.3s ease",
               }}
@@ -195,7 +196,7 @@ export const SupplyPointsPage: FC = () => {
               startIcon={<CloudUploadIcon />}
               onClick={handleOpenImportModal}
               sx={{
-                borderRadius: 2,
+                borderRadius: radii.default,
                 textTransform: "none",
                 px: 3,
                 py: 1.5,

@@ -4,6 +4,7 @@ import { Link as RouterLink } from "react-router";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import HomeIcon from "@mui/icons-material/Home";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import { radii } from "../../theme/tokens";
 
 interface BreadCrumbStep {
   label: string;
@@ -29,8 +30,8 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
       sx={{
         p: { xs: 1.5, sm: 2 },
         background: "#ffffff",
-        borderRadius: 2,
-        boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)",
+        borderRadius: radii.default,
+        boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)", // unique breadcrumb shadow, not in canonical set
         overflow: "auto",
       }}
     >

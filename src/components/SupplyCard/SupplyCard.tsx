@@ -1,6 +1,7 @@
 import { useState, type FC } from "react";
 import { Card, CardContent, Box, Typography, Chip, Avatar } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PercentIcon from "@mui/icons-material/Percent";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -105,8 +106,8 @@ export const SupplyCard: FC<SupplyCardProps> = ({
           cursor: "pointer",
           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           overflow: "hidden",
-          borderRadius: 2,
-          boxShadow: isHovered ? "0 8px 30px 0 rgba(0,0,0,0.12)" : "0 4px 20px 0 rgba(0,0,0,0.08)",
+          borderRadius: radii.default,
+          boxShadow: isHovered ? "0 8px 30px 0 rgba(0,0,0,0.12)" : shadows.soft,
           transform: isHovered ? "translateY(-4px)" : "translateY(0)",
           width: "100%",
           minWidth: 0,
@@ -190,7 +191,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 alignItems: "center",
                 gap: 1.5,
                 p: 1.5,
-                borderRadius: 2,
+                borderRadius: radii.default,
                 bgcolor: "rgba(236, 72, 153, 0.08)",
               }}
             >
@@ -212,7 +213,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 alignItems: "center",
                 gap: 1.5,
                 p: 1.5,
-                borderRadius: 2,
+                borderRadius: radii.default,
                 bgcolor: alpha(theme.palette.primary.main, 0.08),
               }}
             >
@@ -234,7 +235,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 alignItems: "center",
                 gap: 1.5,
                 p: 1.5,
-                borderRadius: 2,
+                borderRadius: radii.default,
                 bgcolor: "rgba(16, 185, 129, 0.08)",
               }}
             >
@@ -258,7 +259,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               gap: 1,
               p: 2,
               bgcolor: "rgba(0, 0, 0, 0.02)",
-              borderRadius: 2,
+              borderRadius: radii.default,
             }}
           >
             <LocationOnIcon sx={{ color: "#64748b", fontSize: 20 }} />

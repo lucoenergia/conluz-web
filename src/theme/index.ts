@@ -2,6 +2,12 @@ import { createTheme } from "@mui/material";
 import { colors } from "./tokens";
 
 export const theme = createTheme({
+  shape: {
+    // Canonical base radius (px). radii.default = "8px" in tokens.ts.
+    // MUI sx numeric shorthand (e.g. borderRadius: 2) is NOT used in this
+    // project; all call sites use explicit px strings from the radii token.
+    borderRadius: 8,
+  },
   palette: {
     primary: {
       main: colors.brand.main,

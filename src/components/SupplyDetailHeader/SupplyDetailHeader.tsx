@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { Box, Paper, Typography, Avatar, Chip } from "@mui/material";
+import { radii } from "../../theme/tokens";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import type { SupplyResponse } from "../../api/models";
 
@@ -19,7 +20,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
       elevation={0}
       sx={{
         p: { xs: 2, sm: 3 },
-        borderRadius: { xs: 0, sm: 3 },
+        borderRadius: { xs: 0, sm: radii.large },
         background: (theme) => theme.palette.primary.main,
         color: "white",
         mx: { xs: 0, sm: 0 },
@@ -74,7 +75,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
             sx={{
               bgcolor: "rgba(255, 255, 255, 0.15)",
               backdropFilter: "blur(10px)",
-              borderRadius: 2,
+              borderRadius: radii.default,
               p: 2,
             }}
           >
@@ -90,7 +91,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
             sx={{
               bgcolor: "rgba(255, 255, 255, 0.15)",
               backdropFilter: "blur(10px)",
-              borderRadius: 2,
+              borderRadius: radii.default,
               p: 2,
             }}
           >
@@ -106,7 +107,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
             sx={{
               bgcolor: "rgba(255, 255, 255, 0.15)",
               backdropFilter: "blur(10px)",
-              borderRadius: 2,
+              borderRadius: radii.default,
               p: 2,
             }}
           >
@@ -122,7 +123,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
             sx={{
               bgcolor: "rgba(255, 255, 255, 0.15)",
               backdropFilter: "blur(10px)",
-              borderRadius: 2,
+              borderRadius: radii.default,
               p: 2,
             }}
           >

@@ -1,3 +1,4 @@
+import { radii, shadows } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import {
   Box,
@@ -72,7 +73,7 @@ const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
       sx={{
         width: 48,
         height: 48,
-        borderRadius: 2,
+        borderRadius: radii.default,
         background: `${color}15`,
         color: color,
         display: "flex",
@@ -115,9 +116,9 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
     <Paper
       elevation={0}
       sx={{
-        borderRadius: { xs: 2, sm: 3 },
+        borderRadius: { xs: radii.default, sm: radii.large },
         bgcolor: "white",
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.08)",
+        boxShadow: shadows.soft,
         overflow: "hidden",
         transition: "box-shadow .2s",
         "&:hover": { boxShadow: "0 6px 24px 0 rgba(0,0,0,0.10)" },
@@ -293,13 +294,13 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
           }
           sx={{
             background: accent,
-            borderRadius: "6px",
+            borderRadius: radii.default,
             px: 3,
-            boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
+            boxShadow: shadows.medium,
             "&:hover": {
               background: accent,
               filter: "brightness(0.95)",
-              boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
+              boxShadow: shadows.strong,
             },
           }}
         >

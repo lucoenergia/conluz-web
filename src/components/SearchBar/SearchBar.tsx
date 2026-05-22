@@ -1,5 +1,6 @@
 import { InputBase, Paper, InputAdornment, IconButton } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import { radii, shadows } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -37,7 +38,7 @@ export const SearchBar: FC<SearchBarProps> = ({
         alignItems: "center",
         width: "100%",
         maxWidth: { xs: "100%", sm: 400 },
-        borderRadius: 3,
+        borderRadius: radii.large,
         background: isFocused
           ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, rgba(118,75,162,0.08) 100%)`
           : "white",
@@ -45,11 +46,11 @@ export const SearchBar: FC<SearchBarProps> = ({
         borderColor: isFocused ? theme.palette.primary.main : "#e2e8f0",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         boxShadow: isFocused
-          ? "0 10px 40px 0 rgba(102,126,234,0.15)"
-          : "0 4px 20px 0 rgba(0,0,0,0.08)",
+          ? `0 10px 40px 0 ${alpha(theme.palette.primary.main, 0.15)}`
+          : shadows.soft,
         "&:hover": {
           borderColor: theme.palette.primary.main,
-          boxShadow: "0 6px 24px 0 rgba(102,126,234,0.12)",
+          boxShadow: `0 6px 24px 0 ${alpha(theme.palette.primary.main, 0.12)}`,
         },
       }}
     >
