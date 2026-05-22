@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import type { FC } from "react";
 import { Box, Button, Typography, CircularProgress } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
@@ -28,6 +29,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const theme = useTheme();
   const mutation = useCreateSuppliesWithFile();
 
   const reset = () => {
@@ -108,18 +110,18 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
               data-testid="drop-zone"
               sx={{
                 border: "2px dashed",
-                borderColor: file ? "#667eea" : "#d1d5db",
+                borderColor: file ? theme.palette.primary.main : "#d1d5db",
                 borderRadius: 2,
                 p: 4,
                 textAlign: "center",
                 cursor: "pointer",
                 backgroundColor: file
-                  ? "rgba(102, 126, 234, 0.04)"
+                  ? alpha(theme.palette.primary.main, 0.04)
                   : "#f9fafb",
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  borderColor: "#667eea",
-                  backgroundColor: "rgba(102, 126, 234, 0.04)",
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
                 },
                 mb: 3,
               }}
@@ -127,7 +129,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
               <CloudUploadIcon
                 sx={{
                   fontSize: 48,
-                  color: file ? "#667eea" : "#9ca3af",
+                  color: file ? theme.palette.primary.main : "#9ca3af",
                   mb: 1,
                 }}
               />
@@ -137,7 +139,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                     fontFamily: "Inter, sans-serif",
                     fontSize: "0.9375rem",
                     fontWeight: 600,
-                    color: "#667eea",
+                    color: theme.palette.primary.main,
                   }}
                 >
                   {file.name}
@@ -250,11 +252,11 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: "6px",
-                  borderColor: "#667eea",
-                  color: "#667eea",
+                  borderColor: theme.palette.primary.main,
+                  color: theme.palette.primary.main,
                   "&:hover": {
-                    borderColor: "#5568d3",
-                    backgroundColor: "rgba(102, 126, 234, 0.04)",
+                    borderColor: theme.palette.primary.dark,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
                   },
                 }}
               >
@@ -271,10 +273,10 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: "6px",
-                  backgroundColor: "#667eea",
+                  backgroundColor: theme.palette.primary.main,
                   boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
                   "&:hover": {
-                    backgroundColor: "#5568d3",
+                    backgroundColor: theme.palette.primary.dark,
                     boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
                   },
                   "&.Mui-disabled": {
@@ -291,7 +293,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
 
         {step === "uploading" && (
           <Box sx={{ textAlign: "center", py: 4 }}>
-            <CircularProgress sx={{ color: "#667eea", mb: 2 }} />
+            <CircularProgress sx={{ color: theme.palette.primary.main, mb: 2 }} />
             <Typography
               sx={{
                 fontFamily: "Inter, sans-serif",
@@ -431,11 +433,11 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: "6px",
-                  borderColor: "#667eea",
-                  color: "#667eea",
+                  borderColor: theme.palette.primary.main,
+                  color: theme.palette.primary.main,
                   "&:hover": {
-                    borderColor: "#5568d3",
-                    backgroundColor: "rgba(102, 126, 234, 0.04)",
+                    borderColor: theme.palette.primary.dark,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
                   },
                 }}
               >
@@ -451,10 +453,10 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                   fontFamily: "Inter, sans-serif",
                   fontSize: "0.9375rem",
                   borderRadius: "6px",
-                  backgroundColor: "#667eea",
+                  backgroundColor: theme.palette.primary.main,
                   boxShadow: "0 2px 4px 0 rgba(0,0,0,0.12)",
                   "&:hover": {
-                    backgroundColor: "#5568d3",
+                    backgroundColor: theme.palette.primary.dark,
                     boxShadow: "0 4px 8px 0 rgba(0,0,0,0.16)",
                   },
                 }}

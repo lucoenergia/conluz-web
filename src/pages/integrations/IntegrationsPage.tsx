@@ -11,6 +11,7 @@ import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
 import type { ConfigureDatadisBody, ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
+import { colors } from "../../theme/tokens";
 
 interface IntegrationState {
   datadis: { enabled: boolean; username: string; password: string; baseUrl: string };
@@ -51,7 +52,7 @@ const PROVIDERS = [
   },
 ];
 
-const ACCENT = "#667eea";
+const ACCENT = colors.brand.main;
 
 export const IntegrationsPage: FC = () => {
   const [state, setState] = useState<IntegrationState>({

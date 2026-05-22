@@ -1,4 +1,5 @@
 import { Autocomplete, TextField, Box, Paper, Chip, InputAdornment, CircularProgress } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import React, { useMemo, type FC } from "react";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -25,6 +26,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
   onChange,
   icon = <ElectricMeterIcon />
 }) => {
+  const theme = useTheme();
   const selectedValue = useMemo(() => {
     if (value === undefined) {
       return undefined;
@@ -66,10 +68,10 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                 "& .MuiAutocomplete-option": {
                   transition: "all 0.2s ease",
                   "&:hover": {
-                    background: "linear-gradient(90deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%)",
+                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, rgba(118,75,162,0.1) 100%)`,
                   },
                   "&[aria-selected='true']": {
-                    background: "linear-gradient(90deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%)",
+                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, rgba(118,75,162,0.15) 100%)`,
                     fontWeight: 600,
                   },
                 },
@@ -93,11 +95,11 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
               }}
             >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ElectricMeterIcon sx={{ color: "#667eea", fontSize: 20 }} />
+              <ElectricMeterIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
               <span>{option.label}</span>
             </Box>
             {selectedValue?.value === option.value && (
-              <CheckCircleIcon sx={{ color: "#667eea", fontSize: 18 }} />
+              <CheckCircleIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
             )}
           </Box>
           );
@@ -108,7 +110,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
               label={option.label}
               {...getTagProps({ index })}
               sx={{
-                background: "#667eea",
+                background: theme.palette.primary.main,
                 color: "white",
                 "& .MuiChip-deleteIcon": {
                   color: "rgba(255, 255, 255, 0.7)",
@@ -130,7 +132,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
               startAdornment: (
                 <InputAdornment position="start">
                   {isLoading ? (
-                    <CircularProgress size={20} sx={{ color: "#667eea" }} />
+                    <CircularProgress size={20} sx={{ color: theme.palette.primary.main }} />
                   ) : (
                     icon
                   )}
@@ -144,12 +146,12 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                   transition: "all 0.3s ease",
                 },
                 "&:hover fieldset": {
-                  borderColor: "#667eea",
+                  borderColor: theme.palette.primary.main,
                 },
                 "&.Mui-focused fieldset": {
-                  borderColor: "#667eea",
+                  borderColor: theme.palette.primary.main,
                   borderWidth: 2,
-                  background: "linear-gradient(90deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%)",
+                  background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, rgba(118,75,162,0.05) 100%)`,
                 },
               },
             }}
@@ -157,7 +159,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
               sx: {
                 color: "#64748b",
                 "&.Mui-focused": {
-                  color: "#667eea",
+                  color: theme.palette.primary.main,
                   fontWeight: 600,
                 },
               },

@@ -33,9 +33,6 @@ export const FilterChipsBar: FC<FilterChipsBarProps> = ({
         onClick={() => onChange("all")}
         color={value === "all" ? "primary" : "default"}
         size="small"
-        sx={{
-          background: value === "all" ? "#667eea" : undefined,
-        }}
       />
       <Chip
         label="Activos"

@@ -124,7 +124,7 @@ export const PlantsPage: FC = () => {
             variant="contained"
             startIcon={<AddCircleOutlineIcon />}
             sx={{
-              background: "#667eea",
+              background: (theme) => theme.palette.primary.main,
               borderRadius: 2,
               textTransform: "none",
               px: 3,

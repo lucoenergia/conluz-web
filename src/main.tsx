@@ -3,29 +3,19 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { BrowserRouter } from "react-router";
-import { createTheme, GlobalStyles, StyledEngineProvider } from "@mui/material";
-import { ThemeProvider } from "@emotion/react";
+import { GlobalStyles, StyledEngineProvider } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/auth.context.tsx";
 import { LoggedUserProvider } from "./context/logged-user.context.tsx";
 import { getFromStorage } from "./utils/getFromStorage.tsx";
+import { theme } from "./theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       throwOnError: (error: any) => error.response?.status === 401,
-    },
-  },
-});
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#eeaf11",
-      light: "#f2d152",
-      dark: "#ed8d06",
-      contrastText: "#fff",
     },
   },
 });

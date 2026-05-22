@@ -1,5 +1,6 @@
 import { useState, type FC } from "react";
 import { Card, CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -34,6 +35,7 @@ export const PlantCard: FC<PlantCardProps> = ({
   description = "",
   onDelete,
 }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
@@ -118,7 +120,7 @@ export const PlantCard: FC<PlantCardProps> = ({
           minWidth: 0,
           "&:hover": {
             "& .card-header": {
-              background: "#667eea",
+              background: theme.palette.primary.main,
             },
           },
         }}
@@ -127,7 +129,7 @@ export const PlantCard: FC<PlantCardProps> = ({
         <Box
           className="card-header"
           sx={{
-            background: "#667eea",
+            background: theme.palette.primary.main,
             p: 2,
             color: "white",
             display: "flex",
@@ -255,12 +257,12 @@ export const PlantCard: FC<PlantCardProps> = ({
                 gap: 1.5,
                 p: 1.5,
                 borderRadius: 2,
-                bgcolor: "rgba(102, 126, 234, 0.08)",
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
               }}
             >
-              <BoltIcon sx={{ color: "#667eea", fontSize: 24 }} />
+              <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" fontWeight="bold" color="#667eea">
+                <Typography variant="h5" fontWeight="bold" color={theme.palette.primary.main}>
                   {totalPower || 0} kW
                 </Typography>
                 <Typography variant="caption" color="text.secondary">

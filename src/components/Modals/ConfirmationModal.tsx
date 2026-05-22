@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import { alpha } from "@mui/material/styles";
 import { BasicModal } from "./BasicModal";
 import type { FC, MouseEvent, ReactNode } from "react";
 
@@ -51,11 +52,11 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
             fontSize: "0.9375rem",
             borderRadius: "6px",
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-            borderColor: "#667eea",
-            color: "#667eea",
+            borderColor: (theme) => theme.palette.primary.main,
+            color: (theme) => theme.palette.primary.main,
             "&:hover": {
-              borderColor: "#5568d3",
-              backgroundColor: "rgba(102, 126, 234, 0.04)",
+              borderColor: (theme) => theme.palette.primary.dark,
+              backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
             },
           }}
         >

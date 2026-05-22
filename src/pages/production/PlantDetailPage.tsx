@@ -350,7 +350,7 @@ export const PlantDetailPage: FC = () => {
               trend: productionMetrics.productionTrend !== undefined ? Math.round(productionMetrics.productionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <SolarPowerIcon sx={{ fontSize: 24 }} />,
-              color: "#667eea",
+              color: "primary.main",
             },
           ]}
         />
