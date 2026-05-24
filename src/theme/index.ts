@@ -47,6 +47,26 @@ export const theme = createTheme({
     },
   },
   components: {
+    // PR 2 — MenuItem defaults: standard nav-item layout and hover colour
+    // encoded once instead of repeated in ProfileMenu, DisplayMenu, PlantCard.
+    // Danger/success hover colours remain in local sx (they win over this default).
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          paddingLeft: 24,
+          paddingRight: 24,
+          paddingTop: 12,
+          paddingBottom: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          width: "100%",
+          "&:hover": {
+            backgroundColor: "#f8fafc",
+          },
+        },
+      },
+    },
     // PR 1 — OutlinedInput hover/focus border colour centralised here so every
     // field in the app gets primary.main without repeating sx on each instance.
     MuiOutlinedInput: {
