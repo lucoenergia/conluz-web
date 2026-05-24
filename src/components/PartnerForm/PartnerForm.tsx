@@ -10,7 +10,6 @@ import {
   Select,
   TextField,
 } from "@mui/material";
-import type { Theme } from "@mui/material/styles";
 import { colors } from "../../theme/tokens";
 import { CreateUserBodyRole } from "../../api/models";
 
@@ -33,16 +32,6 @@ interface PartnerFormProps {
   submitLabel: string;
 }
 
-const fieldSx = (theme: Theme) => ({
-  "& .MuiOutlinedInput-root": {
-    "&.Mui-focused fieldset": {
-      borderColor: theme.palette.primary.main,
-    },
-  },
-  "& .MuiInputLabel-root.Mui-focused": {
-    color: theme.palette.primary.main,
-  },
-});
 
 export const PartnerForm: FC<PartnerFormProps> = ({
   mode,
@@ -101,7 +90,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           required
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          sx={fieldSx}
         />
 
         <TextField
@@ -111,7 +99,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           required
           value={personalId}
           onChange={(e) => setPersonalId(e.target.value)}
-          sx={fieldSx}
         />
 
         {mode === "create" && (
@@ -124,8 +111,7 @@ export const PartnerForm: FC<PartnerFormProps> = ({
             inputProps={{ min: 0, step: 1 }}
             value={number}
             onChange={(e) => setNumber(e.target.value)}
-            sx={fieldSx}
-          />
+            />
         )}
 
         <TextField
@@ -136,7 +122,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          sx={fieldSx}
         />
 
         <TextField
@@ -145,7 +130,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           fullWidth
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          sx={fieldSx}
         />
 
         <TextField
@@ -154,7 +138,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           fullWidth
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
-          sx={fieldSx}
         />
 
         {mode === "create" && (
@@ -170,8 +153,7 @@ export const PartnerForm: FC<PartnerFormProps> = ({
                 setPassword(e.target.value);
                 if (passwordError) setPasswordError("");
               }}
-              sx={fieldSx}
-            />
+                />
 
             <TextField
               label="Confirmar contraseña"
@@ -186,10 +168,9 @@ export const PartnerForm: FC<PartnerFormProps> = ({
                 setPasswordConfirm(e.target.value);
                 if (passwordError) setPasswordError("");
               }}
-              sx={fieldSx}
-            />
+                />
 
-            <FormControl fullWidth required sx={fieldSx}>
+            <FormControl fullWidth required>
               <InputLabel>Rol</InputLabel>
               <Select
                 label="Rol"

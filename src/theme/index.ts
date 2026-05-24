@@ -46,4 +46,30 @@ export const theme = createTheme({
       paper: colors.background.paper,
     },
   },
+  components: {
+    // PR 1 — OutlinedInput hover/focus border colour centralised here so every
+    // field in the app gets primary.main without repeating sx on each instance.
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          "&:hover fieldset": {
+            borderColor: theme.palette.primary.main,
+          },
+          "&.Mui-focused fieldset": {
+            borderColor: theme.palette.primary.main,
+          },
+        }),
+      },
+    },
+    // Matching label colour on focus — pairs with the OutlinedInput override above.
+    MuiInputLabel: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          "&.Mui-focused": {
+            color: theme.palette.primary.main,
+          },
+        }),
+      },
+    },
+  },
 });

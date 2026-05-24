@@ -158,17 +158,7 @@ export const Login: FC = () => {
                 required
                 fullWidth
                 variant="outlined"
-                sx={(theme) => ({
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: radii.default,
-                    "&:hover fieldset": {
-                      borderColor: theme.palette.primary.main,
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: theme.palette.primary.main,
-                    },
-                  },
-                })}
+
               />
             </Box>
 
@@ -194,17 +184,6 @@ export const Login: FC = () => {
                 required
                 fullWidth
                 variant="outlined"
-                sx={(theme) => ({
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: radii.default,
-                    "&:hover fieldset": {
-                      borderColor: theme.palette.primary.main,
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: theme.palette.primary.main,
-                    },
-                  },
-                })}
               />
             </Box>
 

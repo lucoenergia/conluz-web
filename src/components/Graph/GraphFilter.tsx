@@ -169,23 +169,12 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               slotProps={{
                 textField: {
                   size: "small",
-                  sx: (theme) => ({
+                  sx: {
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: radii.default,
                       fontSize: "0.9375rem",
                       height: "40px",
-                      "&:hover fieldset": {
-                        borderColor: theme.palette.primary.main,
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: theme.palette.primary.main,
-                        borderWidth: "2px",
-                      },
                     },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme.palette.primary.main,
-                    },
-                  }),
+                  },
                 },
                 popper: {
                   sx: (theme) => ({
@@ -241,23 +230,12 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               slotProps={{
                 textField: {
                   size: "small",
-                  sx: (theme) => ({
+                  sx: {
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: radii.default,
                       fontSize: "0.9375rem",
                       height: "40px",
-                      "&:hover fieldset": {
-                        borderColor: theme.palette.primary.main,
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: theme.palette.primary.main,
-                        borderWidth: "2px",
-                      },
                     },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme.palette.primary.main,
-                    },
-                  }),
+                  },
                 },
                 popper: {
                   sx: (theme) => ({

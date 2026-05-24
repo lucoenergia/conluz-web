@@ -48,14 +48,6 @@ export const ChangePasswordPage: FC = () => {
     }
   };
 
-  const inputSx = (theme: any) => ({
-    "& .MuiOutlinedInput-root": {
-      borderRadius: radii.default,
-      "&:hover fieldset": { borderColor: theme.palette.primary.main },
-      "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-    },
-  });
-
   return (
     <Box
       sx={{
@@ -119,21 +111,21 @@ export const ChangePasswordPage: FC = () => {
               <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Contraseña actual
               </Typography>
-              <PasswordInput error={formErrors.currentPassword} helperText={formErrors.currentPassword ? currentPasswordErrorMessage : ""} id="currentPassword" name="currentPassword" placeholder="Introduce tu contraseña actual" autoComplete="current-password" required fullWidth variant="outlined" sx={inputSx} />
+              <PasswordInput error={formErrors.currentPassword} helperText={formErrors.currentPassword ? currentPasswordErrorMessage : ""} id="currentPassword" name="currentPassword" placeholder="Introduce tu contraseña actual" autoComplete="current-password" required fullWidth variant="outlined" />
             </Box>
 
             <Box>
               <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Nueva contraseña
               </Typography>
-              <PasswordInput error={formErrors.newPassword || passwordMismatch} helperText={formErrors.newPassword ? newPasswordErrorMessage : ""} id="newPassword" name="newPassword" placeholder="Introduce tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" sx={inputSx} />
+              <PasswordInput error={formErrors.newPassword || passwordMismatch} helperText={formErrors.newPassword ? newPasswordErrorMessage : ""} id="newPassword" name="newPassword" placeholder="Introduce tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" />
             </Box>
 
             <Box>
               <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Repite la nueva contraseña
               </Typography>
-              <PasswordInput error={formErrors.confirmPassword || passwordMismatch} helperText={formErrors.confirmPassword ? confirmPasswordErrorMessage : passwordMismatch ? mismatchErrorMessage : ""} id="confirmPassword" name="confirmPassword" placeholder="Repite tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" sx={inputSx} />
+              <PasswordInput error={formErrors.confirmPassword || passwordMismatch} helperText={formErrors.confirmPassword ? confirmPasswordErrorMessage : passwordMismatch ? mismatchErrorMessage : ""} id="confirmPassword" name="confirmPassword" placeholder="Repite tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" />
             </Box>
 
             <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
