@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material";
-import { colors } from "./tokens";
+import { colors, shadows, radii } from "./tokens";
 
 export const theme = createTheme({
   shape: {
@@ -63,6 +63,47 @@ export const theme = createTheme({
           width: "100%",
           "&:hover": {
             backgroundColor: "#f8fafc",
+          },
+        },
+      },
+    },
+    // PR 5 — DialogTitle resolves to the Phase-3 h6 variant (1.25rem/600)
+    // so future dialogs don't re-specify fontSize/fontWeight individually.
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          typography: "h6",
+        },
+      },
+    },
+    // PR 4 — Button: textTransform:none + brand shadow as defaults.
+    // Instances that already set a unique boxShadow (e.g. brand-tinted alpha)
+    // keep their local sx — sx wins over styleOverrides.
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          borderRadius: radii.default,
+        },
+        contained: {
+          boxShadow: shadows.medium,
+          "&:hover": {
+            boxShadow: shadows.strong,
+          },
+        },
+      },
+    },
+    // PR 3 — Card baseline: soft shadow + hover lift as defaults.
+    // Existing cards with explicit sx boxShadow (state-based hover) are unaffected
+    // because sx wins over styleOverrides.
+    MuiCard: {
+      defaultProps: { elevation: 0 },
+      styleOverrides: {
+        root: {
+          boxShadow: shadows.soft,
+          transition: "box-shadow 0.2s ease",
+          "&:hover": {
+            boxShadow: shadows.medium,
           },
         },
       },
