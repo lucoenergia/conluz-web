@@ -1,6 +1,6 @@
 import type { FC } from "react";
-import { BasicModal } from "./BasicModal";
-import { Box, Button, Typography } from "@mui/material";
+import { AppModal } from "./AppModal";
+import { Button, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { radii, shadows } from "../../theme/tokens";
 
@@ -12,84 +12,65 @@ interface DisableSuccessModalProps {
 
 export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isOpen, code }) => {
   return (
-    <BasicModal isOpen={isOpen} onClose={onClose}>
-      <Box
+    <AppModal
+      isOpen={isOpen}
+      onClose={onClose}
+      centered
+      icon={<CheckCircleIcon sx={{ fontSize: 40, color: "#10b981" }} />}
+      iconBg="rgba(16, 185, 129, 0.1)"
+    >
+      <Typography
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-          p: { xs: 2, sm: 3 },
+          fontSize: "1.125rem",
+          color: "#475569",
+          lineHeight: 1.6,
+          mb: 2,
         }}
       >
-        <Box
-          sx={{
-            width: 64,
-            height: 64,
-            borderRadius: "50%",
-            backgroundColor: "rgba(16, 185, 129, 0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 3,
-          }}
-        >
-          <CheckCircleIcon sx={{ fontSize: 40, color: "#10b981" }} />
-        </Box>
-        <Typography
-          sx={{
-            fontSize: "1.125rem",
-            color: "#475569",
-            lineHeight: 1.6,
-            mb: 2,
-          }}
-        >
-          El punto de suministro
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: "0.9375rem",
-            fontWeight: 600,
-            color: "#1e293b",
-            mb: 2,
-            backgroundColor: "rgba(16, 185, 129, 0.08)",
-            padding: "10px 16px",
-            borderRadius: radii.default,
-          }}
-        >
-          {code}
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: "1.125rem",
-            color: "#475569",
-            lineHeight: 1.6,
-            mb: 3,
-          }}
-        >
-          ha sido deshabilitado
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={onClose}
-          sx={{
-            minWidth: "120px",
-            padding: "8px 24px",
-
-            fontSize: "0.9375rem",
-            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-            backgroundColor: (theme) => theme.palette.primary.main,
-            color: "white",
-            boxShadow: shadows.medium,
-            "&:hover": {
-              backgroundColor: (theme) => theme.palette.primary.dark,
-              boxShadow: shadows.strong,
-            },
-          }}
-        >
-          Cerrar
-        </Button>
-      </Box>
-    </BasicModal>
+        El punto de suministro
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: "0.9375rem",
+          fontWeight: 600,
+          color: "#1e293b",
+          mb: 2,
+          backgroundColor: "rgba(16, 185, 129, 0.08)",
+          padding: "10px 16px",
+          borderRadius: radii.default,
+        }}
+      >
+        {code}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: "1.125rem",
+          color: "#475569",
+          lineHeight: 1.6,
+          mb: 3,
+        }}
+      >
+        ha sido deshabilitado
+      </Typography>
+      <Button
+        variant="contained"
+        onClick={onClose}
+        sx={{
+          minWidth: "120px",
+          padding: "8px 24px",
+          fontSize: "0.9375rem",
+          transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+          backgroundColor: (theme) => theme.palette.primary.main,
+          color: "white",
+          boxShadow: shadows.medium,
+          "&:hover": {
+            backgroundColor: (theme) => theme.palette.primary.dark,
+            boxShadow: shadows.strong,
+          },
+        }}
+      >
+        Cerrar
+      </Button>
+    </AppModal>
   );
 };

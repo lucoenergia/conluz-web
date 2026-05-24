@@ -313,4 +313,81 @@ test.describe("Visual baselines", () => {
 
     await expect(page).toHaveScreenshot("import-supplies-modal.png", { fullPage: true });
   });
+
+  // ── Task 0 baselines: captured on PRE-REFACTOR code ────────────────────────
+  // These three screenshots must be committed BEFORE AppModal is built so the
+  // "before" state is recorded and the post-migration diff is meaningful.
+
+  test("disable confirmation modal open", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page);
+
+    await page.goto("/supply-points");
+    await stabilizePage(page);
+
+    // Open the three-dot menu on the enabled supply card (ES0021000000000000AA)
+    const enabledCard = page
+      .locator(".MuiCard-root")
+      .filter({ hasText: "ES0021000000000000AA" });
+    await enabledCard.getByRole("button").click();
+
+    // Click "Deshabilitar" in the dropdown — opens DisableConfirmationModal
+    await page.getByRole("menuitem", { name: /Deshabilitar/i }).click();
+
+    await page.waitForSelector("text=Deshabilitar punto de suministro");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("disable-confirmation-modal.png", {
+      fullPage: true,
+    });
+  });
+
+  test("disable success modal open", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page);
+
+    await page.goto("/supply-points");
+    await stabilizePage(page);
+
+    // Open the dropdown and trigger the disable confirmation modal
+    const enabledCard = page
+      .locator(".MuiCard-root")
+      .filter({ hasText: "ES0021000000000000AA" });
+    await enabledCard.getByRole("button").click();
+    await page.getByRole("menuitem", { name: /Deshabilitar/i }).click();
+    await page.waitForSelector("text=Deshabilitar punto de suministro");
+
+    // Confirm — fires POST /api/v1/supplies/{id}/disable (mocked → 200)
+    // then opens DisableSuccessModal
+    await page
+      .getByRole("button", { name: /^Deshabilitar$/i })
+      .click();
+
+    await page.waitForSelector("text=ha sido deshabilitado");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("disable-success-modal.png", {
+      fullPage: true,
+    });
+  });
+
+  test("import partners modal open", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page);
+
+    await page.goto("/partners");
+    await stabilizePage(page);
+
+    // Click "Importar CSV" on the Partners page
+    const importBtn = page.getByRole("button", { name: /importar csv/i });
+    await importBtn.scrollIntoViewIfNeeded();
+    await importBtn.click();
+
+    await page.waitForSelector("text=Importar Socios desde CSV");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("import-partners-modal.png", {
+      fullPage: true,
+    });
+  });
 });

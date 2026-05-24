@@ -1,5 +1,4 @@
 import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -14,31 +13,15 @@ interface DeleteConfirmationModalProps {
 
 export const DeleteConfirmationModal: FC<DeleteConfirmationModalProps> = ({ isOpen, code, onCancel, onDelete }) => {
   return (
-    <ConfirmationModal isOpen={isOpen} onCancel={onCancel} confirmLabel="Eliminar" onConfirm={onDelete}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            backgroundColor: "rgba(239, 68, 68, 0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <WarningAmberIcon sx={{ fontSize: 28, color: "#ef4444" }} />
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="h6"
-            component="h2"
-            sx={{ color: "#1e293b" }}
-          >
-            Eliminar planta
-          </Typography>
-        </Box>
-      </Box>
+    <ConfirmationModal
+      isOpen={isOpen}
+      onCancel={onCancel}
+      confirmLabel="Eliminar"
+      onConfirm={onDelete}
+      title="Eliminar planta"
+      icon={<WarningAmberIcon sx={{ fontSize: 28, color: "#ef4444" }} />}
+      iconBg="rgba(239, 68, 68, 0.1)"
+    >
       <Typography
         sx={{
           fontSize: "0.875rem",
