@@ -1,8 +1,7 @@
 import { type FC } from "react";
-import { Skeleton, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { CardTemplate } from "../CardTemplate/CardTemplate";
+import { Card, Skeleton, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { LoadingAppAccordion } from "../AppAccordion/LoadingAppAccordion";
 import { LoadingStat } from "../Stat/LoadingStat";
-import { LoadingDropdownCard } from "../DropdownCard/LoadingDropdownCard";
 
 export const LoadingSupplyDetailCard: FC = () => {
   const theme = useTheme();
@@ -10,16 +9,27 @@ export const LoadingSupplyDetailCard: FC = () => {
   return (
     <>
       {isSmall ? (
-        <LoadingDropdownCard>
+        <LoadingAppAccordion>
           <SupplyDetailContent />
-        </LoadingDropdownCard>
+        </LoadingAppAccordion>
       ) : (
-        <CardTemplate className="p-4 grid grid-flow-col auto-cols-fr gap-2 content-center items-center w-full">
+        <Card
+          sx={{
+            p: 2,
+            display: "grid",
+            gridAutoFlow: "column",
+            gridAutoColumns: "1fr",
+            gap: 1,
+            alignContent: "center",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
           <Typography variant="h5" sx={{ fontWeight: 800 }}>
             <Skeleton />
           </Typography>
           <SupplyDetailContent />
-        </CardTemplate>
+        </Card>
       )}
     </>
   );

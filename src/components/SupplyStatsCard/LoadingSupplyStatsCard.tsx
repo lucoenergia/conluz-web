@@ -1,6 +1,5 @@
 import type { FC } from "react";
-import { Divider, useMediaQuery, useTheme } from "@mui/material";
-import { CardTemplate } from "../CardTemplate/CardTemplate";
+import { Card, Divider, useMediaQuery, useTheme } from "@mui/material";
 import { LoadingStat } from "../Stat/LoadingStat";
 
 export const LoadingSupplyStatsCard: FC = () => {
@@ -8,13 +7,23 @@ export const LoadingSupplyStatsCard: FC = () => {
   const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <CardTemplate className="grid md:grid-flow-col md:auto-cols-max justify-center md:justify-between gap-2 p-4">
-      <LoadingStat className="text-center md:text-left" label="Consumo" variant="big" />
-      <LoadingStat className="text-center md:text-left" label="Autoconsumo" variant="big" />
-      <LoadingStat className="text-center md:text-left" label="Excedente" variant="big" />
+    <Card
+      sx={{
+        display: "grid",
+        gridAutoFlow: { md: "column" },
+        gridAutoColumns: { md: "max-content" },
+        justifyContent: { md: "space-between" },
+        textAlign: { xs: "center", md: "left" },
+        gap: 1,
+        p: 2,
+      }}
+    >
+      <LoadingStat label="Consumo" variant="big" />
+      <LoadingStat label="Autoconsumo" variant="big" />
+      <LoadingStat label="Excedente" variant="big" />
       {isSmall ? <Divider orientation="horizontal" /> : <Divider orientation="vertical" />}
-      <LoadingStat className="text-center md:text-left" label="Porcentaje de autoconsumo" variant="big" />
-      <LoadingStat className="text-center md:text-left" label="Porcentaje de aprovechamiento" variant="big" />
-    </CardTemplate>
+      <LoadingStat label="Porcentaje de autoconsumo" variant="big" />
+      <LoadingStat label="Porcentaje de aprovechamiento" variant="big" />
+    </Card>
   );
 };

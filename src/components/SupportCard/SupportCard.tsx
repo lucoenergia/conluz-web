@@ -1,6 +1,6 @@
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { FC, ReactNode } from "react";
-import { CardTemplate } from "../CardTemplate/CardTemplate";
+import { Card } from "@mui/material";
 import { LabeledIcon } from "../LabeledIcon/LabeledIcon";
 
 interface SupportCardProps {
@@ -11,9 +11,16 @@ interface SupportCardProps {
 
 export const SupportCard: FC<SupportCardProps> = ({ children, label, icon }) => {
   return (
-    <CardTemplate className="p-4 grid grid-cols-2 md:grid-cols-4 items-center">
+    <Card
+      sx={{
+        p: 2,
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+        alignItems: "center",
+      }}
+    >
       <LabeledIcon label={label} labelSize="text-2xl" icon={icon} />
       {children}
-    </CardTemplate>
+    </Card>
   );
 };

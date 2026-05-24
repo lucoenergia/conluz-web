@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { PaginationOutlined } from "../Pagination/Pagination";
 import React from "react";
 
-interface CardListProps {
+interface PaginatedListProps {
   children?: React.ReactNode;
   className?: string;
 }
@@ -14,7 +14,7 @@ const calculateStartIndex = (currentPage: number): number => {
   return (currentPage - 1) * ITEMS_PER_PAGE;
 };
 
-export const CardList: FC<CardListProps> = ({ children, className }) => {
+export const PaginatedList: FC<PaginatedListProps> = ({ children, className }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export const CardList: FC<CardListProps> = ({ children, className }) => {
   const startIndex = useMemo(() => calculateStartIndex(currentPage), [currentPage]);
 
   return (
-    <Box className="mt-5 grid content-center">
+    <Box sx={{ mt: 2.5, display: "grid", justifyContent: "center" }}>
       <Box className={className}>
         <ul>{listItems.slice(startIndex, startIndex + ITEMS_PER_PAGE)}</ul>
       </Box>

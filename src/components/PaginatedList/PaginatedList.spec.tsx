@@ -1,10 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { CardList } from "./CardList";
+import { PaginatedList } from "./PaginatedList";
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import { SupplyCard } from "../SupplyCard/SupplyCard";
 
-// Mock de los datos de ejemplo
 const mockItemList = [
   {
     code: "1",
@@ -30,10 +29,10 @@ vi.mock("../SupplyCard/SupplyCard", () => ({
   SupplyCard: ({ name }: { name: string }) => <div>{name}</div>,
 }));
 
-describe("CardList (unit)", () => {
+describe("PaginatedList (unit)", () => {
   it("renders a list of SupplyCards based on itemList", () => {
     render(
-      <CardList>
+      <PaginatedList>
         {mockItemList.map((item) => (
           <SupplyCard
             key={item.code}
@@ -46,10 +45,9 @@ describe("CardList (unit)", () => {
             onEnable={async () => true}
           />
         ))}
-      </CardList>,
+      </PaginatedList>,
     );
 
-    // Verifica que los nombres estén presentes
     expect(screen.getByText("Casa")).toBeInTheDocument();
     expect(screen.getByText("Garaje")).toBeInTheDocument();
   });

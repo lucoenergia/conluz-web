@@ -2,12 +2,12 @@ import { type FC, type ReactNode } from "react";
 import { Accordion, AccordionDetails, AccordionSummary, Skeleton, Typography } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-interface DropdownCardProps {
+interface LoadingAppAccordionProps {
   className?: string;
   children: ReactNode;
 }
 
-export const LoadingDropdownCard: FC<DropdownCardProps> = ({ className, children }) => {
+export const LoadingAppAccordion: FC<LoadingAppAccordionProps> = ({ className, children }) => {
   return (
     <Accordion className={`rounded p-2 ${className}`}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
