@@ -1,5 +1,4 @@
 import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
 import type { FC, MouseEvent } from "react";
 import { useTheme, alpha } from "@mui/material/styles";
 import { ConfirmationModal } from "./ConfirmationModal";
@@ -26,31 +25,10 @@ export const ResetPasswordConfirmationModal: FC<ResetPasswordConfirmationModalPr
       confirmLabel="Reestablecer"
       confirmColor="primary"
       onConfirm={onReset}
+      title={`Reestablecer contraseña para ${partnerName}`}
+      icon={<LockResetIcon sx={{ fontSize: 28, color: "primary.main" }} />}
+      iconBg={alpha(theme.palette.primary.main, 0.1)}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <LockResetIcon sx={{ fontSize: 28, color: "primary.main" }} />
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="h6"
-            component="h2"
-            sx={{ color: "#1e293b" }}
-          >
-            Reestablecer contraseña para {partnerName}
-          </Typography>
-        </Box>
-      </Box>
       <Typography
         sx={{
           fontSize: "0.9375rem",

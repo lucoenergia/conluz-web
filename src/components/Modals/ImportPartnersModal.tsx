@@ -6,7 +6,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ErrorIcon from "@mui/icons-material/Error";
-import { BasicModal } from "./BasicModal";
+import { AppModal } from "./AppModal";
 import { useCreateUsersWithFile } from "../../api/users/users";
 import type { CreateUsersInBulkResponse } from "../../api/models";
 import { radii, shadows } from "../../theme/tokens";
@@ -89,356 +89,354 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
   const errors = result?.errors || [];
 
   return (
-    <BasicModal isOpen={isOpen} onClose={handleClose}>
-      <Box sx={{ p: { xs: 2, sm: 3 } }}>
-        {step === "upload" && (
-          <>
-            <Typography
-              variant="h6"
-              sx={{ color: "#1e293b", mb: 3 }}
-            >
-              Importar Socios desde CSV
-            </Typography>
+    <AppModal isOpen={isOpen} onClose={handleClose}>
+      {step === "upload" && (
+        <>
+          <Typography
+            variant="h6"
+            sx={{ color: "#1e293b", mb: 3 }}
+          >
+            Importar Socios desde CSV
+          </Typography>
 
-            <Box
-              onClick={handleDropZoneClick}
-              data-testid="drop-zone"
+          <Box
+            onClick={handleDropZoneClick}
+            data-testid="drop-zone"
+            sx={{
+              border: "2px dashed",
+              borderColor: file ? theme.palette.primary.main : "#d1d5db",
+              borderRadius: radii.default,
+              p: 4,
+              textAlign: "center",
+              cursor: "pointer",
+              backgroundColor: file
+                ? alpha(theme.palette.primary.main, 0.04)
+                : "#f9fafb",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                borderColor: theme.palette.primary.main,
+                backgroundColor: alpha(theme.palette.primary.main, 0.04),
+              },
+              mb: 3,
+            }}
+          >
+            <CloudUploadIcon
               sx={{
-                border: "2px dashed",
-                borderColor: file ? theme.palette.primary.main : "#d1d5db",
-                borderRadius: radii.default,
-                p: 4,
-                textAlign: "center",
-                cursor: "pointer",
-                backgroundColor: file
-                  ? alpha(theme.palette.primary.main, 0.04)
-                  : "#f9fafb",
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  borderColor: theme.palette.primary.main,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                },
-                mb: 3,
+                fontSize: 48,
+                color: file ? theme.palette.primary.main : "#9ca3af",
+                mb: 1,
               }}
-            >
-              <CloudUploadIcon
+            />
+            {file ? (
+              <Typography
                 sx={{
-                  fontSize: 48,
-                  color: file ? theme.palette.primary.main : "#9ca3af",
-                  mb: 1,
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
+                  color: theme.palette.primary.main,
                 }}
-              />
-              {file ? (
+              >
+                {file.name}
+              </Typography>
+            ) : (
+              <>
                 <Typography
                   sx={{
                     fontSize: "0.9375rem",
-                    fontWeight: 600,
-                    color: theme.palette.primary.main,
+                    color: "#475569",
+                    mb: 0.5,
                   }}
                 >
-                  {file.name}
+                  Haz clic para seleccionar un archivo CSV
                 </Typography>
-              ) : (
-                <>
-                  <Typography
-                    sx={{
-                      fontSize: "0.9375rem",
-                      color: "#475569",
-                      mb: 0.5,
-                    }}
-                  >
-                    Haz clic para seleccionar un archivo CSV
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "0.8125rem",
-                      color: "#9ca3af",
-                    }}
-                  >
-                    Solo archivos .csv
-                  </Typography>
-                </>
-              )}
-            </Box>
+                <Typography
+                  sx={{
+                    fontSize: "0.8125rem",
+                    color: "#9ca3af",
+                  }}
+                >
+                  Solo archivos .csv
+                </Typography>
+              </>
+            )}
+          </Box>
 
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".csv"
-              data-testid="csv-file-input"
-              hidden
-            />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".csv"
+            data-testid="csv-file-input"
+            hidden
+          />
 
+          <Typography
+            sx={{
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              color: "#475569",
+              mb: 1,
+            }}
+          >
+            Formato esperado del CSV:
+          </Typography>
+          <Box
+            sx={{
+              backgroundColor: "#f8fafc",
+              borderRadius: radii.small,
+              p: 1.5,
+              mb: 2,
+            }}
+          >
             <Typography
               sx={{
-                fontSize: "0.875rem",
-                fontWeight: 600,
+                fontFamily: "monospace",
+                fontSize: "0.75rem",
                 color: "#475569",
-                mb: 1,
+                lineHeight: 1.8,
               }}
             >
-              Formato esperado del CSV:
+              number, fullName, personalId, address, email, phoneNumber,
+              role, password
             </Typography>
+          </Box>
+
+          {uploadError && (
             <Box
               sx={{
-                backgroundColor: "#f8fafc",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                backgroundColor: "rgba(239, 68, 68, 0.08)",
                 borderRadius: radii.small,
                 p: 1.5,
                 mb: 2,
               }}
             >
+              <ErrorOutlineIcon sx={{ fontSize: 20, color: "#ef4444" }} />
               <Typography
                 sx={{
-                  fontFamily: "monospace",
-                  fontSize: "0.75rem",
-                  color: "#475569",
-                  lineHeight: 1.8,
+                  fontSize: "0.8125rem",
+                  color: "#ef4444",
                 }}
               >
-                number, fullName, personalId, address, email, phoneNumber,
-                role, password
+                {uploadError}
               </Typography>
             </Box>
+          )}
 
-            {uploadError && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  backgroundColor: "rgba(239, 68, 68, 0.08)",
-                  borderRadius: radii.small,
-                  p: 1.5,
-                  mb: 2,
-                }}
-              >
-                <ErrorOutlineIcon sx={{ fontSize: 20, color: "#ef4444" }} />
-                <Typography
-                  sx={{
-                    fontSize: "0.8125rem",
-                    color: "#ef4444",
-                  }}
-                >
-                  {uploadError}
-                </Typography>
-              </Box>
-            )}
-
-            <Box
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              pt: 2,
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={handleClose}
               sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 2,
-                pt: 2,
+                minWidth: "100px",
+                padding: "8px 20px",
+                fontSize: "0.9375rem",
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
+                "&:hover": {
+                  borderColor: theme.palette.primary.dark,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                },
               }}
             >
-              <Button
-                variant="outlined"
-                onClick={handleClose}
-                sx={{
-                  minWidth: "100px",
-                  padding: "8px 20px",
-                  fontSize: "0.9375rem",
-                  borderColor: theme.palette.primary.main,
-                  color: theme.palette.primary.main,
-                  "&:hover": {
-                    borderColor: theme.palette.primary.dark,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                  },
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="contained"
-                disabled={!file}
-                onClick={handleImport}
-                sx={{
-                  minWidth: "120px",
-                  padding: "8px 20px",
-                  fontSize: "0.9375rem",
-                  backgroundColor: theme.palette.primary.main,
-                  boxShadow: shadows.medium,
-                  "&:hover": {
-                    backgroundColor: theme.palette.primary.dark,
-                    boxShadow: shadows.strong,
-                  },
-                  "&.Mui-disabled": {
-                    backgroundColor: "#e5e7eb",
-                    color: "#9ca3af",
-                  },
-                }}
-              >
-                Importar
-              </Button>
-            </Box>
-          </>
-        )}
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              disabled={!file}
+              onClick={handleImport}
+              sx={{
+                minWidth: "120px",
+                padding: "8px 20px",
+                fontSize: "0.9375rem",
+                backgroundColor: theme.palette.primary.main,
+                boxShadow: shadows.medium,
+                "&:hover": {
+                  backgroundColor: theme.palette.primary.dark,
+                  boxShadow: shadows.strong,
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "#e5e7eb",
+                  color: "#9ca3af",
+                },
+              }}
+            >
+              Importar
+            </Button>
+          </Box>
+        </>
+      )}
 
-        {step === "uploading" && (
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <CircularProgress sx={{ color: theme.palette.primary.main, mb: 2 }} />
+      {step === "uploading" && (
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          <CircularProgress sx={{ color: theme.palette.primary.main, mb: 2 }} />
+          <Typography
+            sx={{
+              fontSize: "1rem",
+              color: "#475569",
+            }}
+          >
+            Importando socios...
+          </Typography>
+        </Box>
+      )}
+
+      {step === "results" && (
+        <>
+          <Box sx={{ textAlign: "center", mb: 3 }}>
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                backgroundColor:
+                  errors.length > 0
+                    ? "rgba(245, 158, 11, 0.1)"
+                    : "rgba(16, 185, 129, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2,
+              }}
+            >
+              {errors.length > 0 ? (
+                <ErrorOutlineIcon sx={{ fontSize: 40, color: "#f59e0b" }} />
+              ) : (
+                <CheckCircleIcon sx={{ fontSize: 40, color: "#10b981" }} />
+              )}
+            </Box>
+
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: "1.125rem",
+                color: "#1e293b",
+                mb: 1,
+              }}
+            >
+              Importación completada
+            </Typography>
+
             <Typography
               sx={{
-                fontSize: "1rem",
+                fontSize: "0.9375rem",
                 color: "#475569",
               }}
             >
-              Importando socios...
+              Se ha{createdCount !== 1 ? "n" : ""} creado {createdCount}{" "}
+              socio{createdCount !== 1 ? "s" : ""}
             </Typography>
           </Box>
-        )}
 
-        {step === "results" && (
-          <>
-            <Box sx={{ textAlign: "center", mb: 3 }}>
-              <Box
-                sx={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: "50%",
-                  backgroundColor:
-                    errors.length > 0
-                      ? "rgba(245, 158, 11, 0.1)"
-                      : "rgba(16, 185, 129, 0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  mx: "auto",
-                  mb: 2,
-                }}
-              >
-                {errors.length > 0 ? (
-                  <ErrorOutlineIcon sx={{ fontSize: 40, color: "#f59e0b" }} />
-                ) : (
-                  <CheckCircleIcon sx={{ fontSize: 40, color: "#10b981" }} />
-                )}
-              </Box>
-
+          {errors.length > 0 && (
+            <Box sx={{ mb: 3 }}>
               <Typography
-                variant="h6"
                 sx={{
-                  fontSize: "1.125rem",
-                  color: "#1e293b",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: "#ef4444",
                   mb: 1,
                 }}
               >
-                Importación completada
+                Errores ({errors.length}):
               </Typography>
-
-              <Typography
+              <Box
                 sx={{
-                  fontSize: "0.9375rem",
-                  color: "#475569",
+                  maxHeight: 150,
+                  overflowY: "auto",
+                  backgroundColor: "#fef2f2",
+                  borderRadius: radii.small,
+                  p: 1.5,
                 }}
               >
-                Se ha{createdCount !== 1 ? "n" : ""} creado {createdCount}{" "}
-                socio{createdCount !== 1 ? "s" : ""}
-              </Typography>
-            </Box>
-
-            {errors.length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography
-                  sx={{
-                    fontSize: "0.875rem",
-                    fontWeight: 600,
-                    color: "#ef4444",
-                    mb: 1,
-                  }}
-                >
-                  Errores ({errors.length}):
-                </Typography>
-                <Box
-                  sx={{
-                    maxHeight: 150,
-                    overflowY: "auto",
-                    backgroundColor: "#fef2f2",
-                    borderRadius: radii.small,
-                    p: 1.5,
-                  }}
-                >
-                  {errors.map((err, index) => (
-                    <Box
-                      key={index}
+                {errors.map((err, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1,
+                      py: 0.5,
+                    }}
+                  >
+                    <ErrorIcon
                       sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 1,
-                        py: 0.5,
+                        fontSize: 16,
+                        color: "#ef4444",
+                        mt: 0.3,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "0.8125rem",
+                        color: "#ef4444",
                       }}
                     >
-                      <ErrorIcon
-                        sx={{
-                          fontSize: 16,
-                          color: "#ef4444",
-                          mt: 0.3,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: "0.8125rem",
-                          color: "#ef4444",
-                        }}
-                      >
-                        {err.personalId && (
-                          <strong>{err.personalId}: </strong>
-                        )}
-                        {err.errorMessage}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
+                      {err.personalId && (
+                        <strong>{err.personalId}: </strong>
+                      )}
+                      {err.errorMessage}
+                    </Typography>
+                  </Box>
+                ))}
               </Box>
-            )}
+            </Box>
+          )}
 
-            <Box
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={handleImportAnother}
               sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 2,
+                minWidth: "140px",
+                padding: "8px 20px",
+                fontSize: "0.9375rem",
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
+                "&:hover": {
+                  borderColor: theme.palette.primary.dark,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                },
               }}
             >
-              <Button
-                variant="outlined"
-                onClick={handleImportAnother}
-                sx={{
-                  minWidth: "140px",
-                  padding: "8px 20px",
-                  fontSize: "0.9375rem",
-                  borderColor: theme.palette.primary.main,
-                  color: theme.palette.primary.main,
-                  "&:hover": {
-                    borderColor: theme.palette.primary.dark,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                  },
-                }}
-              >
-                Importar otro archivo
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleClose}
-                sx={{
-                  minWidth: "100px",
-                  padding: "8px 20px",
-                  fontSize: "0.9375rem",
-                  backgroundColor: theme.palette.primary.main,
-                  boxShadow: shadows.medium,
-                  "&:hover": {
-                    backgroundColor: theme.palette.primary.dark,
-                    boxShadow: shadows.strong,
-                  },
-                }}
-              >
-                Cerrar
-              </Button>
-            </Box>
-          </>
-        )}
-      </Box>
-    </BasicModal>
+              Importar otro archivo
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleClose}
+              sx={{
+                minWidth: "100px",
+                padding: "8px 20px",
+                fontSize: "0.9375rem",
+                backgroundColor: theme.palette.primary.main,
+                boxShadow: shadows.medium,
+                "&:hover": {
+                  backgroundColor: theme.palette.primary.dark,
+                  boxShadow: shadows.strong,
+                },
+              }}
+            >
+              Cerrar
+            </Button>
+          </Box>
+        </>
+      )}
+    </AppModal>
   );
 };
