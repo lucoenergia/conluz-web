@@ -236,11 +236,9 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                 variant="outlined"
                 onClick={handleClose}
                 sx={{
-                  textTransform: "none",
                   minWidth: "100px",
                   padding: "8px 20px",
                   fontSize: "0.9375rem",
-                  borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
                   "&:hover": {
@@ -256,11 +254,9 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                 disabled={!file}
                 onClick={handleImport}
                 sx={{
-                  textTransform: "none",
                   minWidth: "120px",
                   padding: "8px 20px",
                   fontSize: "0.9375rem",
-                  borderRadius: radii.default,
                   backgroundColor: theme.palette.primary.main,
                   boxShadow: shadows.medium,
                   "&:hover": {
@@ -409,11 +405,9 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                 variant="outlined"
                 onClick={handleImportAnother}
                 sx={{
-                  textTransform: "none",
                   minWidth: "140px",
                   padding: "8px 20px",
                   fontSize: "0.9375rem",
-                  borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
                   "&:hover": {
@@ -428,11 +422,9 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                 variant="contained"
                 onClick={handleClose}
                 sx={{
-                  textTransform: "none",
                   minWidth: "100px",
                   padding: "8px 20px",
                   fontSize: "0.9375rem",
-                  borderRadius: radii.default,
                   backgroundColor: theme.palette.primary.main,
                   boxShadow: shadows.medium,
                   "&:hover": {

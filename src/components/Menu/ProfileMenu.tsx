@@ -1,5 +1,4 @@
 import { Avatar, IconButton, MenuItem, Box, Typography, Button } from "@mui/material";
-import { radii } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import { Link } from "react-router";
 import PersonIcon from "@mui/icons-material/Person";
@@ -65,65 +64,32 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
         {/* Menu Items */}
         <Box sx={{ py: 1 }}>
-          <Link to="/profile" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem
-              onClick={handleCloseUserMenu}
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                width: '100%',
-                '&:hover': { backgroundColor: '#f8fafc' }
-              }}
-            >
+          <Box component={Link} to="/profile" sx={{ textDecoration: 'none', color: 'inherit' }}>
+            <MenuItem onClick={handleCloseUserMenu}>
               <PersonIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
                 Mi perfil
               </Typography>
             </MenuItem>
-          </Link>
+          </Box>
 
-          <Link to="/change-password" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem
-              onClick={handleCloseUserMenu}
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                width: '100%',
-                '&:hover': { backgroundColor: '#f8fafc' }
-              }}
-            >
+          <Box component={Link} to="/change-password" sx={{ textDecoration: 'none', color: 'inherit' }}>
+            <MenuItem onClick={handleCloseUserMenu}>
               <KeyIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
                 Cambiar contraseña
               </Typography>
             </MenuItem>
-          </Link>
+          </Box>
 
-          <Link to="/contact" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem
-              onClick={handleCloseUserMenu}
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                width: '100%',
-                '&:hover': { backgroundColor: '#f8fafc' }
-              }}
-            >
+          <Box component={Link} to="/contact" sx={{ textDecoration: 'none', color: 'inherit' }}>
+            <MenuItem onClick={handleCloseUserMenu}>
               <HelpOutlineIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
                 ¿Necesitas ayuda?
               </Typography>
             </MenuItem>
-          </Link>
+          </Box>
         </Box>
 
         {/* Logout Button */}
@@ -136,9 +102,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             sx={{
               backgroundColor: '#ef4444',
               color: 'white',
-              textTransform: 'none',
               fontWeight: 500,
-              borderRadius: radii.default,
               py: 1,
               '&:hover': {
                 backgroundColor: '#dc2626',

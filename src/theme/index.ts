@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material";
-import { colors } from "./tokens";
+import { colors, shadows, radii } from "./tokens";
 
 export const theme = createTheme({
   shape: {
@@ -44,6 +44,93 @@ export const theme = createTheme({
     background: {
       default: colors.background.default,
       paper: colors.background.paper,
+    },
+  },
+  components: {
+    // PR 2 — MenuItem defaults: standard nav-item layout and hover colour
+    // encoded once instead of repeated in ProfileMenu, DisplayMenu, PlantCard.
+    // Danger/success hover colours remain in local sx (they win over this default).
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          paddingLeft: 24,
+          paddingRight: 24,
+          paddingTop: 12,
+          paddingBottom: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          width: "100%",
+          "&:hover": {
+            backgroundColor: "#f8fafc",
+          },
+        },
+      },
+    },
+    // PR 5 — DialogTitle resolves to the Phase-3 h6 variant (1.25rem/600)
+    // so future dialogs don't re-specify fontSize/fontWeight individually.
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          typography: "h6",
+        },
+      },
+    },
+    // PR 4 — Button: textTransform:none + brand shadow as defaults.
+    // Instances that already set a unique boxShadow (e.g. brand-tinted alpha)
+    // keep their local sx — sx wins over styleOverrides.
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          borderRadius: radii.default,
+        },
+        contained: {
+          boxShadow: shadows.medium,
+          "&:hover": {
+            boxShadow: shadows.strong,
+          },
+        },
+      },
+    },
+    // PR 3 — Card baseline: soft shadow + hover lift as defaults.
+    // Existing cards with explicit sx boxShadow (state-based hover) are unaffected
+    // because sx wins over styleOverrides.
+    MuiCard: {
+      defaultProps: { elevation: 0 },
+      styleOverrides: {
+        root: {
+          boxShadow: shadows.soft,
+          transition: "box-shadow 0.2s ease",
+          "&:hover": {
+            boxShadow: shadows.medium,
+          },
+        },
+      },
+    },
+    // PR 1 — OutlinedInput hover/focus border colour centralised here so every
+    // field in the app gets primary.main without repeating sx on each instance.
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          "&:hover fieldset": {
+            borderColor: theme.palette.primary.main,
+          },
+          "&.Mui-focused fieldset": {
+            borderColor: theme.palette.primary.main,
+          },
+        }),
+      },
+    },
+    // Matching label colour on focus — pairs with the OutlinedInput override above.
+    MuiInputLabel: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          "&.Mui-focused": {
+            color: theme.palette.primary.main,
+          },
+        }),
+      },
     },
   },
 });

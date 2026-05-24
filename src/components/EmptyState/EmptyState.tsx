@@ -52,8 +52,6 @@ export const EmptyState: FC<EmptyStateProps> = ({
           sx={{
             mt: 3,
             background: (theme) => theme.palette.primary.main,
-            borderRadius: radii.default,
-            textTransform: "none",
           }}
         >
           {actionButton.label}

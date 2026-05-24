@@ -139,19 +139,6 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
               ),
             },
           }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: "primary.main",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "primary.main",
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "primary.main",
-            },
-          }}
         />
       )}
     />

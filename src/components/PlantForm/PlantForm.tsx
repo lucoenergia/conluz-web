@@ -4,7 +4,6 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
@@ -125,19 +124,6 @@ export const PlantForm: FC<PlantFormProps> = ({
           autoFocus
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: theme.palette.primary.main,
-            },
-          })}
         />
 
         <TextField
@@ -151,19 +137,6 @@ export const PlantForm: FC<PlantFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: theme.palette.primary.main,
-            },
-          })}
         />
 
         <Autocomplete
@@ -190,19 +163,6 @@ export const PlantForm: FC<PlantFormProps> = ({
                   ),
                 },
               }}
-              sx={(theme) => ({
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: disableSupplySelector ? undefined : theme.palette.primary.main,
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: disableSupplySelector ? undefined : theme.palette.primary.main,
-                  },
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: disableSupplySelector ? undefined : theme.palette.primary.main,
-                },
-              })}
             />
           )}
         />
@@ -218,19 +178,6 @@ export const PlantForm: FC<PlantFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: theme.palette.primary.main,
-            },
-          })}
         />
 
         <TextField
@@ -245,19 +192,6 @@ export const PlantForm: FC<PlantFormProps> = ({
           rows={3}
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: theme.palette.primary.main,
-            },
-          })}
         />
 
         <TextField
@@ -278,19 +212,7 @@ export const PlantForm: FC<PlantFormProps> = ({
               step: 0.01,
             },
           }}
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: theme.palette.primary.main,
-            },
-          })}
+
         />
 
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
@@ -302,23 +224,12 @@ export const PlantForm: FC<PlantFormProps> = ({
               textField: {
                 fullWidth: true,
                 size: "small",
-                sx: (theme) => ({
+                sx: {
                   "& .MuiOutlinedInput-root": {
-                    borderRadius: radii.default,
                     fontSize: "0.9375rem",
                     height: "40px",
-                    "&:hover fieldset": {
-                      borderColor: theme.palette.primary.main,
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: theme.palette.primary.main,
-                      borderWidth: "2px",
-                    },
                   },
-                  "& .MuiInputLabel-root.Mui-focused": {
-                    color: theme.palette.primary.main,
-                  },
-                }),
+                },
               },
               popper: {
                 sx: (theme) => ({
@@ -372,7 +283,6 @@ export const PlantForm: FC<PlantFormProps> = ({
           variant="contained"
           sx={(theme) => ({
             background: theme.palette.primary.main,
-            textTransform: "none",
             px: 3,
             py: 1.5,
             fontSize: "1rem",

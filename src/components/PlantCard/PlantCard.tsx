@@ -175,59 +175,31 @@ export const PlantCard: FC<PlantCardProps> = ({
             <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
               <Box sx={{ py: 1 }}>
                 {/* Ver */}
-                <Link to={`/production/${id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <MenuItem
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-start',
-                      width: '100%',
-                      '&:hover': { backgroundColor: '#f8fafc' }
-                    }}
-                  >
+                <Box component={Link} to={`/production/${id}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
+                  <MenuItem>
                     <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
                     <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
                       Ver
                     </Typography>
                   </MenuItem>
-                </Link>
+                </Box>
 
                 {/* Editar */}
-                <Link to={`/production/${id}/edit`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <MenuItem
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-start',
-                      width: '100%',
-                      '&:hover': { backgroundColor: '#f8fafc' }
-                    }}
-                  >
+                <Box component={Link} to={`/production/${id}/edit`} sx={{ textDecoration: 'none', color: 'inherit' }}>
+                  <MenuItem>
                     <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
                     <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
                       Editar
                     </Typography>
                   </MenuItem>
-                </Link>
+                </Box>
 
                 <Divider sx={{ my: 1 }} />
 
                 {/* Eliminar */}
                 <MenuItem
                   onClick={handleDeleteClick}
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    width: '100%',
-                    '&:hover': { backgroundColor: '#fff5f5' }
-                  }}
+                  sx={{ '&:hover': { backgroundColor: '#fff5f5' } }}
                 >
                   <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: '#dc2626', flexShrink: 0 }} />
                   <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 500, textAlign: 'left' }}>

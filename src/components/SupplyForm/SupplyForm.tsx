@@ -100,13 +100,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           autoFocus
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": { borderColor: theme.palette.primary.main },
-              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-            },
-            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
-          })}
         />
 
         {showUserSelector && (
@@ -134,13 +127,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
                     ),
                   },
                 }}
-                sx={(theme) => ({
-                  "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": { borderColor: disableUserSelector ? undefined : theme.palette.primary.main },
-                    "&.Mui-focused fieldset": { borderColor: disableUserSelector ? undefined : theme.palette.primary.main },
-                  },
-                  "& .MuiInputLabel-root.Mui-focused": { color: disableUserSelector ? undefined : theme.palette.primary.main },
-                })}
               />
             )}
           />
@@ -157,13 +143,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": { borderColor: theme.palette.primary.main },
-              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-            },
-            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
-          })}
         />
 
         <TextField
@@ -177,13 +156,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": { borderColor: theme.palette.primary.main },
-              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-            },
-            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
-          })}
         />
 
         <TextField
@@ -198,13 +170,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": { borderColor: theme.palette.primary.main },
-              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-            },
-            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
-          })}
         />
 
         <TextField
@@ -218,20 +183,12 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           required
           fullWidth
           variant="outlined"
-          sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              "&:hover fieldset": { borderColor: theme.palette.primary.main },
-              "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-            },
-            "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
-          })}
         />
 
         <Button
           type="submit"
           variant="contained"
           sx={(theme) => ({
-            textTransform: "none",
             px: 3,
             py: 1.5,
             fontSize: "1rem",

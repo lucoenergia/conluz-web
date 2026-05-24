@@ -91,14 +91,6 @@ export const ProfilePage: FC = () => {
 
   const handleCloseSuccessMessage = () => { setSuccessMessage(false); };
 
-  const fieldSx = (theme: any) => ({
-    "& .MuiOutlinedInput-root": {
-      "&:hover fieldset": { borderColor: theme.palette.primary.main },
-      "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-    },
-    "& .MuiInputLabel-root.Mui-focused": { color: theme.palette.primary.main },
-  });
-
   return (
     <Box
       sx={{
@@ -199,21 +191,19 @@ export const ProfilePage: FC = () => {
                 />
               </Box>
 
-              <TextField label="Nombre completo" error={formErrors.name} helperText={formErrors.name ? "Por favor, introduce tu nombre completo" : ""} value={formData.name} onChange={handleChange("name")} required fullWidth variant="outlined" sx={fieldSx} />
-              <TextField label="DNI/NIF" error={formErrors.dni} helperText={formErrors.dni ? "Por favor, introduce tu DNI/NIF" : ""} value={formData.dni} onChange={handleChange("dni")} required fullWidth variant="outlined" sx={fieldSx} />
-              <TextField label="Email" error={formErrors.email} helperText={formErrors.email ? "Por favor, introduce tu email" : ""} type="email" value={formData.email} onChange={handleChange("email")} required fullWidth variant="outlined" sx={fieldSx} />
-              <TextField label="Dirección" value={formData.address} onChange={handleChange("address")} fullWidth variant="outlined" sx={fieldSx} />
-              <TextField label="Número de teléfono" value={formData.phone} onChange={handleChange("phone")} fullWidth variant="outlined" sx={fieldSx} />
+              <TextField label="Nombre completo" error={formErrors.name} helperText={formErrors.name ? "Por favor, introduce tu nombre completo" : ""} value={formData.name} onChange={handleChange("name")} required fullWidth variant="outlined" />
+              <TextField label="DNI/NIF" error={formErrors.dni} helperText={formErrors.dni ? "Por favor, introduce tu DNI/NIF" : ""} value={formData.dni} onChange={handleChange("dni")} required fullWidth variant="outlined" />
+              <TextField label="Email" error={formErrors.email} helperText={formErrors.email ? "Por favor, introduce tu email" : ""} type="email" value={formData.email} onChange={handleChange("email")} required fullWidth variant="outlined" />
+              <TextField label="Dirección" value={formData.address} onChange={handleChange("address")} fullWidth variant="outlined" />
+              <TextField label="Número de teléfono" value={formData.phone} onChange={handleChange("phone")} fullWidth variant="outlined" />
 
               <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
                 <Button
                   type="submit"
                   variant="contained"
                   sx={{
-                    textTransform: "none",
                     fontSize: "0.9375rem",
                     fontWeight: 600,
-                    borderRadius: radii.default,
                     boxShadow: shadows.medium,
                     px: 4,
                     "&:hover": { boxShadow: shadows.strong },

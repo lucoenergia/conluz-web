@@ -96,7 +96,6 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               width: { xs: "100%", sm: "auto" },
             },
             "& .MuiButton-root": {
-              textTransform: "none",
               fontSize: { xs: "0.875rem", sm: "0.9375rem" },
               fontWeight: 500,
               lineHeight: 1.46667,
@@ -169,23 +168,12 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               slotProps={{
                 textField: {
                   size: "small",
-                  sx: (theme) => ({
+                  sx: {
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: radii.default,
                       fontSize: "0.9375rem",
                       height: "40px",
-                      "&:hover fieldset": {
-                        borderColor: theme.palette.primary.main,
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: theme.palette.primary.main,
-                        borderWidth: "2px",
-                      },
                     },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme.palette.primary.main,
-                    },
-                  }),
+                  },
                 },
                 popper: {
                   sx: (theme) => ({
@@ -241,23 +229,12 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               slotProps={{
                 textField: {
                   size: "small",
-                  sx: (theme) => ({
+                  sx: {
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: radii.default,
                       fontSize: "0.9375rem",
                       height: "40px",
-                      "&:hover fieldset": {
-                        borderColor: theme.palette.primary.main,
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: theme.palette.primary.main,
-                        borderWidth: "2px",
-                      },
                     },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme.palette.primary.main,
-                    },
-                  }),
+                  },
                 },
                 popper: {
                   sx: (theme) => ({

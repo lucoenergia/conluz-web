@@ -63,44 +63,24 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
       <MenuTemplate anchorElement={anchorElement} onClose={handleCloseUserMenu}>
         <Box sx={{ py: 1 }}>
           {/* Ver */}
-          <Link to={`/supply-points/${supplyPointId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                width: '100%',
-                '&:hover': { backgroundColor: '#f8fafc' }
-              }}
-            >
+          <Box component={Link} to={`/supply-points/${supplyPointId}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
+            <MenuItem>
               <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
                 Ver
               </Typography>
             </MenuItem>
-          </Link>
+          </Box>
 
           {/* Editar */}
-          <Link to={`/supply-points/${supplyPointId}/edit`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                width: '100%',
-                '&:hover': { backgroundColor: '#f8fafc' }
-              }}
-            >
+          <Box component={Link} to={`/supply-points/${supplyPointId}/edit`} sx={{ textDecoration: 'none', color: 'inherit' }}>
+            <MenuItem>
               <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
                 Editar
               </Typography>
             </MenuItem>
-          </Link>
+          </Box>
 
           <Divider sx={{ my: 1 }} />
 
@@ -108,15 +88,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
           {enabled ? (
             <MenuItem
               onClick={handleDisableSupplyPoint}
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                width: '100%',
-                '&:hover': { backgroundColor: '#fff5f5' }
-              }}
+              sx={{ '&:hover': { backgroundColor: '#fff5f5' } }}
             >
               <BlockOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#dc2626', flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 500, textAlign: 'left' }}>
@@ -126,15 +98,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
           ) : (
             <MenuItem
               onClick={handleEnableSupplyPoint}
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                width: '100%',
-                '&:hover': { backgroundColor: '#f0fdf4' }
-              }}
+              sx={{ '&:hover': { backgroundColor: '#f0fdf4' } }}
             >
               <CheckCircleOutlineIcon sx={{ mr: 2, fontSize: 20, color: '#16a34a', flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: '#16a34a', fontWeight: 500, textAlign: 'left' }}>

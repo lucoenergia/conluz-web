@@ -177,8 +177,6 @@ export const SupplyPointsPage: FC = () => {
               startIcon={<AddCircleOutlineIcon />}
               sx={{
                 background: theme.palette.primary.main,
-                borderRadius: radii.default,
-                textTransform: "none",
                 px: 3,
                 py: 1.5,
                 boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
@@ -196,8 +194,6 @@ export const SupplyPointsPage: FC = () => {
               startIcon={<CloudUploadIcon />}
               onClick={handleOpenImportModal}
               sx={{
-                borderRadius: radii.default,
-                textTransform: "none",
                 px: 3,
                 py: 1.5,
                 borderColor: theme.palette.primary.main,
