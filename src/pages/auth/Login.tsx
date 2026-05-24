@@ -240,11 +240,9 @@ export const Login: FC = () => {
               variant="contained"
               fullWidth
               sx={(theme) => ({
-                textTransform: "none",
                 fontSize: "1rem",
                 fontWeight: 600,
                 padding: "12px", // 12px intentionally off-grid for button vertical rhythm
-                borderRadius: radii.default,
                 background: theme.palette.primary.main,
                 boxShadow: `0 4px 12px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                 transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",

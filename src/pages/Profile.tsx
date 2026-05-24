@@ -202,10 +202,8 @@ export const ProfilePage: FC = () => {
                   type="submit"
                   variant="contained"
                   sx={{
-                    textTransform: "none",
                     fontSize: "0.9375rem",
                     fontWeight: 600,
-                    borderRadius: radii.default,
                     boxShadow: shadows.medium,
                     px: 4,
                     "&:hover": { boxShadow: shadows.strong },

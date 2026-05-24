@@ -133,10 +133,8 @@ export const ChangePasswordPage: FC = () => {
                 variant="outlined"
                 onClick={() => navigate(-1)}
                 sx={(theme) => ({
-                  textTransform: "none",
                   fontSize: "0.9375rem",
                   fontWeight: 500,
-                  borderRadius: radii.default,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
                   px: 3,
@@ -152,10 +150,8 @@ export const ChangePasswordPage: FC = () => {
                 type="submit"
                 variant="contained"
                 sx={{
-                  textTransform: "none",
                   fontSize: "0.9375rem",
                   fontWeight: 600,
-                  borderRadius: radii.default,
                   boxShadow: shadows.medium,
                   px: 3,
                   "&:hover": { boxShadow: shadows.strong },

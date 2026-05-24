@@ -189,7 +189,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           type="submit"
           variant="contained"
           sx={(theme) => ({
-            textTransform: "none",
             px: 3,
             py: 1.5,
             fontSize: "1rem",

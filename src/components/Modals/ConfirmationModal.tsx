@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { alpha } from "@mui/material/styles";
 import { BasicModal } from "./BasicModal";
-import { radii, shadows } from "../../theme/tokens";
+import { shadows } from "../../theme/tokens";
 import type { FC, MouseEvent, ReactNode } from "react";
 
 interface ConfirmationModalProps {
@@ -46,12 +46,10 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
           variant="outlined"
           onClick={onCancel}
           sx={{
-            textTransform: "none",
             minWidth: "64px",
             padding: "5px 15px",
 
             fontSize: "0.9375rem",
-            borderRadius: radii.default,
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
             borderColor: (theme) => theme.palette.primary.main,
             color: (theme) => theme.palette.primary.main,
@@ -68,12 +66,10 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
           color={confirmColor}
           onClick={handleConfirm}
           sx={{
-            textTransform: "none",
             minWidth: "64px",
             padding: "5px 15px",
 
             fontSize: "0.9375rem",
-            borderRadius: radii.default,
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
             boxShadow: shadows.medium,
             "&:hover": {

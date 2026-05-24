@@ -1,5 +1,4 @@
 import { Avatar, IconButton, MenuItem, Box, Typography, Button } from "@mui/material";
-import { radii } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import { Link } from "react-router";
 import PersonIcon from "@mui/icons-material/Person";
@@ -103,9 +102,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             sx={{
               backgroundColor: '#ef4444',
               color: 'white',
-              textTransform: 'none',
               fontWeight: 500,
-              borderRadius: radii.default,
               py: 1,
               '&:hover': {
                 backgroundColor: '#dc2626',

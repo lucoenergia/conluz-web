@@ -193,7 +193,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           sx={{
             mt: 2,
             py: 1.5,
-            textTransform: "none",
             fontSize: "1rem",
             fontWeight: 600,
             "&:hover": {

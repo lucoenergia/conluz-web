@@ -73,12 +73,10 @@ export const DeleteSuccessModal: FC<DeleteSuccessModalProps> = ({ onClose, isOpe
           variant="contained"
           onClick={onClose}
           sx={{
-            textTransform: "none",
             minWidth: "120px",
             padding: "8px 24px",
 
             fontSize: "0.9375rem",
-            borderRadius: radii.default,
             transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
             backgroundColor: (theme) => theme.palette.primary.main,
             color: "white",

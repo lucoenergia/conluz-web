@@ -96,7 +96,6 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               width: { xs: "100%", sm: "auto" },
             },
             "& .MuiButton-root": {
-              textTransform: "none",
               fontSize: { xs: "0.875rem", sm: "0.9375rem" },
               fontWeight: 500,
               lineHeight: 1.46667,

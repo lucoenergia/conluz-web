@@ -283,7 +283,6 @@ export const PlantForm: FC<PlantFormProps> = ({
           variant="contained"
           sx={(theme) => ({
             background: theme.palette.primary.main,
-            textTransform: "none",
             px: 3,
             py: 1.5,
             fontSize: "1rem",
