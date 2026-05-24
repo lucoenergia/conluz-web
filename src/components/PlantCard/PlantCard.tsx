@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
-import { Card, CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
+import { CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { radii } from "../../theme/tokens";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -14,6 +14,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { DeleteConfirmationModal } from "../Modals/DeleteConfirmationModal";
 import { DeleteSuccessModal } from "../Modals/DeleteSuccessModal";
+import { AppCard } from "../AppCard";
 
 interface PlantCardProps {
   id?: string;
@@ -41,7 +42,6 @@ export const PlantCard: FC<PlantCardProps> = ({
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [openDeleteSuccess, setOpenDeleteSuccess] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
@@ -97,7 +97,7 @@ export const PlantCard: FC<PlantCardProps> = ({
       return date.toLocaleDateString("es-ES", {
         year: "numeric",
         month: "short",
-        day: "numeric"
+        day: "numeric",
       });
     } catch {
       return "N/A";
@@ -106,111 +106,88 @@ export const PlantCard: FC<PlantCardProps> = ({
 
   return (
     <>
-      <Card
+      <AppCard
         onClick={handleCardClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         sx={{
           cursor: "pointer",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          overflow: "hidden",
-          borderRadius: radii.default,
-          boxShadow: isHovered ? "0 8px 30px 0 rgba(0,0,0,0.12)" : shadows.soft,
-          transform: isHovered ? "translateY(-4px)" : "translateY(0)",
-          width: "100%",
           minWidth: 0,
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           "&:hover": {
-            "& .card-header": {
-              background: theme.palette.primary.main,
-            },
+            transform: "translateY(-4px)",
           },
         }}
-      >
-        {/* Header */}
-        <Box
-          className="card-header"
-          sx={{
-            background: theme.palette.primary.main,
-            p: 2,
-            color: "white",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            transition: "background 0.3s ease",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: "rgba(255, 255, 255, 0.2)",
-                width: 48,
-                height: 48,
-              }}
-            >
-              <SolarPowerIcon />
-            </Avatar>
-            <Box>
-              <Typography variant="h6">
-                {name || "Sin nombre"}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                {code}
-              </Typography>
-            </Box>
-          </Box>
-          <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
-            <IconButton
-              onClick={handleOpenMenu}
-              sx={{
-                color: "white",
-                minWidth: 40,
-                minHeight: 40,
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              <MoreVertIcon />
-            </IconButton>
-            <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
-              <Box sx={{ py: 1 }}>
-                {/* Ver */}
-                <Box component={Link} to={`/production/${id}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
-                  <MenuItem>
-                    <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
-                      Ver
-                    </Typography>
-                  </MenuItem>
-                </Box>
-
-                {/* Editar */}
-                <Box component={Link} to={`/production/${id}/edit`} sx={{ textDecoration: 'none', color: 'inherit' }}>
-                  <MenuItem>
-                    <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
-                      Editar
-                    </Typography>
-                  </MenuItem>
-                </Box>
-
-                <Divider sx={{ my: 1 }} />
-
-                {/* Eliminar */}
-                <MenuItem
-                  onClick={handleDeleteClick}
-                  sx={{ '&:hover': { backgroundColor: '#fff5f5' } }}
-                >
-                  <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: '#dc2626', flexShrink: 0 }} />
-                  <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 500, textAlign: 'left' }}>
-                    Eliminar
-                  </Typography>
-                </MenuItem>
+        header={
+          <>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 48, height: 48 }}>
+                <SolarPowerIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h6">{name || "Sin nombre"}</Typography>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  {code}
+                </Typography>
               </Box>
-            </MenuTemplate>
-          </Box>
-        </Box>
+            </Box>
+            <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
+              <IconButton
+                onClick={handleOpenMenu}
+                sx={{
+                  color: "white",
+                  minWidth: 40,
+                  minHeight: 40,
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
+                <Box sx={{ py: 1 }}>
+                  <Box
+                    component={Link}
+                    to={`/production/${id}`}
+                    sx={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <MenuItem>
+                      <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: "#6b7280", flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: "#374151", fontWeight: 500, textAlign: "left" }}>
+                        Ver
+                      </Typography>
+                    </MenuItem>
+                  </Box>
 
+                  <Box
+                    component={Link}
+                    to={`/production/${id}/edit`}
+                    sx={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <MenuItem>
+                      <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: "#6b7280", flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: "#374151", fontWeight: 500, textAlign: "left" }}>
+                        Editar
+                      </Typography>
+                    </MenuItem>
+                  </Box>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <MenuItem
+                    onClick={handleDeleteClick}
+                    sx={{ "&:hover": { backgroundColor: "#fff5f5" } }}
+                  >
+                    <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "#dc2626", flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ color: "#dc2626", fontWeight: 500, textAlign: "left" }}>
+                      Eliminar
+                    </Typography>
+                  </MenuItem>
+                </Box>
+              </MenuTemplate>
+            </Box>
+          </>
+        }
+      >
         {/* Content */}
         <CardContent sx={{ p: 3 }}>
           {/* Metrics Row */}
@@ -300,7 +277,7 @@ export const PlantCard: FC<PlantCardProps> = ({
             </Typography>
           </Box>
         </CardContent>
-      </Card>
+      </AppCard>
 
       {/* Modals */}
       <DeleteConfirmationModal

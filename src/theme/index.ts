@@ -47,7 +47,7 @@ export const theme = createTheme({
     },
   },
   components: {
-    // PR 2 — MenuItem defaults: standard nav-item layout and hover colour
+    // MenuItem defaults: standard nav-item layout and hover colour
     // encoded once instead of repeated in ProfileMenu, DisplayMenu, PlantCard.
     // Danger/success hover colours remain in local sx (they win over this default).
     MuiMenuItem: {
@@ -67,7 +67,7 @@ export const theme = createTheme({
         },
       },
     },
-    // PR 5 — DialogTitle resolves to the Phase-3 h6 variant (1.25rem/600)
+    // DialogTitle resolves to the Phase-3 h6 variant (1.25rem/600)
     // so future dialogs don't re-specify fontSize/fontWeight individually.
     MuiDialogTitle: {
       styleOverrides: {
@@ -76,7 +76,7 @@ export const theme = createTheme({
         },
       },
     },
-    // PR 4 — Button: textTransform:none + brand shadow as defaults.
+    // Button: textTransform:none + brand shadow as defaults.
     // Instances that already set a unique boxShadow (e.g. brand-tinted alpha)
     // keep their local sx — sx wins over styleOverrides.
     MuiButton: {
@@ -93,7 +93,7 @@ export const theme = createTheme({
         },
       },
     },
-    // PR 3 — Card baseline: soft shadow + hover lift as defaults.
+    // Card baseline: soft shadow + hover lift as defaults.
     // Existing cards with explicit sx boxShadow (state-based hover) are unaffected
     // because sx wins over styleOverrides.
     MuiCard: {
@@ -108,7 +108,7 @@ export const theme = createTheme({
         },
       },
     },
-    // PR 1 — OutlinedInput hover/focus border colour centralised here so every
+    // OutlinedInput hover/focus border colour centralised here so every
     // field in the app gets primary.main without repeating sx on each instance.
     MuiOutlinedInput: {
       styleOverrides: {

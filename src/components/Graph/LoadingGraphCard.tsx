@@ -1,6 +1,5 @@
 import type { FC } from "react";
-import { CardTemplate } from "../CardTemplate/CardTemplate";
-import { Skeleton, Typography } from "@mui/material";
+import { Card, Skeleton, Typography } from "@mui/material";
 
 interface LoadingGraphCardProps {
   className?: string;
@@ -8,14 +7,14 @@ interface LoadingGraphCardProps {
 
 export const LoadingGraphCard: FC<LoadingGraphCardProps> = ({ className }) => {
   return (
-    <CardTemplate className={`${className} rounded-xl`}>
-      <Typography variant="body2" sx={{ fontWeight: 700 }} className="mt-3 mr-3 ml-3 mb-2">
+    <Card className={className}>
+      <Typography variant="body2" sx={{ fontWeight: 700, mt: 1.5, mx: 1.5, mb: 1 }}>
         <Skeleton />
       </Typography>
-      <Typography variant="caption" className="mr-3 ml-3">
+      <Typography variant="caption" sx={{ mx: 1.5 }}>
         <Skeleton />
       </Typography>
-      <Skeleton className="mx-2 h-50" />
-    </CardTemplate>
+      <Skeleton sx={{ mx: 1 }} />
+    </Card>
   );
 };

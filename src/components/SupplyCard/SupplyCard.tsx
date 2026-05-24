@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
-import { Card, CardContent, Box, Typography, Chip, Avatar } from "@mui/material";
+import { CardContent, Box, Typography, Chip, Avatar } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { radii } from "../../theme/tokens";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PercentIcon from "@mui/icons-material/Percent";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -14,6 +14,7 @@ import { DisableSuccessModal } from "../Modals/DisableSuccessModal";
 import { EnableConfirmationModal } from "../Modals/EnableConfirmationModal";
 import { EnableSuccessModal } from "../Modals/EnableSuccesModal";
 import { DisableConfirmationModal } from "../Modals/DisableConfirmationModal";
+import { AppCard } from "../AppCard";
 
 export interface SupplyCardProps {
   id?: string;
@@ -46,7 +47,6 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   const [openDisableSuccess, setOpenDisableSuccess] = useState(false);
   const [openEnableConfirmation, setOpenEnableConfirmation] = useState(false);
   const [openEnableSuccess, setOpenEnableSuccess] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleCloseDisableConfirmation = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -98,80 +98,52 @@ export const SupplyCard: FC<SupplyCardProps> = ({
 
   return (
     <>
-      <Card
+      <AppCard
         onClick={handleCardClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         sx={{
           cursor: "pointer",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          overflow: "hidden",
-          borderRadius: radii.default,
-          boxShadow: isHovered ? "0 8px 30px 0 rgba(0,0,0,0.12)" : shadows.soft,
-          transform: isHovered ? "translateY(-4px)" : "translateY(0)",
-          width: "100%",
           minWidth: 0,
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           "&:hover": {
-            "& .card-header": {
-              background: theme.palette.primary.main,
-            },
+            transform: "translateY(-4px)",
           },
         }}
-      >
-        {/* Header */}
-        <Box
-          className="card-header"
-          sx={{
-            background: theme.palette.primary.main,
-            p: 2,
-            color: "white",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            transition: "background 0.3s ease",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: "rgba(255, 255, 255, 0.2)",
-                width: 48,
-                height: 48,
-              }}
-            >
-              {enabled ? <PowerIcon /> : <PowerOffIcon />}
-            </Avatar>
-            <Box>
-              <Typography variant="h6">
-                {name || "Sin nombre"}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                {code}
-              </Typography>
+        header={
+          <>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 48, height: 48 }}>
+                {enabled ? <PowerIcon /> : <PowerOffIcon />}
+              </Avatar>
+              <Box>
+                <Typography variant="h6">{name || "Sin nombre"}</Typography>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  {code}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
-            <Chip
-              label={enabled ? "Activo" : "Inactivo"}
-              size="small"
-              sx={{
-                backgroundColor: enabled ? "#10b981" : "#ef4444",
-                color: "white",
-                fontWeight: 600,
-                display: { xs: "none", sm: "flex" },
-              }}
-            />
-            <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
-              <DisplayMenu
-                supplyPointId={id}
-                disableSupplyPoint={() => setOpenDisableConfirmation(true)}
-                enableSupplyPoint={() => setOpenEnableConfirmation(true)}
-                enabled={enabled}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
+              <Chip
+                label={enabled ? "Activo" : "Inactivo"}
+                size="small"
+                sx={{
+                  backgroundColor: enabled ? "#10b981" : "#ef4444",
+                  color: "white",
+                  fontWeight: 600,
+                  display: { xs: "none", sm: "flex" },
+                }}
               />
+              <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
+                <DisplayMenu
+                  supplyPointId={id}
+                  disableSupplyPoint={() => setOpenDisableConfirmation(true)}
+                  enableSupplyPoint={() => setOpenEnableConfirmation(true)}
+                  enabled={enabled}
+                />
+              </Box>
             </Box>
-          </Box>
-        </Box>
-
+          </>
+        }
+      >
         {/* Content */}
         <CardContent sx={{ p: 3 }}>
           {/* Metrics Row */}
@@ -183,7 +155,6 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               mb: 3,
             }}
           >
-
             {/* Partition Coefficient */}
             <Box
               sx={{
@@ -205,7 +176,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 </Typography>
               </Box>
             </Box>
-            
+
             {/* Last Measurement */}
             <Box
               sx={{
@@ -226,12 +197,12 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                   Último consumo
                 </Typography>
               </Box>
-            </Box>            
+            </Box>
 
             {/* Last Connection */}
             <Box
               sx={{
-                display: { xs: "flex", md: "flex" },
+                display: "flex",
                 alignItems: "center",
                 gap: 1.5,
                 p: 1.5,
@@ -267,9 +238,8 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               {address || "Dirección no disponible"}
             </Typography>
           </Box>
-
         </CardContent>
-      </Card>
+      </AppCard>
 
       {/* Modals */}
       <DisableConfirmationModal

@@ -1,9 +1,8 @@
 import { type FC, type ReactNode } from "react";
-import { Card, CardContent, Typography, Box, Divider } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
+import { CardContent, Typography, Box, Divider } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import { AppCard } from "../AppCard";
 
 export interface StatItem {
   label: string;
@@ -31,79 +30,38 @@ export const StatsCard: FC<StatsCardProps> = ({
   accentColor = "#1976d2",
   variant = "default",
 }) => {
-  const theme = useTheme();
-
-  const getVariantStyles = () => {
-    switch (variant) {
-      case "production":
-        return {
-          background: theme.palette.primary.main,
-          iconBg: "rgba(255, 255, 255, 0.2)",
-        };
-      case "consumption":
-        return {
-          background: theme.palette.primary.main,
-          iconBg: "rgba(255, 255, 255, 0.2)",
-        };
-      default:
-        return {
-          background: theme.palette.primary.main,
-          iconBg: "rgba(255, 255, 255, 0.2)",
-        };
-    }
-  };
-
-  const variantStyles = getVariantStyles();
+  // variant is reserved for future differentiation; all variants currently share the same look
+  void variant;
 
   return (
-    <Card
-      sx={{
-        width: "100%",
-        borderRadius: radii.default,
-        transition: "all 0.3s ease",
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)", // intentionally heavier than shadows.soft for data cards
-        overflow: "hidden",
-        "&:hover": {
-          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.15)", // unique card hover lift
-        },
-      }}
-    >
-      <Box
-        sx={{
-          background: variantStyles.background,
-          color: "white",
-          p: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Box>
-          <Typography variant="h6">
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-              {subtitle}
-            </Typography>
-          )}
-        </Box>
-        {icon && (
-          <Box
-            sx={{
-              background: variantStyles.iconBg,
-              borderRadius: "50%",
-              p: 1.5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {icon}
+    <AppCard
+      header={
+        <>
+          <Box>
+            <Typography variant="h6">{title}</Typography>
+            {subtitle && (
+              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                {subtitle}
+              </Typography>
+            )}
           </Box>
-        )}
-      </Box>
-
+          {icon && (
+            <Box
+              sx={{
+                background: "rgba(255, 255, 255, 0.2)",
+                borderRadius: "50%",
+                p: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {icon}
+            </Box>
+          )}
+        </>
+      }
+    >
       <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
         <Box
           sx={{
@@ -112,22 +70,29 @@ export const StatsCard: FC<StatsCardProps> = ({
             gridTemplateColumns: {
               xs: "1fr",
               sm: stats.length > 2 ? "repeat(2, minmax(0, 1fr))" : "1fr",
-              md: stats.length > 3 ? `repeat(${stats.length}, minmax(0, 1fr))` : `repeat(${Math.min(stats.length, 3)}, minmax(0, 1fr))`,
+              md:
+                stats.length > 3
+                  ? `repeat(${stats.length}, minmax(0, 1fr))`
+                  : `repeat(${Math.min(stats.length, 3)}, minmax(0, 1fr))`,
             },
           }}
         >
           {stats.map((stat, index) => (
-            <Box key={index} className="text-center">
+            <Box key={index} sx={{ textAlign: "center" }}>
               {stat.icon && (
-                <Box className="flex justify-center mb-2" sx={{ color: stat.color || accentColor }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    mb: 2,
+                    color: stat.color || accentColor,
+                  }}
+                >
                   {stat.icon}
                 </Box>
               )}
 
-              <Typography
-                variant="h4"
-                sx={{ color: stat.color || "#1e293b", mb: 0.5 }}
-              >
+              <Typography variant="h4" sx={{ color: stat.color || "#1e293b", mb: 0.5 }}>
                 {stat.value}
               </Typography>
 
@@ -136,7 +101,7 @@ export const StatsCard: FC<StatsCardProps> = ({
               </Typography>
 
               {stat.trend !== undefined && (
-                <Box className="flex items-center justify-center gap-1">
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {stat.trend > 0 ? (
                     <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
                   ) : (
@@ -172,6 +137,6 @@ export const StatsCard: FC<StatsCardProps> = ({
           ))}
         </Box>
       </CardContent>
-    </Card>
+    </AppCard>
   );
 };

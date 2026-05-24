@@ -1,7 +1,6 @@
 import { type FC } from "react";
-import { Typography, useMediaQuery, useTheme } from "@mui/material";
-import { CardTemplate } from "../CardTemplate/CardTemplate";
-import { DropdownCard } from "../DropdownCard/DropdownCard";
+import { Card, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { AppAccordion } from "../AppAccordion/AppAccordion";
 import { Stat } from "../Stat/Stat";
 
 interface SupplyDetailCardProps {
@@ -22,14 +21,25 @@ export const SupplyDetailCard: FC<SupplyDetailCardProps> = ({
   return (
     <>
       {isSmall ? (
-        <DropdownCard title={name}>
+        <AppAccordion title={name}>
           <SupplyDetailContent cups={cups} address={address} partitionCoeficient={partitionCoeficient} />
-        </DropdownCard>
+        </AppAccordion>
       ) : (
-        <CardTemplate className="p-4 grid grid-flow-col auto-cols-fr gap-2 content-center items-center w-full">
+        <Card
+          sx={{
+            p: 2,
+            display: "grid",
+            gridAutoFlow: "column",
+            gridAutoColumns: "1fr",
+            gap: 1,
+            alignContent: "center",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
           <Typography variant="h5" sx={{ fontWeight: 800 }}>{name}</Typography>
           <SupplyDetailContent cups={cups} address={address} partitionCoeficient={partitionCoeficient} />
-        </CardTemplate>
+        </Card>
       )}
     </>
   );
