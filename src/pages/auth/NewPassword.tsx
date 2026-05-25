@@ -18,7 +18,7 @@ export const NewPassword: FC = () => {
     };
   }, [password, repeatPassword]);
 
-  const handleSubmit = async (_data: FormData) => {
+  const handleSubmit = async () => {
     // const newPassword = data.get('newPassword')?.toString().trim();
     // const repeatNewPassword = data.get('repeatNewPassword')?.toString().trim();
 

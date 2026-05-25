@@ -58,7 +58,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
   const [partitionCoefficientError, setPartitionCoefficientError] = useState<string | undefined>();
 
   const partitionCoefficientIsValid = (input: string): boolean => {
-    return input.match(/^\d{1,3}[,|\.]\d{6}$/) !== null;
+    return input.match(/^\d{1,3}[,.]\d{6}$/) !== null;
   };
 
   const onPartitionCoeficientChange = (e: React.ChangeEvent<HTMLInputElement>) => {

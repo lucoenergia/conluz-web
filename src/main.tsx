@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { BrowserRouter } from "react-router";
-import { CssBaseline, GlobalStyles, StyledEngineProvider } from "@mui/material";
+import { GlobalStyles, StyledEngineProvider } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/auth.context.tsx";
@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      throwOnError: (error: any) => error.response?.status === 401,
+      throwOnError: (error: unknown) => (error as { response?: { status?: number } }).response?.status === 401,
     },
   },
 });
@@ -25,9 +25,8 @@ createRoot(document.getElementById("root")!).render(
       <LoggedUserProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>
-            <CssBaseline />
             <StyledEngineProvider enableCssLayer>
-              <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
+              <GlobalStyles styles={`@layer theme, base, mui, components, utilities; body { font-family: "Inter", sans-serif; }`} />
               <BrowserRouter>
                 <App />
               </BrowserRouter>

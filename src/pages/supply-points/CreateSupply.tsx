@@ -33,7 +33,7 @@ export const CreateSupplyPage: FC = () => {
       } else {
         errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
     }
   };

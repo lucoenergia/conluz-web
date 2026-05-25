@@ -28,7 +28,12 @@ vi.mock("../../context/error.context", () => ({
 }));
 
 vi.mock("../../components/PartnerForm/PartnerForm", () => ({
-  PartnerForm: ({ handleSubmit, submitLabel, initialValues, mode }: any) => (
+  PartnerForm: ({ handleSubmit, submitLabel, initialValues, mode }: {
+    handleSubmit: (v: Record<string, unknown>) => void;
+    submitLabel: string;
+    initialValues?: Record<string, string | number | undefined>;
+    mode: string;
+  }) => (
     <div>
       <span data-testid="form-mode">{mode}</span>
       <span data-testid="form-initial-fullname">{initialValues?.fullName}</span>

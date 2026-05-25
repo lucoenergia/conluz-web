@@ -34,7 +34,7 @@ export const EditSupplyPage: FC = () => {
       } else {
         errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
     }
   };

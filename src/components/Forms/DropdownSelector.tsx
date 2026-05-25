@@ -83,7 +83,8 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
           </Paper>
         )}
         renderOption={(props, option) => {
-          const { sx: _, ...otherProps } = props as any;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { sx: _sx, ...otherProps } = props as React.HTMLAttributes<HTMLLIElement> & { sx?: unknown };
           return (
             <Box
               component="li"

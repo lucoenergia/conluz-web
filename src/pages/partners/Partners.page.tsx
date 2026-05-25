@@ -115,16 +115,8 @@ export const PartnersPage: FC = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any = a[orderBy];
-      let bValue: any = b[orderBy];
-
-      // Handle null/undefined values
-      if (aValue == null) aValue = '';
-      if (bValue == null) bValue = '';
-
-      // Convert to strings for comparison
-      const aStr = String(aValue).toLowerCase();
-      const bStr = String(bValue).toLowerCase();
+      const aStr = String(a[orderBy] ?? '').toLowerCase();
+      const bStr = String(b[orderBy] ?? '').toLowerCase();
 
       if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
       if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
@@ -250,7 +242,7 @@ export const PartnersPage: FC = () => {
     setPage(0);
   };
 
-  const handleFilterChange = (filterType: keyof FilterState, value: any) => {
+  const handleFilterChange = (filterType: keyof FilterState, value: FilterState[keyof FilterState]) => {
     setFilters(prev => ({ ...prev, [filterType]: value }));
     setPage(0);
   };

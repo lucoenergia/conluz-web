@@ -8,7 +8,7 @@ import { ProfileMenu } from "../Menu/ProfileMenu";
 
 interface HeaderProps {
   username?: string;
-  onMenuClick: Function;
+  onMenuClick: () => void;
 }
 
 export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {

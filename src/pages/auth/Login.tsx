@@ -59,7 +59,7 @@ export const Login: FC = () => {
       } else {
         setLoginError(true);
       }
-    } catch (error) {
+    } catch {
       setLoginError(true);
     }
   };

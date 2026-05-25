@@ -30,7 +30,7 @@ export const PlantsPage: FC = () => {
       await deletePlant.mutateAsync({ id });
       refetch();
       return true;
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al eliminar la planta. Por favor inténtalo más tarde");
       return false;
     }

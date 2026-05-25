@@ -49,7 +49,7 @@ export const PartnerSupplyPointsPage: FC = () => {
         errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
         return false;
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
       return false;
     }
@@ -65,7 +65,7 @@ export const PartnerSupplyPointsPage: FC = () => {
         errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
         return false;
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
       return false;
     }

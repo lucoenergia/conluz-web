@@ -165,13 +165,20 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
         enabled: true,
         shared: true,
         intersect: false,
-        custom: function({ series: seriesData, dataPointIndex, w }: any) {
+        custom: function({ series: seriesData, dataPointIndex, w }: {
+          series: number[][];
+          dataPointIndex: number;
+          w: {
+            globals: { labels: string[]; collapsedSeriesIndices: number[] };
+            config: { series: Array<{ name: string }>; colors: string[] };
+          };
+        }) {
           const category = w.globals.labels[dataPointIndex];
           let tooltipContent = `<div style="padding: 8px 12px; background: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">`;
           tooltipContent += `<div style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${category}</div>`;
 
           // Only show visible series (not hidden by legend click)
-          w.config.series.forEach((s: any, index: number) => {
+          w.config.series.forEach((s: { name: string }, index: number) => {
             // Check if series is visible using globals.collapsedSeriesIndices
             const isHidden = w.globals.collapsedSeriesIndices.includes(index);
             if (isHidden) return;

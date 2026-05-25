@@ -34,7 +34,7 @@ export const CreatePlantPage: FC = () => {
       } else {
         errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
     }
   };

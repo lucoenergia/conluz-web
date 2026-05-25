@@ -106,7 +106,6 @@ const PAGED_USERS = {
 };
 
 const EMPTY_PRODUCTION = [];
-const EMPTY_CONSUMPTION: object[] = [];
 
 // ---------------------------------------------------------------------------
 // Helper: set up all API route mocks on a given page

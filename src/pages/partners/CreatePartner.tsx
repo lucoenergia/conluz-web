@@ -34,7 +34,7 @@ export const CreatePartnerPage: FC = () => {
       } else {
         errorDispatch("Ha habido un problema al crear el socio. Por favor, inténtalo más tarde");
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al crear el socio. Por favor, inténtalo más tarde");
     }
   };

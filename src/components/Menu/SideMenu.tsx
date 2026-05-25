@@ -8,7 +8,7 @@ import { MENU_ITEMS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../../utils/const
 
 interface SideMenuProps {
   isMenuOpened: boolean;
-  onMenuClose: Function;
+  onMenuClose: (open: boolean) => void;
   menuItems: typeof MENU_ITEMS;
 }
 

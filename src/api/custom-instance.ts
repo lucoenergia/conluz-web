@@ -8,7 +8,7 @@ export const customInstance = <T>(config: AxiosRequestConfig): Promise<T> => {
     ({ data }) => data,
   );
 
-  // @ts-ignore
+  // @ts-expect-error — cancel is not part of the Promise type but React Query reads it
   promise.cancel = () => {
     source.cancel('Query was cancelled by React Query');
   };
@@ -18,4 +18,4 @@ export const customInstance = <T>(config: AxiosRequestConfig): Promise<T> => {
 
 export default customInstance;
 
-export interface ErrorType<Error> extends AxiosError<Error> {}
+export type ErrorType<Error> = AxiosError<Error>;

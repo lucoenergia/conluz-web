@@ -38,7 +38,7 @@ export const EditPlantPage: FC = () => {
       } else {
         errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
     }
   };
