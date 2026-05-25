@@ -1,6 +1,6 @@
 import { Box, Typography, Paper, Avatar, Grow, Fade } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { radii, shadows } from "../theme/tokens";
+import { radii, shadows, alphas, colors } from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
 import type { FC } from "react";
 
@@ -63,7 +63,7 @@ export const ContactPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
       }}
     >
       {/* Breadcrumb */}
@@ -90,7 +90,7 @@ export const ContactPage: FC = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
             <Avatar
               sx={{
-                bgcolor: "rgba(255, 255, 255, 0.2)",
+                bgcolor: alphas.white.soft,
                 width: 56,
                 height: 56,
               }}
@@ -144,6 +144,7 @@ export const ContactPage: FC = () => {
                   cursor: "pointer",
                   "&:hover": {
                     transform: "translateY(-4px)",
+                    // eslint-disable-next-line no-restricted-syntax -- contact-card hover shadow; heavier lift effect, no matching token
                     boxShadow: "0 8px 30px 0 rgba(0,0,0,0.12)",
                   },
                 }}
@@ -168,6 +169,7 @@ export const ContactPage: FC = () => {
                 <Typography
                   variant="h6"
                   sx={{
+                    // eslint-disable-next-line no-restricted-syntax -- contact page gray (#2d3748 Slate-800); no matching token
                     color: "#2d3748",
                     mb: 2,
                   }}
@@ -183,6 +185,7 @@ export const ContactPage: FC = () => {
                         <Typography
                           variant="caption"
                           sx={{
+                            // eslint-disable-next-line no-restricted-syntax -- contact page gray (#718096 Gray-500); no matching token
                             color: "#718096",
                             fontWeight: 500,
                             textTransform: "uppercase",
@@ -195,6 +198,7 @@ export const ContactPage: FC = () => {
                       <Typography
                         variant="body2"
                         sx={{
+                          // eslint-disable-next-line no-restricted-syntax -- contact page gray (#4a5568 Slate-600); no matching token
                           color: "#4a5568",
                           fontWeight: item.label ? 600 : 500,
                         }}
@@ -225,17 +229,20 @@ export const ContactPage: FC = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
             <Avatar
               sx={{
+                // eslint-disable-next-line no-restricted-syntax -- amber-faint avatar bg (#fef3c7); no matching token
                 bgcolor: "#fef3c7",
                 width: 48,
                 height: 48,
               }}
             >
-              <MessageIcon sx={{ color: "#f59e0b", fontSize: 24 }} />
+              <MessageIcon sx={{ color: colors.warning, fontSize: 24 }} />
             </Avatar>
             <Box>
+              {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#2d3748); no matching token */}
               <Typography variant="h6" sx={{ color: "#2d3748" }}>
                 ¿Prefieres escribirnos?
               </Typography>
+              {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#718096); no matching token */}
               <Typography variant="body2" sx={{ color: "#718096" }}>
                 Utiliza nuestro formulario de contacto y te responderemos lo antes posible
               </Typography>
@@ -246,14 +253,16 @@ export const ContactPage: FC = () => {
             sx={{
               p: 3,
               borderRadius: radii.default,
-              bgcolor: "#f7fafc",
-              border: "1px solid #e2e8f0",
+              bgcolor: colors.background.surface,
+              border: `1px solid ${colors.border.light}`,
             }}
           >
+            {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#4a5568); no matching token */}
             <Typography variant="body1" sx={{ color: "#4a5568", mb: 2 }}>
               Estamos comprometidos con el desarrollo sostenible y la transición energética de nuestra comunidad.
               Tu participación es fundamental para construir un futuro más verde y eficiente.
             </Typography>
+            {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#718096); no matching token */}
             <Typography variant="body2" sx={{ color: "#718096" }}>
               <strong>Nota:</strong> Para consultas urgentes, te recomendamos contactarnos por teléfono durante
               nuestro horario de atención.

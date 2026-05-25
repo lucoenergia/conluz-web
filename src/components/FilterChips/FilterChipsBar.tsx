@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { Box, Chip } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import { colors } from "../../theme/tokens";
 
 export type FilterStatus = "all" | "active" | "inactive";
 
@@ -26,7 +27,7 @@ export const FilterChipsBar: FC<FilterChipsBarProps> = ({
       }}
     >
       {showIcon && (
-        <FilterListIcon sx={{ color: "#64748b", display: { xs: "none", sm: "block" } }} />
+        <FilterListIcon sx={{ color: colors.text.secondary, display: { xs: "none", sm: "block" } }} />
       )}
       <Chip
         label="Todos"

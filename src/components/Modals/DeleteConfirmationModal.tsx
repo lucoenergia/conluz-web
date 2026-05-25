@@ -2,7 +2,7 @@ import Typography from "@mui/material/Typography";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { radii } from "../../theme/tokens";
+import { radii, alphas, fontSizes } from "../../theme/tokens";
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
@@ -19,16 +19,16 @@ export const DeleteConfirmationModal: FC<DeleteConfirmationModalProps> = ({ isOp
       confirmLabel="Eliminar"
       onConfirm={onDelete}
       title="Eliminar planta"
-      icon={<WarningAmberIcon sx={{ fontSize: 28, color: "#ef4444" }} />}
-      iconBg="rgba(239, 68, 68, 0.1)"
+      icon={<WarningAmberIcon sx={{ fontSize: 28, color: "error.main" }} />}
+      iconBg={alphas.error.light}
     >
       <Typography
         sx={{
-          fontSize: "0.875rem",
+          fontSize: fontSizes.md,
           fontWeight: 600,
-          color: "#475569",
+          color: "secondary.main",
           mb: 2,
-          backgroundColor: "rgba(239, 68, 68, 0.08)",
+          backgroundColor: alphas.error.subtle,
           padding: "8px 12px",
           borderRadius: radii.default,
         }}
@@ -37,8 +37,8 @@ export const DeleteConfirmationModal: FC<DeleteConfirmationModalProps> = ({ isOp
       </Typography>
       <Typography
         sx={{
-          fontSize: "0.9375rem",
-          color: "#64748b",
+          fontSize: fontSizes.lg,
+          color: "text.secondary",
           lineHeight: 1.6,
         }}
       >

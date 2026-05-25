@@ -11,7 +11,7 @@ import {
   Select,
   TextField,
 } from "@mui/material";
-import { colors } from "../../theme/tokens";
+import { colors, fontSizes } from "../../theme/tokens";
 import { CreateUserBodyRole } from "../../api/models";
 
 export interface PartnerFormValues {
@@ -194,7 +194,7 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           sx={{
             mt: 2,
             py: 1.5,
-            fontSize: "1rem",
+            fontSize: fontSizes.xl,
             fontWeight: 600,
             "&:hover": {
               background: `linear-gradient(135deg, ${colors.brand.dark} 0%, #6a3f8f 100%)`,

@@ -31,7 +31,8 @@ export const theme = createTheme({
       main: colors.success,
     },
     error: {
-      main: colors.error,
+      main: colors.error.main,
+      dark: colors.error.dark,
     },
     warning: {
       main: colors.warning,
@@ -45,6 +46,8 @@ export const theme = createTheme({
       default: colors.background.default,
       paper: colors.background.paper,
     },
+    // background.surface (#f8fafc) is available via colors.background.surface for
+    // call sites that need it outside of the theme palette shorthand.
   },
   components: {
     // MenuItem defaults: standard nav-item layout and hover colour

@@ -9,13 +9,13 @@ interface LoadingAppAccordionProps {
 
 export const LoadingAppAccordion: FC<LoadingAppAccordionProps> = ({ className, children }) => {
   return (
-    <Accordion className={`rounded p-2 ${className}`}>
+    <Accordion className={className}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h5">
           <Skeleton />
         </Typography>
       </AccordionSummary>
-      <AccordionDetails className="grid gap-4">{children}</AccordionDetails>
+      <AccordionDetails>{children}</AccordionDetails>
     </Accordion>
   );
 };

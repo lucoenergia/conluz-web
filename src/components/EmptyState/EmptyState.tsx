@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { Button, Paper, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, colors } from "../../theme/tokens";
 
 export interface EmptyStateProps {
   icon: SvgIconComponent;
@@ -22,7 +22,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
   subtitle,
   actionButton,
   iconSize = 64,
-  iconColor = "#94a3b8",
+  iconColor = colors.text.placeholder,
 }) => {
   return (
     <Paper

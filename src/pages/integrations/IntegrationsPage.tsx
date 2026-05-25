@@ -1,4 +1,4 @@
-import { radii } from "../../theme/tokens";
+import { radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { useState, useCallback, useEffect, type FC } from "react";
 import { Box, Typography, Paper, Snackbar, Alert, Avatar, CircularProgress } from "@mui/material";
@@ -13,7 +13,7 @@ import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
 import type { ConfigureDatadisBody, ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
-import { colors } from "../../theme/tokens";
+import { colors, alphas } from "../../theme/tokens";
 
 interface IntegrationState {
   datadis: { enabled: boolean; username: string; password: string; baseUrl: string };
@@ -26,7 +26,7 @@ const PROVIDERS = [
     id: "datadis" as const,
     name: "Datadis",
     icon: "electric_meter",
-    color: "#0ea5e9",
+    color: colors.chart.cyan,
     description:
       "Plataforma oficial de las distribuidoras eléctricas para acceder a datos de consumo de los socios.",
     fields: ["credentials"] as string[],
@@ -37,7 +37,7 @@ const PROVIDERS = [
     id: "huawei" as const,
     name: "Huawei",
     icon: "solar_power",
-    color: "#dc2626",
+    color: colors.error.dark,
     description: "Conexión con inversores Huawei para recoger datos de producción de las plantas fotovoltaicas.",
     fields: ["credentials"] as string[],
     urlPlaceholder: "https://eu5.fusionsolar.huawei.com/thirdData",
@@ -47,7 +47,7 @@ const PROVIDERS = [
     id: "shelly" as const,
     name: "Shelly",
     icon: "sensors",
-    color: "#10b981",
+    color: colors.success,
     description:
       "Lecturas en tiempo real desde dispositivos Shelly instalados en la comunidad. No requiere credenciales adicionales.",
     fields: [] as string[],
@@ -188,7 +188,7 @@ export const IntegrationsPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "calc(100vh - 64px)",
-        background: "#f5f7fa",
+        background: colors.background.default,
       }}
     >
       {/* Breadcrumb */}
@@ -213,7 +213,7 @@ export const IntegrationsPage: FC = () => {
           }}
         >
           <Box sx={sxStyles.flexRowCenter}>
-            <Avatar sx={{ bgcolor: "rgba(255,255,255,0.2)", width: 56, height: 56 }}>
+            <Avatar sx={{ bgcolor: alphas.white.soft, width: 56, height: 56 }}>
               <ExtensionIcon sx={{ fontSize: 32, color: "white" }} />
             </Avatar>
             <Box>
@@ -236,7 +236,7 @@ export const IntegrationsPage: FC = () => {
             p: { xs: 1.5, sm: 2 },
             borderRadius: radii.default,
             bgcolor: "white",
-            boxShadow: "0 2px 8px 0 rgba(0,0,0,0.06)",
+            boxShadow: shadows.breadcrumb,
             display: "flex",
             alignItems: "center",
             gap: { xs: 1.5, sm: 3 },
@@ -244,8 +244,8 @@ export const IntegrationsPage: FC = () => {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <BoltIcon sx={{ fontSize: 18, color: "#10b981" }} />
-            <Typography variant="body2" sx={{ color: "#374151", fontWeight: 500 }}>
+            <BoltIcon sx={{ fontSize: 18, color: "success.main" }} />
+            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500 }}>
               {activeCount} de {PROVIDERS.length} integraciones activas
             </Typography>
           </Box>

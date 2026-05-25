@@ -1,6 +1,6 @@
 import { Autocomplete, TextField, Box, Paper, Chip, InputAdornment, CircularProgress } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, colors, alphas } from "../../theme/tokens";
 import React, { useMemo, type FC } from "react";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -45,7 +45,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
         p: { xs: 1.5, sm: 2 },
         transition: "all 0.3s ease",
         "&:hover": {
-          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.12)", // unique hover lift, not in canonical set
+          boxShadow: shadows.dataCard,
         },
       }}
     >
@@ -114,7 +114,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                 background: theme.palette.primary.main,
                 color: "white",
                 "& .MuiChip-deleteIcon": {
-                  color: "rgba(255, 255, 255, 0.7)",
+                  color: alphas.white.heavy,
                   "&:hover": {
                     color: "white",
                   },
@@ -142,7 +142,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
               sx: {
                 borderRadius: radii.default,
                 "& fieldset": {
-                  borderColor: "#e2e8f0",
+                  borderColor: colors.border.light,
                   borderWidth: 2,
                   transition: "all 0.3s ease",
                 },
@@ -158,7 +158,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
             }}
             InputLabelProps={{
               sx: {
-                color: "#64748b",
+                color: "text.secondary",
                 "&.Mui-focused": {
                   color: theme.palette.primary.main,
                   fontWeight: 600,
@@ -167,7 +167,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
             }}
             sx={{
               "& .MuiInputBase-root": {
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                backgroundColor: alphas.white.strong,
                 backdropFilter: "blur(10px)",
               },
             }}

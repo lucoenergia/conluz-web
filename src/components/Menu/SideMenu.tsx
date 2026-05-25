@@ -1,6 +1,6 @@
 import { Box, Drawer, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
+import { radii, colors } from "../../theme/tokens";
 import type { FC } from "react";
 import { Link, useLocation } from "react-router";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -34,8 +34,9 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuIte
         '& .MuiDrawer-paper': {
           width: SIDEMENU_WIDTH,
           boxSizing: 'border-box',
-          borderRight: '1px solid #e5e7eb',
-          background: '#ffffff',
+          borderRight: `1px solid ${colors.divider}`,
+          background: colors.background.paper,
+          // eslint-disable-next-line no-restricted-syntax -- compound drawer shadow; no matching token
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
           overflowX: 'hidden',
         }
@@ -71,10 +72,10 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuIte
                       '&.Mui-selected': {
                         background: theme.palette.primary.main,
                         '& .MuiListItemIcon-root': {
-                          color: '#ffffff',
+                          color: 'white',
                         },
                         '& .MuiListItemText-primary': {
-                          color: '#ffffff',
+                          color: 'white',
                           fontWeight: 600,
                         },
                         '&:hover': {
@@ -83,13 +84,13 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuIte
                       },
                       '&:not(.Mui-selected)': {
                         '&:hover': {
-                          backgroundColor: '#f8fafc',
+                          backgroundColor: colors.background.surface,
                         },
                         '& .MuiListItemIcon-root': {
-                          color: '#6b7280',
+                          color: colors.text.subtle,
                         },
                         '& .MuiListItemText-primary': {
-                          color: '#374151',
+                          color: colors.text.body,
                         },
                       },
                     }}
@@ -100,6 +101,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, menuIte
                     <ListItemText
                       primary={menuItem.label}
                       primaryTypographyProps={{
+                        // eslint-disable-next-line no-restricted-syntax -- 0.9rem nav label; between fontSizes.md (0.875) and fontSizes.lg (0.9375)
                         fontSize: '0.9rem',
                         fontWeight: selected ? 600 : 500,
                       }}

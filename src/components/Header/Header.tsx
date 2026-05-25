@@ -1,5 +1,6 @@
 import { AppBar, IconButton, Toolbar, Box } from "@mui/material";
 import { sxStyles } from "../../theme/sx";
+import { colors } from "../../theme/tokens";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Logo } from "./Logo";
 import type { FC } from "react";
@@ -18,8 +19,9 @@ export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
       elevation={0}
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: colors.background.paper,
         borderBottom: '1px solid #e5e7eb',
+        // eslint-disable-next-line no-restricted-syntax -- app-bar divider shadow; no matching token (0.05 opacity, very subtle)
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
       }}
     >
@@ -39,8 +41,9 @@ export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
             aria-label="menu"
             onClick={() => onMenuClick()}
             sx={{
-              color: '#6b7280',
+              color: colors.text.subtle,
               '&:hover': {
+                // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint; Tailwind gray-100, no matching token
                 backgroundColor: '#f3f4f6',
               },
             }}

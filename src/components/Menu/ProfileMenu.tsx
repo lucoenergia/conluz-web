@@ -7,6 +7,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { MenuTemplate } from "./MenuTemplate";
 import { useNavigate } from "react-router";
+import { colors, fontSizes } from "../../theme/tokens";
 import { useAuthDispatch } from "../../context/auth.context";
 import { useLoggedUserDispatch } from "../../context/logged-user.context";
 
@@ -53,10 +54,11 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             {username.charAt(0).toUpperCase()}
           </Avatar>
           <Box>
+            {/* eslint-disable-next-line no-restricted-syntax -- near-black heading; no matching token (#2f2f2f vs text.primary #1e293b) */}
             <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#2f2f2f' }}>
               {username}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
+            <Typography variant="body2" sx={{ color: colors.text.subtle, fontSize: fontSizes.md }}>
               Admin
             </Typography>
           </Box>
@@ -66,8 +68,8 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
         <Box sx={{ py: 1 }}>
           <Box component={Link} to="/profile" sx={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem onClick={handleCloseUserMenu}>
-              <PersonIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
+              <PersonIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
                 Mi perfil
               </Typography>
             </MenuItem>
@@ -75,8 +77,8 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
           <Box component={Link} to="/change-password" sx={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem onClick={handleCloseUserMenu}>
-              <KeyIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
+              <KeyIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
                 Cambiar contraseña
               </Typography>
             </MenuItem>
@@ -84,8 +86,8 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
           <Box component={Link} to="/contact" sx={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem onClick={handleCloseUserMenu}>
-              <HelpOutlineIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
+              <HelpOutlineIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
                 ¿Necesitas ayuda?
               </Typography>
             </MenuItem>
@@ -100,12 +102,12 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             variant="contained"
             startIcon={<LogoutIcon />}
             sx={{
-              backgroundColor: '#ef4444',
+              backgroundColor: colors.error.main,
               color: 'white',
               fontWeight: 500,
               py: 1,
               '&:hover': {
-                backgroundColor: '#dc2626',
+                backgroundColor: colors.error.dark,
               }
             }}
           >

@@ -2,6 +2,7 @@ import Typography from "@mui/material/Typography";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { alphas, fontSizes } from "../../theme/tokens";
 
 interface EnablePartnerConfirmationModalProps {
   isOpen: boolean;
@@ -24,13 +25,13 @@ export const EnablePartnerConfirmationModal: FC<EnablePartnerConfirmationModalPr
       confirmColor="success"
       onConfirm={onEnable}
       title={`Habilitar a ${partnerName}`}
-      icon={<CheckCircleOutlineIcon sx={{ fontSize: 28, color: "#10b981" }} />}
-      iconBg="rgba(16, 185, 129, 0.1)"
+      icon={<CheckCircleOutlineIcon sx={{ fontSize: 28, color: "success.main" }} />}
+      iconBg={alphas.success.light}
     >
       <Typography
         sx={{
-          fontSize: "0.9375rem",
-          color: "#64748b",
+          fontSize: fontSizes.lg,
+          color: "text.secondary",
           lineHeight: 1.6,
           mb: 2,
         }}

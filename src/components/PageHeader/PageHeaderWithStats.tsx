@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
-import { colors, radii } from "../../theme/tokens";
+import { colors, radii, alphas } from "../../theme/tokens";
 
 export interface StatItem {
   value: number | string;
@@ -62,7 +62,7 @@ export const PageHeaderWithStats: FC<PageHeaderWithStatsProps> = ({
           <Box
             key={index}
             sx={{
-              bgcolor: "rgba(255, 255, 255, 0.15)",
+              bgcolor: alphas.white.subtle,
               backdropFilter: "blur(10px)",
               borderRadius: radii.default,
               p: 2,

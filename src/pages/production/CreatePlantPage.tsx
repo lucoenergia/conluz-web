@@ -1,4 +1,4 @@
-import { radii } from "../../theme/tokens";
+import { radii, colors, alphas } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
@@ -47,7 +47,7 @@ export const CreatePlantPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         overflow: "hidden",
@@ -79,7 +79,7 @@ export const CreatePlantPage: FC = () => {
         <Box sx={sxStyles.flexRowCenter}>
           <Avatar
             sx={{
-              bgcolor: "rgba(255, 255, 255, 0.2)",
+              bgcolor: alphas.white.soft,
               width: 56,
               height: 56,
             }}

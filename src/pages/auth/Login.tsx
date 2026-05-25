@@ -1,6 +1,6 @@
 import { useState, type FC } from "react";
 import { alpha } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import {
   Box,
@@ -79,7 +79,7 @@ export const Login: FC = () => {
           maxWidth: 480,
           width: "100%",
           borderRadius: radii.large,
-          boxShadow: "0 8px 32px 0 rgba(0,0,0,0.2)",
+          boxShadow: shadows.auth,
           overflow: "hidden",
         }}
       >
@@ -93,7 +93,7 @@ export const Login: FC = () => {
         >
           <Avatar
             sx={{
-              bgcolor: "rgba(255, 255, 255, 0.2)",
+              bgcolor: alphas.white.soft,
               width: 64,
               height: 64,
               margin: "0 auto 16px",
@@ -140,9 +140,9 @@ export const Login: FC = () => {
             <Box>
               <Typography
                 sx={{
-                  fontSize: "0.875rem",
+                  fontSize: fontSizes.md,
                   fontWeight: 600,
-                  color: "#1e293b",
+                  color: "text.primary",
                   mb: 1,
                 }}
               >
@@ -166,9 +166,9 @@ export const Login: FC = () => {
             <Box>
               <Typography
                 sx={{
-                  fontSize: "0.875rem",
+                  fontSize: fontSizes.md,
                   fontWeight: 600,
-                  color: "#1e293b",
+                  color: "text.primary",
                   mb: 1,
                 }}
               >
@@ -212,8 +212,8 @@ export const Login: FC = () => {
                 label={
                   <Typography
                     sx={{
-                      fontSize: "0.875rem",
-                      color: "#475569",
+                      fontSize: fontSizes.md,
+                      color: "secondary.main",
                     }}
                   >
                     Recordarme
@@ -225,7 +225,7 @@ export const Login: FC = () => {
                 to="/forgot-password"
                 underline="hover"
                 sx={(theme) => ({
-                  fontSize: "0.875rem",
+                  fontSize: fontSizes.md,
                   color: theme.palette.primary.main,
                   "&:hover": {
                     color: theme.palette.primary.dark,
@@ -241,7 +241,7 @@ export const Login: FC = () => {
               variant="contained"
               fullWidth
               sx={(theme) => ({
-                fontSize: "1rem",
+                fontSize: fontSizes.xl,
                 fontWeight: 600,
                 padding: "12px", // 12px intentionally off-grid for button vertical rhythm
                 background: theme.palette.primary.main,
@@ -259,8 +259,8 @@ export const Login: FC = () => {
             <Box sx={{ textAlign: "center", mt: 2 }}>
               <Typography
                 sx={{
-                  fontSize: "0.875rem",
-                  color: "#64748b",
+                  fontSize: fontSizes.md,
+                  color: "text.secondary",
                   mb: 1,
                 }}
               >
@@ -271,7 +271,7 @@ export const Login: FC = () => {
                 to="/contact"
                 underline="hover"
                 sx={(theme) => ({
-                  fontSize: "0.875rem",
+                  fontSize: fontSizes.md,
                   color: theme.palette.primary.main,
                   fontWeight: 600,
                   "&:hover": {

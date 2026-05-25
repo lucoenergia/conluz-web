@@ -119,5 +119,31 @@ docker compose up -d  # Runs on port 3001
 The Docker setup includes nginx configuration for proper SPA routing and dynamic environment variable injection.
 - never run the server after completing changes
 
+### Styling Contract
+
+**Never** write raw hex colors, rgba strings, hand-written shadow strings, rem/em font-size literals, or Tailwind `className` in component code. ESLint enforces this with `no-restricted-syntax` rules.
+
+Token files (read these before touching any sx prop):
+- `src/theme/tokens.ts` — `colors`, `alphas`, `shadows`, `radii`, `fontSizes`
+- `src/theme/index.ts` — MUI theme (palette maps tokens; use `theme.palette.*` shorthands in sx)
+- `src/theme/sx.ts` — shared `sxStyles` helpers (`pageContainer`, `flexRowCenter`, `softPanel`, …)
+
+Key rules:
+- Use `theme.palette.primary.main` / `"primary.main"` shorthand, **not** `"#667eea"`
+- Use `colors.text.subtle` / `colors.error.dark` etc., **not** raw hex
+- Use `alphas.white.soft` etc., **not** `rgba(255,255,255,0.2)`
+- Use `shadows.soft` / `shadows.dataCard` etc., **not** hand-written shadow strings
+- Use `fontSizes.md` etc., **not** `"0.875rem"`
+- For genuine one-offs: `// eslint-disable-next-line no-restricted-syntax -- <reason>`
+
+Full guide: `references/styling-conventions.md`
+Full token catalogue: `references/theme-tokens.md`
+
+Verification gates (both must pass before committing styling changes):
+```bash
+npm run lint   # 0 no-restricted-syntax errors
+npm test       # pass (3 pre-existing form-spec timeouts are expected)
+```
+
 # Language
 All code and documentation must be in english.

@@ -1,7 +1,6 @@
 import type { FC, ReactNode } from "react";
 import { Box, Paper, Typography, Avatar } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
+import { alphas, radii } from "../../theme/tokens";
 import type { SxProps, Theme } from "@mui/material";
 
 // ─── DetailTile ──────────────────────────────────────────────────────────────
@@ -17,7 +16,7 @@ export interface DetailTileProps {
 export const DetailTile: FC<DetailTileProps> = ({ label, children, sx }) => (
   <Box
     sx={{
-      bgcolor: alpha("#ffffff", 0.15),
+      bgcolor: alphas.white.subtle,
       backdropFilter: "blur(10px)",
       borderRadius: radii.default,
       p: 2,
@@ -74,7 +73,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3 }}>
       <Avatar
         sx={{
-          bgcolor: alpha("#ffffff", 0.2),
+          bgcolor: alphas.white.soft,
           width: 56,
           height: 56,
         }}

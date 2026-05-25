@@ -51,6 +51,7 @@ export const LoadingCardGrid: FC<LoadingCardGridProps> = ({
         >
           <Skeleton variant="rectangular" height={120} />
           <Box sx={{ p: 2 }}>
+            {/* eslint-disable-next-line no-restricted-syntax -- Skeleton fontSize controls rendered height, not text size */}
             <Skeleton variant="text" sx={{ fontSize: "1.5rem" }} />
             <Skeleton variant="text" />
             <Skeleton variant="text" width="60%" />

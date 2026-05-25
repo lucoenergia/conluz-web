@@ -1,4 +1,4 @@
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
@@ -306,7 +306,7 @@ export const PlantDetailPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
@@ -381,6 +381,7 @@ export const PlantDetailPage: FC = () => {
               boxShadow: shadows.soft,
             }}
           >
+            {/* eslint-disable-next-line no-restricted-syntax -- empty-state icon muted blue (#cbd5e1); no matching token */}
             <SolarPowerIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 2 }} />
             <Box sx={{ typography: "h6", color: "text.secondary" }}>
               No hay datos de producción para el período seleccionado

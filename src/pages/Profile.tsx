@@ -1,4 +1,4 @@
-import { radii, shadows } from "../theme/tokens";
+import { radii, shadows, alphas, fontSizes, colors } from "../theme/tokens";
 import { sxStyles } from "../theme/sx";
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Chip, Alert, Snackbar } from "@mui/material";
@@ -100,7 +100,7 @@ export const ProfilePage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         maxWidth: "100%",
         overflow: "hidden",
       }}
@@ -126,7 +126,7 @@ export const ProfilePage: FC = () => {
         })}
       >
         <Box sx={sxStyles.flexRowCenter}>
-          <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 56, height: 56 }}>
+          <Avatar sx={{ bgcolor: alphas.white.soft, width: 56, height: 56 }}>
             <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
@@ -148,7 +148,7 @@ export const ProfilePage: FC = () => {
           )}
 
           {error && (
-            <Typography sx={{ color: "#ef4444", textAlign: "center", p: 2 }}>
+            <Typography sx={{ color: "error.main", textAlign: "center", p: 2 }}>
               Error al cargar los datos del usuario
             </Typography>
           )}
@@ -160,7 +160,7 @@ export const ProfilePage: FC = () => {
                   icon={<BadgeIcon />}
                   label={`Socio #${currentUser?.number || 0}`}
                   sx={(theme) => ({
-                    fontSize: "0.875rem",
+                    fontSize: fontSizes.md,
                     fontWeight: 600,
                     backgroundColor: theme.palette.primary.main,
                     color: "white",
@@ -173,9 +173,9 @@ export const ProfilePage: FC = () => {
                   icon={<AdminPanelSettingsIcon />}
                   label={currentUser?.role || ""}
                   sx={{
-                    fontSize: "0.875rem",
+                    fontSize: fontSizes.md,
                     fontWeight: 600,
-                    backgroundColor: "#10b981",
+                    backgroundColor: colors.success,
                     color: "white",
                     px: 1,
                     py: 2.5,
@@ -195,7 +195,7 @@ export const ProfilePage: FC = () => {
                   type="submit"
                   variant="contained"
                   sx={{
-                    fontSize: "0.9375rem",
+                    fontSize: fontSizes.lg,
                     fontWeight: 600,
                     boxShadow: shadows.medium,
                     px: 4,

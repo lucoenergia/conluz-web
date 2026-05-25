@@ -2,6 +2,7 @@ import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
+import { fontSizes } from "../../theme/tokens";
 import { useGetAllUsers } from "../../api/users/users";
 import type { UserResponse } from "../../api/models";
 
@@ -192,7 +193,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           sx={(theme) => ({
             px: 3,
             py: 1.5,
-            fontSize: "1rem",
+            fontSize: fontSizes.xl,
             boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
             "&:hover": {
               transform: "translateY(-2px)",

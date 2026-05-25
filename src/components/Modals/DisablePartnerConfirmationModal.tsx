@@ -2,6 +2,7 @@ import Typography from "@mui/material/Typography";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { alphas, fontSizes } from "../../theme/tokens";
 
 interface DisablePartnerConfirmationModalProps {
   isOpen: boolean;
@@ -23,13 +24,13 @@ export const DisablePartnerConfirmationModal: FC<DisablePartnerConfirmationModal
       confirmLabel="Deshabilitar"
       onConfirm={onDisable}
       title={`Deshabilitar a ${partnerName}`}
-      icon={<WarningAmberIcon sx={{ fontSize: 28, color: "#ef4444" }} />}
-      iconBg="rgba(239, 68, 68, 0.1)"
+      icon={<WarningAmberIcon sx={{ fontSize: 28, color: "error.main" }} />}
+      iconBg={alphas.error.light}
     >
       <Typography
         sx={{
-          fontSize: "0.9375rem",
-          color: "#64748b",
+          fontSize: fontSizes.lg,
+          color: "text.secondary",
           lineHeight: 1.6,
           mb: 2,
         }}

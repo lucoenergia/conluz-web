@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useState, type FC } from "react";
 import Chart from "react-apexcharts";
 import { useTheme } from "@mui/material/styles";
+import { colors } from "../../theme/tokens";
 
 interface GraphBarProps {
   title: string;
@@ -96,7 +97,7 @@ export const GraphBar: FC<GraphBarProps> = ({
       },
       grid: {
         show: true,
-        borderColor: "#e2e8f0",
+        borderColor: colors.border.light,
         strokeDashArray: 5,
         position: "back" as const,
         xaxis: {
@@ -120,7 +121,7 @@ export const GraphBar: FC<GraphBarProps> = ({
         categories: categories,
         labels: {
           style: {
-            colors: "#64748b",
+            colors: colors.text.secondary,
             fontSize: "12px",
             fontWeight: 400,
           },
@@ -135,7 +136,7 @@ export const GraphBar: FC<GraphBarProps> = ({
       yaxis: {
         labels: {
           style: {
-            colors: "#64748b",
+            colors: colors.text.secondary,
             fontSize: "12px",
             fontWeight: 400,
           },

@@ -1,4 +1,5 @@
 import { sxStyles } from "../../theme/sx";
+import { colors } from "../../theme/tokens";
 import { useEffect, useMemo, useState, type FC } from "react";
 import { useParams } from "react-router";
 import { Box, Paper } from "@mui/material";
@@ -112,7 +113,7 @@ export const PartnerSupplyPointsPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         overflow: "hidden",
@@ -138,8 +139,8 @@ export const PartnerSupplyPointsPage: FC = () => {
           subtitle={isLoadingPartner ? "Cargando..." : `Socio: ${partner?.fullName || "Desconocido"}`}
           stats={[
             { value: stats.total, label: "Total" },
-            { value: stats.active, label: "Activos", color: "#10b981" },
-            { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
+            { value: stats.active, label: "Activos", color: colors.success },
+            { value: stats.inactive, label: "Inactivos", color: colors.error.main },
           ]}
         />
       </Box>

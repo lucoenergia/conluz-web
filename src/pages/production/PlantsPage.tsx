@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
+import { colors } from "../../theme/tokens";
 import { useGetAllPlants, useDeletePlant } from "../../api/plants/plants";
 import type { PlantResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -70,7 +71,7 @@ export const PlantsPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
@@ -95,7 +96,7 @@ export const PlantsPage: FC = () => {
           subtitle="Gestiona las plantas de producción de la comunidad energética"
           stats={[
             { value: stats.total, label: "Total plantas" },
-            { value: `${stats.totalPower} kW`, label: "Potencia total", color: "#10b981" },
+            { value: `${stats.totalPower} kW`, label: "Potencia total", color: colors.success },
           ]}
         />
       </Box>

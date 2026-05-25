@@ -4,7 +4,7 @@ import { Link as RouterLink } from "react-router";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import HomeIcon from "@mui/icons-material/Home";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import { radii } from "../../theme/tokens";
+import { radii, shadows, colors } from "../../theme/tokens";
 
 interface BreadCrumbStep {
   label: string;
@@ -29,9 +29,9 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
       className={className}
       sx={{
         p: { xs: 1.5, sm: 2 },
-        background: "#ffffff",
+        bgcolor: "background.paper",
         borderRadius: radii.default,
-        boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)", // unique breadcrumb shadow, not in canonical set
+        boxShadow: shadows.breadcrumb,
         overflow: "auto",
       }}
     >
@@ -39,7 +39,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
         separator={
           <NavigateNextIcon
             fontSize="small"
-            sx={{ color: "#94a3b8" }}
+            sx={{ color: colors.text.placeholder }}
           />
         }
         aria-label="breadcrumbs"
@@ -58,7 +58,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
                       variant="body2"
                       sx={{
                         fontWeight: 600,
-                        color: "#fff",
+                        color: "white",
                       }}
                     >
                       {step.label}
@@ -85,7 +85,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                color: "#475569",
+                color: "secondary.main",
                 textDecoration: "none",
                 transition: "all 0.3s ease",
                 "&:hover": {

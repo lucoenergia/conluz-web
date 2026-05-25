@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
 import { Box, Button, Typography, Paper, Avatar } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import KeyIcon from "@mui/icons-material/Key";
 import { useNavigate } from "react-router";
@@ -57,7 +57,7 @@ export const ChangePasswordPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         maxWidth: "100%",
         overflow: "hidden",
       }}
@@ -84,7 +84,7 @@ export const ChangePasswordPage: FC = () => {
         })}
       >
         <Box sx={sxStyles.flexRowCenter}>
-          <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 56, height: 56 }}>
+          <Avatar sx={{ bgcolor: alphas.white.soft, width: 56, height: 56 }}>
             <KeyIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
@@ -101,21 +101,21 @@ export const ChangePasswordPage: FC = () => {
         >
           <Box component="form" action={handleSubmit} sx={sxStyles.flexColumnGap3}>
             <Box>
-              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: fontSizes.md, fontWeight: 600, color: "text.primary", mb: 1 }}>
                 Contraseña actual
               </Typography>
               <PasswordInput error={formErrors.currentPassword} helperText={formErrors.currentPassword ? currentPasswordErrorMessage : ""} id="currentPassword" name="currentPassword" placeholder="Introduce tu contraseña actual" autoComplete="current-password" required fullWidth variant="outlined" />
             </Box>
 
             <Box>
-              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: fontSizes.md, fontWeight: 600, color: "text.primary", mb: 1 }}>
                 Nueva contraseña
               </Typography>
               <PasswordInput error={formErrors.newPassword || passwordMismatch} helperText={formErrors.newPassword ? newPasswordErrorMessage : ""} id="newPassword" name="newPassword" placeholder="Introduce tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" />
             </Box>
 
             <Box>
-              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: fontSizes.md, fontWeight: 600, color: "text.primary", mb: 1 }}>
                 Repite la nueva contraseña
               </Typography>
               <PasswordInput error={formErrors.confirmPassword || passwordMismatch} helperText={formErrors.confirmPassword ? confirmPasswordErrorMessage : passwordMismatch ? mismatchErrorMessage : ""} id="confirmPassword" name="confirmPassword" placeholder="Repite tu nueva contraseña" autoComplete="new-password" required fullWidth variant="outlined" />
@@ -126,7 +126,7 @@ export const ChangePasswordPage: FC = () => {
                 variant="outlined"
                 onClick={() => navigate(-1)}
                 sx={(theme) => ({
-                  fontSize: "0.9375rem",
+                  fontSize: fontSizes.lg,
                   fontWeight: 500,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
@@ -143,7 +143,7 @@ export const ChangePasswordPage: FC = () => {
                 type="submit"
                 variant="contained"
                 sx={{
-                  fontSize: "0.9375rem",
+                  fontSize: fontSizes.lg,
                   fontWeight: 600,
                   boxShadow: shadows.medium,
                   px: 3,

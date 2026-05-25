@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useState, type FC } from "react";
 import Chart from "react-apexcharts";
 import { useTheme } from "@mui/material/styles";
+import { colors as themeColors } from "../../theme/tokens";
 
 interface SeriesData {
   name: string;
@@ -39,11 +40,11 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
   const getChartColors = () => {
     switch (variant) {
       case "consumption":
-        return ["#ef4444", "#10b981", "#f59e0b"]; // Red, Green, Amber
+        return [themeColors.error.main, themeColors.success, themeColors.warning]; // Red, Green, Amber
       case "production":
-        return ["#8b5cf6", "#3b82f6", "#10b981"]; // Purple, Blue, Green
+        return [themeColors.chart.violet, themeColors.chart.blue, themeColors.success]; // Purple, Blue, Green
       default:
-        return ["#3b82f6", "#8b5cf6", "#10b981"]; // Blue, Purple, Green
+        return [themeColors.chart.blue, themeColors.chart.violet, themeColors.success]; // Blue, Purple, Green
     }
   };
 
@@ -96,7 +97,7 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
       },
       grid: {
         show: true,
-        borderColor: "#e2e8f0",
+        borderColor: themeColors.border.light,
         strokeDashArray: 5,
         position: "back" as const,
         xaxis: {
@@ -120,7 +121,7 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
         categories: categories,
         labels: {
           style: {
-            colors: "#64748b",
+            colors: themeColors.text.secondary,
             fontSize: "12px",
             fontWeight: 400,
           },
@@ -135,7 +136,7 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
       yaxis: {
         labels: {
           style: {
-            colors: "#64748b",
+            colors: themeColors.text.secondary,
             fontSize: "12px",
             fontWeight: 400,
           },

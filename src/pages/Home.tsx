@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Typography, Autocomplete, TextField, CircularProgress } from "@mui/material";
 import { sxStyles } from "../theme/sx";
+import { colors } from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
@@ -35,7 +36,7 @@ export const HomePage: FC = () => {
         p: { xs: 1, sm: 2, md: 3 },
         maxWidth: "100%",
         minWidth: 0,
-        background: "#f5f7fa",
+        background: colors.background.default,
         boxSizing: "border-box",
         overflow: "hidden",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -284,12 +285,12 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
           >
             {/* Producción Total */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#8b5cf6" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.chart.violet }}>
                 <BoltIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
-                sx={{ color: "#8b5cf6", mb: 0.5 }}
+                sx={{ color: colors.chart.violet, mb: 0.5 }}
               >
                 {totalProduction.toFixed(2)} kWh
               </Typography>
@@ -299,14 +300,14 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
               {productionTrend !== undefined && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {productionTrend > 0 ? (
-                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
                   ) : (
-                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
                   )}
                   <Typography
                     variant="caption"
                     sx={{
-                      color: productionTrend > 0 ? "#10b981" : "#ef4444",
+                      color: productionTrend > 0 ? "success.main" : "error.main",
                       fontWeight: 500,
                     }}
                   >
@@ -318,12 +319,12 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
 
             {/* Pico Máximo */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#3b82f6" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.chart.blue }}>
                 <ElectricMeterIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
-                sx={{ color: "#3b82f6", mb: 0.5 }}
+                sx={{ color: colors.chart.blue, mb: 0.5 }}
               >
                 {peakPower.toFixed(2)} kW
               </Typography>
@@ -481,17 +482,17 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
       {
         name: "Consumo de Red",
         data: consumptionData.map((item) => item.consumptionKWh || 0),
-        color: "#ef4444", // Red
+        color: colors.error.main, // Red
       },
       {
         name: "Autoconsumo",
         data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
-        color: "#10b981", // Green
+        color: colors.success, // Green
       },
       {
         name: "Excedentes",
         data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
-        color: "#f59e0b", // Amber
+        color: colors.warning, // Amber
       },
     ];
 
@@ -534,12 +535,12 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
           >
             {/* Consumo de REd */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#ef4444" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "error.main" }}>
                 <PowerIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
-                sx={{ color: "#ef4444", mb: 0.5 }}
+                sx={{ color: "error.main", mb: 0.5 }}
               >
                 {totalConsumption.toFixed(2)} kWh
               </Typography>
@@ -549,14 +550,14 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               {consumptionTrend !== undefined && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {consumptionTrend > 0 ? (
-                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
                   ) : (
-                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
                   )}
                   <Typography
                     variant="caption"
                     sx={{
-                      color: consumptionTrend > 0 ? "#10b981" : "#ef4444",
+                      color: consumptionTrend > 0 ? "success.main" : "error.main",
                       fontWeight: 500,
                     }}
                   >
@@ -568,12 +569,12 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
 
             {/* Autoconsumo */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#10b981" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "success.main" }}>
                 <EvStationIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
-                sx={{ color: "#10b981", mb: 0.5 }}
+                sx={{ color: "success.main", mb: 0.5 }}
               >
                 {totalSelfConsumption.toFixed(2)} kWh
               </Typography>
@@ -583,14 +584,14 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               {selfConsumptionTrend !== undefined && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {selfConsumptionTrend > 0 ? (
-                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
                   ) : (
-                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
                   )}
                   <Typography
                     variant="caption"
                     sx={{
-                      color: selfConsumptionTrend > 0 ? "#10b981" : "#ef4444",
+                      color: selfConsumptionTrend > 0 ? "success.main" : "error.main",
                       fontWeight: 500,
                     }}
                   >
@@ -602,12 +603,12 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
 
             {/* Excedentes */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "#f59e0b" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: "warning.main" }}>
                 <BatteryChargingFullIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
-                sx={{ color: "#f59e0b", mb: 0.5 }}
+                sx={{ color: "warning.main", mb: 0.5 }}
               >
                 {totalSurplus.toFixed(2)} kWh
               </Typography>
@@ -617,14 +618,14 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               {surplusTrend !== undefined && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {surplusTrend > 0 ? (
-                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
                   ) : (
-                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
                   )}
                   <Typography
                     variant="caption"
                     sx={{
-                      color: surplusTrend > 0 ? "#10b981" : "#ef4444",
+                      color: surplusTrend > 0 ? "success.main" : "error.main",
                       fontWeight: 500,
                     }}
                   >

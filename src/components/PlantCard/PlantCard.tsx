@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
+import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -120,7 +120,7 @@ export const PlantCard: FC<PlantCardProps> = ({
         header={
           <>
             <Box sx={sxStyles.flexRowCenter}>
-              <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: alphas.white.soft, width: 48, height: 48 }}>
                 <SolarPowerIcon />
               </Avatar>
               <Box>
@@ -138,7 +138,7 @@ export const PlantCard: FC<PlantCardProps> = ({
                   minWidth: 40,
                   minHeight: 40,
                   "&:hover": {
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    backgroundColor: alphas.white.hairline,
                   },
                 }}
               >
@@ -152,8 +152,8 @@ export const PlantCard: FC<PlantCardProps> = ({
                     sx={{ textDecoration: "none", color: "inherit" }}
                   >
                     <MenuItem>
-                      <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: "#6b7280", flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: "#374151", fontWeight: 500, textAlign: "left" }}>
+                      <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
                         Ver
                       </Typography>
                     </MenuItem>
@@ -165,8 +165,8 @@ export const PlantCard: FC<PlantCardProps> = ({
                     sx={{ textDecoration: "none", color: "inherit" }}
                   >
                     <MenuItem>
-                      <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: "#6b7280", flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: "#374151", fontWeight: 500, textAlign: "left" }}>
+                      <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
                         Editar
                       </Typography>
                     </MenuItem>
@@ -176,10 +176,12 @@ export const PlantCard: FC<PlantCardProps> = ({
 
                   <MenuItem
                     onClick={handleDeleteClick}
-                    sx={{ "&:hover": { backgroundColor: "#fff5f5" } }}
+                    sx={{ "&:hover": {
+                      backgroundColor: colors.background.errorFaint,
+                    } }}
                   >
-                    <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "#dc2626", flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: "#dc2626", fontWeight: 500, textAlign: "left" }}>
+                    <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
                       Eliminar
                     </Typography>
                   </MenuItem>
@@ -230,12 +232,12 @@ export const PlantCard: FC<PlantCardProps> = ({
                 gap: 1.5,
                 p: 1.5,
                 borderRadius: radii.default,
-                bgcolor: "rgba(16, 185, 129, 0.08)",
+                bgcolor: alphas.success.subtle,
               }}
             >
-              <CalendarTodayIcon sx={{ color: "#10b981", fontSize: 24 }} />
+              <CalendarTodayIcon sx={{ color: "success.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="body1" fontWeight="600" color="#10b981">
+                <Typography variant="body1" fontWeight="600" color="success.main">
                   {formatDate(connectionDate)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -251,7 +253,7 @@ export const PlantCard: FC<PlantCardProps> = ({
               sx={{
                 mb: 2,
                 p: 2,
-                bgcolor: "rgba(0, 0, 0, 0.02)",
+                bgcolor: alphas.black.ghost,
                 borderRadius: radii.default,
               }}
             >
@@ -268,11 +270,11 @@ export const PlantCard: FC<PlantCardProps> = ({
               alignItems: "center",
               gap: 1,
               p: 2,
-              bgcolor: "rgba(0, 0, 0, 0.02)",
+              bgcolor: alphas.black.ghost,
               borderRadius: radii.default,
             }}
           >
-            <LocationOnIcon sx={{ color: "#64748b", fontSize: 20 }} />
+            <LocationOnIcon sx={{ color: "text.secondary", fontSize: 20 }} />
             <Typography variant="body2" color="text.secondary">
               {address || "Dirección no disponible"}
             </Typography>

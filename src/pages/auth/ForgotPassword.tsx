@@ -1,7 +1,7 @@
 import { Box, Button, Link, TextField, Typography, Paper, Avatar } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useState, type FC } from "react";
-import { radii } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -34,7 +34,7 @@ export const ForgotPassword: FC = () => {
           maxWidth: 480,
           width: "100%",
           borderRadius: radii.large,
-          boxShadow: "0 8px 32px 0 rgba(0,0,0,0.2)", // prominent auth card — intentionally elevated
+          boxShadow: shadows.auth, // prominent auth card — intentionally elevated
           overflow: "hidden",
         }}
       >
@@ -46,7 +46,7 @@ export const ForgotPassword: FC = () => {
             textAlign: "center",
           })}
         >
-          <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 64, height: 64, margin: "0 auto 16px" }}>
+          <Avatar sx={{ bgcolor: alphas.white.soft, width: 64, height: 64, margin: "0 auto 16px" }}>
             <LockResetIcon sx={{ fontSize: 36 }} />
           </Avatar>
           <Typography variant="h4" sx={{ mb: 1 }}>
@@ -60,7 +60,7 @@ export const ForgotPassword: FC = () => {
         <Box component="form" action={handleSubmit} sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={sxStyles.flexColumnGap3}>
             <Box>
-              <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
+              <Typography sx={{ fontSize: fontSizes.md, fontWeight: 600, color: "text.primary", mb: 1 }}>
                 Email
               </Typography>
               <TextField
@@ -82,7 +82,7 @@ export const ForgotPassword: FC = () => {
               variant="contained"
               fullWidth
               sx={(theme) => ({
-                fontSize: "1rem",
+                fontSize: fontSizes.xl,
                 fontWeight: 600,
                 padding: "12px", // 12px intentionally off-grid for button vertical rhythm
                 boxShadow: `0 4px 12px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
@@ -102,7 +102,7 @@ export const ForgotPassword: FC = () => {
                 to="/login"
                 underline="none"
                 sx={(theme) => ({
-                  fontSize: "0.875rem",
+                  fontSize: fontSizes.md,
                   color: theme.palette.primary.main,
                   fontWeight: 600,
                   display: "inline-flex",
