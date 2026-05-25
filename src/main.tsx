@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { BrowserRouter } from "react-router";
-import { GlobalStyles, StyledEngineProvider } from "@mui/material";
+import { CssBaseline, GlobalStyles, StyledEngineProvider } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/auth.context.tsx";
@@ -25,6 +25,7 @@ createRoot(document.getElementById("root")!).render(
       <LoggedUserProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>
+            <CssBaseline />
             <StyledEngineProvider enableCssLayer>
               <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
               <BrowserRouter>
