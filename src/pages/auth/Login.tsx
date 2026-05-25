@@ -1,6 +1,7 @@
 import { useState, type FC } from "react";
 import { alpha } from "@mui/material/styles";
 import { radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import {
   Box,
   Button,
@@ -135,7 +136,7 @@ export const Login: FC = () => {
             </Alert>
           )}
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={sxStyles.flexColumnGap3}>
             <Box>
               <Typography
                 sx={{

@@ -2,6 +2,7 @@ import { Box, Button, Link, TextField, Typography, Paper, Avatar } from "@mui/ma
 import { alpha } from "@mui/material/styles";
 import { useState, type FC } from "react";
 import { radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link as RouterLink } from "react-router";
@@ -57,7 +58,7 @@ export const ForgotPassword: FC = () => {
         </Box>
 
         <Box component="form" action={handleSubmit} sx={{ p: { xs: 3, sm: 4 } }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={sxStyles.flexColumnGap3}>
             <Box>
               <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Email

@@ -1,4 +1,5 @@
 import { AppBar, IconButton, Toolbar, Box } from "@mui/material";
+import { sxStyles } from "../../theme/sx";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Logo } from "./Logo";
 import type { FC } from "react";
@@ -31,7 +32,7 @@ export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
           justifyContent: 'space-between',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={sxStyles.flexRowCenter}>
           <IconButton
             size="large"
             edge="start"
@@ -49,7 +50,7 @@ export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
           <Logo responsive />
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={sxStyles.flexRowCenter}>
           <ProfileMenu username={username} />
         </Box>
       </Toolbar>

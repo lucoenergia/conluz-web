@@ -1,4 +1,5 @@
 import { radii, shadows } from "../theme/tokens";
+import { sxStyles } from "../theme/sx";
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Chip, Alert, Snackbar } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
@@ -104,7 +105,7 @@ export const ProfilePage: FC = () => {
         overflow: "hidden",
       }}
     >
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -124,7 +125,7 @@ export const ProfilePage: FC = () => {
           width: { xs: "100%", sm: "auto" },
         })}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={sxStyles.flexRowCenter}>
           <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 56, height: 56 }}>
             <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
@@ -135,18 +136,10 @@ export const ProfilePage: FC = () => {
         </Box>
       </Paper>
 
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-            width: "100%",
-            maxWidth: 800,
-            margin: "0 auto",
-          }}
+          sx={[sxStyles.softPanel, { width: "100%", maxWidth: 800, margin: "0 auto" }]}
         >
           {isLoading && (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -161,7 +154,7 @@ export const ProfilePage: FC = () => {
           )}
 
           {!isLoading && !error && (
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={sxStyles.flexColumnGap3}>
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
                 <Chip
                   icon={<BadgeIcon />}

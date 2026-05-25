@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -125,7 +125,7 @@ export const SupplyPointsPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -135,7 +135,7 @@ export const SupplyPointsPage: FC = () => {
       </Box>
 
       {/* Header Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <PageHeaderWithStats
           icon={ElectricMeterIcon}
           title="Puntos de Suministro"
@@ -149,15 +149,10 @@ export const SupplyPointsPage: FC = () => {
       </Box>
 
       {/* Controls Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <Paper
           elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-          }}
+          sx={sxStyles.softPanel}
         >
           <Box
             sx={{
@@ -221,7 +216,7 @@ export const SupplyPointsPage: FC = () => {
 
       {/* Supply Cards Grid */}
       {!isLoading && !error && filteredItems.length > 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        <Box sx={sxStyles.pageContainer}>
           <CardGrid
             items={filteredItems}
             getKey={(item) => item.id || ""}
@@ -245,14 +240,14 @@ export const SupplyPointsPage: FC = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        <Box sx={sxStyles.pageContainer}>
           <LoadingCardGrid />
         </Box>
       )}
 
       {/* Empty State */}
       {!isLoading && !error && filteredItems.length === 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        <Box sx={sxStyles.pageContainer}>
           <EmptyState
             icon={ElectricMeterIcon}
             title="No se encontraron puntos de suministro"

@@ -1,4 +1,5 @@
 import { useState, type FC } from "react";
+import { sxStyles } from "../../theme/sx";
 import {
   Box,
   Button,
@@ -82,7 +83,7 @@ export const PartnerForm: FC<PartnerFormProps> = ({
 
   return (
     <Box component="form" onSubmit={onSubmit} noValidate>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={sxStyles.flexColumnGap3}>
         <TextField
           label="Nombre completo"
           variant="outlined"

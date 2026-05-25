@@ -2,6 +2,7 @@ import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -118,7 +119,7 @@ export const PlantCard: FC<PlantCardProps> = ({
         }}
         header={
           <>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={sxStyles.flexRowCenter}>
               <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 48, height: 48 }}>
                 <SolarPowerIcon />
               </Avatar>

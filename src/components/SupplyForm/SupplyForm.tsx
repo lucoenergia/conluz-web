@@ -1,6 +1,7 @@
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { sxStyles } from "../../theme/sx";
 import { useGetAllUsers } from "../../api/users/users";
 import type { UserResponse } from "../../api/models";
 
@@ -88,7 +89,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
 
   return (
     <Box component="form" action={onSubmit}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={sxStyles.flexColumnGap3}>
         <TextField
           id="name"
           label="Nombre"
