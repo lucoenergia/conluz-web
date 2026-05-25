@@ -1,4 +1,4 @@
-import { radii, shadows } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import { useEffect, useMemo, useState, type FC } from "react";
 import { useParams } from "react-router";
 import { Box, Paper } from "@mui/material";
@@ -119,7 +119,7 @@ export const PartnerSupplyPointsPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -145,15 +145,10 @@ export const PartnerSupplyPointsPage: FC = () => {
       </Box>
 
       {/* Controls Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-          }}
+          sx={sxStyles.softPanel}
         >
           <Box
             sx={{
@@ -175,7 +170,7 @@ export const PartnerSupplyPointsPage: FC = () => {
 
       {/* Supply Cards Grid */}
       {!isLoading && !error && filteredItems.length > 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
           <CardGrid
             items={filteredItems}
             getKey={(item) => item.id || ""}
@@ -199,14 +194,14 @@ export const PartnerSupplyPointsPage: FC = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
           <LoadingCardGrid />
         </Box>
       )}
 
       {/* Empty State */}
       {!isLoading && !error && filteredItems.length === 0 && (
-        <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+        <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
           <EmptyState
             icon={ElectricMeterIcon}
             title="No se encontraron puntos de suministro"

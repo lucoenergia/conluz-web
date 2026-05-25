@@ -3,7 +3,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { shadows } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import { useEffect, useMemo, useState, type FC } from "react";
 import type { DateView } from "@mui/x-date-pickers/models";
 import dayjs from "dayjs";
@@ -70,12 +71,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
   return (
     <Paper
       elevation={0}
-      sx={{
-        p: { xs: 2, sm: 3 },
-        borderRadius: { xs: radii.default, sm: radii.large },
-        bgcolor: "white",
-        boxShadow: shadows.soft,
-      }}
+      sx={sxStyles.softPanel}
     >
       <Box
         sx={{

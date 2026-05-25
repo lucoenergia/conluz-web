@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Typography, Autocomplete, TextField, CircularProgress } from "@mui/material";
+import { sxStyles } from "../theme/sx";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
@@ -269,7 +270,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
         infoText="Cantidad de energía generada por la comunidad que te ha sido asignada a este punto de suministro en base a su coeficiente de reparto"
         variant="production"
       >
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box sx={sxStyles.flexColumnGap3}>
           {/* Stats Section */}
           <Box
             sx={{
@@ -519,7 +520,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
         infoText="Visualización del consumo de red, autoconsumo y excedentes del punto de suministro"
         variant="consumption"
       >
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box sx={sxStyles.flexColumnGap3}>
           {/* Stats Section */}
           <Box
             sx={{

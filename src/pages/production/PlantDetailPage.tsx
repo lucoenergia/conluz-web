@@ -1,4 +1,5 @@
 import { radii, shadows } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
@@ -313,7 +314,7 @@ export const PlantDetailPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -324,7 +325,7 @@ export const PlantDetailPage: FC = () => {
       </Box>
 
       {/* Header Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <PlantDetailHeader
           plant={plant}
           isLoading={plantLoading}
@@ -333,12 +334,12 @@ export const PlantDetailPage: FC = () => {
       </Box>
 
       {/* Filter Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <GraphFilter handleChange={handleFilterChange} />
       </Box>
 
       {/* Stats Card */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <StatsCard
           title="Producción"
           subtitle="Producción energética de la planta"
@@ -358,7 +359,7 @@ export const PlantDetailPage: FC = () => {
       </Box>
 
       {/* Production Graph */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         {!isLoading && !error && productionValues.length > 0 && (
           <Graph
             title="Producción"

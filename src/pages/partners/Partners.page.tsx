@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii, shadows } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import {
   Box,
   Typography,
@@ -300,15 +301,10 @@ export const PartnersPage: FC = () => {
       />
 
       {/* Search and Filters Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+      <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <Paper
           elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-          }}
+          sx={sxStyles.softPanel}
         >
           <Box
             sx={{
@@ -381,7 +377,7 @@ export const PartnersPage: FC = () => {
       </Box>
 
       {/* Table Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", boxSizing: "border-box" }}>
+      <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <Paper
           elevation={0}
           sx={{

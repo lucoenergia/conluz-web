@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FC } from "react";
+import { sxStyles } from "../../theme/sx";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
 import { LoadingGraphCard } from "../../components/Graph/LoadingGraphCard";
@@ -505,7 +506,7 @@ export const SupplyDetailPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -516,7 +517,7 @@ export const SupplyDetailPage: FC = () => {
       </Box>
 
       {/* Header Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <SupplyDetailHeader
           supplyPoint={supplyPoint}
           isLoading={supplyPointLoading}
@@ -525,18 +526,20 @@ export const SupplyDetailPage: FC = () => {
       </Box>
 
       {/* Filter Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <GraphFilter handleChange={handleFilterChange} />
       </Box>
 
       {/* Stats Cards */}
       <Box
-        sx={{
-          px: { xs: 2, sm: 0 },
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-          gap: { xs: 2, sm: 3 },
-        }}
+        sx={[
+          sxStyles.pageContainer,
+          {
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            gap: { xs: 2, sm: 3 },
+          },
+        ]}
       >
         <StatsCard
           title="Consumo"
@@ -598,7 +601,7 @@ export const SupplyDetailPage: FC = () => {
       </Box>
 
       {/* Graphs Grid */}
-      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+      <Box sx={sxStyles.pageContainer}>
         <Box
           sx={{
             display: "grid",

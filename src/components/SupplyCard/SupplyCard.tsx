@@ -2,6 +2,7 @@ import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Chip, Avatar } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PercentIcon from "@mui/icons-material/Percent";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -110,7 +111,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         }}
         header={
           <>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={sxStyles.flexRowCenter}>
               <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 48, height: 48 }}>
                 {enabled ? <PowerIcon /> : <PowerOffIcon />}
               </Avatar>

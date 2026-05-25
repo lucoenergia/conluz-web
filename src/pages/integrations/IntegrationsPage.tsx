@@ -1,4 +1,5 @@
 import { radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import { useState, useCallback, useEffect, type FC } from "react";
 import { Box, Typography, Paper, Snackbar, Alert, Avatar, CircularProgress } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -191,7 +192,7 @@ export const IntegrationsPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -201,7 +202,7 @@ export const IntegrationsPage: FC = () => {
       </Box>
 
       {/* Hero Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", maxWidth: 960, mx: "auto" }}>
+      <Box sx={[sxStyles.pageContainerFull, { maxWidth: 960, mx: "auto" }]}>
         <Paper
           elevation={0}
           sx={{
@@ -211,7 +212,7 @@ export const IntegrationsPage: FC = () => {
             color: "white",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={sxStyles.flexRowCenter}>
             <Avatar sx={{ bgcolor: "rgba(255,255,255,0.2)", width: 56, height: 56 }}>
               <ExtensionIcon sx={{ fontSize: 32, color: "white" }} />
             </Avatar>
@@ -228,7 +229,7 @@ export const IntegrationsPage: FC = () => {
       </Box>
 
       {/* Summary strip */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%", maxWidth: 960, mx: "auto" }}>
+      <Box sx={[sxStyles.pageContainerFull, { maxWidth: 960, mx: "auto" }]}>
         <Paper
           elevation={0}
           sx={{
@@ -254,15 +255,16 @@ export const IntegrationsPage: FC = () => {
 
       {/* Cards stack */}
       <Box
-        sx={{
-          px: { xs: 2, sm: 0 },
-          width: "100%",
-          maxWidth: 960,
-          mx: "auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: { xs: 2, sm: 2.5 },
-        }}
+        sx={[
+          sxStyles.pageContainerFull,
+          {
+            maxWidth: 960,
+            mx: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: { xs: 2, sm: 2.5 },
+          },
+        ]}
       >
         {PROVIDERS.map((p) => (
           <IntegrationCard

@@ -1,5 +1,6 @@
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
+import { sxStyles } from "../../theme/sx";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -111,7 +112,7 @@ export const PlantForm: FC<PlantFormProps> = ({
 
   return (
     <Box component="form" action={onSubmit}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={sxStyles.flexColumnGap3}>
         <TextField
           id="code"
           label="Código"

@@ -1,4 +1,5 @@
-import { radii, shadows } from "../../theme/tokens";
+import { radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
@@ -56,7 +57,7 @@ export const EditPlantPage: FC = () => {
       }}
     >
       {/* Breadcrumb */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -79,7 +80,7 @@ export const EditPlantPage: FC = () => {
           width: { xs: "100%", sm: "auto" },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={sxStyles.flexRowCenter}>
           <Avatar
             sx={{
               bgcolor: "rgba(255, 255, 255, 0.2)",
@@ -101,15 +102,10 @@ export const EditPlantPage: FC = () => {
       </Paper>
 
       {/* Form Section */}
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-          }}
+          sx={sxStyles.softPanel}
         >
           {!isLoading && !error && (
             <PlantForm

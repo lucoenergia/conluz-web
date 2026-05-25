@@ -2,6 +2,7 @@ import { useState, type FC } from "react";
 import { Box, Button, Typography, Paper, Avatar } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { radii, shadows } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 import KeyIcon from "@mui/icons-material/Key";
 import { useNavigate } from "react-router";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -61,7 +62,7 @@ export const ChangePasswordPage: FC = () => {
         overflow: "hidden",
       }}
     >
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
@@ -82,7 +83,7 @@ export const ChangePasswordPage: FC = () => {
           width: { xs: "100%", sm: "auto" },
         })}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={sxStyles.flexRowCenter}>
           <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 56, height: 56 }}>
             <KeyIcon sx={{ fontSize: 32 }} />
           </Avatar>
@@ -93,20 +94,12 @@ export const ChangePasswordPage: FC = () => {
         </Box>
       </Paper>
 
-      <Box sx={{ px: { xs: 2, sm: 0 }, width: "100%" }}>
+      <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-            width: "100%",
-            maxWidth: 600,
-            margin: "0 auto",
-          }}
+          sx={[sxStyles.softPanel, { width: "100%", maxWidth: 600, margin: "0 auto" }]}
         >
-          <Box component="form" action={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box component="form" action={handleSubmit} sx={sxStyles.flexColumnGap3}>
             <Box>
               <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1e293b", mb: 1 }}>
                 Contraseña actual
