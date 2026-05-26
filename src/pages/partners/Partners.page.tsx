@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import {
   Box,
@@ -115,16 +115,8 @@ export const PartnersPage: FC = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any = a[orderBy];
-      let bValue: any = b[orderBy];
-
-      // Handle null/undefined values
-      if (aValue == null) aValue = '';
-      if (bValue == null) bValue = '';
-
-      // Convert to strings for comparison
-      const aStr = String(aValue).toLowerCase();
-      const bStr = String(bValue).toLowerCase();
+      const aStr = String(a[orderBy] ?? '').toLowerCase();
+      const bStr = String(b[orderBy] ?? '').toLowerCase();
 
       if (aStr < bStr) return orderDirection === 'asc' ? -1 : 1;
       if (aStr > bStr) return orderDirection === 'asc' ? 1 : -1;
@@ -250,7 +242,7 @@ export const PartnersPage: FC = () => {
     setPage(0);
   };
 
-  const handleFilterChange = (filterType: keyof FilterState, value: any) => {
+  const handleFilterChange = (filterType: keyof FilterState, value: FilterState[keyof FilterState]) => {
     setFilters(prev => ({ ...prev, [filterType]: value }));
     setPage(0);
   };
@@ -274,7 +266,7 @@ export const PartnersPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
@@ -295,8 +287,8 @@ export const PartnersPage: FC = () => {
         subtitle="Administra los miembros de tu comunidad energética"
         stats={[
           { value: stats.total, label: "Total" },
-          { value: stats.active, label: "Activos", color: "#10b981" },
-          { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
+          { value: stats.active, label: "Activos", color: colors.success },
+          { value: stats.inactive, label: "Inactivos", color: colors.error.main },
         ]}
       />
 
@@ -397,14 +389,14 @@ export const PartnersPage: FC = () => {
               <TableContainer>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ backgroundColor: "#f8fafc" }}>
+                    <TableRow sx={{ backgroundColor: colors.background.surface }}>
                       <TableCell>
                         <TableSortLabel
                           active={orderBy === 'number'}
                           direction={orderBy === 'number' ? orderDirection : 'asc'}
                           onClick={() => handleSort('number')}
                         >
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#475569" }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                             Nº Socio
                           </Typography>
                         </TableSortLabel>
@@ -415,7 +407,7 @@ export const PartnersPage: FC = () => {
                           direction={orderBy === 'fullName' ? orderDirection : 'asc'}
                           onClick={() => handleSort('fullName')}
                         >
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#475569" }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                             Nombre
                           </Typography>
                         </TableSortLabel>
@@ -426,28 +418,28 @@ export const PartnersPage: FC = () => {
                           direction={orderBy === 'personalId' ? orderDirection : 'asc'}
                           onClick={() => handleSort('personalId')}
                         >
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#475569" }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                             NIF/CIF
                           </Typography>
                         </TableSortLabel>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#475569" }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                           Email
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#475569" }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                           Teléfono
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#475569" }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                           Estado
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#475569" }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                           Acciones
                         </Typography>
                       </TableCell>
@@ -473,7 +465,7 @@ export const PartnersPage: FC = () => {
                         <TableRow
                           key={user.id}
                           sx={{
-                            "&:hover": { backgroundColor: "#f8fafc" },
+                            "&:hover": { backgroundColor: colors.background.surface },
                             transition: "background-color 0.2s",
                           }}
                         >
@@ -489,33 +481,33 @@ export const PartnersPage: FC = () => {
                                   width: 36,
                                   height: 36,
                                   bgcolor: theme.palette.primary.main,
-                                  fontSize: "0.875rem",
+                                  fontSize: fontSizes.md,
                                 }}
                               >
                                 {user.fullName?.charAt(0).toUpperCase() || '?'}
                               </Avatar>
                               <Box>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b" }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
                                   {user.fullName || 'Sin nombre'}
                                 </Typography>
-                                <Typography variant="caption" sx={{ color: "#64748b" }}>
+                                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                                   {user.role || 'PARTNER'}
                                 </Typography>
                               </Box>
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" sx={{ color: "#475569" }}>
+                            <Typography variant="body2" sx={{ color: "secondary.main" }}>
                               {user.personalId || '-'}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" sx={{ color: "#475569" }}>
+                            <Typography variant="body2" sx={{ color: "secondary.main" }}>
                               {user.email || '-'}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" sx={{ color: "#475569" }}>
+                            <Typography variant="body2" sx={{ color: "secondary.main" }}>
                               {user.phoneNumber || '-'}
                             </Typography>
                           </TableCell>
@@ -532,7 +524,8 @@ export const PartnersPage: FC = () => {
                               size="small"
                               onClick={(e) => handleMenuOpen(e, user.id || '', user.fullName || 'Sin nombre', user.enabled || false)}
                               sx={{
-                                color: "#6b7280",
+                                color: colors.text.subtle,
+                                // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token
                                 "&:hover": { backgroundColor: "#f3f4f6" },
                               }}
                             >
@@ -558,7 +551,7 @@ export const PartnersPage: FC = () => {
                 labelRowsPerPage="Filas por página:"
                 labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
                 sx={{
-                  borderTop: "1px solid #e5e7eb",
+                  borderTop: `1px solid ${colors.divider}`,
                   ".MuiTablePagination-toolbar": { px: 2 },
                 }}
               />
@@ -629,16 +622,16 @@ export const PartnersPage: FC = () => {
         {selectedUser?.enabled ? (
           <MenuItem onClick={handleToggleStatusClick}>
             <ListItemIcon>
-              <BlockIcon fontSize="small" sx={{ color: "#ef4444" }} />
+              <BlockIcon fontSize="small" sx={{ color: "error.main" }} />
             </ListItemIcon>
-            <ListItemText sx={{ color: "#ef4444" }}>Deshabilitar</ListItemText>
+            <ListItemText sx={{ color: "error.main" }}>Deshabilitar</ListItemText>
           </MenuItem>
         ) : (
           <MenuItem onClick={handleToggleStatusClick}>
             <ListItemIcon>
-              <CheckCircleIcon fontSize="small" sx={{ color: "#10b981" }} />
+              <CheckCircleIcon fontSize="small" sx={{ color: "success.main" }} />
             </ListItemIcon>
-            <ListItemText sx={{ color: "#10b981" }}>Habilitar</ListItemText>
+            <ListItemText sx={{ color: "success.main" }}>Habilitar</ListItemText>
           </MenuItem>
         )}
       </Menu>

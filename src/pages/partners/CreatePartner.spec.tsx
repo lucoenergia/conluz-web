@@ -25,7 +25,7 @@ vi.mock("../../context/error.context", () => ({
 }));
 
 vi.mock("../../components/PartnerForm/PartnerForm", () => ({
-  PartnerForm: ({ handleSubmit, submitLabel }: any) => (
+  PartnerForm: ({ handleSubmit, submitLabel }: { handleSubmit: (v: Record<string, unknown>) => void; submitLabel: string }) => (
     <button
       onClick={() =>
         handleSubmit({

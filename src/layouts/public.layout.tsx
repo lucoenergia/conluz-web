@@ -4,7 +4,7 @@ import { Outlet } from "react-router";
 
 export const PublicLayout: FC = () => {
   return (
-    <Box className="p-4">
+    <Box sx={{ p: 2 }}>
       <Outlet />
     </Box>
   );

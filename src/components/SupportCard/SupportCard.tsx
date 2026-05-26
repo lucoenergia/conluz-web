@@ -19,7 +19,7 @@ export const SupportCard: FC<SupportCardProps> = ({ children, label, icon }) => 
         alignItems: "center",
       }}
     >
-      <LabeledIcon label={label} labelSize="text-2xl" icon={icon} />
+      <LabeledIcon label={label} labelSize="1.5rem" icon={icon} />
       {children}
     </Card>
   );

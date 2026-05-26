@@ -3,6 +3,7 @@ import type { FC, MouseEvent } from "react";
 import { useTheme, alpha } from "@mui/material/styles";
 import { ConfirmationModal } from "./ConfirmationModal";
 import LockResetIcon from "@mui/icons-material/LockReset";
+import { fontSizes } from "../../theme/tokens";
 
 interface ResetPasswordConfirmationModalProps {
   isOpen: boolean;
@@ -31,8 +32,8 @@ export const ResetPasswordConfirmationModal: FC<ResetPasswordConfirmationModalPr
     >
       <Typography
         sx={{
-          fontSize: "0.9375rem",
-          color: "#64748b",
+          fontSize: fontSizes.lg,
+          color: "text.secondary",
           lineHeight: 1.6,
           mb: 2,
         }}

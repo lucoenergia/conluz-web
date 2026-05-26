@@ -1,6 +1,6 @@
 import { Menu } from "@mui/material";
 import { type FC, type ReactNode } from "react";
-import { radii } from "../../theme/tokens";
+import { radii, shadows, colors } from "../../theme/tokens";
 
 interface MenuTemplateProps {
   children: ReactNode;
@@ -16,8 +16,8 @@ export const MenuTemplate: FC<MenuTemplateProps> = ({ anchorElement, onClose, co
         "& .MuiPaper-root": {
           borderRadius: radii.default,
           minWidth: 280,
-          boxShadow: "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-          border: "1px solid #e5e7eb",
+          boxShadow: shadows.dropdown,
+          border: `1px solid ${colors.divider}`,
           overflow: "hidden",
         },
         "& .MuiMenu-list": {

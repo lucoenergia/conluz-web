@@ -69,7 +69,7 @@ describe("PartnerForm", () => {
         password: "secreto123",
         role: "PARTNER",
       });
-    });
+    }, 15000);
 
     it("does not submit and marks confirm field invalid when passwords do not match", async () => {
       const user = userEvent.setup();

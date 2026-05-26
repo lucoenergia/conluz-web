@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { sxStyles } from "../../theme/sx";
+import { colors } from "../../theme/tokens";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
 import { LoadingGraphCard } from "../../components/Graph/LoadingGraphCard";
@@ -470,17 +471,17 @@ export const SupplyDetailPage: FC = () => {
       {
         name: "Consumo de Red",
         data: consumptionData.map((item) => item.consumptionKWh || 0),
-        color: "#ef4444", // Red
+        color: colors.error.main, // Red
       },
       {
         name: "Autoconsumo",
         data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
-        color: "#10b981", // Green
+        color: colors.success, // Green
       },
       {
         name: "Excedentes",
         data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
-        color: "#f59e0b", // Amber
+        color: colors.warning, // Amber
       },
     ];
 
@@ -498,7 +499,7 @@ export const SupplyDetailPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
@@ -553,7 +554,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.consumptionTrend !== undefined ? Math.round(consumptionMetrics.consumptionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PowerIcon sx={{ fontSize: 24 }} />,
-              color: "#ef4444",
+              color: colors.error.main,
             },
             {
               label: "Autoconsumo",
@@ -561,7 +562,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.selfConsumptionTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
-              color: "#10b981",
+              color: colors.success,
             },
             {
               label: "Excedentes",
@@ -569,7 +570,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.surplusTrend !== undefined ? Math.round(consumptionMetrics.surplusTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <EvStationIcon sx={{ fontSize: 24 }} />,
-              color: "#f59e0b",
+              color: colors.warning,
             },
           ]}
         />
@@ -586,7 +587,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.selfConsumptionPercentageTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
-              color: "#8b5cf6",
+              color: colors.chart.violet,
             },
             {
               label: "Porcentaje de aprovechamiento",
@@ -594,7 +595,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.utilizationPercentageTrend !== undefined ? Math.round(consumptionMetrics.utilizationPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
-              color: "#3b82f6",
+              color: colors.chart.blue,
             },
           ]}
         />

@@ -1,5 +1,5 @@
 import { Card, CardContent, Typography, Box, IconButton, Tooltip, useMediaQuery, useTheme, ClickAwayListener } from "@mui/material";
-import { radii } from "../../theme/tokens";
+import { radii, shadows, alphas } from "../../theme/tokens";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { FC, ReactNode } from "react";
 import { useState } from "react";
@@ -62,10 +62,10 @@ export const GraphCard: FC<GraphCardProps> = ({
         width: "100%",
         borderRadius: radii.default,
         transition: "all 0.3s ease",
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)", // intentionally heavier than shadows.soft for data cards
+        boxShadow: shadows.dataCard,
         overflow: "hidden",
         "&:hover": {
-          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.15)", // unique card hover lift
+          boxShadow: shadows.dataCardHover,
         },
       }}
     >
@@ -104,9 +104,9 @@ export const GraphCard: FC<GraphCardProps> = ({
                 onClick={handleTooltipToggle}
                 sx={{
                   color: "white",
-                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                  backgroundColor: alphas.white.soft,
                   "&:hover": {
-                    backgroundColor: "rgba(255, 255, 255, 0.3)",
+                    backgroundColor: alphas.white.cloud,
                   },
                 }}
               >

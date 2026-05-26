@@ -7,7 +7,7 @@ import { MENU_ITEMS } from "../../utils/constants";
 
 const MENU_ELEMENTS = MENU_ITEMS.map((menuItem) => menuItem.label);
 
-function setup(menuOpened: boolean, closeFn: Function) {
+function setup(menuOpened: boolean, closeFn: () => void) {
   render(
     <MemoryRouter>
       <SideMenu isMenuOpened={menuOpened} onMenuClose={closeFn} menuItems={MENU_ITEMS} />

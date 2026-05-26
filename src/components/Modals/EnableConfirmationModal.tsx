@@ -2,7 +2,7 @@ import Typography from "@mui/material/Typography";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { radii } from "../../theme/tokens";
+import { radii, alphas, fontSizes } from "../../theme/tokens";
 
 interface EnableConfirmationModalProps {
   isOpen: boolean;
@@ -20,16 +20,16 @@ export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOp
       confirmColor="success"
       onConfirm={onEnable}
       title="Rehabilitar punto de suministro"
-      icon={<CheckCircleOutlineIcon sx={{ fontSize: 28, color: "#10b981" }} />}
-      iconBg="rgba(16, 185, 129, 0.1)"
+      icon={<CheckCircleOutlineIcon sx={{ fontSize: 28, color: "success.main" }} />}
+      iconBg={alphas.success.light}
     >
       <Typography
         sx={{
-          fontSize: "0.875rem",
+          fontSize: fontSizes.md,
           fontWeight: 600,
-          color: "#475569",
+          color: "secondary.main",
           mb: 2,
-          backgroundColor: "rgba(16, 185, 129, 0.08)",
+          backgroundColor: alphas.success.subtle,
           padding: "8px 12px",
           borderRadius: radii.default,
         }}
@@ -38,8 +38,8 @@ export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOp
       </Typography>
       <Typography
         sx={{
-          fontSize: "0.9375rem",
-          color: "#64748b",
+          fontSize: fontSizes.lg,
+          color: "text.secondary",
           lineHeight: 1.6,
         }}
       >

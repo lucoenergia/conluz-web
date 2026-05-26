@@ -2,6 +2,7 @@ import { useState, type FC } from "react";
 import { Divider, IconButton, MenuItem, Box, Typography } from "@mui/material";
 import { MenuTemplate } from "./MenuTemplate";
 import { Link } from "react-router";
+import { alphas, colors } from "../../theme/tokens";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -54,7 +55,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
           minWidth: 40,
           minHeight: 40,
           "&:hover": {
-            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            backgroundColor: alphas.white.hairline,
           },
         }}
       >
@@ -65,8 +66,8 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
           {/* Ver */}
           <Box component={Link} to={`/supply-points/${supplyPointId}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem>
-              <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
+              <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
                 Ver
               </Typography>
             </MenuItem>
@@ -75,8 +76,8 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
           {/* Editar */}
           <Box component={Link} to={`/supply-points/${supplyPointId}/edit`} sx={{ textDecoration: 'none', color: 'inherit' }}>
             <MenuItem>
-              <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#6b7280', flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500, textAlign: 'left' }}>
+              <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
                 Editar
               </Typography>
             </MenuItem>
@@ -88,19 +89,22 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
           {enabled ? (
             <MenuItem
               onClick={handleDisableSupplyPoint}
-              sx={{ '&:hover': { backgroundColor: '#fff5f5' } }}
+              sx={{ '&:hover': { backgroundColor: colors.background.errorFaint } }}
             >
-              <BlockOutlinedIcon sx={{ mr: 2, fontSize: 20, color: '#dc2626', flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 500, textAlign: 'left' }}>
+              <BlockOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.error.dark, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.error.dark, fontWeight: 500, textAlign: 'left' }}>
                 Deshabilitar
               </Typography>
             </MenuItem>
           ) : (
             <MenuItem
               onClick={handleEnableSupplyPoint}
-              sx={{ '&:hover': { backgroundColor: '#f0fdf4' } }}
+              // eslint-disable-next-line no-restricted-syntax -- success-faint hover tint; no token for green bg variant
+            sx={{ '&:hover': { backgroundColor: '#f0fdf4' } }}
             >
+              {/* eslint-disable-next-line no-restricted-syntax -- success-dark green; CSS keyword unavailable, no matching token */}
               <CheckCircleOutlineIcon sx={{ mr: 2, fontSize: 20, color: '#16a34a', flexShrink: 0 }} />
+              {/* eslint-disable-next-line no-restricted-syntax -- success-dark green; CSS keyword unavailable, no matching token */}
               <Typography variant="body2" sx={{ color: '#16a34a', fontWeight: 500, textAlign: 'left' }}>
                 Activar
               </Typography>

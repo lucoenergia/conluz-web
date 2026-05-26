@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { Card, Box, type CardProps } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
+import { radii, shadows } from "../../theme/tokens";
 
 interface AppCardProps extends Omit<CardProps, "children"> {
   children: ReactNode;
@@ -17,11 +17,10 @@ export const AppCard: FC<AppCardProps> = ({ children, header, sx, ...rest }) => 
         width: "100%",
         borderRadius: radii.default,
         overflow: "hidden",
-        // Intentionally heavier than shadows.soft for data cards
-        boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)",
+        boxShadow: shadows.dataCard,
         transition: "all 0.3s ease",
         "&:hover": {
-          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.15)",
+          boxShadow: shadows.dataCardHover,
         },
         ...sx,
       }}

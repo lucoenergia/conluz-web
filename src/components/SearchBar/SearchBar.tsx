@@ -1,6 +1,6 @@
 import { InputBase, Paper, InputAdornment, IconButton } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, colors } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -43,7 +43,7 @@ export const SearchBar: FC<SearchBarProps> = ({
           ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, rgba(118,75,162,0.08) 100%)`
           : "white",
         border: "2px solid",
-        borderColor: isFocused ? theme.palette.primary.main : "#e2e8f0",
+        borderColor: isFocused ? theme.palette.primary.main : colors.border.light,
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         boxShadow: isFocused
           ? `0 10px 40px 0 ${alpha(theme.palette.primary.main, 0.15)}`
@@ -65,9 +65,10 @@ export const SearchBar: FC<SearchBarProps> = ({
           px: 2,
           py: 1.5,
           "& .MuiInputBase-input": {
-            fontSize: "0.95rem",
+          // eslint-disable-next-line no-restricted-syntax -- 0.95rem search input; between fontSizes.lg (0.9375) and fontSizes.xl (1rem), no matching token
+          fontSize: "0.95rem",
             "&::placeholder": {
-              color: "#94a3b8",
+              color: colors.text.placeholder,
               opacity: 1,
             },
           },
@@ -76,7 +77,7 @@ export const SearchBar: FC<SearchBarProps> = ({
           <InputAdornment position="start">
             <SearchIcon
               sx={{
-                color: isFocused ? theme.palette.primary.main : "#94a3b8",
+                color: isFocused ? theme.palette.primary.main : colors.text.placeholder,
                 transition: "color 0.3s ease",
                 ml: 1,
               }}
@@ -91,7 +92,7 @@ export const SearchBar: FC<SearchBarProps> = ({
                 onClick={handleClear}
                 sx={{
                   mr: 0.5,
-                  color: "#94a3b8",
+                  color: colors.text.placeholder,
                   "&:hover": {
                     color: theme.palette.primary.main,
                     bgcolor: alpha(theme.palette.primary.main, 0.08),

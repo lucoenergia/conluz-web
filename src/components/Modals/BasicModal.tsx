@@ -1,7 +1,7 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Modal from "@mui/material/Modal";
-import { radii } from "../../theme/tokens";
+import { radii, alphas } from "../../theme/tokens";
 
 interface BasicModalProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ const modalContainerStyle = {
   transform: 'translate(-50%, -50%)',
   backgroundColor: 'white',
   borderRadius: radii.large,
+  // eslint-disable-next-line no-restricted-syntax -- MUI elevation integer, not a shadow string
   boxShadow: 24,
   maxWidth: { xs: '90%', sm: 500 },
   minWidth: { xs: 280, sm: 400 },
@@ -33,7 +34,7 @@ export const BasicModal: React.FC<BasicModalProps> = ({ isOpen, onClose, childre
       slotProps={{
         backdrop: {
           sx: {
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: alphas.black.overlay,
           },
         },
       }}

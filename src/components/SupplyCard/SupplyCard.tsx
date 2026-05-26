@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Chip, Avatar } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii } from "../../theme/tokens";
+import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PercentIcon from "@mui/icons-material/Percent";
@@ -112,7 +112,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         header={
           <>
             <Box sx={sxStyles.flexRowCenter}>
-              <Avatar sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: alphas.white.soft, width: 48, height: 48 }}>
                 {enabled ? <PowerIcon /> : <PowerOffIcon />}
               </Avatar>
               <Box>
@@ -127,7 +127,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 label={enabled ? "Activo" : "Inactivo"}
                 size="small"
                 sx={{
-                  backgroundColor: enabled ? "#10b981" : "#ef4444",
+                  backgroundColor: enabled ? colors.success : colors.error.main,
                   color: "white",
                   fontWeight: 600,
                   display: { xs: "none", sm: "flex" },
@@ -164,12 +164,17 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 gap: 1.5,
                 p: 1.5,
                 borderRadius: radii.default,
+                // eslint-disable-next-line no-restricted-syntax -- partition-coefficient pink (#ec4899 alpha tint); brand accent without a token
                 bgcolor: "rgba(236, 72, 153, 0.08)",
               }}
             >
+              {/* eslint-disable-next-line no-restricted-syntax -- partition-coefficient pink (#ec4899); brand accent without a token */}
               <PercentIcon sx={{ color: "#ec4899", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" color="#ec4899">
+                <Typography variant="h5" sx={{
+                  // eslint-disable-next-line no-restricted-syntax -- partition-coefficient pink (#ec4899); brand accent without a token
+                  color: "#ec4899",
+                }}>
                   {partitionCoefficient.toFixed(2)}%
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -208,12 +213,12 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 gap: 1.5,
                 p: 1.5,
                 borderRadius: radii.default,
-                bgcolor: "rgba(16, 185, 129, 0.08)",
+                bgcolor: alphas.success.subtle,
               }}
             >
-              <AccessTimeIcon sx={{ color: "#10b981", fontSize: 24 }} />
+              <AccessTimeIcon sx={{ color: "success.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="body1" fontWeight="600" color="#10b981">
+                <Typography variant="body1" fontWeight="600" color="success.main">
                   {lastConnection || "N/A"}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -230,11 +235,11 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               alignItems: "center",
               gap: 1,
               p: 2,
-              bgcolor: "rgba(0, 0, 0, 0.02)",
+              bgcolor: alphas.black.ghost,
               borderRadius: radii.default,
             }}
           >
-            <LocationOnIcon sx={{ color: "#64748b", fontSize: 20 }} />
+            <LocationOnIcon sx={{ color: "text.secondary", fontSize: 20 }} />
             <Typography variant="body2" color="text.secondary">
               {address || "Dirección no disponible"}
             </Typography>

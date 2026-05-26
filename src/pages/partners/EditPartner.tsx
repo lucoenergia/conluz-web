@@ -1,4 +1,4 @@
-import { radii } from "../../theme/tokens";
+import { radii, colors, alphas } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar, CircularProgress, Alert } from "@mui/material";
@@ -36,7 +36,7 @@ export const EditPartnerPage: FC = () => {
       } else {
         errorDispatch("Ha habido un problema al editar el socio. Por favor, inténtalo más tarde");
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al editar el socio. Por favor, inténtalo más tarde");
     }
   };
@@ -65,7 +65,7 @@ export const EditPartnerPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
@@ -97,7 +97,7 @@ export const EditPartnerPage: FC = () => {
         <Box sx={sxStyles.flexRowCenter}>
           <Avatar
             sx={{
-              bgcolor: "rgba(255, 255, 255, 0.2)",
+              bgcolor: alphas.white.soft,
               width: 56,
               height: 56,
             }}

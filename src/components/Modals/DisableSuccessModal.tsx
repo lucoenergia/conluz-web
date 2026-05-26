@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { AppModal } from "./AppModal";
 import { Button, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
 
 interface DisableSuccessModalProps {
   onClose: (event: React.MouseEvent<HTMLElement>) => void;
@@ -16,13 +16,13 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
       isOpen={isOpen}
       onClose={onClose}
       centered
-      icon={<CheckCircleIcon sx={{ fontSize: 40, color: "#10b981" }} />}
-      iconBg="rgba(16, 185, 129, 0.1)"
+      icon={<CheckCircleIcon sx={{ fontSize: 40, color: "success.main" }} />}
+      iconBg={alphas.success.light}
     >
       <Typography
         sx={{
-          fontSize: "1.125rem",
-          color: "#475569",
+          fontSize: fontSizes["2xl"],
+          color: "secondary.main",
           lineHeight: 1.6,
           mb: 2,
         }}
@@ -31,11 +31,11 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
       </Typography>
       <Typography
         sx={{
-          fontSize: "0.9375rem",
+          fontSize: fontSizes.lg,
           fontWeight: 600,
-          color: "#1e293b",
+          color: "text.primary",
           mb: 2,
-          backgroundColor: "rgba(16, 185, 129, 0.08)",
+          backgroundColor: alphas.success.subtle,
           padding: "10px 16px",
           borderRadius: radii.default,
         }}
@@ -44,8 +44,8 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
       </Typography>
       <Typography
         sx={{
-          fontSize: "1.125rem",
-          color: "#475569",
+          fontSize: fontSizes["2xl"],
+          color: "secondary.main",
           lineHeight: 1.6,
           mb: 3,
         }}
@@ -58,7 +58,7 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
         sx={{
           minWidth: "120px",
           padding: "8px 24px",
-          fontSize: "0.9375rem",
+          fontSize: fontSizes.lg,
           transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
           backgroundColor: (theme) => theme.palette.primary.main,
           color: "white",

@@ -1,6 +1,7 @@
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { sxStyles } from "../../theme/sx";
+import { fontSizes } from "../../theme/tokens";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -227,7 +228,7 @@ export const PlantForm: FC<PlantFormProps> = ({
                 size: "small",
                 sx: {
                   "& .MuiOutlinedInput-root": {
-                    fontSize: "0.9375rem",
+                    fontSize: fontSizes.lg,
                     height: "40px",
                   },
                 },
@@ -286,7 +287,7 @@ export const PlantForm: FC<PlantFormProps> = ({
             background: theme.palette.primary.main,
             px: 3,
             py: 1.5,
-            fontSize: "1rem",
+            fontSize: fontSizes.xl,
             boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
             "&:hover": {
               transform: "translateY(-2px)",

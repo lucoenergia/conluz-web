@@ -9,7 +9,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import { AppModal } from "./AppModal";
 import { useCreateUsersWithFile } from "../../api/users/users";
 import type { CreateUsersInBulkResponse } from "../../api/models";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, alphas, colors, fontSizes } from "../../theme/tokens";
 
 interface ImportPartnersModalProps {
   isOpen: boolean;
@@ -94,7 +94,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
         <>
           <Typography
             variant="h6"
-            sx={{ color: "#1e293b", mb: 3 }}
+            sx={{ color: "text.primary", mb: 3 }}
           >
             Importar Socios desde CSV
           </Typography>
@@ -104,14 +104,14 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             data-testid="drop-zone"
             sx={{
               border: "2px dashed",
-              borderColor: file ? theme.palette.primary.main : "#d1d5db",
+              borderColor: file ? theme.palette.primary.main : colors.border.inactive,
               borderRadius: radii.default,
               p: 4,
               textAlign: "center",
               cursor: "pointer",
               backgroundColor: file
                 ? alpha(theme.palette.primary.main, 0.04)
-                : "#f9fafb",
+                : colors.background.inactive,
               transition: "all 0.2s ease",
               "&:hover": {
                 borderColor: theme.palette.primary.main,
@@ -123,14 +123,14 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             <CloudUploadIcon
               sx={{
                 fontSize: 48,
-                color: file ? theme.palette.primary.main : "#9ca3af",
+                color: file ? theme.palette.primary.main : colors.text.muted,
                 mb: 1,
               }}
             />
             {file ? (
               <Typography
                 sx={{
-                  fontSize: "0.9375rem",
+                  fontSize: fontSizes.lg,
                   fontWeight: 600,
                   color: theme.palette.primary.main,
                 }}
@@ -141,8 +141,8 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               <>
                 <Typography
                   sx={{
-                    fontSize: "0.9375rem",
-                    color: "#475569",
+                    fontSize: fontSizes.lg,
+                    color: "secondary.main",
                     mb: 0.5,
                   }}
                 >
@@ -150,8 +150,8 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "0.8125rem",
-                    color: "#9ca3af",
+                    fontSize: fontSizes.sm,
+                    color: colors.text.muted,
                   }}
                 >
                   Solo archivos .csv
@@ -171,9 +171,9 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
 
           <Typography
             sx={{
-              fontSize: "0.875rem",
+              fontSize: fontSizes.md,
               fontWeight: 600,
-              color: "#475569",
+              color: "secondary.main",
               mb: 1,
             }}
           >
@@ -181,7 +181,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
           </Typography>
           <Box
             sx={{
-              backgroundColor: "#f8fafc",
+              backgroundColor: colors.background.surface,
               borderRadius: radii.small,
               p: 1.5,
               mb: 2,
@@ -190,8 +190,8 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             <Typography
               sx={{
                 fontFamily: "monospace",
-                fontSize: "0.75rem",
-                color: "#475569",
+                fontSize: fontSizes.xs,
+                color: "secondary.main",
                 lineHeight: 1.8,
               }}
             >
@@ -206,17 +206,17 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                backgroundColor: "rgba(239, 68, 68, 0.08)",
+                backgroundColor: alphas.error.subtle,
                 borderRadius: radii.small,
                 p: 1.5,
                 mb: 2,
               }}
             >
-              <ErrorOutlineIcon sx={{ fontSize: 20, color: "#ef4444" }} />
+              <ErrorOutlineIcon sx={{ fontSize: 20, color: "error.main" }} />
               <Typography
                 sx={{
-                  fontSize: "0.8125rem",
-                  color: "#ef4444",
+                  fontSize: fontSizes.sm,
+                  color: "error.main",
                 }}
               >
                 {uploadError}
@@ -238,7 +238,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               sx={{
                 minWidth: "100px",
                 padding: "8px 20px",
-                fontSize: "0.9375rem",
+                fontSize: fontSizes.lg,
                 borderColor: theme.palette.primary.main,
                 color: theme.palette.primary.main,
                 "&:hover": {
@@ -256,7 +256,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               sx={{
                 minWidth: "120px",
                 padding: "8px 20px",
-                fontSize: "0.9375rem",
+                fontSize: fontSizes.lg,
                 backgroundColor: theme.palette.primary.main,
                 boxShadow: shadows.medium,
                 "&:hover": {
@@ -264,8 +264,8 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                   boxShadow: shadows.strong,
                 },
                 "&.Mui-disabled": {
-                  backgroundColor: "#e5e7eb",
-                  color: "#9ca3af",
+                  backgroundColor: colors.divider,
+                  color: colors.text.muted,
                 },
               }}
             >
@@ -280,8 +280,8 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
           <CircularProgress sx={{ color: theme.palette.primary.main, mb: 2 }} />
           <Typography
             sx={{
-              fontSize: "1rem",
-              color: "#475569",
+              fontSize: fontSizes.xl,
+              color: "secondary.main",
             }}
           >
             Importando socios...
@@ -299,8 +299,8 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                 borderRadius: "50%",
                 backgroundColor:
                   errors.length > 0
-                    ? "rgba(245, 158, 11, 0.1)"
-                    : "rgba(16, 185, 129, 0.1)",
+                    ? alphas.warning.light
+                    : alphas.success.light,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -309,17 +309,17 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               }}
             >
               {errors.length > 0 ? (
-                <ErrorOutlineIcon sx={{ fontSize: 40, color: "#f59e0b" }} />
+                <ErrorOutlineIcon sx={{ fontSize: 40, color: "warning.main" }} />
               ) : (
-                <CheckCircleIcon sx={{ fontSize: 40, color: "#10b981" }} />
+                <CheckCircleIcon sx={{ fontSize: 40, color: "success.main" }} />
               )}
             </Box>
 
             <Typography
               variant="h6"
               sx={{
-                fontSize: "1.125rem",
-                color: "#1e293b",
+                fontSize: fontSizes["2xl"],
+                color: "text.primary",
                 mb: 1,
               }}
             >
@@ -328,8 +328,8 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
 
             <Typography
               sx={{
-                fontSize: "0.9375rem",
-                color: "#475569",
+                fontSize: fontSizes.lg,
+                color: "secondary.main",
               }}
             >
               Se ha{createdCount !== 1 ? "n" : ""} creado {createdCount}{" "}
@@ -341,9 +341,9 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             <Box sx={{ mb: 3 }}>
               <Typography
                 sx={{
-                  fontSize: "0.875rem",
+                  fontSize: fontSizes.md,
                   fontWeight: 600,
-                  color: "#ef4444",
+                  color: "error.main",
                   mb: 1,
                 }}
               >
@@ -353,7 +353,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                 sx={{
                   maxHeight: 150,
                   overflowY: "auto",
-                  backgroundColor: "#fef2f2",
+                  backgroundColor: colors.background.errorFaint,
                   borderRadius: radii.small,
                   p: 1.5,
                 }}
@@ -371,15 +371,15 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
                     <ErrorIcon
                       sx={{
                         fontSize: 16,
-                        color: "#ef4444",
+                        color: "error.main",
                         mt: 0.3,
                         flexShrink: 0,
                       }}
                     />
                     <Typography
                       sx={{
-                        fontSize: "0.8125rem",
-                        color: "#ef4444",
+                        fontSize: fontSizes.sm,
+                        color: "error.main",
                       }}
                     >
                       {err.personalId && (
@@ -406,7 +406,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               sx={{
                 minWidth: "140px",
                 padding: "8px 20px",
-                fontSize: "0.9375rem",
+                fontSize: fontSizes.lg,
                 borderColor: theme.palette.primary.main,
                 color: theme.palette.primary.main,
                 "&:hover": {
@@ -423,7 +423,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               sx={{
                 minWidth: "100px",
                 padding: "8px 20px",
-                fontSize: "0.9375rem",
+                fontSize: fontSizes.lg,
                 backgroundColor: theme.palette.primary.main,
                 boxShadow: shadows.medium,
                 "&:hover": {

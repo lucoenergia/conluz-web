@@ -1,5 +1,8 @@
 import type { FC } from "react";
 import type { SvgIconComponent } from "@mui/icons-material";
+import { Box, Typography } from "@mui/material";
+
+type FontSize = "0.875rem" | "1rem" | "1.125rem" | "1.25rem" | "1.5rem";
 
 interface LabeledIconProps {
   icon: SvgIconComponent;
@@ -7,13 +10,13 @@ interface LabeledIconProps {
   justify?: "start" | "end" | "between";
   label: string;
   variant?: "normal" | "compact";
-  labelSize?: "text-sm" | "text-base" | "text-lg" | "text-xl" | "text-2xl";
+  labelSize?: FontSize;
 }
 
-const contentJustification = {
-  start: "justify-start",
-  end: "justify-end",
-  between: "justify-between",
+const justifyMap: Record<NonNullable<LabeledIconProps["justify"]>, string> = {
+  start: "flex-start",
+  end: "flex-end",
+  between: "space-between",
 };
 
 export const LabeledIcon: FC<LabeledIconProps> = ({
@@ -22,15 +25,24 @@ export const LabeledIcon: FC<LabeledIconProps> = ({
   iconPosition = "left",
   justify = "start",
   variant = "normal",
-  labelSize = "text-base",
+  labelSize = "1rem",
 }) => {
   return (
-    <div
-      className={`grid grid-flow-col w-full ${contentJustification[justify]} items-center gap-2 ${variant === "compact" ? "" : "p-2"}`}
+    <Box
+      sx={{
+        display: "grid",
+        gridAutoFlow: "column",
+        gridAutoColumns: "max-content",
+        width: "100%",
+        justifyContent: justifyMap[justify],
+        alignItems: "center",
+        gap: 1,
+        p: variant === "normal" ? 1 : 0,
+      }}
     >
-      {iconPosition === "left" && <Icon className={labelSize} />}
-      <span className={labelSize}>{label}</span>
-      {iconPosition === "right" && <Icon className={labelSize} />}
-    </div>
+      {iconPosition === "left" && <Icon sx={{ fontSize: labelSize }} />}
+      <Typography sx={{ fontSize: labelSize }}>{label}</Typography>
+      {iconPosition === "right" && <Icon sx={{ fontSize: labelSize }} />}
+    </Box>
   );
 };

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
+import { colors } from "../../theme/tokens";
 import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -40,7 +41,7 @@ export const SupplyPointsPage: FC = () => {
         errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
         return false;
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
       return false;
     }
@@ -56,7 +57,7 @@ export const SupplyPointsPage: FC = () => {
         errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
         return false;
       }
-    } catch (e) {
+    } catch {
       errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
       return false;
     }
@@ -117,7 +118,7 @@ export const SupplyPointsPage: FC = () => {
         gap: { xs: 2, sm: 3 },
         p: { xs: 0, sm: 2, md: 3 },
         minHeight: "100vh",
-        background: "#f5f7fa",
+        background: colors.background.default,
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
@@ -142,8 +143,8 @@ export const SupplyPointsPage: FC = () => {
           subtitle="Gestiona los puntos de suministro de la comunidad energética"
           stats={[
             { value: stats.total, label: "Total" },
-            { value: stats.active, label: "Activos", color: "#10b981" },
-            { value: stats.inactive, label: "Inactivos", color: "#ef4444" },
+            { value: stats.active, label: "Activos", color: colors.success },
+            { value: stats.inactive, label: "Inactivos", color: colors.error.main },
           ]}
         />
       </Box>

@@ -1,6 +1,5 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
 import App from "./App.tsx";
 import { BrowserRouter } from "react-router";
 import { GlobalStyles, StyledEngineProvider } from "@mui/material";
@@ -15,7 +14,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      throwOnError: (error: any) => error.response?.status === 401,
+      throwOnError: (error: unknown) => (error as { response?: { status?: number } }).response?.status === 401,
     },
   },
 });
@@ -27,7 +26,7 @@ createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>
             <StyledEngineProvider enableCssLayer>
-              <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
+              <GlobalStyles styles={`@layer theme, base, mui, components, utilities; body { font-family: "Inter", sans-serif; }`} />
               <BrowserRouter>
                 <App />
               </BrowserRouter>

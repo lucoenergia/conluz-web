@@ -3,7 +3,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
-import { shadows } from "../../theme/tokens";
+import { shadows, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { useEffect, useMemo, useState, type FC } from "react";
 import type { DateView } from "@mui/x-date-pickers/models";
@@ -92,7 +92,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
               width: { xs: "100%", sm: "auto" },
             },
             "& .MuiButton-root": {
-              fontSize: { xs: "0.875rem", sm: "0.9375rem" },
+              fontSize: { xs: fontSizes.md, sm: fontSizes.lg },
               fontWeight: 500,
               lineHeight: 1.46667,
               padding: { xs: "0.5rem 1rem", sm: "0.4375rem 1.0625rem" },
@@ -166,7 +166,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
                   size: "small",
                   sx: {
                     "& .MuiOutlinedInput-root": {
-                      fontSize: "0.9375rem",
+                      fontSize: fontSizes.lg,
                       height: "40px",
                     },
                   },
@@ -227,7 +227,7 @@ export const GraphFilter: FC<GraphFilterProps> = ({ handleChange }) => {
                   size: "small",
                   sx: {
                     "& .MuiOutlinedInput-root": {
-                      fontSize: "0.9375rem",
+                      fontSize: fontSizes.lg,
                       height: "40px",
                     },
                   },

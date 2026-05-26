@@ -1,4 +1,3 @@
-import "./App.css";
 import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
 import { SupplyPointsPage } from "./pages/supply-points/SupplyPointsPage";

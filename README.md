@@ -7,7 +7,7 @@ Web interface made in React to interact with [Conluz](https://github.com/lucoene
 - **Framework**: React 19.1 with TypeScript
 - **Build Tool**: Vite 7.0
 - **Routing**: React Router 7.6
-- **UI Components**: Material-UI (MUI) 7.2 + Tailwind CSS 4.1
+- **UI Components**: Material-UI (MUI) 7.2
 - **State Management**: TanStack React Query 5.81
 - **API Client**: Auto-generated from OpenAPI spec using Orval
 - **Testing**: Vitest with React Testing Library
@@ -31,29 +31,28 @@ conluz-web/
 │   │   ├── supplies/
 │   │   └── users/
 │   ├── components/    # Reusable UI components
+│   │   ├── AppAccordion/
+│   │   ├── AppCard/       # Base card primitive
 │   │   ├── Auth/
 │   │   ├── Breadcrumb/
-│   │   ├── CardList/
-│   │   ├── CardTemplate/
-│   │   ├── DropdownCard/
+│   │   ├── CardGrid/
+│   │   ├── DetailHeader/  # Shared header for detail pages
 │   │   ├── ErrorBoundries/
 │   │   ├── Errors/
+│   │   ├── FilterChips/
 │   │   ├── Forms/
 │   │   ├── Graph/
 │   │   ├── Header/
-│   │   ├── LabeledIcon/
 │   │   ├── Menu/
-│   │   ├── Modals/
+│   │   ├── Modals/        # AppModal + confirmation/import modals
+│   │   ├── PaginatedList/
 │   │   ├── Pagination/
 │   │   ├── SearchBar/
 │   │   ├── Stat/
-│   │   ├── StatsCard/
 │   │   ├── SupplyCard/
 │   │   ├── SupplyDetailCard/
 │   │   ├── SupplyForm/
-│   │   ├── SupplyStatsCard/
-│   │   ├── SupportCard/
-│   │   └── Tag/
+│   │   └── PageHeader/
 │   ├── context/       # React Context providers (auth, user)
 │   ├── layouts/       # Page layouts
 │   │   ├── authenticated.layout.tsx
@@ -85,7 +84,7 @@ conluz-web/
 1. **Supply Point Management**: Create, edit, and view energy supply points
 2. **Authentication System**: Login, password recovery, token-based auth
 3. **Energy Data Visualization**: Consumption and production graphs using ApexCharts
-4. **Responsive Design**: Mobile-friendly interface with MUI + Tailwind CSS
+4. **Responsive Design**: Mobile-friendly interface with MUI responsive breakpoints
 5. **Multi-layout Support**: Different layouts for authenticated/unauthenticated pages
 6. **Auto-generated API**: Type-safe API client generated from OpenAPI specification
 7. **Real-time Data**: Energy consumption and production tracking
@@ -234,7 +233,7 @@ In order to be hotswaped at the container startup. Further reading of the method
 - **Error Handling**:
   - Global error boundaries for React component errors
   - Query error handling with automatic 401 response handling
-- **Styling Strategy**: Hybrid approach using Material-UI components with Tailwind CSS utilities
+- **Styling Strategy**: MUI-only — the theme in `src/theme/` is the single source of truth for all design tokens (colours, radii, shadows, typography). See `docs/styling-conventions.md` for authoring rules.
 - **Code Splitting**: Manual chunks configuration in Vite for optimized bundle sizes
 - **Testing Strategy**: Component testing with Vitest and React Testing Library, MSW for API mocking
 - **Type Safety**: Full TypeScript coverage with auto-generated types from OpenAPI spec

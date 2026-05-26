@@ -1,4 +1,4 @@
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, colors } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import {
   Box,
@@ -121,6 +121,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         boxShadow: shadows.soft,
         overflow: "hidden",
         transition: "box-shadow .2s",
+        // eslint-disable-next-line no-restricted-syntax -- integration-card hover shadow (0.10 alpha); dataCardHover has 0.15, visual difference matters
         "&:hover": { boxShadow: "0 6px 24px 0 rgba(0,0,0,0.10)" },
       }}
     >
@@ -137,11 +138,12 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         <ProviderMark icon={provider.icon} color={provider.color} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-            <Typography variant="h6" sx={{ color: "#111827" }}>
+          {/* eslint-disable-next-line no-restricted-syntax -- near-black provider name (#111827); no matching token */}
+          <Typography variant="h6" sx={{ color: "#111827" }}>
               {provider.name}
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ color: "#6b7280", mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: colors.text.subtle, mt: 0.5 }}>
             {provider.description}
           </Typography>
         </Box>
@@ -163,7 +165,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
               px: { xs: 2, sm: 3 },
               pb: { xs: 2, sm: 3 },
               pt: 0,
-              borderTop: "1px dashed #e5e7eb",
+              borderTop: `1px dashed ${colors.divider}`,
             }}
           >
             <Box sx={{ pt: { xs: 2, sm: 3 } }}>
@@ -184,7 +186,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <PersonOutlineIcon sx={{ fontSize: 20, color: "#9ca3af" }} />
+                        <PersonOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
                       </InputAdornment>
                     ),
                   }}
@@ -201,7 +203,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <LockOutlineIcon sx={{ fontSize: 20, color: "#9ca3af" }} />
+                        <LockOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
                       </InputAdornment>
                     ),
                     endAdornment: (
@@ -212,9 +214,9 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                           edge="end"
                         >
                           {showPwd ? (
-                            <VisibilityOffIcon sx={{ fontSize: 20, color: "#9ca3af" }} />
+                            <VisibilityOffIcon sx={{ fontSize: 20, color: colors.text.muted }} />
                           ) : (
-                            <VisibilityIcon sx={{ fontSize: 20, color: "#9ca3af" }} />
+                            <VisibilityIcon sx={{ fontSize: 20, color: colors.text.muted }} />
                           )}
                         </IconButton>
                       </InputAdornment>
@@ -224,8 +226,8 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                 />
                 {value.passwordSet && !value.password && (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: -1 }}>
-                    <LockOutlineIcon sx={{ fontSize: 16, color: "#10b981" }} />
-                    <Typography variant="caption" sx={{ color: "#10b981" }}>
+                    <LockOutlineIcon sx={{ fontSize: 16, color: "success.main" }} />
+                    <Typography variant="caption" sx={{ color: "success.main" }}>
                       Contraseña configurada (deja vacío para mantener)
                     </Typography>
                   </Box>
@@ -241,7 +243,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <LinkIcon sx={{ fontSize: 20, color: "#9ca3af" }} />
+                        <LinkIcon sx={{ fontSize: 20, color: colors.text.muted }} />
                       </InputAdornment>
                     ),
                   }}
@@ -257,11 +259,11 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    color: "#6b7280",
+                    color: colors.text.subtle,
                   }}
                 >
-                  <InfoOutlineIcon sx={{ fontSize: 16, color: "#9ca3af" }} />
-                  <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                  <InfoOutlineIcon sx={{ fontSize: 16, color: colors.text.muted }} />
+                  <Typography variant="caption" sx={{ color: colors.text.subtle }}>
                     {provider.help}
                   </Typography>
                 </Box>

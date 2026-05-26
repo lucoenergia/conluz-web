@@ -3,6 +3,7 @@ import { CardContent, Typography, Box, Divider } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { AppCard } from "../AppCard";
+import { alphas, colors } from "../../theme/tokens";
 
 export interface StatItem {
   label: string;
@@ -27,7 +28,7 @@ export const StatsCard: FC<StatsCardProps> = ({
   subtitle,
   stats,
   icon,
-  accentColor = "#1976d2",
+  accentColor = colors.brand.main,
   variant = "default",
 }) => {
   // variant is reserved for future differentiation; all variants currently share the same look
@@ -48,7 +49,7 @@ export const StatsCard: FC<StatsCardProps> = ({
           {icon && (
             <Box
               sx={{
-                background: "rgba(255, 255, 255, 0.2)",
+                background: alphas.white.soft,
                 borderRadius: "50%",
                 p: 1.5,
                 display: "flex",
@@ -92,7 +93,7 @@ export const StatsCard: FC<StatsCardProps> = ({
                 </Box>
               )}
 
-              <Typography variant="h4" sx={{ color: stat.color || "#1e293b", mb: 0.5 }}>
+              <Typography variant="h4" sx={{ color: stat.color || "text.primary", mb: 0.5 }}>
                 {stat.value}
               </Typography>
 
@@ -103,14 +104,14 @@ export const StatsCard: FC<StatsCardProps> = ({
               {stat.trend !== undefined && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                   {stat.trend > 0 ? (
-                    <TrendingUpIcon sx={{ fontSize: 16, color: "#10b981" }} />
+                    <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
                   ) : (
-                    <TrendingDownIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                    <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
                   )}
                   <Typography
                     variant="caption"
                     sx={{
-                      color: stat.trend > 0 ? "#10b981" : "#ef4444",
+                      color: stat.trend > 0 ? "success.main" : "error.main",
                       fontWeight: 500,
                     }}
                   >
