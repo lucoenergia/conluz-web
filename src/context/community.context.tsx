@@ -29,7 +29,7 @@ function readPersistedCommunity(userId: string): string | null {
   return localStorage.getItem(storageKey(userId));
 }
 
-export const CommunityProvider = ({ children }: CommunityProviderProps) => {
+const CommunityProvider = ({ children }: CommunityProviderProps) => {
   const loggedUser = useLoggedUser();
   const [activeCommunityId, setActiveCommunityId] = useState<string | null>(null);
 
@@ -97,11 +97,11 @@ export const CommunityProvider = ({ children }: CommunityProviderProps) => {
   );
 };
 
-export const useActiveCommunity = (): string | null => {
+const useActiveCommunity = (): string | null => {
   return useContext<string | null>(ActiveCommunityContext);
 };
 
-export const useActiveCommunityDispatch = (): Dispatch => {
+const useActiveCommunityDispatch = (): Dispatch => {
   const context = useContext<Dispatch | null>(ActiveCommunityDispatchContext);
   if (context === null) {
     throw new Error("useActiveCommunityDispatch must be used within a CommunityProvider");
@@ -110,4 +110,4 @@ export const useActiveCommunityDispatch = (): Dispatch => {
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export { ActiveCommunityContext };
+export { CommunityProvider, useActiveCommunity, useActiveCommunityDispatch, ActiveCommunityContext };
