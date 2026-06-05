@@ -13,6 +13,8 @@ import { useAuthDispatch } from "../context/auth.context";
 import { useLoggedUser, useLoggedUserDispatch } from "../context/logged-user.context";
 import { ErrorProvider } from "../context/error.context";
 import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
+import { CommunityRole } from "../api/models";
 
 export const AuthenticatedLayout: FC = () => {
   const { width } = useWindowDimensions();
@@ -21,8 +23,23 @@ export const AuthenticatedLayout: FC = () => {
   const queryClient = useQueryClient();
   const loggedUser = useLoggedUser();
   const setLoggedUser = useLoggedUserDispatch();
+  const activeCommunityRole = useActiveCommunityRole();
+  const isPlatformAdmin = useIsPlatformAdmin();
   // For desktop view the menu starts open, for mobile view it starts collapsed
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
+
+  const isCommunityAdmin = isPlatformAdmin || activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
+
+  const visibleMenuItems = useMemo(
+    () =>
+      MENU_ITEMS.filter((item) => {
+        if (item.access === "all") return true;
+        if (item.access === "communityAdmin") return isCommunityAdmin;
+        if (item.access === "platformAdmin") return isPlatformAdmin;
+        return false;
+      }),
+    [isCommunityAdmin, isPlatformAdmin],
+  );
 
   const contentMargin = useMemo(() => {
     return isMenuOpened && width > MIN_DESKTOP_WIDTH ? SIDEMENU_WIDTH : 0;
@@ -56,7 +73,7 @@ export const AuthenticatedLayout: FC = () => {
       <SideMenu
         isMenuOpened={isMenuOpened}
         onMenuClose={setIsMenuOpened}
-        menuItems={MENU_ITEMS}
+        menuItems={visibleMenuItems}
       />
       <Box
         sx={{

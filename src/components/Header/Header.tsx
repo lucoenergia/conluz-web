@@ -5,6 +5,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { Logo } from "./Logo";
 import type { FC } from "react";
 import { ProfileMenu } from "../Menu/ProfileMenu";
+import { CommunitySelector } from "../CommunitySelector";
 
 interface HeaderProps {
   username?: string;
@@ -54,6 +55,7 @@ export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
         </Box>
 
         <Box sx={sxStyles.flexRowCenter}>
+          <CommunitySelector />
           <ProfileMenu username={username} />
         </Box>
       </Toolbar>

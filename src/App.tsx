@@ -22,6 +22,11 @@ import { CreatePlantPage } from "./pages/production/CreatePlantPage";
 import { EditPlantPage } from "./pages/production/EditPlantPage";
 import { PlantDetailPage } from "./pages/production/PlantDetailPage";
 import { IntegrationsPage } from "./pages/integrations/IntegrationsPage";
+import { CommunitiesPage } from "./pages/communities/CommunitiesPage";
+import { CreateCommunityPage } from "./pages/communities/CreateCommunityPage";
+import { MembersPage } from "./pages/members/MembersPage";
+import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
+import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
 
 function App() {
   return (
@@ -60,7 +65,24 @@ function App() {
           </Route>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
-          <Route path="integrations" element={<IntegrationsPage />} />
+          <Route
+            path="integrations"
+            element={<CommunityAdminRoute><IntegrationsPage /></CommunityAdminRoute>}
+          />
+          <Route
+            path="members"
+            element={<CommunityAdminRoute><MembersPage /></CommunityAdminRoute>}
+          />
+          <Route path="communities">
+            <Route
+              index
+              element={<PlatformAdminRoute><CommunitiesPage /></PlatformAdminRoute>}
+            />
+            <Route
+              path="new"
+              element={<PlatformAdminRoute><CreateCommunityPage /></PlatformAdminRoute>}
+            />
+          </Route>
         </Route>
         <Route element={<DynamicLayout />}>
           <Route path="contact" element={<ContactPage />} />
