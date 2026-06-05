@@ -4,7 +4,7 @@ import { Outlet, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
 import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
-import { Box, Toolbar } from "@mui/material";
+import { Box, CircularProgress, Toolbar } from "@mui/material";
 import { ProtectedRoute } from "../components/Auth/ProtectedRoute";
 import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,17 +31,16 @@ export const AuthenticatedLayout: FC = () => {
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
 
   const hasActiveCommunity = activeCommunity !== null;
-  const isCommunityAdmin = isPlatformAdmin || activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
 
   const visibleSections = useMemo(
     () =>
       MENU_SECTIONS.filter((section) => {
         if (section.visibility === "operational") return hasActiveCommunity;
-        if (section.visibility === "communityAdmin") return isCommunityAdmin;
+        if (section.visibility === "communityAdmin") return activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
         if (section.visibility === "platformAdmin") return isPlatformAdmin;
         return false;
       }),
-    [hasActiveCommunity, isCommunityAdmin, isPlatformAdmin],
+    [hasActiveCommunity, activeCommunityRole, isPlatformAdmin],
   );
 
   const contentMargin = useMemo(() => {
@@ -90,7 +89,13 @@ export const AuthenticatedLayout: FC = () => {
         <Toolbar />
         <AuthErrorBoundry onError={logout}>
           <ErrorProvider>
-            <Outlet />
+            {loggedUser === null ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Outlet />
+            )}
             <ErrorDisplay />
           </ErrorProvider>
         </AuthErrorBoundry>
