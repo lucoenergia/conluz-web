@@ -27,6 +27,9 @@ import { CreateCommunityPage } from "./pages/communities/CreateCommunityPage";
 import { MembersPage } from "./pages/members/MembersPage";
 import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
 import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
+import { UsersPage } from "./pages/users/UsersPage";
+import { PlatformPage } from "./pages/platform/PlatformPage";
+import { NoCommunityPage } from "./pages/no-community/NoCommunityPage";
 
 function App() {
   return (
@@ -83,6 +86,15 @@ function App() {
               element={<PlatformAdminRoute><CreateCommunityPage /></PlatformAdminRoute>}
             />
           </Route>
+          <Route
+            path="platform"
+            element={<PlatformAdminRoute><PlatformPage /></PlatformAdminRoute>}
+          />
+          <Route
+            path="users"
+            element={<PlatformAdminRoute><UsersPage /></PlatformAdminRoute>}
+          />
+          <Route path="no-community" element={<NoCommunityPage />} />
         </Route>
         <Route element={<DynamicLayout />}>
           <Route path="contact" element={<ContactPage />} />

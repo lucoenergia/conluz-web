@@ -3,8 +3,8 @@ import { Header } from "../components/Header/Header";
 import { Outlet, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
-import { MENU_ITEMS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
-import { Box, Toolbar } from "@mui/material";
+import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
+import { Box, CircularProgress, Toolbar } from "@mui/material";
 import { ProtectedRoute } from "../components/Auth/ProtectedRoute";
 import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,8 +13,10 @@ import { useAuthDispatch } from "../context/auth.context";
 import { useLoggedUser, useLoggedUserDispatch } from "../context/logged-user.context";
 import { ErrorProvider } from "../context/error.context";
 import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
+import { useActiveCommunity } from "../context/community.context";
 import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
 import { CommunityRole } from "../api/models";
+import { resolveLandingRoute } from "../utils/routes";
 
 export const AuthenticatedLayout: FC = () => {
   const { width } = useWindowDimensions();
@@ -23,36 +25,39 @@ export const AuthenticatedLayout: FC = () => {
   const queryClient = useQueryClient();
   const loggedUser = useLoggedUser();
   const setLoggedUser = useLoggedUserDispatch();
+  const activeCommunity = useActiveCommunity();
   const activeCommunityRole = useActiveCommunityRole();
   const isPlatformAdmin = useIsPlatformAdmin();
-  // For desktop view the menu starts open, for mobile view it starts collapsed
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
 
-  const isCommunityAdmin = isPlatformAdmin || activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
+  const hasActiveCommunity = activeCommunity !== null;
 
-  const visibleMenuItems = useMemo(
+  const visibleSections = useMemo(
     () =>
-      MENU_ITEMS.filter((item) => {
-        if (item.access === "all") return true;
-        if (item.access === "communityAdmin") return isCommunityAdmin;
-        if (item.access === "platformAdmin") return isPlatformAdmin;
+      MENU_SECTIONS.filter((section) => {
+        if (section.visibility === "operational") return hasActiveCommunity;
+        if (section.visibility === "communityAdmin") return activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
+        if (section.visibility === "platformAdmin") return isPlatformAdmin;
         return false;
       }),
-    [isCommunityAdmin, isPlatformAdmin],
+    [hasActiveCommunity, activeCommunityRole, isPlatformAdmin],
   );
 
   const contentMargin = useMemo(() => {
     return isMenuOpened && width > MIN_DESKTOP_WIDTH ? SIDEMENU_WIDTH : 0;
   }, [isMenuOpened, width]);
 
-  // If there is no logged user in context we query the backend and retrieve it
   const { data } = useGetCurrentUser({ query: { enabled: loggedUser === null } });
 
   useEffect(() => {
     if (data) {
       setLoggedUser(data);
+      if (window.location.pathname === '/') {
+        const landing = resolveLandingRoute(data);
+        if (landing !== '/') navigate(landing, { replace: true });
+      }
     }
-  }, [data]);
+  }, [data, navigate, setLoggedUser]);
 
   const logout = async () => {
     queryClient.clear();
@@ -61,19 +66,17 @@ export const AuthenticatedLayout: FC = () => {
     navigate("/login");
   };
 
-
   return (
     <ProtectedRoute>
       <Header
-        onMenuClick={() => {
-          setIsMenuOpened(!isMenuOpened);
-        }}
+        onMenuClick={() => setIsMenuOpened(!isMenuOpened)}
         username={loggedUser?.fullName}
       />
       <SideMenu
         isMenuOpened={isMenuOpened}
         onMenuClose={setIsMenuOpened}
-        menuItems={visibleMenuItems}
+        sections={visibleSections}
+        contactItem={CONTACT_ITEM}
       />
       <Box
         sx={{
@@ -86,7 +89,13 @@ export const AuthenticatedLayout: FC = () => {
         <Toolbar />
         <AuthErrorBoundry onError={logout}>
           <ErrorProvider>
-            <Outlet />
+            {loggedUser === null ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Outlet />
+            )}
             <ErrorDisplay />
           </ErrorProvider>
         </AuthErrorBoundry>
