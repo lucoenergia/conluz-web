@@ -95,7 +95,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, section
       <Box sx={{ width: SIDEMENU_WIDTH, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
         <Toolbar />
 
-        <Box sx={{ flex: 1, overflowY: 'auto', pt: 1 }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', pt: 2 }}>
           {sections.map((section, index) => (
             <Box key={section.id}>
               {index > 0 && <Divider sx={{ mx: 2, my: 1 }} />}
