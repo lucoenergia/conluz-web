@@ -7,6 +7,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/auth.context.tsx";
 import { LoggedUserProvider } from "./context/logged-user.context.tsx";
+import { CommunityProvider } from "./context/community.context.tsx";
 import { getFromStorage } from "./utils/getFromStorage.tsx";
 import { theme } from "./theme";
 
@@ -23,16 +24,18 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider initialState={getFromStorage("token")}>
       <LoggedUserProvider>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={theme}>
-            <StyledEngineProvider enableCssLayer>
-              <GlobalStyles styles={`@layer theme, base, mui, components, utilities; body { font-family: "Inter", sans-serif; }`} />
-              <BrowserRouter>
-                <App />
-              </BrowserRouter>
-            </StyledEngineProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
+        <CommunityProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider theme={theme}>
+              <StyledEngineProvider enableCssLayer>
+                <GlobalStyles styles={`@layer theme, base, mui, components, utilities; body { font-family: "Inter", sans-serif; }`} />
+                <BrowserRouter>
+                  <App />
+                </BrowserRouter>
+              </StyledEngineProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </CommunityProvider>
       </LoggedUserProvider>
     </AuthProvider>
   </StrictMode>,
