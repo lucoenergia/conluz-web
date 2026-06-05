@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CreateUserBodyRole } from './createUserBodyRole';
+import type { CreateUserBodyCommunityRole } from './createUserBodyCommunityRole';
 
 export interface CreateUserBody {
   /** @minLength 1 */
@@ -21,4 +22,6 @@ export interface CreateUserBody {
   /** @minLength 1 */
   password: string;
   role: CreateUserBodyRole;
+  communityId?: string;
+  communityRole?: CreateUserBodyCommunityRole;
 }

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { UserResponseRole } from './userResponseRole';
+import type { UserResponseMemberships } from './userResponseMemberships';
 
 export interface UserResponse {
   id?: string;
@@ -17,4 +18,7 @@ export interface UserResponse {
   phoneNumber?: string;
   enabled?: boolean;
   role?: UserResponseRole;
+  isPlatformAdmin?: boolean;
+  /** Map of communityId (UUID string) to the user's role in that community */
+  memberships?: UserResponseMemberships;
 }
