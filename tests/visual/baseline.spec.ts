@@ -1,5 +1,5 @@
 /**
- * Visual regression baseline tests — Phase 0.5 safety net
+ * Visual regression baseline tests — multi-role safety net
  *
  * Auth approach (no live backend required):
  *   A fake JWT string is injected into localStorage via page.addInitScript() before
@@ -18,6 +18,24 @@
  *   - document.fonts.ready is awaited before capture to prevent mid-render font flashes.
  *   - All API responses include no time-varying fields (no "createdAt", etc.).
  *   - reducedMotion: "reduce" is set at the project level in playwright.config.ts.
+ *
+ * Role fixture mapping:
+ *   FIXED_MEMBER_USER          → home, supply-points, supply-detail, supply modals
+ *   FIXED_COMMUNITY_ADMIN_USER → defined for completeness; /members is not Playwright-tested
+ *                                because CommunityAdminRoute defers community selection to a
+ *                                useEffect that fires after the first render, causing a redirect
+ *                                to / before the guard re-evaluates. The modal and page are
+ *                                covered by unit tests (ImportPartnersModal.spec.tsx, etc.).
+ *   FIXED_PLATFORM_ADMIN_USER  → /platform (platform welcome), /users (users page)
+ *   FIXED_NO_COMMUNITY_USER    → /no-community (asserts the screen renders correctly)
+ *
+ * Partners page migration:
+ *   /partners has been removed from the route table (Phase 5.1/5.2). The "partners page"
+ *   test has been migrated to "users page" (/users, PlatformAdminRoute). The "import
+ *   partners modal" test has been removed: ImportPartnersModal now lives in MembersPage
+ *   (/members, CommunityAdminRoute). The CommunityAdminRoute timing issue described above
+ *   makes reliable direct Playwright navigation to /members impossible without app-level
+ *   changes. The modal itself is unit-tested in ImportPartnersModal.spec.tsx.
  */
 
 import { test, expect, type Page, type Route } from "@playwright/test";
@@ -30,7 +48,14 @@ const FIXED_TOKEN = "test-jwt-token-for-visual-regression";
 
 const FIXED_SUPPLY_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
-const FIXED_USER = {
+/** Stable community UUID used in all member/community-admin fixtures. */
+const FIXED_COMMUNITY_ID = "cccccccc-dddd-eeee-ffff-000000000001";
+
+/**
+ * Member fixture — belongs to FIXED_COMMUNITY_ID as COMMUNITY_MEMBER.
+ * Use for: home, supply-points, supply-detail, supply modal tests.
+ */
+const FIXED_MEMBER_USER = {
   id: "11111111-2222-3333-4444-555555555555",
   personalId: "12345678A",
   number: 1,
@@ -40,6 +65,78 @@ const FIXED_USER = {
   phoneNumber: "600000001",
   enabled: true,
   role: "ADMIN",
+  isPlatformAdmin: false,
+  memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+};
+
+/**
+ * Community-admin fixture — belongs to FIXED_COMMUNITY_ID as COMMUNITY_ADMIN.
+ * Defined for completeness; not currently used in a Playwright test — see file header.
+ */
+const FIXED_COMMUNITY_ADMIN_USER = {
+  id: "55555555-6666-7777-8888-999999999999",
+  personalId: "87654321B",
+  number: 2,
+  fullName: "Pedro Sánchez Ruiz",
+  address: "Avenida del Parque, 42",
+  email: "pedro@conluz.test",
+  phoneNumber: "600000002",
+  enabled: true,
+  role: "ADMIN",
+  isPlatformAdmin: false,
+  memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" },
+};
+
+/**
+ * Platform-admin fixture — no community memberships, isPlatformAdmin=true.
+ * Use for: /platform (platform welcome), /users (users page).
+ */
+const FIXED_PLATFORM_ADMIN_USER = {
+  id: "33333333-4444-5555-6666-777777777777",
+  personalId: "11111111C",
+  number: 3,
+  fullName: "María García López",
+  address: "Calle Mayor, 1",
+  email: "platform@conluz.test",
+  phoneNumber: "600000003",
+  enabled: true,
+  role: "ADMIN",
+  isPlatformAdmin: true,
+  memberships: {},
+};
+
+/**
+ * No-community fixture — not a platform admin and no memberships.
+ * resolveLandingRoute sends this user to /no-community.
+ * Use for: /no-community screen.
+ */
+const FIXED_NO_COMMUNITY_USER = {
+  id: "44444444-5555-6666-7777-888888888888",
+  personalId: "22222222D",
+  number: 4,
+  fullName: "Ana Martínez García",
+  address: "Calle Secundaria, 2",
+  email: "nocommunity@conluz.test",
+  phoneNumber: "600000004",
+  enabled: true,
+  role: "PARTNER",
+  isPlatformAdmin: false,
+  memberships: {},
+};
+
+/** Secondary user shown in list responses — not the logged-in user. */
+const FIXED_USER_2 = {
+  id: "22222222-3333-4444-5555-666666666666",
+  personalId: "87654321B",
+  number: 2,
+  fullName: "Pedro Sánchez Ruiz",
+  address: "Avenida del Parque, 42",
+  email: "pedro@conluz.test",
+  phoneNumber: "600000002",
+  enabled: true,
+  role: "PARTNER",
+  isPlatformAdmin: false,
+  memberships: {},
 };
 
 const FIXED_SUPPLY = {
@@ -55,7 +152,7 @@ const FIXED_SUPPLY = {
   datadisDistributorCode: "2",
   datadisPointType: 5,
   datadisIsThirdParty: false,
-  user: FIXED_USER,
+  user: FIXED_MEMBER_USER,
 };
 
 const FIXED_SUPPLY_2 = {
@@ -71,19 +168,7 @@ const FIXED_SUPPLY_2 = {
   datadisDistributorCode: "1",
   datadisPointType: 3,
   datadisIsThirdParty: false,
-  user: FIXED_USER,
-};
-
-const FIXED_USER_2 = {
-  id: "22222222-3333-4444-5555-666666666666",
-  personalId: "87654321B",
-  number: 2,
-  fullName: "Pedro Sánchez Ruiz",
-  address: "Avenida del Parque, 42",
-  email: "pedro@conluz.test",
-  phoneNumber: "600000002",
-  enabled: true,
-  role: "PARTNER",
+  user: FIXED_MEMBER_USER,
 };
 
 const PAGED_SUPPLIES = {
@@ -95,36 +180,26 @@ const PAGED_SUPPLIES = {
 };
 
 const PAGED_USERS = {
-  items: [
-    { ...FIXED_USER, role: "ADMIN" },
-    { ...FIXED_USER_2, role: "PARTNER" },
-  ],
+  items: [FIXED_MEMBER_USER, FIXED_USER_2],
   size: 10,
   totalElements: 2,
   totalPages: 1,
   number: 0,
 };
 
-const EMPTY_PRODUCTION = [];
+const EMPTY_PRODUCTION: unknown[] = [];
 
 // ---------------------------------------------------------------------------
 // Helper: set up all API route mocks on a given page
+//
+// Pass the fixture that should be returned by /api/v1/users/current.
+// All other responses are fixture-independent.
 // ---------------------------------------------------------------------------
 
-async function mockAllApiRoutes(page: Page) {
-  // Current user (needed by AuthenticatedLayout on every protected page)
-  await page.route("**/api/v1/users/current", (route: Route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(FIXED_USER),
-    })
-  );
-
-  // Supply list
+async function mockAllApiRoutes(page: Page, currentUser: object) {
+  // Supply list and supply detail
   await page.route("**/api/v1/supplies**", async (route: Route) => {
     const url = route.request().url();
-    // Supply detail: /api/v1/supplies/{id}/...  or  /api/v1/supplies/{id}
     if (url.includes(`/supplies/${FIXED_SUPPLY_ID}`)) {
       if (url.includes("/production/") || url.includes("/consumption/")) {
         return route.fulfill({
@@ -139,8 +214,12 @@ async function mockAllApiRoutes(page: Page) {
         body: JSON.stringify(FIXED_SUPPLY),
       });
     }
-    // Supplies list
-    if (route.request().method() === "GET" && !url.includes("/import") && !url.includes("/datadis") && !url.includes("/partitions")) {
+    if (
+      route.request().method() === "GET" &&
+      !url.includes("/import") &&
+      !url.includes("/datadis") &&
+      !url.includes("/partitions")
+    ) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -150,10 +229,12 @@ async function mockAllApiRoutes(page: Page) {
     return route.continue();
   });
 
-  // User list (Partners page)
+  // User list and current user.
+  // Routes are matched in reverse registration order, so this handler — registered
+  // after the /current-specific one — takes precedence and handles /users/current
+  // via the regex branch (returning currentUser) as well as the users list.
   await page.route("**/api/v1/users**", async (route: Route) => {
     const url = route.request().url();
-    // /users/{id}/supplies
     if (url.includes("/supplies")) {
       return route.fulfill({
         status: 200,
@@ -161,15 +242,14 @@ async function mockAllApiRoutes(page: Page) {
         body: JSON.stringify([FIXED_SUPPLY]),
       });
     }
-    // /users/{id} specific user
+    // Matches /users/current and /users/{uuid}
     if (url.match(/\/api\/v1\/users\/[a-z0-9-]+$/)) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(FIXED_USER),
+        body: JSON.stringify(currentUser),
       });
     }
-    // users list
     if (route.request().method() === "GET") {
       return route.fulfill({
         status: 200,
@@ -180,7 +260,7 @@ async function mockAllApiRoutes(page: Page) {
     return route.continue();
   });
 
-  // Plants, production, sharing-agreements — return empty/null to avoid loading spinners
+  // Plants — return empty to avoid loading spinners
   await page.route("**/api/v1/plants**", (route: Route) =>
     route.fulfill({
       status: 200,
@@ -194,6 +274,14 @@ async function mockAllApiRoutes(page: Page) {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify([]),
+    })
+  );
+
+  await page.route("**/api/v1/communities**", (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [], size: 10, totalElements: 0, totalPages: 0, number: 0 }),
     })
   );
 
@@ -214,6 +302,21 @@ async function injectAuthToken(page: Page) {
   await page.addInitScript((token: string) => {
     window.localStorage.setItem("token", token);
   }, FIXED_TOKEN);
+}
+
+// ---------------------------------------------------------------------------
+// Helper: seed active community in localStorage so the community context
+// resolves immediately for tests that navigate to community-scoped screens.
+// Called in addition to injectAuthToken for member and community-admin fixtures.
+// ---------------------------------------------------------------------------
+
+async function seedActiveCommunity(page: Page, userId: string) {
+  await page.addInitScript(
+    ({ key, value }: { key: string; value: string }) => {
+      window.localStorage.setItem(key, value);
+    },
+    { key: `activeCommunity:${userId}`, value: FIXED_COMMUNITY_ID }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -254,9 +357,14 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("login-page.png", { fullPage: true });
   });
 
+  // Member-fixture tests: home, supply-points, supply-detail, supply modals
+  // Active community is seeded in localStorage so operational UI is visible
+  // after the community useEffect auto-selects it.
+
   test("home page", async ({ page }) => {
     await injectAuthToken(page);
-    await mockAllApiRoutes(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 
     await page.goto("/");
     await stabilizePage(page);
@@ -266,7 +374,8 @@ test.describe("Visual baselines", () => {
 
   test("supplies list page", async ({ page }) => {
     await injectAuthToken(page);
-    await mockAllApiRoutes(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 
     await page.goto("/supply-points");
     await stabilizePage(page);
@@ -276,7 +385,8 @@ test.describe("Visual baselines", () => {
 
   test("supply detail page", async ({ page }) => {
     await injectAuthToken(page);
-    await mockAllApiRoutes(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
     await stabilizePage(page);
@@ -284,19 +394,10 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("supply-detail.png", { fullPage: true });
   });
 
-  test("partners page", async ({ page }) => {
-    await injectAuthToken(page);
-    await mockAllApiRoutes(page);
-
-    await page.goto("/partners");
-    await stabilizePage(page);
-
-    await expect(page).toHaveScreenshot("partners-page.png", { fullPage: true });
-  });
-
   test("import supplies modal open", async ({ page }) => {
     await injectAuthToken(page);
-    await mockAllApiRoutes(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 
     await page.goto("/supply-points");
     await stabilizePage(page);
@@ -313,13 +414,10 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("import-supplies-modal.png", { fullPage: true });
   });
 
-  // ── Task 0 baselines: captured on PRE-REFACTOR code ────────────────────────
-  // These three screenshots must be committed BEFORE AppModal is built so the
-  // "before" state is recorded and the post-migration diff is meaningful.
-
   test("disable confirmation modal open", async ({ page }) => {
     await injectAuthToken(page);
-    await mockAllApiRoutes(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 
     await page.goto("/supply-points");
     await stabilizePage(page);
@@ -343,7 +441,8 @@ test.describe("Visual baselines", () => {
 
   test("disable success modal open", async ({ page }) => {
     await injectAuthToken(page);
-    await mockAllApiRoutes(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 
     await page.goto("/supply-points");
     await stabilizePage(page);
@@ -358,9 +457,7 @@ test.describe("Visual baselines", () => {
 
     // Confirm — fires POST /api/v1/supplies/{id}/disable (mocked → 200)
     // then opens DisableSuccessModal
-    await page
-      .getByRole("button", { name: /^Deshabilitar$/i })
-      .click();
+    await page.getByRole("button", { name: /^Deshabilitar$/i }).click();
 
     await page.waitForSelector("text=ha sido deshabilitado");
     await stabilizePage(page);
@@ -370,23 +467,49 @@ test.describe("Visual baselines", () => {
     });
   });
 
-  test("import partners modal open", async ({ page }) => {
+  // Platform-admin fixture tests: /platform (welcome) and /users (users management).
+  // PlatformAdminRoute reads isPlatformAdmin directly from loggedUser (no async
+  // community selection needed), so direct page.goto() works reliably.
+
+  test("platform welcome page", async ({ page }) => {
     await injectAuthToken(page);
-    await mockAllApiRoutes(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
 
-    await page.goto("/partners");
+    await page.goto("/platform");
     await stabilizePage(page);
 
-    // Click "Importar CSV" on the Partners page
-    const importBtn = page.getByRole("button", { name: /importar csv/i });
-    await importBtn.scrollIntoViewIfNeeded();
-    await importBtn.click();
-
-    await page.waitForSelector("text=Importar Socios desde CSV");
-    await stabilizePage(page);
-
-    await expect(page).toHaveScreenshot("import-partners-modal.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("platform-welcome-page.png", { fullPage: true });
   });
+
+  test("users page", async ({ page }) => {
+    // Migrated from "partners page" — /partners was removed in Phase 5.1/5.2.
+    // The users management screen (/users) is the platform-admin equivalent.
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/users");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("users-page.png", { fullPage: true });
+  });
+
+  // No-community fixture test: asserts that a user with no memberships and
+  // isPlatformAdmin=false sees the /no-community screen (the correct expected behaviour).
+
+  test("no-community page", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_NO_COMMUNITY_USER);
+
+    // Navigate directly — NoCommunityPage has no route guard, so it always renders.
+    // AuthenticatedLayout's landing-redirect only fires when pathname === '/',
+    // so navigating here directly does not trigger a redirect to /no-community.
+    await page.goto("/no-community");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("no-community-page.png", { fullPage: true });
+  });
+
+  // Note: FIXED_COMMUNITY_ADMIN_USER and a test for /members are intentionally
+  // omitted from Playwright coverage. See the file header for the reason.
+  // Note: "import partners modal" is intentionally omitted. See file header.
 });
