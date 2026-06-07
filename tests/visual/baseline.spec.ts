@@ -73,6 +73,7 @@ const FIXED_MEMBER_USER = {
  * Community-admin fixture — belongs to FIXED_COMMUNITY_ID as COMMUNITY_ADMIN.
  * Defined for completeness; not currently used in a Playwright test — see file header.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- defined for three-role completeness; no Playwright test yet (CommunityAdminRoute timing — see file header)
 const FIXED_COMMUNITY_ADMIN_USER = {
   id: "55555555-6666-7777-8888-999999999999",
   personalId: "87654321B",
