@@ -1,4 +1,5 @@
 import { useState, type FC } from "react";
+import { useNavigate } from "react-router";
 import { useTheme } from "@mui/material/styles";
 import {
   Box,
@@ -24,10 +25,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -42,6 +47,7 @@ import {
 import { useGetAllUsers } from "../../api/users/users";
 import { CommunityRole } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
+import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 
 const ROLE_LABELS: Record<string, string> = {
   [CommunityRole.COMMUNITY_MEMBER]: "Miembro",
@@ -50,10 +56,12 @@ const ROLE_LABELS: Record<string, string> = {
 
 export const MembersPage: FC = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const activeCommunityId = useActiveCommunity();
   const errorDispatch = useErrorDispatch();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>(CommunityRole.COMMUNITY_MEMBER);
 
@@ -162,7 +170,15 @@ export const MembersPage: FC = () => {
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <Paper elevation={0} sx={sxStyles.softPanel}>
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<CloudUploadIcon />}
+              onClick={() => setShowImportModal(true)}
+              sx={{ px: 3, py: 1.5 }}
+            >
+              Importar usuarios
+            </Button>
             <Button
               variant="contained"
               startIcon={<PersonAddIcon />}
@@ -291,15 +307,26 @@ export const MembersPage: FC = () => {
                             />
                           </TableCell>
                           <TableCell align="center">
-                            <Button
-                              size="small"
-                              color="error"
-                              startIcon={<DeleteOutlineIcon />}
-                              onClick={() => handleRemoveMember(membership.userId!)}
-                              sx={{ fontSize: fontSizes.sm }}
-                            >
-                              Eliminar
-                            </Button>
+                            <Box sx={{ display: "flex", gap: 1, justifyContent: "center", alignItems: "center" }}>
+                              <Tooltip title="Puntos de suministro">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => navigate(`/supply-points?personId=${membership.userId}`)}
+                                  sx={{ color: theme.palette.primary.main }}
+                                >
+                                  <ElectricBoltIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Button
+                                size="small"
+                                color="error"
+                                startIcon={<DeleteOutlineIcon />}
+                                onClick={() => handleRemoveMember(membership.userId!)}
+                                sx={{ fontSize: fontSizes.sm }}
+                              >
+                                Eliminar
+                              </Button>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       );
@@ -311,6 +338,12 @@ export const MembersPage: FC = () => {
           )}
         </Paper>
       </Box>
+
+      <ImportPartnersModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={() => refetch()}
+      />
 
       {/* Add member dialog */}
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>

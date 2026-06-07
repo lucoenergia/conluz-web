@@ -11,12 +11,8 @@ import { EditSupplyPage } from "./pages/supply-points/EditSupply";
 import { HomePage } from "./pages/Home";
 import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
-import { PartnersPage } from "./pages/partners/Partners.page";
 import { ChangePasswordPage } from "./pages/auth/ChangePassword";
 import { ProfilePage } from "./pages/Profile";
-import { EditPartnerPage } from "./pages/partners/EditPartner";
-import { CreatePartnerPage } from "./pages/partners/CreatePartner";
-import { PartnerSupplyPointsPage } from "./pages/partners/PartnerSupplyPointsPage";
 import { PlantsPage } from "./pages/production/PlantsPage";
 import { CreatePlantPage } from "./pages/production/CreatePlantPage";
 import { EditPlantPage } from "./pages/production/EditPlantPage";
@@ -28,6 +24,8 @@ import { MembersPage } from "./pages/members/MembersPage";
 import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
 import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
 import { UsersPage } from "./pages/users/UsersPage";
+import { CreateUserPage } from "./pages/users/CreateUser";
+import { EditUserPage } from "./pages/users/EditUser";
 import { PlatformPage } from "./pages/platform/PlatformPage";
 import { NoCommunityPage } from "./pages/no-community/NoCommunityPage";
 
@@ -60,12 +58,6 @@ function App() {
               <Route path="edit" element={<EditPlantPage />} />
             </Route>
           </Route>
-          <Route path="partners">
-            <Route index element={<PartnersPage />} />
-            <Route path="new" element={<CreatePartnerPage />} />
-            <Route path=":partnerId/edit" element={<EditPartnerPage />} />
-            <Route path=":partnerId/supply-points" element={<PartnerSupplyPointsPage />} />
-          </Route>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route
@@ -90,10 +82,11 @@ function App() {
             path="platform"
             element={<PlatformAdminRoute><PlatformPage /></PlatformAdminRoute>}
           />
-          <Route
-            path="users"
-            element={<PlatformAdminRoute><UsersPage /></PlatformAdminRoute>}
-          />
+          <Route path="users">
+            <Route index element={<PlatformAdminRoute><UsersPage /></PlatformAdminRoute>} />
+            <Route path="new" element={<PlatformAdminRoute><CreateUserPage /></PlatformAdminRoute>} />
+            <Route path=":userId/edit" element={<PlatformAdminRoute><EditUserPage /></PlatformAdminRoute>} />
+          </Route>
           <Route path="no-community" element={<NoCommunityPage />} />
         </Route>
         <Route element={<DynamicLayout />}>

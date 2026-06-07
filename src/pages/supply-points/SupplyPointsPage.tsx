@@ -4,6 +4,7 @@ import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
+import { useGetSuppliesByUserId, useGetUserById } from "../../api/users/users";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
@@ -13,7 +14,7 @@ import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips"
 import { CardGrid } from "../../components/CardGrid";
 import { LoadingCardGrid } from "../../components/CardGrid";
 import { EmptyState } from "../../components/EmptyState";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -27,7 +28,25 @@ export const SupplyPointsPage: FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllSupplies({ size: 10000 });
+  const [searchParams] = useSearchParams();
+  const personId = searchParams.get("personId");
+
+  const { data: allData, isLoading: isLoadingAll, error: errorAll, refetch: refetchAll } = useGetAllSupplies(
+    { size: 10000 },
+    { query: { enabled: !personId } },
+  );
+  const { data: userSupplies = [], isLoading: isLoadingUser, error: errorUser, refetch: refetchUser } =
+    useGetSuppliesByUserId(personId ?? "", { query: { enabled: !!personId } });
+  const { data: personData } = useGetUserById(personId ?? "", { query: { enabled: !!personId } });
+
+  const responseFromApi = useMemo<SupplyResponse[]>(
+    () => (personId ? userSupplies : (allData?.items ?? [])),
+    [personId, userSupplies, allData?.items],
+  );
+  const isLoading = personId ? isLoadingUser : isLoadingAll;
+  const error = personId ? errorUser : errorAll;
+  const refetch = personId ? refetchUser : refetchAll;
+
   const disableSupply = useDisableSupply();
   const enableSupply = useEnableSupply();
 
@@ -130,7 +149,8 @@ export const SupplyPointsPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Puntos de Suministro", href: "/supply-points" }
+            ...(personId ? [{ label: "Miembros", href: "/members" }] : []),
+            { label: "Puntos de Suministro", href: "/supply-points" },
           ]}
         />
       </Box>
@@ -140,7 +160,11 @@ export const SupplyPointsPage: FC = () => {
         <PageHeaderWithStats
           icon={ElectricMeterIcon}
           title="Puntos de Suministro"
-          subtitle="Gestiona los puntos de suministro de la comunidad energética"
+          subtitle={
+            personId
+              ? `Usuario: ${personData?.fullName ?? "..."}`
+              : "Gestiona los puntos de suministro de la comunidad energética"
+          }
           stats={[
             { value: stats.total, label: "Total" },
             { value: stats.active, label: "Activos", color: colors.success },
