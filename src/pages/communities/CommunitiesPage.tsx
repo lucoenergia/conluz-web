@@ -26,6 +26,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleIcon from "@mui/icons-material/People";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
@@ -33,6 +34,7 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { PageHeaderWithStats } from "../../components/PageHeader";
 import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
+import { ManageAdminsDialog } from "./ManageAdminsDialog";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
 
@@ -65,6 +67,7 @@ export const CommunitiesPage: FC = () => {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCommunity, setSelectedCommunity] = useState<CommunityResponse | null>(null);
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
 
   const totalActive = communities.filter((c) => c.enabled).length;
   const totalInactive = communities.filter((c) => !c.enabled).length;
@@ -83,6 +86,11 @@ export const CommunitiesPage: FC = () => {
     if (selectedCommunity?.id) {
       navigate(`/communities/${selectedCommunity.id}/edit`);
     }
+  };
+
+  const handleManageAdminsClick = () => {
+    handleMenuClose();
+    setAdminDialogOpen(true);
   };
 
   return (
@@ -310,7 +318,19 @@ export const CommunitiesPage: FC = () => {
           </ListItemIcon>
           <ListItemText>Editar</ListItemText>
         </MenuItem>
+        <MenuItem onClick={handleManageAdminsClick}>
+          <ListItemIcon>
+            <AdminPanelSettingsIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Gestionar administradores</ListItemText>
+        </MenuItem>
       </Menu>
+
+      <ManageAdminsDialog
+        community={selectedCommunity}
+        open={adminDialogOpen}
+        onClose={() => setAdminDialogOpen(false)}
+      />
     </Box>
   );
 };
