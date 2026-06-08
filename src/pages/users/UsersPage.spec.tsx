@@ -9,8 +9,32 @@ const mockDisableMutate = vi.fn();
 const mockEnableMutate = vi.fn();
 
 const MOCK_USERS = [
-  { id: "u1", fullName: "Ana García", personalId: "11111111A", email: "ana@example.com", phoneNumber: "600000001", enabled: true, role: "PARTNER" },
-  { id: "u2", fullName: "Bruno Leal", personalId: "22222222B", email: "bruno@example.com", phoneNumber: "600000002", enabled: false, role: "PARTNER" },
+  {
+    id: "u1",
+    fullName: "Ana García",
+    personalId: "11111111A",
+    email: "ana@example.com",
+    phoneNumber: "600000001",
+    enabled: true,
+    role: "PARTNER",
+    memberships: { "c1": "COMMUNITY_ADMIN", "c2": "COMMUNITY_MEMBER", "c3": "COMMUNITY_MEMBER" },
+  },
+  {
+    id: "u2",
+    fullName: "Bruno Leal",
+    personalId: "22222222B",
+    email: "bruno@example.com",
+    phoneNumber: "600000002",
+    enabled: false,
+    role: "PARTNER",
+    memberships: {},
+  },
+];
+
+const MOCK_COMMUNITIES = [
+  { id: "c1", name: "Sol Común", code: "SOL", enabled: true },
+  { id: "c2", name: "Verde Activa", code: "VRD", enabled: true },
+  { id: "c3", name: "Energía Norte", code: "NOR", enabled: true },
 ];
 
 vi.mock("react-router", async () => {
@@ -22,6 +46,10 @@ vi.mock("../../api/users/users", () => ({
   useGetAllUsers: () => ({ data: { items: MOCK_USERS }, isLoading: false, error: null, refetch: vi.fn() }),
   useDisableUser1: () => ({ mutateAsync: mockDisableMutate }),
   useDisableUser: () => ({ mutateAsync: mockEnableMutate }),
+}));
+
+vi.mock("../../api/communities/communities", () => ({
+  useGetAllCommunities: () => ({ data: MOCK_COMMUNITIES }),
 }));
 
 vi.mock("../../context/error.context", () => ({
@@ -182,5 +210,34 @@ describe("UsersPage", () => {
     await user.click(screen.getByText("Reestablecer contraseña"));
 
     expect(screen.getByText("Reset password modal")).toBeInTheDocument();
+  });
+
+  it("shows Comunidades column header", () => {
+    setup();
+    expect(screen.getByText("Comunidades")).toBeInTheDocument();
+  });
+
+  it("shows community membership chips for Ana (first 2 + overflow)", () => {
+    setup();
+    // Ana has 3 memberships: c1 (admin), c2 (member), c3 (member) — shows 2 chips + +1
+    expect(screen.getByText(/Sol Común · Adm/)).toBeInTheDocument();
+    expect(screen.getByText(/Verde Activa · Mbr/)).toBeInTheDocument();
+    expect(screen.getByText("+1")).toBeInTheDocument();
+  });
+
+  it("shows dash for Bruno who has no memberships", () => {
+    setup();
+    // There should be a — for Bruno (no memberships)
+    const dashes = screen.getAllByText("—");
+    expect(dashes.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("Comunidades column is read-only — no assign/edit buttons in that column", () => {
+    setup();
+    // No buttons or links inside the communities cell — just chips
+    const communityChips = screen.getAllByText(/· Adm|· Mbr/);
+    communityChips.forEach((chip) => {
+      expect(chip.closest("button")).toBeNull();
+    });
   });
 });

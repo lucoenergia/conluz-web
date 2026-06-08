@@ -42,6 +42,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import { useGetAllUsers, useDisableUser1, useDisableUser } from "../../api/users/users";
+import { useGetAllCommunities } from "../../api/communities/communities";
+import type { CommunityResponse } from "../../api/models";
 import { useDebounce } from "../../utils/useDebounce";
 import { DisablePartnerConfirmationModal } from "../../components/Modals/DisablePartnerConfirmationModal";
 import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
@@ -51,6 +53,53 @@ import { useErrorDispatch } from "../../context/error.context";
 
 type OrderDirection = "asc" | "desc";
 type OrderBy = "fullName" | "personalId";
+
+const MAX_COMMUNITY_CHIPS = 2;
+
+function UserCommunitiesCell({
+  memberships,
+  communities,
+}: {
+  memberships?: Record<string, string>;
+  communities: CommunityResponse[];
+}) {
+  if (!memberships) {
+    return <Typography variant="body2" sx={{ color: colors.text.subtle }}>—</Typography>;
+  }
+  const entries = Object.entries(memberships);
+  if (entries.length === 0) {
+    return <Typography variant="body2" sx={{ color: colors.text.subtle }}>—</Typography>;
+  }
+  const shown = entries.slice(0, MAX_COMMUNITY_CHIPS);
+  const overflow = entries.length - MAX_COMMUNITY_CHIPS;
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+      {shown.map(([communityId, role]) => {
+        const community = communities.find((c) => c.id === communityId);
+        const label = community?.name ?? communityId.slice(0, 8);
+        const isAdmin = role === "COMMUNITY_ADMIN";
+        return (
+          <Chip
+            key={communityId}
+            label={`${label} · ${isAdmin ? "Adm" : "Mbr"}`}
+            size="small"
+            color={isAdmin ? "primary" : "default"}
+            variant="outlined"
+            sx={{ fontSize: fontSizes.xs }}
+          />
+        );
+      })}
+      {overflow > 0 && (
+        <Chip
+          label={`+${overflow}`}
+          size="small"
+          variant="outlined"
+          sx={{ fontSize: fontSizes.xs, color: colors.text.subtle }}
+        />
+      )}
+    </Box>
+  );
+}
 
 interface FilterState {
   search: string;
@@ -81,6 +130,7 @@ export const UsersPage: FC = () => {
   const enableUserMutation = useDisableUser();
 
   const { data, isLoading, error, refetch } = useGetAllUsers({ size: 10000 });
+  const { data: communitiesList = [] } = useGetAllCommunities();
 
   const { filteredUsers, paginatedUsers } = useMemo(() => {
     if (!data?.items) return { filteredUsers: [], paginatedUsers: [] };
@@ -362,6 +412,11 @@ export const UsersPage: FC = () => {
                           Estado
                         </Typography>
                       </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                          Comunidades
+                        </Typography>
+                      </TableCell>
                       <TableCell align="center">
                         <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                           Acciones
@@ -372,13 +427,13 @@ export const UsersPage: FC = () => {
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                           <CircularProgress />
                         </TableCell>
                       </TableRow>
                     ) : paginatedUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                           <Typography variant="body1" color="text.secondary">
                             No se encontraron usuarios
                           </Typography>
@@ -436,6 +491,12 @@ export const UsersPage: FC = () => {
                               color={user.enabled ? "success" : "error"}
                               size="small"
                               sx={{ fontWeight: 600 }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ maxWidth: 220 }}>
+                            <UserCommunitiesCell
+                              memberships={user.memberships as Record<string, string> | undefined}
+                              communities={communitiesList}
                             />
                           </TableCell>
                           <TableCell align="center">
