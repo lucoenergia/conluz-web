@@ -70,12 +70,13 @@ function UserCommunitiesCell({
   if (entries.length === 0) {
     return <Typography variant="body2" sx={{ color: colors.text.subtle }}>—</Typography>;
   }
+  const safeList = Array.isArray(communities) ? communities : [];
   const shown = entries.slice(0, MAX_COMMUNITY_CHIPS);
   const overflow = entries.length - MAX_COMMUNITY_CHIPS;
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
       {shown.map(([communityId, role]) => {
-        const community = communities.find((c) => c.id === communityId);
+        const community = safeList.find((c) => c.id === communityId);
         const label = community?.name ?? communityId.slice(0, 8);
         const isAdmin = role === "COMMUNITY_ADMIN";
         return (
