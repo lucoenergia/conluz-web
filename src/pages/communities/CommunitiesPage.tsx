@@ -1,7 +1,6 @@
 import { useState, type FC } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -16,30 +15,24 @@ import {
   CircularProgress,
   Alert,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   IconButton,
-  Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleIcon from "@mui/icons-material/People";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { PageHeaderWithStats } from "../../components/PageHeader";
-import {
-  useGetAllCommunities,
-  useUpdateCommunity,
-  getGetAllCommunitiesQueryKey,
-} from "../../api/communities/communities";
-import type { CommunityResponse, UpdateCommunityBody } from "../../api/models";
-import { useErrorDispatch } from "../../context/error.context";
+import { useGetAllCommunities } from "../../api/communities/communities";
+import type { CommunityResponse } from "../../api/models";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
 
@@ -65,119 +58,31 @@ function AdminNamesCell({ adminNames }: { adminNames?: string[] }) {
   );
 }
 
-interface EditDialogProps {
-  community: CommunityResponse;
-  onClose: () => void;
-  onSaved: () => void;
-}
-
-const EditCommunityDialog: FC<EditDialogProps> = ({ community, onClose, onSaved }) => {
-  const errorDispatch = useErrorDispatch();
-  const updateCommunity = useUpdateCommunity();
-
-  const [name, setName] = useState(community.name ?? "");
-  const [code, setCode] = useState(community.code ?? "");
-  const [legalId, setLegalId] = useState(community.legalId ?? "");
-  const [address, setAddress] = useState(community.address ?? "");
-  const [nameError, setNameError] = useState("");
-  const [codeError, setCodeError] = useState("");
-
-  const validate = () => {
-    let valid = true;
-    if (!name.trim()) {
-      setNameError("El nombre es obligatorio");
-      valid = false;
-    } else {
-      setNameError("");
-    }
-    if (!code.trim()) {
-      setCodeError("El código es obligatorio");
-      valid = false;
-    } else {
-      setCodeError("");
-    }
-    return valid;
-  };
-
-  const handleSubmit = async () => {
-    if (!validate() || !community.id) return;
-    try {
-      await updateCommunity.mutateAsync({
-        id: community.id,
-        data: {
-          name: name.trim(),
-          code: code.trim(),
-          legalId: legalId.trim() || undefined,
-          address: address.trim() || undefined,
-        } as UpdateCommunityBody,
-      });
-      onSaved();
-    } catch {
-      errorDispatch("Error al actualizar la comunidad. Por favor, inténtalo de nuevo.");
-    }
-  };
-
-  return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Editar comunidad</DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
-        <TextField
-          label="Nombre *"
-          fullWidth
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          error={!!nameError}
-          helperText={nameError}
-        />
-        <TextField
-          label="Código *"
-          fullWidth
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          error={!!codeError}
-          helperText={codeError || "Identificador corto único para la comunidad"}
-        />
-        <TextField
-          label="NIF/CIF"
-          fullWidth
-          value={legalId}
-          onChange={(e) => setLegalId(e.target.value)}
-        />
-        <TextField
-          label="Dirección"
-          fullWidth
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={updateCommunity.isPending}>
-          Cancelar
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={updateCommunity.isPending}
-        >
-          {updateCommunity.isPending ? "Guardando..." : "Guardar cambios"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
 export const CommunitiesPage: FC = () => {
   const theme = useTheme();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: communities = [], isLoading, error } = useGetAllCommunities();
-  const [editingCommunity, setEditingCommunity] = useState<CommunityResponse | null>(null);
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedCommunity, setSelectedCommunity] = useState<CommunityResponse | null>(null);
 
   const totalActive = communities.filter((c) => c.enabled).length;
   const totalInactive = communities.filter((c) => !c.enabled).length;
 
-  const handleEditSaved = () => {
-    setEditingCommunity(null);
-    queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, community: CommunityResponse) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedCommunity(community);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleEditClick = () => {
+    handleMenuClose();
+    if (selectedCommunity?.id) {
+      navigate(`/communities/${selectedCommunity.id}/edit`);
+    }
   };
 
   return (
@@ -380,15 +285,13 @@ export const CommunitiesPage: FC = () => {
                           />
                         </TableCell>
                         <TableCell align="center">
-                          <Tooltip title="Editar comunidad">
-                            <IconButton
-                              size="small"
-                              onClick={() => setEditingCommunity(community)}
-                              sx={{ color: theme.palette.primary.main }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, community)}
+                            sx={{ color: colors.text.subtle }}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
                         </TableCell>
                       </TableRow>
                     ))
@@ -400,13 +303,14 @@ export const CommunitiesPage: FC = () => {
         </Paper>
       </Box>
 
-      {editingCommunity && (
-        <EditCommunityDialog
-          community={editingCommunity}
-          onClose={() => setEditingCommunity(null)}
-          onSaved={handleEditSaved}
-        />
-      )}
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem onClick={handleEditClick}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Editar</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

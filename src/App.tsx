@@ -20,6 +20,7 @@ import { PlantDetailPage } from "./pages/production/PlantDetailPage";
 import { IntegrationsPage } from "./pages/integrations/IntegrationsPage";
 import { CommunitiesPage } from "./pages/communities/CommunitiesPage";
 import { CreateCommunityPage } from "./pages/communities/CreateCommunityPage";
+import { EditCommunityPage } from "./pages/communities/EditCommunityPage";
 import { MembersPage } from "./pages/members/MembersPage";
 import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
 import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
@@ -76,6 +77,10 @@ function App() {
             <Route
               path="new"
               element={<PlatformAdminRoute><CreateCommunityPage /></PlatformAdminRoute>}
+            />
+            <Route
+              path=":communityId/edit"
+              element={<PlatformAdminRoute><EditCommunityPage /></PlatformAdminRoute>}
             />
           </Route>
           <Route

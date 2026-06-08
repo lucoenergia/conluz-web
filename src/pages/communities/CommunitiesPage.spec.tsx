@@ -1,10 +1,9 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
-const mockInvalidateQueries = vi.fn();
-const mockUpdateMutate = vi.fn().mockResolvedValue({});
+const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
 
 const MOCK_COMMUNITIES = [
@@ -34,21 +33,11 @@ const MOCK_COMMUNITIES = [
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
-  return { ...actual };
-});
-
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual("@tanstack/react-query");
-  return {
-    ...actual,
-    useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
-  };
+  return { ...actual, useNavigate: () => mockNavigate };
 });
 
 vi.mock("../../api/communities/communities", () => ({
   useGetAllCommunities: () => ({ data: MOCK_COMMUNITIES, isLoading: false, error: null }),
-  useUpdateCommunity: () => ({ mutateAsync: mockUpdateMutate, isPending: false }),
-  getGetAllCommunitiesQueryKey: () => ["/api/v1/communities"],
 }));
 
 vi.mock("../../context/error.context", () => ({
@@ -98,50 +87,23 @@ describe("CommunitiesPage", () => {
     expect(screen.getByText("4")).toBeInTheDocument();
   });
 
-  it("shows edit button per row", () => {
+  it("shows a MoreVert action button per row", () => {
     setup();
-    const editButtons = screen.getAllByRole("button", { name: "Editar comunidad" });
-    expect(editButtons).toHaveLength(2);
+    const iconButtons = screen.getAllByRole("button").filter((b) => b.textContent === "");
+    expect(iconButtons.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("opens edit dialog with community data when edit button clicked", async () => {
+  it("navigates to /communities/:id/edit when Editar is chosen from the menu", async () => {
     const user = userEvent.setup();
     setup();
 
-    const editButtons = screen.getAllByRole("button", { name: "Editar comunidad" });
-    await user.click(editButtons[0]);
+    const iconButtons = screen.getAllByRole("button").filter((b) => b.textContent === "");
+    await user.click(iconButtons[0]);
 
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByDisplayValue("Sol Común")).toBeInTheDocument();
-    expect(within(dialog).getByDisplayValue("SOL")).toBeInTheDocument();
-  });
+    await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
+    await user.click(screen.getByText("Editar"));
 
-  it("calls updateCommunity and invalidates list on save", async () => {
-    const user = userEvent.setup();
-    setup();
-
-    const editButtons = screen.getAllByRole("button", { name: "Editar comunidad" });
-    await user.click(editButtons[0]);
-
-    await waitFor(() => screen.getByRole("dialog"));
-    const dialog = screen.getByRole("dialog");
-
-    const nameInput = within(dialog).getByDisplayValue("Sol Común");
-    await user.clear(nameInput);
-    await user.type(nameInput, "Sol Común Editada");
-
-    await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
-
-    await waitFor(() =>
-      expect(mockUpdateMutate).toHaveBeenCalledWith({
-        id: "c1",
-        data: expect.objectContaining({ name: "Sol Común Editada" }),
-      }),
-    );
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["/api/v1/communities"],
-    });
+    expect(mockNavigate).toHaveBeenCalledWith("/communities/c1/edit");
   });
 
   it("shows status chips Activa / Inactiva", () => {
