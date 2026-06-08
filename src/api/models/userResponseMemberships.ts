@@ -6,7 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-/**
- * Map of communityId (UUID string) to the user's role in that community
- */
-export type UserResponseMemberships = {[key: string]: 'COMMUNITY_MEMBER' | 'COMMUNITY_ADMIN'};
+export type UserResponseMemberships = {[key: string]: string};

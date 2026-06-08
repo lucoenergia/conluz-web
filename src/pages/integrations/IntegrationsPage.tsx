@@ -9,11 +9,13 @@ import { useConfigureShelly } from "../../api/consumption/consumption";
 import { useGetDatadisConfig } from "../../api/consumption/consumption";
 import { useGetHuaweiConfig } from "../../api/production/production";
 import { useGetShellyConfig } from "../../api/consumption/consumption";
+import { useGetAllPlants } from "../../api/plants/plants";
 import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
 import type { ConfigureDatadisBody, ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
 import { colors, alphas } from "../../theme/tokens";
+import { useActiveCommunity } from "../../context/community.context";
 
 interface IntegrationState {
   datadis: { enabled: boolean; username: string; password: string; baseUrl: string };
@@ -57,6 +59,8 @@ const PROVIDERS = [
 const ACCENT = colors.brand.main;
 
 export const IntegrationsPage: FC = () => {
+  const activeCommunityId = useActiveCommunity();
+
   const [state, setState] = useState<IntegrationState>({
     datadis: { enabled: false, username: "", password: "", baseUrl: "" },
     huawei: { enabled: false, username: "", password: "", baseUrl: "" },
@@ -67,9 +71,21 @@ export const IntegrationsPage: FC = () => {
   const [snack, setSnack] = useState<string | null>(null);
   const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
 
-  const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig();
-  const { data: datadisConfig, isLoading: datadisLoading } = useGetDatadisConfig();
-  const { data: huaweiConfig, isLoading: huaweiLoading } = useGetHuaweiConfig();
+  const { data: plantsData } = useGetAllPlants({ size: 1 });
+  const firstPlantId = plantsData?.items?.[0]?.id ?? "";
+
+  const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig(
+    activeCommunityId ?? "",
+    { query: { enabled: !!activeCommunityId } },
+  );
+  const { data: datadisConfig, isLoading: datadisLoading } = useGetDatadisConfig(
+    activeCommunityId ?? "",
+    { query: { enabled: !!activeCommunityId } },
+  );
+  const { data: huaweiConfig, isLoading: huaweiLoading } = useGetHuaweiConfig(
+    firstPlantId,
+    { query: { enabled: !!firstPlantId } },
+  );
 
   const configureDatadis = useConfigureDatadis();
   const configureHuawei = useConfigureHuawei();
@@ -133,6 +149,7 @@ export const IntegrationsPage: FC = () => {
         if (id === "datadis") {
           const val = state.datadis;
           await configureDatadis.mutateAsync({
+            communityId: activeCommunityId ?? "",
             data: {
               enabled: val.enabled,
               username: val.username,
@@ -144,6 +161,7 @@ export const IntegrationsPage: FC = () => {
         } else if (id === "huawei") {
           const val = state.huawei;
           await configureHuawei.mutateAsync({
+            plantId: firstPlantId,
             data: {
               enabled: val.enabled,
               username: val.username,
@@ -155,6 +173,7 @@ export const IntegrationsPage: FC = () => {
         } else if (id === "shelly") {
           const val = state.shelly;
           await configureShelly.mutateAsync({
+            communityId: activeCommunityId ?? "",
             data: { enabled: val.enabled } as ConfigureShellyBody,
           });
           setSnack("Shelly Cloud guardado correctamente");
@@ -166,7 +185,7 @@ export const IntegrationsPage: FC = () => {
         setSaving((prev) => ({ ...prev, [id]: false }));
       }
     },
-    [state, configureDatadis, configureHuawei, configureShelly],
+    [state, activeCommunityId, firstPlantId, configureDatadis, configureHuawei, configureShelly],
   );
 
   const activeCount = Object.values(state).filter((v) => v.enabled).length;

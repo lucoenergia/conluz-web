@@ -44,7 +44,7 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
- * This endpoint returns the current Huawei FusionSolar API configuration.
+ * This endpoint returns the Huawei FusionSolar API configuration for a specific plant.
 
 The password is never returned in the response. Instead, a boolean field
 `passwordSet` indicates whether a password has been configured.
@@ -55,42 +55,42 @@ Authentication is mandated, utilizing an authentication token, to ensure secure 
 Upon successful request, the server responds with an HTTP status code of 200, along with
 the current configuration. If no configuration has been set yet, a 404 is returned.
 
- * @summary Returns the current Huawei configuration.
+ * @summary Returns the current Huawei configuration for a plant.
  */
 export const getHuaweiConfig = (
-    
+    plantId: string,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/production/huawei/config`, method: 'GET', signal
+      {url: `/api/v1/production/huawei/config/${plantId}`, method: 'GET', signal
     },
       );
     }
   
 
-export const getGetHuaweiConfigQueryKey = () => {
-    return [`/api/v1/production/huawei/config`] as const;
+export const getGetHuaweiConfigQueryKey = (plantId: string,) => {
+    return [`/api/v1/production/huawei/config/${plantId}`] as const;
     }
 
     
-export const getGetHuaweiConfigQueryOptions = <TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
+export const getGetHuaweiConfigQueryOptions = <TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetHuaweiConfigQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetHuaweiConfigQueryKey(plantId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHuaweiConfig>>> = ({ signal }) => getHuaweiConfig(signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHuaweiConfig>>> = ({ signal }) => getHuaweiConfig(plantId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(plantId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetHuaweiConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getHuaweiConfig>>>
@@ -98,7 +98,7 @@ export type GetHuaweiConfigQueryError = ErrorType<unknown>
 
 
 export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
+ plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHuaweiConfig>>,
           TError,
@@ -108,7 +108,7 @@ export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiCo
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHuaweiConfig>>,
           TError,
@@ -118,19 +118,19 @@ export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiCo
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Returns the current Huawei configuration.
+ * @summary Returns the current Huawei configuration for a plant.
  */
 
 export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetHuaweiConfigQueryOptions(options)
+  const queryOptions = getGetHuaweiConfigQueryOptions(plantId,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -172,12 +172,13 @@ status code, accompanied by a descriptive error message to guide clients in addr
  * @summary Sets up the configuration to be able to connect with Huawei.
  */
 export const configureHuawei = (
+    plantId: string,
     configureHuaweiBody: ConfigureHuaweiBody,
  ) => {
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/production/huawei/config`, method: 'PUT',
+      {url: `/api/v1/production/huawei/config/${plantId}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: configureHuaweiBody
     },
@@ -187,8 +188,8 @@ export const configureHuawei = (
 
 
 export const getConfigureHuaweiMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{plantId: string;data: ConfigureHuaweiBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{plantId: string;data: ConfigureHuaweiBody}, TContext> => {
 
 const mutationKey = ['configureHuawei'];
 const {mutation: mutationOptions} = options ?
@@ -200,10 +201,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureHuawei>>, {data: ConfigureHuaweiBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureHuawei>>, {plantId: string;data: ConfigureHuaweiBody}> = (props) => {
+          const {plantId,data} = props ?? {};
 
-          return  configureHuawei(data,)
+          return  configureHuawei(plantId,data,)
         }
 
         
@@ -219,11 +220,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Sets up the configuration to be able to connect with Huawei.
  */
 export const useConfigureHuawei = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{data: ConfigureHuaweiBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{plantId: string;data: ConfigureHuaweiBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureHuawei>>,
         TError,
-        {data: ConfigureHuaweiBody},
+        {plantId: string;data: ConfigureHuaweiBody},
         TContext
       > => {
 

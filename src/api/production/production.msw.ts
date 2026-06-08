@@ -33,7 +33,7 @@ export const getGetDailyProductionResponseMock = (): ProductionByTime[] => (Arra
 
 
 export const getGetHuaweiConfigMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.get('*/api/v1/production/huawei/config', async (info) => {await delay(1000);
+  return http.get('*/api/v1/production/huawei/config/:plantId', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -43,7 +43,7 @@ export const getGetHuaweiConfigMockHandler = (overrideResponse?: unknown | ((inf
 }
 
 export const getConfigureHuaweiMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.put('*/api/v1/production/huawei/config', async (info) => {await delay(1000);
+  return http.put('*/api/v1/production/huawei/config/:plantId', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,

@@ -6,6 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { UserResponse } from './userResponse';
+import type { SupplyContractResponse } from './supplyContractResponse';
+import type { SupplyDistributorResponse } from './supplyDistributorResponse';
+import type { SupplyDatadisResponse } from './supplyDatadisResponse';
+import type { SupplyShellyResponse } from './supplyShellyResponse';
 
 export interface SupplyResponse {
   /** Internal unique identifier of the supply */
@@ -24,20 +28,12 @@ export interface SupplyResponse {
   partitionCoefficient?: number;
   /** Whether the supply is enabled or disabled */
   enabled?: boolean;
-  /** Date on which the supply point was registered as valid */
-  datadisValidDateFrom?: string;
-  /** Name of the distribution company */
-  datadisDistributor?: string;
-  /** Code of the distribution company */
-  datadisDistributorCode?: string;
-  /** Type of measurement point */
-  datadisPointType?: number;
-  /** Whether is an authorized third parth supply or not */
-  datadisIsThirdParty?: boolean;
-  /** MAC address of the Shelly */
-  shellyMac?: string;
-  /** Unique identifier of the Shelly */
-  shellyId?: string;
-  /** MQTT prefix for the Shelly */
-  shellyMqttPrefix?: string;
+  /** Contract information of the supply */
+  contract?: SupplyContractResponse;
+  /** Distributor information of the supply */
+  distributor?: SupplyDistributorResponse;
+  /** Datadis integration information of the supply */
+  datadis?: SupplyDatadisResponse;
+  /** Shelly device information of the supply */
+  shelly?: SupplyShellyResponse;
 }

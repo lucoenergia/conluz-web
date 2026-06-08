@@ -6,13 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface UpdateSupplyBody {
-  /** @minLength 1 */
-  code: string;
-  name?: string;
-  /** @minLength 1 */
-  address: string;
-  /** @minLength 1 */
-  addressRef: string;
-  partitionCoefficient?: number;
+export interface CoefficientAtTimestampResponse {
+  /** Supply UUID */
+  supplyId?: string;
+  /** Queried timestamp */
+  timestamp?: string;
+  /** Coefficient active at the queried timestamp */
+  coefficient?: number;
 }

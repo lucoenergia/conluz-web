@@ -13,4 +13,5 @@ export interface SyncYearlyDatadisConsumptionsBody {
    */
   year: number;
   supplyCode?: string;
+  communityId?: string;
 }

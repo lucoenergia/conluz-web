@@ -6,13 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface UpdateSupplyBody {
-  /** @minLength 1 */
-  code: string;
-  name?: string;
-  /** @minLength 1 */
-  address: string;
-  /** @minLength 1 */
-  addressRef: string;
-  partitionCoefficient?: number;
-}
+export type ImportPartitionCoefficientsWithFileParams = {
+/**
+ * ISO-8601 instant from which the new coefficients are effective.
+ */
+effectiveAt: string;
+/**
+ * Target community UUID.
+ */
+communityId?: string;
+};

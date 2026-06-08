@@ -6,13 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface UpdateSupplyBody {
-  /** @minLength 1 */
-  code: string;
+export interface SupplyDistributorResponse {
+  /** Name of the distribution company */
   name?: string;
-  /** @minLength 1 */
-  address: string;
-  /** @minLength 1 */
-  addressRef: string;
-  partitionCoefficient?: number;
+  /** Code of the distribution company */
+  code?: string;
+  /** Type of measurement point */
+  pointType?: number;
 }

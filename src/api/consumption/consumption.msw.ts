@@ -15,22 +15,33 @@ import {
   http
 } from 'msw';
 
+import type {
+  GetDatadisConfigResponse,
+  GetShellyConfigResponse
+} from '.././models';
+
+
+export const getGetShellyConfigResponseMock = (overrideResponse: Partial< GetShellyConfigResponse > = {}): GetShellyConfigResponse => ({enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
+
+export const getGetDatadisConfigResponseMock = (overrideResponse: Partial< GetDatadisConfigResponse > = {}): GetDatadisConfigResponse => ({username: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), passwordSet: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), baseUrl: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
 
 export const getGetDatadisConsumptionHourlyCsvReportResponseMock = (): string => (faker.word.sample())
 
 
-export const getGetShellyConfigMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.get('*/api/v1/consumption/shelly/config', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+export const getGetShellyConfigMockHandler = (overrideResponse?: GetShellyConfigResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<GetShellyConfigResponse> | GetShellyConfigResponse)) => {
+  return http.get('*/api/v1/communities/:communityId/config/shelly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetShellyConfigResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
 
 export const getConfigureShellyMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.put('*/api/v1/consumption/shelly/config', async (info) => {await delay(1000);
+  return http.put('*/api/v1/communities/:communityId/config/shelly', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -39,18 +50,20 @@ export const getConfigureShellyMockHandler = (overrideResponse?: unknown | ((inf
   })
 }
 
-export const getGetDatadisConfigMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.get('*/api/v1/consumption/datadis/config', async (info) => {await delay(1000);
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-    return new HttpResponse(null,
+export const getGetDatadisConfigMockHandler = (overrideResponse?: GetDatadisConfigResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<GetDatadisConfigResponse> | GetDatadisConfigResponse)) => {
+  return http.get('*/api/v1/communities/:communityId/config/datadis', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetDatadisConfigResponseMock()),
       { status: 200,
-        
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
 
 export const getConfigureDatadisMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.put('*/api/v1/consumption/datadis/config', async (info) => {await delay(1000);
+  return http.put('*/api/v1/communities/:communityId/config/datadis', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,

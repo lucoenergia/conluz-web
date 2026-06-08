@@ -10,4 +10,5 @@ export interface SharingAgreementResponse {
   id?: string;
   startDate?: string;
   endDate?: string;
+  communityId?: string;
 }

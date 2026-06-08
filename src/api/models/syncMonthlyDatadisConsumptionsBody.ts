@@ -18,4 +18,5 @@ export interface SyncMonthlyDatadisConsumptionsBody {
    */
   month?: number;
   supplyCode?: string;
+  communityId?: string;
 }

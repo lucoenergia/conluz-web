@@ -6,13 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface UpdateSupplyBody {
+export interface UpdateCommunityBody {
+  /** @minLength 1 */
+  name: string;
   /** @minLength 1 */
   code: string;
-  name?: string;
-  /** @minLength 1 */
-  address: string;
-  /** @minLength 1 */
-  addressRef: string;
-  partitionCoefficient?: number;
+  legalId?: string;
+  address?: string;
 }

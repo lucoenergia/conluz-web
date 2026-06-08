@@ -18,4 +18,5 @@ export interface SyncMonthlyHuaweiProductionBody {
    */
   month?: number;
   plantCode?: string;
+  communityId?: string;
 }
