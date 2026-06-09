@@ -92,6 +92,27 @@ When working with API endpoints:
 3. Handle loading/error states using React Query's built-in states
 4. Mutations automatically invalidate related queries
 
+### Table Row Actions Pattern
+
+**All data tables must use a three-dot kebab menu for row actions.** Never place action buttons or interactive controls (selects, toggles) inline in table rows.
+
+Canonical reference: `src/pages/users/UsersPage.tsx`
+
+**Required structure:**
+1. State: `anchorEl: HTMLElement | null` + `selectedItem` typed to the row's data model.
+2. Handlers: `handleMenuOpen(event, item)` / `handleMenuClose()`.
+3. Actions cell: a single `IconButton` with `MoreVertIcon`; no visible labels.
+4. `<Menu>` placed outside the table (after the Paper), with `PaperProps` arrow styling matching UsersPage.
+5. Destructive items (delete) go below a `<Divider>` with `color: "error.main"`.
+
+**For actions that change server state** (role change, status toggle, etc.) the menu item must open a confirmation `<Dialog>` that:
+- Names the affected entity.
+- Shows the new value via a controlled select or clear text.
+- Includes an `<Alert severity="info">` explaining consequences.
+- Disables the confirm button while the mutation is pending or when the new value equals the current value.
+
+**Never** show a `<Select>` or any mutable control directly inside a table row — it bypasses the confirmation step and is visually inconsistent.
+
 ### Form Handling
 Forms use controlled components with Material-UI inputs. Supply forms (`SupplyForm`) serve as the primary reference for complex form patterns.
 

@@ -1,6 +1,7 @@
 import { useState, type FC } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "@mui/material/styles";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -24,15 +25,19 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   IconButton,
-  Tooltip,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -43,15 +48,22 @@ import {
   useCreateMembership,
   useDeleteMembership,
   useUpdateMembershipRole,
+  getGetMembershipsQueryKey,
 } from "../../api/memberships/memberships";
+import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
 import { useGetAllUsers } from "../../api/users/users";
-import { CommunityRole } from "../../api/models";
+import {
+  type MembershipResponse,
+  CreateMembershipBodyRole,
+  MembershipResponseRole,
+  UpdateMembershipRoleBodyRole,
+} from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 
 const ROLE_LABELS: Record<string, string> = {
-  [CommunityRole.COMMUNITY_MEMBER]: "Miembro",
-  [CommunityRole.COMMUNITY_ADMIN]: "Administrador",
+  [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
+  [MembershipResponseRole.COMMUNITY_ADMIN]: "Administrador",
 };
 
 export const MembersPage: FC = () => {
@@ -59,17 +71,22 @@ export const MembersPage: FC = () => {
   const navigate = useNavigate();
   const activeCommunityId = useActiveCommunity();
   const errorDispatch = useErrorDispatch();
+  const queryClient = useQueryClient();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>(CommunityRole.COMMUNITY_MEMBER);
+  const [selectedRole, setSelectedRole] = useState<string>(CreateMembershipBodyRole.COMMUNITY_MEMBER);
+  const [removeConfirmUserId, setRemoveConfirmUserId] = useState<string | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedMembership, setSelectedMembership] = useState<MembershipResponse | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [pendingRole, setPendingRole] = useState<string>("");
 
   const {
     data: memberships = [],
     isLoading,
     error,
-    refetch,
   } = useGetMemberships(activeCommunityId ?? "", {
     query: { enabled: !!activeCommunityId },
   });
@@ -79,6 +96,11 @@ export const MembersPage: FC = () => {
   const createMembership = useCreateMembership();
   const deleteMembership = useDeleteMembership();
   const updateRole = useUpdateMembershipRole();
+
+  const invalidateAfterWrite = () => {
+    queryClient.invalidateQueries({ queryKey: getGetMembershipsQueryKey(activeCommunityId ?? "") });
+    queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
+  };
 
   if (!activeCommunityId) {
     return (
@@ -95,12 +117,12 @@ export const MembersPage: FC = () => {
     try {
       await createMembership.mutateAsync({
         id: activeCommunityId,
-        data: { userId: selectedUserId, role: selectedRole as CommunityRole },
+        data: { userId: selectedUserId, role: selectedRole as CreateMembershipBodyRole },
       });
       setAddDialogOpen(false);
       setSelectedUserId("");
-      setSelectedRole(CommunityRole.COMMUNITY_MEMBER);
-      refetch();
+      setSelectedRole(CreateMembershipBodyRole.COMMUNITY_MEMBER);
+      invalidateAfterWrite();
     } catch {
       errorDispatch("Error al añadir el miembro. Por favor, inténtalo de nuevo.");
     }
@@ -110,7 +132,8 @@ export const MembersPage: FC = () => {
     if (!activeCommunityId) return;
     try {
       await deleteMembership.mutateAsync({ id: activeCommunityId, userId });
-      refetch();
+      setRemoveConfirmUserId(null);
+      invalidateAfterWrite();
     } catch {
       errorDispatch("Error al eliminar el miembro. Por favor, inténtalo de nuevo.");
     }
@@ -122,19 +145,42 @@ export const MembersPage: FC = () => {
       await updateRole.mutateAsync({
         id: activeCommunityId,
         userId,
-        data: { role: newRole as CommunityRole },
+        data: { role: newRole as UpdateMembershipRoleBodyRole },
       });
-      refetch();
+      invalidateAfterWrite();
     } catch {
       errorDispatch("Error al actualizar el rol. Por favor, inténtalo de nuevo.");
     }
   };
 
-  const existingUserIds = new Set(memberships.map((m) => m.userId));
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, membership: MembershipResponse) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedMembership(membership);
+  };
+
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleChangeRoleClick = () => {
+    handleMenuClose();
+    setPendingRole(selectedMembership?.role ?? MembershipResponseRole.COMMUNITY_MEMBER);
+    setRoleDialogOpen(true);
+  };
+
+  const handleRoleDialogConfirm = async () => {
+    if (!selectedMembership?.user?.id) return;
+    await handleRoleChange(selectedMembership.user.id, pendingRole);
+    setRoleDialogOpen(false);
+  };
+
+  const existingUserIds = new Set(memberships.map((m) => m.user?.id).filter(Boolean));
   const availableUsers = allUsersData?.items?.filter((u) => u.id && !existingUserIds.has(u.id)) ?? [];
 
   const activeCount = memberships.filter((m) => m.enabled).length;
-  const adminCount = memberships.filter((m) => m.role === CommunityRole.COMMUNITY_ADMIN).length;
+  const adminCount = memberships.filter((m) => m.role === MembershipResponseRole.COMMUNITY_ADMIN).length;
+
+  const removeTarget = removeConfirmUserId
+    ? memberships.find((m) => m.user?.id === removeConfirmUserId)
+    : null;
 
   return (
     <Box
@@ -177,7 +223,7 @@ export const MembersPage: FC = () => {
               onClick={() => setShowImportModal(true)}
               sx={{ px: 3, py: 1.5 }}
             >
-              Importar usuarios
+              Importar miembros
             </Button>
             <Button
               variant="contained"
@@ -249,88 +295,64 @@ export const MembersPage: FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    memberships.map((membership) => {
-                      const user = allUsersData?.items?.find((u) => u.id === membership.userId);
-                      return (
-                        <TableRow
-                          key={membership.id}
-                          sx={{
-                            "&:hover": { backgroundColor: colors.background.surface },
-                            transition: "background-color 0.2s",
-                          }}
-                        >
-                          <TableCell>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                              <Avatar
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  bgcolor: theme.palette.primary.main,
-                                  fontSize: fontSizes.md,
-                                }}
-                              >
-                                {(user?.fullName ?? "?").charAt(0).toUpperCase()}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                  {user?.fullName ?? membership.userId}
-                                </Typography>
-                                <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                                  {user?.email ?? ""}
-                                </Typography>
-                              </Box>
+                    memberships.map((membership) => (
+                      <TableRow
+                        key={membership.id}
+                        sx={{
+                          "&:hover": { backgroundColor: colors.background.surface },
+                          transition: "background-color 0.2s",
+                        }}
+                      >
+                        <TableCell>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            <Avatar
+                              sx={{
+                                width: 36,
+                                height: 36,
+                                bgcolor: theme.palette.primary.main,
+                                fontSize: fontSizes.md,
+                              }}
+                            >
+                              {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {membership.user?.fullName ?? "Usuario desconocido"}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: colors.text.subtle }}>
+                                {membership.user?.email ?? ""}
+                              </Typography>
                             </Box>
-                          </TableCell>
-                          <TableCell>
-                            <FormControl size="small" sx={{ minWidth: 140 }}>
-                              <Select
-                                value={membership.role ?? CommunityRole.COMMUNITY_MEMBER}
-                                onChange={(e) =>
-                                  handleRoleChange(membership.userId!, e.target.value)
-                                }
-                              >
-                                <MenuItem value={CommunityRole.COMMUNITY_MEMBER}>
-                                  {ROLE_LABELS[CommunityRole.COMMUNITY_MEMBER]}
-                                </MenuItem>
-                                <MenuItem value={CommunityRole.COMMUNITY_ADMIN}>
-                                  {ROLE_LABELS[CommunityRole.COMMUNITY_ADMIN]}
-                                </MenuItem>
-                              </Select>
-                            </FormControl>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={membership.enabled ? "Activo" : "Inactivo"}
-                              color={membership.enabled ? "success" : "error"}
-                              size="small"
-                              sx={{ fontWeight: 600 }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Box sx={{ display: "flex", gap: 1, justifyContent: "center", alignItems: "center" }}>
-                              <Tooltip title="Puntos de suministro">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => navigate(`/supply-points?personId=${membership.userId}`)}
-                                  sx={{ color: theme.palette.primary.main }}
-                                >
-                                  <ElectricBoltIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Button
-                                size="small"
-                                color="error"
-                                startIcon={<DeleteOutlineIcon />}
-                                onClick={() => handleRemoveMember(membership.userId!)}
-                                sx={{ fontSize: fontSizes.sm }}
-                              >
-                                Eliminar
-                              </Button>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={membership.enabled ? "Activo" : "Inactivo"}
+                            color={membership.enabled ? "success" : "error"}
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, membership)}
+                            sx={{
+                              color: colors.text.subtle,
+                              // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token
+                              "&:hover": { backgroundColor: "#f3f4f6" },
+                            }}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>
@@ -342,8 +364,107 @@ export const MembersPage: FC = () => {
       <ImportPartnersModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
-        onImportComplete={() => refetch()}
+        onImportComplete={invalidateAfterWrite}
       />
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: "visible",
+            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+            mt: 1.5,
+            minWidth: 200,
+            "&:before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            navigate(`/supply-points?personId=${selectedMembership?.user?.id}`);
+          }}
+        >
+          <ListItemIcon>
+            <ElectricBoltIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Puntos de suministro</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleChangeRoleClick}>
+          <ListItemIcon>
+            <ManageAccountsIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Cambiar rol</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setRemoveConfirmUserId(selectedMembership?.user?.id ?? null);
+          }}
+        >
+          <ListItemIcon>
+            <DeleteOutlineIcon fontSize="small" sx={{ color: "error.main" }} />
+          </ListItemIcon>
+          <ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Change role dialog */}
+      <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Cambiar rol</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+          <Typography variant="body2">
+            Cambiando el rol de <strong>{selectedMembership?.user?.fullName}</strong>.
+          </Typography>
+          <FormControl fullWidth size="small">
+            <InputLabel>Nuevo rol</InputLabel>
+            <Select
+              value={pendingRole}
+              label="Nuevo rol"
+              onChange={(e) => setPendingRole(e.target.value)}
+            >
+              <MenuItem value={MembershipResponseRole.COMMUNITY_MEMBER}>
+                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_MEMBER]}
+              </MenuItem>
+              <MenuItem value={MembershipResponseRole.COMMUNITY_ADMIN}>
+                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_ADMIN]}
+              </MenuItem>
+            </Select>
+          </FormControl>
+          <Alert severity="info">
+            {pendingRole === MembershipResponseRole.COMMUNITY_ADMIN
+              ? "Un administrador puede gestionar los miembros y la configuración de la comunidad."
+              : "Un miembro tiene acceso básico a la comunidad y perderá los permisos de administración."}
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setRoleDialogOpen(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            onClick={handleRoleDialogConfirm}
+            disabled={pendingRole === selectedMembership?.role || updateRole.isPending}
+          >
+            {updateRole.isPending ? "Guardando..." : "Confirmar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add member dialog */}
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -370,15 +491,14 @@ export const MembersPage: FC = () => {
               label="Rol"
               onChange={(e) => setSelectedRole(e.target.value)}
             >
-              <MenuItem value={CommunityRole.COMMUNITY_MEMBER}>
-                {ROLE_LABELS[CommunityRole.COMMUNITY_MEMBER]}
+              <MenuItem value={CreateMembershipBodyRole.COMMUNITY_MEMBER}>
+                {ROLE_LABELS[CreateMembershipBodyRole.COMMUNITY_MEMBER]}
               </MenuItem>
-              <MenuItem value={CommunityRole.COMMUNITY_ADMIN}>
-                {ROLE_LABELS[CommunityRole.COMMUNITY_ADMIN]}
+              <MenuItem value={CreateMembershipBodyRole.COMMUNITY_ADMIN}>
+                {ROLE_LABELS[CreateMembershipBodyRole.COMMUNITY_ADMIN]}
               </MenuItem>
             </Select>
           </FormControl>
-          <TextField label="ID de comunidad" value={activeCommunityId} disabled fullWidth />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setAddDialogOpen(false)}>Cancelar</Button>
@@ -388,6 +508,34 @@ export const MembersPage: FC = () => {
             disabled={!selectedUserId || createMembership.isPending}
           >
             {createMembership.isPending ? "Añadiendo..." : "Añadir"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Remove confirmation dialog */}
+      <Dialog
+        open={!!removeConfirmUserId}
+        onClose={() => setRemoveConfirmUserId(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Confirmar eliminación</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            ¿Eliminar a{" "}
+            <strong>{removeTarget?.user?.fullName ?? "este miembro"}</strong> de la comunidad?
+            Esta acción no se puede deshacer.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setRemoveConfirmUserId(null)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => removeConfirmUserId && handleRemoveMember(removeConfirmUserId)}
+            disabled={deleteMembership.isPending}
+          >
+            {deleteMembership.isPending ? "Eliminando..." : "Eliminar"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -13,4 +13,10 @@ export interface CommunityResponse {
   legalId?: string;
   address?: string;
   enabled?: boolean;
+  /** Display names of community administrators */
+  adminNames?: string[];
+  /** Total number of members in the community */
+  memberCount?: number;
+  /** Total number of supply points in the community */
+  supplyPointCount?: number;
 }

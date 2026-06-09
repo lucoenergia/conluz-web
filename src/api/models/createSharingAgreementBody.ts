@@ -9,4 +9,5 @@
 export interface CreateSharingAgreementBody {
   startDate: string;
   endDate?: string;
+  communityId: string;
 }

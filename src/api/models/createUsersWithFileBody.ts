@@ -7,6 +7,6 @@
  */
 
 export type CreateUsersWithFileBody = {
-  /** CSV file format: number(Integer), fullName(String), personalId(String), address(String), email(String), phoneNumber(String), role(String), password(String). */
+  /** CSV file format: number(Integer), fullName(String), personalId(String), address(String), email(String), phoneNumber(String), role(String), password(String), communityId(UUID, optional), communityRole(COMMUNITY_MEMBER|COMMUNITY_ADMIN, optional). */
   file: Blob;
 };

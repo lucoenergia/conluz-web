@@ -21,10 +21,8 @@ export const CommunitySelector: FC = () => {
   const communityIds = Object.keys(memberships);
 
   const { data: allCommunities = [] } = useGetAllCommunities({
-    query: { enabled: communityIds.length > 1 },
+    query: { enabled: communityIds.length >= 1 },
   });
-
-  if (communityIds.length <= 1) return null;
 
   const activeCommunity: CommunityResponse | undefined = allCommunities.find(
     (c) => c.id === activeCommunityId,
@@ -47,6 +45,27 @@ export const CommunitySelector: FC = () => {
     queryClient.invalidateQueries();
     handleClose();
   };
+
+  if (communityIds.length === 0) return null;
+
+  if (communityIds.length === 1) {
+    return (
+      <Chip
+        icon={<BusinessIcon sx={{ fontSize: 16 }} />}
+        label={
+          <Typography variant="body2" sx={{ fontSize: fontSizes.sm, fontWeight: 500, color: colors.text.body }}>
+            {activeCommunity?.name ?? "Comunidad"}
+          </Typography>
+        }
+        variant="outlined"
+        sx={{
+          borderColor: colors.border.light,
+          backgroundColor: colors.background.surface,
+          "& .MuiChip-label": { px: 1 },
+        }}
+      />
+    );
+  }
 
   return (
     <>

@@ -9,4 +9,5 @@
 export type GetDatadisConsumptionHourlyCsvReportParams = {
 startDate: string;
 endDate: string;
+communityId?: string;
 };

@@ -10,6 +10,8 @@ import { useNavigate } from "react-router";
 import { colors, fontSizes } from "../../theme/tokens";
 import { useAuthDispatch } from "../../context/auth.context";
 import { useLoggedUserDispatch } from "../../context/logged-user.context";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../../hooks/useActiveCommunityRole";
+import { CommunityRole } from "../../api/models";
 
 interface ProfileMenuProps {
   username: string;
@@ -20,6 +22,16 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
   const dispatchAuth = useAuthDispatch();
   const dispatchLoggedUser = useLoggedUserDispatch();
   const navigate = useNavigate();
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const communityRole = useActiveCommunityRole();
+
+  const roleLabel = isPlatformAdmin
+    ? "Administrador de plataforma"
+    : communityRole === CommunityRole.COMMUNITY_ADMIN
+    ? "Administrador de comunidad"
+    : communityRole === CommunityRole.COMMUNITY_MEMBER
+    ? "Miembro"
+    : "";
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
@@ -58,9 +70,11 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#2f2f2f' }}>
               {username}
             </Typography>
-            <Typography variant="body2" sx={{ color: colors.text.subtle, fontSize: fontSizes.md }}>
-              Admin
-            </Typography>
+            {roleLabel && (
+              <Typography variant="body2" sx={{ color: colors.text.subtle, fontSize: fontSizes.md }}>
+                {roleLabel}
+              </Typography>
+            )}
           </Box>
         </Box>
 

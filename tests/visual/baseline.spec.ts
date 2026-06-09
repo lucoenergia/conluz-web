@@ -282,7 +282,9 @@ async function mockAllApiRoutes(page: Page, currentUser: object) {
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ items: [], size: 10, totalElements: 0, totalPages: 0, number: 0 }),
+      body: JSON.stringify([
+        { id: FIXED_COMMUNITY_ID, name: "Sol Común", code: "SOL", enabled: true },
+      ]),
     })
   );
 

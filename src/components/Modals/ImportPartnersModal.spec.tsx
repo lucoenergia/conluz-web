@@ -33,7 +33,7 @@ describe("ImportPartnersModal", () => {
   describe("Upload view", () => {
     it("renders the modal title", () => {
       setup();
-      expect(screen.getByText("Importar Socios desde CSV")).toBeInTheDocument();
+      expect(screen.getByText("Importar miembros desde CSV")).toBeInTheDocument();
     });
 
     it("renders the CSV drop zone", () => {
@@ -113,7 +113,7 @@ describe("ImportPartnersModal", () => {
 
       await user.click(screen.getByRole("button", { name: /Importar/i }));
 
-      expect(screen.getByText("Importando socios...")).toBeInTheDocument();
+      expect(screen.getByText("Importando miembros...")).toBeInTheDocument();
     });
   });
 
@@ -134,7 +134,7 @@ describe("ImportPartnersModal", () => {
         expect(
           screen.getByText("Importación completada"),
         ).toBeInTheDocument();
-        expect(screen.getByText("Se han creado 2 socios")).toBeInTheDocument();
+        expect(screen.getByText("Se han creado 2 miembros")).toBeInTheDocument();
       });
     });
 
@@ -151,7 +151,7 @@ describe("ImportPartnersModal", () => {
       await user.click(screen.getByRole("button", { name: /Importar/i }));
 
       await waitFor(() => {
-        expect(screen.getByText("Se ha creado 1 socio")).toBeInTheDocument();
+        expect(screen.getByText("Se ha creado 1 miembro")).toBeInTheDocument();
       });
     });
 

@@ -14,5 +14,5 @@ export interface UpdateSupplyBody {
   address: string;
   /** @minLength 1 */
   addressRef: string;
-  partitionCoefficient: number;
+  partitionCoefficient?: number;
 }

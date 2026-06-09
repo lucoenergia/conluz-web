@@ -27,7 +27,9 @@ import type {
 import type {
   ConfigureDatadisBody,
   ConfigureShellyBody,
+  GetDatadisConfigResponse,
   GetDatadisConsumptionHourlyCsvReportParams,
+  GetShellyConfigResponse,
   SyncDatadisConsumptionsBody,
   SyncMonthlyDatadisConsumptionsBody,
   SyncYearlyDatadisConsumptionsBody
@@ -40,50 +42,50 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
- * This endpoint returns the current Shelly integration configuration.
+ * This endpoint returns the Shelly integration configuration for a specific community.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required Role: ADMIN or COMMUNITY_ADMIN**
 
 Upon successful request, the server responds with an HTTP status code of 200, along with
 the current configuration. If no configuration has been set yet, a 404 is returned.
 
- * @summary Returns the current Shelly configuration.
+ * @summary Returns the Shelly configuration for the specified community.
  */
 export const getShellyConfig = (
-    
+    communityId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<unknown>(
-      {url: `/api/v1/consumption/shelly/config`, method: 'GET', signal
+      return customInstance<GetShellyConfigResponse>(
+      {url: `/api/v1/communities/${communityId}/config/shelly`, method: 'GET', signal
     },
       );
     }
   
 
-export const getGetShellyConfigQueryKey = () => {
-    return [`/api/v1/consumption/shelly/config`] as const;
+export const getGetShellyConfigQueryKey = (communityId: string,) => {
+    return [`/api/v1/communities/${communityId}/config/shelly`] as const;
     }
 
     
-export const getGetShellyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+export const getGetShellyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetShellyConfigQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetShellyConfigQueryKey(communityId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getShellyConfig>>> = ({ signal }) => getShellyConfig(signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getShellyConfig>>> = ({ signal }) => getShellyConfig(communityId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetShellyConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getShellyConfig>>>
@@ -91,7 +93,7 @@ export type GetShellyConfigQueryError = ErrorType<unknown>
 
 
 export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
+ communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getShellyConfig>>,
           TError,
@@ -101,7 +103,7 @@ export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyCo
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getShellyConfig>>,
           TError,
@@ -111,19 +113,19 @@ export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyCo
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Returns the current Shelly configuration.
+ * @summary Returns the Shelly configuration for the specified community.
  */
 
 export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetShellyConfigQueryOptions(options)
+  const queryOptions = getGetShellyConfigQueryOptions(communityId,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -146,7 +148,7 @@ The request body must contain:
 This configuration is a mandatory step to be able to process Shelly consumption data.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required Role: ADMIN or COMMUNITY_ADMIN**
 
 Upon successful request, the server responds with an HTTP status code of 200, along with details
 about the configuration already set.
@@ -154,15 +156,16 @@ about the configuration already set.
 In cases where the creation process encounters errors, the server responds with an appropriate error
 status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
 
- * @summary Sets up the configuration for Shelly integration.
+ * @summary Sets up the Shelly configuration for the specified community.
  */
 export const configureShelly = (
+    communityId: string,
     configureShellyBody: ConfigureShellyBody,
  ) => {
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/consumption/shelly/config`, method: 'PUT',
+      {url: `/api/v1/communities/${communityId}/config/shelly`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: configureShellyBody
     },
@@ -172,8 +175,8 @@ export const configureShelly = (
 
 
 export const getConfigureShellyMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext> => {
 
 const mutationKey = ['configureShelly'];
 const {mutation: mutationOptions} = options ?
@@ -185,10 +188,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureShelly>>, {data: ConfigureShellyBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureShelly>>, {communityId: string;data: ConfigureShellyBody}> = (props) => {
+          const {communityId,data} = props ?? {};
 
-          return  configureShelly(data,)
+          return  configureShelly(communityId,data,)
         }
 
         
@@ -201,14 +204,14 @@ const {mutation: mutationOptions} = options ?
     export type ConfigureShellyMutationError = ErrorType<unknown>
 
     /**
- * @summary Sets up the configuration for Shelly integration.
+ * @summary Sets up the Shelly configuration for the specified community.
  */
 export const useConfigureShelly = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{data: ConfigureShellyBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureShelly>>,
         TError,
-        {data: ConfigureShellyBody},
+        {communityId: string;data: ConfigureShellyBody},
         TContext
       > => {
 
@@ -217,53 +220,53 @@ export const useConfigureShelly = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint returns the current Datadis connection configuration.
+ * This endpoint returns the Datadis connection configuration for a specific community.
 
 The password is never returned in the response. Instead, a boolean field
 `passwordSet` indicates whether a password has been configured.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required Role: ADMIN or COMMUNITY_ADMIN**
 
 Upon successful request, the server responds with an HTTP status code of 200, along with
 the current configuration. If no configuration has been set yet, a 404 is returned.
 
- * @summary Returns the current Datadis configuration.
+ * @summary Returns the Datadis configuration for the specified community.
  */
 export const getDatadisConfig = (
-    
+    communityId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<unknown>(
-      {url: `/api/v1/consumption/datadis/config`, method: 'GET', signal
+      return customInstance<GetDatadisConfigResponse>(
+      {url: `/api/v1/communities/${communityId}/config/datadis`, method: 'GET', signal
     },
       );
     }
   
 
-export const getGetDatadisConfigQueryKey = () => {
-    return [`/api/v1/consumption/datadis/config`] as const;
+export const getGetDatadisConfigQueryKey = (communityId: string,) => {
+    return [`/api/v1/communities/${communityId}/config/datadis`] as const;
     }
 
     
-export const getGetDatadisConfigQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
+export const getGetDatadisConfigQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetDatadisConfigQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetDatadisConfigQueryKey(communityId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisConfig>>> = ({ signal }) => getDatadisConfig(signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisConfig>>> = ({ signal }) => getDatadisConfig(communityId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetDatadisConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisConfig>>>
@@ -271,7 +274,7 @@ export type GetDatadisConfigQueryError = ErrorType<unknown>
 
 
 export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
+ communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDatadisConfig>>,
           TError,
@@ -281,7 +284,7 @@ export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadis
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDatadisConfig>>,
           TError,
@@ -291,19 +294,19 @@ export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadis
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Returns the current Datadis configuration.
+ * @summary Returns the Datadis configuration for the specified community.
  */
 
 export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetDatadisConfigQueryOptions(options)
+  const queryOptions = getGetDatadisConfigQueryOptions(communityId,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -315,12 +318,12 @@ export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadis
 
 
 /**
- * This endpoint allows to configure the app to connect with datadis.es.
+ * This endpoint allows to configure the app to connect with datadis.es for a specific community.
 
 This configuration is a mandatory step to be able to retrieve consumption data from datadis.es.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required Role: ADMIN or COMMUNITY_ADMIN**
 
 Upon successful request, the server responds with an HTTP status code of 200, along with details
 about the configuration already set.
@@ -329,15 +332,16 @@ In cases where the creation process encounters errors, the server responds with 
 status code, accompanied by a descriptive error message to guide clients in addressing and resolving
 the issue.
 
- * @summary Sets up the configuration to be able to connect with Datadis.
+ * @summary Sets up the Datadis configuration for the specified community.
  */
 export const configureDatadis = (
+    communityId: string,
     configureDatadisBody: ConfigureDatadisBody,
  ) => {
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/consumption/datadis/config`, method: 'PUT',
+      {url: `/api/v1/communities/${communityId}/config/datadis`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: configureDatadisBody
     },
@@ -347,8 +351,8 @@ export const configureDatadis = (
 
 
 export const getConfigureDatadisMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{communityId: string;data: ConfigureDatadisBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{communityId: string;data: ConfigureDatadisBody}, TContext> => {
 
 const mutationKey = ['configureDatadis'];
 const {mutation: mutationOptions} = options ?
@@ -360,10 +364,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureDatadis>>, {data: ConfigureDatadisBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureDatadis>>, {communityId: string;data: ConfigureDatadisBody}> = (props) => {
+          const {communityId,data} = props ?? {};
 
-          return  configureDatadis(data,)
+          return  configureDatadis(communityId,data,)
         }
 
         
@@ -376,14 +380,14 @@ const {mutation: mutationOptions} = options ?
     export type ConfigureDatadisMutationError = ErrorType<unknown>
 
     /**
- * @summary Sets up the configuration to be able to connect with Datadis.
+ * @summary Sets up the Datadis configuration for the specified community.
  */
 export const useConfigureDatadis = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{data: ConfigureDatadisBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{communityId: string;data: ConfigureDatadisBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureDatadis>>,
         TError,
-        {data: ConfigureDatadisBody},
+        {communityId: string;data: ConfigureDatadisBody},
         TContext
       > => {
 

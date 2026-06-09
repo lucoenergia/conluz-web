@@ -25,12 +25,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CoefficientAtTimestampResponse,
   CreateSharingAgreementBody,
   CreateSuppliesWithFileBody,
+  CreateSuppliesWithFileParams,
   CreateSupplyBody,
   CreationInBulkResponse,
   DatadisConsumption,
   GetAllSuppliesParams,
+  GetPartitionCoefficientAtTimestampParams,
   GetSupplyDailyConsumptionParams,
   GetSupplyDailyProductionParams,
   GetSupplyHourlyConsumptionParams,
@@ -38,12 +41,19 @@ import type {
   GetSupplyMonthlyConsumptionParams,
   GetSupplyMonthlyProductionParams,
   GetSupplyYearlyConsumptionParams,
+  ImportPartitionCoefficientsWithFileBody,
+  ImportPartitionCoefficientsWithFileParams,
   ImportSuppliesPartitionsWithFileBody,
   ImportSuppliesPartitionsWithFileParams,
   PagedResultSupplyResponse,
+  PartitionCoefficientResponse,
   ProductionByTime,
+  RegisterPartitionCoefficientBody,
+  RegisterPartitionCoefficientResponse,
+  RegisterPartitionCoefficientsWithFileResponse,
   SharingAgreementResponse,
   SupplyResponse,
+  SyncDatadisSuppliesParams,
   UpdateSharingAgreementBody,
   UpdateSupplyBody
 } from '.././models';
@@ -621,6 +631,166 @@ export const useCreateSupply = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * Returns all coefficient periods ordered by validFrom ascending. **Required Role: ADMIN**
+ * @summary Returns the full partition coefficient history for a supply.
+ */
+export const getPartitionCoefficientHistory = (
+    supplyId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PartitionCoefficientResponse[]>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetPartitionCoefficientHistoryQueryKey = (supplyId: string,) => {
+    return [`/api/v1/supplies/${supplyId}/partition-coefficients`] as const;
+    }
+
+    
+export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientHistoryQueryKey(supplyId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>> = ({ signal }) => getPartitionCoefficientHistory(supplyId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPartitionCoefficientHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>>
+export type GetPartitionCoefficientHistoryQueryError = ErrorType<unknown>
+
+
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the full partition coefficient history for a supply.
+ */
+
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPartitionCoefficientHistoryQueryOptions(supplyId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Closes the currently active coefficient period and opens a new one starting at effectiveAt.
+Also updates the supply.partitionCoefficient denormalization field.
+The response includes a communityCoefficientSumWarning field if the total sum of active
+coefficients across all supplies at effectiveAt deviates from 100 by more than 0.0001.
+This warning is informational only — the change is always persisted.
+**Required Role: ADMIN**
+
+ * @summary Registers a new partition coefficient for a supply.
+ */
+export const registerPartitionCoefficient = (
+    supplyId: string,
+    registerPartitionCoefficientBody: RegisterPartitionCoefficientBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<RegisterPartitionCoefficientResponse>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: registerPartitionCoefficientBody, signal
+    },
+      );
+    }
+  
+
+
+export const getRegisterPartitionCoefficientMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPartitionCoefficient>>, TError,{supplyId: string;data: RegisterPartitionCoefficientBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof registerPartitionCoefficient>>, TError,{supplyId: string;data: RegisterPartitionCoefficientBody}, TContext> => {
+
+const mutationKey = ['registerPartitionCoefficient'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerPartitionCoefficient>>, {supplyId: string;data: RegisterPartitionCoefficientBody}> = (props) => {
+          const {supplyId,data} = props ?? {};
+
+          return  registerPartitionCoefficient(supplyId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterPartitionCoefficientMutationResult = NonNullable<Awaited<ReturnType<typeof registerPartitionCoefficient>>>
+    export type RegisterPartitionCoefficientMutationBody = RegisterPartitionCoefficientBody
+    export type RegisterPartitionCoefficientMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Registers a new partition coefficient for a supply.
+ */
+export const useRegisterPartitionCoefficient = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPartitionCoefficient>>, TError,{supplyId: string;data: RegisterPartitionCoefficientBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof registerPartitionCoefficient>>,
+        TError,
+        {supplyId: string;data: RegisterPartitionCoefficientBody},
+        TContext
+      > => {
+
+      const mutationOptions = getRegisterPartitionCoefficientMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * This endpoint enables a supply by its unique identifier.
 
 Authentication via bearer token is required.
@@ -844,6 +1014,93 @@ export const useImportSuppliesPartitionsWithFile = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * Imports the official partition coefficient file produced by the Spanish distribution company.
+
+The file must be a plain-text (.txt) file with one supply per line in the format:
+`CUPS;coefficient` where the coefficient uses a comma as the decimal separator
+(e.g. `ES0031300806333001KE0F;0,025000`).
+
+The file name must follow the pattern: CAU_YYYY.txt, where CAU is the plant identifier
+and YYYY is the year.
+
+Each row closes the currently active coefficient period for that supply and opens a new one
+starting at `effectiveAt`. Supplies whose CUPS code is not found in the system are recorded
+as errors and the remaining rows continue to be processed.
+
+The response includes a `communityCoefficientSumWarning` if the total sum of active
+coefficients across all supplies deviates from 100 by more than 0.0001 at `effectiveAt`.
+This warning is informational only.
+
+**Required Role: ADMIN**
+
+ * @summary Registers partition coefficients in bulk from a TXT file.
+ */
+export const importPartitionCoefficientsWithFile = (
+    importPartitionCoefficientsWithFileBody: ImportPartitionCoefficientsWithFileBody,
+    params: ImportPartitionCoefficientsWithFileParams,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+formData.append(`file`, importPartitionCoefficientsWithFileBody.file)
+
+      return customInstance<RegisterPartitionCoefficientsWithFileResponse>(
+      {url: `/api/v1/supplies/partition-coefficients/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      );
+    }
+  
+
+
+export const getImportPartitionCoefficientsWithFileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, TError,{data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, TError,{data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}, TContext> => {
+
+const mutationKey = ['importPartitionCoefficientsWithFile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, {data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  importPartitionCoefficientsWithFile(data,params,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportPartitionCoefficientsWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>>
+    export type ImportPartitionCoefficientsWithFileMutationBody = ImportPartitionCoefficientsWithFileBody
+    export type ImportPartitionCoefficientsWithFileMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Registers partition coefficients in bulk from a TXT file.
+ */
+export const useImportPartitionCoefficientsWithFile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, TError,{data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>,
+        TError,
+        {data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams},
+        TContext
+      > => {
+
+      const mutationOptions = getImportPartitionCoefficientsWithFileMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * This endpoint facilitates the creation of a set of supplies within the system by importing a
 CSV file.
 
@@ -863,6 +1120,7 @@ In cases where the creation process encounters errors, the server responds with 
  */
 export const createSuppliesWithFile = (
     createSuppliesWithFileBody: CreateSuppliesWithFileBody,
+    params?: CreateSuppliesWithFileParams,
  signal?: AbortSignal
 ) => {
       
@@ -872,7 +1130,8 @@ formData.append(`file`, createSuppliesWithFileBody.file)
       return customInstance<CreationInBulkResponse>(
       {url: `/api/v1/supplies/import`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       );
     }
@@ -880,8 +1139,8 @@ formData.append(`file`, createSuppliesWithFileBody.file)
 
 
 export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext> => {
 
 const mutationKey = ['createSuppliesWithFile'];
 const {mutation: mutationOptions} = options ?
@@ -893,10 +1152,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  createSuppliesWithFile(data,)
+          return  createSuppliesWithFile(data,params,)
         }
 
         
@@ -912,11 +1171,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Creates supplies in bulk importing a CSV file.
  */
 export const useCreateSuppliesWithFile = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSuppliesWithFile>>,
         TError,
-        {data: CreateSuppliesWithFileBody},
+        {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams},
         TContext
       > => {
 
@@ -940,13 +1199,14 @@ descriptive message to guide users in resolving any issues.
  * @summary Synchronize supplies retrieving the information from datadis.es.
  */
 export const syncDatadisSupplies = (
-    
+    params?: SyncDatadisSuppliesParams,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/supplies/datadis/sync`, method: 'POST', signal
+      {url: `/api/v1/supplies/datadis/sync`, method: 'POST',
+        params, signal
     },
       );
     }
@@ -954,8 +1214,8 @@ export const syncDatadisSupplies = (
 
 
 export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{params?: SyncDatadisSuppliesParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{params?: SyncDatadisSuppliesParams}, TContext> => {
 
 const mutationKey = ['syncDatadisSupplies'];
 const {mutation: mutationOptions} = options ?
@@ -967,10 +1227,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisSupplies>>, void> = () => {
-          
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisSupplies>>, {params?: SyncDatadisSuppliesParams}> = (props) => {
+          const {params} = props ?? {};
 
-          return  syncDatadisSupplies()
+          return  syncDatadisSupplies(params,)
         }
 
         
@@ -986,11 +1246,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Synchronize supplies retrieving the information from datadis.es.
  */
 export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{params?: SyncDatadisSuppliesParams}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncDatadisSupplies>>,
         TError,
-        void,
+        {params?: SyncDatadisSuppliesParams},
         TContext
       > => {
 
@@ -1092,6 +1352,192 @@ export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * Uses boundary convention: validFrom inclusive, validTo exclusive.
+**Required Role: ADMIN**
+
+ * @summary Returns the coefficient that was active at the given point in time.
+ */
+export const getPartitionCoefficientAtTimestamp = (
+    supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CoefficientAtTimestampResponse>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/at`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetPartitionCoefficientAtTimestampQueryKey = (supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams,) => {
+    return [`/api/v1/supplies/${supplyId}/partition-coefficients/at`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetPartitionCoefficientAtTimestampQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientAtTimestampQueryKey(supplyId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>> = ({ signal }) => getPartitionCoefficientAtTimestamp(supplyId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPartitionCoefficientAtTimestampQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>>
+export type GetPartitionCoefficientAtTimestampQueryError = ErrorType<unknown>
+
+
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the coefficient that was active at the given point in time.
+ */
+
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPartitionCoefficientAtTimestampQueryOptions(supplyId,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Returns the coefficient with validTo = null. **Required Role: ADMIN**
+ * @summary Returns the currently active partition coefficient for a supply.
+ */
+export const getActivePartitionCoefficient = (
+    supplyId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PartitionCoefficientResponse>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/active`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetActivePartitionCoefficientQueryKey = (supplyId: string,) => {
+    return [`/api/v1/supplies/${supplyId}/partition-coefficients/active`] as const;
+    }
+
+    
+export const getGetActivePartitionCoefficientQueryOptions = <TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetActivePartitionCoefficientQueryKey(supplyId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivePartitionCoefficient>>> = ({ signal }) => getActivePartitionCoefficient(supplyId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetActivePartitionCoefficientQueryResult = NonNullable<Awaited<ReturnType<typeof getActivePartitionCoefficient>>>
+export type GetActivePartitionCoefficientQueryError = ErrorType<unknown>
+
+
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+ supplyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
+          TError,
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
+          TError,
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the currently active partition coefficient for a supply.
+ */
+
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetActivePartitionCoefficientQueryOptions(supplyId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * This endpoint retrieves monthly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
  * @summary Retrieves monthly production data assigned to a specific supply
  */

@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
@@ -15,22 +15,83 @@ import {
   CircularProgress,
   Alert,
   Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import { radii, shadows, colors } from "../../theme/tokens";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import PeopleIcon from "@mui/icons-material/People";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
+import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { PageHeaderWithStats } from "../../components/PageHeader";
 import { useGetAllCommunities } from "../../api/communities/communities";
+import type { CommunityResponse } from "../../api/models";
+import { ManageAdminsDialog } from "./ManageAdminsDialog";
+
+const MAX_ADMIN_NAMES_SHOWN = 2;
+
+function AdminNamesCell({ adminNames }: { adminNames?: string[] }) {
+  if (!adminNames || adminNames.length === 0) {
+    return (
+      <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+        —
+      </Typography>
+    );
+  }
+  const shown = adminNames.slice(0, MAX_ADMIN_NAMES_SHOWN);
+  const overflow = adminNames.length - MAX_ADMIN_NAMES_SHOWN;
+  return (
+    <Typography variant="body2" sx={{ color: "secondary.main" }}>
+      {shown.join(", ")}
+      {overflow > 0 && (
+        <Typography component="span" variant="body2" sx={{ color: colors.text.subtle }}>
+          {" "}y {overflow} más
+        </Typography>
+      )}
+    </Typography>
+  );
+}
 
 export const CommunitiesPage: FC = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { data: communities = [], isLoading, error } = useGetAllCommunities();
-  const [notFoundShown] = useState(false);
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedCommunity, setSelectedCommunity] = useState<CommunityResponse | null>(null);
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
 
   const totalActive = communities.filter((c) => c.enabled).length;
   const totalInactive = communities.filter((c) => !c.enabled).length;
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, community: CommunityResponse) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedCommunity(community);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleEditClick = () => {
+    handleMenuClose();
+    if (selectedCommunity?.id) {
+      navigate(`/communities/${selectedCommunity.id}/edit`);
+    }
+  };
+
+  const handleManageAdminsClick = () => {
+    handleMenuClose();
+    setAdminDialogOpen(true);
+  };
 
   return (
     <Box
@@ -101,11 +162,6 @@ export const CommunitiesPage: FC = () => {
             width: "100%",
           }}
         >
-          {notFoundShown && (
-            <Alert severity="info" sx={{ m: 2 }}>
-              La creación de comunidades no está habilitada en este servidor.
-            </Alert>
-          )}
           {error ? (
             <Alert severity="error" sx={{ m: 2 }}>
               Error al cargar las comunidades. Por favor, intente de nuevo.
@@ -137,7 +193,33 @@ export const CommunitiesPage: FC = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                        Administradores
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
+                        <PeopleIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                          Miembros
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
+                        <ElectricBoltIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                          Suministros
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                         Estado
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                        Acciones
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -145,13 +227,13 @@ export const CommunitiesPage: FC = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                         <CircularProgress />
                       </TableCell>
                     </TableRow>
                   ) : communities.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                         <Typography variant="body1" color="text.secondary">
                           No hay comunidades registradas
                         </Typography>
@@ -181,12 +263,25 @@ export const CommunitiesPage: FC = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                            {community.legalId || "-"}
+                            {community.legalId || "—"}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                            {community.address || "-"}
+                            {community.address || "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <AdminNamesCell adminNames={community.adminNames} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                            {community.memberCount ?? "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                            {community.supplyPointCount ?? "—"}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -197,6 +292,15 @@ export const CommunitiesPage: FC = () => {
                             sx={{ fontWeight: 600 }}
                           />
                         </TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, community)}
+                            sx={{ color: colors.text.subtle }}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -206,6 +310,27 @@ export const CommunitiesPage: FC = () => {
           )}
         </Paper>
       </Box>
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem onClick={handleEditClick}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Editar</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleManageAdminsClick}>
+          <ListItemIcon>
+            <AdminPanelSettingsIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Gestionar administradores</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      <ManageAdminsDialog
+        community={selectedCommunity}
+        open={adminDialogOpen}
+        onClose={() => setAdminDialogOpen(false)}
+      />
     </Box>
   );
 };

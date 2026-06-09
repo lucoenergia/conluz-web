@@ -28,6 +28,7 @@ import type {
   CreateUserBody,
   CreateUsersInBulkResponse,
   CreateUsersWithFileBody,
+  CreateUsersWithFileParams,
   GetAllUsersParams,
   PagedResultUserResponse,
   SupplyResponse,
@@ -280,7 +281,8 @@ export const useDeleteUser = <TError = ErrorType<unknown>,
  * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a
 comprehensive list of user details.
 
-**Required Role: ADMIN**
+**Required Role: ADMIN or COMMUNITY_ADMIN**
+Platform admins see all users; community admins see only users belonging to their communities.
 
 Features:
 - Pagination support through page and limit parameters
@@ -382,8 +384,14 @@ export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, 
 
 This endpoint requires clients to send a request containing essential user details, including username, password, and any additional relevant information.
 
+Optionally, a communityId and communityRole can be specified to automatically create a membership
+for the new user in the given community. If communityId is not provided and the caller is a
+COMMUNITY_ADMIN, the community is derived from the caller's active context. If the caller is a
+PLATFORM_ADMIN and communityId is not provided, a user with no memberships is created
+(they can be attached later).
+
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required Role: PLATFORM_ADMIN or COMMUNITY_ADMIN in the target community**
 
 Upon successful user creation, the server responds with an HTTP status code of 200, along with comprehensive details about the newly created user, such as a unique identifier and username.
 
@@ -613,6 +621,7 @@ In cases where the creation process encounters errors, the server responds with 
  */
 export const createUsersWithFile = (
     createUsersWithFileBody: CreateUsersWithFileBody,
+    params?: CreateUsersWithFileParams,
  signal?: AbortSignal
 ) => {
       
@@ -622,7 +631,8 @@ formData.append(`file`, createUsersWithFileBody.file)
       return customInstance<CreateUsersInBulkResponse>(
       {url: `/api/v1/users/import`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       );
     }
@@ -630,8 +640,8 @@ formData.append(`file`, createUsersWithFileBody.file)
 
 
 export const getCreateUsersWithFileMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext> => {
 
 const mutationKey = ['createUsersWithFile'];
 const {mutation: mutationOptions} = options ?
@@ -643,10 +653,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUsersWithFile>>, {data: CreateUsersWithFileBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUsersWithFile>>, {data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  createUsersWithFile(data,)
+          return  createUsersWithFile(data,params,)
         }
 
         
@@ -662,11 +672,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Creates users in bulk importing a CSV file.
  */
 export const useCreateUsersWithFile = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUsersWithFile>>,
         TError,
-        {data: CreateUsersWithFileBody},
+        {data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams},
         TContext
       > => {
 

@@ -37,7 +37,7 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
- * Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Returns the list of memberships for the specified community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
  * @summary Lists all memberships of a community.
  */
 export const getMemberships = (
@@ -125,7 +125,9 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
 
 
 /**
- * Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Adds a user as a member of the specified community with the given role.
+Requires COMMUNITY_ADMIN role in the community or PLATFORM_ADMIN.
+
  * @summary Creates a new membership in a community.
  */
 export const createMembership = (
@@ -191,7 +193,7 @@ export const useCreateMembership = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Deletes the membership of the specified user in the community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
  * @summary Removes a user from a community.
  */
 export const deleteMembership = (
@@ -254,7 +256,7 @@ export const useDeleteMembership = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Changes the role of a user within a community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
  * @summary Updates the role of a membership.
  */
 export const updateMembershipRole = (

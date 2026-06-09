@@ -13,4 +13,5 @@ export interface SyncYearlyHuaweiProductionBody {
    */
   year: number;
   plantCode?: string;
+  communityId?: string;
 }

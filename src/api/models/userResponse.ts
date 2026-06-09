@@ -18,7 +18,6 @@ export interface UserResponse {
   phoneNumber?: string;
   enabled?: boolean;
   role?: UserResponseRole;
-  isPlatformAdmin?: boolean;
-  /** Map of communityId (UUID string) to the user's role in that community */
   memberships?: UserResponseMemberships;
+  isPlatformAdmin?: boolean;
 }

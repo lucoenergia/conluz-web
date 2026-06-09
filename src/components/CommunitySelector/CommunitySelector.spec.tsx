@@ -43,14 +43,15 @@ function Wrapper({
 }
 
 describe("CommunitySelector visibility", () => {
-  test("is hidden for a user with exactly one community", () => {
-    const { container } = render(
+  test("shows a non-interactive community chip for a user with exactly one community", () => {
+    render(
       <Wrapper memberships={{ "community-A": "COMMUNITY_MEMBER" }}>
         <CommunitySelector />
       </Wrapper>,
     );
-    // renders null → no DOM elements inside the container beyond the wrapper
-    expect(container.firstChild).toBeNull();
+    // Shows the chip but without a button role (non-interactive)
+    expect(screen.getByTestId("BusinessIcon")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
   test("is visible for a user with more than one community", () => {
