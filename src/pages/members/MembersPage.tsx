@@ -26,13 +26,18 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Tooltip,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -48,6 +53,7 @@ import {
 import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
 import { useGetAllUsers } from "../../api/users/users";
 import {
+  type MembershipResponse,
   CreateMembershipBodyRole,
   MembershipResponseRole,
   UpdateMembershipRoleBodyRole,
@@ -72,6 +78,10 @@ export const MembersPage: FC = () => {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>(CreateMembershipBodyRole.COMMUNITY_MEMBER);
   const [removeConfirmUserId, setRemoveConfirmUserId] = useState<string | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedMembership, setSelectedMembership] = useState<MembershipResponse | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [pendingRole, setPendingRole] = useState<string>("");
 
   const {
     data: memberships = [],
@@ -143,6 +153,25 @@ export const MembersPage: FC = () => {
     }
   };
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, membership: MembershipResponse) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedMembership(membership);
+  };
+
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleChangeRoleClick = () => {
+    handleMenuClose();
+    setPendingRole(selectedMembership?.role ?? MembershipResponseRole.COMMUNITY_MEMBER);
+    setRoleDialogOpen(true);
+  };
+
+  const handleRoleDialogConfirm = async () => {
+    if (!selectedMembership?.user?.id) return;
+    await handleRoleChange(selectedMembership.user.id, pendingRole);
+    setRoleDialogOpen(false);
+  };
+
   const existingUserIds = new Set(memberships.map((m) => m.user?.id).filter(Boolean));
   const availableUsers = allUsersData?.items?.filter((u) => u.id && !existingUserIds.has(u.id)) ?? [];
 
@@ -194,7 +223,7 @@ export const MembersPage: FC = () => {
               onClick={() => setShowImportModal(true)}
               sx={{ px: 3, py: 1.5 }}
             >
-              Importar usuarios
+              Importar miembros
             </Button>
             <Button
               variant="contained"
@@ -297,21 +326,9 @@ export const MembersPage: FC = () => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <FormControl size="small" sx={{ minWidth: 140 }}>
-                            <Select
-                              value={membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER}
-                              onChange={(e) =>
-                                handleRoleChange(membership.user?.id ?? "", e.target.value)
-                              }
-                            >
-                              <MenuItem value={MembershipResponseRole.COMMUNITY_MEMBER}>
-                                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_MEMBER]}
-                              </MenuItem>
-                              <MenuItem value={MembershipResponseRole.COMMUNITY_ADMIN}>
-                                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_ADMIN]}
-                              </MenuItem>
-                            </Select>
-                          </FormControl>
+                          <Typography variant="body2">
+                            {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Chip
@@ -322,26 +339,17 @@ export const MembersPage: FC = () => {
                           />
                         </TableCell>
                         <TableCell align="center">
-                          <Box sx={{ display: "flex", gap: 1, justifyContent: "center", alignItems: "center" }}>
-                            <Tooltip title="Puntos de suministro">
-                              <IconButton
-                                size="small"
-                                onClick={() => navigate(`/supply-points?personId=${membership.user?.id}`)}
-                                sx={{ color: theme.palette.primary.main }}
-                              >
-                                <ElectricBoltIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Button
-                              size="small"
-                              color="error"
-                              startIcon={<DeleteOutlineIcon />}
-                              onClick={() => setRemoveConfirmUserId(membership.user?.id ?? null)}
-                              sx={{ fontSize: fontSizes.sm }}
-                            >
-                              Eliminar
-                            </Button>
-                          </Box>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, membership)}
+                            sx={{
+                              color: colors.text.subtle,
+                              // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token
+                              "&:hover": { backgroundColor: "#f3f4f6" },
+                            }}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
                         </TableCell>
                       </TableRow>
                     ))
@@ -358,6 +366,105 @@ export const MembersPage: FC = () => {
         onClose={() => setShowImportModal(false)}
         onImportComplete={invalidateAfterWrite}
       />
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: "visible",
+            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+            mt: 1.5,
+            minWidth: 200,
+            "&:before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            navigate(`/supply-points?personId=${selectedMembership?.user?.id}`);
+          }}
+        >
+          <ListItemIcon>
+            <ElectricBoltIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Puntos de suministro</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleChangeRoleClick}>
+          <ListItemIcon>
+            <ManageAccountsIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Cambiar rol</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setRemoveConfirmUserId(selectedMembership?.user?.id ?? null);
+          }}
+        >
+          <ListItemIcon>
+            <DeleteOutlineIcon fontSize="small" sx={{ color: "error.main" }} />
+          </ListItemIcon>
+          <ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Change role dialog */}
+      <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Cambiar rol</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+          <Typography variant="body2">
+            Cambiando el rol de <strong>{selectedMembership?.user?.fullName}</strong>.
+          </Typography>
+          <FormControl fullWidth size="small">
+            <InputLabel>Nuevo rol</InputLabel>
+            <Select
+              value={pendingRole}
+              label="Nuevo rol"
+              onChange={(e) => setPendingRole(e.target.value)}
+            >
+              <MenuItem value={MembershipResponseRole.COMMUNITY_MEMBER}>
+                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_MEMBER]}
+              </MenuItem>
+              <MenuItem value={MembershipResponseRole.COMMUNITY_ADMIN}>
+                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_ADMIN]}
+              </MenuItem>
+            </Select>
+          </FormControl>
+          <Alert severity="info">
+            {pendingRole === MembershipResponseRole.COMMUNITY_ADMIN
+              ? "Un administrador puede gestionar los miembros y la configuración de la comunidad."
+              : "Un miembro tiene acceso básico a la comunidad y perderá los permisos de administración."}
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setRoleDialogOpen(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            onClick={handleRoleDialogConfirm}
+            disabled={pendingRole === selectedMembership?.role || updateRole.isPending}
+          >
+            {updateRole.isPending ? "Guardando..." : "Confirmar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add member dialog */}
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>

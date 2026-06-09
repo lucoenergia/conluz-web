@@ -96,7 +96,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             variant="h6"
             sx={{ color: "text.primary", mb: 3 }}
           >
-            Importar Socios desde CSV
+            Importar miembros desde CSV
           </Typography>
 
           <Box
@@ -284,7 +284,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               color: "secondary.main",
             }}
           >
-            Importando socios...
+            Importando miembros...
           </Typography>
         </Box>
       )}
@@ -333,7 +333,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               }}
             >
               Se ha{createdCount !== 1 ? "n" : ""} creado {createdCount}{" "}
-              socio{createdCount !== 1 ? "s" : ""}
+              miembro{createdCount !== 1 ? "s" : ""}
             </Typography>
           </Box>
 

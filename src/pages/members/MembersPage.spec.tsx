@@ -104,10 +104,10 @@ describe("MembersPage", () => {
     expect(screen.getByText("bruno@example.com")).toBeInTheDocument();
   });
 
-  it("renders role column with selects for each member", () => {
+  it("renders role column with text labels for each member", () => {
     setup();
-    const selects = screen.getAllByRole("combobox");
-    expect(selects.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Miembro")).toBeInTheDocument();
+    expect(screen.getByText("Administrador")).toBeInTheDocument();
   });
 
   it("add dialog offers only non-members (Carlos but not Ana/Bruno)", async () => {
@@ -153,12 +153,16 @@ describe("MembersPage", () => {
     expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
   });
 
-  it("remove button opens confirmation dialog with member name", async () => {
+  it("row menu opens confirmation dialog with member name on Eliminar", async () => {
     const user = userEvent.setup();
     setup();
 
-    const removeButtons = screen.getAllByText("Eliminar");
-    await user.click(removeButtons[0]);
+    // Buttons: [0] Importar miembros, [1] Añadir miembro, [2] MoreVert Ana, [3] MoreVert Bruno
+    const buttons = screen.getAllByRole("button");
+    await user.click(buttons[2]);
+
+    const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
+    await user.click(eliminarMenuItem);
 
     await waitFor(() => expect(screen.getByText("Confirmar eliminación")).toBeInTheDocument());
     const dialog = screen.getByRole("dialog");
@@ -169,9 +173,13 @@ describe("MembersPage", () => {
     const user = userEvent.setup();
     setup();
 
-    await user.click(screen.getAllByText("Eliminar")[0]);
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+    const buttons = screen.getAllByRole("button");
+    await user.click(buttons[2]);
 
+    const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
+    await user.click(eliminarMenuItem);
+
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
     const dialog = screen.getByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: "Eliminar" }));
 
@@ -181,20 +189,27 @@ describe("MembersPage", () => {
     expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
   });
 
-  it("role change calls updateRole with new role and invalidates queries", async () => {
+  it("role change modal calls updateRole with new role and invalidates queries", async () => {
     const user = userEvent.setup();
     setup();
 
-    // Find Ana's row role select (first combobox in the main table, Ana is COMMUNITY_MEMBER)
-    const tableBody = document.querySelector("tbody");
-    const anaRow = tableBody?.querySelectorAll("tr")[0];
-    const roleSelect = anaRow?.querySelector("[role=combobox]") as HTMLElement;
-    await user.click(roleSelect);
+    // Open menu for Ana's row (first MoreVert button after the two header buttons)
+    const buttons = screen.getAllByRole("button");
+    await user.click(buttons[2]);
 
-    // Choose COMMUNITY_ADMIN from the listbox
+    const cambiarRolItem = await screen.findByRole("menuitem", { name: /Cambiar rol/ });
+    await user.click(cambiarRolItem);
+
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+    const dialog = screen.getByRole("dialog");
+
+    // Open the role select inside the dialog and pick Administrador
+    const combobox = within(dialog).getByRole("combobox");
+    await user.click(combobox);
     const listbox = await screen.findByRole("listbox");
-    const adminOption = within(listbox).getByText("Administrador");
-    await user.click(adminOption);
+    await user.click(within(listbox).getByText("Administrador"));
+
+    await user.click(within(dialog).getByRole("button", { name: "Confirmar" }));
 
     await waitFor(() =>
       expect(mockUpdateMutate).toHaveBeenCalledWith({
