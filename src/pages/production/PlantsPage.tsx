@@ -16,13 +16,19 @@ import { Link, useNavigate } from "react-router";
 import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
+import { useActiveCommunity } from "../../context/community.context";
 
 export const PlantsPage: FC = () => {
   const theme = useTheme();
   const [searchText, setSearchText] = useState("");
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllPlants({ size: 10000 });
+  const activeCommunityId = useActiveCommunity();
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllPlants(
+    activeCommunityId ?? "",
+    { size: 10000 },
+    { query: { enabled: !!activeCommunityId } },
+  );
   const deletePlant = useDeletePlant();
 
   const deletePlantHandler = async (id: string) => {

@@ -10,6 +10,7 @@ import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
+import { useActiveCommunity } from "../../context/community.context";
 
 export interface PlantFormValues {
   code: string;
@@ -54,7 +55,12 @@ export const PlantForm: FC<PlantFormProps> = ({
   const [selectedSupply, setSelectedSupply] = useState<SupplyResponse | null>(null);
 
   // Fetch supplies for the selector
-  const { data: suppliesData, isLoading: suppliesLoading } = useGetAllSupplies({ size: 10000 });
+  const activeCommunityId = useActiveCommunity();
+  const { data: suppliesData, isLoading: suppliesLoading } = useGetAllSupplies(
+    activeCommunityId ?? "",
+    { size: 10000 },
+    { query: { enabled: !!activeCommunityId } },
+  );
 
   // Set initial selected supply when editing
   useEffect(() => {

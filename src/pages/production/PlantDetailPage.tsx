@@ -13,10 +13,12 @@ import { useGetPlantById } from "../../api/plants/plants";
 import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { useErrorDispatch } from "../../context/error.context";
+import { useActiveCommunity } from "../../context/community.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
 export const PlantDetailPage: FC = () => {
   const { plantId = "" } = useParams();
+  const activeCommunityId = useActiveCommunity();
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const errorDispatch = useErrorDispatch();
@@ -105,8 +107,9 @@ export const PlantDetailPage: FC = () => {
     isLoading: hourlyProductionIsLoading,
     error: hourlyProductionError,
   } = useGetHourlyProduction(
+    activeCommunityId ?? "",
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: filterType === "day" } },
+    { query: { enabled: !!activeCommunityId && filterType === "day" } },
   );
 
   // Fetch daily production data for month filter and dates filter with daily granularity
@@ -115,8 +118,9 @@ export const PlantDetailPage: FC = () => {
     isLoading: dailyProductionIsLoading,
     error: dailyProductionError,
   } = useGetDailyProduction(
+    activeCommunityId ?? "",
     { startDate: startDate.toISOString(), endDate: endDate.toISOString()},
-    { query: { enabled: filterType === "month" || (filterType === "dates" && datesGranularity === "daily") } },
+    { query: { enabled: !!activeCommunityId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
   );
 
   // Fetch monthly production data for year filter and dates filter with monthly granularity
@@ -125,8 +129,9 @@ export const PlantDetailPage: FC = () => {
     isLoading: monthlyProductionIsLoading,
     error: monthlyProductionError,
   } = useGetMonthlyProduction(
+    activeCommunityId ?? "",
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") } },
+    { query: { enabled: !!activeCommunityId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
   );
 
   // Fetch yearly production data for totals filter and dates filter with yearly granularity
@@ -135,38 +140,43 @@ export const PlantDetailPage: FC = () => {
     isLoading: yearlyProductionIsLoading,
     error: yearlyProductionError,
   } = useGetYearlyProduction(
+    activeCommunityId ?? "",
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly") } },
+    { query: { enabled: !!activeCommunityId && (filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly")) } },
   );
 
   // Fetch previous period hourly production data when DAY filter is selected
   const {
     data: prevHourlyProductionData,
   } = useGetHourlyProduction(
+    activeCommunityId ?? "",
     { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
-    { query: { enabled: filterType === "day" } },
+    { query: { enabled: !!activeCommunityId && filterType === "day" } },
   );
 
   // Fetch previous period daily production data for month filter and dates filter with daily granularity
   const {
     data: prevDailyProductionData,
   } = useGetDailyProduction(
+    activeCommunityId ?? "",
     { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString()},
-    { query: { enabled: filterType === "month" || (filterType === "dates" && datesGranularity === "daily") } },
+    { query: { enabled: !!activeCommunityId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
   );
 
   // Fetch previous period monthly production data
   const {
     data: prevMonthlyProductionData,
   } = useGetMonthlyProduction(
+    activeCommunityId ?? "",
     { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
-    { query: { enabled: filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") } },
+    { query: { enabled: !!activeCommunityId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
   );
 
   // No meaningful previous period for totals (multi-year range)
   const {
     data: prevYearlyProductionData,
   } = useGetYearlyProduction(
+    activeCommunityId ?? "",
     { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
     { query: { enabled: false } },
   );
