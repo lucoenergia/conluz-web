@@ -7,6 +7,7 @@ import type { CreateSupplyBody } from "../../api/models";
 import { useNavigate } from "react-router";
 import { SupplyForm, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
 import { useLoggedUser } from "../../context/logged-user.context";
+import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -14,19 +15,22 @@ import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
   const loggedUser = useLoggedUser();
+  const activeCommunityId = useActiveCommunity();
   const errorDispatch = useErrorDispatch();
   const createSupply = useCreateSupply();
 
   const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef, personalId }: SupplyFormValues) => {
+    if (!activeCommunityId) return;
     try {
-      const newSupply = {
+      const newSupply: CreateSupplyBody = {
         name,
-        code: cups,
-        address,
+        code: cups ?? "",
+        address: address ?? "",
         partitionCoefficient,
-        personalId: personalId || loggedUser?.personalId,
-        addressRef,
-      } as CreateSupplyBody;
+        personalId: personalId || loggedUser?.personalId || "",
+        addressRef: addressRef ?? "",
+        communityId: activeCommunityId,
+      };
       const response = await createSupply.mutateAsync({ data: newSupply });
       if (response) {
         navigate("/supply-points");
@@ -102,7 +106,7 @@ export const CreateSupplyPage: FC = () => {
           elevation={0}
           sx={[sxStyles.softPanel, { width: { xs: "100%", sm: "auto" } }]}
         >
-          <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} />
+          <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} disabled={!activeCommunityId} />
         </Paper>
       </Box>
     </Box>

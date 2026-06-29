@@ -21,6 +21,7 @@ interface SupplyFormProps {
   showUserSelector?: boolean;
   selectedUserId?: string;
   disableUserSelector?: boolean;
+  disabled?: boolean;
 }
 
 export const SupplyForm: FC<SupplyFormProps> = ({
@@ -36,6 +37,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
   showUserSelector = false,
   selectedUserId,
   disableUserSelector = false,
+  disabled = false,
 }) => {
   const [name, setName] = useState(initialName);
   const [cups, setCups] = useState(initialCups);
@@ -190,6 +192,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
         <Button
           type="submit"
           variant="contained"
+          disabled={disabled}
           sx={(theme) => ({
             px: 3,
             py: 1.5,
