@@ -106,8 +106,12 @@ describe("MembersPage", () => {
 
   it("renders role column with text labels for each member", () => {
     setup();
-    expect(screen.getByText("Miembro")).toBeInTheDocument();
-    expect(screen.getByText("Administrador")).toBeInTheDocument();
+    // "Miembro" also appears as the column header, so scope the role label
+    // assertions to each member's row to avoid ambiguity.
+    const anaRow = screen.getByText("Ana García").closest("tr") as HTMLElement;
+    const brunoRow = screen.getByText("Bruno Leal").closest("tr") as HTMLElement;
+    expect(within(anaRow).getByText("Miembro")).toBeInTheDocument();
+    expect(within(brunoRow).getByText("Administrador")).toBeInTheDocument();
   });
 
   it("add dialog offers only non-members (Carlos but not Ana/Bruno)", async () => {
