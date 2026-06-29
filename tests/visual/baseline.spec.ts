@@ -198,8 +198,11 @@ const EMPTY_PRODUCTION: unknown[] = [];
 // ---------------------------------------------------------------------------
 
 async function mockAllApiRoutes(page: Page, currentUser: object) {
-  // Supply list and supply detail
-  await page.route("**/api/v1/supplies**", async (route: Route) => {
+  // Supply list and supply detail.
+  // NOTE: Playwright's glob ** matching is unreliable for patterns like
+  // `**/api/v1/**/supplies**`.  Function predicates match reliably and avoid
+  // accidentally catching the communities handler.
+  const suppliesHandler = async (route: Route) => {
     const url = route.request().url();
     if (url.includes(`/supplies/${FIXED_SUPPLY_ID}`)) {
       if (url.includes("/production/") || url.includes("/consumption/")) {
@@ -215,6 +218,15 @@ async function mockAllApiRoutes(page: Page, currentUser: object) {
         body: JSON.stringify(FIXED_SUPPLY),
       });
     }
+    // User-scoped supplies endpoint (e.g. GET /api/v1/users/{id}/supplies)
+    // returns a raw array, not a paged envelope.
+    if (url.includes("/api/v1/users/")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([FIXED_SUPPLY, FIXED_SUPPLY_2]),
+      });
+    }
     if (
       route.request().method() === "GET" &&
       !url.includes("/import") &&
@@ -228,72 +240,86 @@ async function mockAllApiRoutes(page: Page, currentUser: object) {
       });
     }
     return route.continue();
-  });
+  };
+
+  await page.route(
+    (url) => url.href.includes("/api/v1/") && url.href.includes("/supplies"),
+    suppliesHandler,
+  );
 
   // User list and current user.
-  // Routes are matched in reverse registration order, so this handler — registered
-  // after the /current-specific one — takes precedence and handles /users/current
-  // via the regex branch (returning currentUser) as well as the users list.
-  await page.route("**/api/v1/users**", async (route: Route) => {
-    const url = route.request().url();
-    if (url.includes("/supplies")) {
-      return route.fulfill({
+  await page.route(
+    (url) => url.href.includes("/api/v1/users"),
+    async (route: Route) => {
+      const url = route.request().url();
+      // User-scoped supplies (e.g. /api/v1/users/{id}/supplies) is owned by
+      // suppliesHandler. Playwright matches routes in reverse registration order,
+      // so this handler is consulted first for that URL; defer to suppliesHandler
+      // so it returns the raw supply array instead of the paged-users envelope.
+      if (url.includes("/supplies")) {
+        return route.fallback();
+      }
+      // Matches /users/current and /users/{uuid}
+      if (url.match(/\/api\/v1\/users\/[a-z0-9-]+$/)) {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentUser),
+        });
+      }
+      if (route.request().method() === "GET") {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(PAGED_USERS),
+        });
+      }
+      return route.continue();
+    },
+  );
+
+  // Communities (list only — exclude supplies URLs)
+  await page.route(
+    (url) => url.href.includes("/api/v1/communities") && !url.href.includes("/supplies"),
+    (route: Route) =>
+      route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([FIXED_SUPPLY]),
-      });
-    }
-    // Matches /users/current and /users/{uuid}
-    if (url.match(/\/api\/v1\/users\/[a-z0-9-]+$/)) {
-      return route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(currentUser),
-      });
-    }
-    if (route.request().method() === "GET") {
-      return route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(PAGED_USERS),
-      });
-    }
-    return route.continue();
-  });
+        body: JSON.stringify([
+          { id: FIXED_COMMUNITY_ID, name: "Sol Común", code: "SOL", enabled: true },
+        ]),
+      }),
+  );
 
   // Plants — return empty to avoid loading spinners
-  await page.route("**/api/v1/plants**", (route: Route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ items: [], size: 10, totalElements: 0, totalPages: 0, number: 0 }),
-    })
+  await page.route(
+    (url) => url.href.includes("/api/v1/plants"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], size: 10, totalElements: 0, totalPages: 0, number: 0 }),
+      }),
   );
 
-  await page.route("**/api/v1/sharing-agreements**", (route: Route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([]),
-    })
+  await page.route(
+    (url) => url.href.includes("/api/v1/sharing-agreements"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      }),
   );
 
-  await page.route("**/api/v1/communities**", (route: Route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([
-        { id: FIXED_COMMUNITY_ID, name: "Sol Común", code: "SOL", enabled: true },
-      ]),
-    })
-  );
-
-  await page.route("**/api/v1/info**", (route: Route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ version: "1.0.0-test" }),
-    })
+  await page.route(
+    (url) => url.href.includes("/api/v1/info"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ version: "1.0.0-test" }),
+      }),
   );
 }
 
