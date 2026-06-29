@@ -27,7 +27,6 @@ export const EditUserPage: FC = () => {
         address,
         email,
         phoneNumber,
-        role: userData?.role,
       } as UpdateUserBody;
 
       const response = await updateUser.mutateAsync({ id: userId, data: updatedUser }, {});

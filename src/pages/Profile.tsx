@@ -8,11 +8,25 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { useGetCurrentUser, useUpdateUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
+import { CommunityRole } from "../api/models";
 
 export const ProfilePage: FC = () => {
   const { data: currentUser, isLoading, error, refetch } = useGetCurrentUser();
   const updateUser = useUpdateUser();
   const errorDispatch = useErrorDispatch();
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const activeCommunityRole = useActiveCommunityRole();
+
+  // Derive a display label from the new membership model: platform admins first,
+  // then the role within the active community.
+  const roleLabel = isPlatformAdmin
+    ? "Administrador de plataforma"
+    : activeCommunityRole === CommunityRole.COMMUNITY_ADMIN
+      ? "Administrador de comunidad"
+      : activeCommunityRole === CommunityRole.COMMUNITY_MEMBER
+        ? "Socio"
+        : "";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -78,7 +92,6 @@ export const ProfilePage: FC = () => {
         address: formData.address || undefined,
         email: formData.email,
         phoneNumber: formData.phone || undefined,
-        role: currentUser.role!,
       };
       await updateUser.mutateAsync(
         { id: currentUser.id, data: updatedUserData },
@@ -169,19 +182,21 @@ export const ProfilePage: FC = () => {
                     "& .MuiChip-icon": { color: "white" },
                   })}
                 />
-                <Chip
-                  icon={<AdminPanelSettingsIcon />}
-                  label={currentUser?.role || ""}
-                  sx={{
-                    fontSize: fontSizes.md,
-                    fontWeight: 600,
-                    backgroundColor: colors.success,
-                    color: "white",
-                    px: 1,
-                    py: 2.5,
-                    "& .MuiChip-icon": { color: "white" },
-                  }}
-                />
+                {roleLabel && (
+                  <Chip
+                    icon={<AdminPanelSettingsIcon />}
+                    label={roleLabel}
+                    sx={{
+                      fontSize: fontSizes.md,
+                      fontWeight: 600,
+                      backgroundColor: colors.success,
+                      color: "white",
+                      px: 1,
+                      py: 2.5,
+                      "& .MuiChip-icon": { color: "white" },
+                    }}
+                  />
+                )}
               </Box>
 
               <TextField label="Nombre completo" error={formErrors.name} helperText={formErrors.name ? "Por favor, introduce tu nombre completo" : ""} value={formData.name} onChange={handleChange("name")} required fullWidth variant="outlined" />

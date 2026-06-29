@@ -17,5 +17,5 @@ export interface CreateSupplyBody {
   addressRef: string;
   partitionCoefficient?: number;
   name?: string;
-  communityId?: string;
+  communityId: string;
 }

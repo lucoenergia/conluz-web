@@ -16,7 +16,6 @@ const MOCK_USERS = [
     email: "ana@example.com",
     phoneNumber: "600000001",
     enabled: true,
-    role: "PARTNER",
     memberships: { "c1": "COMMUNITY_ADMIN", "c2": "COMMUNITY_MEMBER", "c3": "COMMUNITY_MEMBER" },
   },
   {
@@ -26,7 +25,6 @@ const MOCK_USERS = [
     email: "bruno@example.com",
     phoneNumber: "600000002",
     enabled: false,
-    role: "PARTNER",
     memberships: {},
   },
 ];
@@ -134,6 +132,12 @@ describe("UsersPage", () => {
 
     expect(screen.getByText("Ana García")).toBeInTheDocument();
     expect(screen.getByText("Bruno Leal")).toBeInTheDocument();
+  });
+
+  it("does not render a role label in user rows", () => {
+    setup();
+
+    expect(screen.queryByText("PARTNER")).not.toBeInTheDocument();
   });
 
   it("shows summary stats", () => {

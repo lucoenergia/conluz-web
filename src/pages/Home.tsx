@@ -20,7 +20,9 @@ import EvStationIcon from "@mui/icons-material/EvStation";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useLoggedUser } from "../context/logged-user.context";
-import { UserResponseRole } from "../api/models";
+import { useActiveCommunity } from "../context/community.context";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
+import { CommunityRole } from "../api/models";
 
 // TODO: Set monitorig data methods when endpoints are ready
 
@@ -76,7 +78,10 @@ interface SupplyPointAutocompleteProps {
 
 const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onChange }) => {
   const loggedUser = useLoggedUser();
-  const isAdmin = loggedUser?.role === UserResponseRole.ADMIN;
+  const activeCommunityId = useActiveCommunity();
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const activeCommunityRole = useActiveCommunityRole();
+  const isAdmin = isPlatformAdmin || activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
 
   const { data: userSupplies, isLoading: isLoadingUserSupplies } = useGetSuppliesByUserId(
     loggedUser?.id || "",
@@ -86,9 +91,10 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
   );
 
   const { data: allSupplies, isLoading: isLoadingAllSupplies } = useGetAllSupplies(
+    activeCommunityId ?? "",
     { size: 100 },
     {
-      query: { enabled: isAdmin },
+      query: { enabled: isAdmin && !!activeCommunityId },
     },
   );
 

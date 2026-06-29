@@ -53,7 +53,7 @@ export const getConfigureHuaweiMockHandler = (overrideResponse?: unknown | ((inf
 }
 
 export const getSyncYearlyHuaweiProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.post('*/api/v1/production/huawei/sync/yearly', async (info) => {await delay(1000);
+  return http.post('*/api/v1/communities/:communityId/production/huawei/sync/yearly', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -63,7 +63,7 @@ export const getSyncYearlyHuaweiProductionMockHandler = (overrideResponse?: unkn
 }
 
 export const getSyncMonthlyHuaweiProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
-  return http.post('*/api/v1/production/huawei/sync/monthly', async (info) => {await delay(1000);
+  return http.post('*/api/v1/communities/:communityId/production/huawei/sync/monthly', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -73,7 +73,7 @@ export const getSyncMonthlyHuaweiProductionMockHandler = (overrideResponse?: unk
 }
 
 export const getGetInstantProductionMockHandler = (overrideResponse?: InstantProduction | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<InstantProduction> | InstantProduction)) => {
-  return http.get('*/api/v1/production', async (info) => {await delay(1000);
+  return http.get('*/api/v1/communities/:communityId/production', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -85,7 +85,7 @@ export const getGetInstantProductionMockHandler = (overrideResponse?: InstantPro
 }
 
 export const getGetYearlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
-  return http.get('*/api/v1/production/yearly', async (info) => {await delay(1000);
+  return http.get('*/api/v1/communities/:communityId/production/yearly', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -97,7 +97,7 @@ export const getGetYearlyProductionMockHandler = (overrideResponse?: ProductionB
 }
 
 export const getGetMonthlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
-  return http.get('*/api/v1/production/monthly', async (info) => {await delay(1000);
+  return http.get('*/api/v1/communities/:communityId/production/monthly', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -109,7 +109,7 @@ export const getGetMonthlyProductionMockHandler = (overrideResponse?: Production
 }
 
 export const getGetHourlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
-  return http.get('*/api/v1/production/hourly', async (info) => {await delay(1000);
+  return http.get('*/api/v1/communities/:communityId/production/hourly', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -121,7 +121,7 @@ export const getGetHourlyProductionMockHandler = (overrideResponse?: ProductionB
 }
 
 export const getGetDailyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
-  return http.get('*/api/v1/production/daily', async (info) => {await delay(1000);
+  return http.get('*/api/v1/communities/:communityId/production/daily', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)

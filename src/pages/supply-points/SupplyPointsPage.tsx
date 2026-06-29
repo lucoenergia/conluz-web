@@ -20,9 +20,11 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import { ImportSuppliesModal } from "../../components/Modals/ImportSuppliesModal";
+import { useActiveCommunity } from "../../context/community.context";
 
 export const SupplyPointsPage: FC = () => {
   const theme = useTheme();
+  const activeCommunityId = useActiveCommunity();
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [showImportModal, setShowImportModal] = useState(false);
@@ -32,8 +34,9 @@ export const SupplyPointsPage: FC = () => {
   const personId = searchParams.get("personId");
 
   const { data: allData, isLoading: isLoadingAll, error: errorAll, refetch: refetchAll } = useGetAllSupplies(
+    activeCommunityId ?? "",
     { size: 10000 },
-    { query: { enabled: !personId } },
+    { query: { enabled: !personId && !!activeCommunityId } },
   );
   const { data: userSupplies = [], isLoading: isLoadingUser, error: errorUser, refetch: refetchUser } =
     useGetSuppliesByUserId(personId ?? "", { query: { enabled: !!personId } });

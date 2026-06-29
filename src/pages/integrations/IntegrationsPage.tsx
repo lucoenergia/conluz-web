@@ -71,7 +71,11 @@ export const IntegrationsPage: FC = () => {
   const [snack, setSnack] = useState<string | null>(null);
   const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
 
-  const { data: plantsData } = useGetAllPlants({ size: 1 });
+  const { data: plantsData } = useGetAllPlants(
+    activeCommunityId ?? "",
+    { size: 1 },
+    { query: { enabled: !!activeCommunityId } },
+  );
   const firstPlantId = plantsData?.items?.[0]?.id ?? "";
 
   const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig(

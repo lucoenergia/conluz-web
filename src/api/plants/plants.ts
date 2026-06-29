@@ -41,7 +41,10 @@ import type { ErrorType } from '.././custom-instance';
 /**
  * This endpoint retrieves detailed information about a specific plant by its unique identifier.
 
-**Required Role: ADMIN**
+**Required: any member of the plant's community (any role).**
+
+Returns 404 if the plant does not exist OR if the caller is not a member of its
+community, to avoid leaking the existence of plants by ID.
 
 Authentication is required using a Bearer token.
 
@@ -137,7 +140,7 @@ endpoint path.
 
 Clients send a request containing the updated plant details, and authentication, through an
 authentication token, is required for secure access.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 A successful update results in an HTTP status code of 200, indicating that the plant information has
 been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
@@ -214,7 +217,7 @@ export const useUpdatePlant = <TError = ErrorType<unknown>,
 
     To utilize this endpoint, clients send a DELETE request with the targeted plant's ID, requiring
     authentication for secure access.
-    **Required Role: ADMIN**
+    **Required: Community Admin**
 
     Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the
     plant has been successfully removed.
@@ -284,102 +287,13 @@ export const useDeletePlant = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint serves to retrieve all registered plants within the system, supporting pagination, filtering, and sorting for a customized query experience. This endpoint requires authentication through a Bearer Token for secure access. Clients can include optional query parameters such as page to specify the page number, limit to determine plants per page, filter to selectively retrieve plants based on criteria, and sort to define the order of the results. A successful request yields a paginated list of plants, providing essential details, while any authentication or retrieval issues prompt an appropriate error response. With its versatile functionality, this endpoint enhances the ability to explore and manage the array of energy plants within the system.
- * @summary Retrieves all registered plants in the system with support for pagination, filtering, and sorting.
- */
-export const getAllPlants = (
-    params?: GetAllPlantsParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PagedResultPlantResponse>(
-      {url: `/api/v1/plants`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-export const getGetAllPlantsQueryKey = (params?: GetAllPlantsParams,) => {
-    return [`/api/v1/plants`, ...(params ? [params]: [])] as const;
-    }
-
-    
-export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetAllPlantsQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllPlants>>> = ({ signal }) => getAllPlants(params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetAllPlantsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllPlants>>>
-export type GetAllPlantsQueryError = ErrorType<unknown>
-
-
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
- params: undefined |  GetAllPlantsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllPlants>>,
-          TError,
-          Awaited<ReturnType<typeof getAllPlants>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
- params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllPlants>>,
-          TError,
-          Awaited<ReturnType<typeof getAllPlants>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
- params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves all registered plants in the system with support for pagination, filtering, and sorting.
- */
-
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
- params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetAllPlantsQueryOptions(params,options)
-
-  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-/**
  * This endpoint facilitates the creation of a new plant within the system.
 
 To utilize this endpoint, a client sends a request containing essential details such as the plants's
 address, its code and any relevant parameters.
 
 Proper authentication, through authentication tokens, is required to access this endpoint.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 Upon successful creation, the server responds with a status code of 200, providing comprehensive
 details about the newly created plant, including its unique identifier.
@@ -450,4 +364,102 @@ export const useCreatePlant = <TError = ErrorType<unknown>,
 
       return useMutation(mutationOptions , queryClient);
     }
+    /**
+ * Retrieves the plants of the given community with pagination, filtering and sorting. Requires
+authentication through a Bearer Token.
+
+**Required: any member of the community (any role).**
+ * @summary Retrieves the plants of a community with support for pagination, filtering, and sorting.
+ */
+export const getAllPlants = (
+    communityId: string,
+    params?: GetAllPlantsParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PagedResultPlantResponse>(
+      {url: `/api/v1/communities/${communityId}/plants`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetAllPlantsQueryKey = (communityId: string,
+    params?: GetAllPlantsParams,) => {
+    return [`/api/v1/communities/${communityId}/plants`, ...(params ? [params]: [])] as const;
+    }
+
     
+export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAllPlantsQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllPlants>>> = ({ signal }) => getAllPlants(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAllPlantsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllPlants>>>
+export type GetAllPlantsQueryError = ErrorType<unknown>
+
+
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: undefined |  GetAllPlantsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllPlants>>,
+          TError,
+          Awaited<ReturnType<typeof getAllPlants>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllPlants>>,
+          TError,
+          Awaited<ReturnType<typeof getAllPlants>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the plants of a community with support for pagination, filtering, and sorting.
+ */
+
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAllPlantsQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
