@@ -23,6 +23,10 @@ vi.mock("../../context/error.context", () => ({
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
+vi.mock("../../context/community.context", () => ({
+  useActiveCommunity: () => "community-1",
+}));
+
 vi.mock("../../components/PartnerForm/PartnerForm", () => ({
   PartnerForm: ({ handleSubmit, submitLabel }: { handleSubmit: (v: Record<string, unknown>) => void; submitLabel: string }) => (
     <button
@@ -35,7 +39,6 @@ vi.mock("../../components/PartnerForm/PartnerForm", () => ({
           address: "Calle Mayor 1",
           phoneNumber: "600123456",
           password: "secreto123",
-          role: "PARTNER",
         })
       }
     >
@@ -99,9 +102,12 @@ describe("CreateUserPage", () => {
           address: "Calle Mayor 1",
           phoneNumber: "600123456",
           password: "secreto123",
-          role: "PARTNER",
+          communityId: "community-1",
+          communityRole: "COMMUNITY_MEMBER",
         },
       });
+      const submittedData = mockMutateAsync.mock.calls[0][0].data;
+      expect(submittedData).not.toHaveProperty("role");
       expect(mockNavigate).toHaveBeenCalledWith("/users");
     });
   });

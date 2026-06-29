@@ -68,7 +68,6 @@ const mockPartnerData = {
   address: "Avenida Libertad 5",
   phoneNumber: "611987654",
   number: 7,
-  role: "PARTNER" as const,
   enabled: true,
 };
 
@@ -146,11 +145,12 @@ describe("EditPartnerPage", () => {
             address: mockPartnerData.address,
             email: mockPartnerData.email,
             phoneNumber: mockPartnerData.phoneNumber,
-            role: mockPartnerData.role,
           },
         },
         {},
       );
+      const submittedData = mockMutateAsync.mock.calls[0][0].data;
+      expect(submittedData).not.toHaveProperty("role");
       expect(mockNavigate).toHaveBeenCalledWith("/partners");
     });
   });

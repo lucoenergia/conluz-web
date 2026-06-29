@@ -67,9 +67,18 @@ describe("PartnerForm", () => {
         address: "Calle Mayor 1",
         phoneNumber: "600123456",
         password: "secreto123",
-        role: "PARTNER",
       });
+      expect(mockHandleSubmit).not.toHaveBeenCalledWith(
+        expect.objectContaining({ role: expect.anything() }),
+      );
     }, 15000);
+
+    it("does not render a role selector", () => {
+      render(<PartnerForm {...defaultCreateProps} />);
+
+      expect(screen.queryByRole("combobox", { name: /rol/i })).not.toBeInTheDocument();
+      expect(screen.queryByText("Administrador")).not.toBeInTheDocument();
+    });
 
     it("does not submit and marks confirm field invalid when passwords do not match", async () => {
       const user = userEvent.setup();
