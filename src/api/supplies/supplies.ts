@@ -53,7 +53,6 @@ import type {
   RegisterPartitionCoefficientsWithFileResponse,
   SharingAgreementResponse,
   SupplyResponse,
-  SyncDatadisSuppliesParams,
   UpdateSharingAgreementBody,
   UpdateSupplyBody
 } from '.././models';
@@ -66,6 +65,8 @@ import type { ErrorType } from '.././custom-instance';
 
 /**
  * This endpoint retrieves a supply by its unique identifier.
+
+**Required: Community Admin of the supply's community, or the supply owner.**
  * @summary Gets a supply by ID
  */
 export const getSupply = (
@@ -156,6 +157,7 @@ export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TErr
  * This endpoint enables the update of supply information by specifying the supply's unique identifier in the endpoint path.
 
 Clients send a request containing the updated supply details, and authentication, through an authentication token, is required for secure access.
+**Required: Community Admin of the supply's community.**
 
 A successful update results in an HTTP status code of 200, indicating that the supply information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
 
@@ -225,6 +227,8 @@ export const useUpdateSupply = <TError = ErrorType<unknown>,
     }
     /**
  * This endpoint retrieves a sharing agreement by its unique identifier.
+
+**Required: Community Admin of the sharing agreement's community.**
  * @summary Gets a sharing agreement by ID
  */
 export const getSharingAgreement = (
@@ -317,7 +321,7 @@ identifier in the endpoint path.
 
 Clients send a request containing the updated agreement details, and authentication, through an
 authentication token, is required for secure access.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 A successful update results in an HTTP status code of 200, indicating that the sharing agreement
 information has been successfully modified and returning the updated agreement details.
@@ -397,7 +401,7 @@ unique identifier within the endpoint path.
 
 To utilize this endpoint, clients send a DELETE request with the targeted agreement's ID, requiring
 authentication for secure access.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the
 sharing agreement has been successfully removed.
@@ -467,101 +471,16 @@ export const useDeleteSharingAgreement = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint serves to retrieve all registered supplies within the system, supporting pagination, filtering, and sorting for a customized query experience. This endpoint requires authentication through a Bearer Token for secure access. Clients can include optional query parameters such as page to specify the page number, limit to determine supplies per page, filter to selectively retrieve supplies based on criteria, and sort to define the order of the results. A successful request yields a paginated list of supplies, providing essential details, while any authentication or retrieval issues prompt an appropriate error response. With its versatile functionality, this endpoint enhances the ability to explore and manage the array of energy supplies within the system.
- * @summary Retrieves all registered supplies in the system with support for pagination, filtering, and sorting.
- */
-export const getAllSupplies = (
-    params?: GetAllSuppliesParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PagedResultSupplyResponse>(
-      {url: `/api/v1/supplies`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-export const getGetAllSuppliesQueryKey = (params?: GetAllSuppliesParams,) => {
-    return [`/api/v1/supplies`, ...(params ? [params]: [])] as const;
-    }
-
-    
-export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetAllSuppliesQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllSupplies>>> = ({ signal }) => getAllSupplies(params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetAllSuppliesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllSupplies>>>
-export type GetAllSuppliesQueryError = ErrorType<unknown>
-
-
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
- params: undefined |  GetAllSuppliesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllSupplies>>,
-          TError,
-          Awaited<ReturnType<typeof getAllSupplies>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
- params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllSupplies>>,
-          TError,
-          Awaited<ReturnType<typeof getAllSupplies>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
- params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves all registered supplies in the system with support for pagination, filtering, and sorting.
- */
-
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
- params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetAllSuppliesQueryOptions(params,options)
-
-  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-/**
  * This endpoint is designed to create a new supply within the system.
 
 To utilize this endpoint, a client sends a request containing essential details such as the supply's address, partition coefficient, and any relevant parameters.
 
+The supply's community is provided in the body via the required `communityId` field.
+
 Proper authentication, through authentication tokens, is required to access this endpoint.
-**Required Role: ADMIN**
+**Required: Community Admin of the community. Returns 400 if `communityId` is missing, 404 if the
+community does not exist or the caller is not a member of it, or 403 if the caller is a member but
+not one of its admins.**
 
 Upon successful creation, the server responds with a status code of 200, providing comprehensive details about the newly created supply, including its unique identifier.
 
@@ -631,7 +550,7 @@ export const useCreateSupply = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * Returns all coefficient periods ordered by validFrom ascending. **Required Role: ADMIN**
+ * Returns all coefficient periods ordered by validFrom ascending. **Required: Community Admin**
  * @summary Returns the full partition coefficient history for a supply.
  */
 export const getPartitionCoefficientHistory = (
@@ -724,7 +643,7 @@ Also updates the supply.partitionCoefficient denormalization field.
 The response includes a communityCoefficientSumWarning field if the total sum of active
 coefficients across all supplies at effectiveAt deviates from 100 by more than 0.0001.
 This warning is informational only — the change is always persisted.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
  * @summary Registers a new partition coefficient for a supply.
  */
@@ -794,7 +713,7 @@ export const useRegisterPartitionCoefficient = <TError = ErrorType<unknown>,
  * This endpoint enables a supply by its unique identifier.
 
 Authentication via bearer token is required.
-Required Role: ADMIN
+Required: Community Admin
 
 The operation is idempotent: enabling an already enabled supply will not fail and will return the current state.
 
@@ -863,7 +782,7 @@ export const useEnableSupply = <TError = ErrorType<unknown>,
  * This endpoint disables a supply by its unique identifier.
 
 Authentication via bearer token is required.
-Required Role: ADMIN
+Required: Community Admin
 
 The operation is idempotent: disabling an already disabled supply will not fail and will return the current state.
 
@@ -936,7 +855,7 @@ This endpoint requires clients to send a request containing a file with an ident
 coefficient for each supply.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 Upon successful file processing, the server responds with an HTTP status code of 200, along with
 comprehensive details about the result of the bulk operation, including what supplies partitions
@@ -1031,7 +950,7 @@ The response includes a `communityCoefficientSumWarning` if the total sum of act
 coefficients across all supplies deviates from 100 by more than 0.0001 at `effectiveAt`.
 This warning is informational only.
 
-**Required Role: ADMIN**
+**Required: Community Admin**
 
  * @summary Registers partition coefficients in bulk from a TXT file.
  */
@@ -1108,7 +1027,7 @@ This endpoint requires clients to send a request containing a file with essentia
 supply, including code, address, users and any additional relevant information.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 Upon successful file processing, the server responds with an HTTP status code of 200, along with
 comprehensive details about the result of the bulk operation, including what users have been created
@@ -1184,81 +1103,6 @@ export const useCreateSuppliesWithFile = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint enables users to synchronize all active supplies retrieving the information from
-datadis.es.
-
-Proper authentication, through an authentication token, is required for secure access to this
-endpoint.
-**Required Role: ADMIN**
-
-A successful request returns an HTTP status code of 200.
-
-In cases of errors, the server responds with an appropriate error status code accompanied by a
-descriptive message to guide users in resolving any issues.
-
- * @summary Synchronize supplies retrieving the information from datadis.es.
- */
-export const syncDatadisSupplies = (
-    params?: SyncDatadisSuppliesParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<unknown>(
-      {url: `/api/v1/supplies/datadis/sync`, method: 'POST',
-        params, signal
-    },
-      );
-    }
-  
-
-
-export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{params?: SyncDatadisSuppliesParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{params?: SyncDatadisSuppliesParams}, TContext> => {
-
-const mutationKey = ['syncDatadisSupplies'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisSupplies>>, {params?: SyncDatadisSuppliesParams}> = (props) => {
-          const {params} = props ?? {};
-
-          return  syncDatadisSupplies(params,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SyncDatadisSuppliesMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisSupplies>>>
-    
-    export type SyncDatadisSuppliesMutationError = ErrorType<unknown>
-
-    /**
- * @summary Synchronize supplies retrieving the information from datadis.es.
- */
-export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{params?: SyncDatadisSuppliesParams}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof syncDatadisSupplies>>,
-        TError,
-        {params?: SyncDatadisSuppliesParams},
-        TContext
-      > => {
-
-      const mutationOptions = getSyncDatadisSuppliesMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
  * This endpoint creates a new sharing agreement with the specified start and end dates.
  * @summary This endpoint facilitates the creation of a new sharing agreement within the system.
 
@@ -1266,7 +1110,7 @@ To utilize this endpoint, clients send a request containing essential details su
 start and end dates.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 Upon successful creation, the server responds with an HTTP status code of 200, providing comprehensive
 details about the newly created sharing agreement.
@@ -1328,7 +1172,7 @@ To utilize this endpoint, clients send a request containing essential details su
 start and end dates.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
 Upon successful creation, the server responds with an HTTP status code of 200, providing comprehensive
 details about the newly created sharing agreement.
@@ -1352,8 +1196,83 @@ export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * This endpoint enables users to synchronize the active supplies of the community identified by the
+path `communityId`, retrieving the information from datadis.es.
+
+Proper authentication, through an authentication token, is required for secure access to this
+endpoint.
+**Required: Community Admin of the community. Returns 404 if the community does not exist or the
+caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+A successful request returns an HTTP status code of 200.
+
+In cases of errors, the server responds with an appropriate error status code accompanied by a
+descriptive message to guide users in resolving any issues.
+
+ * @summary Synchronize supplies retrieving the information from datadis.es.
+ */
+export const syncDatadisSupplies = (
+    communityId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/supplies/datadis/sync`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext> => {
+
+const mutationKey = ['syncDatadisSupplies'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisSupplies>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
+
+          return  syncDatadisSupplies(communityId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncDatadisSuppliesMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisSupplies>>>
+    
+    export type SyncDatadisSuppliesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Synchronize supplies retrieving the information from datadis.es.
+ */
+export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncDatadisSupplies>>,
+        TError,
+        {communityId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncDatadisSuppliesMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * Uses boundary convention: validFrom inclusive, validTo exclusive.
-**Required Role: ADMIN**
+**Required: Community Admin**
 
  * @summary Returns the coefficient that was active at the given point in time.
  */
@@ -1450,7 +1369,7 @@ export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType
 
 
 /**
- * Returns the coefficient with validTo = null. **Required Role: ADMIN**
+ * Returns the coefficient with validTo = null. **Required: Community Admin**
  * @summary Returns the currently active partition coefficient for a supply.
  */
 export const getActivePartitionCoefficient = (
@@ -1538,7 +1457,7 @@ export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<type
 
 
 /**
- * This endpoint retrieves monthly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
+ * This endpoint retrieves monthly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
  * @summary Retrieves monthly production data assigned to a specific supply
  */
 export const getSupplyMonthlyProduction = (
@@ -1634,7 +1553,7 @@ export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof 
 
 
 /**
- * This endpoint retrieves hourly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
+ * This endpoint retrieves hourly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
  * @summary Retrieves hourly production data assigned to a specific supply
  */
 export const getSupplyHourlyProduction = (
@@ -1730,7 +1649,7 @@ export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof g
 
 
 /**
- * This endpoint retrieves daily energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community.
+ * This endpoint retrieves daily energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
  * @summary Retrieves daily production data assigned to a specific supply
  */
 export const getSupplyDailyProduction = (
@@ -1829,8 +1748,8 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
  * This endpoint retrieves yearly consumption data from Datadis for a specific supply within a given date range.
 
 **Authorization Rules:**
-- Users with role ADMIN can retrieve consumption data for any supply
-- Users with role PARTNER can only retrieve consumption data for their own supplies
+- Community Admins can retrieve consumption data for any supply they administer
+- Supply owners can only retrieve consumption data for their own supplies
 
 The consumption data includes:
 - Total consumption in kWh
@@ -1938,8 +1857,8 @@ export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof 
  * This endpoint retrieves monthly consumption data from Datadis for a specific supply within a given date range.
 
 **Authorization Rules:**
-- Users with role ADMIN can retrieve consumption data for any supply
-- Users with role PARTNER can only retrieve consumption data for their own supplies
+- Community Admins can retrieve consumption data for any supply they administer
+- Supply owners can only retrieve consumption data for their own supplies
 
 The consumption data includes:
 - Total consumption in kWh
@@ -2047,8 +1966,8 @@ export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof
  * This endpoint retrieves hourly consumption data from Datadis for a specific supply within a given date range.
 
 **Authorization Rules:**
-- Users with role ADMIN can retrieve consumption data for any supply
-- Users with role PARTNER can only retrieve consumption data for their own supplies
+- Community Admins can retrieve consumption data for any supply they administer
+- Supply owners can only retrieve consumption data for their own supplies
 
 The consumption data includes:
 - Total consumption in kWh
@@ -2156,8 +2075,8 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
  * This endpoint retrieves daily consumption data from Datadis for a specific supply within a given date range.
 
 **Authorization Rules:**
-- Users with role ADMIN can retrieve consumption data for any supply
-- Users with role PARTNER can only retrieve consumption data for their own supplies
+- Community Admins can retrieve consumption data for any supply they administer
+- Supply owners can only retrieve consumption data for their own supplies
 
 The consumption data includes:
 - Total consumption in kWh
@@ -2251,6 +2170,107 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSupplyDailyConsumptionQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Retrieves the supplies of the community identified by the path `communityId`, with pagination,
+filtering and sorting. Requires authentication through a Bearer Token.
+
+**Visibility:** Community admins of the community see all of its supplies.
+Regular members see only the supplies they own within the community. Returns 404 if the community
+does not exist or the caller is not a member of it.
+ * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
+ */
+export const getAllSupplies = (
+    communityId: string,
+    params?: GetAllSuppliesParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PagedResultSupplyResponse>(
+      {url: `/api/v1/communities/${communityId}/supplies`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetAllSuppliesQueryKey = (communityId: string,
+    params?: GetAllSuppliesParams,) => {
+    return [`/api/v1/communities/${communityId}/supplies`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAllSuppliesQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllSupplies>>> = ({ signal }) => getAllSupplies(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAllSuppliesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllSupplies>>>
+export type GetAllSuppliesQueryError = ErrorType<unknown>
+
+
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: undefined |  GetAllSuppliesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllSupplies>>,
+          TError,
+          Awaited<ReturnType<typeof getAllSupplies>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllSupplies>>,
+          TError,
+          Awaited<ReturnType<typeof getAllSupplies>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
+ */
+
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAllSuppliesQueryOptions(communityId,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

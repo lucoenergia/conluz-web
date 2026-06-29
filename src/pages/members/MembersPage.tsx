@@ -259,7 +259,7 @@ export const MembersPage: FC = () => {
                   <TableRow sx={{ backgroundColor: colors.background.surface }}>
                     <TableCell>
                       <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Usuario
+                        Miembro
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -317,7 +317,7 @@ export const MembersPage: FC = () => {
                             </Avatar>
                             <Box>
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {membership.user?.fullName ?? "Usuario desconocido"}
+                                {membership.user?.fullName ?? "Miembro desconocido"}
                               </Typography>
                               <Typography variant="caption" sx={{ color: colors.text.subtle }}>
                                 {membership.user?.email ?? ""}
@@ -471,10 +471,10 @@ export const MembersPage: FC = () => {
         <DialogTitle>Añadir miembro a la comunidad</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           <FormControl fullWidth>
-            <InputLabel>Usuario</InputLabel>
+            <InputLabel>Miembro</InputLabel>
             <Select
               value={selectedUserId}
-              label="Usuario"
+              label="Miembro"
               onChange={(e) => setSelectedUserId(e.target.value)}
             >
               {availableUsers.map((u) => (
