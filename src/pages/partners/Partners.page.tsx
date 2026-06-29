@@ -490,9 +490,6 @@ export const PartnersPage: FC = () => {
                                 <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
                                   {user.fullName || 'Sin nombre'}
                                 </Typography>
-                                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                  {user.role || 'PARTNER'}
-                                </Typography>
                               </Box>
                             </Box>
                           </TableCell>

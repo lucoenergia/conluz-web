@@ -21,7 +21,8 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useLoggedUser } from "../context/logged-user.context";
 import { useActiveCommunity } from "../context/community.context";
-import { UserResponseRole } from "../api/models";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
+import { CommunityRole } from "../api/models";
 
 // TODO: Set monitorig data methods when endpoints are ready
 
@@ -78,7 +79,9 @@ interface SupplyPointAutocompleteProps {
 const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onChange }) => {
   const loggedUser = useLoggedUser();
   const activeCommunityId = useActiveCommunity();
-  const isAdmin = loggedUser?.role === UserResponseRole.ADMIN;
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const activeCommunityRole = useActiveCommunityRole();
+  const isAdmin = isPlatformAdmin || activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
 
   const { data: userSupplies, isLoading: isLoadingUserSupplies } = useGetSuppliesByUserId(
     loggedUser?.id || "",

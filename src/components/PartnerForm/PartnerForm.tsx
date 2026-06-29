@@ -4,15 +4,9 @@ import {
   Box,
   Button,
   CircularProgress,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
 } from "@mui/material";
 import { colors, fontSizes } from "../../theme/tokens";
-import { CreateUserBodyRole } from "../../api/models";
 
 export interface PartnerFormValues {
   fullName: string;
@@ -22,7 +16,6 @@ export interface PartnerFormValues {
   phoneNumber: string;
   number?: number;
   password?: string;
-  role?: string;
 }
 
 interface PartnerFormProps {
@@ -31,6 +24,7 @@ interface PartnerFormProps {
   handleSubmit: (values: PartnerFormValues) => void;
   isPending: boolean;
   submitLabel: string;
+  disabled?: boolean;
 }
 
 
@@ -42,11 +36,11 @@ export const PartnerForm: FC<PartnerFormProps> = ({
     email: initialEmail = "",
     address: initialAddress = "",
     phoneNumber: initialPhoneNumber = "",
-    role: initialRole = CreateUserBodyRole.PARTNER,
   } = {},
   handleSubmit,
   isPending,
   submitLabel,
+  disabled = false,
 }) => {
   const [fullName, setFullName] = useState(initialFullName);
   const [personalId, setPersonalId] = useState(initialPersonalId);
@@ -57,7 +51,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [role, setRole] = useState(initialRole);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +69,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
       ...(mode === "create" && {
         number: Number(number),
         password,
-        role,
       }),
     });
   };
@@ -170,19 +162,6 @@ export const PartnerForm: FC<PartnerFormProps> = ({
                 if (passwordError) setPasswordError("");
               }}
                 />
-
-            <FormControl fullWidth required>
-              <InputLabel>Rol</InputLabel>
-              <Select
-                label="Rol"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <MenuItem value={CreateUserBodyRole.PARTNER}>Socio</MenuItem>
-                <MenuItem value={CreateUserBodyRole.ADMIN}>Administrador</MenuItem>
-              </Select>
-              <FormHelperText> </FormHelperText>
-            </FormControl>
           </>
         )}
 
@@ -190,7 +169,7 @@ export const PartnerForm: FC<PartnerFormProps> = ({
           type="submit"
           variant="contained"
           fullWidth
-          disabled={isPending}
+          disabled={isPending || disabled}
           sx={{
             mt: 2,
             py: 1.5,
