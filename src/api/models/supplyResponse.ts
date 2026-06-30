@@ -8,7 +8,6 @@
 import type { UserResponse } from './userResponse';
 import type { SupplyContractResponse } from './supplyContractResponse';
 import type { SupplyDistributorResponse } from './supplyDistributorResponse';
-import type { SupplyDatadisResponse } from './supplyDatadisResponse';
 import type { SupplyShellyResponse } from './supplyShellyResponse';
 
 export interface SupplyResponse {
@@ -32,8 +31,6 @@ export interface SupplyResponse {
   contract?: SupplyContractResponse;
   /** Distributor information of the supply */
   distributor?: SupplyDistributorResponse;
-  /** Datadis integration information of the supply */
-  datadis?: SupplyDatadisResponse;
   /** Shelly device information of the supply */
   shelly?: SupplyShellyResponse;
 }

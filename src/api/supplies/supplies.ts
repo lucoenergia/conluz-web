@@ -1197,7 +1197,7 @@ export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
     }
     /**
  * This endpoint enables users to synchronize the active supplies of the community identified by the
-path `communityId`, retrieving the information from datadis.es.
+path `communityId`, retrieving the information from datadis.
 
 Proper authentication, through an authentication token, is required for secure access to this
 endpoint.
@@ -1209,7 +1209,7 @@ A successful request returns an HTTP status code of 200.
 In cases of errors, the server responds with an appropriate error status code accompanied by a
 descriptive message to guide users in resolving any issues.
 
- * @summary Synchronize supplies retrieving the information from datadis.es.
+ * @summary Synchronize supplies retrieving the information from datadis.
  */
 export const syncDatadisSupplies = (
     communityId: string,
@@ -1255,7 +1255,7 @@ const {mutation: mutationOptions} = options ?
     export type SyncDatadisSuppliesMutationError = ErrorType<unknown>
 
     /**
- * @summary Synchronize supplies retrieving the information from datadis.es.
+ * @summary Synchronize supplies retrieving the information from datadis.
  */
 export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
