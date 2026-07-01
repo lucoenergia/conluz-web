@@ -3,10 +3,9 @@ import { sxStyles } from "../../theme/sx";
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate } from "react-router";
-import { CommunityRole, type CreateUserBody } from "../../api/models";
+import { type CreateUserBody } from "../../api/models";
 import { useCreateUser } from "../../api/users/users";
 import { useErrorDispatch } from "../../context/error.context";
-import { useActiveCommunity } from "../../context/community.context";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { PartnerForm, type PartnerFormValues } from "../../components/PartnerForm/PartnerForm";
 import PersonIcon from "@mui/icons-material/Person";
@@ -15,10 +14,8 @@ export const CreateUserPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const createUser = useCreateUser();
-  const activeCommunityId = useActiveCommunity();
 
   const handleSubmit = async ({ fullName, personalId, number, email, address, phoneNumber, password }: PartnerFormValues) => {
-    if (!activeCommunityId) return;
     try {
       const newUser: CreateUserBody = {
         fullName,
@@ -28,8 +25,6 @@ export const CreateUserPage: FC = () => {
         address: address || undefined,
         phoneNumber: phoneNumber || undefined,
         password: password ?? "",
-        communityId: activeCommunityId,
-        communityRole: CommunityRole.COMMUNITY_MEMBER,
       };
 
       const response = await createUser.mutateAsync({ data: newUser });
@@ -103,7 +98,6 @@ export const CreateUserPage: FC = () => {
             handleSubmit={handleSubmit}
             isPending={createUser.isPending}
             submitLabel="Crear usuario"
-            disabled={!activeCommunityId}
           />
         </Paper>
       </Box>

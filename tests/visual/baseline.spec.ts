@@ -181,7 +181,9 @@ const PAGED_SUPPLIES = {
 };
 
 const PAGED_USERS = {
-  items: [FIXED_MEMBER_USER, FIXED_USER_2],
+  // Include a platform admin so the Users page baseline exercises both the
+  // platform-admin indicator (FIXED_PLATFORM_ADMIN_USER) and a plain row (FIXED_USER_2).
+  items: [FIXED_PLATFORM_ADMIN_USER, FIXED_USER_2],
   size: 10,
   totalElements: 2,
   totalPages: 1,

@@ -10,6 +10,7 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   confirmLabel: string;
   confirmColor?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
+  confirmDisabled?: boolean;
   title?: string;
   icon?: ReactNode;
   iconBg?: string;
@@ -22,6 +23,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
   onConfirm,
   confirmLabel,
   confirmColor = "error",
+  confirmDisabled = false,
   title,
   icon,
   iconBg,
@@ -63,6 +65,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
             variant="contained"
             color={confirmColor}
             onClick={handleConfirm}
+            disabled={confirmDisabled}
             sx={{
               minWidth: "64px",
               padding: "5px 15px",

@@ -7,6 +7,11 @@ const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
 const mockDisableMutate = vi.fn();
 const mockEnableMutate = vi.fn();
+const mockGrantMutate = vi.fn();
+const mockRevokeMutate = vi.fn();
+
+// The logged-in user — used to assert the self-revoke guard (revoke disabled on own row).
+const LOGGED_USER_ID = "u3";
 
 const MOCK_USERS = [
   {
@@ -16,6 +21,7 @@ const MOCK_USERS = [
     email: "ana@example.com",
     phoneNumber: "600000001",
     enabled: true,
+    isPlatformAdmin: true, // another platform admin (not the logged-in user) → revoke enabled
     memberships: { "c1": "COMMUNITY_ADMIN", "c2": "COMMUNITY_MEMBER", "c3": "COMMUNITY_MEMBER" },
   },
   {
@@ -25,6 +31,17 @@ const MOCK_USERS = [
     email: "bruno@example.com",
     phoneNumber: "600000002",
     enabled: false,
+    isPlatformAdmin: false, // not an admin → grant shown
+    memberships: {},
+  },
+  {
+    id: LOGGED_USER_ID,
+    fullName: "Zoe Admin",
+    personalId: "33333333C",
+    email: "zoe@example.com",
+    phoneNumber: "600000003",
+    enabled: true,
+    isPlatformAdmin: true, // the logged-in user → revoke disabled
     memberships: {},
   },
 ];
@@ -42,8 +59,10 @@ vi.mock("react-router", async () => {
 
 vi.mock("../../api/users/users", () => ({
   useGetAllUsers: () => ({ data: { items: MOCK_USERS }, isLoading: false, error: null, refetch: vi.fn() }),
-  useDisableUser1: () => ({ mutateAsync: mockDisableMutate }),
-  useDisableUser: () => ({ mutateAsync: mockEnableMutate }),
+  useDisableUser: () => ({ mutateAsync: mockDisableMutate }),
+  useEnableUser: () => ({ mutateAsync: mockEnableMutate }),
+  useGrantPlatformAdmin: () => ({ mutateAsync: mockGrantMutate, isPending: false }),
+  useRevokePlatformAdmin: () => ({ mutateAsync: mockRevokeMutate, isPending: false }),
 }));
 
 vi.mock("../../api/communities/communities", () => ({
@@ -52,6 +71,14 @@ vi.mock("../../api/communities/communities", () => ({
 
 vi.mock("../../context/error.context", () => ({
   useErrorDispatch: () => mockErrorDispatch,
+}));
+
+vi.mock("../../context/logged-user.context", () => ({
+  useLoggedUser: () => ({ id: LOGGED_USER_ID }),
+}));
+
+vi.mock("../../hooks/useActiveCommunityRole", () => ({
+  useIsPlatformAdmin: () => true,
 }));
 
 vi.mock("../../components/Modals/DisablePartnerConfirmationModal", () => ({
@@ -92,6 +119,37 @@ vi.mock("../../components/Modals/ResetPasswordConfirmationModal", () => ({
         <button onClick={onCancel}>Cancelar</button>
       </div>
     ) : null,
+}));
+
+vi.mock("../../components/Modals/GrantPlatformAdminConfirmationModal", () => ({
+  GrantPlatformAdminConfirmationModal: ({ isOpen, onConfirm, userName }: {
+    isOpen: boolean; onConfirm: () => void; userName: string;
+  }) =>
+    isOpen ? (
+      <div>
+        <span>Grant modal for {userName}</span>
+        <button onClick={onConfirm}>Confirmar conceder</button>
+      </div>
+    ) : null,
+}));
+
+vi.mock("../../components/Modals/RevokePlatformAdminConfirmationModal", () => ({
+  RevokePlatformAdminConfirmationModal: ({ isOpen, onConfirm, userName }: {
+    isOpen: boolean; onConfirm: () => void; userName: string;
+  }) =>
+    isOpen ? (
+      <div>
+        <span>Revoke modal for {userName}</span>
+        <button onClick={onConfirm}>Confirmar revocar</button>
+      </div>
+    ) : null,
+}));
+
+vi.mock("../../components/Modals/PlatformAdminSuccessModal", () => ({
+  PlatformAdminSuccessModal: ({ isOpen, userName, wasGranted }: {
+    isOpen: boolean; userName: string; wasGranted: boolean;
+  }) =>
+    isOpen ? <span>Platform admin {wasGranted ? "granted" : "revoked"} for {userName}</span> : null,
 }));
 
 import { MemoryRouter } from "react-router";
@@ -143,7 +201,7 @@ describe("UsersPage", () => {
   it("shows summary stats", () => {
     setup();
 
-    expect(screen.getByText("2")).toBeInTheDocument(); // Total
+    expect(screen.getByText("3")).toBeInTheDocument(); // Total (Ana, Bruno, Zoe)
     expect(screen.getByText("Total")).toBeInTheDocument();
     expect(screen.getAllByText("Activos").length).toBeGreaterThan(0);
   });
@@ -243,5 +301,81 @@ describe("UsersPage", () => {
     communityChips.forEach((chip) => {
       expect(chip.closest("button")).toBeNull();
     });
+  });
+
+  it("shows the platform-admin indicator only on platform-admin rows", () => {
+    setup();
+    // Ana and Zoe are platform admins; Bruno is not.
+    expect(screen.getAllByText("Admin plataforma")).toHaveLength(2);
+  });
+
+  it("shows the grant action on a non-admin row", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    // Sorted asc by name: Ana(0), Bruno(1), Zoe(2). Bruno is not a platform admin.
+    const iconButtons = screen.getAllByRole("button").filter((b) => b.textContent === "");
+    await user.click(iconButtons[1]);
+
+    await waitFor(() => expect(screen.getByText("Conceder admin de plataforma")).toBeInTheDocument());
+    expect(screen.queryByText("Revocar admin de plataforma")).not.toBeInTheDocument();
+  });
+
+  it("enables revoke on another platform admin's row", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    // Ana (index 0) is a platform admin but not the logged-in user → revoke enabled.
+    const iconButtons = screen.getAllByRole("button").filter((b) => b.textContent === "");
+    await user.click(iconButtons[0]);
+
+    await waitFor(() => expect(screen.getByText("Revocar admin de plataforma")).toBeInTheDocument());
+    const menuItem = screen.getByText("Revocar admin de plataforma").closest("li");
+    expect(menuItem).not.toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("disables revoke on the logged-in user's own row", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    // Zoe (index 2) is the logged-in platform admin → self-revoke guard disables the item.
+    const iconButtons = screen.getAllByRole("button").filter((b) => b.textContent === "");
+    await user.click(iconButtons[2]);
+
+    await waitFor(() => expect(screen.getByText("Revocar admin de plataforma")).toBeInTheDocument());
+    const menuItem = screen.getByText("Revocar admin de plataforma").closest("li");
+    expect(menuItem).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("grants platform admin through the confirmation modal", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const iconButtons = screen.getAllByRole("button").filter((b) => b.textContent === "");
+    await user.click(iconButtons[1]); // Bruno
+
+    await waitFor(() => expect(screen.getByText("Conceder admin de plataforma")).toBeInTheDocument());
+    await user.click(screen.getByText("Conceder admin de plataforma"));
+
+    expect(screen.getByText(/Grant modal for Bruno Leal/)).toBeInTheDocument();
+    await user.click(screen.getByText("Confirmar conceder"));
+
+    await waitFor(() => expect(mockGrantMutate).toHaveBeenCalledWith({ id: "u2" }));
+  });
+
+  it("revokes platform admin through the confirmation modal", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const iconButtons = screen.getAllByRole("button").filter((b) => b.textContent === "");
+    await user.click(iconButtons[0]); // Ana
+
+    await waitFor(() => expect(screen.getByText("Revocar admin de plataforma")).toBeInTheDocument());
+    await user.click(screen.getByText("Revocar admin de plataforma"));
+
+    expect(screen.getByText(/Revoke modal for Ana García/)).toBeInTheDocument();
+    await user.click(screen.getByText("Confirmar revocar"));
+
+    await waitFor(() => expect(mockRevokeMutate).toHaveBeenCalledWith({ id: "u1" }));
   });
 });

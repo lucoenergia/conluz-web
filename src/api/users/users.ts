@@ -461,6 +461,150 @@ export const useCreateUser = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * This endpoint removes platform-administrator privileges from the user identified in the endpoint path.
+
+Proper authentication, through an authentication token, is required for secure access.
+**Required: Platform Admin. You cannot revoke your own privileges.**
+
+Two safety rails apply: the system can never be left with zero platform admins (the last platform admin cannot be revoked), and a platform admin cannot revoke their own privileges.
+
+Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user is no longer a platform administrator.
+
+In situations where the operation encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
+ * @summary Revokes platform-admin privileges from a user by ID
+ */
+export const revokePlatformAdmin = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${id}/revoke-platform-admin`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getRevokePlatformAdminMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['revokePlatformAdmin'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokePlatformAdmin>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  revokePlatformAdmin(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokePlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof revokePlatformAdmin>>>
+    
+    export type RevokePlatformAdminMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Revokes platform-admin privileges from a user by ID
+ */
+export const useRevokePlatformAdmin = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokePlatformAdmin>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRevokePlatformAdminMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint promotes the user identified in the endpoint path to platform administrator.
+
+Proper authentication, through an authentication token, is required for secure access.
+**Required: Platform Admin.**
+
+The operation is idempotent: granting the flag to a user who is already a platform admin has no effect.
+
+Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user is now a platform administrator.
+
+In situations where the operation encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
+ * @summary Grants platform-admin privileges to a user by ID
+ */
+export const grantPlatformAdmin = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${id}/grant-platform-admin`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getGrantPlatformAdminMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['grantPlatformAdmin'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof grantPlatformAdmin>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  grantPlatformAdmin(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GrantPlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof grantPlatformAdmin>>>
+    
+    export type GrantPlatformAdminMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Grants platform-admin privileges to a user by ID
+ */
+export const useGrantPlatformAdmin = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof grantPlatformAdmin>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getGrantPlatformAdminMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * This endpoint serves the purpose of enabling a previously disabled user within the system, with the user's unique identifier specified in the endpoint path.
 
 Proper authentication, through an authentication token, is required for secure access.
@@ -473,7 +617,7 @@ This endpoint provides a crucial mechanism for restoring user access or lifting 
 In situations where the enabling process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
  * @summary Enables a user by ID
  */
-export const disableUser = (
+export const enableUser = (
     id: string,
  signal?: AbortSignal
 ) => {
@@ -481,6 +625,79 @@ export const disableUser = (
       
       return customInstance<void>(
       {url: `/api/v1/users/${id}/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableUserMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['enableUser'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableUser>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  enableUser(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableUserMutationResult = NonNullable<Awaited<ReturnType<typeof enableUser>>>
+    
+    export type EnableUserMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Enables a user by ID
+ */
+export const useEnableUser = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableUser>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableUserMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ *     This endpoint is designed to disable a user within the system by specifying the user's unique identifier in the endpoint path.
+
+    This operation requires proper authentication, through an authentication token, to ensure secure access.
+    **Required: Platform Admin or Community Admin. You cannot disable your own account.**
+
+    Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been disabled.
+
+    The endpoint provides an effective means to temporarily suspend user accounts or restrict access, crucial for security and user management purposes.
+
+    In cases where the disablement encounters errors, the server returns an appropriate error status code along with a descriptive error message to guide clients in addressing and resolving the issue.
+
+ * @summary Disables a user by ID
+ */
+export const disableUser = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${id}/disable`, method: 'POST', signal
     },
       );
     }
@@ -517,7 +734,7 @@ const {mutation: mutationOptions} = options ?
     export type DisableUserMutationError = ErrorType<unknown>
 
     /**
- * @summary Enables a user by ID
+ * @summary Disables a user by ID
  */
 export const useDisableUser = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{id: string}, TContext>, }
@@ -529,79 +746,6 @@ export const useDisableUser = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getDisableUserMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
- *     This endpoint is designed to disable a user within the system by specifying the user's unique identifier in the endpoint path.
-
-    This operation requires proper authentication, through an authentication token, to ensure secure access.
-    **Required: Platform Admin or Community Admin. You cannot disable your own account.**
-
-    Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been disabled.
-
-    The endpoint provides an effective means to temporarily suspend user accounts or restrict access, crucial for security and user management purposes.
-
-    In cases where the disablement encounters errors, the server returns an appropriate error status code along with a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Disables a user by ID
- */
-export const disableUser1 = (
-    id: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/${id}/disable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getDisableUser1MutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext> => {
-
-const mutationKey = ['disableUser1'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableUser1>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
-
-          return  disableUser1(id,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DisableUser1MutationResult = NonNullable<Awaited<ReturnType<typeof disableUser1>>>
-    
-    export type DisableUser1MutationError = ErrorType<unknown>
-
-    /**
- * @summary Disables a user by ID
- */
-export const useDisableUser1 = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser1>>, TError,{id: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disableUser1>>,
-        TError,
-        {id: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDisableUser1MutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

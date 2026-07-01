@@ -318,9 +318,9 @@ export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadis
 
 
 /**
- * This endpoint allows to configure the app to connect with datadis.es for a specific community.
+ * This endpoint allows to configure the app to connect with datadis for a specific community.
 
-This configuration is a mandatory step to be able to retrieve consumption data from datadis.es.
+This configuration is a mandatory step to be able to retrieve consumption data from datadis.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
 **Required: Community Admin**
@@ -396,7 +396,7 @@ export const useConfigureDatadis = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint enables users to synchronize consumption data from datadis.es for a specific year.
+ * This endpoint enables users to synchronize consumption data from datadis for a specific year.
 
 The request body must contain:
 - **year** (required, integer): The year for which to synchronize consumption data
@@ -420,7 +420,7 @@ A successful request returns an HTTP status code of 200.
 In cases of errors, the server responds with an appropriate error status code accompanied by a
 descriptive message to guide users in resolving any issues.
 
- * @summary Synchronize the consumptions for a specific year from datadis.es, optionally filtering by supply code.
+ * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
  */
 export const syncDatadisConsumptions = (
     communityId: string,
@@ -469,7 +469,7 @@ const {mutation: mutationOptions} = options ?
     export type SyncDatadisConsumptionsMutationError = ErrorType<unknown>
 
     /**
- * @summary Synchronize the consumptions for a specific year from datadis.es, optionally filtering by supply code.
+ * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
  */
 export const useSyncDatadisConsumptions = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext>, }
