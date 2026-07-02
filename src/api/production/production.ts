@@ -149,7 +149,7 @@ The request body must contain:
 - **username** (required, string): API user.
 - **password** (required, string): API password / system code.
 - **baseUrl** (required, string): Base URL of the Huawei FusionSolar API
-  (for example `https://eu5.fusionsolar.huawei.com/thirdData`). Mock services
+  (for example `https://localhost:8000/thirdData`). Mock services
   that emulate the SmartPVMS V6 Northbound Interface can be targeted by
   providing their base URL here.
 - **enabled** (required, boolean): Master switch for every Huawei-related

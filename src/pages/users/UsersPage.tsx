@@ -26,6 +26,7 @@ import {
   Divider,
   TableSortLabel,
   Button,
+  Tooltip,
 } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar";
@@ -40,16 +41,31 @@ import LockResetIcon from "@mui/icons-material/LockReset";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AddModeratorIcon from "@mui/icons-material/AddModerator";
+import RemoveModeratorIcon from "@mui/icons-material/RemoveModerator";
 
-import { useGetAllUsers, useDisableUser1, useDisableUser } from "../../api/users/users";
+import {
+  useGetAllUsers,
+  useDisableUser,
+  useEnableUser,
+  useGrantPlatformAdmin,
+  useRevokePlatformAdmin,
+} from "../../api/users/users";
 import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
+import type { AxiosError } from "axios";
 import { useDebounce } from "../../utils/useDebounce";
 import { DisablePartnerConfirmationModal } from "../../components/Modals/DisablePartnerConfirmationModal";
 import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
 import { DisablePartnerSuccessModal } from "../../components/Modals/DisablePartnerSuccessModal";
 import { ResetPasswordConfirmationModal } from "../../components/Modals/ResetPasswordConfirmationModal";
+import { GrantPlatformAdminConfirmationModal } from "../../components/Modals/GrantPlatformAdminConfirmationModal";
+import { RevokePlatformAdminConfirmationModal } from "../../components/Modals/RevokePlatformAdminConfirmationModal";
+import { PlatformAdminSuccessModal } from "../../components/Modals/PlatformAdminSuccessModal";
 import { useErrorDispatch } from "../../context/error.context";
+import { useLoggedUser } from "../../context/logged-user.context";
+import { useIsPlatformAdmin } from "../../hooks/useActiveCommunityRole";
 
 type OrderDirection = "asc" | "desc";
 type OrderBy = "fullName" | "personalId";
@@ -82,7 +98,7 @@ function UserCommunitiesCell({
         return (
           <Chip
             key={communityId}
-            label={`${label} · ${isAdmin ? "Adm" : "Mbr"}`}
+            label={`${label} · ${isAdmin ? "Admin" : "Miembro"}`}
             size="small"
             color={isAdmin ? "primary" : "default"}
             variant="outlined"
@@ -118,17 +134,29 @@ export const UsersPage: FC = () => {
     status: "all",
   });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; enabled: boolean } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string;
+    name: string;
+    enabled: boolean;
+    isPlatformAdmin: boolean;
+  } | null>(null);
   const [showDisableConfirmation, setShowDisableConfirmation] = useState(false);
   const [showDisableSuccess, setShowDisableSuccess] = useState(false);
   const [showResetPasswordConfirmation, setShowResetPasswordConfirmation] = useState(false);
   const [wasEnabled, setWasEnabled] = useState(false);
+  const [showPlatformAdminConfirmation, setShowPlatformAdminConfirmation] = useState(false);
+  const [showPlatformAdminSuccess, setShowPlatformAdminSuccess] = useState(false);
+  const [wasGranted, setWasGranted] = useState(false);
 
   const debouncedSearch = useDebounce(filters.search, 500);
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const disableUserMutation = useDisableUser1();
-  const enableUserMutation = useDisableUser();
+  const loggedUser = useLoggedUser();
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const disableUserMutation = useDisableUser();
+  const enableUserMutation = useEnableUser();
+  const grantMutation = useGrantPlatformAdmin();
+  const revokeMutation = useRevokePlatformAdmin();
 
   const { data, isLoading, error, refetch } = useGetAllUsers({ size: 10000 });
   const { data: communitiesList = [] } = useGetAllCommunities();
@@ -181,9 +209,15 @@ export const UsersPage: FC = () => {
     setPage(0);
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, userId: string, userName: string, enabled: boolean) => {
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    userId: string,
+    userName: string,
+    enabled: boolean,
+    userIsPlatformAdmin: boolean,
+  ) => {
     setAnchorEl(event.currentTarget);
-    setSelectedUser({ id: userId, name: userName, enabled });
+    setSelectedUser({ id: userId, name: userName, enabled, isPlatformAdmin: userIsPlatformAdmin });
   };
 
   const handleMenuClose = () => {
@@ -226,6 +260,44 @@ export const UsersPage: FC = () => {
 
   const handleDisableSuccessClose = () => {
     setShowDisableSuccess(false);
+    setSelectedUser(null);
+  };
+
+  const handlePlatformAdminClick = () => {
+    handleMenuClose();
+    setShowPlatformAdminConfirmation(true);
+  };
+
+  const handlePlatformAdminConfirm = async () => {
+    if (!selectedUser) return;
+
+    const wasGrantOperation = !selectedUser.isPlatformAdmin;
+    try {
+      if (selectedUser.isPlatformAdmin) {
+        await revokeMutation.mutateAsync({ id: selectedUser.id });
+      } else {
+        await grantMutation.mutateAsync({ id: selectedUser.id });
+      }
+      setWasGranted(wasGrantOperation);
+      setShowPlatformAdminConfirmation(false);
+      setShowPlatformAdminSuccess(true);
+      refetch();
+    } catch (err) {
+      const message =
+        (err as AxiosError<{ message?: string }>)?.response?.data?.message ??
+        "No se pudo actualizar el rol de administrador de plataforma.";
+      errorDispatch(message);
+      setShowPlatformAdminConfirmation(false);
+      console.error("Error updating platform-admin role:", err);
+    }
+  };
+
+  const handlePlatformAdminCancel = () => {
+    setShowPlatformAdminConfirmation(false);
+  };
+
+  const handlePlatformAdminSuccessClose = () => {
+    setShowPlatformAdminSuccess(false);
     setSelectedUser(null);
   };
 
@@ -461,10 +533,21 @@ export const UsersPage: FC = () => {
                               >
                                 {user.fullName?.charAt(0).toUpperCase() || "?"}
                               </Avatar>
-                              <Box>
+                              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
                                 <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
                                   {user.fullName || "Sin nombre"}
                                 </Typography>
+                                {user.isPlatformAdmin && (
+                                  <Chip
+                                    icon={<AdminPanelSettingsIcon />}
+                                    label="Admin plataforma"
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                    aria-label="Administrador de plataforma"
+                                    sx={{ fontSize: fontSizes.xs }}
+                                  />
+                                )}
                               </Box>
                             </Box>
                           </TableCell>
@@ -501,7 +584,13 @@ export const UsersPage: FC = () => {
                             <IconButton
                               size="small"
                               onClick={(e) =>
-                                handleMenuOpen(e, user.id || "", user.fullName || "Sin nombre", user.enabled || false)
+                                handleMenuOpen(
+                                  e,
+                                  user.id || "",
+                                  user.fullName || "Sin nombre",
+                                  user.enabled || false,
+                                  user.isPlatformAdmin || false,
+                                )
                               }
                               sx={{
                                 color: colors.text.subtle,
@@ -596,6 +685,33 @@ export const UsersPage: FC = () => {
             <ListItemText sx={{ color: "success.main" }}>Habilitar</ListItemText>
           </MenuItem>
         )}
+        {isPlatformAdmin &&
+          (selectedUser?.isPlatformAdmin ? (
+            // Tooltip needs a non-disabled wrapper to receive hover events when the item is disabled.
+            <Tooltip
+              title={selectedUser?.id === loggedUser?.id ? "No puedes revocar tu propio rol" : ""}
+              placement="left"
+            >
+              <span>
+                <MenuItem
+                  onClick={handlePlatformAdminClick}
+                  disabled={selectedUser?.id === loggedUser?.id}
+                >
+                  <ListItemIcon>
+                    <RemoveModeratorIcon fontSize="small" sx={{ color: "error.main" }} />
+                  </ListItemIcon>
+                  <ListItemText sx={{ color: "error.main" }}>Revocar admin de plataforma</ListItemText>
+                </MenuItem>
+              </span>
+            </Tooltip>
+          ) : (
+            <MenuItem onClick={handlePlatformAdminClick}>
+              <ListItemIcon>
+                <AddModeratorIcon fontSize="small" sx={{ color: "primary.main" }} />
+              </ListItemIcon>
+              <ListItemText sx={{ color: "primary.main" }}>Conceder admin de plataforma</ListItemText>
+            </MenuItem>
+          ))}
       </Menu>
 
       {selectedUser?.enabled ? (
@@ -626,6 +742,31 @@ export const UsersPage: FC = () => {
         partnerName={selectedUser?.name || ""}
         onCancel={handleResetPasswordCancel}
         onReset={handleResetPasswordConfirm}
+      />
+
+      {selectedUser?.isPlatformAdmin ? (
+        <RevokePlatformAdminConfirmationModal
+          isOpen={showPlatformAdminConfirmation}
+          userName={selectedUser?.name || ""}
+          isPending={revokeMutation.isPending}
+          onCancel={handlePlatformAdminCancel}
+          onConfirm={handlePlatformAdminConfirm}
+        />
+      ) : (
+        <GrantPlatformAdminConfirmationModal
+          isOpen={showPlatformAdminConfirmation}
+          userName={selectedUser?.name || ""}
+          isPending={grantMutation.isPending}
+          onCancel={handlePlatformAdminCancel}
+          onConfirm={handlePlatformAdminConfirm}
+        />
+      )}
+
+      <PlatformAdminSuccessModal
+        isOpen={showPlatformAdminSuccess}
+        userName={selectedUser?.name || ""}
+        wasGranted={wasGranted}
+        onClose={handlePlatformAdminSuccessClose}
       />
     </Box>
   );

@@ -43,7 +43,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
-import { useGetAllUsers, useDisableUser1, useDisableUser } from "../../api/users/users";
+import { useGetAllUsers, useDisableUser, useEnableUser } from "../../api/users/users";
 import { useDebounce } from "../../utils/useDebounce";
 import { DisablePartnerConfirmationModal } from "../../components/Modals/DisablePartnerConfirmationModal";
 import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
@@ -81,8 +81,8 @@ export const PartnersPage: FC = () => {
   const debouncedSearch = useDebounce(filters.search, 500);
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const disableUserMutation = useDisableUser1();
-  const enableUserMutation = useDisableUser();
+  const disableUserMutation = useDisableUser();
+  const enableUserMutation = useEnableUser();
 
   // Fetch users data - using large size to get all users and handle pagination client-side
   // TODO: Backend CORS configuration needed for proper server-side pagination with sort parameters
