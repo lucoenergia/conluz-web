@@ -26,7 +26,7 @@
  *                                useEffect that fires after the first render, causing a redirect
  *                                to / before the guard re-evaluates. The modal and page are
  *                                covered by unit tests (ImportPartnersModal.spec.tsx, etc.).
- *   FIXED_PLATFORM_ADMIN_USER  → /platform (platform welcome), /users (users page)
+ *   FIXED_PLATFORM_ADMIN_USER  → /platform (platform dashboard: populated + empty), /users (users page)
  *   FIXED_NO_COMMUNITY_USER    → /no-community (asserts the screen renders correctly)
  *
  * Partners page migration:
@@ -189,6 +189,22 @@ const PAGED_USERS = {
   totalPages: 1,
   number: 0,
 };
+
+/**
+ * Rich community fixtures for the platform dashboard baseline. Deterministic
+ * values chosen to cover every derived signal:
+ *   - Activa (enabled, members, admins): Luco de Jiloca, Barrio del Sol
+ *   - Sin admin (no adminNames):          Vega Baja
+ *   - Sin usuarios (memberCount 0):        Monte Alto
+ *   - Deshabilitada (enabled false):       Río Verde
+ */
+const DASHBOARD_COMMUNITIES = [
+  { id: "c1", name: "Luco de Jiloca", code: "LDJ", enabled: true, adminNames: ["Ana Gil"], memberCount: 38, supplyPointCount: 42 },
+  { id: "c2", name: "Barrio del Sol", code: "BDS", enabled: true, adminNames: ["Luis Mora"], memberCount: 21, supplyPointCount: 24 },
+  { id: "c3", name: "Vega Baja", code: "VGB", enabled: true, adminNames: [], memberCount: 12, supplyPointCount: 8 },
+  { id: "c4", name: "Monte Alto", code: "MTA", enabled: true, adminNames: ["Sara Ruiz"], memberCount: 0, supplyPointCount: 3 },
+  { id: "c5", name: "Río Verde", code: "RVD", enabled: false, adminNames: ["Paco Díaz"], memberCount: 5, supplyPointCount: 2 },
+];
 
 const EMPTY_PRODUCTION: unknown[] = [];
 
@@ -502,14 +518,46 @@ test.describe("Visual baselines", () => {
   // PlatformAdminRoute reads isPlatformAdmin directly from loggedUser (no async
   // community selection needed), so direct page.goto() works reliably.
 
-  test("platform welcome page", async ({ page }) => {
+  // Platform dashboard — populated. A richer communities fixture (registered
+  // AFTER mockAllApiRoutes so it is consulted first) exercises every KPI, the
+  // attention panel (all three signals), and all four status-chip variants.
+  test("platform dashboard (populated)", async ({ page }) => {
     await injectAuthToken(page);
     await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    await page.route(
+      (url) => url.href.includes("/api/v1/communities") && !url.href.includes("/supplies"),
+      (route: Route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(DASHBOARD_COMMUNITIES),
+        }),
+    );
 
     await page.goto("/platform");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("platform-welcome-page.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("platform-dashboard-populated.png", { fullPage: true });
+  });
+
+  // Platform dashboard — empty (0 communities → first-community empty state).
+  test("platform dashboard (empty)", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    await page.route(
+      (url) => url.href.includes("/api/v1/communities") && !url.href.includes("/supplies"),
+      (route: Route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify([]),
+        }),
+    );
+
+    await page.goto("/platform");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("platform-dashboard-empty.png", { fullPage: true });
   });
 
   test("users page", async ({ page }) => {
