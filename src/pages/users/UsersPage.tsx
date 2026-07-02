@@ -98,7 +98,7 @@ function UserCommunitiesCell({
         return (
           <Chip
             key={communityId}
-            label={`${label} · ${isAdmin ? "Adm" : "Mbr"}`}
+            label={`${label} · ${isAdmin ? "Admin" : "Miembro"}`}
             size="small"
             color={isAdmin ? "primary" : "default"}
             variant="outlined"

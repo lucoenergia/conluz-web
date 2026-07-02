@@ -282,8 +282,8 @@ describe("UsersPage", () => {
   it("shows community membership chips for Ana (first 2 + overflow)", () => {
     setup();
     // Ana has 3 memberships: c1 (admin), c2 (member), c3 (member) — shows 2 chips + +1
-    expect(screen.getByText(/Sol Común · Adm/)).toBeInTheDocument();
-    expect(screen.getByText(/Verde Activa · Mbr/)).toBeInTheDocument();
+    expect(screen.getByText(/Sol Común · Admin/)).toBeInTheDocument();
+    expect(screen.getByText(/Verde Activa · Miembro/)).toBeInTheDocument();
     expect(screen.getByText("+1")).toBeInTheDocument();
   });
 
@@ -297,7 +297,7 @@ describe("UsersPage", () => {
   it("Comunidades column is read-only — no assign/edit buttons in that column", () => {
     setup();
     // No buttons or links inside the communities cell — just chips
-    const communityChips = screen.getAllByText(/· Adm|· Mbr/);
+  const communityChips = screen.getAllByText(/· Admin|· Miembro/);
     communityChips.forEach((chip) => {
       expect(chip.closest("button")).toBeNull();
     });
