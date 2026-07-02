@@ -7,10 +7,9 @@ import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "
 import { Box, CircularProgress, Toolbar } from "@mui/material";
 import { ProtectedRoute } from "../components/Auth/ProtectedRoute";
 import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
-import { useQueryClient } from "@tanstack/react-query";
 import { useGetCurrentUser } from "../api/users/users";
-import { useAuthDispatch } from "../context/auth.context";
 import { useLoggedUser, useLoggedUserDispatch } from "../context/logged-user.context";
+import { useLogout } from "../hooks/useLogout";
 import { ErrorProvider } from "../context/error.context";
 import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
 import { useActiveCommunity } from "../context/community.context";
@@ -20,9 +19,8 @@ import { resolveLandingRoute } from "../utils/routes";
 
 export const AuthenticatedLayout: FC = () => {
   const { width } = useWindowDimensions();
-  const dispatchAuth = useAuthDispatch();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const logout = useLogout();
   const loggedUser = useLoggedUser();
   const setLoggedUser = useLoggedUserDispatch();
   const activeCommunity = useActiveCommunity();
@@ -58,13 +56,6 @@ export const AuthenticatedLayout: FC = () => {
       }
     }
   }, [data, navigate, setLoggedUser]);
-
-  const logout = async () => {
-    queryClient.clear();
-    dispatchAuth(null);
-    setLoggedUser(null);
-    navigate("/login");
-  };
 
   return (
     <ProtectedRoute>

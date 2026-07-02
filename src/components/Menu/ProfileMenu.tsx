@@ -6,11 +6,9 @@ import KeyIcon from "@mui/icons-material/Key";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { MenuTemplate } from "./MenuTemplate";
-import { useNavigate } from "react-router";
 import { colors, fontSizes } from "../../theme/tokens";
-import { useAuthDispatch } from "../../context/auth.context";
-import { useLoggedUserDispatch } from "../../context/logged-user.context";
 import { useActiveCommunityRole, useIsPlatformAdmin } from "../../hooks/useActiveCommunityRole";
+import { useLogout } from "../../hooks/useLogout";
 import { CommunityRole } from "../../api/models";
 
 interface ProfileMenuProps {
@@ -19,9 +17,7 @@ interface ProfileMenuProps {
 
 export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-  const dispatchAuth = useAuthDispatch();
-  const dispatchLoggedUser = useLoggedUserDispatch();
-  const navigate = useNavigate();
+  const logout = useLogout();
   const isPlatformAdmin = useIsPlatformAdmin();
   const communityRole = useActiveCommunityRole();
 
@@ -39,12 +35,6 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
   const handleCloseUserMenu = () => {
     setAnchorElement(null);
-  };
-
-  const logout = () => {
-    dispatchAuth(null);
-    dispatchLoggedUser(null);
-    navigate("/login");
   };
 
   return (
