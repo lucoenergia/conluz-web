@@ -6,13 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-npm run dev              # Start development server on port 3001
-npm run build            # TypeScript compile + Vite production build
-npm run preview          # Preview production build locally
-npm run lint             # Run ESLint
-npm test                 # Run all tests once
-npm test -- --watch      # Run tests in watch mode
-npm run generate-client  # Regenerate API client from api-docs.json
+npm run dev                   # Start development server on port 3001
+npm run build                 # TypeScript compile + Vite production build
+npm run preview               # Preview production build locally
+npm run lint                  # Run ESLint
+npm test                      # Run all tests once
+npm test -- --watch           # Run tests in watch mode
+npm run generate-client       # Regenerate API client from api-docs.json
+npm run test:visual           # Run visual tests
+npm run test:visual:mobile    # Run visual tests for mobile screens
+npm run test:visual:desktop   # Run visual tests for desktop screens
+rpm run test:visual:update    # Update screenshots that acts as baseline for asserting visual tests
 ```
 
 ## Architecture Overview
@@ -29,6 +33,21 @@ The application uses a layered state management approach:
 3. Protected routes use `ProtectedRoute` component that checks authentication status
 4. 401 responses trigger automatic logout via React Query's global error handler
 
+### Multi-Community Model & Authorization
+
+The app is **multi-community**. This is the single most important mental model for any data or gating work, and it supersedes any older single-community assumptions.
+
+- **Two independent authorization axes.** There is no global user `role`. Instead:
+  - `isPlatformAdmin` (boolean) — platform-level privilege.
+  - The user's role **within the active community**, derived via `src/hooks/useActiveCommunityRole.ts` from the `memberships` map (`COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`).
+- **Golden rule (mirror of the backend):** `isPlatformAdmin` **never** grants access to a community's operational data. Platform admins manage users/communities and assign community admins; they do not get members' consumption/production data by virtue of the flag.
+- **Active community context:** `src/context/community.context.tsx` selects and persists the active community (auto-selects when the user has exactly one; restores the persisted choice otherwise). `CommunitySelector` switches it.
+- **Data endpoints are path-scoped:** `/communities/{communityId}/{supplies,consumption,production,plants,config}`. Data hooks must pass `communityId` and be **gated on its presence** — no active community → no call, and controls that submit community-scoped data disable when none is selected.
+- **Route guards:** `PlatformAdminRoute` and `CommunityAdminRoute` (`src/components/Auth/`) gate pages by axis. Menu/profile gating derives from `isPlatformAdmin` + active-community role, not a global role.
+- **Legacy header:** `community.context.tsx` still injects an `X-Community-Id` header in the axios interceptor. Data endpoints now carry `communityId` in the **path**, so the header is legacy and likely redundant for them — **verify before relying on it**, and do not treat it as the scoping mechanism. (Removing it is a separate cleanup, not an assumption to build on.)
+
+Deeper patterns (gating recipes, hook shapes, common pitfalls) live in the **`conluz-web-community-scope`** skill in `.claude/skills/`.
+
 ### API Client Architecture
 The API layer is **completely auto-generated** from OpenAPI specification using Orval:
 - **Input**: `api-docs.json` (OpenAPI spec from backend)
@@ -36,9 +55,11 @@ The API layer is **completely auto-generated** from OpenAPI specification using 
 - **Generated artifacts**: TypeScript models, React Query hooks, MSW mocks
 - **Never manually edit** files in `src/api/` - they will be overwritten
 
-To update API definitions:
+To update API definitions (human maintainer workflow):
 1. Get latest `api-docs.json` from backend Swagger UI
 2. Run `npm run generate-client`
+
+**For AI-agent tasks:** the updated `api-docs.json` and the regenerated Orval client under `src/api/` are **always provided as an input before implementation** — treat `src/api/` as already current. Do **not** include fetching `api-docs.json` or running `npm run generate-client` as a task step, and do not regenerate the client yourself. If `src/api/` appears out of sync with the task, stop and report it rather than regenerating.
 
 ### Routing and Layout System
 Routes are organized by authentication requirement:
@@ -165,6 +186,12 @@ Verification gates (both must pass before committing styling changes):
 npm run lint   # 0 no-restricted-syntax errors
 npm test       # pass (3 pre-existing form-spec timeouts are expected)
 ```
+
+## Skills & documentation maintenance
+
+- Task-specific procedural knowledge lives in `.claude/skills/`. Load **`conluz-web-community-scope`** before any data-fetching or role-gating work. Styling depth lives in `references/styling-conventions.md` and `references/theme-tokens.md`.
+- **Author skills, this file, and the reference docs against the real, merged code — never against a plan.** A convention describing code that has since changed misleads with authority and is worse than none.
+- **Epic-closeout rule:** closing any epic includes updating `CLAUDE.md`, the affected skills, and the reference docs to match the code that actually landed. This is part of "done," not a follow-up. This file drifted before — it described a single-community model long after multi-community shipped — precisely because that step was skipped.
 
 # Language
 All code and documentation must be in english.
