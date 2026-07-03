@@ -16,7 +16,7 @@ npm run generate-client       # Regenerate API client from api-docs.json
 npm run test:visual           # Run visual tests
 npm run test:visual:mobile    # Run visual tests for mobile screens
 npm run test:visual:desktop   # Run visual tests for desktop screens
-rpm run test:visual:update    # Update screenshots that acts as baseline for asserting visual tests
+npm run test:visual:update    # Update screenshots that act as the baseline for asserting visual tests
 ```
 
 ## Architecture Overview
@@ -70,11 +70,27 @@ Routes are organized by authentication requirement:
 Route definitions are in `src/App.tsx` with nested structure for supply points management.
 
 ### Testing Strategy
+
+**Unit / component tests (Vitest):**
 - **Framework**: Vitest with jsdom environment
 - **Convention**: Test files use `.spec.tsx` extension (not `.test.tsx`)
 - **Location**: Tests are colocated with components
 - **API Mocking**: MSW (Mock Service Worker) auto-generated for all endpoints
 - **Pattern**: Use React Testing Library with `@testing-library/jest-dom` matchers
+
+**Visual regression tests (Playwright):**
+- **Framework**: Playwright (`@playwright/test`), configured in `playwright.config.ts`.
+- **Location**: Specs live in `tests/visual/` (e.g. `tests/visual/baseline.spec.ts`); baseline screenshots live in `tests/visual/__screenshots__/{mobile,desktop}/`.
+- **Projects**: Two viewports — `mobile` (iPhone 13: 390×844, DPR 3) and `desktop` (1440×900). Both run in **Chromium** on purpose: WebKit's text rendering couples to the host OS fonts and drifts between local and CI, while Chromium bundles its own renderer and produces identical screenshots across environments.
+- **Commands**:
+  - `npm run test:visual` — run all visual tests (both viewports)
+  - `npm run test:visual:mobile` — mobile viewport only (`--project=mobile`)
+  - `npm run test:visual:desktop` — desktop viewport only (`--project=desktop`)
+  - `npm run test:visual:update` — regenerate baseline screenshots (`--update-snapshots`); run this whenever an intentional UI change alters a captured screen, then commit the updated PNGs.
+- **Server**: Playwright starts (or reuses locally) the dev server on `http://localhost:3001` via the `webServer` config — no need to launch it yourself. In CI it always starts fresh.
+- **No live backend**: Auth is faked by injecting a JWT into `localStorage` before load, and every `/api/v1/**` request is intercepted with fixed, hard-coded JSON fixtures. Data must be deterministic (no faker, no time-varying fields) so screenshots are byte-stable. Animations are disabled and `document.fonts.ready` is awaited before capture.
+- **Tolerance**: `toHaveScreenshot` allows `maxDiffPixelRatio: 0.02` to absorb sub-pixel font rendering while still catching real color/layout changes.
+- **Coverage is role-based**: fixtures map users to routes by authorization axis (member → home/supplies, platform admin → `/platform` and `/users`, no-community user → `/no-community`). `CommunityAdminRoute` pages (e.g. `/members`) are **not** directly Playwright-tested because the guard defers community selection to a `useEffect` that redirects before it re-evaluates — those are covered by unit tests instead.
 
 ### Environment Variables
 - **Required prefix**: `CONLUZ_` for all environment variables
