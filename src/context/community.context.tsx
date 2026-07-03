@@ -1,5 +1,4 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
-import { AXIOS_INSTANCE } from "../api/custom-instance";
 import { useLoggedUser } from "./logged-user.context";
 import type { UserResponseMemberships } from "../api/models";
 
@@ -61,25 +60,6 @@ const CommunityProvider = ({ children }: CommunityProviderProps) => {
       setActiveCommunityId(null);
     }
   }, [userId, communityIds.join(",")]);
-
-  // Attach X-Community-Id to every request via the shared Axios instance.
-  // Mirrors auth.context.tsx interceptor shape exactly.
-  useEffect(() => {
-    const interceptorId = AXIOS_INSTANCE.interceptors.request.use((config) => {
-      if (config.headers && activeCommunityId) {
-        Object.entries({
-          "X-Community-Id": activeCommunityId,
-        }).forEach(([key, value]) => {
-          config.headers.set(key, value);
-        });
-      }
-      return config;
-    });
-
-    return () => {
-      AXIOS_INSTANCE.interceptors.request.eject(interceptorId);
-    };
-  }, [activeCommunityId]);
 
   const dispatch: Dispatch = (communityId) => {
     setActiveCommunityId(communityId);

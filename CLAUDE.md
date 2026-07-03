@@ -44,7 +44,7 @@ The app is **multi-community**. This is the single most important mental model f
 - **Active community context:** `src/context/community.context.tsx` selects and persists the active community (auto-selects when the user has exactly one; restores the persisted choice otherwise). `CommunitySelector` switches it.
 - **Data endpoints are path-scoped:** `/communities/{communityId}/{supplies,consumption,production,plants,config}`. Data hooks must pass `communityId` and be **gated on its presence** — no active community → no call, and controls that submit community-scoped data disable when none is selected.
 - **Route guards:** `PlatformAdminRoute` and `CommunityAdminRoute` (`src/components/Auth/`) gate pages by axis. Menu/profile gating derives from `isPlatformAdmin` + active-community role, not a global role.
-- **Legacy header:** `community.context.tsx` still injects an `X-Community-Id` header in the axios interceptor. Data endpoints now carry `communityId` in the **path**, so the header is legacy and likely redundant for them — **verify before relying on it**, and do not treat it as the scoping mechanism. (Removing it is a separate cleanup, not an assumption to build on.)
+- **Legacy `X-Community-Id` header removed:** the axios interceptor that injected this header was removed from `community.context.tsx`. Data endpoints carry `communityId` in the **path** — that is the sole scoping mechanism.
 
 Deeper patterns (gating recipes, hook shapes, common pitfalls) live in the **`conluz-web-community-scope`** skill in `.claude/skills/`.
 

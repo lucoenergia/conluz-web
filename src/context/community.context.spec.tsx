@@ -3,7 +3,6 @@ import { describe, expect, test, vi, beforeEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { createContext, useContext, type ReactNode } from "react";
 import { ActiveCommunityContext, CommunityProvider, useActiveCommunity, useActiveCommunityDispatch } from "./community.context";
-import { AXIOS_INSTANCE } from "../api/custom-instance";
 
 // Provide a fake LoggedUser context so CommunityProvider can read memberships
 const FakeLoggedUserContext = createContext<{
@@ -128,30 +127,14 @@ describe("CommunityProvider — dispatch", () => {
   });
 });
 
-describe("X-Community-Id interceptor", () => {
-  test("interceptor is registered on AXIOS_INSTANCE when a community is active", () => {
-    const useSpy = vi.spyOn(AXIOS_INSTANCE.interceptors.request, "use");
+test("active community context value propagates via context", () => {
+  render(
+    <Wrapper user={{ id: "u1", memberships: { "com-1": "COMMUNITY_MEMBER" } }}>
+      <ActiveCommunityContext.Consumer>
+        {(value) => <span data-testid="ctx">{value}</span>}
+      </ActiveCommunityContext.Consumer>
+    </Wrapper>,
+  );
 
-    render(
-      <Wrapper user={{ id: "u1", memberships: { "com-1": "COMMUNITY_MEMBER" } }}>
-        <ReadActiveCommunity />
-      </Wrapper>,
-    );
-
-    // At least one interceptor registration must have happened
-    expect(useSpy).toHaveBeenCalled();
-    useSpy.mockRestore();
-  });
-
-  test("active community context value propagates via context", () => {
-    render(
-      <Wrapper user={{ id: "u1", memberships: { "com-1": "COMMUNITY_MEMBER" } }}>
-        <ActiveCommunityContext.Consumer>
-          {(value) => <span data-testid="ctx">{value}</span>}
-        </ActiveCommunityContext.Consumer>
-      </Wrapper>,
-    );
-
-    expect(screen.getByTestId("ctx").textContent).toBe("com-1");
-  });
+  expect(screen.getByTestId("ctx").textContent).toBe("com-1");
 });

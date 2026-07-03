@@ -16,8 +16,7 @@ assumptions still lingering in fixtures, comments, or your own priors.
 
 ## Read the real code first
 
-- `src/context/community.context.tsx` — active-community context/provider + the
-  `X-Community-Id` axios interceptor.
+- `src/context/community.context.tsx` — active-community context/provider.
 - `src/hooks/useActiveCommunityRole.ts` — derives the role in the active community.
 - `src/components/Auth/PlatformAdminRoute.tsx`, `CommunityAdminRoute.tsx` — route guards.
 - `src/components/CommunitySelector/`, `CommunityStatusChip/`.
@@ -59,10 +58,9 @@ community.
 
 ## Sharp edges
 
-- **Legacy `X-Community-Id` header:** still injected by `community.context.tsx` and
-  covered by a test, but data endpoints now carry `communityId` in the **path**. Treat
-  the header as legacy/possibly-redundant — do not build new scoping on it, and verify
-  before assuming any endpoint consumes it.
+- **Legacy `X-Community-Id` header removed:** the axios interceptor that injected this
+  header was removed from `community.context.tsx`. Data endpoints carry `communityId`
+  in the **path** — that is the sole scoping mechanism.
 - **Pre-epic artifacts:** older DTOs, test fixtures (e.g. a `FIXED_USER` fixture), and
   MSW data may predate the multi-community model and omit `isPlatformAdmin`/`memberships`.
   If gating or a visual test misbehaves, suspect a stale fixture before suspecting the code.
