@@ -5,17 +5,12 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { Entry } from './entry';
 
-export interface SyncMonthlyHuaweiProductionBody {
+export interface ReplacePartitionCoefficientsBody {
   /**
-   * @minimum 2000
-   * @maximum 2100
+   * The agreement's full new coefficient set. Replaces the entire existing set.
+   * @minItems 1
    */
-  year: number;
-  /**
-   * @minimum 1
-   * @maximum 12
-   */
-  month?: number;
-  plantProviderCode?: string;
+  coefficients: Entry[];
 }

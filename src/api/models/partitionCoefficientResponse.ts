@@ -11,9 +11,11 @@ export interface PartitionCoefficientResponse {
   id?: string;
   /** Supply this coefficient belongs to */
   supplyId?: string;
+  /** Plant this coefficient belongs to. Disambiguates a supply's timeline when it participates in more than one plant. */
+  plantId?: string;
   /** Partition coefficient value */
   coefficient?: number;
-  /** Start of the period during which this coefficient is active (inclusive) */
+  /** Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated. */
   validFrom?: string;
   /** End of the period (exclusive). Null means this is the currently active coefficient. */
   validTo?: string;

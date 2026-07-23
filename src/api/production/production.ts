@@ -26,14 +26,21 @@ import type {
 
 import type {
   ConfigureHuaweiBody,
+  DatadisProduction,
   GetDailyProductionParams,
+  GetDatadisDailyProductionParams,
+  GetDatadisHourlyProductionParams,
+  GetDatadisMonthlyProductionParams,
+  GetDatadisYearlyProductionParams,
   GetHourlyProductionParams,
   GetInstantProductionParams,
   GetMonthlyProductionParams,
   GetYearlyProductionParams,
   InstantProduction,
   ProductionByTime,
+  SyncMonthlyDatadisProductionBody,
   SyncMonthlyHuaweiProductionBody,
+  SyncYearlyDatadisProductionBody,
   SyncYearlyHuaweiProductionBody
 } from '.././models';
 
@@ -237,11 +244,11 @@ export const useConfigureHuawei = <TError = ErrorType<unknown>,
 
 The request body must contain:
 - **year** (required, integer): The year for which to aggregate data
-- **plantCode** (optional, string): The plant code to aggregate. If not provided, all plants will be aggregated.
+- **plantProviderCode** (optional, string): The plant code to aggregate. If not provided, all plants will be aggregated.
 
 **Behavior:**
-- If plantCode is provided: Aggregates only that specific plant
-- If plantCode is not provided or is empty: Aggregates all plants
+- If plantProviderCode is provided: Aggregates only that specific plant
+- If plantProviderCode is not provided or is empty: Aggregates all plants
 
 **Note:** This aggregation requires that monthly aggregations have already been performed
 for the specified year.
@@ -324,13 +331,13 @@ export const useSyncYearlyHuaweiProduction = <TError = ErrorType<unknown>,
 The request body must contain:
 - **year** (required, integer): The year for which to aggregate data
 - **month** (optional, integer 1-12): The month to aggregate. If not provided, all months of the year will be aggregated.
-- **plantCode** (optional, string): The plant code to aggregate. If not provided, all plants will be aggregated.
+- **plantProviderCode** (optional, string): The plant code to aggregate. If not provided, all plants will be aggregated.
 
 **Behavior:**
-- If both month and plantCode are provided: Aggregates only that specific plant for that month
+- If both month and plantProviderCode are provided: Aggregates only that specific plant for that month
 - If only month is provided: Aggregates all plants for that specific month
-- If only plantCode is provided: Aggregates that plant for all months of the year
-- If neither month nor plantCode is provided: Aggregates all plants for all months of the year
+- If only plantProviderCode is provided: Aggregates that plant for all months of the year
+- If neither month nor plantProviderCode is provided: Aggregates all plants for all months of the year
 
 The community is taken from the path and only that community's plants are aggregated.
 
@@ -401,6 +408,178 @@ export const useSyncMonthlyHuaweiProduction = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getSyncMonthlyHuaweiProductionMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint enables admins to sync monthly production data into yearly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, all active supplies will be aggregated.
+
+**Behavior:**
+- If supplyCode is provided: Aggregates only that specific supply
+- If supplyCode is not provided or is empty: Aggregates all active supplies
+
+**Note:** This aggregation requires that monthly aggregations have already been performed
+for the specified year.
+
+The community is taken from the path and only that community's supplies are aggregated.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required: Community Admin of the community. Returns 404 if the community does not exist or the
+caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Sync monthly Datadis production data into yearly totals
+ */
+export const syncYearlyDatadisProduction = (
+    communityId: string,
+    syncYearlyDatadisProductionBody: SyncYearlyDatadisProductionBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/production/datadis/sync/yearly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncYearlyDatadisProductionBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncYearlyDatadisProductionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>, TError,{communityId: string;data: SyncYearlyDatadisProductionBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>, TError,{communityId: string;data: SyncYearlyDatadisProductionBody}, TContext> => {
+
+const mutationKey = ['syncYearlyDatadisProduction'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>, {communityId: string;data: SyncYearlyDatadisProductionBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  syncYearlyDatadisProduction(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncYearlyDatadisProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>>
+    export type SyncYearlyDatadisProductionMutationBody = SyncYearlyDatadisProductionBody
+    export type SyncYearlyDatadisProductionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Sync monthly Datadis production data into yearly totals
+ */
+export const useSyncYearlyDatadisProduction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>, TError,{communityId: string;data: SyncYearlyDatadisProductionBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncYearlyDatadisProduction>>,
+        TError,
+        {communityId: string;data: SyncYearlyDatadisProductionBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncYearlyDatadisProductionMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * This endpoint enables admins to aggregate hourly production data into monthly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **month** (optional, integer 1-12): The month to aggregate. If not provided, all months of the year will be aggregated.
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, all active supplies will be aggregated.
+
+**Behavior:**
+- If both month and supplyCode are provided: Aggregates only that specific supply for that month
+- If only month is provided: Aggregates all supplies for that specific month
+- If only supplyCode is provided: Aggregates that supply for all months of the year
+- If neither month nor supplyCode is provided: Aggregates all supplies for all months of the year
+
+The community is taken from the path and only that community's supplies are aggregated.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required: Community Admin of the community. Returns 404 if the community does not exist or the
+caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Aggregate hourly Datadis production data into monthly totals
+ */
+export const syncMonthlyDatadisProduction = (
+    communityId: string,
+    syncMonthlyDatadisProductionBody: SyncMonthlyDatadisProductionBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/production/datadis/sync/monthly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncMonthlyDatadisProductionBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncMonthlyDatadisProductionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>, TError,{communityId: string;data: SyncMonthlyDatadisProductionBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>, TError,{communityId: string;data: SyncMonthlyDatadisProductionBody}, TContext> => {
+
+const mutationKey = ['syncMonthlyDatadisProduction'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>, {communityId: string;data: SyncMonthlyDatadisProductionBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  syncMonthlyDatadisProduction(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncMonthlyDatadisProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>>
+    export type SyncMonthlyDatadisProductionMutationBody = SyncMonthlyDatadisProductionBody
+    export type SyncMonthlyDatadisProductionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Aggregate hourly Datadis production data into monthly totals
+ */
+export const useSyncMonthlyDatadisProduction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>, TError,{communityId: string;data: SyncMonthlyDatadisProductionBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>,
+        TError,
+        {communityId: string;data: SyncMonthlyDatadisProductionBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncMonthlyDatadisProductionMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }
@@ -778,6 +957,422 @@ export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHour
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetHourlyProductionQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Retrieves yearly Datadis-derived production data for the plants of the community identified by
+`communityId`, within the specified date range. **Required: any member of the community.**
+
+Returns 404 if the community does not exist or the caller is not a member of it. When a
+`supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is
+returned (an out-of-community supply is never confirmed to exist).
+
+Data is aggregated by year within the specified date range.
+
+ * @summary Retrieves yearly Datadis production data of a community within a given date interval.
+ */
+export const getDatadisYearlyProduction = (
+    communityId: string,
+    params: GetDatadisYearlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisProduction[]>(
+      {url: `/api/v1/communities/${communityId}/production/datadis/yearly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetDatadisYearlyProductionQueryKey = (communityId: string,
+    params: GetDatadisYearlyProductionParams,) => {
+    return [`/api/v1/communities/${communityId}/production/datadis/yearly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetDatadisYearlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+    params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDatadisYearlyProductionQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisYearlyProduction>>> = ({ signal }) => getDatadisYearlyProduction(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDatadisYearlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisYearlyProduction>>>
+export type GetDatadisYearlyProductionQueryError = ErrorType<unknown>
+
+
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisYearlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisYearlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisYearlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisYearlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisYearlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves yearly Datadis production data of a community within a given date interval.
+ */
+
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDatadisYearlyProductionQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Retrieves monthly Datadis-derived production data for the plants of the community identified by
+`communityId`, within the specified date range. **Required: any member of the community.**
+
+Returns 404 if the community does not exist or the caller is not a member of it. When a
+`supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is
+returned (an out-of-community supply is never confirmed to exist).
+
+Data is aggregated by month within the specified date range.
+
+ * @summary Retrieves monthly Datadis production data of a community within a given date interval.
+ */
+export const getDatadisMonthlyProduction = (
+    communityId: string,
+    params: GetDatadisMonthlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisProduction[]>(
+      {url: `/api/v1/communities/${communityId}/production/datadis/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetDatadisMonthlyProductionQueryKey = (communityId: string,
+    params: GetDatadisMonthlyProductionParams,) => {
+    return [`/api/v1/communities/${communityId}/production/datadis/monthly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetDatadisMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+    params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDatadisMonthlyProductionQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>> = ({ signal }) => getDatadisMonthlyProduction(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDatadisMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>>
+export type GetDatadisMonthlyProductionQueryError = ErrorType<unknown>
+
+
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisMonthlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisMonthlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisMonthlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisMonthlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves monthly Datadis production data of a community within a given date interval.
+ */
+
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDatadisMonthlyProductionQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Retrieves hourly Datadis-derived production data for the plants of the community identified by
+`communityId`, within the specified date range. **Required: any member of the community.**
+
+Returns 404 if the community does not exist or the caller is not a member of it. When a
+`supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is
+returned (an out-of-community supply is never confirmed to exist).
+
+Data is aggregated by hour within the specified date range.
+
+ * @summary Retrieves hourly Datadis production data of a community within a given date interval.
+ */
+export const getDatadisHourlyProduction = (
+    communityId: string,
+    params: GetDatadisHourlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisProduction[]>(
+      {url: `/api/v1/communities/${communityId}/production/datadis/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetDatadisHourlyProductionQueryKey = (communityId: string,
+    params: GetDatadisHourlyProductionParams,) => {
+    return [`/api/v1/communities/${communityId}/production/datadis/hourly`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetDatadisHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+    params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDatadisHourlyProductionQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisHourlyProduction>>> = ({ signal }) => getDatadisHourlyProduction(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDatadisHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisHourlyProduction>>>
+export type GetDatadisHourlyProductionQueryError = ErrorType<unknown>
+
+
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisHourlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisHourlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisHourlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisHourlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves hourly Datadis production data of a community within a given date interval.
+ */
+
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDatadisHourlyProductionQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Retrieves daily Datadis-derived production data for the plants of the community identified by
+`communityId`, within the specified date range. **Required: any member of the community.**
+
+Returns 404 if the community does not exist or the caller is not a member of it. When a
+`supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is
+returned (an out-of-community supply is never confirmed to exist).
+
+Data is aggregated by day within the specified date range.
+
+ * @summary Retrieves daily Datadis production data of a community within a given date interval.
+ */
+export const getDatadisDailyProduction = (
+    communityId: string,
+    params: GetDatadisDailyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DatadisProduction[]>(
+      {url: `/api/v1/communities/${communityId}/production/datadis/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetDatadisDailyProductionQueryKey = (communityId: string,
+    params: GetDatadisDailyProductionParams,) => {
+    return [`/api/v1/communities/${communityId}/production/datadis/daily`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetDatadisDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+    params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDatadisDailyProductionQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDatadisDailyProduction>>> = ({ signal }) => getDatadisDailyProduction(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDatadisDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisDailyProduction>>>
+export type GetDatadisDailyProductionQueryError = ErrorType<unknown>
+
+
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisDailyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisDailyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDatadisDailyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getDatadisDailyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves daily Datadis production data of a community within a given date interval.
+ */
+
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDatadisDailyProductionQueryOptions(communityId,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

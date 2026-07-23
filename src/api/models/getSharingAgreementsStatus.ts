@@ -6,16 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface SyncMonthlyHuaweiProductionBody {
-  /**
-   * @minimum 2000
-   * @maximum 2100
-   */
-  year: number;
-  /**
-   * @minimum 1
-   * @maximum 12
-   */
-  month?: number;
-  plantProviderCode?: string;
-}
+export type GetSharingAgreementsStatus = typeof GetSharingAgreementsStatus[keyof typeof GetSharingAgreementsStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const GetSharingAgreementsStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  SUPERSEDED: 'SUPERSEDED',
+} as const;

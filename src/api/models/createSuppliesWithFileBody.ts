@@ -7,6 +7,6 @@
  */
 
 export type CreateSuppliesWithFileBody = {
-  /** CSV file format: code(String), address(String), partitionCoefficient(Float), address(String), personalId(String). */
+  /** CSV file format: code(String), address(String), addressRef(String), personalId(String). */
   file: Blob;
 };

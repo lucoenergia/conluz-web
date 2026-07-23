@@ -6,16 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface SyncMonthlyHuaweiProductionBody {
-  /**
-   * @minimum 2000
-   * @maximum 2100
-   */
-  year: number;
-  /**
-   * @minimum 1
-   * @maximum 12
-   */
-  month?: number;
-  plantProviderCode?: string;
+export interface DatadisProduction {
+  cups?: string;
+  date?: string;
+  time?: string;
+  productionKWh?: number;
+  obtainMethod?: string;
 }

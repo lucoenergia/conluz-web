@@ -16,6 +16,7 @@ import {
 } from 'msw';
 
 import type {
+  DatadisProduction,
   InstantProduction,
   ProductionByTime
 } from '.././models';
@@ -28,6 +29,14 @@ export const getGetYearlyProductionResponseMock = (): ProductionByTime[] => (Arr
 export const getGetMonthlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
 export const getGetHourlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+
+export const getGetDatadisYearlyProductionResponseMock = (): DatadisProduction[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), productionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})))
+
+export const getGetDatadisMonthlyProductionResponseMock = (): DatadisProduction[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), productionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})))
+
+export const getGetDatadisHourlyProductionResponseMock = (): DatadisProduction[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), productionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})))
+
+export const getGetDatadisDailyProductionResponseMock = (): DatadisProduction[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), productionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})))
 
 export const getGetDailyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
@@ -64,6 +73,26 @@ export const getSyncYearlyHuaweiProductionMockHandler = (overrideResponse?: unkn
 
 export const getSyncMonthlyHuaweiProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
   return http.post('*/api/v1/communities/:communityId/production/huawei/sync/monthly', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
+export const getSyncYearlyDatadisProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
+  return http.post('*/api/v1/communities/:communityId/production/datadis/sync/yearly', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 200,
+        
+      })
+  })
+}
+
+export const getSyncMonthlyDatadisProductionMockHandler = (overrideResponse?: unknown | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<unknown> | unknown)) => {
+  return http.post('*/api/v1/communities/:communityId/production/datadis/sync/monthly', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -120,6 +149,54 @@ export const getGetHourlyProductionMockHandler = (overrideResponse?: ProductionB
   })
 }
 
+export const getGetDatadisYearlyProductionMockHandler = (overrideResponse?: DatadisProduction[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisProduction[]> | DatadisProduction[])) => {
+  return http.get('*/api/v1/communities/:communityId/production/datadis/yearly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetDatadisYearlyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGetDatadisMonthlyProductionMockHandler = (overrideResponse?: DatadisProduction[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisProduction[]> | DatadisProduction[])) => {
+  return http.get('*/api/v1/communities/:communityId/production/datadis/monthly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetDatadisMonthlyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGetDatadisHourlyProductionMockHandler = (overrideResponse?: DatadisProduction[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisProduction[]> | DatadisProduction[])) => {
+  return http.get('*/api/v1/communities/:communityId/production/datadis/hourly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetDatadisHourlyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGetDatadisDailyProductionMockHandler = (overrideResponse?: DatadisProduction[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisProduction[]> | DatadisProduction[])) => {
+  return http.get('*/api/v1/communities/:communityId/production/datadis/daily', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetDatadisDailyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
 export const getGetDailyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
   return http.get('*/api/v1/communities/:communityId/production/daily', async (info) => {await delay(1000);
   
@@ -136,9 +213,15 @@ export const getProductionMock = () => [
   getConfigureHuaweiMockHandler(),
   getSyncYearlyHuaweiProductionMockHandler(),
   getSyncMonthlyHuaweiProductionMockHandler(),
+  getSyncYearlyDatadisProductionMockHandler(),
+  getSyncMonthlyDatadisProductionMockHandler(),
   getGetInstantProductionMockHandler(),
   getGetYearlyProductionMockHandler(),
   getGetMonthlyProductionMockHandler(),
   getGetHourlyProductionMockHandler(),
+  getGetDatadisYearlyProductionMockHandler(),
+  getGetDatadisMonthlyProductionMockHandler(),
+  getGetDatadisHourlyProductionMockHandler(),
+  getGetDatadisDailyProductionMockHandler(),
   getGetDailyProductionMockHandler()
 ]

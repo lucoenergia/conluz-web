@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface SyncMonthlyHuaweiProductionBody {
+export interface SyncMonthlyDatadisProductionBody {
   /**
    * @minimum 2000
    * @maximum 2100
@@ -17,5 +17,5 @@ export interface SyncMonthlyHuaweiProductionBody {
    * @maximum 12
    */
   month?: number;
-  plantProviderCode?: string;
+  supplyCode?: string;
 }

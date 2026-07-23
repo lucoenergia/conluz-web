@@ -6,16 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface SyncMonthlyHuaweiProductionBody {
+export interface Entry {
   /**
-   * @minimum 2000
-   * @maximum 2100
+   * Supply code (CUPS)
+   * @minLength 1
    */
-  year: number;
-  /**
-   * @minimum 1
-   * @maximum 12
-   */
-  month?: number;
-  plantProviderCode?: string;
+  cups: string;
+  /** Partition coefficient value */
+  coefficient: number;
 }

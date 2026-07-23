@@ -6,16 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface SyncMonthlyHuaweiProductionBody {
-  /**
-   * @minimum 2000
-   * @maximum 2100
-   */
-  year: number;
-  /**
-   * @minimum 1
-   * @maximum 12
-   */
-  month?: number;
-  plantProviderCode?: string;
-}
+/**
+ * Structured data for this error, keyed in camelCase for use as i18n interpolation variables. Null when the error carries no such data.
+ */
+export type RestErrorDetailParams = {[key: string]: string};

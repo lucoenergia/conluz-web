@@ -6,16 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface SyncMonthlyHuaweiProductionBody {
-  /**
-   * @minimum 2000
-   * @maximum 2100
-   */
-  year: number;
-  /**
-   * @minimum 1
-   * @maximum 12
-   */
-  month?: number;
-  plantProviderCode?: string;
+export interface UploadSharingAgreementFileResponse {
+  /** Internal unique identifier of the stored file */
+  fileId?: string;
+  /** Original uploaded filename */
+  filename?: string;
+  /** Number of coefficient entries materialised as pending rows */
+  entriesMaterialized?: number;
 }

@@ -7,7 +7,11 @@
  */
 
 export interface CreateSharingAgreementBody {
-  startDate: string;
-  endDate?: string;
-  communityId: string;
+  /**
+   * Human-readable label for the agreement
+   * @minLength 1
+   */
+  name: string;
+  /** Free-text notes about the agreement */
+  notes?: string;
 }

@@ -6,16 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface SyncMonthlyHuaweiProductionBody {
-  /**
-   * @minimum 2000
-   * @maximum 2100
-   */
-  year: number;
-  /**
-   * @minimum 1
-   * @maximum 12
-   */
-  month?: number;
-  plantProviderCode?: string;
-}
+export type UploadSharingAgreementFileBody = {
+  /** Distributor TXT file. Format: CUPS;coefficient (comma decimal separator). File name must follow the pattern: {regulatoryCode}_{YYYY}.txt. */
+  file: Blob;
+};

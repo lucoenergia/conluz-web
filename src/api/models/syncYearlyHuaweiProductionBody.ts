@@ -12,5 +12,5 @@ export interface SyncYearlyHuaweiProductionBody {
    * @maximum 2100
    */
   year: number;
-  plantCode?: string;
+  plantProviderCode?: string;
 }

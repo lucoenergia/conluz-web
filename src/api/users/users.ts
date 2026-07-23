@@ -31,6 +31,7 @@ import type {
   CreateUsersWithFileParams,
   GetAllUsersParams,
   PagedResultUserResponse,
+  RestError,
   SupplyResponse,
   UpdateUserBody,
   UserResponse
@@ -487,7 +488,7 @@ export const revokePlatformAdmin = (
   
 
 
-export const getRevokePlatformAdminMutationOptions = <TError = ErrorType<unknown>,
+export const getRevokePlatformAdminMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{id: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{id: string}, TContext> => {
 
@@ -514,12 +515,12 @@ const {mutation: mutationOptions} = options ?
 
     export type RevokePlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof revokePlatformAdmin>>>
     
-    export type RevokePlatformAdminMutationError = ErrorType<unknown>
+    export type RevokePlatformAdminMutationError = ErrorType<RestError>
 
     /**
  * @summary Revokes platform-admin privileges from a user by ID
  */
-export const useRevokePlatformAdmin = <TError = ErrorType<unknown>,
+export const useRevokePlatformAdmin = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{id: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof revokePlatformAdmin>>,

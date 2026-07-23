@@ -26,7 +26,6 @@ import type {
 
 import type {
   CoefficientAtTimestampResponse,
-  CreateSharingAgreementBody,
   CreateSuppliesWithFileBody,
   CreateSuppliesWithFileParams,
   CreateSupplyBody,
@@ -41,19 +40,10 @@ import type {
   GetSupplyMonthlyConsumptionParams,
   GetSupplyMonthlyProductionParams,
   GetSupplyYearlyConsumptionParams,
-  ImportPartitionCoefficientsWithFileBody,
-  ImportPartitionCoefficientsWithFileParams,
-  ImportSuppliesPartitionsWithFileBody,
-  ImportSuppliesPartitionsWithFileParams,
   PagedResultSupplyResponse,
   PartitionCoefficientResponse,
   ProductionByTime,
-  RegisterPartitionCoefficientBody,
-  RegisterPartitionCoefficientResponse,
-  RegisterPartitionCoefficientsWithFileResponse,
-  SharingAgreementResponse,
   SupplyResponse,
-  UpdateSharingAgreementBody,
   UpdateSupplyBody
 } from '.././models';
 
@@ -226,251 +216,6 @@ export const useUpdateSupply = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint retrieves a sharing agreement by its unique identifier.
-
-**Required: Community Admin of the sharing agreement's community.**
- * @summary Gets a sharing agreement by ID
- */
-export const getSharingAgreement = (
-    id: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<SharingAgreementResponse>(
-      {url: `/api/v1/sharing-agreements/${id}`, method: 'GET', signal
-    },
-      );
-    }
-  
-
-export const getGetSharingAgreementQueryKey = (id: string,) => {
-    return [`/api/v1/sharing-agreements/${id}`] as const;
-    }
-
-    
-export const getGetSharingAgreementQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreement>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreement>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementQueryKey(id);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreement>>> = ({ signal }) => getSharingAgreement(id, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreement>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetSharingAgreementQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreement>>>
-export type GetSharingAgreementQueryError = ErrorType<unknown>
-
-
-export function useGetSharingAgreement<TData = Awaited<ReturnType<typeof getSharingAgreement>>, TError = ErrorType<unknown>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreement>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSharingAgreement>>,
-          TError,
-          Awaited<ReturnType<typeof getSharingAgreement>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreement<TData = Awaited<ReturnType<typeof getSharingAgreement>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreement>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSharingAgreement>>,
-          TError,
-          Awaited<ReturnType<typeof getSharingAgreement>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreement<TData = Awaited<ReturnType<typeof getSharingAgreement>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreement>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Gets a sharing agreement by ID
- */
-
-export function useGetSharingAgreement<TData = Awaited<ReturnType<typeof getSharingAgreement>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreement>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetSharingAgreementQueryOptions(id,options)
-
-  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-/**
- * This endpoint enables the update of sharing agreement information by specifying the agreement's unique
-identifier in the endpoint path.
-
-Clients send a request containing the updated agreement details, and authentication, through an
-authentication token, is required for secure access.
-**Required: Community Admin**
-
-A successful update results in an HTTP status code of 200, indicating that the sharing agreement
-information has been successfully modified and returning the updated agreement details.
-
-In cases where the update encounters errors, the server responds with an appropriate error status
-code, along with a descriptive error message to guide clients in addressing and resolving the issue.
-
-If you don't provide some of the optional parameters, they will be considered as null value so their
-values will be updated with a null value.
-
- * @summary Updates a sharing agreement
- */
-export const updateSharingAgreement = (
-    id: string,
-    updateSharingAgreementBody: UpdateSharingAgreementBody,
- ) => {
-      
-      
-      return customInstance<SharingAgreementResponse>(
-      {url: `/api/v1/sharing-agreements/${id}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: updateSharingAgreementBody
-    },
-      );
-    }
-  
-
-
-export const getUpdateSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{id: string;data: UpdateSharingAgreementBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{id: string;data: UpdateSharingAgreementBody}, TContext> => {
-
-const mutationKey = ['updateSharingAgreement'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSharingAgreement>>, {id: string;data: UpdateSharingAgreementBody}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  updateSharingAgreement(id,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof updateSharingAgreement>>>
-    export type UpdateSharingAgreementMutationBody = UpdateSharingAgreementBody
-    export type UpdateSharingAgreementMutationError = ErrorType<unknown>
-
-    /**
- * @summary Updates a sharing agreement
- */
-export const useUpdateSharingAgreement = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{id: string;data: UpdateSharingAgreementBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateSharingAgreement>>,
-        TError,
-        {id: string;data: UpdateSharingAgreementBody},
-        TContext
-      > => {
-
-      const mutationOptions = getUpdateSharingAgreementMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
- * This endpoint enables the removal of a sharing agreement from the system by specifying the agreement's
-unique identifier within the endpoint path.
-
-To utilize this endpoint, clients send a DELETE request with the targeted agreement's ID, requiring
-authentication for secure access.
-**Required: Community Admin**
-
-Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the
-sharing agreement has been successfully removed.
-
-In cases where the deletion process encounters errors, the server returns an appropriate error
-status code, along with a descriptive error message to guide clients in diagnosing and addressing
-the issue.
-
- * @summary Removes a sharing agreement by ID
- */
-export const deleteSharingAgreement = (
-    id: string,
- ) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/sharing-agreements/${id}`, method: 'DELETE'
-    },
-      );
-    }
-  
-
-
-export const getDeleteSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{id: string}, TContext> => {
-
-const mutationKey = ['deleteSharingAgreement'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSharingAgreement>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
-
-          return  deleteSharingAgreement(id,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSharingAgreement>>>
-    
-    export type DeleteSharingAgreementMutationError = ErrorType<unknown>
-
-    /**
- * @summary Removes a sharing agreement by ID
- */
-export const useDeleteSharingAgreement = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{id: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteSharingAgreement>>,
-        TError,
-        {id: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDeleteSharingAgreementMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
  * This endpoint is designed to create a new supply within the system.
 
 To utilize this endpoint, a client sends a request containing essential details such as the supply's address, partition coefficient, and any relevant parameters.
@@ -546,166 +291,6 @@ export const useCreateSupply = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getCreateSupplyMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
- * Returns all coefficient periods ordered by validFrom ascending. **Required: Community Admin**
- * @summary Returns the full partition coefficient history for a supply.
- */
-export const getPartitionCoefficientHistory = (
-    supplyId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PartitionCoefficientResponse[]>(
-      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'GET', signal
-    },
-      );
-    }
-  
-
-export const getGetPartitionCoefficientHistoryQueryKey = (supplyId: string,) => {
-    return [`/api/v1/supplies/${supplyId}/partition-coefficients`] as const;
-    }
-
-    
-export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientHistoryQueryKey(supplyId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>> = ({ signal }) => getPartitionCoefficientHistory(supplyId, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetPartitionCoefficientHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>>
-export type GetPartitionCoefficientHistoryQueryError = ErrorType<unknown>
-
-
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
-          TError,
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
-          TError,
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Returns the full partition coefficient history for a supply.
- */
-
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetPartitionCoefficientHistoryQueryOptions(supplyId,options)
-
-  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-/**
- * Closes the currently active coefficient period and opens a new one starting at effectiveAt.
-Also updates the supply.partitionCoefficient denormalization field.
-The response includes a communityCoefficientSumWarning field if the total sum of active
-coefficients across all supplies at effectiveAt deviates from 100 by more than 0.0001.
-This warning is informational only — the change is always persisted.
-**Required: Community Admin**
-
- * @summary Registers a new partition coefficient for a supply.
- */
-export const registerPartitionCoefficient = (
-    supplyId: string,
-    registerPartitionCoefficientBody: RegisterPartitionCoefficientBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<RegisterPartitionCoefficientResponse>(
-      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: registerPartitionCoefficientBody, signal
-    },
-      );
-    }
-  
-
-
-export const getRegisterPartitionCoefficientMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPartitionCoefficient>>, TError,{supplyId: string;data: RegisterPartitionCoefficientBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof registerPartitionCoefficient>>, TError,{supplyId: string;data: RegisterPartitionCoefficientBody}, TContext> => {
-
-const mutationKey = ['registerPartitionCoefficient'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerPartitionCoefficient>>, {supplyId: string;data: RegisterPartitionCoefficientBody}> = (props) => {
-          const {supplyId,data} = props ?? {};
-
-          return  registerPartitionCoefficient(supplyId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RegisterPartitionCoefficientMutationResult = NonNullable<Awaited<ReturnType<typeof registerPartitionCoefficient>>>
-    export type RegisterPartitionCoefficientMutationBody = RegisterPartitionCoefficientBody
-    export type RegisterPartitionCoefficientMutationError = ErrorType<unknown>
-
-    /**
- * @summary Registers a new partition coefficient for a supply.
- */
-export const useRegisterPartitionCoefficient = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPartitionCoefficient>>, TError,{supplyId: string;data: RegisterPartitionCoefficientBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof registerPartitionCoefficient>>,
-        TError,
-        {supplyId: string;data: RegisterPartitionCoefficientBody},
-        TContext
-      > => {
-
-      const mutationOptions = getRegisterPartitionCoefficientMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }
@@ -848,178 +433,6 @@ export const useDisableSupply = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint facilitates the creation of a set of supplies partitions within the system by
-importing a CSV file.
-
-This endpoint requires clients to send a request containing a file with an identifier and the
-coefficient for each supply.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Community Admin**
-
-Upon successful file processing, the server responds with an HTTP status code of 200, along with
-comprehensive details about the result of the bulk operation, including what supplies partitions
-have been created or any potential error.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error
-status code, accompanied by a descriptive error message to guide clients in addressing and resolving
-the issue.
-
- * @summary Creates supplies partitions in bulk importing a CSV file.
- */
-export const importSuppliesPartitionsWithFile = (
-    importSuppliesPartitionsWithFileBody: ImportSuppliesPartitionsWithFileBody,
-    params: ImportSuppliesPartitionsWithFileParams,
- signal?: AbortSignal
-) => {
-      
-      const formData = new FormData();
-formData.append(`file`, importSuppliesPartitionsWithFileBody.file)
-
-      return customInstance<CreationInBulkResponse>(
-      {url: `/api/v1/supplies/partitions/import`, method: 'POST',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params, signal
-    },
-      );
-    }
-  
-
-
-export const getImportSuppliesPartitionsWithFileMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSuppliesPartitionsWithFile>>, TError,{data: ImportSuppliesPartitionsWithFileBody;params: ImportSuppliesPartitionsWithFileParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof importSuppliesPartitionsWithFile>>, TError,{data: ImportSuppliesPartitionsWithFileBody;params: ImportSuppliesPartitionsWithFileParams}, TContext> => {
-
-const mutationKey = ['importSuppliesPartitionsWithFile'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importSuppliesPartitionsWithFile>>, {data: ImportSuppliesPartitionsWithFileBody;params: ImportSuppliesPartitionsWithFileParams}> = (props) => {
-          const {data,params} = props ?? {};
-
-          return  importSuppliesPartitionsWithFile(data,params,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ImportSuppliesPartitionsWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof importSuppliesPartitionsWithFile>>>
-    export type ImportSuppliesPartitionsWithFileMutationBody = ImportSuppliesPartitionsWithFileBody
-    export type ImportSuppliesPartitionsWithFileMutationError = ErrorType<unknown>
-
-    /**
- * @summary Creates supplies partitions in bulk importing a CSV file.
- */
-export const useImportSuppliesPartitionsWithFile = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSuppliesPartitionsWithFile>>, TError,{data: ImportSuppliesPartitionsWithFileBody;params: ImportSuppliesPartitionsWithFileParams}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof importSuppliesPartitionsWithFile>>,
-        TError,
-        {data: ImportSuppliesPartitionsWithFileBody;params: ImportSuppliesPartitionsWithFileParams},
-        TContext
-      > => {
-
-      const mutationOptions = getImportSuppliesPartitionsWithFileMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
- * Imports the official partition coefficient file produced by the Spanish distribution company.
-
-The file must be a plain-text (.txt) file with one supply per line in the format:
-`CUPS;coefficient` where the coefficient uses a comma as the decimal separator
-(e.g. `ES0031300806333001KE0F;0,025000`).
-
-The file name must follow the pattern: CAU_YYYY.txt, where CAU is the plant identifier
-and YYYY is the year.
-
-Each row closes the currently active coefficient period for that supply and opens a new one
-starting at `effectiveAt`. Supplies whose CUPS code is not found in the system are recorded
-as errors and the remaining rows continue to be processed.
-
-The response includes a `communityCoefficientSumWarning` if the total sum of active
-coefficients across all supplies deviates from 100 by more than 0.0001 at `effectiveAt`.
-This warning is informational only.
-
-**Required: Community Admin**
-
- * @summary Registers partition coefficients in bulk from a TXT file.
- */
-export const importPartitionCoefficientsWithFile = (
-    importPartitionCoefficientsWithFileBody: ImportPartitionCoefficientsWithFileBody,
-    params: ImportPartitionCoefficientsWithFileParams,
- signal?: AbortSignal
-) => {
-      
-      const formData = new FormData();
-formData.append(`file`, importPartitionCoefficientsWithFileBody.file)
-
-      return customInstance<RegisterPartitionCoefficientsWithFileResponse>(
-      {url: `/api/v1/supplies/partition-coefficients/import`, method: 'POST',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params, signal
-    },
-      );
-    }
-  
-
-
-export const getImportPartitionCoefficientsWithFileMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, TError,{data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, TError,{data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}, TContext> => {
-
-const mutationKey = ['importPartitionCoefficientsWithFile'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, {data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}> = (props) => {
-          const {data,params} = props ?? {};
-
-          return  importPartitionCoefficientsWithFile(data,params,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ImportPartitionCoefficientsWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>>
-    export type ImportPartitionCoefficientsWithFileMutationBody = ImportPartitionCoefficientsWithFileBody
-    export type ImportPartitionCoefficientsWithFileMutationError = ErrorType<unknown>
-
-    /**
- * @summary Registers partition coefficients in bulk from a TXT file.
- */
-export const useImportPartitionCoefficientsWithFile = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>, TError,{data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof importPartitionCoefficientsWithFile>>,
-        TError,
-        {data: ImportPartitionCoefficientsWithFileBody;params: ImportPartitionCoefficientsWithFileParams},
-        TContext
-      > => {
-
-      const mutationOptions = getImportPartitionCoefficientsWithFileMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
  * This endpoint facilitates the creation of a set of supplies within the system by importing a
 CSV file.
 
@@ -1103,99 +516,6 @@ export const useCreateSuppliesWithFile = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * This endpoint creates a new sharing agreement with the specified start and end dates.
- * @summary This endpoint facilitates the creation of a new sharing agreement within the system.
-
-To utilize this endpoint, clients send a request containing essential details such as the agreement's
-start and end dates.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Community Admin**
-
-Upon successful creation, the server responds with an HTTP status code of 200, providing comprehensive
-details about the newly created sharing agreement.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error
-status code, accompanied by a descriptive error message to guide clients in addressing and resolving
-the issue.
-
- */
-export const createSharingAgreement = (
-    createSharingAgreementBody: CreateSharingAgreementBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<SharingAgreementResponse>(
-      {url: `/api/v1/sharing-agreements`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createSharingAgreementBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext> => {
-
-const mutationKey = ['createSharingAgreement'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSharingAgreement>>, {data: CreateSharingAgreementBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createSharingAgreement(data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof createSharingAgreement>>>
-    export type CreateSharingAgreementMutationBody = CreateSharingAgreementBody
-    export type CreateSharingAgreementMutationError = ErrorType<unknown>
-
-    /**
- * @summary This endpoint facilitates the creation of a new sharing agreement within the system.
-
-To utilize this endpoint, clients send a request containing essential details such as the agreement's
-start and end dates.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Community Admin**
-
-Upon successful creation, the server responds with an HTTP status code of 200, providing comprehensive
-details about the newly created sharing agreement.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error
-status code, accompanied by a descriptive error message to guide clients in addressing and resolving
-the issue.
-
- */
-export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{data: CreateSharingAgreementBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createSharingAgreement>>,
-        TError,
-        {data: CreateSharingAgreementBody},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateSharingAgreementMutationOptions(options);
-
-      return useMutation(mutationOptions , queryClient);
-    }
-    /**
  * This endpoint enables users to synchronize the active supplies of the community identified by the
 path `communityId`, retrieving the information from datadis.
 
@@ -1271,6 +591,94 @@ export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * Returns all coefficient periods ordered by validFrom ascending. **Required: Community Admin**
+ * @summary Returns the full partition coefficient history for a supply.
+ */
+export const getPartitionCoefficientHistory = (
+    supplyId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PartitionCoefficientResponse[]>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetPartitionCoefficientHistoryQueryKey = (supplyId: string,) => {
+    return [`/api/v1/supplies/${supplyId}/partition-coefficients`] as const;
+    }
+
+    
+export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientHistoryQueryKey(supplyId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>> = ({ signal }) => getPartitionCoefficientHistory(supplyId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPartitionCoefficientHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>>
+export type GetPartitionCoefficientHistoryQueryError = ErrorType<unknown>
+
+
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the full partition coefficient history for a supply.
+ */
+
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+ supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPartitionCoefficientHistoryQueryOptions(supplyId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * Uses boundary convention: validFrom inclusive, validTo exclusive.
 **Required: Community Admin**
 
