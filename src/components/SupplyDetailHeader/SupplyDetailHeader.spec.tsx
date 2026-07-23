@@ -11,7 +11,6 @@ describe("SupplyDetailHeader", () => {
     code: "ES0031300296192001MB0F",
     address: "Calle Test 123",
     addressRef: "REF123456",
-    partitionCoefficient: 0.25,
     enabled: true,
     user: {
       id: "user1",
@@ -27,7 +26,7 @@ describe("SupplyDetailHeader", () => {
     expect(screen.getByText("Activo")).toBeInTheDocument();
   });
 
-  it("renders supply details grid with CUPS, address ref, coefficient, and owner", () => {
+  it("renders supply details grid with CUPS, address ref, and owner", () => {
     render(<SupplyDetailHeader supplyPoint={mockSupplyPoint} />);
 
     expect(screen.getByText("CUPS")).toBeInTheDocument();
@@ -35,9 +34,6 @@ describe("SupplyDetailHeader", () => {
 
     expect(screen.getByText("Referencia catastral")).toBeInTheDocument();
     expect(screen.getByText("REF123456")).toBeInTheDocument();
-
-    expect(screen.getByText("Coeficiente de reparto")).toBeInTheDocument();
-    expect(screen.getByText("25.00%")).toBeInTheDocument();
 
     expect(screen.getByText("Propietario")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
@@ -60,9 +56,9 @@ describe("SupplyDetailHeader", () => {
   it("renders placeholders for missing supply details", () => {
     render(<SupplyDetailHeader supplyPoint={{}} />);
 
-    // Should render 4 dashes for missing data
+    // Should render 3 dashes for missing data
     const dashes = screen.getAllByText("-");
-    expect(dashes.length).toBeGreaterThanOrEqual(4);
+    expect(dashes.length).toBeGreaterThanOrEqual(3);
   });
 
   it("does not render details grid when loading", () => {

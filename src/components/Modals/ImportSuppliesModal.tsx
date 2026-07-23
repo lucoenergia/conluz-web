@@ -195,7 +195,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
                 lineHeight: 1.8,
               }}
             >
-              code, address, partitionCoefficient, personalId
+              code, address, addressRef, personalId
             </Typography>
           </Box>
 

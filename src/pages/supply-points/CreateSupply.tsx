@@ -19,14 +19,13 @@ export const CreateSupplyPage: FC = () => {
   const errorDispatch = useErrorDispatch();
   const createSupply = useCreateSupply();
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef, personalId }: SupplyFormValues) => {
+  const handleSubmit = async ({ name, cups, address, addressRef, personalId }: SupplyFormValues) => {
     if (!activeCommunityId) return;
     try {
       const newSupply: CreateSupplyBody = {
         name,
         code: cups ?? "",
         address: address ?? "",
-        partitionCoefficient,
         personalId: personalId || loggedUser?.personalId || "",
         addressRef: addressRef ?? "",
         communityId: activeCommunityId,

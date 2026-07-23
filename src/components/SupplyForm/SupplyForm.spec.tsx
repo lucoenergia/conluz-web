@@ -60,30 +60,15 @@ describe("Supply Form", () => {
     await user.type(screen.getByLabelText("Nombre"), "Mi casa");
     await user.type(screen.getByLabelText(/CUPS/i), "ES002100823463");
     await user.type(screen.getByLabelText(/Dirección/i), "Calle Escuadra 3");
-    await user.type(screen.getByLabelText(/Coeficiente de reparto/i), "0.002345");
     await user.type(screen.getByLabelText(/Referencia catastral/i), "AS35NB354223");
     await user.click(screen.getByRole("button"));
     expect(mockHandleSubmit).toBeCalledWith({
       name: "Mi casa",
       cups: "ES002100823463",
       address: "Calle Escuadra 3",
-      partitionCoefficient: 0.002345,
       addressRef: "AS35NB354223",
       personalId: "",
     });
-  });
-
-  it("Displays Partition Coeficient error", async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.type(screen.getByLabelText("Nombre"), "Mi casa");
-    await user.type(screen.getByLabelText(/CUPS/i), "ES002100823463");
-    await user.type(screen.getByLabelText(/Dirección/i), "Calle Escuadra 3");
-    await user.type(screen.getByLabelText(/Coeficiente de reparto/i), "0.02");
-    await user.type(screen.getByLabelText(/Referencia catastral/i), "AS35NB354223");
-    await user.click(screen.getByRole("button"));
-    expect(mockHandleSubmit).toBeCalledTimes(0);
-    expect(screen.getByText("Por favor, introduce un numero de 6 decimales")).toBeVisible();
   });
 
   it("Loads inital values and shows correct button text", async () => {
@@ -95,7 +80,6 @@ describe("Supply Form", () => {
             name: "Mi casa",
             cups: "ES002100823463",
             address: "Calle Escuadra 3",
-            partitionCoefficient: 0.002345,
             addressRef: "AS35NB354223",
           }}
         />
@@ -104,7 +88,6 @@ describe("Supply Form", () => {
     expect(screen.getByDisplayValue("Mi casa")).toBeVisible();
     expect(screen.getByDisplayValue("ES002100823463")).toBeVisible();
     expect(screen.getByDisplayValue("Calle Escuadra 3")).toBeVisible();
-    expect(screen.getByDisplayValue("0.002345")).toBeVisible();
     expect(screen.getByDisplayValue("AS35NB354223")).toBeVisible();
     expect(screen.getByText("Guardar cambios")).toBeVisible();
   });

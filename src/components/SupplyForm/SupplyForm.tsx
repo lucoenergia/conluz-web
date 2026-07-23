@@ -10,7 +10,6 @@ export interface SupplyFormValues {
   name?: string;
   cups?: string;
   address?: string;
-  partitionCoefficient?: number;
   addressRef?: string;
   personalId?: string;
 }
@@ -29,7 +28,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
     name: initialName = "",
     cups: initialCups = "",
     address: initialAddress = "",
-    partitionCoefficient: initialPartitionCoefficient = "",
     addressRef: initialAddressRef = "",
     personalId: initialPersonalId = "",
   } = {},
@@ -42,7 +40,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
   const [name, setName] = useState(initialName);
   const [cups, setCups] = useState(initialCups);
   const [address, setAddress] = useState(initialAddress);
-  const [partitionCoefficient, setPartitionCoefficient] = useState(initialPartitionCoefficient);
   const [addressRef, setAddressRef] = useState(initialAddressRef);
   const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
 
@@ -57,37 +54,15 @@ export const SupplyForm: FC<SupplyFormProps> = ({
     }
   }, [selectedUserId, usersData]);
 
-  const [partitionCoefficientError, setPartitionCoefficientError] = useState<string | undefined>();
-
-  const partitionCoefficientIsValid = (input: string): boolean => {
-    return input.match(/^\d{1,3}[,.]\d{6}$/) !== null;
-  };
-
-  const onPartitionCoeficientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!partitionCoefficientIsValid(e.target.value.toString())) {
-      setPartitionCoefficientError("Por favor, introduce un numero de 6 decimales");
-    } else {
-      setPartitionCoefficientError(undefined);
-    }
-    setPartitionCoefficient(e.target.value);
-  };
-
-  const validateForm = (data: SupplyFormValues): boolean => {
-    return data.partitionCoefficient !== undefined && partitionCoefficientIsValid(data.partitionCoefficient.toString());
-  };
-
   const onSubmit = async (data: FormData) => {
     const newSupplyPoint = {
       name: data.get("name") ? (data.get("name") as string) : null,
       cups: data.get("cups") as string,
       address: data.get("address") as string,
-      partitionCoefficient: Number((data.get("partitionCoefficient") as string).replaceAll(",", ".")),
       addressRef: data.get("addressRef") as string,
       personalId: selectedUser?.personalId || initialPersonalId,
     } as SupplyFormValues;
-    if (validateForm(newSupplyPoint)) {
-      handleSubmit(newSupplyPoint);
-    }
+    handleSubmit(newSupplyPoint);
   };
 
   return (
@@ -157,20 +132,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           slotProps={{ htmlInput: { maxLength: 50 } }}
-          required
-          fullWidth
-          variant="outlined"
-        />
-
-        <TextField
-          id="partitionCoefficient"
-          label="Coeficiente de reparto (%)"
-          type="text"
-          error={partitionCoefficientError !== undefined}
-          helperText={partitionCoefficientError}
-          name="partitionCoefficient"
-          value={partitionCoefficient}
-          onChange={onPartitionCoeficientChange}
           required
           fullWidth
           variant="outlined"

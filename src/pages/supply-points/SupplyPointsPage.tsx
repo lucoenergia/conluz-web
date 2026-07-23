@@ -252,7 +252,6 @@ export const SupplyPointsPage: FC = () => {
               <SupplyCard
                 id={item.id}
                 code={item.code}
-                partitionCoefficient={item.partitionCoefficient ? item.partitionCoefficient * 100 : undefined}
                 name={item.name}
                 address={item.address}
                 enabled={item.enabled}

@@ -9,7 +9,6 @@ const mockItemList = [
     code: "1",
     name: "Casa",
     address: "Calle Mayor 1",
-    partitionCoefficient: 10,
     enabled: true,
     datadisValidDateFrom: "hoy",
     datadisPointType: "4.5",
@@ -18,7 +17,6 @@ const mockItemList = [
     code: "2",
     name: "Garaje",
     address: "Calle Segunda",
-    partitionCoefficient: 5,
     enabled: false,
     datadisValidDateFrom: "ayer",
     datadisPointType: "2.5",
@@ -37,7 +35,6 @@ describe("PaginatedList (unit)", () => {
           <SupplyCard
             key={item.code}
             code={item.code}
-            partitionCoefficient={item.partitionCoefficient * 100}
             name={item.name}
             address={item.address}
             enabled={item.enabled}

@@ -51,7 +51,7 @@ describe("ImportSuppliesModal", () => {
         screen.getByText("Formato esperado del CSV:"),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/code, address, partitionCoefficient, personalId/),
+        screen.getByText(/code, address, addressRef, personalId/),
       ).toBeInTheDocument();
     });
 

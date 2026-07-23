@@ -53,14 +53,6 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
       </Typography>
     </DetailTile>
 
-    <DetailTile label="Coeficiente de reparto">
-      <Typography variant="body1" fontWeight="bold">
-        {supplyPoint?.partitionCoefficient
-          ? `${(supplyPoint.partitionCoefficient * 100).toFixed(2)}%`
-          : "-"}
-      </Typography>
-    </DetailTile>
-
     <DetailTile label="Propietario">
       <Typography variant="body1" fontWeight="bold">
         {supplyPoint?.user?.fullName || "-"}

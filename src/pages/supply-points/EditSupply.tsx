@@ -18,13 +18,12 @@ export const EditSupplyPage: FC = () => {
 
   const { data: supplyPoint, isLoading, error, refetch } = useGetSupply(supplyPointId);
 
-  const handleSubmit = async ({ name, cups, address, partitionCoefficient, addressRef }: SupplyFormValues) => {
+  const handleSubmit = async ({ name, cups, address, addressRef }: SupplyFormValues) => {
     try {
       const updatedSupply = {
         name,
         code: cups,
         address,
-        partitionCoefficient,
         addressRef,
       } as UpdateSupplyBody;
       const response = await updateSupply.mutateAsync({ id: supplyPointId, data: updatedSupply }, {});
@@ -108,7 +107,6 @@ export const EditSupplyPage: FC = () => {
                 name: supplyPoint?.name,
                 cups: supplyPoint?.code,
                 address: supplyPoint?.address,
-                partitionCoefficient: supplyPoint?.partitionCoefficient,
                 addressRef: supplyPoint?.addressRef,
                 personalId: supplyPoint?.user?.personalId,
               }}

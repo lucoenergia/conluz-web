@@ -4,7 +4,6 @@ import { useTheme, alpha } from "@mui/material/styles";
 import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import PercentIcon from "@mui/icons-material/Percent";
 import BoltIcon from "@mui/icons-material/Bolt";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PowerIcon from "@mui/icons-material/Power";
@@ -22,7 +21,6 @@ export interface SupplyCardProps {
   code?: string;
   name?: string;
   address?: string;
-  partitionCoefficient?: number;
   enabled?: boolean;
   lastConnection?: string;
   lastMeasurement?: number;
@@ -35,7 +33,6 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   code = "",
   name = "",
   address = "",
-  partitionCoefficient = 0,
   enabled = false,
   lastConnection = "",
   lastMeasurement = 0,
@@ -156,33 +153,6 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               mb: 3,
             }}
           >
-            {/* Partition Coefficient */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                p: 1.5,
-                borderRadius: radii.default,
-                // eslint-disable-next-line no-restricted-syntax -- partition-coefficient pink (#ec4899 alpha tint); brand accent without a token
-                bgcolor: "rgba(236, 72, 153, 0.08)",
-              }}
-            >
-              {/* eslint-disable-next-line no-restricted-syntax -- partition-coefficient pink (#ec4899); brand accent without a token */}
-              <PercentIcon sx={{ color: "#ec4899", fontSize: 24 }} />
-              <Box>
-                <Typography variant="h5" sx={{
-                  // eslint-disable-next-line no-restricted-syntax -- partition-coefficient pink (#ec4899); brand accent without a token
-                  color: "#ec4899",
-                }}>
-                  {partitionCoefficient.toFixed(2)}%
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Coeficiente de reparto
-                </Typography>
-              </Box>
-            </Box>
-
             {/* Last Measurement */}
             <Box
               sx={{
