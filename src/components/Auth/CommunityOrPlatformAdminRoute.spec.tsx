@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
-import { CommunityAdminRoute } from "./CommunityAdminRoute";
+import { CommunityOrPlatformAdminRoute } from "./CommunityOrPlatformAdminRoute";
 import { CommunityRole } from "../../api/models";
 
 vi.mock("../../hooks/useActiveCommunityRole", () => ({
@@ -23,9 +23,9 @@ function setup(role: string | null, isPlatformAdmin: boolean, path = "/protected
         <Route
           path="/protected"
           element={
-            <CommunityAdminRoute>
+            <CommunityOrPlatformAdminRoute>
               <span>protected</span>
-            </CommunityAdminRoute>
+            </CommunityOrPlatformAdminRoute>
           }
         />
       </Routes>
@@ -33,16 +33,15 @@ function setup(role: string | null, isPlatformAdmin: boolean, path = "/protected
   );
 }
 
-describe("CommunityAdminRoute", () => {
+describe("CommunityOrPlatformAdminRoute", () => {
   test("renders children for COMMUNITY_ADMIN role", () => {
     setup(CommunityRole.COMMUNITY_ADMIN, false);
     expect(screen.getByText("protected")).toBeInTheDocument();
   });
 
-  test("redirects platform admin without community-admin role", () => {
+  test("renders children for platform admin regardless of community role", () => {
     setup(null, true);
-    expect(screen.getByText("home")).toBeInTheDocument();
-    expect(screen.queryByText("protected")).not.toBeInTheDocument();
+    expect(screen.getByText("protected")).toBeInTheDocument();
   });
 
   test("redirects to / for COMMUNITY_MEMBER", () => {

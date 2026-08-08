@@ -23,7 +23,7 @@ import { CreateCommunityPage } from "./pages/communities/CreateCommunityPage";
 import { EditCommunityPage } from "./pages/communities/EditCommunityPage";
 import { MembersPage } from "./pages/members/MembersPage";
 import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
-import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
+import { CommunityOrPlatformAdminRoute } from "./components/Auth/CommunityOrPlatformAdminRoute";
 import { UsersPage } from "./pages/users/UsersPage";
 import { CreateUserPage } from "./pages/users/CreateUser";
 import { EditUserPage } from "./pages/users/EditUser";
@@ -63,11 +63,11 @@ function App() {
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route
             path="integrations"
-            element={<CommunityAdminRoute><IntegrationsPage /></CommunityAdminRoute>}
+            element={<CommunityOrPlatformAdminRoute><IntegrationsPage /></CommunityOrPlatformAdminRoute>}
           />
           <Route
             path="members"
-            element={<CommunityAdminRoute><MembersPage /></CommunityAdminRoute>}
+            element={<CommunityOrPlatformAdminRoute><MembersPage /></CommunityOrPlatformAdminRoute>}
           />
           <Route path="communities">
             <Route
