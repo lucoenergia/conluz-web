@@ -51,39 +51,39 @@ Authentication is required using a Bearer token.
  * @summary Retrieves a single plant by ID
  */
 export const getPlantById = (
-    id: string,
+    plantId: string,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<PlantResponse>(
-      {url: `/api/v1/plants/${id}`, method: 'GET', signal
+      {url: `/api/v1/plants/${plantId}`, method: 'GET', signal
     },
       );
     }
   
 
-export const getGetPlantByIdQueryKey = (id: string,) => {
-    return [`/api/v1/plants/${id}`] as const;
+export const getGetPlantByIdQueryKey = (plantId: string,) => {
+    return [`/api/v1/plants/${plantId}`] as const;
     }
 
     
-export const getGetPlantByIdQueryOptions = <TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
+export const getGetPlantByIdQueryOptions = <TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetPlantByIdQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantByIdQueryKey(plantId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantById>>> = ({ signal }) => getPlantById(id, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantById>>> = ({ signal }) => getPlantById(plantId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(plantId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPlantByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantById>>>
@@ -91,7 +91,7 @@ export type GetPlantByIdQueryError = ErrorType<unknown>
 
 
 export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
+ plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlantById>>,
           TError,
@@ -101,7 +101,7 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlantById>>,
           TError,
@@ -111,7 +111,7 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -119,11 +119,11 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
  */
 
 export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetPlantByIdQueryOptions(id,options)
+  const queryOptions = getGetPlantByIdQueryOptions(plantId,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -151,13 +151,13 @@ values will be updated with a null value.
  * @summary Updates plant information
  */
 export const updatePlant = (
-    id: string,
+    plantId: string,
     updatePlantBody: UpdatePlantBody,
  ) => {
       
       
       return customInstance<PlantResponse>(
-      {url: `/api/v1/plants/${id}`, method: 'PUT',
+      {url: `/api/v1/plants/${plantId}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: updatePlantBody
     },
@@ -167,8 +167,8 @@ export const updatePlant = (
 
 
 export const getUpdatePlantMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{plantId: string;data: UpdatePlantBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{plantId: string;data: UpdatePlantBody}, TContext> => {
 
 const mutationKey = ['updatePlant'];
 const {mutation: mutationOptions} = options ?
@@ -180,10 +180,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePlant>>, {id: string;data: UpdatePlantBody}> = (props) => {
-          const {id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePlant>>, {plantId: string;data: UpdatePlantBody}> = (props) => {
+          const {plantId,data} = props ?? {};
 
-          return  updatePlant(id,data,)
+          return  updatePlant(plantId,data,)
         }
 
         
@@ -199,11 +199,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Updates plant information
  */
 export const useUpdatePlant = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{id: string;data: UpdatePlantBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{plantId: string;data: UpdatePlantBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updatePlant>>,
         TError,
-        {id: string;data: UpdatePlantBody},
+        {plantId: string;data: UpdatePlantBody},
         TContext
       > => {
 
@@ -229,12 +229,12 @@ export const useUpdatePlant = <TError = ErrorType<unknown>,
  * @summary Removes a plant by ID
  */
 export const deletePlant = (
-    id: string,
+    plantId: string,
  ) => {
       
       
       return customInstance<void>(
-      {url: `/api/v1/plants/${id}`, method: 'DELETE'
+      {url: `/api/v1/plants/${plantId}`, method: 'DELETE'
     },
       );
     }
@@ -242,8 +242,8 @@ export const deletePlant = (
 
 
 export const getDeletePlantMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext> => {
 
 const mutationKey = ['deletePlant'];
 const {mutation: mutationOptions} = options ?
@@ -255,10 +255,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlant>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlant>>, {plantId: string}> = (props) => {
+          const {plantId} = props ?? {};
 
-          return  deletePlant(id,)
+          return  deletePlant(plantId,)
         }
 
         
@@ -274,11 +274,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Removes a plant by ID
  */
 export const useDeletePlant = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePlant>>,
         TError,
-        {id: string},
+        {plantId: string},
         TContext
       > => {
 

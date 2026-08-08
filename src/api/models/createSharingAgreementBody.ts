@@ -14,4 +14,6 @@ export interface CreateSharingAgreementBody {
   name: string;
   /** Free-text notes about the agreement */
   notes?: string;
+  /** Snapshot of the plant's installed power at authoring time, in kW */
+  installedPowerKw: number;
 }

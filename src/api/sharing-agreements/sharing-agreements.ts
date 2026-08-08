@@ -25,11 +25,18 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ActivateCoefficientsBody,
+  CloseCoefficientsBody,
+  CoefficientActivationResponse,
   CreateSharingAgreementBody,
+  DeactivateCoefficientsBody,
+  GenerateDistributorFileBody,
   GetSharingAgreementsParams,
+  ReopenCoefficientsBody,
   ReplacePartitionCoefficientsBody,
   ReplacePartitionCoefficientsResponse,
   RestError,
+  SharingAgreementPartitionCoefficientResponse,
   SharingAgreementResponse,
   UpdateSharingAgreementBody,
   UploadSharingAgreementFileBody,
@@ -57,41 +64,41 @@ Authentication is required using a Bearer token.
  */
 export const getSharingAgreementById = (
     plantId: string,
-    id: string,
+    sharingAgreementId: string,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<SharingAgreementResponse>(
-      {url: `/api/v1/plants/${plantId}/sharing-agreements/${id}`, method: 'GET', signal
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}`, method: 'GET', signal
     },
       );
     }
   
 
 export const getGetSharingAgreementByIdQueryKey = (plantId: string,
-    id: string,) => {
-    return [`/api/v1/plants/${plantId}/sharing-agreements/${id}`] as const;
+    sharingAgreementId: string,) => {
+    return [`/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}`] as const;
     }
 
     
 export const getGetSharingAgreementByIdQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementByIdQueryKey(plantId,id);
+  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementByIdQueryKey(plantId,sharingAgreementId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreementById>>> = ({ signal }) => getSharingAgreementById(plantId,id, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreementById>>> = ({ signal }) => getSharingAgreementById(plantId,sharingAgreementId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(plantId && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(plantId && sharingAgreementId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetSharingAgreementByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementById>>>
@@ -100,7 +107,7 @@ export type GetSharingAgreementByIdQueryError = ErrorType<unknown>
 
 export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>> & Pick<
+    sharingAgreementId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSharingAgreementById>>,
           TError,
@@ -111,7 +118,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>> & Pick<
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSharingAgreementById>>,
           TError,
@@ -122,7 +129,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -131,11 +138,11 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
 
 export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetSharingAgreementByIdQueryOptions(plantId,id,options)
+  const queryOptions = getGetSharingAgreementByIdQueryOptions(plantId,sharingAgreementId,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -164,13 +171,13 @@ Authentication is required using a Bearer token.
  */
 export const updateSharingAgreement = (
     plantId: string,
-    id: string,
+    sharingAgreementId: string,
     updateSharingAgreementBody: UpdateSharingAgreementBody,
  ) => {
       
       
       return customInstance<SharingAgreementResponse>(
-      {url: `/api/v1/plants/${plantId}/sharing-agreements/${id}`, method: 'PUT',
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: updateSharingAgreementBody
     },
@@ -180,8 +187,8 @@ export const updateSharingAgreement = (
 
 
 export const getUpdateSharingAgreementMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;id: string;data: UpdateSharingAgreementBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;id: string;data: UpdateSharingAgreementBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext> => {
 
 const mutationKey = ['updateSharingAgreement'];
 const {mutation: mutationOptions} = options ?
@@ -193,10 +200,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSharingAgreement>>, {plantId: string;id: string;data: UpdateSharingAgreementBody}> = (props) => {
-          const {plantId,id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSharingAgreement>>, {plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
 
-          return  updateSharingAgreement(plantId,id,data,)
+          return  updateSharingAgreement(plantId,sharingAgreementId,data,)
         }
 
         
@@ -212,11 +219,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Replaces a DRAFT sharing agreement's name, notes and installed power
  */
 export const useUpdateSharingAgreement = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;id: string;data: UpdateSharingAgreementBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateSharingAgreement>>,
         TError,
-        {plantId: string;id: string;data: UpdateSharingAgreementBody},
+        {plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody},
         TContext
       > => {
 
@@ -240,12 +247,12 @@ Authentication is required using a Bearer token.
  */
 export const deleteSharingAgreement = (
     plantId: string,
-    id: string,
+    sharingAgreementId: string,
  ) => {
       
       
       return customInstance<void>(
-      {url: `/api/v1/plants/${plantId}/sharing-agreements/${id}`, method: 'DELETE'
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}`, method: 'DELETE'
     },
       );
     }
@@ -253,8 +260,8 @@ export const deleteSharingAgreement = (
 
 
 export const getDeleteSharingAgreementMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{plantId: string;id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{plantId: string;id: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string}, TContext> => {
 
 const mutationKey = ['deleteSharingAgreement'];
 const {mutation: mutationOptions} = options ?
@@ -266,10 +273,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSharingAgreement>>, {plantId: string;id: string}> = (props) => {
-          const {plantId,id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSharingAgreement>>, {plantId: string;sharingAgreementId: string}> = (props) => {
+          const {plantId,sharingAgreementId} = props ?? {};
 
-          return  deleteSharingAgreement(plantId,id,)
+          return  deleteSharingAgreement(plantId,sharingAgreementId,)
         }
 
         
@@ -285,11 +292,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Removes a DRAFT sharing agreement
  */
 export const useDeleteSharingAgreement = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{plantId: string;id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteSharingAgreement>>,
         TError,
-        {plantId: string;id: string},
+        {plantId: string;sharingAgreementId: string},
         TContext
       > => {
 
@@ -298,6 +305,114 @@ export const useDeleteSharingAgreement = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * Returns one row per supply of the agreement's coefficient set, enriched with the
+supply's CUPS code and name, and two server-computed fields (applicationState,
+endState) so callers never need to derive interval/successor logic themselves.
+Ordered by CUPS ascending. Works regardless of the agreement's status (DRAFT,
+PUBLISHED or SUPERSEDED).
+
+**Required: any member of the plant's community (any role).**
+
+Returns 404 if the plant does not exist, if the caller is not a member of its
+community, or if the sharing agreement does not exist or does not belong to this
+plant, to avoid leaking the existence of plants or agreements by ID.
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves the full partition-coefficient set of a sharing agreement
+ */
+export const getSharingAgreementPartitionCoefficients = (
+    plantId: string,
+    sharingAgreementId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SharingAgreementPartitionCoefficientResponse[]>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetSharingAgreementPartitionCoefficientsQueryKey = (plantId: string,
+    sharingAgreementId: string,) => {
+    return [`/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients`] as const;
+    }
+
+    
+export const getGetSharingAgreementPartitionCoefficientsQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementPartitionCoefficientsQueryKey(plantId,sharingAgreementId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>> = ({ signal }) => getSharingAgreementPartitionCoefficients(plantId,sharingAgreementId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(plantId && sharingAgreementId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSharingAgreementPartitionCoefficientsQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>>
+export type GetSharingAgreementPartitionCoefficientsQueryError = ErrorType<unknown>
+
+
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string,
+    sharingAgreementId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>,
+          TError,
+          Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>,
+          TError,
+          Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the full partition-coefficient set of a sharing agreement
+ */
+
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSharingAgreementPartitionCoefficientsQueryOptions(plantId,sharingAgreementId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * Atomically replaces the agreement's entire coefficient set with the given one, as
 pending rows (not yet active). This is the manual-authoring counterpart of uploading
 a distributor file.
@@ -316,13 +431,13 @@ Authentication is required using a Bearer token.
  */
 export const replacePartitionCoefficients = (
     plantId: string,
-    id: string,
+    sharingAgreementId: string,
     replacePartitionCoefficientsBody: ReplacePartitionCoefficientsBody,
  ) => {
       
       
       return customInstance<ReplacePartitionCoefficientsResponse>(
-      {url: `/api/v1/plants/${plantId}/sharing-agreements/${id}/partition-coefficients`, method: 'PUT',
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: replacePartitionCoefficientsBody
     },
@@ -332,8 +447,8 @@ export const replacePartitionCoefficients = (
 
 
 export const getReplacePartitionCoefficientsMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePartitionCoefficients>>, TError,{plantId: string;id: string;data: ReplacePartitionCoefficientsBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof replacePartitionCoefficients>>, TError,{plantId: string;id: string;data: ReplacePartitionCoefficientsBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ReplacePartitionCoefficientsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof replacePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ReplacePartitionCoefficientsBody}, TContext> => {
 
 const mutationKey = ['replacePartitionCoefficients'];
 const {mutation: mutationOptions} = options ?
@@ -345,10 +460,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replacePartitionCoefficients>>, {plantId: string;id: string;data: ReplacePartitionCoefficientsBody}> = (props) => {
-          const {plantId,id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replacePartitionCoefficients>>, {plantId: string;sharingAgreementId: string;data: ReplacePartitionCoefficientsBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
 
-          return  replacePartitionCoefficients(plantId,id,data,)
+          return  replacePartitionCoefficients(plantId,sharingAgreementId,data,)
         }
 
         
@@ -364,11 +479,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Replaces a DRAFT sharing agreement's partition coefficients
  */
 export const useReplacePartitionCoefficients = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePartitionCoefficients>>, TError,{plantId: string;id: string;data: ReplacePartitionCoefficientsBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ReplacePartitionCoefficientsBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof replacePartitionCoefficients>>,
         TError,
-        {plantId: string;id: string;data: ReplacePartitionCoefficientsBody},
+        {plantId: string;sharingAgreementId: string;data: ReplacePartitionCoefficientsBody},
         TContext
       > => {
 
@@ -482,8 +597,9 @@ export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSha
 
 /**
  * This endpoint creates a new DRAFT sharing agreement under the given plant. The
-agreement's installed power is snapshotted from the plant's current total power at
-creation time.
+agreement's installed power is supplied by the caller as a snapshot of the plant's
+installed power at authoring time (the frontend pre-fills it from the plant's
+current total power, but it may be edited before submission).
 
 **Required: Community Admin**
 
@@ -557,6 +673,84 @@ export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
+ * This endpoint transitions a sharing agreement from PUBLISHED back to DRAFT, making
+its coefficient set editable again. Only allowed while the agreement is inert: none
+of its coefficients may have been applied by the distributor yet (none may have
+validFrom set).
+
+**Required: Community Admin**
+
+Returns 404 if the plant or the agreement does not exist, does not belong to this
+plant, or the caller is not a member of its community, to avoid leaking existence.
+Returns 409 if the agreement is not in PUBLISHED status (already DRAFT, or
+SUPERSEDED), or if any of its coefficients has already been applied by the
+distributor.
+
+Authentication is required using a Bearer token.
+
+ * @summary Reverts a PUBLISHED sharing agreement back to DRAFT
+ */
+export const revertSharingAgreementToDraft = (
+    plantId: string,
+    sharingAgreementId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SharingAgreementResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/revert-to-draft`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getRevertSharingAgreementToDraftMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revertSharingAgreementToDraft>>, TError,{plantId: string;sharingAgreementId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revertSharingAgreementToDraft>>, TError,{plantId: string;sharingAgreementId: string}, TContext> => {
+
+const mutationKey = ['revertSharingAgreementToDraft'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revertSharingAgreementToDraft>>, {plantId: string;sharingAgreementId: string}> = (props) => {
+          const {plantId,sharingAgreementId} = props ?? {};
+
+          return  revertSharingAgreementToDraft(plantId,sharingAgreementId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevertSharingAgreementToDraftMutationResult = NonNullable<Awaited<ReturnType<typeof revertSharingAgreementToDraft>>>
+    
+    export type RevertSharingAgreementToDraftMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Reverts a PUBLISHED sharing agreement back to DRAFT
+ */
+export const useRevertSharingAgreementToDraft = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revertSharingAgreementToDraft>>, TError,{plantId: string;sharingAgreementId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revertSharingAgreementToDraft>>,
+        TError,
+        {plantId: string;sharingAgreementId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRevertSharingAgreementToDraftMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * This endpoint transitions a sharing agreement from DRAFT to PUBLISHED. The
 agreement must already have at least one partition coefficient.
 
@@ -573,13 +767,13 @@ Authentication is required using a Bearer token.
  */
 export const publishSharingAgreement = (
     plantId: string,
-    id: string,
+    sharingAgreementId: string,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<SharingAgreementResponse>(
-      {url: `/api/v1/plants/${plantId}/sharing-agreements/${id}/publish`, method: 'POST', signal
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/publish`, method: 'POST', signal
     },
       );
     }
@@ -587,8 +781,8 @@ export const publishSharingAgreement = (
 
 
 export const getPublishSharingAgreementMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishSharingAgreement>>, TError,{plantId: string;id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof publishSharingAgreement>>, TError,{plantId: string;id: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof publishSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string}, TContext> => {
 
 const mutationKey = ['publishSharingAgreement'];
 const {mutation: mutationOptions} = options ?
@@ -600,10 +794,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publishSharingAgreement>>, {plantId: string;id: string}> = (props) => {
-          const {plantId,id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publishSharingAgreement>>, {plantId: string;sharingAgreementId: string}> = (props) => {
+          const {plantId,sharingAgreementId} = props ?? {};
 
-          return  publishSharingAgreement(plantId,id,)
+          return  publishSharingAgreement(plantId,sharingAgreementId,)
         }
 
         
@@ -619,15 +813,442 @@ const {mutation: mutationOptions} = options ?
  * @summary Publishes a DRAFT sharing agreement
  */
 export const usePublishSharingAgreement = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishSharingAgreement>>, TError,{plantId: string;id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof publishSharingAgreement>>,
         TError,
-        {plantId: string;id: string},
+        {plantId: string;sharingAgreementId: string},
         TContext
       > => {
 
       const mutationOptions = getPublishSharingAgreementMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Clears `validTo` on each given coefficient. Rejected when a successor coefficient
+starts at or before the current `validTo` -- that boundary was written by the
+activation cascade, not authored: you may only undo a closure you authored.
+
+**Required: Community Admin**
+
+PUBLISHED or SUPERSEDED agreements only. The coefficient must already be active
+and closed; reopening a pending coefficient is rejected.
+
+Idempotent in effect: re-sending a batch that would produce no change is a no-op.
+
+Returns 404 if the plant or the agreement does not exist, does not belong to this
+plant, or the caller is not a member of its community, to avoid leaking existence.
+Returns 409 if the agreement is DRAFT, or if any coefficient fails validation.
+
+Authentication is required using a Bearer token.
+
+ * @summary Retracts an authored close on a batch of coefficients
+ */
+export const reopenPartitionCoefficients = (
+    plantId: string,
+    sharingAgreementId: string,
+    reopenCoefficientsBody: ReopenCoefficientsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CoefficientActivationResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients/reopen`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reopenCoefficientsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getReopenPartitionCoefficientsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenPartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ReopenCoefficientsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof reopenPartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ReopenCoefficientsBody}, TContext> => {
+
+const mutationKey = ['reopenPartitionCoefficients'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenPartitionCoefficients>>, {plantId: string;sharingAgreementId: string;data: ReopenCoefficientsBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
+
+          return  reopenPartitionCoefficients(plantId,sharingAgreementId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReopenPartitionCoefficientsMutationResult = NonNullable<Awaited<ReturnType<typeof reopenPartitionCoefficients>>>
+    export type ReopenPartitionCoefficientsMutationBody = ReopenCoefficientsBody
+    export type ReopenPartitionCoefficientsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Retracts an authored close on a batch of coefficients
+ */
+export const useReopenPartitionCoefficients = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenPartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ReopenCoefficientsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reopenPartitionCoefficients>>,
+        TError,
+        {plantId: string;sharingAgreementId: string;data: ReopenCoefficientsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getReopenPartitionCoefficientsMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Retracts the activation of each given coefficient: the distributor never applied
+it, so no date is correct. Splices the chain -- the coefficient's predecessor for
+the same (plant, supply), if any, has its `validTo` set to the coefficient's own
+former `validTo` (which may itself be null, reopening the predecessor to infinity).
+If there is no predecessor and a successor exists, this deliberately leaves a gap:
+that supply resolves to zero over the window, the honest representation of "this
+agreement was never applied".
+
+**Required: Community Admin**
+
+PUBLISHED or SUPERSEDED agreements only -- see the `activate` endpoint for why DRAFT
+is rejected and why this is nonetheless the correct write on a non-DRAFT agreement.
+
+Idempotent in effect: re-sending a batch that would produce no change is a no-op.
+
+Returns 404 if the plant or the agreement does not exist, does not belong to this
+plant, or the caller is not a member of its community, to avoid leaking existence.
+Returns 409 if the agreement is DRAFT, or if any coefficient does not belong to it.
+
+Authentication is required using a Bearer token.
+
+ * @summary Reverts a batch of coefficients to pending
+ */
+export const deactivatePartitionCoefficients = (
+    plantId: string,
+    sharingAgreementId: string,
+    deactivateCoefficientsBody: DeactivateCoefficientsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CoefficientActivationResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients/deactivate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: deactivateCoefficientsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getDeactivatePartitionCoefficientsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivatePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: DeactivateCoefficientsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deactivatePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: DeactivateCoefficientsBody}, TContext> => {
+
+const mutationKey = ['deactivatePartitionCoefficients'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivatePartitionCoefficients>>, {plantId: string;sharingAgreementId: string;data: DeactivateCoefficientsBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
+
+          return  deactivatePartitionCoefficients(plantId,sharingAgreementId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeactivatePartitionCoefficientsMutationResult = NonNullable<Awaited<ReturnType<typeof deactivatePartitionCoefficients>>>
+    export type DeactivatePartitionCoefficientsMutationBody = DeactivateCoefficientsBody
+    export type DeactivatePartitionCoefficientsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Reverts a batch of coefficients to pending
+ */
+export const useDeactivatePartitionCoefficients = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivatePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: DeactivateCoefficientsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deactivatePartitionCoefficients>>,
+        TError,
+        {plantId: string;sharingAgreementId: string;data: DeactivateCoefficientsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getDeactivatePartitionCoefficientsMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Sets `validTo` for each given coefficient to `closedOn` -- the exit case: the
+supply is present in this agreement but absent from its successor, so no
+activation cascade will ever close it. Also corrects an already-closed date, as
+long as no successor coefficient starts at or before the requested boundary (that
+would mean the current close is cascade-derived, not authored, or that the new
+date would overlap a later row).
+
+**Required: Community Admin**
+
+PUBLISHED or SUPERSEDED agreements only. The coefficient must already be active
+(`validFrom` set); closing a pending coefficient is rejected.
+
+Idempotent in effect: re-sending a batch that would produce no change is a no-op.
+
+Returns 404 if the plant or the agreement does not exist, does not belong to this
+plant, or the caller is not a member of its community, to avoid leaking existence.
+Returns 409 if the agreement is DRAFT, or if any coefficient fails validation.
+
+Authentication is required using a Bearer token.
+
+ * @summary Records or corrects when a batch of coefficients' coverage explicitly ends
+ */
+export const closePartitionCoefficients = (
+    plantId: string,
+    sharingAgreementId: string,
+    closeCoefficientsBody: CloseCoefficientsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CoefficientActivationResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients/close`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: closeCoefficientsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getClosePartitionCoefficientsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: CloseCoefficientsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof closePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: CloseCoefficientsBody}, TContext> => {
+
+const mutationKey = ['closePartitionCoefficients'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closePartitionCoefficients>>, {plantId: string;sharingAgreementId: string;data: CloseCoefficientsBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
+
+          return  closePartitionCoefficients(plantId,sharingAgreementId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClosePartitionCoefficientsMutationResult = NonNullable<Awaited<ReturnType<typeof closePartitionCoefficients>>>
+    export type ClosePartitionCoefficientsMutationBody = CloseCoefficientsBody
+    export type ClosePartitionCoefficientsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Records or corrects when a batch of coefficients' coverage explicitly ends
+ */
+export const useClosePartitionCoefficients = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: CloseCoefficientsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof closePartitionCoefficients>>,
+        TError,
+        {plantId: string;sharingAgreementId: string;data: CloseCoefficientsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getClosePartitionCoefficientsMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Sets `validFrom` for each of the given coefficients to `appliedOn` (activation), or
+corrects it if already set. Cascades: each coefficient's previously-open predecessor
+for the same (plant, supply), if any, has its `validTo` set to `appliedOn` in the
+same transaction.
+
+**Required: Community Admin**
+
+PUBLISHED or SUPERSEDED agreements only -- DRAFT is rejected (a DRAFT has not been
+finalised, and a subsequent coefficient replacement would delete the activated row).
+This is the one write allowed on a non-DRAFT agreement: it records WHEN the
+distributor applied a coefficient, not WHICH coefficients exist (sealed at publish).
+
+Idempotent in effect: re-sending a batch that would produce no change is a no-op,
+not an error. A failure on any item rejects the whole batch -- nothing is written.
+
+Returns 404 if the plant or the agreement does not exist, does not belong to this
+plant, or the caller is not a member of its community, to avoid leaking existence.
+Returns 409 if the agreement is DRAFT, or if any coefficient fails validation (does
+not belong to this agreement, the date is in the future, or the date is not after
+the resolved predecessor's own date / not before the coefficient's own end date).
+
+Authentication is required using a Bearer token.
+
+ * @summary Records or corrects the date the distributor applied a batch of coefficients
+ */
+export const activatePartitionCoefficients = (
+    plantId: string,
+    sharingAgreementId: string,
+    activateCoefficientsBody: ActivateCoefficientsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CoefficientActivationResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients/activate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: activateCoefficientsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getActivatePartitionCoefficientsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activatePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ActivateCoefficientsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof activatePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ActivateCoefficientsBody}, TContext> => {
+
+const mutationKey = ['activatePartitionCoefficients'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activatePartitionCoefficients>>, {plantId: string;sharingAgreementId: string;data: ActivateCoefficientsBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
+
+          return  activatePartitionCoefficients(plantId,sharingAgreementId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActivatePartitionCoefficientsMutationResult = NonNullable<Awaited<ReturnType<typeof activatePartitionCoefficients>>>
+    export type ActivatePartitionCoefficientsMutationBody = ActivateCoefficientsBody
+    export type ActivatePartitionCoefficientsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Records or corrects the date the distributor applied a batch of coefficients
+ */
+export const useActivatePartitionCoefficients = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activatePartitionCoefficients>>, TError,{plantId: string;sharingAgreementId: string;data: ActivateCoefficientsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof activatePartitionCoefficients>>,
+        TError,
+        {plantId: string;sharingAgreementId: string;data: ActivateCoefficientsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getActivatePartitionCoefficientsMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Builds the i-DE distributor TXT file from this agreement's currently-active
+partition coefficients and streams it back as a file download. Nothing is
+persisted -- the file is built in memory from the current state and returned.
+
+**Required: Community Admin**
+
+Allowed for any agreement status (DRAFT, PUBLISHED, SUPERSEDED).
+
+Returns 404 if the plant or the agreement does not exist, does not belong to this
+plant, or the caller is not a member of its community, to avoid leaking existence.
+Returns 409 if the plant has no regulatory code (CAU) configured, or if the
+currently-active coefficients do not sum to exactly 1.
+
+Authentication is required using a Bearer token.
+
+ * @summary Generates the i-DE distributor coefficient-partition file for a sharing agreement
+ */
+export const generateSharingAgreementDistributorFile = (
+    plantId: string,
+    sharingAgreementId: string,
+    generateDistributorFileBody: GenerateDistributorFileBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Blob>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/generate-file`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: generateDistributorFileBody,
+        responseType: 'blob', signal
+    },
+      );
+    }
+  
+
+
+export const getGenerateSharingAgreementDistributorFileMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateSharingAgreementDistributorFile>>, TError,{plantId: string;sharingAgreementId: string;data: GenerateDistributorFileBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof generateSharingAgreementDistributorFile>>, TError,{plantId: string;sharingAgreementId: string;data: GenerateDistributorFileBody}, TContext> => {
+
+const mutationKey = ['generateSharingAgreementDistributorFile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateSharingAgreementDistributorFile>>, {plantId: string;sharingAgreementId: string;data: GenerateDistributorFileBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
+
+          return  generateSharingAgreementDistributorFile(plantId,sharingAgreementId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateSharingAgreementDistributorFileMutationResult = NonNullable<Awaited<ReturnType<typeof generateSharingAgreementDistributorFile>>>
+    export type GenerateSharingAgreementDistributorFileMutationBody = GenerateDistributorFileBody
+    export type GenerateSharingAgreementDistributorFileMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Generates the i-DE distributor coefficient-partition file for a sharing agreement
+ */
+export const useGenerateSharingAgreementDistributorFile = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateSharingAgreementDistributorFile>>, TError,{plantId: string;sharingAgreementId: string;data: GenerateDistributorFileBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof generateSharingAgreementDistributorFile>>,
+        TError,
+        {plantId: string;sharingAgreementId: string;data: GenerateDistributorFileBody},
+        TContext
+      > => {
+
+      const mutationOptions = getGenerateSharingAgreementDistributorFileMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }
@@ -647,41 +1268,41 @@ Authentication is required using a Bearer token.
  */
 export const getSharingAgreementFile = (
     plantId: string,
-    id: string,
+    sharingAgreementId: string,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<string>(
-      {url: `/api/v1/plants/${plantId}/sharing-agreements/${id}/file`, method: 'GET', signal
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/file`, method: 'GET', signal
     },
       );
     }
   
 
 export const getGetSharingAgreementFileQueryKey = (plantId: string,
-    id: string,) => {
-    return [`/api/v1/plants/${plantId}/sharing-agreements/${id}/file`] as const;
+    sharingAgreementId: string,) => {
+    return [`/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/file`] as const;
     }
 
     
 export const getGetSharingAgreementFileQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementFileQueryKey(plantId,id);
+  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementFileQueryKey(plantId,sharingAgreementId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreementFile>>> = ({ signal }) => getSharingAgreementFile(plantId,id, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreementFile>>> = ({ signal }) => getSharingAgreementFile(plantId,sharingAgreementId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(plantId && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(plantId && sharingAgreementId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetSharingAgreementFileQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementFile>>>
@@ -690,7 +1311,7 @@ export type GetSharingAgreementFileQueryError = ErrorType<unknown>
 
 export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>> & Pick<
+    sharingAgreementId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSharingAgreementFile>>,
           TError,
@@ -701,7 +1322,7 @@ export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof get
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>> & Pick<
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSharingAgreementFile>>,
           TError,
@@ -712,7 +1333,7 @@ export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof get
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -721,11 +1342,11 @@ export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof get
 
 export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
  plantId: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetSharingAgreementFileQueryOptions(plantId,id,options)
+  const queryOptions = getGetSharingAgreementFileQueryOptions(plantId,sharingAgreementId,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -755,7 +1376,7 @@ Authentication is required using a Bearer token.
  */
 export const uploadSharingAgreementFile = (
     plantId: string,
-    id: string,
+    sharingAgreementId: string,
     uploadSharingAgreementFileBody: UploadSharingAgreementFileBody,
  signal?: AbortSignal
 ) => {
@@ -764,7 +1385,7 @@ export const uploadSharingAgreementFile = (
 formData.append(`file`, uploadSharingAgreementFileBody.file)
 
       return customInstance<UploadSharingAgreementFileResponse>(
-      {url: `/api/v1/plants/${plantId}/sharing-agreements/${id}/file`, method: 'POST',
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/file`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -774,8 +1395,8 @@ formData.append(`file`, uploadSharingAgreementFileBody.file)
 
 
 export const getUploadSharingAgreementFileMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, TError,{plantId: string;id: string;data: UploadSharingAgreementFileBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, TError,{plantId: string;id: string;data: UploadSharingAgreementFileBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, TError,{plantId: string;sharingAgreementId: string;data: UploadSharingAgreementFileBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, TError,{plantId: string;sharingAgreementId: string;data: UploadSharingAgreementFileBody}, TContext> => {
 
 const mutationKey = ['uploadSharingAgreementFile'];
 const {mutation: mutationOptions} = options ?
@@ -787,10 +1408,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, {plantId: string;id: string;data: UploadSharingAgreementFileBody}> = (props) => {
-          const {plantId,id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, {plantId: string;sharingAgreementId: string;data: UploadSharingAgreementFileBody}> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
 
-          return  uploadSharingAgreementFile(plantId,id,data,)
+          return  uploadSharingAgreementFile(plantId,sharingAgreementId,data,)
         }
 
         
@@ -806,11 +1427,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Uploads a distributor coefficient-partition file for a DRAFT sharing agreement
  */
 export const useUploadSharingAgreementFile = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, TError,{plantId: string;id: string;data: UploadSharingAgreementFileBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadSharingAgreementFile>>, TError,{plantId: string;sharingAgreementId: string;data: UploadSharingAgreementFileBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof uploadSharingAgreementFile>>,
         TError,
-        {plantId: string;id: string;data: UploadSharingAgreementFileBody},
+        {plantId: string;sharingAgreementId: string;data: UploadSharingAgreementFileBody},
         TContext
       > => {
 

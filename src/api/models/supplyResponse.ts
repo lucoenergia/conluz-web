@@ -23,8 +23,6 @@ export interface SupplyResponse {
   address?: string;
   /** Reference ID of the address */
   addressRef?: string;
-  /** Legacy partition coefficient of the supply. No longer authoritative: the sharing-agreement coefficient timeline is the source of truth for production calculations. */
-  partitionCoefficient?: number;
   /** Whether the supply is enabled or disabled */
   enabled?: boolean;
   /** Contract information of the supply */

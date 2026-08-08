@@ -41,39 +41,39 @@ import type { ErrorType } from '.././custom-instance';
  * @summary Lists all memberships of a community.
  */
 export const getMemberships = (
-    id: string,
+    communityId: string,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<MembershipResponse[]>(
-      {url: `/api/v1/communities/${id}/memberships`, method: 'GET', signal
+      {url: `/api/v1/communities/${communityId}/memberships`, method: 'GET', signal
     },
       );
     }
   
 
-export const getGetMembershipsQueryKey = (id: string,) => {
-    return [`/api/v1/communities/${id}/memberships`] as const;
+export const getGetMembershipsQueryKey = (communityId: string,) => {
+    return [`/api/v1/communities/${communityId}/memberships`] as const;
     }
 
     
-export const getGetMembershipsQueryOptions = <TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
+export const getGetMembershipsQueryOptions = <TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetMembershipsQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipsQueryKey(communityId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMemberships>>> = ({ signal }) => getMemberships(id, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMemberships>>> = ({ signal }) => getMemberships(communityId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetMembershipsQueryResult = NonNullable<Awaited<ReturnType<typeof getMemberships>>>
@@ -81,7 +81,7 @@ export type GetMembershipsQueryError = ErrorType<unknown>
 
 
 export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
+ communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMemberships>>,
           TError,
@@ -91,7 +91,7 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMemberships>>,
           TError,
@@ -101,7 +101,7 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -109,11 +109,11 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
  */
 
 export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetMembershipsQueryOptions(id,options)
+  const queryOptions = getGetMembershipsQueryOptions(communityId,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -131,14 +131,14 @@ Requires COMMUNITY_ADMIN role in the community or PLATFORM_ADMIN.
  * @summary Creates a new membership in a community.
  */
 export const createMembership = (
-    id: string,
+    communityId: string,
     createMembershipBody: CreateMembershipBody,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<MembershipResponse>(
-      {url: `/api/v1/communities/${id}/memberships`, method: 'POST',
+      {url: `/api/v1/communities/${communityId}/memberships`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createMembershipBody, signal
     },
@@ -148,8 +148,8 @@ export const createMembership = (
 
 
 export const getCreateMembershipMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{id: string;data: CreateMembershipBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{id: string;data: CreateMembershipBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext> => {
 
 const mutationKey = ['createMembership'];
 const {mutation: mutationOptions} = options ?
@@ -161,10 +161,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMembership>>, {id: string;data: CreateMembershipBody}> = (props) => {
-          const {id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMembership>>, {communityId: string;data: CreateMembershipBody}> = (props) => {
+          const {communityId,data} = props ?? {};
 
-          return  createMembership(id,data,)
+          return  createMembership(communityId,data,)
         }
 
         
@@ -180,11 +180,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Creates a new membership in a community.
  */
 export const useCreateMembership = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{id: string;data: CreateMembershipBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createMembership>>,
         TError,
-        {id: string;data: CreateMembershipBody},
+        {communityId: string;data: CreateMembershipBody},
         TContext
       > => {
 
@@ -197,13 +197,13 @@ export const useCreateMembership = <TError = ErrorType<unknown>,
  * @summary Removes a user from a community.
  */
 export const deleteMembership = (
-    id: string,
+    communityId: string,
     userId: string,
  ) => {
       
       
       return customInstance<void>(
-      {url: `/api/v1/communities/${id}/memberships/${userId}`, method: 'DELETE'
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}`, method: 'DELETE'
     },
       );
     }
@@ -211,8 +211,8 @@ export const deleteMembership = (
 
 
 export const getDeleteMembershipMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{id: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{id: string;userId: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{communityId: string;userId: string}, TContext> => {
 
 const mutationKey = ['deleteMembership'];
 const {mutation: mutationOptions} = options ?
@@ -224,10 +224,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMembership>>, {id: string;userId: string}> = (props) => {
-          const {id,userId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMembership>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
 
-          return  deleteMembership(id,userId,)
+          return  deleteMembership(communityId,userId,)
         }
 
         
@@ -243,11 +243,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Removes a user from a community.
  */
 export const useDeleteMembership = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{id: string;userId: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{communityId: string;userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteMembership>>,
         TError,
-        {id: string;userId: string},
+        {communityId: string;userId: string},
         TContext
       > => {
 
@@ -260,14 +260,14 @@ export const useDeleteMembership = <TError = ErrorType<unknown>,
  * @summary Updates the role of a membership.
  */
 export const updateMembershipRole = (
-    id: string,
+    communityId: string,
     userId: string,
     updateMembershipRoleBody: UpdateMembershipRoleBody,
  ) => {
       
       
       return customInstance<MembershipResponse>(
-      {url: `/api/v1/communities/${id}/memberships/${userId}`, method: 'PATCH',
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateMembershipRoleBody
     },
@@ -277,8 +277,8 @@ export const updateMembershipRole = (
 
 
 export const getUpdateMembershipRoleMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{id: string;userId: string;data: UpdateMembershipRoleBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{id: string;userId: string;data: UpdateMembershipRoleBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{communityId: string;userId: string;data: UpdateMembershipRoleBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{communityId: string;userId: string;data: UpdateMembershipRoleBody}, TContext> => {
 
 const mutationKey = ['updateMembershipRole'];
 const {mutation: mutationOptions} = options ?
@@ -290,10 +290,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMembershipRole>>, {id: string;userId: string;data: UpdateMembershipRoleBody}> = (props) => {
-          const {id,userId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMembershipRole>>, {communityId: string;userId: string;data: UpdateMembershipRoleBody}> = (props) => {
+          const {communityId,userId,data} = props ?? {};
 
-          return  updateMembershipRole(id,userId,data,)
+          return  updateMembershipRole(communityId,userId,data,)
         }
 
         
@@ -309,11 +309,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Updates the role of a membership.
  */
 export const useUpdateMembershipRole = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{id: string;userId: string;data: UpdateMembershipRoleBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{communityId: string;userId: string;data: UpdateMembershipRoleBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateMembershipRole>>,
         TError,
-        {id: string;userId: string;data: UpdateMembershipRoleBody},
+        {communityId: string;userId: string;data: UpdateMembershipRoleBody},
         TContext
       > => {
 

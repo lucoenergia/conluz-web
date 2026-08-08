@@ -30,7 +30,7 @@ export const getCreateCommunityResponseMock = (overrideResponse: Partial< Commun
 
 
 export const getGetCommunityByIdMockHandler = (overrideResponse?: CommunityResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<CommunityResponse> | CommunityResponse)) => {
-  return http.get('*/api/v1/communities/:id', async (info) => {await delay(1000);
+  return http.get('*/api/v1/communities/:communityId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -42,7 +42,7 @@ export const getGetCommunityByIdMockHandler = (overrideResponse?: CommunityRespo
 }
 
 export const getUpdateCommunityMockHandler = (overrideResponse?: CommunityResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<CommunityResponse> | CommunityResponse)) => {
-  return http.put('*/api/v1/communities/:id', async (info) => {await delay(1000);
+  return http.put('*/api/v1/communities/:communityId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -78,7 +78,7 @@ export const getCreateCommunityMockHandler = (overrideResponse?: CommunityRespon
 }
 
 export const getEnableCommunityMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void)) => {
-  return http.post('*/api/v1/communities/:id/enable', async (info) => {await delay(1000);
+  return http.post('*/api/v1/communities/:communityId/enable', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -88,7 +88,7 @@ export const getEnableCommunityMockHandler = (overrideResponse?: void | ((info: 
 }
 
 export const getDisableCommunityMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void)) => {
-  return http.post('*/api/v1/communities/:id/disable', async (info) => {await delay(1000);
+  return http.post('*/api/v1/communities/:communityId/disable', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
