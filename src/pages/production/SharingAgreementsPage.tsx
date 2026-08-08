@@ -1,24 +1,51 @@
-import { useEffect, type FC } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { useEffect, useMemo, useState, type FC } from "react";
+import { Box, Chip, Paper } from "@mui/material";
 import { useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
+import { PageHeaderWithStats } from "../../components/PageHeader";
+import { CardGrid, LoadingCardGrid } from "../../components/CardGrid";
+import { SearchBar } from "../../components/SearchBar/SearchBar";
+import { SharingAgreementCard } from "../../components/SharingAgreementCard";
 import { useErrorDispatch } from "../../context/error.context";
+import { useDebounce } from "../../utils/useDebounce";
+import { SharingAgreementResponseStatus } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
+import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
+import { getSharingAgreementStatusColor, getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
+
+const STATUS_FILTERS: SharingAgreementStatusFilter[] = [
+  "all",
+  SharingAgreementResponseStatus.DRAFT,
+  SharingAgreementResponseStatus.PUBLISHED,
+  SharingAgreementResponseStatus.SUPERSEDED,
+];
+
+const SINGLE_COLUMN = { xs: 1, sm: 1, md: 1, lg: 1 };
 
 export const SharingAgreementsPage: FC = () => {
   const { plantId = "" } = useParams();
   const errorDispatch = useErrorDispatch();
-  const { isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
+  const { agreements, plant, counts, isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
+
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<SharingAgreementStatusFilter>("all");
+  const debouncedSearchText = useDebounce(searchText, 500);
 
   useEffect(() => {
     if (error) {
       errorDispatch("Ha habido un problema al cargar los acuerdos de reparto. Por favor, inténtalo más tarde");
     }
   }, [error, errorDispatch]);
+
+  const filteredAgreements = useMemo(
+    () => filterSharingAgreements(agreements, debouncedSearchText, statusFilter),
+    [agreements, debouncedSearchText, statusFilter],
+  );
 
   return (
     <Box
@@ -56,12 +83,93 @@ export const SharingAgreementsPage: FC = () => {
       ) : (
         <>
           <Box sx={sxStyles.pageContainer}>
-            <Typography variant="h4">Acuerdos de Reparto</Typography>
+            <PageHeaderWithStats
+              icon={HandshakeOutlinedIcon}
+              title={plant?.name || "Planta de Producción"}
+              subtitle={plant?.regulatoryCode ? `CAU: ${plant.regulatoryCode}` : "CAU no disponible"}
+              stats={[
+                { value: counts.total, label: "Total" },
+                { value: counts.drafts, label: "Borradores", color: colors.warning },
+                { value: counts.historicos, label: "Históricos" },
+              ]}
+            />
+          </Box>
+
+          <Box sx={sxStyles.pageContainer}>
+            <Paper elevation={0} sx={sxStyles.softPanel}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 2,
+                  alignItems: { xs: "stretch", sm: "center" },
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    overflowX: "auto",
+                    flexWrap: "nowrap",
+                    pb: 0.5,
+                  }}
+                >
+                  {STATUS_FILTERS.map((status) => (
+                    <Chip
+                      key={status}
+                      label={status === "all" ? "Todos" : getSharingAgreementStatusLabel(status)}
+                      onClick={() => setStatusFilter(status)}
+                      color={
+                        statusFilter === status
+                          ? status === "all"
+                            ? "primary"
+                            : getSharingAgreementStatusColor(status)
+                          : "default"
+                      }
+                      size="small"
+                      sx={{ flexShrink: 0 }}
+                    />
+                  ))}
+                </Box>
+
+                <SearchBar
+                  value={searchText}
+                  onChange={setSearchText}
+                  placeholder="Buscar por nombre o notas..."
+                />
+              </Box>
+            </Paper>
           </Box>
 
           {isLoading && (
-            <Box sx={{ ...sxStyles.pageContainer, display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress />
+            <Box sx={sxStyles.pageContainer}>
+              <LoadingCardGrid columns={SINGLE_COLUMN} />
+            </Box>
+          )}
+
+          {!isLoading && !error && filteredAgreements.length > 0 && (
+            <Box sx={sxStyles.pageContainer}>
+              <CardGrid
+                items={filteredAgreements}
+                getKey={(item) => item.id || ""}
+                columns={SINGLE_COLUMN}
+                renderCard={(item) => <SharingAgreementCard plantId={plantId} agreement={item} />}
+              />
+            </Box>
+          )}
+
+          {!isLoading && !error && filteredAgreements.length === 0 && (
+            <Box sx={sxStyles.pageContainer}>
+              <EmptyState
+                icon={HandshakeOutlinedIcon}
+                title="No se encontraron acuerdos de reparto"
+                subtitle={
+                  agreements.length === 0
+                    ? "Esta planta todavía no tiene acuerdos de reparto registrados."
+                    : "No hay acuerdos de reparto que coincidan con los filtros aplicados."
+                }
+              />
             </Box>
           )}
         </>
