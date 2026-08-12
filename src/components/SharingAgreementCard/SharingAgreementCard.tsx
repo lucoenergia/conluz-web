@@ -1,16 +1,16 @@
-import type { FC } from "react";
-import { Box, CardContent, Chip, Link, Typography } from "@mui/material";
+import { useState, type FC } from "react";
+import { Box, CardContent, IconButton, MenuItem, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import BoltIcon from "@mui/icons-material/Bolt";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, alphas } from "../../theme/tokens";
+import { radii, alphas, colors } from "../../theme/tokens";
 import { AppCard } from "../AppCard";
+import { MenuTemplate } from "../Menu/MenuTemplate";
+import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
 import type { SharingAgreementResponse } from "../../api/models";
-import {
-  getSharingAgreementStatusColor,
-  getSharingAgreementStatusLabel,
-} from "../../pages/production/sharingAgreementStatus";
 
 export interface SharingAgreementCardProps {
   plantId: string;
@@ -40,28 +40,72 @@ function excerpt(text: string | undefined, maxLength: number): string | undefine
 export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, agreement }) => {
   const theme = useTheme();
   const notesExcerpt = excerpt(agreement.notes, NOTES_EXCERPT_LENGTH);
+  const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setAnchorElement(event.currentTarget);
+  };
+
+  const handleCloseMenu = (event?: React.MouseEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setAnchorElement(null);
+  };
 
   return (
     <AppCard
       header={
         <>
           <Typography variant="h6">{agreement.name || "Sin nombre"}</Typography>
-          <Chip
-            label={getSharingAgreementStatusLabel(agreement.status)}
-            color={getSharingAgreementStatusColor(agreement.status)}
-            size="small"
-            sx={{ fontWeight: 600 }}
-          />
+          {agreement.id && (
+            <Box sx={{ flexShrink: 0 }}>
+              <IconButton
+                onClick={handleOpenMenu}
+                sx={{
+                  color: "white",
+                  minWidth: 40,
+                  minHeight: 40,
+                  "&:hover": {
+                    backgroundColor: alphas.white.hairline,
+                  },
+                }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
+                <Box sx={{ py: 1 }}>
+                  <Box
+                    component={RouterLink}
+                    to={`/production/${plantId}/sharing-agreements/${agreement.id}`}
+                    sx={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <MenuItem>
+                      <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                        Ver detalle
+                      </Typography>
+                    </MenuItem>
+                  </Box>
+                </Box>
+              </MenuTemplate>
+            </Box>
+          )}
         </>
       }
     >
       <CardContent sx={{ p: 3 }}>
+        <Box sx={{ mb: 2 }}>
+          <SharingAgreementStatusChip status={agreement.status} />
+        </Box>
+
         <Box
           sx={{
             display: "grid",
             gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
             gap: 2,
-            mb: notesExcerpt || agreement.id ? 2 : 0,
+            mb: notesExcerpt ? 2 : 0,
           }}
         >
           <Box
@@ -113,29 +157,12 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
               p: 2,
               bgcolor: alphas.black.ghost,
               borderRadius: radii.default,
-              mb: agreement.id ? 2 : 0,
             }}
           >
             <Typography variant="body2" color="text.secondary">
               {notesExcerpt}
             </Typography>
           </Box>
-        )}
-
-        {agreement.id && (
-          <Link
-            component={RouterLink}
-            to={`/production/${plantId}/sharing-agreements/${agreement.id}`}
-            sx={{
-              display: "inline-block",
-              fontWeight: 600,
-              color: "primary.main",
-              textDecoration: "none",
-              "&:hover": { textDecoration: "underline" },
-            }}
-          >
-            Ver detalle
-          </Link>
         )}
       </CardContent>
     </AppCard>

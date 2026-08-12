@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { SharingAgreementCard } from "./SharingAgreementCard";
 import { SharingAgreementResponseStatus } from "../../api/models";
@@ -12,6 +13,10 @@ function renderCard(agreement: SharingAgreementResponse) {
       <SharingAgreementCard plantId="plant-1" agreement={agreement} />
     </MemoryRouter>,
   );
+}
+
+function getKebabButton() {
+  return screen.getAllByRole("button").filter((button) => button.textContent === "")[0];
 }
 
 describe("SharingAgreementCard", () => {
@@ -31,15 +36,21 @@ describe("SharingAgreementCard", () => {
     expect(screen.getByText("Acuerdo firmado en la reunión de la comunidad")).toBeInTheDocument();
   });
 
-  test("renders a detail link only when the agreement has an id", () => {
+  test("renders a detail link, reachable from the kebab menu, only when the agreement has an id", async () => {
+    const user = userEvent.setup();
     renderCard({ id: "agreement-2", name: "Con enlace" });
+
+    await user.click(getKebabButton());
+
+    await waitFor(() => expect(screen.getByText("Ver detalle")).toBeInTheDocument());
     const link = screen.getByRole("link", { name: "Ver detalle" });
     expect(link).toHaveAttribute("href", "/production/plant-1/sharing-agreements/agreement-2");
   });
 
-  test("renders no detail link when id is missing, without crashing", () => {
+  test("renders no kebab menu when id is missing, without crashing", () => {
     renderCard({ name: "Sin id" });
-    expect(screen.queryByRole("link", { name: "Ver detalle" })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.queryByText("Ver detalle")).not.toBeInTheDocument();
   });
 
   test("falls back visibly for every missing optional field", () => {
