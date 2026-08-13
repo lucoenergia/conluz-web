@@ -758,8 +758,8 @@ agreement must already have at least one partition coefficient.
 
 Returns 404 if the plant or the agreement does not exist, does not belong to this
 plant, or the caller is not a member of its community, to avoid leaking existence.
-Returns 409 if the agreement is not in DRAFT status, or if it has no partition
-coefficients yet.
+Returns 409 if the agreement is not in DRAFT status, if it has no partition
+coefficients yet, or if its coefficients do not sum to exactly 1.
 
 Authentication is required using a Bearer token.
 
@@ -1171,8 +1171,9 @@ export const useActivatePartitionCoefficients = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * Builds the i-DE distributor TXT file from this agreement's currently-active
-partition coefficients and streams it back as a file download. Nothing is
+ * Builds the i-DE distributor TXT file from this agreement's complete, immutable
+partition-coefficient set -- one row per supply, regardless of status or
+activation state -- and streams it back as a file download. Nothing is
 persisted -- the file is built in memory from the current state and returned.
 
 **Required: Community Admin**
@@ -1182,7 +1183,7 @@ Allowed for any agreement status (DRAFT, PUBLISHED, SUPERSEDED).
 Returns 404 if the plant or the agreement does not exist, does not belong to this
 plant, or the caller is not a member of its community, to avoid leaking existence.
 Returns 409 if the plant has no regulatory code (CAU) configured, or if the
-currently-active coefficients do not sum to exactly 1.
+agreement's coefficient set does not sum to exactly 1.
 
 Authentication is required using a Bearer token.
 
