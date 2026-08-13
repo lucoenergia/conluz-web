@@ -61,7 +61,7 @@ export const SharingAgreementsPage: FC = () => {
         boxSizing: "border-box",
       }}
     >
-      <Box sx={sxStyles.pageContainer}>
+      <Box sx={{ ...sxStyles.pageContainer, pt: { xs: 2, sm: 0 } }}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
