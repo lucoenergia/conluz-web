@@ -205,7 +205,7 @@ describe("CommunitiesPage", () => {
     await waitFor(() =>
       expect(mockCreateMutate).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: "c1",
+          communityId: "c1",
           data: expect.objectContaining({ userId: "u2", role: "COMMUNITY_ADMIN" }),
         }),
       ),

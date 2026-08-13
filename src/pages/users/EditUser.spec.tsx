@@ -133,7 +133,7 @@ describe("EditUserPage", () => {
     await waitFor(() => {
       expect(mockMutateAsync).toHaveBeenCalledWith(
         {
-          id: "test-user-id",
+          userId: "test-user-id",
           data: expect.objectContaining({
             fullName: mockUserData.fullName,
             email: mockUserData.email,

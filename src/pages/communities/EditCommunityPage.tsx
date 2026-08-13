@@ -67,7 +67,7 @@ export const EditCommunityPage: FC = () => {
 
     try {
       await updateCommunity.mutateAsync({
-        id: communityId,
+        communityId,
         data: {
           name: currentName.trim(),
           code: currentCode.trim(),

@@ -165,11 +165,11 @@ export const PartnersPage: FC = () => {
     try {
       if (selectedUser.enabled) {
         // Disable user
-        await disableUserMutation.mutateAsync({ id: selectedUser.id });
+        await disableUserMutation.mutateAsync({ userId: selectedUser.id });
         setWasEnabled(false);
       } else {
         // Enable user
-        await enableUserMutation.mutateAsync({ id: selectedUser.id });
+        await enableUserMutation.mutateAsync({ userId: selectedUser.id });
         setWasEnabled(true);
       }
       setShowDisableConfirmation(false);

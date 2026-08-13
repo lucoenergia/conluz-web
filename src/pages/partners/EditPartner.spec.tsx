@@ -137,7 +137,7 @@ describe("EditPartnerPage", () => {
     await waitFor(() => {
       expect(mockMutateAsync).toHaveBeenCalledWith(
         {
-          id: "test-partner-id",
+          userId: "test-partner-id",
           data: {
             number: mockPartnerData.number,
             personalId: mockPartnerData.personalId,

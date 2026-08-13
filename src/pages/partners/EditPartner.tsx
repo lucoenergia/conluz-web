@@ -29,7 +29,7 @@ export const EditPartnerPage: FC = () => {
         phoneNumber,
       } as UpdateUserBody;
 
-      const response = await updateUser.mutateAsync({ id: partnerId, data: updatedUser }, {});
+      const response = await updateUser.mutateAsync({ userId: partnerId, data: updatedUser }, {});
       if (response) {
         navigate("/partners");
       } else {

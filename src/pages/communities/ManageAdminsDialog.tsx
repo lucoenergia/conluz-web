@@ -85,13 +85,13 @@ export const ManageAdminsDialog: FC<Props> = ({ community, open, onClose }) => {
       const existingMembership = memberships.find((m) => m.user?.id === selectedUserId);
       if (existingMembership) {
         await updateRole.mutateAsync({
-          id: communityId,
+          communityId,
           userId: selectedUserId,
           data: { role: UpdateMembershipRoleBodyRole.COMMUNITY_ADMIN },
         });
       } else {
         await createMembership.mutateAsync({
-          id: communityId,
+          communityId,
           data: { userId: selectedUserId, role: CreateMembershipBodyRole.COMMUNITY_ADMIN },
         });
       }
@@ -105,7 +105,7 @@ export const ManageAdminsDialog: FC<Props> = ({ community, open, onClose }) => {
   const handleRemove = async (userId: string) => {
     if (!communityId) return;
     try {
-      await deleteMembership.mutateAsync({ id: communityId, userId });
+      await deleteMembership.mutateAsync({ communityId, userId });
       invalidate();
     } catch {
       errorDispatch("Error al eliminar el administrador. Por favor, inténtalo de nuevo.");

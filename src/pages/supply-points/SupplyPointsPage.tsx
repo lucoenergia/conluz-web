@@ -55,7 +55,7 @@ export const SupplyPointsPage: FC = () => {
 
   const disableSupplyPoint = async (id: string) => {
     try {
-      const response = await disableSupply.mutateAsync({ id });
+      const response = await disableSupply.mutateAsync({ supplyId: id });
       if (response) {
         refetch();
         return true;
@@ -71,7 +71,7 @@ export const SupplyPointsPage: FC = () => {
 
   const enableSupplyPoint = async (id: string) => {
     try {
-      const response = await enableSupply.mutateAsync({ id });
+      const response = await enableSupply.mutateAsync({ supplyId: id });
       if (response) {
         refetch();
         return true;
