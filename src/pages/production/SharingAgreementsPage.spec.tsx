@@ -33,7 +33,7 @@ function baseData(): SharingAgreementsData {
   return {
     agreements: AGREEMENTS,
     plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" },
-    counts: { total: 3, drafts: 1, historicos: 1 },
+    counts: { vigentes: 5, drafts: 1, historicos: 2 },
     isLoading: false,
     isNotFound: false,
     error: null,
@@ -85,7 +85,7 @@ describe("SharingAgreementsPage", () => {
   });
 
   test("shows a distinct empty state when the plant has no agreements at all", () => {
-    mockData({ agreements: [], counts: { total: 0, drafts: 0, historicos: 0 } });
+    mockData({ agreements: [], counts: { vigentes: 0, drafts: 0, historicos: 0 } });
     setup();
 
     expect(screen.getByText("Esta planta todavía no tiene acuerdos de reparto registrados.")).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe("SharingAgreementsPage", () => {
     expect(screen.queryByText("Acuerdo histórico norte")).not.toBeInTheDocument();
     // Header counts stay derived from the unfiltered response.
     expect(mockUseSharingAgreementsData).toHaveBeenCalled();
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
   });
 
   test("search filters cards by name, case- and accent-insensitively", async () => {

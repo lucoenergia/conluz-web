@@ -8,9 +8,9 @@ import { colors } from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
 import { PageHeaderWithStats } from "../../components/PageHeader";
-import { CardGrid, LoadingCardGrid } from "../../components/CardGrid";
+import { LoadingCardGrid } from "../../components/CardGrid";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
-import { SharingAgreementCard } from "../../components/SharingAgreementCard";
+import { SharingAgreementTimeline } from "../../components/SharingAgreementTimeline";
 import { useErrorDispatch } from "../../context/error.context";
 import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
@@ -88,7 +88,7 @@ export const SharingAgreementsPage: FC = () => {
               title={plant?.name || "Planta de Producción"}
               subtitle={plant?.regulatoryCode ? `CAU: ${plant.regulatoryCode}` : "CAU no disponible"}
               stats={[
-                { value: counts.total, label: "Total" },
+                { value: counts.vigentes, label: "Vigente" },
                 { value: counts.drafts, label: "Borradores", color: colors.warning },
                 { value: counts.historicos, label: "Históricos" },
               ]}
@@ -150,12 +150,7 @@ export const SharingAgreementsPage: FC = () => {
 
           {!isLoading && !error && filteredAgreements.length > 0 && (
             <Box sx={sxStyles.pageContainer}>
-              <CardGrid
-                items={filteredAgreements}
-                getKey={(item) => item.id || ""}
-                columns={SINGLE_COLUMN}
-                renderCard={(item) => <SharingAgreementCard plantId={plantId} agreement={item} />}
-              />
+              <SharingAgreementTimeline plantId={plantId} agreements={filteredAgreements} />
             </Box>
           )}
 

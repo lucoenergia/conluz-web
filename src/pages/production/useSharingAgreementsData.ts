@@ -5,7 +5,7 @@ import { SharingAgreementResponseStatus } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 
 export interface SharingAgreementCounts {
-  total: number;
+  vigentes: number;
   drafts: number;
   historicos: number;
 }
@@ -15,15 +15,17 @@ export interface SharingAgreementCounts {
  * counts, which never move when a status filter chip is active.
  */
 export function computeSharingAgreementCounts(agreements: SharingAgreementResponse[]): SharingAgreementCounts {
+  let vigentes = 0;
   let drafts = 0;
   let historicos = 0;
 
   for (const agreement of agreements) {
+    if (agreement.status === SharingAgreementResponseStatus.PUBLISHED) vigentes += 1;
     if (agreement.status === SharingAgreementResponseStatus.DRAFT) drafts += 1;
     if (agreement.status === SharingAgreementResponseStatus.SUPERSEDED) historicos += 1;
   }
 
-  return { total: agreements.length, drafts, historicos };
+  return { vigentes, drafts, historicos };
 }
 
 /**

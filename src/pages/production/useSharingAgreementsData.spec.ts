@@ -5,22 +5,22 @@ import type { SharingAgreementResponse } from "../../api/models";
 
 describe("computeSharingAgreementCounts", () => {
   test("returns zeroed counts for an empty list", () => {
-    expect(computeSharingAgreementCounts([])).toEqual({ total: 0, drafts: 0, historicos: 0 });
+    expect(computeSharingAgreementCounts([])).toEqual({ vigentes: 0, drafts: 0, historicos: 0 });
   });
 
-  test("counts drafts and históricos independently from the total", () => {
+  test("counts vigentes, drafts and históricos independently", () => {
     const agreements: SharingAgreementResponse[] = [
       { status: SharingAgreementResponseStatus.DRAFT },
       { status: SharingAgreementResponseStatus.DRAFT },
       { status: SharingAgreementResponseStatus.PUBLISHED },
       { status: SharingAgreementResponseStatus.SUPERSEDED },
     ];
-    expect(computeSharingAgreementCounts(agreements)).toEqual({ total: 4, drafts: 2, historicos: 1 });
+    expect(computeSharingAgreementCounts(agreements)).toEqual({ vigentes: 1, drafts: 2, historicos: 1 });
   });
 
-  test("treats an undefined or unrecognized status as neither draft nor histórico", () => {
+  test("treats an undefined or unrecognized status as neither vigente, draft nor histórico", () => {
     const agreements: SharingAgreementResponse[] = [{ status: undefined }, {}];
-    expect(computeSharingAgreementCounts(agreements)).toEqual({ total: 2, drafts: 0, historicos: 0 });
+    expect(computeSharingAgreementCounts(agreements)).toEqual({ vigentes: 0, drafts: 0, historicos: 0 });
   });
 });
 
