@@ -491,6 +491,18 @@ async function stabilizePage(page: Page) {
 
   // Give React Query one tick to settle any pending state updates
   await page.waitForLoadState("networkidle");
+
+  // Reset scroll to the top. A page scrolled away from (0, 0) at capture time
+  // can bake a stale offset into position: fixed elements (e.g. the AppBar)
+  // in a fullPage screenshot, even though the element renders correctly on screen.
+  // A preceding click (e.g. a filter chip) can trigger the browser's native
+  // focus scroll-into-view asynchronously; under CPU contention that can land
+  // after a single reset, so re-assert once more after giving it time to fire,
+  // then let the compositor settle before the screenshot is taken.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
 }
 
 // ---------------------------------------------------------------------------
