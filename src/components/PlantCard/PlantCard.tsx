@@ -11,6 +11,7 @@ import { useNavigate, Link } from "react-router";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { DeleteConfirmationModal } from "../Modals/DeleteConfirmationModal";
@@ -168,6 +169,19 @@ export const PlantCard: FC<PlantCardProps> = ({
                       <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
                       <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
                         Editar
+                      </Typography>
+                    </MenuItem>
+                  </Box>
+
+                  <Box
+                    component={Link}
+                    to={`/production/${id}/sharing-agreements`}
+                    sx={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <MenuItem>
+                      <HandshakeOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                        Acuerdos de Reparto
                       </Typography>
                     </MenuItem>
                   </Box>

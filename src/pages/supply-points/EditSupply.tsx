@@ -26,7 +26,7 @@ export const EditSupplyPage: FC = () => {
         address,
         addressRef,
       } as UpdateSupplyBody;
-      const response = await updateSupply.mutateAsync({ id: supplyPointId, data: updatedSupply }, {});
+      const response = await updateSupply.mutateAsync({ supplyId: supplyPointId, data: updatedSupply }, {});
       if (response) {
         refetch();
         navigate("/supply-points");

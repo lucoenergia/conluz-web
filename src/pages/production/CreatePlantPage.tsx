@@ -17,8 +17,9 @@ export const CreatePlantPage: FC = () => {
 
   const handleSubmit = async (values: PlantFormValues) => {
     try {
-      const newPlant = {
-        code: values.code,
+      const newPlant: CreatePlantBody = {
+        providerCode: values.providerCode,
+        regulatoryCode: values.regulatoryCode || undefined,
         name: values.name,
         address: values.address,
         description: values.description || undefined,
@@ -26,7 +27,7 @@ export const CreatePlantPage: FC = () => {
         connectionDate: values.connectionDate || undefined,
         supplyCode: values.supplyCode,
         inverterProvider: "HUAWEI",
-      } as CreatePlantBody;
+      };
 
       const response = await createPlant.mutateAsync({ data: newPlant });
       if (response) {

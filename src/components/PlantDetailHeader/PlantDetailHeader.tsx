@@ -39,9 +39,15 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({
     isLoading={isLoading}
     error={error}
   >
-    <DetailTile label="Código">
+    <DetailTile label="CAU">
       <Typography variant="body1" fontWeight="bold">
-        {plant?.code || "-"}
+        {plant?.regulatoryCode || "-"}
+      </Typography>
+    </DetailTile>
+
+    <DetailTile label="Código de proveedor">
+      <Typography variant="body1" fontWeight="bold">
+        {plant?.providerCode || "-"}
       </Typography>
     </DetailTile>
 

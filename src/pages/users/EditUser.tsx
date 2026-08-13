@@ -29,7 +29,7 @@ export const EditUserPage: FC = () => {
         phoneNumber,
       } as UpdateUserBody;
 
-      const response = await updateUser.mutateAsync({ id: userId, data: updatedUser }, {});
+      const response = await updateUser.mutateAsync({ userId, data: updatedUser }, {});
       if (response) {
         navigate("/users");
       } else {

@@ -94,7 +94,7 @@ export const ProfilePage: FC = () => {
         phoneNumber: formData.phone || undefined,
       };
       await updateUser.mutateAsync(
-        { id: currentUser.id, data: updatedUserData },
+        { userId: currentUser.id, data: updatedUserData },
         { onSuccess: () => { setSuccessMessage(true); refetch(); } }
       );
     } catch (error) {

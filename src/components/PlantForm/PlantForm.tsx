@@ -13,7 +13,8 @@ import type { SupplyResponse } from "../../api/models";
 import { useActiveCommunity } from "../../context/community.context";
 
 export interface PlantFormValues {
-  code: string;
+  providerCode: string;
+  regulatoryCode?: string;
   name: string;
   address: string;
   description?: string;
@@ -32,7 +33,8 @@ interface PlantFormProps {
 
 export const PlantForm: FC<PlantFormProps> = ({
   initialValues: {
-    code: initialCode = "",
+    providerCode: initialProviderCode = "",
+    regulatoryCode: initialRegulatoryCode = "",
     name: initialName = "",
     address: initialAddress = "",
     description: initialDescription = "",
@@ -44,7 +46,8 @@ export const PlantForm: FC<PlantFormProps> = ({
   selectedSupplyCode,
   disableSupplySelector = false,
 }) => {
-  const [code, setCode] = useState(initialCode);
+  const [providerCode, setProviderCode] = useState(initialProviderCode);
+  const [regulatoryCode, setRegulatoryCode] = useState(initialRegulatoryCode);
   const [name, setName] = useState(initialName);
   const [address, setAddress] = useState(initialAddress);
   const [description, setDescription] = useState(initialDescription);
@@ -91,7 +94,7 @@ export const PlantForm: FC<PlantFormProps> = ({
   };
 
   const validateForm = (data: PlantFormValues): boolean => {
-    if (!data.code || !data.name || !data.address || !data.supplyCode) {
+    if (!data.providerCode || !data.name || !data.address || !data.supplyCode) {
       return false;
     }
     if (!totalPowerIsValid(data.totalPower.toString())) {
@@ -102,7 +105,8 @@ export const PlantForm: FC<PlantFormProps> = ({
 
   const onSubmit = async (data: FormData) => {
     const newPlant = {
-      code: data.get("code") as string,
+      providerCode: data.get("providerCode") as string,
+      regulatoryCode: (data.get("regulatoryCode") as string) || undefined,
       name: data.get("name") as string,
       address: data.get("address") as string,
       description: data.get("description") as string,
@@ -121,15 +125,27 @@ export const PlantForm: FC<PlantFormProps> = ({
     <Box component="form" action={onSubmit}>
       <Box sx={sxStyles.flexColumnGap3}>
         <TextField
-          id="code"
-          label="Código"
+          id="providerCode"
+          label="Código de proveedor"
           type="text"
-          name="code"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
+          name="providerCode"
+          value={providerCode}
+          onChange={(e) => setProviderCode(e.target.value)}
           slotProps={{ htmlInput: { maxLength: 50 } }}
           required
           autoFocus
+          fullWidth
+          variant="outlined"
+        />
+
+        <TextField
+          id="regulatoryCode"
+          label="CAU"
+          type="text"
+          name="regulatoryCode"
+          value={regulatoryCode}
+          onChange={(e) => setRegulatoryCode(e.target.value)}
+          slotProps={{ htmlInput: { maxLength: 50 } }}
           fullWidth
           variant="outlined"
         />

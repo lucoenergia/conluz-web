@@ -20,8 +20,9 @@ export const EditPlantPage: FC = () => {
 
   const handleSubmit = async (values: PlantFormValues) => {
     try {
-      const updatedPlant = {
-        code: values.code,
+      const updatedPlant: UpdatePlantBody = {
+        providerCode: values.providerCode,
+        regulatoryCode: values.regulatoryCode || undefined,
         name: values.name,
         address: values.address,
         description: values.description || undefined,
@@ -29,9 +30,9 @@ export const EditPlantPage: FC = () => {
         connectionDate: values.connectionDate || undefined,
         supplyCode: values.supplyCode,
         inverterProvider: "HUAWEI",
-      } as UpdatePlantBody;
+      };
 
-      const response = await updatePlant.mutateAsync({ id: plantId, data: updatedPlant }, {});
+      const response = await updatePlant.mutateAsync({ plantId, data: updatedPlant });
       if (response) {
         refetch();
         navigate("/production");
@@ -62,7 +63,7 @@ export const EditPlantPage: FC = () => {
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Producción", href: "/production" },
-            { label: plant?.code ? plant.code : plantId, href: `/production/${plantId}` },
+            { label: plant?.providerCode ? plant.providerCode : plantId, href: `/production/${plantId}` },
             { label: "Editar", href: "#" },
           ]}
         />
@@ -110,7 +111,8 @@ export const EditPlantPage: FC = () => {
           {!isLoading && !error && (
             <PlantForm
               initialValues={{
-                code: plant?.code,
+                providerCode: plant?.providerCode,
+                regulatoryCode: plant?.regulatoryCode,
                 name: plant?.name,
                 address: plant?.address,
                 description: plant?.description,

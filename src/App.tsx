@@ -24,6 +24,8 @@ import { EditCommunityPage } from "./pages/communities/EditCommunityPage";
 import { MembersPage } from "./pages/members/MembersPage";
 import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
 import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
+import { CommunityOrPlatformAdminRoute } from "./components/Auth/CommunityOrPlatformAdminRoute";
+import { SharingAgreementsPage } from "./pages/production/SharingAgreementsPage";
 import { UsersPage } from "./pages/users/UsersPage";
 import { CreateUserPage } from "./pages/users/CreateUser";
 import { EditUserPage } from "./pages/users/EditUser";
@@ -57,17 +59,21 @@ function App() {
             <Route path=":plantId">
               <Route index element={<PlantDetailPage />} />
               <Route path="edit" element={<EditPlantPage />} />
+              <Route
+                path="sharing-agreements"
+                element={<CommunityAdminRoute><SharingAgreementsPage /></CommunityAdminRoute>}
+              />
             </Route>
           </Route>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route
             path="integrations"
-            element={<CommunityAdminRoute><IntegrationsPage /></CommunityAdminRoute>}
+            element={<CommunityOrPlatformAdminRoute><IntegrationsPage /></CommunityOrPlatformAdminRoute>}
           />
           <Route
             path="members"
-            element={<CommunityAdminRoute><MembersPage /></CommunityAdminRoute>}
+            element={<CommunityOrPlatformAdminRoute><MembersPage /></CommunityOrPlatformAdminRoute>}
           />
           <Route path="communities">
             <Route

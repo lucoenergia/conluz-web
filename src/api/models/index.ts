@@ -6,8 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './activateCoefficientsBody';
 export * from './bulkErrorObject';
 export * from './bulkErrorString';
+export * from './closeCoefficientsBody';
+export * from './coefficientActivationResponse';
 export * from './coefficientAtTimestampResponse';
 export * from './communityResponse';
 export * from './communityRole';
@@ -36,7 +39,9 @@ export * from './createUsersWithFileParams';
 export * from './creationInBulkResponse';
 export * from './datadisConsumption';
 export * from './datadisProduction';
+export * from './deactivateCoefficientsBody';
 export * from './entry';
+export * from './generateDistributorFileBody';
 export * from './getAllPlantsParams';
 export * from './getAllSuppliesParams';
 export * from './getAllUsersParams';
@@ -84,12 +89,17 @@ export * from './productionByTime';
 export * from './registerPartitionCoefficientBody';
 export * from './registerPartitionCoefficientResponse';
 export * from './registerPartitionCoefficientsWithFileResponse';
+export * from './reopenCoefficientsBody';
 export * from './replacePartitionCoefficientsBody';
 export * from './replacePartitionCoefficientsResponse';
 export * from './restError';
 export * from './restErrorDetail';
 export * from './restErrorDetailCode';
 export * from './restErrorDetailParams';
+export * from './sharingAgreementCoefficientSupplyResponse';
+export * from './sharingAgreementPartitionCoefficientResponse';
+export * from './sharingAgreementPartitionCoefficientResponseApplicationState';
+export * from './sharingAgreementPartitionCoefficientResponseEndState';
 export * from './sharingAgreementResponse';
 export * from './sharingAgreementResponseStatus';
 export * from './supplyContractResponse';

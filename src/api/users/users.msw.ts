@@ -43,7 +43,7 @@ export const getCreateUsersWithFileResponseMock = (overrideResponse: Partial< Cr
 
 export const getGetSuppliesByUserIdResponseMock = (): SupplyResponse[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
-      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined])})))
+      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined])})))
 
 export const getGetCurrentUserResponseMock = (overrideResponse: Partial< UserResponse > = {}): UserResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
@@ -51,7 +51,7 @@ export const getGetCurrentUserResponseMock = (overrideResponse: Partial< UserRes
 
 
 export const getGetUserByIdMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<UserResponse> | UserResponse)) => {
-  return http.get('*/api/v1/users/:id', async (info) => {await delay(1000);
+  return http.get('*/api/v1/users/:userId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -63,7 +63,7 @@ export const getGetUserByIdMockHandler = (overrideResponse?: UserResponse | ((in
 }
 
 export const getUpdateUserMockHandler = (overrideResponse?: UserResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<UserResponse> | UserResponse)) => {
-  return http.put('*/api/v1/users/:id', async (info) => {await delay(1000);
+  return http.put('*/api/v1/users/:userId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -75,7 +75,7 @@ export const getUpdateUserMockHandler = (overrideResponse?: UserResponse | ((inf
 }
 
 export const getDeleteUserMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void)) => {
-  return http.delete('*/api/v1/users/:id', async (info) => {await delay(1000);
+  return http.delete('*/api/v1/users/:userId', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -109,7 +109,7 @@ export const getCreateUserMockHandler = (overrideResponse?: UserResponse | ((inf
 }
 
 export const getRevokePlatformAdminMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void)) => {
-  return http.post('*/api/v1/users/:id/revoke-platform-admin', async (info) => {await delay(1000);
+  return http.post('*/api/v1/users/:userId/revoke-platform-admin', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -119,7 +119,7 @@ export const getRevokePlatformAdminMockHandler = (overrideResponse?: void | ((in
 }
 
 export const getGrantPlatformAdminMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void)) => {
-  return http.post('*/api/v1/users/:id/grant-platform-admin', async (info) => {await delay(1000);
+  return http.post('*/api/v1/users/:userId/grant-platform-admin', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -129,7 +129,7 @@ export const getGrantPlatformAdminMockHandler = (overrideResponse?: void | ((inf
 }
 
 export const getEnableUserMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void)) => {
-  return http.post('*/api/v1/users/:id/enable', async (info) => {await delay(1000);
+  return http.post('*/api/v1/users/:userId/enable', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -139,7 +139,7 @@ export const getEnableUserMockHandler = (overrideResponse?: void | ((info: Param
 }
 
 export const getDisableUserMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void)) => {
-  return http.post('*/api/v1/users/:id/disable', async (info) => {await delay(1000);
+  return http.post('*/api/v1/users/:userId/disable', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -161,7 +161,7 @@ export const getCreateUsersWithFileMockHandler = (overrideResponse?: CreateUsers
 }
 
 export const getGetSuppliesByUserIdMockHandler = (overrideResponse?: SupplyResponse[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SupplyResponse[]> | SupplyResponse[])) => {
-  return http.get('*/api/v1/users/:id/supplies', async (info) => {await delay(1000);
+  return http.get('*/api/v1/users/:userId/supplies', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)

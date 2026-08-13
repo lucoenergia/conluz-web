@@ -39,9 +39,10 @@ describe("CommunityAdminRoute", () => {
     expect(screen.getByText("protected")).toBeInTheDocument();
   });
 
-  test("renders children for platform admin regardless of community role", () => {
+  test("redirects platform admin without community-admin role", () => {
     setup(null, true);
-    expect(screen.getByText("protected")).toBeInTheDocument();
+    expect(screen.getByText("home")).toBeInTheDocument();
+    expect(screen.queryByText("protected")).not.toBeInTheDocument();
   });
 
   test("redirects to / for COMMUNITY_MEMBER", () => {

@@ -360,7 +360,7 @@ describe("UsersPage", () => {
     expect(screen.getByText(/Grant modal for Bruno Leal/)).toBeInTheDocument();
     await user.click(screen.getByText("Confirmar conceder"));
 
-    await waitFor(() => expect(mockGrantMutate).toHaveBeenCalledWith({ id: "u2" }));
+    await waitFor(() => expect(mockGrantMutate).toHaveBeenCalledWith({ userId: "u2" }));
   });
 
   it("revokes platform admin through the confirmation modal", async () => {
@@ -376,6 +376,6 @@ describe("UsersPage", () => {
     expect(screen.getByText(/Revoke modal for Ana García/)).toBeInTheDocument();
     await user.click(screen.getByText("Confirmar revocar"));
 
-    await waitFor(() => expect(mockRevokeMutate).toHaveBeenCalledWith({ id: "u1" }));
+    await waitFor(() => expect(mockRevokeMutate).toHaveBeenCalledWith({ userId: "u1" }));
   });
 });

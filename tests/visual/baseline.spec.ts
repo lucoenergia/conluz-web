@@ -21,11 +21,17 @@
  *
  * Role fixture mapping:
  *   FIXED_MEMBER_USER          → home, supply-points, supply-detail, supply modals
- *   FIXED_COMMUNITY_ADMIN_USER → defined for completeness; /members is not Playwright-tested
+ *   FIXED_COMMUNITY_ADMIN_USER → sharing-agreements list (populated/empty/filtered). /members
+ *                                itself is still not Playwright-tested via direct navigation
  *                                because CommunityAdminRoute defers community selection to a
  *                                useEffect that fires after the first render, causing a redirect
- *                                to / before the guard re-evaluates. The modal and page are
- *                                covered by unit tests (ImportPartnersModal.spec.tsx, etc.).
+ *                                to / before the guard re-evaluates on a cold page.goto(). The
+ *                                sharing-agreements tests below route around the same limitation
+ *                                by navigating from an unguarded page (/production) and clicking
+ *                                through via the app's own Link — by the time that client-side
+ *                                navigation happens, the community-resolution effect has already
+ *                                settled, so the guard passes. /members itself is still covered by
+ *                                unit tests only (ImportPartnersModal.spec.tsx, etc.).
  *   FIXED_PLATFORM_ADMIN_USER  → /platform (platform dashboard: populated + empty), /users (users page)
  *   FIXED_NO_COMMUNITY_USER    → /no-community (asserts the screen renders correctly)
  *
@@ -71,9 +77,8 @@ const FIXED_MEMBER_USER = {
 
 /**
  * Community-admin fixture — belongs to FIXED_COMMUNITY_ID as COMMUNITY_ADMIN.
- * Defined for completeness; not currently used in a Playwright test — see file header.
+ * Use for: sharing-agreements list tests (populated/empty/filtered) — see file header.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- defined for three-role completeness; no Playwright test yet (CommunityAdminRoute timing — see file header)
 const FIXED_COMMUNITY_ADMIN_USER = {
   id: "55555555-6666-7777-8888-999999999999",
   personalId: "87654321B",
@@ -207,6 +212,63 @@ const DASHBOARD_COMMUNITIES = [
 ];
 
 const EMPTY_PRODUCTION: unknown[] = [];
+
+/** Stable plant UUID used by the sharing-agreements baselines. */
+const FIXED_PLANT_ID = "dddddddd-eeee-ffff-0000-111111111111";
+
+const FIXED_PLANT = {
+  id: FIXED_PLANT_ID,
+  providerCode: "HWI-001",
+  regulatoryCode: "ES1234567890123456AB1F",
+  name: "Planta Solar Norte",
+  address: "Polígono Industrial Norte, Nave 3",
+  description: "Instalación fotovoltaica comunitaria",
+  inverterProvider: "HUAWEI",
+  totalPower: 120.5,
+  connectionDate: "2023-05-10",
+};
+
+const PAGED_PLANTS = {
+  items: [FIXED_PLANT],
+  size: 10000,
+  totalElements: 1,
+  totalPages: 1,
+  number: 0,
+};
+
+/** Three agreements, one per status, so the populated baseline exercises every chip/badge colour. */
+const FIXED_SHARING_AGREEMENTS = [
+  {
+    id: "eeeeeeee-ffff-0000-1111-222222222222",
+    plantId: FIXED_PLANT_ID,
+    name: "Reparto vecinos bloque A",
+    notes: "Coeficientes acordados en la asamblea anual de la comunidad.",
+    status: "PUBLISHED",
+    installedPowerKw: 120.5,
+    createdAt: "2024-06-15T10:00:00Z",
+    createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
+  },
+  {
+    id: "ffffffff-0000-1111-2222-333333333333",
+    plantId: FIXED_PLANT_ID,
+    name: "Reparto ampliación bloque B",
+    notes: "Pendiente de revisión antes de publicarse.",
+    status: "DRAFT",
+    installedPowerKw: 45,
+    createdAt: "2024-09-01T09:30:00Z",
+    createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
+  },
+  {
+    id: "00000000-1111-2222-3333-444444444444",
+    plantId: FIXED_PLANT_ID,
+    name: "Reparto original 2022",
+    notes: "Sustituido por el acuerdo vigente tras la ampliación de potencia.",
+    status: "SUPERSEDED",
+    installedPowerKw: 80,
+    createdAt: "2022-02-01T08:00:00Z",
+    createdBy: null,
+  },
+];
 
 // ---------------------------------------------------------------------------
 // Helper: set up all API route mocks on a given page
@@ -342,6 +404,46 @@ async function mockAllApiRoutes(page: Page, currentUser: object) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper: override the plants/sharing-agreements routes for a specific plant.
+// Registered AFTER mockAllApiRoutes() so it takes precedence (Playwright
+// matches routes in reverse registration order) — mockAllApiRoutes's broad
+// communities/plants mocks would otherwise return an empty list for these
+// exact URLs.
+// ---------------------------------------------------------------------------
+
+async function mockSharingAgreementsPlantRoutes(page: Page, agreements: unknown[]) {
+  await page.route(
+    (url) => url.href.includes(`/api/v1/communities/${FIXED_COMMUNITY_ID}/plants`),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(PAGED_PLANTS),
+      }),
+  );
+
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}`) && !url.href.includes("sharing-agreements"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FIXED_PLANT),
+      }),
+  );
+
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements`),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(agreements),
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Helper: inject auth token so the app boots as authenticated
 // ---------------------------------------------------------------------------
 
@@ -389,6 +491,18 @@ async function stabilizePage(page: Page) {
 
   // Give React Query one tick to settle any pending state updates
   await page.waitForLoadState("networkidle");
+
+  // Reset scroll to the top. A page scrolled away from (0, 0) at capture time
+  // can bake a stale offset into position: fixed elements (e.g. the AppBar)
+  // in a fullPage screenshot, even though the element renders correctly on screen.
+  // A preceding click (e.g. a filter chip) can trigger the browser's native
+  // focus scroll-into-view asynchronously; under CPU contention that can land
+  // after a single reset, so re-assert once more after giving it time to fire,
+  // then let the compositor settle before the screenshot is taken.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
 }
 
 // ---------------------------------------------------------------------------
@@ -588,7 +702,60 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("no-community-page.png", { fullPage: true });
   });
 
-  // Note: FIXED_COMMUNITY_ADMIN_USER and a test for /members are intentionally
-  // omitted from Playwright coverage. See the file header for the reason.
+  // Community-admin fixture tests: sharing-agreements list.
+  // CommunityAdminRoute redirects on a cold page.goto() before the community
+  // context's useEffect resolves (see file header), so these tests reach the
+  // guarded route the same way a real user would — navigating from the
+  // unguarded /production list and clicking through the plant card's kebab
+  // menu — rather than deep-linking directly.
+
+  async function navigateToSharingAgreements(page: Page) {
+    await page.goto("/production");
+    await stabilizePage(page);
+
+    const plantCard = page.locator(".MuiCard-root").filter({ hasText: FIXED_PLANT.name });
+    await plantCard.getByRole("button").click();
+    await page.getByRole("menuitem", { name: /Acuerdos de Reparto/i }).click();
+
+    await expect(page.getByText(/CAU:/)).toBeVisible();
+    await stabilizePage(page);
+  }
+
+  test("sharing agreements list page (populated)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+
+    await navigateToSharingAgreements(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreements-list.png", { fullPage: true });
+  });
+
+  test("sharing agreements list page (empty)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, []);
+
+    await navigateToSharingAgreements(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreements-list-empty.png", { fullPage: true });
+  });
+
+  test("sharing agreements list page (status filter active)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+
+    await navigateToSharingAgreements(page);
+
+    await page.getByRole("button", { name: "Borrador" }).click();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreements-list-filtered.png", { fullPage: true });
+  });
+
   // Note: "import partners modal" is intentionally omitted. See file header.
 });

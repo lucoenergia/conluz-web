@@ -234,10 +234,10 @@ export const UsersPage: FC = () => {
 
     try {
       if (selectedUser.enabled) {
-        await disableUserMutation.mutateAsync({ id: selectedUser.id });
+        await disableUserMutation.mutateAsync({ userId: selectedUser.id });
         setWasEnabled(false);
       } else {
-        await enableUserMutation.mutateAsync({ id: selectedUser.id });
+        await enableUserMutation.mutateAsync({ userId: selectedUser.id });
         setWasEnabled(true);
       }
       setShowDisableConfirmation(false);
@@ -274,9 +274,9 @@ export const UsersPage: FC = () => {
     const wasGrantOperation = !selectedUser.isPlatformAdmin;
     try {
       if (selectedUser.isPlatformAdmin) {
-        await revokeMutation.mutateAsync({ id: selectedUser.id });
+        await revokeMutation.mutateAsync({ userId: selectedUser.id });
       } else {
-        await grantMutation.mutateAsync({ id: selectedUser.id });
+        await grantMutation.mutateAsync({ userId: selectedUser.id });
       }
       setWasGranted(wasGrantOperation);
       setShowPlatformAdminConfirmation(false);

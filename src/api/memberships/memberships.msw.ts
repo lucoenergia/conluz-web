@@ -34,7 +34,7 @@ export const getUpdateMembershipRoleResponseMock = (overrideResponse: Partial< M
 
 
 export const getGetMembershipsMockHandler = (overrideResponse?: MembershipResponse[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<MembershipResponse[]> | MembershipResponse[])) => {
-  return http.get('*/api/v1/communities/:id/memberships', async (info) => {await delay(1000);
+  return http.get('*/api/v1/communities/:communityId/memberships', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -46,7 +46,7 @@ export const getGetMembershipsMockHandler = (overrideResponse?: MembershipRespon
 }
 
 export const getCreateMembershipMockHandler = (overrideResponse?: MembershipResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<MembershipResponse> | MembershipResponse)) => {
-  return http.post('*/api/v1/communities/:id/memberships', async (info) => {await delay(1000);
+  return http.post('*/api/v1/communities/:communityId/memberships', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -58,7 +58,7 @@ export const getCreateMembershipMockHandler = (overrideResponse?: MembershipResp
 }
 
 export const getDeleteMembershipMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void)) => {
-  return http.delete('*/api/v1/communities/:id/memberships/:userId', async (info) => {await delay(1000);
+  return http.delete('*/api/v1/communities/:communityId/memberships/:userId', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -68,7 +68,7 @@ export const getDeleteMembershipMockHandler = (overrideResponse?: void | ((info:
 }
 
 export const getUpdateMembershipRoleMockHandler = (overrideResponse?: MembershipResponse | ((info: Parameters<Parameters<typeof http.patch>[1]>[0]) => Promise<MembershipResponse> | MembershipResponse)) => {
-  return http.patch('*/api/v1/communities/:id/memberships/:userId', async (info) => {await delay(1000);
+  return http.patch('*/api/v1/communities/:communityId/memberships/:userId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)

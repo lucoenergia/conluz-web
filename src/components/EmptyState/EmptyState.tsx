@@ -33,6 +33,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
         borderRadius: radii.large,
         boxShadow: shadows.soft,
         width: "100%",
+        boxSizing: "border-box",
       }}
     >
       <Icon sx={{ fontSize: iconSize, color: iconColor, mb: 2 }} />

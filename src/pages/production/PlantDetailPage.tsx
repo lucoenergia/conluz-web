@@ -329,7 +329,7 @@ export const PlantDetailPage: FC = () => {
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Producción", href: "/production" },
-            { label: plant?.code ? plant?.code : plantId, href: "#" },
+            { label: plant?.providerCode ? plant?.providerCode : plantId, href: "#" },
           ]}
         />
       </Box>

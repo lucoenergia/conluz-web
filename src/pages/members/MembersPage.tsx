@@ -116,7 +116,7 @@ export const MembersPage: FC = () => {
     if (!selectedUserId || !activeCommunityId) return;
     try {
       await createMembership.mutateAsync({
-        id: activeCommunityId,
+        communityId: activeCommunityId,
         data: { userId: selectedUserId, role: selectedRole as CreateMembershipBodyRole },
       });
       setAddDialogOpen(false);
@@ -131,7 +131,7 @@ export const MembersPage: FC = () => {
   const handleRemoveMember = async (userId: string) => {
     if (!activeCommunityId) return;
     try {
-      await deleteMembership.mutateAsync({ id: activeCommunityId, userId });
+      await deleteMembership.mutateAsync({ communityId: activeCommunityId, userId });
       setRemoveConfirmUserId(null);
       invalidateAfterWrite();
     } catch {
@@ -143,7 +143,7 @@ export const MembersPage: FC = () => {
     if (!activeCommunityId) return;
     try {
       await updateRole.mutateAsync({
-        id: activeCommunityId,
+        communityId: activeCommunityId,
         userId,
         data: { role: newRole as UpdateMembershipRoleBodyRole },
       });

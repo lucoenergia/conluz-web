@@ -150,7 +150,7 @@ describe("MembersPage", () => {
 
     await waitFor(() =>
       expect(mockCreateMutate).toHaveBeenCalledWith({
-        id: "c1",
+        communityId: "c1",
         data: { userId: "u3", role: "COMMUNITY_MEMBER" },
       }),
     );
@@ -188,7 +188,7 @@ describe("MembersPage", () => {
     await user.click(within(dialog).getByRole("button", { name: "Eliminar" }));
 
     await waitFor(() =>
-      expect(mockDeleteMutate).toHaveBeenCalledWith({ id: "c1", userId: "u1" }),
+      expect(mockDeleteMutate).toHaveBeenCalledWith({ communityId: "c1", userId: "u1" }),
     );
     expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
   });
@@ -217,7 +217,7 @@ describe("MembersPage", () => {
 
     await waitFor(() =>
       expect(mockUpdateMutate).toHaveBeenCalledWith({
-        id: "c1",
+        communityId: "c1",
         userId: "u1",
         data: { role: "COMMUNITY_ADMIN" },
       }),

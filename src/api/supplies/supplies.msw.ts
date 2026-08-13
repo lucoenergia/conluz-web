@@ -28,37 +28,37 @@ import type {
 
 export const getGetSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
-      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
+      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
 
 export const getUpdateSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
-      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
+      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
 
 export const getCreateSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
-      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
+      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
 
 export const getEnableSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
-      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
+      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
 
 export const getDisableSupplyResponseMock = (overrideResponse: Partial< SupplyResponse > = {}): SupplyResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
-      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
+      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), ...overrideResponse})
 
 export const getCreateSuppliesWithFileResponseMock = (overrideResponse: Partial< CreationInBulkResponse > = {}): CreationInBulkResponse => ({created: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({})), undefined]), errors: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({item: faker.helpers.arrayElement([{}, undefined]), errorMessage: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])})), undefined]), ...overrideResponse})
-
-export const getGetPartitionCoefficientHistoryResponseMock = (): PartitionCoefficientResponse[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})))
-
-export const getGetPartitionCoefficientAtTimestampResponseMock = (overrideResponse: Partial< CoefficientAtTimestampResponse > = {}): CoefficientAtTimestampResponse => ({supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), timestamp: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), ...overrideResponse})
-
-export const getGetActivePartitionCoefficientResponseMock = (overrideResponse: Partial< PartitionCoefficientResponse > = {}): PartitionCoefficientResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), ...overrideResponse})
 
 export const getGetSupplyMonthlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
 export const getGetSupplyHourlyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
 
 export const getGetSupplyDailyProductionResponseMock = (): ProductionByTime[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({time: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), power: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined])})))
+
+export const getGetPartitionCoefficientHistoryResponseMock = (): PartitionCoefficientResponse[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})))
+
+export const getGetPartitionCoefficientAtTimestampResponseMock = (overrideResponse: Partial< CoefficientAtTimestampResponse > = {}): CoefficientAtTimestampResponse => ({supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), timestamp: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), ...overrideResponse})
+
+export const getGetActivePartitionCoefficientResponseMock = (overrideResponse: Partial< PartitionCoefficientResponse > = {}): PartitionCoefficientResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), ...overrideResponse})
 
 export const getGetSupplyYearlyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), empty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])})))
 
@@ -70,11 +70,11 @@ export const getGetSupplyDailyConsumptionResponseMock = (): DatadisConsumption[]
 
 export const getGetAllSuppliesResponseMock = (overrideResponse: Partial< PagedResultSupplyResponse > = {}): PagedResultSupplyResponse => ({items: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), user: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), personalId: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), fullName: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), email: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), phoneNumber: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), memberships: faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
-      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), partitionCoefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined])})), undefined]), size: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalElements: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalPages: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), ...overrideResponse})
+      }, undefined]), isPlatformAdmin: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), address: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), addressRef: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), contract: faker.helpers.arrayElement([{validDateFrom: faker.helpers.arrayElement([faker.date.past().toISOString().split('T')[0], undefined])}, undefined]), distributor: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), pointType: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined])}, undefined]), shelly: faker.helpers.arrayElement([{macAddress: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), mqttPrefix: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined])})), undefined]), size: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalElements: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), totalPages: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), number: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), undefined]), ...overrideResponse})
 
 
 export const getGetSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
-  return http.get('*/api/v1/supplies/:id', async (info) => {await delay(1000);
+  return http.get('*/api/v1/supplies/:supplyId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -86,7 +86,7 @@ export const getGetSupplyMockHandler = (overrideResponse?: SupplyResponse | ((in
 }
 
 export const getUpdateSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
-  return http.put('*/api/v1/supplies/:id', async (info) => {await delay(1000);
+  return http.put('*/api/v1/supplies/:supplyId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -110,7 +110,7 @@ export const getCreateSupplyMockHandler = (overrideResponse?: SupplyResponse | (
 }
 
 export const getEnableSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
-  return http.post('*/api/v1/supplies/:id/enable', async (info) => {await delay(1000);
+  return http.post('*/api/v1/supplies/:supplyId/enable', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -122,7 +122,7 @@ export const getEnableSupplyMockHandler = (overrideResponse?: SupplyResponse | (
 }
 
 export const getDisableSupplyMockHandler = (overrideResponse?: SupplyResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SupplyResponse> | SupplyResponse)) => {
-  return http.post('*/api/v1/supplies/:id/disable', async (info) => {await delay(1000);
+  return http.post('*/api/v1/supplies/:supplyId/disable', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -151,6 +151,42 @@ export const getSyncDatadisSuppliesMockHandler = (overrideResponse?: unknown | (
     return new HttpResponse(null,
       { status: 200,
         
+      })
+  })
+}
+
+export const getGetSupplyMonthlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
+  return http.get('*/api/v1/supplies/:supplyId/production/monthly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyMonthlyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGetSupplyHourlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
+  return http.get('*/api/v1/supplies/:supplyId/production/hourly', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyHourlyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGetSupplyDailyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
+  return http.get('*/api/v1/supplies/:supplyId/production/daily', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyDailyProductionResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
       })
   })
 }
@@ -191,44 +227,8 @@ export const getGetActivePartitionCoefficientMockHandler = (overrideResponse?: P
   })
 }
 
-export const getGetSupplyMonthlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
-  return http.get('*/api/v1/supplies/:id/production/monthly', async (info) => {await delay(1000);
-  
-    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getGetSupplyMonthlyProductionResponseMock()),
-      { status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
-  })
-}
-
-export const getGetSupplyHourlyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
-  return http.get('*/api/v1/supplies/:id/production/hourly', async (info) => {await delay(1000);
-  
-    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getGetSupplyHourlyProductionResponseMock()),
-      { status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
-  })
-}
-
-export const getGetSupplyDailyProductionMockHandler = (overrideResponse?: ProductionByTime[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ProductionByTime[]> | ProductionByTime[])) => {
-  return http.get('*/api/v1/supplies/:id/production/daily', async (info) => {await delay(1000);
-  
-    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getGetSupplyDailyProductionResponseMock()),
-      { status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
-  })
-}
-
 export const getGetSupplyYearlyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
-  return http.get('*/api/v1/supplies/:id/consumption/yearly', async (info) => {await delay(1000);
+  return http.get('*/api/v1/supplies/:supplyId/consumption/yearly', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -240,7 +240,7 @@ export const getGetSupplyYearlyConsumptionMockHandler = (overrideResponse?: Data
 }
 
 export const getGetSupplyMonthlyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
-  return http.get('*/api/v1/supplies/:id/consumption/monthly', async (info) => {await delay(1000);
+  return http.get('*/api/v1/supplies/:supplyId/consumption/monthly', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -252,7 +252,7 @@ export const getGetSupplyMonthlyConsumptionMockHandler = (overrideResponse?: Dat
 }
 
 export const getGetSupplyHourlyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
-  return http.get('*/api/v1/supplies/:id/consumption/hourly', async (info) => {await delay(1000);
+  return http.get('*/api/v1/supplies/:supplyId/consumption/hourly', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -264,7 +264,7 @@ export const getGetSupplyHourlyConsumptionMockHandler = (overrideResponse?: Data
 }
 
 export const getGetSupplyDailyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
-  return http.get('*/api/v1/supplies/:id/consumption/daily', async (info) => {await delay(1000);
+  return http.get('*/api/v1/supplies/:supplyId/consumption/daily', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -294,12 +294,12 @@ export const getSuppliesMock = () => [
   getDisableSupplyMockHandler(),
   getCreateSuppliesWithFileMockHandler(),
   getSyncDatadisSuppliesMockHandler(),
-  getGetPartitionCoefficientHistoryMockHandler(),
-  getGetPartitionCoefficientAtTimestampMockHandler(),
-  getGetActivePartitionCoefficientMockHandler(),
   getGetSupplyMonthlyProductionMockHandler(),
   getGetSupplyHourlyProductionMockHandler(),
   getGetSupplyDailyProductionMockHandler(),
+  getGetPartitionCoefficientHistoryMockHandler(),
+  getGetPartitionCoefficientAtTimestampMockHandler(),
+  getGetActivePartitionCoefficientMockHandler(),
   getGetSupplyYearlyConsumptionMockHandler(),
   getGetSupplyMonthlyConsumptionMockHandler(),
   getGetSupplyHourlyConsumptionMockHandler(),

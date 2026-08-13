@@ -33,7 +33,7 @@ export const PlantsPage: FC = () => {
 
   const deletePlantHandler = async (id: string) => {
     try {
-      await deletePlant.mutateAsync({ id });
+      await deletePlant.mutateAsync({ plantId: id });
       refetch();
       return true;
     } catch {
@@ -55,7 +55,8 @@ export const PlantsPage: FC = () => {
     if (searchText) {
       items = items.filter((item) =>
         item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.code?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.providerCode?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.regulatoryCode?.toLowerCase().includes(searchText.toLowerCase()) ||
         item.address?.toLowerCase().includes(searchText.toLowerCase())
       );
     }
@@ -158,7 +159,7 @@ export const PlantsPage: FC = () => {
             renderCard={(item) => (
               <PlantCard
                 id={item.id}
-                code={item.code}
+                code={item.providerCode}
                 name={item.name}
                 address={item.address}
                 totalPower={item.totalPower}

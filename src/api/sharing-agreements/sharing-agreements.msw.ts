@@ -16,7 +16,9 @@ import {
 } from 'msw';
 
 import type {
+  CoefficientActivationResponse,
   ReplacePartitionCoefficientsResponse,
+  SharingAgreementPartitionCoefficientResponse,
   SharingAgreementResponse,
   UploadSharingAgreementFileResponse
 } from '.././models';
@@ -26,13 +28,27 @@ export const getGetSharingAgreementByIdResponseMock = (overrideResponse: Partial
 
 export const getUpdateSharingAgreementResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), notes: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), status: faker.helpers.arrayElement([faker.helpers.arrayElement(['DRAFT','PUBLISHED','SUPERSEDED'] as const), undefined]), installedPowerKw: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdBy: faker.helpers.arrayElement([faker.string.uuid(), undefined]), ...overrideResponse})
 
+export const getGetSharingAgreementPartitionCoefficientsResponseMock = (): SharingAgreementPartitionCoefficientResponse[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({coefficientId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supply: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), code: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), applicationState: faker.helpers.arrayElement([faker.helpers.arrayElement(['PENDING','APPLIED'] as const), undefined]), endState: faker.helpers.arrayElement([faker.helpers.arrayElement(['OPEN','OPEN_ORPHAN','PENDING_SUCCESSION','DERIVED','CLOSED'] as const), undefined]), endDate: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})))
+
 export const getReplacePartitionCoefficientsResponseMock = (overrideResponse: Partial< ReplacePartitionCoefficientsResponse > = {}): ReplacePartitionCoefficientsResponse => ({coefficients: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})), undefined]), coefficientSumWarning: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
 export const getGetSharingAgreementsResponseMock = (): SharingAgreementResponse[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), notes: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), status: faker.helpers.arrayElement([faker.helpers.arrayElement(['DRAFT','PUBLISHED','SUPERSEDED'] as const), undefined]), installedPowerKw: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdBy: faker.helpers.arrayElement([faker.string.uuid(), undefined])})))
 
 export const getCreateSharingAgreementResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), notes: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), status: faker.helpers.arrayElement([faker.helpers.arrayElement(['DRAFT','PUBLISHED','SUPERSEDED'] as const), undefined]), installedPowerKw: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdBy: faker.helpers.arrayElement([faker.string.uuid(), undefined]), ...overrideResponse})
 
+export const getRevertSharingAgreementToDraftResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), notes: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), status: faker.helpers.arrayElement([faker.helpers.arrayElement(['DRAFT','PUBLISHED','SUPERSEDED'] as const), undefined]), installedPowerKw: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdBy: faker.helpers.arrayElement([faker.string.uuid(), undefined]), ...overrideResponse})
+
 export const getPublishSharingAgreementResponseMock = (overrideResponse: Partial< SharingAgreementResponse > = {}): SharingAgreementResponse => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), notes: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), status: faker.helpers.arrayElement([faker.helpers.arrayElement(['DRAFT','PUBLISHED','SUPERSEDED'] as const), undefined]), installedPowerKw: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdBy: faker.helpers.arrayElement([faker.string.uuid(), undefined]), ...overrideResponse})
+
+export const getReopenPartitionCoefficientsResponseMock = (overrideResponse: Partial< CoefficientActivationResponse > = {}): CoefficientActivationResponse => ({coefficients: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})), undefined]), ...overrideResponse})
+
+export const getDeactivatePartitionCoefficientsResponseMock = (overrideResponse: Partial< CoefficientActivationResponse > = {}): CoefficientActivationResponse => ({coefficients: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})), undefined]), ...overrideResponse})
+
+export const getClosePartitionCoefficientsResponseMock = (overrideResponse: Partial< CoefficientActivationResponse > = {}): CoefficientActivationResponse => ({coefficients: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})), undefined]), ...overrideResponse})
+
+export const getActivatePartitionCoefficientsResponseMock = (overrideResponse: Partial< CoefficientActivationResponse > = {}): CoefficientActivationResponse => ({coefficients: faker.helpers.arrayElement([Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.string.uuid(), undefined]), supplyId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), plantId: faker.helpers.arrayElement([faker.string.uuid(), undefined]), coefficient: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), validFrom: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), validTo: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined]), createdAt: faker.helpers.arrayElement([`${faker.date.past().toISOString().split('.')[0]}Z`, undefined])})), undefined]), ...overrideResponse})
+
+export const getGenerateSharingAgreementDistributorFileResponseMock = (): Blob => (new Blob(faker.helpers.arrayElements(faker.word.words(10).split(' '))))
 
 export const getGetSharingAgreementFileResponseMock = (): string => (faker.word.sample())
 
@@ -40,7 +56,7 @@ export const getUploadSharingAgreementFileResponseMock = (overrideResponse: Part
 
 
 export const getGetSharingAgreementByIdMockHandler = (overrideResponse?: SharingAgreementResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SharingAgreementResponse> | SharingAgreementResponse)) => {
-  return http.get('*/api/v1/plants/:plantId/sharing-agreements/:id', async (info) => {await delay(1000);
+  return http.get('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -52,7 +68,7 @@ export const getGetSharingAgreementByIdMockHandler = (overrideResponse?: Sharing
 }
 
 export const getUpdateSharingAgreementMockHandler = (overrideResponse?: SharingAgreementResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<SharingAgreementResponse> | SharingAgreementResponse)) => {
-  return http.put('*/api/v1/plants/:plantId/sharing-agreements/:id', async (info) => {await delay(1000);
+  return http.put('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -64,7 +80,7 @@ export const getUpdateSharingAgreementMockHandler = (overrideResponse?: SharingA
 }
 
 export const getDeleteSharingAgreementMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void)) => {
-  return http.delete('*/api/v1/plants/:plantId/sharing-agreements/:id', async (info) => {await delay(1000);
+  return http.delete('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId', async (info) => {await delay(1000);
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
     return new HttpResponse(null,
       { status: 200,
@@ -73,8 +89,20 @@ export const getDeleteSharingAgreementMockHandler = (overrideResponse?: void | (
   })
 }
 
+export const getGetSharingAgreementPartitionCoefficientsMockHandler = (overrideResponse?: SharingAgreementPartitionCoefficientResponse[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SharingAgreementPartitionCoefficientResponse[]> | SharingAgreementPartitionCoefficientResponse[])) => {
+  return http.get('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/partition-coefficients', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSharingAgreementPartitionCoefficientsResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
 export const getReplacePartitionCoefficientsMockHandler = (overrideResponse?: ReplacePartitionCoefficientsResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<ReplacePartitionCoefficientsResponse> | ReplacePartitionCoefficientsResponse)) => {
-  return http.put('*/api/v1/plants/:plantId/sharing-agreements/:id/partition-coefficients', async (info) => {await delay(1000);
+  return http.put('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/partition-coefficients', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -109,8 +137,20 @@ export const getCreateSharingAgreementMockHandler = (overrideResponse?: SharingA
   })
 }
 
+export const getRevertSharingAgreementToDraftMockHandler = (overrideResponse?: SharingAgreementResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SharingAgreementResponse> | SharingAgreementResponse)) => {
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/revert-to-draft', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getRevertSharingAgreementToDraftResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
 export const getPublishSharingAgreementMockHandler = (overrideResponse?: SharingAgreementResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<SharingAgreementResponse> | SharingAgreementResponse)) => {
-  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:id/publish', async (info) => {await delay(1000);
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/publish', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -121,8 +161,68 @@ export const getPublishSharingAgreementMockHandler = (overrideResponse?: Sharing
   })
 }
 
+export const getReopenPartitionCoefficientsMockHandler = (overrideResponse?: CoefficientActivationResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CoefficientActivationResponse> | CoefficientActivationResponse)) => {
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/partition-coefficients/reopen', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getReopenPartitionCoefficientsResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getDeactivatePartitionCoefficientsMockHandler = (overrideResponse?: CoefficientActivationResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CoefficientActivationResponse> | CoefficientActivationResponse)) => {
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/partition-coefficients/deactivate', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getDeactivatePartitionCoefficientsResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getClosePartitionCoefficientsMockHandler = (overrideResponse?: CoefficientActivationResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CoefficientActivationResponse> | CoefficientActivationResponse)) => {
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/partition-coefficients/close', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getClosePartitionCoefficientsResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getActivatePartitionCoefficientsMockHandler = (overrideResponse?: CoefficientActivationResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CoefficientActivationResponse> | CoefficientActivationResponse)) => {
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/partition-coefficients/activate', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getActivatePartitionCoefficientsResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
+export const getGenerateSharingAgreementDistributorFileMockHandler = (overrideResponse?: Blob | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<Blob> | Blob)) => {
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/generate-file', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGenerateSharingAgreementDistributorFileResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
 export const getGetSharingAgreementFileMockHandler = (overrideResponse?: string | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<string> | string)) => {
-  return http.get('*/api/v1/plants/:plantId/sharing-agreements/:id/file', async (info) => {await delay(1000);
+  return http.get('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/file', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -134,7 +234,7 @@ export const getGetSharingAgreementFileMockHandler = (overrideResponse?: string 
 }
 
 export const getUploadSharingAgreementFileMockHandler = (overrideResponse?: UploadSharingAgreementFileResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UploadSharingAgreementFileResponse> | UploadSharingAgreementFileResponse)) => {
-  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:id/file', async (info) => {await delay(1000);
+  return http.post('*/api/v1/plants/:plantId/sharing-agreements/:sharingAgreementId/file', async (info) => {await delay(1000);
   
     return new HttpResponse(JSON.stringify(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
@@ -148,10 +248,17 @@ export const getSharingAgreementsMock = () => [
   getGetSharingAgreementByIdMockHandler(),
   getUpdateSharingAgreementMockHandler(),
   getDeleteSharingAgreementMockHandler(),
+  getGetSharingAgreementPartitionCoefficientsMockHandler(),
   getReplacePartitionCoefficientsMockHandler(),
   getGetSharingAgreementsMockHandler(),
   getCreateSharingAgreementMockHandler(),
+  getRevertSharingAgreementToDraftMockHandler(),
   getPublishSharingAgreementMockHandler(),
+  getReopenPartitionCoefficientsMockHandler(),
+  getDeactivatePartitionCoefficientsMockHandler(),
+  getClosePartitionCoefficientsMockHandler(),
+  getActivatePartitionCoefficientsMockHandler(),
+  getGenerateSharingAgreementDistributorFileMockHandler(),
   getGetSharingAgreementFileMockHandler(),
   getUploadSharingAgreementFileMockHandler()
 ]
