@@ -24,7 +24,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
     title={
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
         <Typography variant="h4">{agreement?.name || "Acuerdo de reparto"}</Typography>
-        {!isLoading && !error && <SharingAgreementStatusChip status={agreement?.status} />}
+        {!isLoading && !error && <SharingAgreementStatusChip status={agreement?.status} tone="onDark" />}
       </Box>
     }
     subtitle={plant?.regulatoryCode ? `CAU: ${plant.regulatoryCode}` : "CAU no disponible"}

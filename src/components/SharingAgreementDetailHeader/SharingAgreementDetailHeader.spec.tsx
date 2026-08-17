@@ -31,6 +31,13 @@ describe("SharingAgreementDetailHeader", () => {
     expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
   });
 
+  it("renders the status chip with contrast against the banner (regression guard: PUBLISHED was previously invisible — blue text on a blue-tinted chip on a solid blue banner)", () => {
+    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} />);
+
+    const chip = screen.getByText("Vigente").closest(".MuiChip-root");
+    expect(chip).toHaveStyle({ backgroundColor: "rgba(255, 255, 255, 0.9)" });
+  });
+
   it("renders default texts and CAU fallback when data is missing", () => {
     render(<SharingAgreementDetailHeader agreement={{}} plant={{}} />);
 
