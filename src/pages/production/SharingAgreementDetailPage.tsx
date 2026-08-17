@@ -75,7 +75,7 @@ export const SharingAgreementDetailPage: FC = () => {
 
           {!isLoading && !error && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementCoefficientSet coefficients={coefficients} />
+              <SharingAgreementCoefficientSet coefficients={coefficients} installedPowerKw={agreement?.installedPowerKw} />
             </Box>
           )}
 

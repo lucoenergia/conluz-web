@@ -21,26 +21,33 @@ const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
 
 describe("SharingAgreementCoefficientSet", () => {
   it("uses the exact search placeholder", () => {
-    renderWithTheme(<SharingAgreementCoefficientSet coefficients={coefficients} />);
+    renderWithTheme(<SharingAgreementCoefficientSet coefficients={coefficients} installedPowerKw={100} />);
     expect(screen.getByPlaceholderText("Buscar por punto o CUPS")).toBeInTheDocument();
   });
 
   it("renders the zero-coefficients empty state when the agreement has none at all", () => {
-    renderWithTheme(<SharingAgreementCoefficientSet coefficients={[]} />);
+    renderWithTheme(<SharingAgreementCoefficientSet coefficients={[]} installedPowerKw={100} />);
     expect(screen.getByText("Sin coeficientes de reparto")).toBeInTheDocument();
     expect(screen.queryByText("No se encontraron coeficientes")).not.toBeInTheDocument();
   });
 
   it("never hides a coefficient: 0 row by default", () => {
-    renderWithTheme(<SharingAgreementCoefficientSet coefficients={coefficients} />);
+    renderWithTheme(<SharingAgreementCoefficientSet coefficients={coefficients} installedPowerKw={100} />);
     expect(screen.getAllByText("Nave Vacía").length).toBeGreaterThan(0);
+  });
+
+  it("renders the assigned energy column, derived from coefficient x installedPowerKw", () => {
+    renderWithTheme(<SharingAgreementCoefficientSet coefficients={coefficients} installedPowerKw={100} />);
+    expect(screen.getByText("Energía asignada")).toBeInTheDocument();
+    // Vivienda A: 40% of 100 kW
+    expect(screen.getAllByText("40,00 kW").length).toBeGreaterThan(0);
   });
 
   it("renders the filtered-empty state (distinct copy) when a chip filter matches nothing", () => {
     const allPending: SharingAgreementPartitionCoefficientResponse[] = [
       { coefficientId: "1", supply: { name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: PENDING },
     ];
-    renderWithTheme(<SharingAgreementCoefficientSet coefficients={allPending} />);
+    renderWithTheme(<SharingAgreementCoefficientSet coefficients={allPending} installedPowerKw={100} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Aplicado" }));
 
@@ -49,7 +56,7 @@ describe("SharingAgreementCoefficientSet", () => {
   });
 
   it("filters rows by applicationState chip", () => {
-    renderWithTheme(<SharingAgreementCoefficientSet coefficients={coefficients} />);
+    renderWithTheme(<SharingAgreementCoefficientSet coefficients={coefficients} installedPowerKw={100} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Pendiente de tratamiento" }));
 

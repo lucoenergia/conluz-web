@@ -18,6 +18,7 @@ import { getApplicationStateLabel } from "../../pages/production/sharingAgreemen
 
 export interface SharingAgreementCoefficientSetProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];
+  installedPowerKw: number | undefined;
 }
 
 // A deliberate 3-chip cut for this slice: applicationState only. The design
@@ -29,7 +30,10 @@ const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilt
   SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
 ];
 
-export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetProps> = ({ coefficients }) => {
+export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetProps> = ({
+  coefficients,
+  installedPowerKw,
+}) => {
   const [searchText, setSearchText] = useState("");
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
@@ -106,6 +110,11 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                       Coeficiente
                     </Typography>
                   </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                      Energía asignada
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                       Estado de aplicación
@@ -120,7 +129,11 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               </TableHead>
               <TableBody>
                 {filteredCoefficients.map((coefficient) => (
-                  <SharingAgreementCoefficientTableRow key={coefficient.coefficientId} coefficient={coefficient} />
+                  <SharingAgreementCoefficientTableRow
+                    key={coefficient.coefficientId}
+                    coefficient={coefficient}
+                    installedPowerKw={installedPowerKw}
+                  />
                 ))}
               </TableBody>
             </Table>
@@ -129,7 +142,11 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           {/* Mobile stacked cards */}
           <Box sx={{ display: { xs: "flex", sm: "none" }, flexDirection: "column" }}>
             {filteredCoefficients.map((coefficient) => (
-              <SharingAgreementCoefficientCard key={coefficient.coefficientId} coefficient={coefficient} />
+              <SharingAgreementCoefficientCard
+                key={coefficient.coefficientId}
+                coefficient={coefficient}
+                installedPowerKw={installedPowerKw}
+              />
             ))}
           </Box>
         </>

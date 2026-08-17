@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { Box, TableCell, TableRow, Typography } from "@mui/material";
 import { colors } from "../../theme/tokens";
 import { formatPercentage } from "../../utils/formatPercentage";
+import { formatKilowatts } from "../../utils/formatKilowatts";
 import {
   getApplicationStateDetail,
   getApplicationStateLabel,
@@ -12,9 +13,18 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
 
 export interface SharingAgreementCoefficientRowProps {
   coefficient: SharingAgreementPartitionCoefficientResponse;
+  installedPowerKw: number | undefined;
 }
 
-export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficientRowProps> = ({ coefficient }) => {
+function formatAssignedEnergy(coefficient: SharingAgreementPartitionCoefficientResponse, installedPowerKw: number | undefined): string {
+  if (coefficient.coefficient === undefined || installedPowerKw === undefined) return "-";
+  return formatKilowatts(coefficient.coefficient * installedPowerKw);
+}
+
+export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficientRowProps> = ({
+  coefficient,
+  installedPowerKw,
+}) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
 
   return (
@@ -34,6 +44,11 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           {formatPercentage(coefficient.coefficient ?? 0)}
         </Typography>
       </TableCell>
+      <TableCell align="right">
+        <Typography variant="body2" fontWeight="600">
+          {formatAssignedEnergy(coefficient, installedPowerKw)}
+        </Typography>
+      </TableCell>
       <TableCell>
         <Typography variant="body2">{getApplicationStateLabel(coefficient.applicationState)}</Typography>
         <Typography variant="caption" color="text.secondary">
@@ -49,7 +64,10 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   );
 };
 
-export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowProps> = ({ coefficient }) => {
+export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowProps> = ({
+  coefficient,
+  installedPowerKw,
+}) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
 
   return (
@@ -66,9 +84,14 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
         <Typography variant="body2" fontWeight="600">
           {coefficient.supply?.name || "-"}
         </Typography>
-        <Typography variant="body2" fontWeight="600">
-          {formatPercentage(coefficient.coefficient ?? 0)}
-        </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+          <Typography variant="body2" fontWeight="600">
+            {formatPercentage(coefficient.coefficient ?? 0)}
+          </Typography>
+          <Typography variant="caption" sx={{ color: colors.text.secondary }}>
+            {formatAssignedEnergy(coefficient, installedPowerKw)}
+          </Typography>
+        </Box>
       </Box>
 
       <Typography variant="caption" sx={{ color: colors.text.secondary }}>
