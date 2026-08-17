@@ -45,6 +45,7 @@ export const colors = {
     dark: "#dc2626", // destructive action hover / darker danger variant
   },
   warning: "#f59e0b",
+  info: "#0ea5e9",
   text: {
     primary:     "#1e293b",
     secondary:   "#64748b",
@@ -86,6 +87,10 @@ export const alphas = {
   },
   warning: {
     light: "rgba(245, 158, 11, 0.1)",
+  },
+  info: {
+    light:  "rgba(14, 165, 233, 0.1)",
+    subtle: "rgba(14, 165, 233, 0.08)",
   },
   white: {
     hairline: "rgba(255, 255, 255, 0.1)",

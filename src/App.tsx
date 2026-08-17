@@ -26,6 +26,7 @@ import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
 import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
 import { CommunityOrPlatformAdminRoute } from "./components/Auth/CommunityOrPlatformAdminRoute";
 import { SharingAgreementsPage } from "./pages/production/SharingAgreementsPage";
+import { SharingAgreementDetailPage } from "./pages/production/SharingAgreementDetailPage";
 import { UsersPage } from "./pages/users/UsersPage";
 import { CreateUserPage } from "./pages/users/CreateUser";
 import { EditUserPage } from "./pages/users/EditUser";
@@ -62,6 +63,10 @@ function App() {
               <Route
                 path="sharing-agreements"
                 element={<CommunityAdminRoute><SharingAgreementsPage /></CommunityAdminRoute>}
+              />
+              <Route
+                path="sharing-agreements/:sharingAgreementId"
+                element={<CommunityAdminRoute><SharingAgreementDetailPage /></CommunityAdminRoute>}
               />
             </Route>
           </Route>

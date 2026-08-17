@@ -270,6 +270,67 @@ const FIXED_SHARING_AGREEMENTS = [
   },
 ];
 
+/**
+ * Coefficient set covering every case the detail-page baselines must exercise:
+ *   - PENDING with no validFrom (row 2) and APPLIED with validFrom (rows 1,3,4,5,6)
+ *   - all 5 endState values: OPEN (1,2), OPEN_ORPHAN (3), PENDING_SUCCESSION (4), DERIVED (5), CLOSED (6)
+ *   - a coefficient: 0 row (row 6) — meaningful (a supply that left distribution), never hidden
+ *   - fileSum = 1.00 (100%); appliedSum = 0.75 (75%, below 100% — exercises the informational card)
+ */
+const FIXED_COEFFICIENTS_MIXED = [
+  {
+    coefficientId: "coef-1",
+    supply: { id: "supply-1", name: "Vivienda A", code: "ES0031300000000001AA" },
+    coefficient: 0.3,
+    applicationState: "APPLIED",
+    validFrom: "2024-01-01T00:00:00Z",
+    endState: "OPEN",
+  },
+  {
+    coefficientId: "coef-2",
+    supply: { id: "supply-2", name: "Vivienda B", code: "ES0031300000000002BB" },
+    coefficient: 0.25,
+    applicationState: "PENDING",
+    endState: "OPEN",
+  },
+  {
+    coefficientId: "coef-3",
+    supply: { id: "supply-3", name: "Local C", code: "ES0031300000000003CC" },
+    coefficient: 0.2,
+    applicationState: "APPLIED",
+    validFrom: "2024-02-01T00:00:00Z",
+    endState: "OPEN_ORPHAN",
+  },
+  {
+    coefficientId: "coef-4",
+    supply: { id: "supply-4", name: "Nave D", code: "ES0031300000000004DD" },
+    coefficient: 0.15,
+    applicationState: "APPLIED",
+    validFrom: "2023-01-01T00:00:00Z",
+    endState: "PENDING_SUCCESSION",
+  },
+  {
+    coefficientId: "coef-5",
+    supply: { id: "supply-5", name: "Trastero E", code: "ES0031300000000005EE" },
+    coefficient: 0.1,
+    applicationState: "APPLIED",
+    validFrom: "2022-01-01T00:00:00Z",
+    endState: "DERIVED",
+    endDate: "2023-12-31T00:00:00Z",
+  },
+  {
+    coefficientId: "coef-6",
+    supply: { id: "supply-6", name: "Ático F", code: "ES0031300000000006FF" },
+    coefficient: 0,
+    applicationState: "APPLIED",
+    validFrom: "2024-03-01T00:00:00Z",
+    endState: "CLOSED",
+    endDate: "2024-05-01T00:00:00Z",
+  },
+];
+
+const FIXED_COEFFICIENTS_EMPTY: unknown[] = [];
+
 // ---------------------------------------------------------------------------
 // Helper: set up all API route mocks on a given page
 //
@@ -440,6 +501,53 @@ async function mockSharingAgreementsPlantRoutes(page: Page, agreements: unknown[
         contentType: "application/json",
         body: JSON.stringify(agreements),
       }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: override the single-agreement, partition-coefficients and file
+// routes for one agreement. Registered AFTER mockSharingAgreementsPlantRoutes()
+// so its more specific predicates win (Playwright matches routes in reverse
+// registration order) — the broad `/plants/{id}/sharing-agreements` route
+// registered there would otherwise return the plain list for these URLs too.
+// ---------------------------------------------------------------------------
+
+async function mockSharingAgreementDetailRoutes(
+  page: Page,
+  agreementId: string,
+  agreement: unknown,
+  coefficients: unknown[],
+  fileStatus: 200 | 404 = 404,
+) {
+  await page.route(
+    (url) =>
+      url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements/${agreementId}`) &&
+      !url.href.includes("/partition-coefficients") &&
+      !url.href.includes("/file"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(agreement),
+      }),
+  );
+
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements/${agreementId}/partition-coefficients`),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(coefficients),
+      }),
+  );
+
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements/${agreementId}/file`),
+    (route: Route) =>
+      fileStatus === 404
+        ? route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({}) })
+        : route.fulfill({ status: 200, contentType: "application/octet-stream", body: "fake-file-bytes" }),
   );
 }
 
@@ -755,6 +863,98 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreements-list-filtered.png", { fullPage: true });
+  });
+
+  // Community-admin fixture tests: sharing-agreement detail page.
+  // Same CommunityAdminRoute cold-navigation limitation as the list page (see
+  // file header) — reached by navigating through the list and clicking a
+  // card's own "Ver detalle" menu item, never via a cold page.goto().
+  //
+  // The file panel never probes the file endpoint on page load (by design —
+  // the download is click-triggered, see SharingAgreementFilePanel), so its
+  // initial render always shows the "Descargar fichero" button regardless of
+  // the mocked file status. These baselines therefore all capture the same
+  // file-panel state; the 404 empty-state copy is exercised by unit tests
+  // (SharingAgreementFilePanel.spec.tsx), not by a visual baseline.
+
+  async function navigateToSharingAgreementDetail(page: Page, agreementName: string) {
+    await navigateToSharingAgreements(page);
+
+    const agreementCard = page.locator(".MuiCard-root").filter({ hasText: agreementName });
+    await agreementCard.getByRole("button").click();
+    await page.getByRole("menuitem", { name: /Ver detalle/i }).click();
+
+    await expect(page.getByText("Suma del fichero")).toBeVisible();
+    await stabilizePage(page);
+  }
+
+  const DRAFT_AGREEMENT = FIXED_SHARING_AGREEMENTS[1];
+  const PUBLISHED_AGREEMENT = FIXED_SHARING_AGREEMENTS[0];
+  const SUPERSEDED_AGREEMENT = FIXED_SHARING_AGREEMENTS[2];
+
+  test("sharing agreement detail page (draft, with coefficients)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (draft, empty coefficient set)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-empty.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (published, mixed pending/applied)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (superseded)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, SUPERSEDED_AGREEMENT.id, SUPERSEDED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, SUPERSEDED_AGREEMENT.name);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-superseded.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (mobile coefficient cards)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    // Both the desktop table and the mobile card list render unconditionally (CSS-only
+    // display toggle) — the table comes first in DOM order, so .last() is the mobile
+    // card instance. Assert it's the one actually visible, not just relying on viewport.
+    await expect(page.getByText("Vivienda A").last()).toBeVisible();
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-mobile.png", { fullPage: true });
   });
 
   // Note: "import partners modal" is intentionally omitted. See file header.
