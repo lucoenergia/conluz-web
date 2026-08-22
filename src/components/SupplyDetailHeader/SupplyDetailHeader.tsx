@@ -19,7 +19,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
   <DetailHeader
     icon={<ElectricMeterIcon sx={{ fontSize: 32 }} />}
     title={
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, mb: 1 }}>
         <Typography variant="h4">
           {supplyPoint?.name || "Punto de Suministro"}
         </Typography>

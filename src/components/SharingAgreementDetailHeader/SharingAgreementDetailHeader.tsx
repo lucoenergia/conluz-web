@@ -22,7 +22,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   <DetailHeader
     icon={<HandshakeOutlinedIcon sx={{ fontSize: 32 }} />}
     title={
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, mb: 1 }}>
         <Typography variant="h4">{agreement?.name || "Acuerdo de reparto"}</Typography>
         {!isLoading && !error && <SharingAgreementStatusChip status={agreement?.status} tone="onDark" />}
       </Box>
