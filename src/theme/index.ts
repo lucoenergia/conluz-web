@@ -37,6 +37,9 @@ export const theme = createTheme({
     warning: {
       main: colors.warning,
     },
+    info: {
+      main: colors.info,
+    },
     text: {
       primary: colors.text.primary,
       secondary: colors.text.secondary,

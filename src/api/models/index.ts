@@ -90,6 +90,7 @@ export * from './registerPartitionCoefficientBody';
 export * from './registerPartitionCoefficientResponse';
 export * from './registerPartitionCoefficientsWithFileResponse';
 export * from './reopenCoefficientsBody';
+export * from './replacePartitionCoefficientEntry';
 export * from './replacePartitionCoefficientsBody';
 export * from './replacePartitionCoefficientsResponse';
 export * from './restError';
