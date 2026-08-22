@@ -940,7 +940,9 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-detail-superseded.png", { fullPage: true });
   });
 
-  test("sharing agreement detail page (mobile coefficient cards)", async ({ page }) => {
+  test("sharing agreement detail page (mobile coefficient cards)", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Mobile-only card layout — not rendered on the desktop viewport.");
+
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
