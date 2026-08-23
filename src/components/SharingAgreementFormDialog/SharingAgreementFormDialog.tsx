@@ -135,7 +135,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
         </>
       }
     >
-      <Box sx={{ maxHeight: "60vh", overflowY: "auto" }}>
+      <Box sx={{ maxHeight: "60vh", overflowY: "auto", pt: 1 }}>
         {mode === "create" && (
           <>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
