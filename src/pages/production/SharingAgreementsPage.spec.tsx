@@ -12,6 +12,8 @@ import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
 const mockErrorDispatch = vi.fn();
 const mockUseSharingAgreementsData = vi.fn();
 const mockCreateAgreement = vi.fn();
+const mockUpdateAgreement = vi.fn();
+const mockDeleteAgreement = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock("../../context/error.context", () => ({
@@ -25,8 +27,8 @@ vi.mock("./useSharingAgreementsData", () => ({
 vi.mock("./useSharingAgreementMutations", () => ({
   useSharingAgreementMutations: (): SharingAgreementMutations => ({
     createAgreement: mockCreateAgreement,
-    updateAgreement: vi.fn(),
-    deleteAgreement: vi.fn(),
+    updateAgreement: mockUpdateAgreement,
+    deleteAgreement: mockDeleteAgreement,
     isCreating: false,
     isUpdating: false,
     isDeleting: false,
@@ -181,4 +183,37 @@ describe("SharingAgreementsPage", () => {
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument());
   });
 
+  test("editing from the card kebab seeds the dialog and calls updateAgreement with the agreement's id", async () => {
+    mockData();
+    mockUpdateAgreement.mockResolvedValue(true);
+    const user = userEvent.setup();
+    setup();
+
+    const kebabButtons = screen.getAllByRole("button").filter((button) => button.textContent === "");
+    await user.click(kebabButtons[1]); // "Borrador reciente" is the DRAFT agreement
+    await user.click(await screen.findByText("Editar"));
+
+    expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Borrador reciente");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(mockUpdateAgreement).toHaveBeenCalledWith("2", expect.objectContaining({ name: "Borrador reciente" })),
+    );
+  });
+
+  test("deleting from the card kebab shows the confirmation and calls deleteAgreement with the agreement's id", async () => {
+    mockData();
+    mockDeleteAgreement.mockResolvedValue(true);
+    const user = userEvent.setup();
+    setup();
+
+    const kebabButtons = screen.getAllByRole("button").filter((button) => button.textContent === "");
+    await user.click(kebabButtons[1]);
+    await user.click(await screen.findByText("Eliminar"));
+
+    expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Eliminar" }));
+
+    await waitFor(() => expect(mockDeleteAgreement).toHaveBeenCalledWith("2"));
+  });
 });

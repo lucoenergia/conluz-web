@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { SharingAgreementDetailHeader } from "./SharingAgreementDetailHeader";
 import { SharingAgreementResponseStatus } from "../../api/models";
@@ -57,5 +58,47 @@ describe("SharingAgreementDetailHeader", () => {
 
     expect(screen.queryByText("Fecha de creación")).not.toBeInTheDocument();
     expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
+  });
+
+  it("hides the actions kebab for a non-DRAFT (published) agreement", () => {
+    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} onEdit={vi.fn()} onDeleteRequest={vi.fn()} />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("shows the actions kebab with Editar/Eliminar for a DRAFT agreement, wired to the callbacks", async () => {
+    const onEdit = vi.fn();
+    const onDeleteRequest = vi.fn();
+    const user = userEvent.setup();
+    const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
+    render(
+      <SharingAgreementDetailHeader agreement={draftAgreement} plant={mockPlant} onEdit={onEdit} onDeleteRequest={onDeleteRequest} />,
+    );
+
+    await user.click(screen.getByRole("button"));
+    await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
+
+    await user.click(screen.getByText("Editar"));
+    expect(onEdit).toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button"));
+    await waitFor(() => expect(screen.getByText("Eliminar")).toBeInTheDocument());
+    await user.click(screen.getByText("Eliminar"));
+    expect(onDeleteRequest).toHaveBeenCalled();
+  });
+
+  it("hides the actions kebab while loading, even for a DRAFT agreement", () => {
+    const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
+    render(
+      <SharingAgreementDetailHeader
+        agreement={draftAgreement}
+        plant={mockPlant}
+        isLoading
+        onEdit={vi.fn()}
+        onDeleteRequest={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

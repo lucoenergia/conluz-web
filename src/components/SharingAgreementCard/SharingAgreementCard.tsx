@@ -1,20 +1,25 @@
 import { useState, type FC } from "react";
-import { Box, CardContent, IconButton, MenuItem, Typography } from "@mui/material";
+import { Box, CardContent, Divider, IconButton, MenuItem, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import BoltIcon from "@mui/icons-material/Bolt";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii, alphas, colors } from "../../theme/tokens";
 import { AppCard } from "../AppCard";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
+import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
 
 export interface SharingAgreementCardProps {
   plantId: string;
   agreement: SharingAgreementResponse;
+  onEdit?: (agreement: SharingAgreementResponse) => void;
+  onDeleteRequest?: (agreement: SharingAgreementResponse) => void;
 }
 
 const NOTES_EXCERPT_LENGTH = 140;
@@ -37,10 +42,11 @@ function excerpt(text: string | undefined, maxLength: number): string | undefine
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 }
 
-export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, agreement }) => {
+export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, agreement, onEdit, onDeleteRequest }) => {
   const theme = useTheme();
   const notesExcerpt = excerpt(agreement.notes, NOTES_EXCERPT_LENGTH);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+  const isDraft = agreement.status === SharingAgreementResponseStatus.DRAFT;
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
@@ -52,6 +58,20 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
     event?.preventDefault();
     event?.stopPropagation();
     setAnchorElement(null);
+  };
+
+  const handleEditClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    handleCloseMenu();
+    onEdit?.(agreement);
+  };
+
+  const handleDeleteClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    handleCloseMenu();
+    onDeleteRequest?.(agreement);
   };
 
   return (
@@ -88,6 +108,30 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
                       </Typography>
                     </MenuItem>
                   </Box>
+
+                  {isDraft && (
+                    <MenuItem onClick={handleEditClick}>
+                      <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                        Editar
+                      </Typography>
+                    </MenuItem>
+                  )}
+
+                  {isDraft && (
+                    <>
+                      <Divider sx={{ my: 1 }} />
+                      <MenuItem
+                        onClick={handleDeleteClick}
+                        sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
+                      >
+                        <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
+                          Eliminar
+                        </Typography>
+                      </MenuItem>
+                    </>
+                  )}
                 </Box>
               </MenuTemplate>
             </Box>

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
@@ -7,10 +7,13 @@ import { SharingAgreementCard } from "./SharingAgreementCard";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
 
-function renderCard(agreement: SharingAgreementResponse) {
+function renderCard(
+  agreement: SharingAgreementResponse,
+  handlers: { onEdit?: (a: SharingAgreementResponse) => void; onDeleteRequest?: (a: SharingAgreementResponse) => void } = {},
+) {
   render(
     <MemoryRouter>
-      <SharingAgreementCard plantId="plant-1" agreement={agreement} />
+      <SharingAgreementCard plantId="plant-1" agreement={agreement} {...handlers} />
     </MemoryRouter>,
   );
 }
@@ -59,6 +62,36 @@ describe("SharingAgreementCard", () => {
     expect(screen.getByText("Sin nombre")).toBeInTheDocument();
     expect(screen.getByText("Desconocido")).toBeInTheDocument();
     expect(screen.getAllByText("-")).toHaveLength(2);
+  });
+
+  test("shows Editar/Eliminar for a DRAFT agreement and wires them to the callbacks", async () => {
+    const onEdit = vi.fn();
+    const onDeleteRequest = vi.fn();
+    const user = userEvent.setup();
+    const agreement = { id: "agreement-3", name: "Borrador", status: SharingAgreementResponseStatus.DRAFT };
+    renderCard(agreement, { onEdit, onDeleteRequest });
+
+    await user.click(getKebabButton());
+    await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
+
+    await user.click(screen.getByText("Editar"));
+    expect(onEdit).toHaveBeenCalledWith(agreement);
+
+    await user.click(getKebabButton());
+    await waitFor(() => expect(screen.getByText("Eliminar")).toBeInTheDocument());
+    await user.click(screen.getByText("Eliminar"));
+    expect(onDeleteRequest).toHaveBeenCalledWith(agreement);
+  });
+
+  test("hides Editar/Eliminar for a non-DRAFT agreement", async () => {
+    const user = userEvent.setup();
+    renderCard({ id: "agreement-4", name: "Vigente", status: SharingAgreementResponseStatus.PUBLISHED });
+
+    await user.click(getKebabButton());
+    await waitFor(() => expect(screen.getByText("Ver detalle")).toBeInTheDocument());
+
+    expect(screen.queryByText("Editar")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
   });
 
   test("truncates long notes with an ellipsis", () => {

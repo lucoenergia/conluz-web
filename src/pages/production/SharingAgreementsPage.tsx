@@ -13,9 +13,11 @@ import { LoadingCardGrid } from "../../components/CardGrid";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import { SharingAgreementTimeline } from "../../components/SharingAgreementTimeline";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
+import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
 import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
+import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
@@ -35,13 +37,16 @@ export const SharingAgreementsPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { agreements, plant, counts, isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
-  const { createAgreement, isCreating } = useSharingAgreementMutations(plantId);
+  const { createAgreement, updateAgreement, deleteAgreement, isCreating, isUpdating, isDeleting } =
+    useSharingAgreementMutations(plantId);
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<SharingAgreementStatusFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<SharingAgreementResponse | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SharingAgreementResponse | null>(null);
 
   useEffect(() => {
     if (error) {
@@ -65,6 +70,18 @@ export const SharingAgreementsPage: FC = () => {
     if (response.id) {
       navigate(`/production/${plantId}/sharing-agreements/${response.id}`);
     }
+  };
+
+  const handleEditSubmit = async (values: SharingAgreementFormValues) => {
+    if (!editTarget?.id) return;
+    const success = await updateAgreement(editTarget.id, values);
+    if (success) setEditTarget(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget?.id) return;
+    const success = await deleteAgreement(deleteTarget.id);
+    if (success) setDeleteTarget(null);
   };
 
   return (
@@ -182,7 +199,12 @@ export const SharingAgreementsPage: FC = () => {
 
           {!isLoading && !error && filteredAgreements.length > 0 && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementTimeline plantId={plantId} agreements={filteredAgreements} />
+              <SharingAgreementTimeline
+                plantId={plantId}
+                agreements={filteredAgreements}
+                onEdit={setEditTarget}
+                onDeleteRequest={setDeleteTarget}
+              />
             </Box>
           )}
 
@@ -214,6 +236,31 @@ export const SharingAgreementsPage: FC = () => {
         />
       )}
 
+      {editTarget && (
+        <SharingAgreementFormDialog
+          key={editTarget.id ?? "edit"}
+          isOpen
+          mode="edit"
+          initialValues={{
+            name: editTarget.name,
+            notes: editTarget.notes,
+            installedPowerKw: editTarget.installedPowerKw,
+          }}
+          isSubmitting={isUpdating}
+          onCancel={() => setEditTarget(null)}
+          onSubmit={handleEditSubmit}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteSharingAgreementConfirmationModal
+          isOpen
+          agreementName={deleteTarget.name || "Acuerdo de reparto"}
+          isDeleting={isDeleting}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
     </Box>
   );
 };
