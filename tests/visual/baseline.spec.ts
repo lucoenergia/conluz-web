@@ -865,6 +865,37 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreements-list-filtered.png", { fullPage: true });
   });
 
+  test("sharing agreement create dialog (capacity prefilled from plant totalPower)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+
+    await navigateToSharingAgreements(page);
+    await page.getByRole("button", { name: "Nuevo acuerdo de reparto" }).click();
+
+    await expect(page.getByLabel("Potencia instalada (kW)", { exact: false })).toHaveValue("120,5");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-create-dialog.png", { fullPage: true });
+  });
+
+  test("sharing agreement create dialog (empty-name validation error)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+
+    await navigateToSharingAgreements(page);
+    await page.getByRole("button", { name: "Nuevo acuerdo de reparto" }).click();
+    await page.getByRole("button", { name: "Crear acuerdo" }).click();
+
+    await expect(page.getByText("El nombre es obligatorio")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-create-dialog-validation-error.png", { fullPage: true });
+  });
+
   // Community-admin fixture tests: sharing-agreement detail page.
   // Same CommunityAdminRoute cold-navigation limitation as the list page (see
   // file header) — reached by navigating through the list and clicking a
@@ -957,6 +988,40 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Vivienda A").last()).toBeVisible();
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-mobile.png", { fullPage: true });
+  });
+
+  test("sharing agreement edit dialog (seeded with existing values)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("menuitem", { name: "Editar" }).click();
+
+    await expect(page.getByLabel("Nombre", { exact: false })).toHaveValue(DRAFT_AGREEMENT.name);
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-edit-dialog.png", { fullPage: true });
+  });
+
+  test("sharing agreement delete confirmation", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("menuitem", { name: "Eliminar" }).click();
+
+    await expect(page.getByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-delete-confirmation.png", { fullPage: true });
   });
 
   // Note: "import partners modal" is intentionally omitted. See file header.
