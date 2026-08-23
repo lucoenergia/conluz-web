@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
@@ -7,9 +7,14 @@ import { SharingAgreementsPage } from "./SharingAgreementsPage";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
 import type { SharingAgreementsData } from "./useSharingAgreementsData";
+import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
 
 const mockErrorDispatch = vi.fn();
 const mockUseSharingAgreementsData = vi.fn();
+const mockCreateAgreement = vi.fn();
+const mockUpdateAgreement = vi.fn();
+const mockDeleteAgreement = vi.fn();
+const mockNavigate = vi.fn();
 
 vi.mock("../../context/error.context", () => ({
   useErrorDispatch: () => mockErrorDispatch,
@@ -19,9 +24,25 @@ vi.mock("./useSharingAgreementsData", () => ({
   useSharingAgreementsData: (...args: unknown[]) => mockUseSharingAgreementsData(...args),
 }));
 
+vi.mock("./useSharingAgreementMutations", () => ({
+  useSharingAgreementMutations: (): SharingAgreementMutations => ({
+    createAgreement: mockCreateAgreement,
+    updateAgreement: mockUpdateAgreement,
+    deleteAgreement: mockDeleteAgreement,
+    isCreating: false,
+    isUpdating: false,
+    isDeleting: false,
+  }),
+}));
+
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
 const AGREEMENTS: SharingAgreementResponse[] = [
   { id: "1", name: "Reparto vecinos bloque A", status: SharingAgreementResponseStatus.PUBLISHED },
-  { id: "2", name: "Borrador reciente", status: SharingAgreementResponseStatus.DRAFT },
+  { id: "2", name: "Borrador reciente", status: SharingAgreementResponseStatus.DRAFT, installedPowerKw: 5 },
   { id: "3", name: "Acuerdo histórico norte", status: SharingAgreementResponseStatus.SUPERSEDED },
 ];
 
@@ -51,6 +72,10 @@ function setup(plantId = "plant-1") {
 }
 
 describe("SharingAgreementsPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   test("renders plant name, CAU, counts and every agreement card on normal load", () => {
     mockData();
     setup("plant-42");
@@ -124,5 +149,71 @@ describe("SharingAgreementsPage", () => {
     setup();
 
     expect(screen.queryByText("Reparto vecinos bloque A")).not.toBeInTheDocument();
+  });
+
+  test("create dialog prefills capacity from the plant's totalPower and navigates to the new agreement on submit", async () => {
+    mockData({ plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123", totalPower: 30 } });
+    mockCreateAgreement.mockResolvedValue({ id: "new-agreement", name: "Reparto nuevo" });
+    const user = userEvent.setup();
+    setup("plant-42");
+
+    await user.click(screen.getByRole("button", { name: "Nuevo acuerdo de reparto" }));
+    expect(await screen.findByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("30");
+
+    await user.type(screen.getByLabelText("Nombre", { exact: false }), "Reparto nuevo");
+    await user.click(screen.getByRole("button", { name: "Crear borrador" }));
+
+    await waitFor(() => expect(mockCreateAgreement).toHaveBeenCalled());
+    expect(mockNavigate).toHaveBeenCalledWith("/production/plant-42/sharing-agreements/new-agreement");
+  });
+
+  test("does not navigate to a route with a missing id when create succeeds without an id", async () => {
+    mockData();
+    mockCreateAgreement.mockResolvedValue({ name: "Reparto nuevo" });
+    const user = userEvent.setup();
+    setup("plant-42");
+
+    await user.click(screen.getByRole("button", { name: "Nuevo acuerdo de reparto" }));
+    await user.type(screen.getByLabelText("Nombre", { exact: false }), "Reparto nuevo");
+    await user.type(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }), "10");
+    await user.click(screen.getByRole("button", { name: "Crear borrador" }));
+
+    await waitFor(() => expect(mockCreateAgreement).toHaveBeenCalled());
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument());
+  });
+
+  test("editing from the card kebab seeds the dialog and calls updateAgreement with the agreement's id", async () => {
+    mockData();
+    mockUpdateAgreement.mockResolvedValue(true);
+    const user = userEvent.setup();
+    setup();
+
+    const kebabButtons = screen.getAllByRole("button").filter((button) => button.textContent === "");
+    await user.click(kebabButtons[1]); // "Borrador reciente" is the DRAFT agreement
+    await user.click(await screen.findByText("Editar"));
+
+    expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Borrador reciente");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(mockUpdateAgreement).toHaveBeenCalledWith("2", expect.objectContaining({ name: "Borrador reciente" })),
+    );
+  });
+
+  test("deleting from the card kebab shows the confirmation and calls deleteAgreement with the agreement's id", async () => {
+    mockData();
+    mockDeleteAgreement.mockResolvedValue(true);
+    const user = userEvent.setup();
+    setup();
+
+    const kebabButtons = screen.getAllByRole("button").filter((button) => button.textContent === "");
+    await user.click(kebabButtons[1]);
+    await user.click(await screen.findByText("Eliminar"));
+
+    expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Eliminar" }));
+
+    await waitFor(() => expect(mockDeleteAgreement).toHaveBeenCalledWith("2"));
   });
 });

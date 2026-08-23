@@ -1,6 +1,6 @@
-import { useEffect, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import { Box } from "@mui/material";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
@@ -10,22 +10,40 @@ import { SharingAgreementDetailHeader } from "../../components/SharingAgreementD
 import { SharingAgreementCoefficientSumCards } from "../../components/SharingAgreementCoefficientSumCards";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
+import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
+import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
+import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 
 export const SharingAgreementDetailPage: FC = () => {
   const { plantId = "", sharingAgreementId = "" } = useParams();
+  const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { agreement, plant, coefficients, isLoading, isNotFound, error } = useSharingAgreementDetailData(
     plantId,
     sharingAgreementId,
   );
+  const { updateAgreement, deleteAgreement, isUpdating, isDeleting } = useSharingAgreementMutations(plantId);
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
 
   useEffect(() => {
     if (error) {
       errorDispatch("Ha habido un problema al cargar el acuerdo de reparto. Por favor, inténtalo más tarde");
     }
   }, [error, errorDispatch]);
+
+  const handleEditSubmit = async (values: SharingAgreementFormValues) => {
+    const success = await updateAgreement(sharingAgreementId, values);
+    if (success) setIsEditDialogOpen(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    const success = await deleteAgreement(sharingAgreementId);
+    if (success) navigate(`/production/${plantId}/sharing-agreements`);
+  };
 
   return (
     <Box
@@ -64,7 +82,14 @@ export const SharingAgreementDetailPage: FC = () => {
       ) : (
         <>
           <Box sx={sxStyles.pageContainer}>
-            <SharingAgreementDetailHeader agreement={agreement} plant={plant} isLoading={isLoading} error={error} />
+            <SharingAgreementDetailHeader
+              agreement={agreement}
+              plant={plant}
+              isLoading={isLoading}
+              error={error}
+              onEdit={() => setIsEditDialogOpen(true)}
+              onDeleteRequest={() => setIsDeleteConfirmationOpen(true)}
+            />
           </Box>
 
           {!isLoading && !error && (
@@ -90,6 +115,30 @@ export const SharingAgreementDetailPage: FC = () => {
           )}
         </>
       )}
+
+      {isEditDialogOpen && agreement && (
+        <SharingAgreementFormDialog
+          key={sharingAgreementId}
+          isOpen
+          mode="edit"
+          initialValues={{
+            name: agreement.name,
+            notes: agreement.notes,
+            installedPowerKw: agreement.installedPowerKw,
+          }}
+          isSubmitting={isUpdating}
+          onCancel={() => setIsEditDialogOpen(false)}
+          onSubmit={handleEditSubmit}
+        />
+      )}
+
+      <DeleteSharingAgreementConfirmationModal
+        isOpen={isDeleteConfirmationOpen}
+        agreementName={agreement?.name || "Acuerdo de reparto"}
+        isDeleting={isDeleting}
+        onCancel={() => setIsDeleteConfirmationOpen(false)}
+        onConfirm={handleDeleteConfirm}
+      />
     </Box>
   );
 };

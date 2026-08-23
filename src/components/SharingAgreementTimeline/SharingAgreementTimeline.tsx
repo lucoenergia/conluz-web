@@ -9,6 +9,8 @@ import type { SharingAgreementResponse, SharingAgreementResponseStatus as Status
 export interface SharingAgreementTimelineProps {
   plantId: string;
   agreements: SharingAgreementResponse[];
+  onEdit?: (agreement: SharingAgreementResponse) => void;
+  onDeleteRequest?: (agreement: SharingAgreementResponse) => void;
 }
 
 const RAIL_WIDTH = 32;
@@ -63,7 +65,12 @@ const TimelineDot: FC<TimelineDotProps> = ({ status }) => {
   );
 };
 
-export const SharingAgreementTimeline: FC<SharingAgreementTimelineProps> = ({ plantId, agreements }) => (
+export const SharingAgreementTimeline: FC<SharingAgreementTimelineProps> = ({
+  plantId,
+  agreements,
+  onEdit,
+  onDeleteRequest,
+}) => (
   <Fade in timeout={500}>
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
       {agreements.map((agreement, index) => {
@@ -90,7 +97,12 @@ export const SharingAgreementTimeline: FC<SharingAgreementTimelineProps> = ({ pl
                 )}
               </Box>
               <Box sx={{ flex: 1, minWidth: 0, pb: isLast ? 0 : 3 }}>
-                <SharingAgreementCard plantId={plantId} agreement={agreement} />
+                <SharingAgreementCard
+                  plantId={plantId}
+                  agreement={agreement}
+                  onEdit={onEdit}
+                  onDeleteRequest={onDeleteRequest}
+                />
               </Box>
             </Box>
           </Grow>

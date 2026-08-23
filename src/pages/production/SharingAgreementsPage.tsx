@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type FC } from "react";
-import { Box, Chip, Paper } from "@mui/material";
-import { useParams } from "react-router";
+import { Box, Button, Chip, Paper } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { useNavigate, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
+import AddIcon from "@mui/icons-material/Add";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -11,10 +13,14 @@ import { PageHeaderWithStats } from "../../components/PageHeader";
 import { LoadingCardGrid } from "../../components/CardGrid";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import { SharingAgreementTimeline } from "../../components/SharingAgreementTimeline";
+import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
+import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
 import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
+import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
+import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
 import { getSharingAgreementStatusColor, getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
 
@@ -29,12 +35,19 @@ const SINGLE_COLUMN = { xs: 1, sm: 1, md: 1, lg: 1 };
 
 export const SharingAgreementsPage: FC = () => {
   const { plantId = "" } = useParams();
+  const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { agreements, plant, counts, isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
+  const { createAgreement, updateAgreement, deleteAgreement, isCreating, isUpdating, isDeleting } =
+    useSharingAgreementMutations(plantId);
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<SharingAgreementStatusFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<SharingAgreementResponse | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SharingAgreementResponse | null>(null);
 
   useEffect(() => {
     if (error) {
@@ -46,6 +59,31 @@ export const SharingAgreementsPage: FC = () => {
     () => filterSharingAgreements(agreements, debouncedSearchText, statusFilter),
     [agreements, debouncedSearchText, statusFilter],
   );
+
+  const handleCreateSubmit = async (values: SharingAgreementFormValues) => {
+    const response = await createAgreement(values);
+    if (!response) return;
+    setIsCreateDialogOpen(false);
+    // `id` is optional on SharingAgreementResponse — the list query is already
+    // invalidated above, so if it's somehow missing we still land somewhere
+    // correct (the list, showing the new agreement) instead of a route
+    // containing the literal string "undefined".
+    if (response.id) {
+      navigate(`/production/${plantId}/sharing-agreements/${response.id}`);
+    }
+  };
+
+  const handleEditSubmit = async (values: SharingAgreementFormValues) => {
+    if (!editTarget?.id) return;
+    const success = await updateAgreement(editTarget.id, values);
+    if (success) setEditTarget(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget?.id) return;
+    const success = await deleteAgreement(deleteTarget.id);
+    if (success) setDeleteTarget(null);
+  };
 
   return (
     <Box
@@ -106,6 +144,25 @@ export const SharingAgreementsPage: FC = () => {
                   justifyContent: "space-between",
                 }}
               >
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  sx={{
+                    background: (theme) => theme.palette.primary.main,
+                    px: 3,
+                    py: 1.5,
+                    boxShadow: (theme) => `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: (theme) => `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
+                    },
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Nuevo acuerdo de reparto
+                </Button>
+
                 <Box
                   sx={{
                     display: "flex",
@@ -150,7 +207,12 @@ export const SharingAgreementsPage: FC = () => {
 
           {!isLoading && !error && filteredAgreements.length > 0 && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementTimeline plantId={plantId} agreements={filteredAgreements} />
+              <SharingAgreementTimeline
+                plantId={plantId}
+                agreements={filteredAgreements}
+                onEdit={setEditTarget}
+                onDeleteRequest={setDeleteTarget}
+              />
             </Box>
           )}
 
@@ -168,6 +230,45 @@ export const SharingAgreementsPage: FC = () => {
             </Box>
           )}
         </>
+      )}
+
+      {isCreateDialogOpen && (
+        <SharingAgreementFormDialog
+          key="create"
+          isOpen
+          mode="create"
+          plantName={plant?.name}
+          initialValues={{ installedPowerKw: plant?.totalPower }}
+          isSubmitting={isCreating}
+          onCancel={() => setIsCreateDialogOpen(false)}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {editTarget && (
+        <SharingAgreementFormDialog
+          key={editTarget.id ?? "edit"}
+          isOpen
+          mode="edit"
+          initialValues={{
+            name: editTarget.name,
+            notes: editTarget.notes,
+            installedPowerKw: editTarget.installedPowerKw,
+          }}
+          isSubmitting={isUpdating}
+          onCancel={() => setEditTarget(null)}
+          onSubmit={handleEditSubmit}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteSharingAgreementConfirmationModal
+          isOpen
+          agreementName={deleteTarget.name || "Acuerdo de reparto"}
+          isDeleting={isDeleting}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteConfirm}
+        />
       )}
     </Box>
   );
