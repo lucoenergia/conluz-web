@@ -10,6 +10,7 @@ import { DetailHeader, DetailTile } from "../DetailHeader";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
+import { formatKilowatts } from "../../utils/formatKilowatts";
 import { alphas, colors } from "../../theme/tokens";
 
 export interface SharingAgreementDetailHeaderProps {
@@ -109,7 +110,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
 
     <DetailTile label="Potencia instalada">
       <Typography variant="body1" fontWeight="bold">
-        {agreement?.installedPowerKw !== undefined ? `${agreement.installedPowerKw} kW` : "-"}
+        {agreement?.installedPowerKw !== undefined ? formatKilowatts(agreement.installedPowerKw) : "-"}
       </Typography>
     </DetailTile>
 

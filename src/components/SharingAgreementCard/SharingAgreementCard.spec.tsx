@@ -35,7 +35,7 @@ describe("SharingAgreementCard", () => {
 
     expect(screen.getByText("Reparto vecinos bloque A")).toBeInTheDocument();
     expect(screen.getByText("Vigente")).toBeInTheDocument();
-    expect(screen.getByText("42.5 kW")).toBeInTheDocument();
+    expect(screen.getByText("42,50 kW")).toBeInTheDocument();
     expect(screen.getByText("Acuerdo firmado en la reunión de la comunidad")).toBeInTheDocument();
   });
 

@@ -9,6 +9,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii, alphas, colors } from "../../theme/tokens";
+import { formatKilowatts } from "../../utils/formatKilowatts";
 import { AppCard } from "../AppCard";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
@@ -186,7 +187,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
             <BoltIcon sx={{ color: "success.main", fontSize: 24 }} />
             <Box>
               <Typography variant="body1" fontWeight="600">
-                {agreement.installedPowerKw !== undefined ? `${agreement.installedPowerKw} kW` : "-"}
+                {agreement.installedPowerKw !== undefined ? formatKilowatts(agreement.installedPowerKw) : "-"}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Potencia instalada

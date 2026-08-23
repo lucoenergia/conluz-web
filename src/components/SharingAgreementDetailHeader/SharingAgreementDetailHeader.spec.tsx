@@ -28,7 +28,7 @@ describe("SharingAgreementDetailHeader", () => {
     expect(screen.getByText("CAU: ES0031300296192001MB")).toBeInTheDocument();
     expect(screen.getByText("Vigente")).toBeInTheDocument();
     expect(screen.getByText("23 de mayo de 2024")).toBeInTheDocument();
-    expect(screen.getByText("42.5 kW")).toBeInTheDocument();
+    expect(screen.getByText("42,50 kW")).toBeInTheDocument();
     expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
   });
 
