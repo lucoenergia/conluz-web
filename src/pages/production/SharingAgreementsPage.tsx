@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type FC } from "react";
-import { Box, Chip, Paper } from "@mui/material";
-import { useParams } from "react-router";
+import { Box, Button, Chip, Paper } from "@mui/material";
+import { useNavigate, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
+import AddIcon from "@mui/icons-material/Add";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -11,10 +12,12 @@ import { PageHeaderWithStats } from "../../components/PageHeader";
 import { LoadingCardGrid } from "../../components/CardGrid";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import { SharingAgreementTimeline } from "../../components/SharingAgreementTimeline";
+import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { useErrorDispatch } from "../../context/error.context";
 import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
+import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
 import { getSharingAgreementStatusColor, getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
 
@@ -29,12 +32,16 @@ const SINGLE_COLUMN = { xs: 1, sm: 1, md: 1, lg: 1 };
 
 export const SharingAgreementsPage: FC = () => {
   const { plantId = "" } = useParams();
+  const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { agreements, plant, counts, isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
+  const { createAgreement, isCreating } = useSharingAgreementMutations(plantId);
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<SharingAgreementStatusFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -46,6 +53,19 @@ export const SharingAgreementsPage: FC = () => {
     () => filterSharingAgreements(agreements, debouncedSearchText, statusFilter),
     [agreements, debouncedSearchText, statusFilter],
   );
+
+  const handleCreateSubmit = async (values: SharingAgreementFormValues) => {
+    const response = await createAgreement(values);
+    if (!response) return;
+    setIsCreateDialogOpen(false);
+    // `id` is optional on SharingAgreementResponse — the list query is already
+    // invalidated above, so if it's somehow missing we still land somewhere
+    // correct (the list, showing the new agreement) instead of a route
+    // containing the literal string "undefined".
+    if (response.id) {
+      navigate(`/production/${plantId}/sharing-agreements/${response.id}`);
+    }
+  };
 
   return (
     <Box
@@ -93,6 +113,18 @@ export const SharingAgreementsPage: FC = () => {
                 { value: counts.historicos, label: "Históricos" },
               ]}
             />
+          </Box>
+
+          <Box sx={{ ...sxStyles.pageContainer, display: "flex", justifyContent: { xs: "stretch", sm: "flex-end" } }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setIsCreateDialogOpen(true)}
+              fullWidth={false}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
+            >
+              Nuevo acuerdo de reparto
+            </Button>
           </Box>
 
           <Box sx={sxStyles.pageContainer}>
@@ -169,6 +201,19 @@ export const SharingAgreementsPage: FC = () => {
           )}
         </>
       )}
+
+      {isCreateDialogOpen && (
+        <SharingAgreementFormDialog
+          key="create"
+          isOpen
+          mode="create"
+          initialValues={{ installedPowerKw: plant?.totalPower }}
+          isSubmitting={isCreating}
+          onCancel={() => setIsCreateDialogOpen(false)}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
     </Box>
   );
 };
