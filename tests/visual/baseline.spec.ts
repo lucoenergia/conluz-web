@@ -874,7 +874,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreements(page);
     await page.getByRole("button", { name: "Nuevo acuerdo de reparto" }).click();
 
-    await expect(page.getByLabel("Potencia instalada (kW)", { exact: false })).toHaveValue("120,5");
+    await expect(page.getByLabel("Capacidad de generación de la planta", { exact: false })).toHaveValue("120,5");
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-create-dialog.png", { fullPage: true });
@@ -888,7 +888,7 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreements(page);
     await page.getByRole("button", { name: "Nuevo acuerdo de reparto" }).click();
-    await page.getByRole("button", { name: "Crear acuerdo" }).click();
+    await page.getByRole("button", { name: "Crear borrador" }).click();
 
     await expect(page.getByText("El nombre es obligatorio")).toBeVisible();
     await stabilizePage(page);

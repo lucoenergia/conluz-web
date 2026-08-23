@@ -1,7 +1,8 @@
 import { useState, type FC } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import { Alert, Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { AppModal } from "../Modals/AppModal";
 import { sxStyles } from "../../theme/sx";
 import { fontSizes, shadows } from "../../theme/tokens";
@@ -22,6 +23,8 @@ export interface SharingAgreementFormInitialValues {
 export interface SharingAgreementFormDialogProps {
   isOpen: boolean;
   mode: "create" | "edit";
+  /** Only used in create mode, for the "se creará para {plantName}" intro line. */
+  plantName?: string;
   initialValues?: SharingAgreementFormInitialValues;
   isSubmitting?: boolean;
   onCancel: () => void;
@@ -39,6 +42,7 @@ function isCapacityValid(raw: string): boolean {
 export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = ({
   isOpen,
   mode,
+  plantName,
   initialValues,
   isSubmitting = false,
   onCancel,
@@ -126,40 +130,63 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
               "&:hover": { boxShadow: shadows.strong },
             }}
           >
-            {mode === "create" ? "Crear acuerdo" : "Guardar cambios"}
+            {mode === "create" ? "Crear borrador" : "Guardar cambios"}
           </Button>
         </>
       }
     >
       <Box sx={{ maxHeight: "60vh", overflowY: "auto" }}>
+        {mode === "create" && (
+          <>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+              Se creará para <strong>{plantName || "la planta"}</strong> en estado <strong>Borrador</strong>. Desde
+              ahí podrás elegir entre dos caminos: adjuntar el fichero TXT que ya te haya facilitado la
+              distribuidora, o introducir los coeficientes a mano — generar el fichero para la distribuidora es
+              opcional y está disponible en cualquier momento del borrador.
+            </Typography>
+
+            <Alert icon={<LockOutlinedIcon fontSize="small" />} severity="info" sx={{ mb: 3 }}>
+              Al <strong>poner en vigor</strong>, el conjunto de coeficientes queda fijo para siempre — cualquier
+              cambio futuro requerirá un nuevo acuerdo. Después de ponerlo en vigor solo podrás registrar cuándo la
+              distribuidora aplica cada coeficiente.
+            </Alert>
+          </>
+        )}
+
         <Box sx={sxStyles.flexColumnGap3}>
           <TextField
-            label="Nombre"
+            label="Capacidad de generación de la planta"
+            placeholder="Ej. 150"
+            value={capacityInput}
+            onChange={handleCapacityChange}
+            error={capacityError !== undefined}
+            helperText={capacityError ?? "Potencia pico instalada, en el momento de este acuerdo."}
+            required
+            autoFocus
+            fullWidth
+            variant="outlined"
+            slotProps={{
+              htmlInput: { inputMode: "decimal" },
+              input: { endAdornment: <InputAdornment position="end">kW</InputAdornment> },
+            }}
+          />
+
+          <TextField
+            label="Nombre del acuerdo"
+            placeholder="Ej. Recálculo julio 2026"
             value={name}
             onChange={handleNameChange}
             error={nameError !== undefined}
             helperText={nameError}
             required
-            autoFocus
             fullWidth
             variant="outlined"
             slotProps={{ htmlInput: { maxLength: 100 } }}
           />
 
           <TextField
-            label="Potencia instalada (kW)"
-            value={capacityInput}
-            onChange={handleCapacityChange}
-            error={capacityError !== undefined}
-            helperText={capacityError}
-            required
-            fullWidth
-            variant="outlined"
-            slotProps={{ htmlInput: { inputMode: "decimal" } }}
-          />
-
-          <TextField
-            label="Notas"
+            label="Notas internas"
+            placeholder="Motivo del nuevo reparto, cambios respecto al anterior, etc."
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             multiline

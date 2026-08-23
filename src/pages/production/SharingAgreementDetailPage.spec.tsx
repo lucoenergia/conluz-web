@@ -120,8 +120,8 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(await screen.findByText("Editar"));
 
     expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Reparto 2025");
-    expect(screen.getByLabelText("Notas")).toHaveValue("Nota original");
-    expect(screen.getByLabelText("Potencia instalada (kW)", { exact: false })).toHaveValue("12,5");
+    expect(screen.getByLabelText("Notas internas", { exact: false })).toHaveValue("Nota original");
+    expect(screen.getByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("12,5");
 
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 

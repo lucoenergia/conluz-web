@@ -158,10 +158,10 @@ describe("SharingAgreementsPage", () => {
     setup("plant-42");
 
     await user.click(screen.getByRole("button", { name: "Nuevo acuerdo de reparto" }));
-    expect(await screen.findByLabelText("Potencia instalada (kW)", { exact: false })).toHaveValue("30");
+    expect(await screen.findByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("30");
 
     await user.type(screen.getByLabelText("Nombre", { exact: false }), "Reparto nuevo");
-    await user.click(screen.getByRole("button", { name: "Crear acuerdo" }));
+    await user.click(screen.getByRole("button", { name: "Crear borrador" }));
 
     await waitFor(() => expect(mockCreateAgreement).toHaveBeenCalled());
     expect(mockNavigate).toHaveBeenCalledWith("/production/plant-42/sharing-agreements/new-agreement");
@@ -175,8 +175,8 @@ describe("SharingAgreementsPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Nuevo acuerdo de reparto" }));
     await user.type(screen.getByLabelText("Nombre", { exact: false }), "Reparto nuevo");
-    await user.type(screen.getByLabelText("Potencia instalada (kW)", { exact: false }), "10");
-    await user.click(screen.getByRole("button", { name: "Crear acuerdo" }));
+    await user.type(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }), "10");
+    await user.click(screen.getByRole("button", { name: "Crear borrador" }));
 
     await waitFor(() => expect(mockCreateAgreement).toHaveBeenCalled());
     expect(mockNavigate).not.toHaveBeenCalled();
