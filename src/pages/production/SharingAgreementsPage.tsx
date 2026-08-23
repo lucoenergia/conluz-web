@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Chip, Paper } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
@@ -132,18 +133,6 @@ export const SharingAgreementsPage: FC = () => {
             />
           </Box>
 
-          <Box sx={{ ...sxStyles.pageContainer, display: "flex", justifyContent: { xs: "stretch", sm: "flex-end" } }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setIsCreateDialogOpen(true)}
-              fullWidth={false}
-              sx={{ width: { xs: "100%", sm: "auto" } }}
-            >
-              Nuevo acuerdo de reparto
-            </Button>
-          </Box>
-
           <Box sx={sxStyles.pageContainer}>
             <Paper elevation={0} sx={sxStyles.softPanel}>
               <Box
@@ -155,6 +144,25 @@ export const SharingAgreementsPage: FC = () => {
                   justifyContent: "space-between",
                 }}
               >
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  sx={{
+                    background: (theme) => theme.palette.primary.main,
+                    px: 3,
+                    py: 1.5,
+                    boxShadow: (theme) => `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: (theme) => `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
+                    },
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Nuevo acuerdo de reparto
+                </Button>
+
                 <Box
                   sx={{
                     display: "flex",
