@@ -223,7 +223,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Los coeficientes se han guardado, pero la suma es 40,000000 % (se esperaba 100,000000 %)."),
+        screen.getByText("Los coeficientes se han guardado, pero la suma es 40,0000 % (se esperaba 100,0000 %)."),
       ).toBeInTheDocument(),
     );
     expect(screen.queryByText(/coefficient set sum/)).not.toBeInTheDocument();
@@ -235,7 +235,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
 
     // 0.4 + 0.6 + 0 = 100%.
-    expect(screen.getByText("Suma del fichero: 100,000000 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma del fichero: 100,0000 %")).toBeInTheDocument();
     expect(screen.getByText(/Suma completa \(100%\)/)).toBeInTheDocument();
     expect(screen.getByText(/100,00 kW de 100,00 kW instalados/)).toBeInTheDocument();
   });
@@ -252,9 +252,9 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
 
-    expect(screen.getByText("Suma del fichero: 99,999900 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma del fichero: 99,9999 %")).toBeInTheDocument();
     expect(screen.getByText(/con redondeo a céntimos/)).toBeInTheDocument();
-    expect(screen.getByText(/faltan 0,000100 % por ajustar en modo porcentaje/)).toBeInTheDocument();
+    expect(screen.getByText(/faltan 0,0001 % por ajustar en modo porcentaje/)).toBeInTheDocument();
     // No standalone "cuadra" claim in the copy.
     expect(screen.queryByText(/cuadra/i)).not.toBeInTheDocument();
   });

@@ -69,18 +69,18 @@ describe("sharingAgreementCoefficientSums", () => {
   });
 
   describe("formatCoefficientPercentage", () => {
-    it("always pads to 6 fixed decimals, never formatPercentage's generic 4dp default", () => {
-      expect(formatCoefficientPercentage(1)).toBe("100,000000 %");
-      expect(formatCoefficientPercentage(0.7)).toBe("70,000000 %");
+    it("always pads to 4 fixed decimals, matching formatPercentage's generic default", () => {
+      expect(formatCoefficientPercentage(1)).toBe("100,0000 %");
+      expect(formatCoefficientPercentage(0.7)).toBe("70,0000 %");
     });
 
-    it("rounds a value with more natural digits to exactly 6 decimals", () => {
+    it("rounds a value with more natural digits to exactly 4 decimals", () => {
       // 999,999 / 1,000,000 units — the exact "one short" scenario from isFullSum.
-      expect(formatCoefficientPercentage(999_999 / COEFFICIENT_SCALE)).toBe("99,999900 %");
+      expect(formatCoefficientPercentage(999_999 / COEFFICIENT_SCALE)).toBe("99,9999 %");
     });
 
     it("formats a tiny gap (1 unit) without collapsing to 0", () => {
-      expect(formatCoefficientPercentage(1 / COEFFICIENT_SCALE)).toBe("0,000100 %");
+      expect(formatCoefficientPercentage(1 / COEFFICIENT_SCALE)).toBe("0,0001 %");
     });
   });
 });

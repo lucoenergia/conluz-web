@@ -47,10 +47,14 @@ export function isFullSum(sumUnits: number): boolean {
 
 /**
  * Formats a 0-1 coefficient (or a coefficient-derived ratio: a sum, a gap)
- * as a percentage, always fixed at six decimals — matching COEFFICIENT_SCALE
- * itself. Every sharing-agreement percentage display must go through this,
- * not formatPercentage's generic 4dp default directly.
+ * as a percentage, at 4 decimals — the coefficient's own 6-decimal precision
+ * (COEFFICIENT_SCALE) shifted 2 places by the *100 percent conversion, so
+ * 4dp on the percentage losslessly matches 6dp on the underlying fraction.
+ * Do not raise this back to 6dp: the extra 2 digits are always trailing
+ * zeros. The raw coefficient value itself (e.g. the editor's "%"-mode input,
+ * via formatCoefficientForInput / formatFixedDecimalForInput) is a different
+ * quantity and correctly stays at 6dp — don't conflate the two.
  */
 export function formatCoefficientPercentage(value: number): string {
-  return formatPercentage(value, { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+  return formatPercentage(value);
 }

@@ -1194,7 +1194,7 @@ test.describe("Visual baselines", () => {
     // Plain string, not regex: the percent formatter's U+00A0 before "%" is
     // normalized against a regular space by getByText's string matcher, but
     // not by its regex matcher.
-    await expect(page.getByText("Suma del fichero: 70,000000 %")).toBeVisible();
+    await expect(page.getByText("Suma del fichero: 70,0000 %")).toBeVisible();
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-mid-edit.png", { fullPage: true });
@@ -1274,12 +1274,12 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar coeficientes" }).click();
 
-    await expect(page.getByText("Suma del fichero: 99,999900 %")).toBeVisible();
+    await expect(page.getByText("Suma del fichero: 99,9999 %")).toBeVisible();
     // Plain strings, not regex — same NBSP-normalization rationale as the
     // percentage assertion above: getByText's string matcher normalizes the
     // formatter's U+00A0 against a regular space; its regex matcher does not.
     await expect(page.getByText("(con redondeo a céntimos)", { exact: false })).toBeVisible();
-    await expect(page.getByText("faltan 0,000100 % por ajustar en modo porcentaje.", { exact: false })).toBeVisible();
+    await expect(page.getByText("faltan 0,0001 % por ajustar en modo porcentaje.", { exact: false })).toBeVisible();
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-kw-rounding-caveat.png", { fullPage: true });

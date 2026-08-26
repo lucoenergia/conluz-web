@@ -253,7 +253,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     <Paper elevation={0} sx={sxStyles.softPanel}>
       {sumWarning && (
         <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setSumWarning(undefined)}>
-          Los coeficientes se han guardado, pero la suma es {sumWarning} (se esperaba 100,000000 %).
+          Los coeficientes se han guardado, pero la suma es {sumWarning} (se esperaba 100,0000 %).
         </Alert>
       )}
 
