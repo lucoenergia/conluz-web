@@ -39,6 +39,17 @@ describe("buildEditableRowsFromCoefficients", () => {
     const rows = buildEditableRowsFromCoefficients([{ supply: undefined, coefficient: 0.5 }], "percentage", 100);
     expect(rows).toHaveLength(0);
   });
+
+  it("re-rounds a drifted legacy coefficient to 6 decimals on load, so re-saving it untouched can't re-propagate the drift", () => {
+    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 1 / 3 }], "percentage", 100);
+    expect(rows[0].value).toBe(0.333333);
+    expect(rows[0].inputText).toBe("0,333333");
+  });
+
+  it("leaves value undefined when the server coefficient is missing, never defaulting it to 0", () => {
+    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: undefined }], "percentage", 100);
+    expect(rows[0].value).toBeUndefined();
+  });
 });
 
 describe("buildEditableRowFromSupply", () => {
@@ -72,6 +83,24 @@ describe("parseCoefficientInput", () => {
   it("'0' parses to a real 0 in both units, never NaN", () => {
     expect(parseCoefficientInput("0", "percentage", 100)).toBe(0);
     expect(parseCoefficientInput("0", "kw", 100)).toBe(0);
+  });
+
+  it("rounds a kW division to exactly 6 decimals — the reported defect: 1.5 kW / 48.4 kW installed used to yield 0.030991735537190084", () => {
+    const value = parseCoefficientInput("1,5", "kw", 48.4);
+    expect(value).toBe(0.030992);
+    expect(Number.isInteger(value * COEFFICIENT_SCALE)).toBe(true);
+  });
+
+  it("reproduction case: installedPowerKw 48,40 kW with rows of 1,50 / 3,20 / 1,00 / 2,00 kW all round to exact millionths", () => {
+    const installedPowerKw = 48.4;
+    const values = ["1,5", "3,2", "1,0", "2,0"].map((kw) => parseCoefficientInput(kw, "kw", installedPowerKw));
+    expect(values).toEqual([0.030992, 0.066116, 0.020661, 0.041322]);
+    values.forEach((value) => expect(Number.isInteger(value * COEFFICIENT_SCALE)).toBe(true));
+  });
+
+  it("rounds a percentage-mode value typed with more than 6 decimals, never leaking extra precision into the canonical value", () => {
+    expect(parseCoefficientInput("0,0309925", "percentage", undefined)).toBe(0.030993);
+    expect(parseCoefficientInput("0,0309924", "percentage", undefined)).toBe(0.030992);
   });
 });
 

@@ -4,6 +4,7 @@ import {
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
 import { formatFixedDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
+import { COEFFICIENT_SCALE, toIntegerUnits } from "./sharingAgreementCoefficientSums";
 
 export type CoefficientInputUnit = "percentage" | "kw";
 
@@ -29,12 +30,22 @@ export interface EditableCoefficientRow {
   inputText: string;
 }
 
+/** Rounds a 0-1 value to the nearest millionth, reusing the sum module's own integer-scale rounding. */
+function toMillionths(value: number): number {
+  return toIntegerUnits(value) / COEFFICIENT_SCALE;
+}
+
 /**
- * Raw text (already expressed in `unit`) -> canonical 0-1 value. No rounding
- * beyond plain division — storage stays full-precision; rounding only ever
- * happens when formatting a value back to display text. NaN (never 0) for
- * empty/unparseable text, or for kW text when installedPowerKw is missing or
- * non-positive — an unusable conversion, not a silent zero.
+ * Raw text (already expressed in `unit`) -> canonical 0-1 value, rounded to
+ * the nearest millionth immediately, once — this IS the canonical value, and
+ * nothing downstream re-derives or re-rounds it. Rounding here (rather than
+ * only at display time) is what guarantees the save payload is always an
+ * exact multiple of 1e-6, matching the distributor file's precision: a plain
+ * `kw / installedPowerKw` division produces an arbitrary-precision float, and
+ * without rounding at the point of conversion that float reaches the server
+ * verbatim. NaN (never 0) for empty/unparseable text, or for kW text when
+ * installedPowerKw is missing or non-positive — an unusable conversion, not a
+ * silent zero.
  */
 export function parseCoefficientInput(
   raw: string,
@@ -42,9 +53,9 @@ export function parseCoefficientInput(
   installedPowerKw: number | undefined,
 ): number {
   const parsed = parseDecimalInput(raw);
-  if (unit === "percentage") return parsed;
+  if (unit === "percentage") return toMillionths(parsed);
   if (installedPowerKw === undefined || installedPowerKw <= 0) return NaN;
-  return parsed / installedPowerKw;
+  return toMillionths(parsed / installedPowerKw);
 }
 
 /**
@@ -86,13 +97,20 @@ export function buildEditableRowsFromCoefficients(
 ): EditableCoefficientRow[] {
   return coefficients
     .filter((coefficient) => !!coefficient.supply?.id)
-    .map((coefficient) => ({
-      // Supply's id is the PUT's join key — never the coefficientId. Guarded above.
-      supplyId: coefficient.supply!.id!,
-      coefficient,
-      value: coefficient.coefficient,
-      inputText: formatCoefficientForInput(coefficient.coefficient, unit, installedPowerKw),
-    }));
+    .map((coefficient) => {
+      // Re-round on load too: a row saved before this rounding existed could
+      // still carry a drifted value, and re-saving it untouched must not
+      // silently re-propagate that drift. `undefined` stays `undefined`
+      // (toIntegerUnits would otherwise default a missing coefficient to 0).
+      const value = coefficient.coefficient !== undefined ? toMillionths(coefficient.coefficient) : undefined;
+      return {
+        // Supply's id is the PUT's join key — never the coefficientId. Guarded above.
+        supplyId: coefficient.supply!.id!,
+        coefficient,
+        value,
+        inputText: formatCoefficientForInput(value, unit, installedPowerKw),
+      };
+    });
 }
 
 export function buildEditableRowFromSupply(supply: SupplyResponse): EditableCoefficientRow {

@@ -54,6 +54,23 @@ describe("SharingAgreementCoefficientTableRow", () => {
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
+  it("renders the supply's display name in the 'Punto' column, never its id, even when both are present", () => {
+    const coefficientWithId: SharingAgreementPartitionCoefficientResponse = {
+      ...pendingCoefficient,
+      supply: { id: "d8e14158-41fa-405b-ab48-4abd9a126079", name: "Vivienda A", code: "ES0031300000000001AB" },
+    };
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow coefficient={coefficientWithId} installedPowerKw={100} />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByText("Vivienda A")).toBeInTheDocument();
+    expect(screen.queryByText("d8e14158-41fa-405b-ab48-4abd9a126079")).not.toBeInTheDocument();
+  });
+
   it("falls back to a dash for assigned energy when installedPowerKw is unavailable", () => {
     render(
       <Table>
@@ -302,6 +319,28 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
 
     expect(screen.getByPlaceholderText("0,00")).toBeInTheDocument();
     expect(screen.getByText("kW")).toBeInTheDocument();
+  });
+
+  it("renders no adornment in percentage mode — the field is a raw 0-1 coefficient, not a percentage", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            isEditing
+            inputUnit="percentage"
+            coefficientInput="0,030992"
+            editedValue={0.030992}
+            onCoefficientChange={vi.fn()}
+            onRemove={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByRole("textbox")).toHaveValue("0,030992");
+    expect(screen.queryByText("%")).not.toBeInTheDocument();
   });
 
   it("shows a kW-range error message using the plant's installedPowerKw", () => {

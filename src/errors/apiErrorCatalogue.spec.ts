@@ -74,6 +74,15 @@ describe("distributor-file and sharing-agreement error templates", () => {
     expect(message).not.toBe("raw server message");
   });
 
+  it("translates SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID to a non-empty Spanish message, distinct from the raw server message", () => {
+    const message = translateErrorDetail(
+      { message: "raw server message", code: RestErrorDetailCode.SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID },
+      "fallback",
+    );
+    expect(message).not.toBe("");
+    expect(message).not.toBe("raw server message");
+  });
+
   it("translates SHARING_AGREEMENT_DUPLICATE_SUPPLY distinctly from DISTRIBUTOR_FILE_CUPS_DUPLICATE", () => {
     const manual = translateErrorDetail(
       { message: "raw", code: RestErrorDetailCode.SHARING_AGREEMENT_DUPLICATE_SUPPLY },

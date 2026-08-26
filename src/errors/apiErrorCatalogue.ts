@@ -6,9 +6,16 @@ import type { RestError, RestErrorDetail } from "../api/models";
  * placeholders, interpolated from the detail's `params` map.
  *
  * Scoped to the codes reachable from the endpoints this app actually calls
- * today. Codes belonging to publishing, reverting, or file generation
- * (e.g. SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID, PLANT_MISSING_REGULATORY_CODE)
- * are deliberately absent — add them when the issue that reaches them lands.
+ * today. Codes belonging to publishing, reverting, or file generation (e.g.
+ * PLANT_MISSING_REGULATORY_CODE) are deliberately absent — add them when the
+ * issue that reaches them lands.
+ *
+ * SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID is an exception: it's added ahead
+ * of the publish/file-validate flow that will actually surface it, so the
+ * catalogue doesn't need touching again once that flow lands. It isn't
+ * reachable from any endpoint the app calls today, and it's unrelated to the
+ * save-success `coefficientSumWarning` string (a different, code-less field —
+ * see SharingAgreementCoefficientSet's save handler).
  */
 const API_ERROR_TEMPLATES: Partial<Record<RestErrorDetailCode, string>> = {
   [RestErrorDetailCode.SHARING_AGREEMENT_NOT_DRAFT]:
@@ -41,6 +48,9 @@ const API_ERROR_TEMPLATES: Partial<Record<RestErrorDetailCode, string>> = {
   // file-path DISTRIBUTOR_FILE_CUPS_DUPLICATE (keyed by CUPS) above.
   [RestErrorDetailCode.SHARING_AGREEMENT_DUPLICATE_SUPPLY]:
     "Hay un suministro repetido en el conjunto de coeficientes.",
+
+  [RestErrorDetailCode.SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID]:
+    "La suma de los coeficientes del acuerdo no es válida.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

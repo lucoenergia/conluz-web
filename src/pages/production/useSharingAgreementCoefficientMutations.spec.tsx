@@ -3,7 +3,13 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
-import type { EditableCoefficientRow } from "./sharingAgreementCoefficientEditing";
+import {
+  buildEditableRowFromSupply,
+  buildEditableRowsFromCoefficients,
+  retextRowsForUnit,
+  updateRowInput,
+  type EditableCoefficientRow,
+} from "./sharingAgreementCoefficientEditing";
 
 const mockErrorDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
@@ -91,6 +97,62 @@ describe("useSharingAgreementCoefficientMutations", () => {
     const outcome = await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5)]);
 
     expect(outcome).toEqual({ success: true, sumWarning: "La suma se aleja del 100%" });
+  });
+
+  it("reproduction case: rows entered in kW mode against a 48,40 kW plant reach the request body as exact 6-decimal values", async () => {
+    mockMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const installedPowerKw = 48.4;
+    const supplies = [
+      { id: "s1", name: "A" },
+      { id: "s2", name: "B" },
+      { id: "s3", name: "C" },
+      { id: "s4", name: "D" },
+    ];
+    const kwText = ["1,5", "3,2", "1,0", "2,0"];
+    const rows = supplies.map((supply, i) => {
+      const empty = buildEditableRowFromSupply(supply);
+      return updateRowInput([empty], supply.id!, kwText[i], "kw", installedPowerKw)[0];
+    });
+
+    await result.current.replaceCoefficients("agreement-1", rows);
+
+    const body = mockMutateAsync.mock.calls[0][0].data;
+    expect(body.coefficients).toEqual([
+      { supplyId: "s1", coefficient: 0.030992 },
+      { supplyId: "s2", coefficient: 0.066116 },
+      { supplyId: "s3", coefficient: 0.020661 },
+      { supplyId: "s4", coefficient: 0.041322 },
+    ]);
+  });
+
+  it("round-trip: exact 6-decimal coefficients summing to 1,000,000 units survive display, unit toggling, and save unchanged", async () => {
+    mockMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const installedPowerKw = 45;
+    const seeded = buildEditableRowsFromCoefficients(
+      [
+        { supply: { id: "s1" }, coefficient: 0.333333 },
+        { supply: { id: "s2" }, coefficient: 0.333333 },
+        { supply: { id: "s3" }, coefficient: 0.333334 },
+      ],
+      "percentage",
+      installedPowerKw,
+    );
+
+    let rows = retextRowsForUnit(seeded, "kw", installedPowerKw);
+    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
+
+    await result.current.replaceCoefficients("agreement-1", rows);
+
+    const body = mockMutateAsync.mock.calls[0][0].data;
+    expect(body.coefficients).toEqual([
+      { supplyId: "s1", coefficient: 0.333333 },
+      { supplyId: "s2", coefficient: 0.333333 },
+      { supplyId: "s3", coefficient: 0.333334 },
+    ]);
   });
 
   it("dispatches a toast and returns success:false on error, without throwing", async () => {

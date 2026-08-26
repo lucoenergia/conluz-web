@@ -76,7 +76,9 @@ function CoefficientInput({
       placeholder={unit === "percentage" ? "0,000000" : "0,00"}
       slotProps={{
         htmlInput: { inputMode: "decimal", style: { textAlign: align === "end" ? "right" : "left" } },
-        input: { endAdornment: <InputAdornment position="end">{unit === "percentage" ? "%" : "kW"}</InputAdornment> },
+        input: {
+          endAdornment: unit === "kw" ? <InputAdornment position="end">kW</InputAdornment> : undefined,
+        },
       }}
       sx={{ width: 160 }}
     />
