@@ -36,12 +36,12 @@ function formatAssignedEnergy(coefficientValue: number | undefined, installedPow
 }
 
 function getCoefficientInputErrorMessage(unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
-  if (unit === "percentage") return "Introduce un valor entre 0 y 1";
+  if (unit === "coefficient") return "Introduce un valor entre 0 y 1";
   if (installedPowerKw === undefined || installedPowerKw <= 0) return "Introduce un valor válido";
   return `Introduce un valor entre 0 y ${formatDecimalForInput(installedPowerKw)} kW`;
 }
 
-/** "Energía asignada" in % mode (as always); the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
+/** "Energía asignada" in coefficient mode (as always); the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
 function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
   if (value === undefined) return "-";
   if (unit === "kw") return formatCoefficientPercentage(value);
@@ -73,7 +73,7 @@ function CoefficientInput({
       onChange={(event) => onCoefficientChange(event.target.value)}
       error={isInvalid || isEmpty}
       helperText={isInvalid ? getCoefficientInputErrorMessage(unit, installedPowerKw) : isEmpty ? "Obligatorio" : undefined}
-      placeholder={unit === "percentage" ? "0,000000" : "0,00"}
+      placeholder={unit === "coefficient" ? "0,000000" : "0,00"}
       slotProps={{
         htmlInput: { inputMode: "decimal", style: { textAlign: align === "end" ? "right" : "left" } },
         input: {
@@ -97,7 +97,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   showStateColumns = true,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
 
   return (
@@ -175,7 +175,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   showStateColumns = true,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
 
   return (

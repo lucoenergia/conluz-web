@@ -1240,7 +1240,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Editar coeficientes" }).click();
     await expect(page.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: "%" }).click();
+    await page.getByRole("button", { name: "Coeficiente" }).click();
 
     // Vivienda A's 0.3 coefficient (13,50 kW of the 45 kW installed) survives
     // the toggle as "0,300000" — converted, not cleared, fixed at 6dp, and not

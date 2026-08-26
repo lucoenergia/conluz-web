@@ -6,7 +6,7 @@ import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } fro
 import { formatFixedDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
 import { COEFFICIENT_SCALE, toIntegerUnits } from "./sharingAgreementCoefficientSums";
 
-export type CoefficientInputUnit = "percentage" | "kw";
+export type CoefficientInputUnit = "coefficient" | "kw";
 
 /**
  * A row in the manual coefficient editor. `coefficient` carries display-only
@@ -53,7 +53,7 @@ export function parseCoefficientInput(
   installedPowerKw: number | undefined,
 ): number {
   const parsed = parseDecimalInput(raw);
-  if (unit === "percentage") return toMillionths(parsed);
+  if (unit === "coefficient") return toMillionths(parsed);
   if (installedPowerKw === undefined || installedPowerKw <= 0) return NaN;
   return toMillionths(parsed / installedPowerKw);
 }
@@ -63,11 +63,12 @@ export function parseCoefficientInput(
  * still-precise `value`, never a previously-formatted string, so
  * rounding-for-display never compounds across repeated toggles.
  *
- * Both units are FIXED precision, always padded, never variable-length:
- * percentage at 6dp (matches the backend's own coefficient precision,
- * COEFFICIENT_SCALE = 1e-6 — the read-only display already honors this via
- * formatPercentage, and the editable input must too, in every case, not just
- * when the natural float representation happens to be short); kW at 2dp
+ * Both units are FIXED precision, always padded, never variable-length: the
+ * raw 0-1 coefficient at 6dp (matches the backend's own coefficient
+ * precision, COEFFICIENT_SCALE = 1e-6 — the read-only percentage display
+ * honors this via formatPercentage at its own, distinct 4dp percentage scale;
+ * the editable coefficient input must stay fixed at 6dp in every case, not
+ * just when the natural float representation happens to be short); kW at 2dp
  * (matches formatKilowatts's convention everywhere else kW is shown). A bare
  * String()-style formatter must never be used here: a kW->coefficient
  * division can produce an arbitrary number of natural decimal digits, and
@@ -79,7 +80,7 @@ export function formatCoefficientForInput(
   installedPowerKw: number | undefined,
 ): string {
   if (value === undefined || !Number.isFinite(value)) return "";
-  if (unit === "percentage") return formatFixedDecimalForInput(value, 6);
+  if (unit === "coefficient") return formatFixedDecimalForInput(value, 6);
   if (installedPowerKw === undefined || installedPowerKw <= 0) return "";
   const kw = Math.round(value * installedPowerKw * 100) / 100;
   return formatFixedDecimalForInput(kw, 2);

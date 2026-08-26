@@ -15,7 +15,7 @@ describe("buildEditableRowsFromCoefficients", () => {
   it("seeds value from the exact server coefficient and inputText fixed at 6 decimals", () => {
     const rows = buildEditableRowsFromCoefficients(
       [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 0.3 }],
-      "percentage",
+      "coefficient",
       100,
     );
     expect(rows).toEqual([
@@ -24,7 +24,7 @@ describe("buildEditableRowsFromCoefficients", () => {
   });
 
   it("seeds an explicit zero coefficient as value 0 and inputText '0,000000', not empty", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 0 }], "percentage", 100);
+    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 0 }], "coefficient", 100);
     expect(rows[0].value).toBe(0);
     expect(rows[0].inputText).toBe("0,000000");
   });
@@ -36,18 +36,18 @@ describe("buildEditableRowsFromCoefficients", () => {
   });
 
   it("drops entries with no supply id rather than crashing", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: undefined, coefficient: 0.5 }], "percentage", 100);
+    const rows = buildEditableRowsFromCoefficients([{ supply: undefined, coefficient: 0.5 }], "coefficient", 100);
     expect(rows).toHaveLength(0);
   });
 
   it("re-rounds a drifted legacy coefficient to 6 decimals on load, so re-saving it untouched can't re-propagate the drift", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 1 / 3 }], "percentage", 100);
+    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 1 / 3 }], "coefficient", 100);
     expect(rows[0].value).toBe(0.333333);
     expect(rows[0].inputText).toBe("0,333333");
   });
 
   it("leaves value undefined when the server coefficient is missing, never defaulting it to 0", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: undefined }], "percentage", 100);
+    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: undefined }], "coefficient", 100);
     expect(rows[0].value).toBeUndefined();
   });
 });
@@ -63,7 +63,7 @@ describe("buildEditableRowFromSupply", () => {
 
 describe("parseCoefficientInput", () => {
   it("percentage unit parses directly", () => {
-    expect(parseCoefficientInput("0,5", "percentage", undefined)).toBe(0.5);
+    expect(parseCoefficientInput("0,5", "coefficient", undefined)).toBe(0.5);
   });
 
   it("kw unit divides by installedPowerKw", () => {
@@ -76,12 +76,12 @@ describe("parseCoefficientInput", () => {
   });
 
   it("empty text is NaN in both units, never 0", () => {
-    expect(parseCoefficientInput("", "percentage", 100)).toBeNaN();
+    expect(parseCoefficientInput("", "coefficient", 100)).toBeNaN();
     expect(parseCoefficientInput("", "kw", 100)).toBeNaN();
   });
 
   it("'0' parses to a real 0 in both units, never NaN", () => {
-    expect(parseCoefficientInput("0", "percentage", 100)).toBe(0);
+    expect(parseCoefficientInput("0", "coefficient", 100)).toBe(0);
     expect(parseCoefficientInput("0", "kw", 100)).toBe(0);
   });
 
@@ -99,21 +99,21 @@ describe("parseCoefficientInput", () => {
   });
 
   it("rounds a percentage-mode value typed with more than 6 decimals, never leaking extra precision into the canonical value", () => {
-    expect(parseCoefficientInput("0,0309925", "percentage", undefined)).toBe(0.030993);
-    expect(parseCoefficientInput("0,0309924", "percentage", undefined)).toBe(0.030992);
+    expect(parseCoefficientInput("0,0309925", "coefficient", undefined)).toBe(0.030993);
+    expect(parseCoefficientInput("0,0309924", "coefficient", undefined)).toBe(0.030992);
   });
 });
 
 describe("formatCoefficientForInput", () => {
   it("percentage unit formats fixed at 6 decimals, padding a value with fewer natural digits", () => {
-    expect(formatCoefficientForInput(0.123456, "percentage", undefined)).toBe("0,123456");
-    expect(formatCoefficientForInput(0.5, "percentage", undefined)).toBe("0,500000");
+    expect(formatCoefficientForInput(0.123456, "coefficient", undefined)).toBe("0,123456");
+    expect(formatCoefficientForInput(0.5, "coefficient", undefined)).toBe("0,500000");
   });
 
   it("percentage unit rounds a value with more natural digits than 6dp, never leaking raw float precision", () => {
     // The exact reported bug: a kW->coefficient division can produce far more
     // than 6 natural decimal digits (here, 1.5 kW / 48.4 kW installed).
-    expect(formatCoefficientForInput(1.5 / 48.4, "percentage", undefined)).toBe("0,030992");
+    expect(formatCoefficientForInput(1.5 / 48.4, "coefficient", undefined)).toBe("0,030992");
   });
 
   it("kw unit multiplies by installedPowerKw and formats fixed at 2 decimals, padding whole numbers too", () => {
@@ -122,7 +122,7 @@ describe("formatCoefficientForInput", () => {
   });
 
   it("undefined value formats as empty text in either unit", () => {
-    expect(formatCoefficientForInput(undefined, "percentage", 100)).toBe("");
+    expect(formatCoefficientForInput(undefined, "coefficient", 100)).toBe("");
     expect(formatCoefficientForInput(undefined, "kw", 100)).toBe("");
   });
 
@@ -156,19 +156,19 @@ describe("updateRowInput", () => {
   ];
 
   it("stores the typed text verbatim and derives value, leaving other rows untouched", () => {
-    const next = updateRowInput(rows, "s1", "0,4", "percentage", 100);
+    const next = updateRowInput(rows, "s1", "0,4", "coefficient", 100);
     expect(next[0]).toEqual({ supplyId: "s1", coefficient: {}, value: 0.4, inputText: "0,4" });
     expect(next[1]).toBe(rows[1]);
   });
 
   it("empty text -> value undefined, never 0 (percentage)", () => {
-    const next = updateRowInput(rows, "s1", "", "percentage", 100);
+    const next = updateRowInput(rows, "s1", "", "coefficient", 100);
     expect(next[0].value).toBeUndefined();
     expect(next[0].inputText).toBe("");
   });
 
   it("'0' text -> value 0, a real zero that survives (percentage)", () => {
-    const next = updateRowInput(rows, "s1", "0", "percentage", 100);
+    const next = updateRowInput(rows, "s1", "0", "coefficient", 100);
     expect(next[0].value).toBe(0);
   });
 
@@ -185,7 +185,7 @@ describe("updateRowInput", () => {
   it("stores an incomplete/unparseable typed value verbatim, without discarding the keystroke", () => {
     // A lone comma is unparseable (mid-typing "0,5"), but the keystroke itself must
     // still show up in the field rather than being silently rejected.
-    const next = updateRowInput(rows, "s1", ",", "percentage", 100);
+    const next = updateRowInput(rows, "s1", ",", "coefficient", 100);
     expect(next[0].inputText).toBe(",");
     expect(next[0].value).toBeUndefined();
   });
@@ -205,9 +205,9 @@ describe("retextRowsForUnit — toggle invariance", () => {
     expect(sumOf(original)).toBe(COEFFICIENT_SCALE);
 
     let rows = retextRowsForUnit(original, "kw", installedPowerKw);
-    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
+    rows = retextRowsForUnit(rows, "coefficient", installedPowerKw);
     rows = retextRowsForUnit(rows, "kw", installedPowerKw);
-    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
+    rows = retextRowsForUnit(rows, "coefficient", installedPowerKw);
 
     rows.forEach((row, i) => {
       expect(row.value).toBe(original[i].value);
@@ -220,13 +220,13 @@ describe("retextRowsForUnit — toggle invariance", () => {
     // must not re-derive value from that rounded text: it always re-derives text
     // from the still-precise value, never the reverse.
     const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {}, value: 0.01667, inputText: "0,01667" }];
-    const toggled = retextRowsForUnit(retextRowsForUnit(rows, "kw", 60), "percentage", 60);
+    const toggled = retextRowsForUnit(retextRowsForUnit(rows, "kw", 60), "coefficient", 60);
     expect(toggled[0].value).toBe(0.01667);
   });
 
   it("formats a row with no value as empty text, in either direction", () => {
     const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {}, value: undefined, inputText: "" }];
     expect(retextRowsForUnit(rows, "kw", 60)[0].inputText).toBe("");
-    expect(retextRowsForUnit(rows, "percentage", 60)[0].inputText).toBe("");
+    expect(retextRowsForUnit(rows, "coefficient", 60)[0].inputText).toBe("");
   });
 });

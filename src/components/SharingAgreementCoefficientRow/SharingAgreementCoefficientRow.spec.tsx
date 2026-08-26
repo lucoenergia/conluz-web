@@ -129,7 +129,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
   });
 });
 
-describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () => {
+describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () => {
   it("renders an editable input instead of the static percentage, seeded from coefficientInput/editedValue", () => {
     render(
       <Table>
@@ -138,7 +138,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="percentage"
+            inputUnit="coefficient"
             coefficientInput="0,25"
             editedValue={0.25}
             onCoefficientChange={vi.fn()}
@@ -163,7 +163,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="percentage"
+            inputUnit="coefficient"
             coefficientInput=""
             editedValue={undefined}
             onCoefficientChange={onCoefficientChange}
@@ -188,7 +188,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="percentage"
+            inputUnit="coefficient"
             coefficientInput=""
             editedValue={undefined}
             onCoefficientChange={vi.fn()}
@@ -210,7 +210,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="percentage"
+            inputUnit="coefficient"
             coefficientInput="0"
             editedValue={0}
             onCoefficientChange={vi.fn()}
@@ -233,7 +233,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="percentage"
+            inputUnit="coefficient"
             coefficientInput="1,5"
             editedValue={1.5}
             onCoefficientChange={vi.fn()}
@@ -255,7 +255,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="percentage"
+            inputUnit="coefficient"
             coefficientInput="0,4"
             editedValue={0.4}
             onCoefficientChange={vi.fn()}
@@ -329,7 +329,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="percentage"
+            inputUnit="coefficient"
             coefficientInput="0,030992"
             editedValue={0.030992}
             onCoefficientChange={vi.fn()}

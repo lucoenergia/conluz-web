@@ -138,12 +138,12 @@ describe("useSharingAgreementCoefficientMutations", () => {
         { supply: { id: "s2" }, coefficient: 0.333333 },
         { supply: { id: "s3" }, coefficient: 0.333334 },
       ],
-      "percentage",
+      "coefficient",
       installedPowerKw,
     );
 
     let rows = retextRowsForUnit(seeded, "kw", installedPowerKw);
-    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
+    rows = retextRowsForUnit(rows, "coefficient", installedPowerKw);
 
     await result.current.replaceCoefficients("agreement-1", rows);
 

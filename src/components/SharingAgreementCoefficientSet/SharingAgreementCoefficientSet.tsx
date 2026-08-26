@@ -183,7 +183,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const alreadyAddedSupplyIds = useMemo(() => new Set(rows.map((row) => row.supplyId)), [rows]);
 
   const handleStartEditing = () => {
-    const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "percentage";
+    const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "coefficient";
     setInputUnit(startingUnit);
     setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, installedPowerKw));
     setSumWarning(undefined);
@@ -294,7 +294,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               color="primary"
               onChange={(_, value: CoefficientInputUnit | null) => value && handleUnitChange(value)}
             >
-              <ToggleButton value="percentage">%</ToggleButton>
+              <ToggleButton value="coefficient">Coeficiente</ToggleButton>
               <Tooltip title={kwModeAvailable ? "" : "Este acuerdo no tiene potencia instalada definida"}>
                 <span>
                   <ToggleButton value="kw" disabled={!kwModeAvailable}>
