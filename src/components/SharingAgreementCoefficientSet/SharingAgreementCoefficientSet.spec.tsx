@@ -92,7 +92,7 @@ describe("SharingAgreementCoefficientSet", () => {
     ];
     renderWithTheme({ coefficients: allPending });
 
-    fireEvent.click(screen.getByRole("button", { name: "Aplicado" }));
+    fireEvent.click(screen.getByRole("button", { name: "En vigor" }));
 
     expect(screen.getByText("No se encontraron coeficientes")).toBeInTheDocument();
     expect(screen.queryByText("Sin coeficientes de reparto")).not.toBeInTheDocument();
@@ -101,7 +101,7 @@ describe("SharingAgreementCoefficientSet", () => {
   it("filters rows by applicationState chip", () => {
     renderWithTheme({ coefficients });
 
-    fireEvent.click(screen.getByRole("button", { name: "Pendiente de tratamiento" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sin aplicar" }));
 
     expect(screen.getAllByText("Vivienda B").length).toBeGreaterThan(0);
     expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument();
@@ -257,5 +257,37 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.getByText(/faltan 0,000100 % por ajustar en modo porcentaje/)).toBeInTheDocument();
     // No standalone "cuadra" claim in the copy.
     expect(screen.queryByText(/cuadra/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
+  // A real DRAFT is guaranteed all-PENDING/all-OPEN by the backend: APPLIED
+  // requires publishing first, and revert-to-draft is refused once anything
+  // is applied. This is what a real user sees.
+  const cleanDraftCoefficients: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "1", supply: { name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: PENDING },
+    { coefficientId: "2", supply: { name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING },
+  ];
+
+  it("hides the state columns and filter chips for a clean DRAFT", () => {
+    renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.queryByText("Estado de aplicación")).not.toBeInTheDocument();
+    expect(screen.queryByText("Estado de fin")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Todos" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sin aplicar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "En vigor" })).not.toBeInTheDocument();
+  });
+
+  // `coefficients` (the module-level fixture) contains APPLIED rows, which a
+  // real DRAFT can never have — the backend guarantees this can't happen. It
+  // exists here purely to prove the frontend doesn't silently hide unexpected
+  // data if that guarantee is ever violated by a backend regression.
+  it("still shows the state columns and chips for a DRAFT containing anomalous (non-PENDING) rows", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.getByText("Estado de aplicación")).toBeInTheDocument();
+    expect(screen.getByText("Estado de fin")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Todos" })).toBeInTheDocument();
   });
 });

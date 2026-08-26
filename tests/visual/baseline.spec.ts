@@ -276,6 +276,14 @@ const FIXED_SHARING_AGREEMENTS = [
  *   - all 5 endState values: OPEN (1,2), OPEN_ORPHAN (3), PENDING_SUCCESSION (4), DERIVED (5), CLOSED (6)
  *   - a coefficient: 0 row (row 6) — meaningful (a supply that left distribution), never hidden
  *   - fileSum = 1.00 (100%); appliedSum = 0.75 (75%, below 100% — exercises the informational card)
+ *
+ * Also doubles as the DRAFT defensive-fallback fixture: paired with
+ * DRAFT_AGREEMENT it represents a state the backend guarantees can't occur
+ * (APPLIED requires publishing first; revert-to-draft is refused once
+ * anything is applied), used only to prove the frontend doesn't silently
+ * drop unexpected data if that guarantee is ever violated. Don't "clean up"
+ * this fixture into an all-PENDING set — see FIXED_COEFFICIENTS_ALL_PENDING
+ * below for what a real DRAFT looks like.
  */
 const FIXED_COEFFICIENTS_MIXED = [
   {
@@ -326,6 +334,35 @@ const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2024-03-01T00:00:00Z",
     endState: "CLOSED",
     endDate: "2024-05-01T00:00:00Z",
+  },
+];
+
+/**
+ * What a real DRAFT looks like: the backend guarantees every coefficient is
+ * PENDING/OPEN until the agreement is published, so this is the canonical
+ * fixture for the DRAFT detail baseline — no state columns, no filter chips.
+ */
+const FIXED_COEFFICIENTS_ALL_PENDING = [
+  {
+    coefficientId: "coef-1",
+    supply: { id: "supply-1", name: "Vivienda A", code: "ES0031300000000001AA" },
+    coefficient: 0.4,
+    applicationState: "PENDING",
+    endState: "OPEN",
+  },
+  {
+    coefficientId: "coef-2",
+    supply: { id: "supply-2", name: "Vivienda B", code: "ES0031300000000002BB" },
+    coefficient: 0.35,
+    applicationState: "PENDING",
+    endState: "OPEN",
+  },
+  {
+    coefficientId: "coef-3",
+    supply: { id: "supply-3", name: "Local C", code: "ES0031300000000003CC" },
+    coefficient: 0.25,
+    applicationState: "PENDING",
+    endState: "OPEN",
   },
 ];
 
@@ -958,11 +995,34 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_ALL_PENDING, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+
+    // A real DRAFT is all-PENDING/OPEN, so the application/end-state columns
+    // and filter chips are hidden entirely — this is what a real user sees.
+    await expect(page.getByText("Estado de aplicación")).toHaveCount(0);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }) => {
+    // FIXED_COEFFICIENTS_MIXED represents a state the backend guarantees a
+    // real DRAFT can never reach (APPLIED requires publishing first; revert-
+    // to-draft is refused once anything is applied). This test exists solely
+    // to prove the frontend still renders the columns rather than silently
+    // dropping unexpected data if that backend guarantee is ever violated.
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
+    await expect(page.getByText("Estado de aplicación")).toBeVisible();
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png", { fullPage: true });
   });
 
   test("sharing agreement detail page (draft, empty coefficient set)", async ({ page }) => {

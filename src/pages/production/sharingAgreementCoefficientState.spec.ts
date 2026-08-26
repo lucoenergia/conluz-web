@@ -6,6 +6,7 @@ import {
 import {
   getApplicationStateColor,
   getApplicationStateDetail,
+  getApplicationStateHeadline,
   getApplicationStateLabel,
   getEndStateLabel,
   isEndStateReadOnly,
@@ -16,15 +17,35 @@ const { OPEN, OPEN_ORPHAN, PENDING_SUCCESSION, DERIVED, CLOSED } = SharingAgreem
 
 describe("getApplicationStateLabel", () => {
   it("labels PENDING", () => {
-    expect(getApplicationStateLabel(PENDING)).toBe("Pendiente de tratamiento");
+    expect(getApplicationStateLabel(PENDING)).toBe("Sin aplicar");
   });
 
   it("labels APPLIED", () => {
-    expect(getApplicationStateLabel(APPLIED)).toBe("Aplicado");
+    expect(getApplicationStateLabel(APPLIED)).toBe("En vigor");
   });
 
   it("falls back for undefined", () => {
     expect(getApplicationStateLabel(undefined)).toBe("-");
+  });
+});
+
+describe("getApplicationStateHeadline", () => {
+  it("headlines PENDING", () => {
+    expect(getApplicationStateHeadline({ applicationState: PENDING })).toBe("Sin fecha de aplicación");
+  });
+
+  it("headlines APPLIED with the validFrom date", () => {
+    expect(getApplicationStateHeadline({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" })).toBe(
+      "En vigor desde 23 de mayo de 2024",
+    );
+  });
+
+  it("headlines APPLIED without a validFrom as just 'En vigor', never a nonsense date", () => {
+    expect(getApplicationStateHeadline({ applicationState: APPLIED })).toBe("En vigor");
+  });
+
+  it("falls back for an unexpected state", () => {
+    expect(getApplicationStateHeadline({})).toBe("-");
   });
 });
 
@@ -43,14 +64,14 @@ describe("getApplicationStateColor", () => {
 });
 
 describe("getApplicationStateDetail", () => {
-  it("explains PENDING contributes 0 to the applied sum", () => {
-    expect(getApplicationStateDetail({ applicationState: PENDING })).toBe("Contribuye 0 a la suma aplicada");
+  it("tells the admin to register it when the distributor applies it, for PENDING", () => {
+    expect(getApplicationStateDetail({ applicationState: PENDING })).toBe(
+      "Regístrala cuando la distribuidora lo aplique",
+    );
   });
 
-  it("shows the validFrom date for APPLIED", () => {
-    expect(getApplicationStateDetail({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" })).toBe(
-      "Desde 23 de mayo de 2024",
-    );
+  it("has no caption for APPLIED — the date lives in the headline instead", () => {
+    expect(getApplicationStateDetail({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" })).toBeUndefined();
   });
 });
 

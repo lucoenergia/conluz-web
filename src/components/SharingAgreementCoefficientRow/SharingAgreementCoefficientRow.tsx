@@ -8,7 +8,7 @@ import { isValidCoefficientValue, type CoefficientInputUnit } from "../../pages/
 import { formatCoefficientPercentage } from "../../pages/production/sharingAgreementCoefficientSums";
 import {
   getApplicationStateDetail,
-  getApplicationStateLabel,
+  getApplicationStateHeadline,
   getEndStateLabel,
   isEndStateReadOnly,
 } from "../../pages/production/sharingAgreementCoefficientState";
@@ -26,6 +26,8 @@ export interface SharingAgreementCoefficientRowProps {
   editedValue?: number;
   onCoefficientChange?: (value: string) => void;
   onRemove?: () => void;
+  /** Whether the applicationState/endState cells render. Defaults to true; the container hides them for a clean DRAFT. */
+  showStateColumns?: boolean;
 }
 
 function formatAssignedEnergy(coefficientValue: number | undefined, installedPowerKw: number | undefined): string {
@@ -90,9 +92,11 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   editedValue,
   onCoefficientChange,
   onRemove,
+  showStateColumns = true,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const applicationStateDetail = getApplicationStateDetail(coefficient);
 
   return (
     <TableRow>
@@ -127,17 +131,23 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           {isEditing ? otherUnitValue : formatAssignedEnergy(coefficient.coefficient, installedPowerKw)}
         </Typography>
       </TableCell>
-      <TableCell>
-        <Typography variant="body2">{getApplicationStateLabel(coefficient.applicationState)}</Typography>
-        <Typography variant="caption" color="text.secondary">
-          {getApplicationStateDetail(coefficient)}
-        </Typography>
-      </TableCell>
-      <TableCell>
-        <Typography variant="body2" sx={endStateReadOnly ? { color: colors.text.muted } : undefined}>
-          {getEndStateLabel(coefficient)}
-        </Typography>
-      </TableCell>
+      {showStateColumns && (
+        <TableCell>
+          <Typography variant="body2">{getApplicationStateHeadline(coefficient)}</Typography>
+          {applicationStateDetail && (
+            <Typography variant="caption" color="text.secondary">
+              {applicationStateDetail}
+            </Typography>
+          )}
+        </TableCell>
+      )}
+      {showStateColumns && (
+        <TableCell>
+          <Typography variant="body2" sx={endStateReadOnly ? { color: colors.text.muted } : undefined}>
+            {getEndStateLabel(coefficient)}
+          </Typography>
+        </TableCell>
+      )}
       {isEditing && (
         <TableCell align="right">
           {onRemove && (
@@ -160,9 +170,11 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   editedValue,
   onCoefficientChange,
   onRemove,
+  showStateColumns = true,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const applicationStateDetail = getApplicationStateDetail(coefficient);
 
   return (
     <Box
@@ -216,13 +228,15 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
         </Typography>
       )}
 
-      {!isEditing && (
+      {!isEditing && showStateColumns && (
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, mt: 0.5 }}>
           <Box>
-            <Typography variant="body2">{getApplicationStateLabel(coefficient.applicationState)}</Typography>
-            <Typography variant="caption" sx={{ color: colors.text.secondary, display: "block" }}>
-              {getApplicationStateDetail(coefficient)}
-            </Typography>
+            <Typography variant="body2">{getApplicationStateHeadline(coefficient)}</Typography>
+            {applicationStateDetail && (
+              <Typography variant="caption" sx={{ color: colors.text.secondary, display: "block" }}>
+                {applicationStateDetail}
+              </Typography>
+            )}
           </Box>
           <Typography variant="body2" sx={endStateReadOnly ? { color: colors.text.muted } : undefined}>
             {getEndStateLabel(coefficient)}

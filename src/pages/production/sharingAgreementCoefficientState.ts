@@ -10,17 +10,34 @@ const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplica
 const { OPEN, OPEN_ORPHAN, PENDING_SUCCESSION, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 
 /**
- * Translates the backend-computed applicationState enum into a label. The
- * frontend never re-derives this state — it only reads it.
+ * Compact applicationState label used by the filter chips ("Todos / Sin
+ * aplicar / En vigor"). The row/card use `getApplicationStateHeadline`
+ * instead, which carries the fuller, actor-naming copy.
  */
 export function getApplicationStateLabel(
   state: SharingAgreementPartitionCoefficientResponseApplicationState | undefined,
 ): string {
   switch (state) {
     case PENDING:
-      return "Pendiente de tratamiento";
+      return "Sin aplicar";
     case APPLIED:
-      return "Aplicado";
+      return "En vigor";
+    default:
+      return "-";
+  }
+}
+
+/**
+ * Row/card headline for applicationState. Names the distributor as the actor
+ * who applies the coefficient out in the world — the admin only records that
+ * fact afterward, never "processes" or "pends" it themselves.
+ */
+export function getApplicationStateHeadline(coefficient: SharingAgreementPartitionCoefficientResponse): string {
+  switch (coefficient.applicationState) {
+    case PENDING:
+      return "Sin fecha de aplicación";
+    case APPLIED:
+      return coefficient.validFrom ? `En vigor desde ${formatCalendarDate(coefficient.validFrom)}` : "En vigor";
     default:
       return "-";
   }
@@ -44,15 +61,20 @@ export function getApplicationStateColor(
 }
 
 /**
- * Secondary readout shown alongside the label: PENDING explains why it
- * doesn't count toward the applied sum yet; APPLIED shows the effective date.
+ * Secondary caption shown under the headline. PENDING tells the admin what
+ * to do and that the trigger is external (the distributor applies it, the
+ * admin only registers it). APPLIED has nothing left to say once its date
+ * moved into the headline — `undefined` states "no caption" unambiguously,
+ * unlike an empty string a caller might render or measure unchecked.
  */
-export function getApplicationStateDetail(coefficient: SharingAgreementPartitionCoefficientResponse): string {
+export function getApplicationStateDetail(
+  coefficient: SharingAgreementPartitionCoefficientResponse,
+): string | undefined {
   switch (coefficient.applicationState) {
     case PENDING:
-      return "Contribuye 0 a la suma aplicada";
+      return "Regístrala cuando la distribuidora lo aplique";
     case APPLIED:
-      return `Desde ${formatCalendarDate(coefficient.validFrom)}`;
+      return undefined;
     default:
       return "-";
   }

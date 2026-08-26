@@ -49,8 +49,8 @@ describe("SharingAgreementCoefficientTableRow", () => {
     expect(screen.getByText("25,000000 %")).toBeInTheDocument();
     // 25% of 100 kW, matching the mock-up's coefficient×installedPowerKw derivation.
     expect(screen.getByText("25,00 kW")).toBeInTheDocument();
-    expect(screen.getByText("Pendiente de tratamiento")).toBeInTheDocument();
-    expect(screen.getByText("Contribuye 0 a la suma aplicada")).toBeInTheDocument();
+    expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
+    expect(screen.getByText("Regístrala cuando la distribuidora lo aplique")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
@@ -77,9 +77,38 @@ describe("SharingAgreementCoefficientTableRow", () => {
       </Table>,
     );
 
-    expect(screen.getByText("Desde 23 de mayo de 2024")).toBeInTheDocument();
+    expect(screen.getByText("En vigor desde 23 de mayo de 2024")).toBeInTheDocument();
+    expect(screen.queryByText("Aplicado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Desde 23 de mayo de 2024")).not.toBeInTheDocument();
     const endDate = screen.getByText("1 de enero de 2025");
     expect(endDate).toHaveStyle({ color: colors.text.muted });
+  });
+
+  it("hides both state cells when showStateColumns is false", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} showStateColumns={false} />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.queryByText("Sin fecha de aplicación")).not.toBeInTheDocument();
+    expect(screen.queryByText("Regístrala cuando la distribuidora lo aplique")).not.toBeInTheDocument();
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
+  });
+
+  it("shows both state cells by default when showStateColumns is omitted", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
+    expect(screen.getByText("—")).toBeInTheDocument();
   });
 });
 
@@ -352,13 +381,21 @@ describe("SharingAgreementCoefficientCard", () => {
     // regular space before comparing, so the matcher uses a regular space too.
     expect(screen.getByText("25,000000 %")).toBeInTheDocument();
     expect(screen.getByText("25,00 kW")).toBeInTheDocument();
-    expect(screen.getByText("Pendiente de tratamiento")).toBeInTheDocument();
+    expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
   });
 
   it("renders a read-only PENDING_SUCCESSION/DERIVED end date with the muted text token", () => {
     render(<SharingAgreementCoefficientCard coefficient={derivedCoefficient} installedPowerKw={100} />);
 
+    expect(screen.getByText("En vigor desde 23 de mayo de 2024")).toBeInTheDocument();
     const endDate = screen.getByText("1 de enero de 2025");
     expect(endDate).toHaveStyle({ color: colors.text.muted });
+  });
+
+  it("hides both state readouts when showStateColumns is false", () => {
+    render(<SharingAgreementCoefficientCard coefficient={pendingCoefficient} installedPowerKw={100} showStateColumns={false} />);
+
+    expect(screen.queryByText("Sin fecha de aplicación")).not.toBeInTheDocument();
+    expect(screen.queryByText("Regístrala cuando la distribuidora lo aplique")).not.toBeInTheDocument();
   });
 });

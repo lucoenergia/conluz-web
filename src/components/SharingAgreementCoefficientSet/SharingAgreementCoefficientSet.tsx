@@ -33,7 +33,11 @@ import { useDebounce } from "../../utils/useDebounce";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { useActiveCommunity } from "../../context/community.context";
 import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
-import { SharingAgreementPartitionCoefficientResponseApplicationState, SharingAgreementResponseStatus } from "../../api/models";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementPartitionCoefficientResponseEndState,
+  SharingAgreementResponseStatus,
+} from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponseStatus as StatusValue } from "../../api/models";
 import {
   filterSharingAgreementCoefficients,
@@ -142,6 +146,23 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const isDraft = agreementStatus === SharingAgreementResponseStatus.DRAFT;
   const kwModeAvailable = installedPowerKw !== undefined && installedPowerKw > 0;
+
+  // Anomaly means an explicit unexpected value, not missing data: a real DRAFT
+  // is guaranteed all-PENDING/all-OPEN by the backend (APPLIED requires
+  // publishing first; revert-to-draft is refused once anything is applied).
+  // `endState` is optional in the generated types until backend issue B4
+  // lands, so `undefined` must not trip this — that's absence of data, not an
+  // unexpected end.
+  const hasAnomalousRow = useMemo(
+    () =>
+      coefficients.some(
+        (c) =>
+          c.applicationState !== SharingAgreementPartitionCoefficientResponseApplicationState.PENDING ||
+          (c.endState !== undefined && c.endState !== SharingAgreementPartitionCoefficientResponseEndState.OPEN),
+      ),
+    [coefficients],
+  );
+  const showStateColumns = !isDraft || hasAnomalousRow;
 
   const filteredCoefficients = useMemo(
     () => filterSharingAgreementCoefficients(coefficients, debouncedSearchText, applicationStateFilter),
@@ -325,24 +346,26 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             </Box>
           )}
 
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
-            <FilterListIcon sx={{ color: colors.text.secondary, display: { xs: "none", sm: "block" } }} />
-            {APPLICATION_STATE_FILTERS.map((state) => (
-              <Chip
-                key={state}
-                label={state === "all" ? "Todos" : getApplicationStateLabel(state)}
-                onClick={() => setApplicationStateFilter(state)}
-                color={
-                  applicationStateFilter === state
-                    ? state === "all"
-                      ? "primary"
-                      : getApplicationStateColor(state)
-                    : "default"
-                }
-                size="small"
-              />
-            ))}
-          </Box>
+          {showStateColumns && (
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+              <FilterListIcon sx={{ color: colors.text.secondary, display: { xs: "none", sm: "block" } }} />
+              {APPLICATION_STATE_FILTERS.map((state) => (
+                <Chip
+                  key={state}
+                  label={state === "all" ? "Todos" : getApplicationStateLabel(state)}
+                  onClick={() => setApplicationStateFilter(state)}
+                  color={
+                    applicationStateFilter === state
+                      ? state === "all"
+                        ? "primary"
+                        : getApplicationStateColor(state)
+                      : "default"
+                  }
+                  size="small"
+                />
+              ))}
+            </Box>
+          )}
 
           <SearchBar value={searchText} onChange={setSearchText} placeholder="Buscar por punto o CUPS" />
         </Box>
@@ -423,16 +446,20 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                       {isEditing && inputUnit === "kw" ? "% equivalente" : "Energía asignada"}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      Estado de aplicación
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      Estado de fin
-                    </Typography>
-                  </TableCell>
+                  {showStateColumns && (
+                    <TableCell>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                        Estado de aplicación
+                      </Typography>
+                    </TableCell>
+                  )}
+                  {showStateColumns && (
+                    <TableCell>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                        Estado de fin
+                      </Typography>
+                    </TableCell>
+                  )}
                   {isEditing && <TableCell />}
                 </TableRow>
               </TableHead>
@@ -449,6 +476,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         editedValue={row.value}
                         onCoefficientChange={(value) => handleCoefficientChange(row.supplyId, value)}
                         onRemove={() => handleRemoveRow(row.supplyId)}
+                        showStateColumns={showStateColumns}
                       />
                     ))
                   : filteredCoefficients.map((coefficient) => (
@@ -456,6 +484,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         key={coefficient.coefficientId}
                         coefficient={coefficient}
                         installedPowerKw={installedPowerKw}
+                        showStateColumns={showStateColumns}
                       />
                     ))}
               </TableBody>
@@ -476,6 +505,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     editedValue={row.value}
                     onCoefficientChange={(value) => handleCoefficientChange(row.supplyId, value)}
                     onRemove={() => handleRemoveRow(row.supplyId)}
+                    showStateColumns={showStateColumns}
                   />
                 ))
               : filteredCoefficients.map((coefficient) => (
@@ -483,6 +513,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     key={coefficient.coefficientId}
                     coefficient={coefficient}
                     installedPowerKw={installedPowerKw}
+                    showStateColumns={showStateColumns}
                   />
                 ))}
           </Box>
