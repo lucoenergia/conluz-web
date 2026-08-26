@@ -1,3 +1,4 @@
+import type { ChipProps } from "@mui/material";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
@@ -22,6 +23,23 @@ export function getApplicationStateLabel(
       return "Aplicado";
     default:
       return "-";
+  }
+}
+
+/**
+ * Semantic chip color for the applicationState filter/badge: PENDING still
+ * needs attention (warning), APPLIED is done (success).
+ */
+export function getApplicationStateColor(
+  state: SharingAgreementPartitionCoefficientResponseApplicationState | undefined,
+): ChipProps["color"] {
+  switch (state) {
+    case PENDING:
+      return "warning";
+    case APPLIED:
+      return "success";
+    default:
+      return "default";
   }
 }
 

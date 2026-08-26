@@ -4,6 +4,7 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
 import {
+  getApplicationStateColor,
   getApplicationStateDetail,
   getApplicationStateLabel,
   getEndStateLabel,
@@ -24,6 +25,20 @@ describe("getApplicationStateLabel", () => {
 
   it("falls back for undefined", () => {
     expect(getApplicationStateLabel(undefined)).toBe("-");
+  });
+});
+
+describe("getApplicationStateColor", () => {
+  it("colors PENDING as warning", () => {
+    expect(getApplicationStateColor(PENDING)).toBe("warning");
+  });
+
+  it("colors APPLIED as success", () => {
+    expect(getApplicationStateColor(APPLIED)).toBe("success");
+  });
+
+  it("falls back to default for undefined", () => {
+    expect(getApplicationStateColor(undefined)).toBe("default");
   });
 });
 

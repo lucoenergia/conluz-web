@@ -59,37 +59,33 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
         Fichero adjunto
       </Typography>
 
-      {fileNotFound ? (
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-          <DescriptionOutlinedIcon sx={{ color: colors.text.subtle, fontSize: 24 }} />
-          <Typography variant="body2" color="text.secondary">
-            {agreementStatus === SharingAgreementResponseStatus.DRAFT
-              ? "Este acuerdo todavía no tiene un fichero adjunto. Podrás adjuntarlo o generarlo más adelante."
-              : "No hay fichero adjunto. Este acuerdo es anterior al sistema de gestión de ficheros — es una situación legítima y permanente."}
-          </Typography>
-        </Box>
-      ) : (
-        <Button
-          variant="outlined"
-          startIcon={<DownloadOutlinedIcon />}
-          onClick={() => downloadMutation.mutate()}
-          disabled={downloadMutation.isPending}
-        >
-          {downloadMutation.isPending ? "Descargando…" : "Descargar fichero"}
-        </Button>
-      )}
-
-      {agreementStatus === SharingAgreementResponseStatus.DRAFT && (
-        <Box sx={{ mt: fileNotFound ? 2 : 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+        {fileNotFound ? (
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+            <DescriptionOutlinedIcon sx={{ color: colors.text.subtle, fontSize: 24 }} />
+            <Typography variant="body2" color="text.secondary">
+              {agreementStatus === SharingAgreementResponseStatus.DRAFT
+                ? "Este acuerdo todavía no tiene un fichero adjunto. Podrás adjuntarlo o generarlo más adelante."
+                : "No hay fichero adjunto. Este acuerdo es anterior al sistema de gestión de ficheros — es una situación legítima y permanente."}
+            </Typography>
+          </Box>
+        ) : (
           <Button
             variant="outlined"
-            startIcon={<UploadFileOutlinedIcon />}
-            onClick={() => setIsUploadDialogOpen(true)}
+            startIcon={<DownloadOutlinedIcon />}
+            onClick={() => downloadMutation.mutate()}
+            disabled={downloadMutation.isPending}
           >
+            {downloadMutation.isPending ? "Descargando…" : "Descargar fichero"}
+          </Button>
+        )}
+
+        {agreementStatus === SharingAgreementResponseStatus.DRAFT && (
+          <Button variant="outlined" startIcon={<UploadFileOutlinedIcon />} onClick={() => setIsUploadDialogOpen(true)}>
             Subir fichero
           </Button>
-        </Box>
-      )}
+        )}
+      </Box>
 
       <SharingAgreementUploadDialog
         isOpen={isUploadDialogOpen}

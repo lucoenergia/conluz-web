@@ -16,10 +16,12 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import { colors, radii } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
@@ -37,7 +39,7 @@ import {
   filterSharingAgreementCoefficients,
   type SharingAgreementCoefficientApplicationStateFilter,
 } from "../../pages/production/sharingAgreementCoefficientFilters";
-import { getApplicationStateLabel } from "../../pages/production/sharingAgreementCoefficientState";
+import { getApplicationStateColor, getApplicationStateLabel } from "../../pages/production/sharingAgreementCoefficientState";
 import { normalizeForSearch } from "../../pages/production/sharingAgreementFilters";
 import {
   buildEditableRowFromSupply,
@@ -122,6 +124,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   installedPowerKw,
   agreementStatus,
 }) => {
+  const theme = useTheme();
   const activeCommunityId = useActiveCommunity();
   const { replaceCoefficients, isReplacing } = useSharingAgreementCoefficientMutations(plantId);
 
@@ -233,18 +236,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         </Alert>
       )}
 
-      {/* Row 1: unit toggle (fixed shape, never affected by variable-length text) + search. */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          gap: 2,
-          alignItems: { xs: "stretch", sm: "center" },
-          justifyContent: "space-between",
-          mb: isEditing ? 1.5 : 2,
-        }}
-      >
-        {isEditing ? (
+      {/* Row 1, editing mode: unit toggle (fixed shape) + search — search still
+          filters `rows` while editing, so it must stay available here too. */}
+      {isEditing && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            mb: 1.5,
+          }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -279,31 +283,70 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               </Tooltip>
             </ToggleButtonGroup>
           </Box>
-        ) : (
-          <Box sx={{ display: "flex", gap: 1, overflowX: "auto", flexWrap: "nowrap", pb: 0.5 }}>
+
+          <SearchBar value={searchText} onChange={setSearchText} placeholder="Buscar por punto o CUPS" />
+        </Box>
+      )}
+
+      {/* Row 1, read mode: three independent siblings — action button, filter chips,
+          search — matching the canonical toolbar shape used across UsersPage,
+          Partners.page, SupplyPointsPage and SharingAgreementsPage. Each sibling
+          wraps on its own, so centering against justify-content: space-between
+          holds regardless of which side grows taller. */}
+      {!isEditing && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          {isDraft && (
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              <Button
+                variant="contained"
+                startIcon={<EditOutlinedIcon />}
+                onClick={handleStartEditing}
+                sx={{
+                  background: theme.palette.primary.main,
+                  boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              >
+                Editar coeficientes
+              </Button>
+            </Box>
+          )}
+
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+            <FilterListIcon sx={{ color: colors.text.secondary, display: { xs: "none", sm: "block" } }} />
             {APPLICATION_STATE_FILTERS.map((state) => (
               <Chip
                 key={state}
                 label={state === "all" ? "Todos" : getApplicationStateLabel(state)}
                 onClick={() => setApplicationStateFilter(state)}
-                color={applicationStateFilter === state ? (state === "all" ? "primary" : "default") : "default"}
-                variant={applicationStateFilter === state ? "filled" : "outlined"}
+                color={
+                  applicationStateFilter === state
+                    ? state === "all"
+                      ? "primary"
+                      : getApplicationStateColor(state)
+                    : "default"
+                }
                 size="small"
-                sx={{ flexShrink: 0 }}
               />
             ))}
           </Box>
-        )}
 
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
           <SearchBar value={searchText} onChange={setSearchText} placeholder="Buscar por punto o CUPS" />
-          {isDraft && !isEditing && (
-            <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={handleStartEditing}>
-              Editar coeficientes
-            </Button>
-          )}
         </Box>
-      </Box>
+      )}
 
       {/* Row 2: sum readout — its own row, free to grow to any length without moving the toggle. */}
       {isEditing && (
