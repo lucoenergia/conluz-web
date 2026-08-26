@@ -197,8 +197,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     const outcome = await replaceCoefficients(sharingAgreementId, rows);
     if (outcome.success) {
       setIsEditing(false);
+      setSumWarning(outcome.sumWarning ? formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE) : undefined);
       setRows([]);
-      setSumWarning(outcome.sumWarning);
     }
   };
 
@@ -232,7 +232,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     <Paper elevation={0} sx={sxStyles.softPanel}>
       {sumWarning && (
         <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setSumWarning(undefined)}>
-          Los coeficientes se han guardado, pero {sumWarning.charAt(0).toLowerCase() + sumWarning.slice(1)}
+          Los coeficientes se han guardado, pero la suma es {sumWarning} (se esperaba 100,000000 %).
         </Alert>
       )}
 

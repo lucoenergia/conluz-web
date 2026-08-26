@@ -210,6 +210,25 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument());
   });
 
+  it("shows a fully Spanish warning with the client-computed sum when the backend flags an invalid sum", async () => {
+    mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: "coefficient set sum is 0.4, expected 1" });
+    const user = userEvent.setup();
+    renderWithTheme({
+      coefficients: [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A" }, coefficient: 0.4 }],
+      agreementStatus: SharingAgreementResponseStatus.DRAFT,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Los coeficientes se han guardado, pero la suma es 40,000000 % (se esperaba 100,000000 %)."),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/coefficient set sum/)).not.toBeInTheDocument();
+  });
+
   it("the percentage sum line is always shown, even in kW mode, and is never demoted", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
