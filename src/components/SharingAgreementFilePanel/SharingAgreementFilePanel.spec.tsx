@@ -25,7 +25,12 @@ function renderPanel(agreementStatus: StatusValue = SharingAgreementResponseStat
   return render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <SharingAgreementFilePanel plantId="plant-1" sharingAgreementId="agreement-1" agreementStatus={agreementStatus} />
+        <SharingAgreementFilePanel
+          plantId="plant-1"
+          sharingAgreementId="agreement-1"
+          agreementStatus={agreementStatus}
+          plantRegulatoryCode="CAU0001"
+        />
       </ThemeProvider>
     </QueryClientProvider>,
   );
@@ -91,5 +96,15 @@ describe("SharingAgreementFilePanel", () => {
 
     await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
     expect(screen.getByRole("button", { name: "Descargar fichero" })).toBeInTheDocument();
+  });
+
+  it("shows the upload action only for a DRAFT agreement", () => {
+    renderPanel(SharingAgreementResponseStatus.DRAFT);
+    expect(screen.getByRole("button", { name: "Subir fichero" })).toBeInTheDocument();
+  });
+
+  it("does not show the upload action for a non-DRAFT agreement", () => {
+    renderPanel(SharingAgreementResponseStatus.PUBLISHED);
+    expect(screen.queryByRole("button", { name: "Subir fichero" })).not.toBeInTheDocument();
   });
 });

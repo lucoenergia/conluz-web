@@ -1,7 +1,8 @@
-import { useEffect, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
@@ -10,11 +11,13 @@ import { isNotFoundError } from "../../pages/production/useSharingAgreementsData
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponseStatus as StatusValue } from "../../api/models";
 import { downloadSharingAgreementFile } from "./downloadSharingAgreementFile";
+import { SharingAgreementUploadDialog } from "../SharingAgreementUploadDialog";
 
 export interface SharingAgreementFilePanelProps {
   plantId: string;
   sharingAgreementId: string;
   agreementStatus: StatusValue | undefined;
+  plantRegulatoryCode: string | undefined;
 }
 
 function triggerBrowserDownload(blob: Blob, filename: string): void {
@@ -32,8 +35,10 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   plantId,
   sharingAgreementId,
   agreementStatus,
+  plantRegulatoryCode,
 }) => {
   const errorDispatch = useErrorDispatch();
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   const downloadMutation = useMutation({
     mutationFn: () => downloadSharingAgreementFile(plantId, sharingAgreementId),
@@ -73,6 +78,26 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
           {downloadMutation.isPending ? "Descargando…" : "Descargar fichero"}
         </Button>
       )}
+
+      {agreementStatus === SharingAgreementResponseStatus.DRAFT && (
+        <Box sx={{ mt: fileNotFound ? 2 : 1.5 }}>
+          <Button
+            variant="outlined"
+            startIcon={<UploadFileOutlinedIcon />}
+            onClick={() => setIsUploadDialogOpen(true)}
+          >
+            Subir fichero
+          </Button>
+        </Box>
+      )}
+
+      <SharingAgreementUploadDialog
+        isOpen={isUploadDialogOpen}
+        plantId={plantId}
+        sharingAgreementId={sharingAgreementId}
+        regulatoryCode={plantRegulatoryCode}
+        onClose={() => setIsUploadDialogOpen(false)}
+      />
     </Paper>
   );
 };

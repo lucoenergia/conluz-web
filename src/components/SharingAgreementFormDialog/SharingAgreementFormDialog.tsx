@@ -6,7 +6,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { AppModal } from "../Modals/AppModal";
 import { sxStyles } from "../../theme/sx";
 import { fontSizes, shadows } from "../../theme/tokens";
-import { formatDecimalForInput, parseDecimalInput } from "./parseDecimalInput";
+import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
 
 export interface SharingAgreementFormValues {
   name: string;
