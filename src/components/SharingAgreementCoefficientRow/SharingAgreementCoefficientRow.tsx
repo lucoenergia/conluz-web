@@ -2,10 +2,10 @@ import type { FC } from "react";
 import { Box, IconButton, InputAdornment, TableCell, TableRow, TextField, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { colors } from "../../theme/tokens";
-import { formatPercentage } from "../../utils/formatPercentage";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatDecimalForInput } from "../../utils/parseDecimalInput";
 import { isValidCoefficientValue, type CoefficientInputUnit } from "../../pages/production/sharingAgreementCoefficientEditing";
+import { formatCoefficientPercentage } from "../../pages/production/sharingAgreementCoefficientSums";
 import {
   getApplicationStateDetail,
   getApplicationStateLabel,
@@ -42,7 +42,7 @@ function getCoefficientInputErrorMessage(unit: CoefficientInputUnit, installedPo
 /** "Energía asignada" in % mode (as always); the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
 function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
   if (value === undefined) return "-";
-  if (unit === "kw") return formatPercentage(value);
+  if (unit === "kw") return formatCoefficientPercentage(value);
   if (installedPowerKw === undefined) return "-";
   return formatKilowatts(value * installedPowerKw);
 }
@@ -118,7 +118,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           />
         ) : (
           <Typography variant="body2" fontWeight="600">
-            {formatPercentage(coefficient.coefficient ?? 0)}
+            {formatCoefficientPercentage(coefficient.coefficient ?? 0)}
           </Typography>
         )}
       </TableCell>
@@ -191,7 +191,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
               <Typography variant="body2" fontWeight="600">
-                {formatPercentage(coefficient.coefficient ?? 0)}
+                {formatCoefficientPercentage(coefficient.coefficient ?? 0)}
               </Typography>
               <Typography variant="caption" sx={{ color: colors.text.secondary }}>
                 {formatAssignedEnergy(coefficient.coefficient, installedPowerKw)}

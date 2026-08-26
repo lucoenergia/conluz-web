@@ -46,7 +46,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     expect(screen.getByText("ES0031300000000001AB")).toBeInTheDocument();
     // getByText's default normalizer collapses the formatter's U+00A0 into a
     // regular space before comparing, so the matcher uses a regular space too.
-    expect(screen.getByText("25,0000 %")).toBeInTheDocument();
+    expect(screen.getByText("25,000000 %")).toBeInTheDocument();
     // 25% of 100 kW, matching the mock-up's coefficient×installedPowerKw derivation.
     expect(screen.getByText("25,00 kW")).toBeInTheDocument();
     expect(screen.getByText("Pendiente de tratamiento")).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
       </Table>,
     );
 
-    expect(screen.getByText("25,0000 %")).toBeInTheDocument();
+    expect(screen.getByText("25,000000 %")).toBeInTheDocument();
     expect(screen.getAllByText("-").length).toBeGreaterThan(0);
     expect(screen.queryByText(/kW/)).not.toBeInTheDocument();
   });
@@ -103,7 +103,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
     );
 
     expect(screen.getByRole("textbox")).toHaveValue("0,25");
-    expect(screen.queryByText("25,0000 %")).not.toBeInTheDocument();
+    expect(screen.queryByText("25,000000 %")).not.toBeInTheDocument();
   });
 
   it("calls onCoefficientChange verbatim as the user types, and onRemove when the delete action is clicked", async () => {
@@ -233,9 +233,9 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
             installedPowerKw={60}
             isEditing
             inputUnit="kw"
-            // value 0.016670 -> exact kW is 1.0002, but the 4dp-rounded display text is "1,0002" —
-            // even if it were rounded further, blurring must not re-derive value from that text.
-            coefficientInput="1,0002"
+            // value 0.016670 -> exact kW is 1.0002, but the 2dp-rounded display text is "1,00" —
+            // blurring must not re-derive value from that rounded text.
+            coefficientInput="1,00"
             editedValue={0.01667}
             onCoefficientChange={onCoefficientChange}
             onRemove={vi.fn()}
@@ -314,7 +314,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
       </Table>,
     );
 
-    expect(screen.getByText("50,0000 %")).toBeInTheDocument();
+    expect(screen.getByText("50,000000 %")).toBeInTheDocument();
   });
 
   it("the other-unit column shows '-', never NaN or 0, for an empty row", () => {
@@ -350,7 +350,7 @@ describe("SharingAgreementCoefficientCard", () => {
     expect(screen.getByText("ES0031300000000001AB")).toBeInTheDocument();
     // getByText's default normalizer collapses the formatter's U+00A0 into a
     // regular space before comparing, so the matcher uses a regular space too.
-    expect(screen.getByText("25,0000 %")).toBeInTheDocument();
+    expect(screen.getByText("25,000000 %")).toBeInTheDocument();
     expect(screen.getByText("25,00 kW")).toBeInTheDocument();
     expect(screen.getByText("Pendiente de tratamiento")).toBeInTheDocument();
   });

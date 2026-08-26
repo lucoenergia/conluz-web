@@ -12,27 +12,27 @@ import {
 import { computeSharingAgreementCoefficientSums, COEFFICIENT_SCALE } from "./sharingAgreementCoefficientSums";
 
 describe("buildEditableRowsFromCoefficients", () => {
-  it("seeds value from the exact server coefficient and inputText formatted with a Spanish comma", () => {
+  it("seeds value from the exact server coefficient and inputText fixed at 6 decimals", () => {
     const rows = buildEditableRowsFromCoefficients(
       [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 0.3 }],
       "percentage",
       100,
     );
     expect(rows).toEqual([
-      { supplyId: "s1", coefficient: expect.objectContaining({ coefficientId: "c1" }), value: 0.3, inputText: "0,3" },
+      { supplyId: "s1", coefficient: expect.objectContaining({ coefficientId: "c1" }), value: 0.3, inputText: "0,300000" },
     ]);
   });
 
-  it("seeds an explicit zero coefficient as value 0 and inputText '0', not empty", () => {
+  it("seeds an explicit zero coefficient as value 0 and inputText '0,000000', not empty", () => {
     const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 0 }], "percentage", 100);
     expect(rows[0].value).toBe(0);
-    expect(rows[0].inputText).toBe("0");
+    expect(rows[0].inputText).toBe("0,000000");
   });
 
-  it("seeds kW-unit text derived from value * installedPowerKw", () => {
+  it("seeds kW-unit text derived from value * installedPowerKw, fixed at 2 decimals", () => {
     const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 0.5 }], "kw", 60);
     expect(rows[0].value).toBe(0.5);
-    expect(rows[0].inputText).toBe("30");
+    expect(rows[0].inputText).toBe("30,00");
   });
 
   it("drops entries with no supply id rather than crashing", () => {
@@ -76,12 +76,20 @@ describe("parseCoefficientInput", () => {
 });
 
 describe("formatCoefficientForInput", () => {
-  it("percentage unit formats with a Spanish comma, full precision", () => {
+  it("percentage unit formats fixed at 6 decimals, padding a value with fewer natural digits", () => {
     expect(formatCoefficientForInput(0.123456, "percentage", undefined)).toBe("0,123456");
+    expect(formatCoefficientForInput(0.5, "percentage", undefined)).toBe("0,500000");
   });
 
-  it("kw unit multiplies by installedPowerKw and rounds to 4dp", () => {
-    expect(formatCoefficientForInput(1 / 3, "kw", 60)).toBe("20");
+  it("percentage unit rounds a value with more natural digits than 6dp, never leaking raw float precision", () => {
+    // The exact reported bug: a kW->coefficient division can produce far more
+    // than 6 natural decimal digits (here, 1.5 kW / 48.4 kW installed).
+    expect(formatCoefficientForInput(1.5 / 48.4, "percentage", undefined)).toBe("0,030992");
+  });
+
+  it("kw unit multiplies by installedPowerKw and formats fixed at 2 decimals, padding whole numbers too", () => {
+    expect(formatCoefficientForInput(1 / 3, "kw", 60)).toBe("20,00");
+    expect(formatCoefficientForInput(0.5, "kw", 60)).toBe("30,00");
   });
 
   it("undefined value formats as empty text in either unit", () => {
@@ -179,9 +187,9 @@ describe("retextRowsForUnit — toggle invariance", () => {
   });
 
   it("never re-parses inputText — a row's value is untouched even if its displayed kW text is rounded", () => {
-    // 0.016670 * 60 = 1.0002 kW, which rounds to "1,0002" at 4dp — but even if it
-    // rounded further (e.g. to "1,00"), retextRowsForUnit must not re-derive value
-    // from that rounded text: it always re-derives text from the still-precise value.
+    // 0.016670 * 60 = 1.0002 kW, which rounds to "1,00" at 2dp — retextRowsForUnit
+    // must not re-derive value from that rounded text: it always re-derives text
+    // from the still-precise value, never the reverse.
     const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {}, value: 0.01667, inputText: "0,01667" }];
     const toggled = retextRowsForUnit(retextRowsForUnit(rows, "kw", 60), "percentage", 60);
     expect(toggled[0].value).toBe(0.01667);

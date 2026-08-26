@@ -126,8 +126,8 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
     const inputs = screen.getAllByRole("textbox") as HTMLInputElement[];
     const values = inputs.map((input) => input.value);
-    expect(values).toContain("40"); // Vivienda A: 0.4 * 100 kW
-    expect(values).toContain("0"); // Nave Vacía's real zero, not blank
+    expect(values).toContain("40,00"); // Vivienda A: 0.4 * 100 kW, fixed at 2dp
+    expect(values).toContain("0,00"); // Nave Vacía's real zero, not blank, fixed at 2dp
   });
 
   it("toggling to percentage converts every row's displayed value, keeping it (not clearing it)", () => {
@@ -138,8 +138,8 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
     const inputs = screen.getAllByRole("textbox") as HTMLInputElement[];
     const values = inputs.map((input) => input.value);
-    expect(values).toContain("0,4"); // 40 kW / 100 kW installed
-    expect(values).toContain("0");
+    expect(values).toContain("0,400000"); // 40 kW / 100 kW installed, fixed at 6dp
+    expect(values).toContain("0,000000");
   });
 
   it("falls back to percentage mode, with kW disabled, when the agreement has no installedPowerKw", () => {
@@ -216,7 +216,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
 
     // 0.4 + 0.6 + 0 = 100%.
-    expect(screen.getByText("Suma del fichero: 100,0000 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma del fichero: 100,000000 %")).toBeInTheDocument();
     expect(screen.getByText(/Suma completa \(100%\)/)).toBeInTheDocument();
     expect(screen.getByText(/100,00 kW de 100,00 kW instalados/)).toBeInTheDocument();
   });
@@ -233,9 +233,9 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
 
-    expect(screen.getByText("Suma del fichero: 99,9999 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma del fichero: 99,999900 %")).toBeInTheDocument();
     expect(screen.getByText(/con redondeo a céntimos/)).toBeInTheDocument();
-    expect(screen.getByText(/faltan 0,0001 % por ajustar en modo porcentaje/)).toBeInTheDocument();
+    expect(screen.getByText(/faltan 0,000100 % por ajustar en modo porcentaje/)).toBeInTheDocument();
     // No standalone "cuadra" claim in the copy.
     expect(screen.queryByText(/cuadra/i)).not.toBeInTheDocument();
   });

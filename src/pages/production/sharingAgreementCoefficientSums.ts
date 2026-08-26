@@ -1,5 +1,6 @@
 import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { formatPercentage } from "../../utils/formatPercentage";
 
 // 1e-6 units — coefficients are stored on a 0-1 scale and rounded to six
 // decimals before summing, so that summing IEEE-754 doubles (which can drift,
@@ -42,4 +43,14 @@ export function computeSharingAgreementCoefficientSums(
  */
 export function isFullSum(sumUnits: number): boolean {
   return sumUnits === COEFFICIENT_SCALE;
+}
+
+/**
+ * Formats a 0-1 coefficient (or a coefficient-derived ratio: a sum, a gap)
+ * as a percentage, always fixed at six decimals — matching COEFFICIENT_SCALE
+ * itself. Every sharing-agreement percentage display must go through this,
+ * not formatPercentage's generic 4dp default directly.
+ */
+export function formatCoefficientPercentage(value: number): string {
+  return formatPercentage(value, { minimumFractionDigits: 6, maximumFractionDigits: 6 });
 }

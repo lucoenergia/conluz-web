@@ -20,7 +20,7 @@ import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
-import { colors } from "../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
 import { SearchBar } from "../SearchBar/SearchBar";
@@ -28,7 +28,6 @@ import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
 import { useDebounce } from "../../utils/useDebounce";
-import { formatPercentage } from "../../utils/formatPercentage";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { useActiveCommunity } from "../../context/community.context";
 import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
@@ -52,6 +51,7 @@ import {
 import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
+  formatCoefficientPercentage,
   isFullSum,
   type SharingAgreementCoefficientSums,
 } from "../../pages/production/sharingAgreementCoefficientSums";
@@ -111,7 +111,7 @@ function formatSumCaption(
 
   const gapUnits = COEFFICIENT_SCALE - sums.fileSumUnits;
   const gapLabel = gapUnits > 0 ? "faltan" : "sobran";
-  const gapPercent = formatPercentage(Math.abs(gapUnits) / COEFFICIENT_SCALE);
+  const gapPercent = formatCoefficientPercentage(Math.abs(gapUnits) / COEFFICIENT_SCALE);
   return `${kwSummary} (con redondeo a céntimos) — ${gapLabel} ${gapPercent} por ajustar en modo porcentaje.`;
 }
 
@@ -233,6 +233,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         </Alert>
       )}
 
+      {/* Row 1: unit toggle (fixed shape, never affected by variable-length text) + search. */}
       <Box
         sx={{
           display: "flex",
@@ -240,23 +241,32 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           gap: 2,
           alignItems: { xs: "stretch", sm: "center" },
           justifyContent: "space-between",
-          mb: 2,
+          mb: isEditing ? 1.5 : 2,
         }}
       >
         {isEditing ? (
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: 2 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Suma del fichero: {formatPercentage(sums.fileSumUnits / COEFFICIENT_SCALE)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {formatSumCaption(sums, inputUnit, installedPowerKw)}
-              </Typography>
-            </Box>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              flexWrap: "wrap",
+              px: 1.5,
+              py: 0.75,
+              borderRadius: radii.default,
+              backgroundColor: colors.background.surface,
+              border: `1px solid ${colors.border.light}`,
+              width: "fit-content",
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>
+              Editar coeficientes en:
+            </Typography>
             <ToggleButtonGroup
               value={inputUnit}
               exclusive
               size="small"
+              color="primary"
               onChange={(_, value: CoefficientInputUnit | null) => value && handleUnitChange(value)}
             >
               <ToggleButton value="percentage">%</ToggleButton>
@@ -294,6 +304,18 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           )}
         </Box>
       </Box>
+
+      {/* Row 2: sum readout — its own row, free to grow to any length without moving the toggle. */}
+      {isEditing && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            Suma del fichero: {formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {formatSumCaption(sums, inputUnit, installedPowerKw)}
+          </Typography>
+        </Box>
+      )}
 
       {isEditing && (
         <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>

@@ -3,7 +3,7 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
-import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
+import { formatFixedDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
 
 export type CoefficientInputUnit = "percentage" | "kw";
 
@@ -50,10 +50,17 @@ export function parseCoefficientInput(
 /**
  * Canonical 0-1 value -> display text in `unit`. Always fed the row's
  * still-precise `value`, never a previously-formatted string, so
- * rounding-for-display never compounds across repeated toggles. kW text is
- * rounded to 4dp for readability — a display-only choice with no correctness
- * consequence, since a toggle always re-derives from `value`, never from this
- * rounded text.
+ * rounding-for-display never compounds across repeated toggles.
+ *
+ * Both units are FIXED precision, always padded, never variable-length:
+ * percentage at 6dp (matches the backend's own coefficient precision,
+ * COEFFICIENT_SCALE = 1e-6 — the read-only display already honors this via
+ * formatPercentage, and the editable input must too, in every case, not just
+ * when the natural float representation happens to be short); kW at 2dp
+ * (matches formatKilowatts's convention everywhere else kW is shown). A bare
+ * String()-style formatter must never be used here: a kW->coefficient
+ * division can produce an arbitrary number of natural decimal digits, and
+ * without fixed rounding+padding that leaks straight into the field.
  */
 export function formatCoefficientForInput(
   value: number | undefined,
@@ -61,10 +68,10 @@ export function formatCoefficientForInput(
   installedPowerKw: number | undefined,
 ): string {
   if (value === undefined || !Number.isFinite(value)) return "";
-  if (unit === "percentage") return formatDecimalForInput(value);
+  if (unit === "percentage") return formatFixedDecimalForInput(value, 6);
   if (installedPowerKw === undefined || installedPowerKw <= 0) return "";
-  const kw = Math.round(value * installedPowerKw * 10_000) / 10_000;
-  return formatDecimalForInput(kw);
+  const kw = Math.round(value * installedPowerKw * 100) / 100;
+  return formatFixedDecimalForInput(kw, 2);
 }
 
 /** Unit-independent range check directly on the canonical value. */

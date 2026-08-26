@@ -23,3 +23,15 @@ export function parseDecimalInput(raw: string): number {
 export function formatDecimalForInput(value: number): string {
   return String(value).replace(".", ",");
 }
+
+/**
+ * Formats a number with a fixed decimal count and the Spanish decimal comma —
+ * always padded to exactly `decimals` digits, never variable-length. Use this
+ * (not `formatDecimalForInput`) wherever a fixed precision is a correctness
+ * requirement, not just a display preference — e.g. a value that raw
+ * floating-point arithmetic could otherwise render with a stray number of
+ * digits.
+ */
+export function formatFixedDecimalForInput(value: number, decimals: number): string {
+  return value.toFixed(decimals).replace(".", ",");
+}
