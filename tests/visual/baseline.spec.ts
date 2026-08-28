@@ -966,7 +966,7 @@ test.describe("Visual baselines", () => {
   // Community-admin fixture tests: sharing-agreement detail page.
   // Same CommunityAdminRoute cold-navigation limitation as the list page (see
   // file header) — reached by navigating through the list and clicking a
-  // card's own "Ver detalle" menu item, never via a cold page.goto().
+  // card's own title link, never via a cold page.goto().
   //
   // The file panel never probes the file endpoint on page load (by design —
   // the download is click-triggered, see SharingAgreementFilePanel), so its
@@ -979,8 +979,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreements(page);
 
     const agreementCard = page.locator(".MuiCard-root").filter({ hasText: agreementName });
-    await agreementCard.getByRole("button").click();
-    await page.getByRole("menuitem", { name: /Ver detalle/i }).click();
+    await agreementCard.getByRole("link", { name: agreementName }).click();
 
     await expect(page.getByText("Suma del fichero")).toBeVisible();
     await stabilizePage(page);

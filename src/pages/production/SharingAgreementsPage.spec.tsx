@@ -183,22 +183,26 @@ describe("SharingAgreementsPage", () => {
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument());
   });
 
-  test("editing from the card kebab seeds the dialog and calls updateAgreement with the agreement's id", async () => {
+  test("renders each agreement's title as a link to its detail page", () => {
     mockData();
-    mockUpdateAgreement.mockResolvedValue(true);
+    setup("plant-42");
+
+    const link = screen.getByRole("link", { name: "Borrador reciente" });
+    expect(link).toHaveAttribute("href", "/production/plant-42/sharing-agreements/2");
+  });
+
+  test("only the DRAFT agreement's card renders a kebab, and it only offers Eliminar", async () => {
+    mockData();
     const user = userEvent.setup();
     setup();
 
     const kebabButtons = screen.getAllByRole("button").filter((button) => button.textContent === "");
-    await user.click(kebabButtons[1]); // "Borrador reciente" is the DRAFT agreement
-    await user.click(await screen.findByText("Editar"));
+    expect(kebabButtons).toHaveLength(1); // only "Borrador reciente" is DRAFT
 
-    expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Borrador reciente");
-    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
-
-    await waitFor(() =>
-      expect(mockUpdateAgreement).toHaveBeenCalledWith("2", expect.objectContaining({ name: "Borrador reciente" })),
-    );
+    await user.click(kebabButtons[0]);
+    expect(await screen.findByText("Eliminar")).toBeInTheDocument();
+    expect(screen.queryByText("Editar")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ver detalle")).not.toBeInTheDocument();
   });
 
   test("deleting from the card kebab shows the confirmation and calls deleteAgreement with the agreement's id", async () => {
@@ -208,7 +212,7 @@ describe("SharingAgreementsPage", () => {
     setup();
 
     const kebabButtons = screen.getAllByRole("button").filter((button) => button.textContent === "");
-    await user.click(kebabButtons[1]);
+    await user.click(kebabButtons[0]); // the only kebab is on "Borrador reciente", the DRAFT agreement
     await user.click(await screen.findByText("Eliminar"));
 
     expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();

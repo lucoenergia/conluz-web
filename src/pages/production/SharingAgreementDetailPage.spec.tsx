@@ -133,6 +133,38 @@ describe("SharingAgreementDetailPage", () => {
     );
   });
 
+  test("warns that changing capacity shifts each supply's kW when the agreement already has coefficients", async () => {
+    mockData({ coefficients: [{ coefficientId: "c1" }] });
+    const user = userEvent.setup();
+    setup("plant-1", "agreement-1");
+
+    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(await screen.findByText("Editar"));
+
+    const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
+    await user.clear(capacityInput);
+    await user.type(capacityInput, "20");
+
+    expect(
+      await screen.findByText(/cambiar la capacidad no modifica los coeficientes ya guardados/i),
+    ).toBeInTheDocument();
+  });
+
+  test("does not warn when the agreement has no coefficients yet", async () => {
+    mockData({ coefficients: [] });
+    const user = userEvent.setup();
+    setup("plant-1", "agreement-1");
+
+    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(await screen.findByText("Editar"));
+
+    const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
+    await user.clear(capacityInput);
+    await user.type(capacityInput, "20");
+
+    expect(screen.queryByText(/cambiar la capacidad no modifica los coeficientes ya guardados/i)).not.toBeInTheDocument();
+  });
+
   test("deleting navigates back to the list on success, removing (not invalidating) the detail query is the hook's job", async () => {
     mockData();
     mockDeleteAgreement.mockResolvedValue(true);

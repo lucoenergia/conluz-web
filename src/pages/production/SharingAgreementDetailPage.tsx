@@ -133,6 +133,7 @@ export const SharingAgreementDetailPage: FC = () => {
             notes: agreement.notes,
             installedPowerKw: agreement.installedPowerKw,
           }}
+          hasCoefficients={coefficients.length > 0}
           isSubmitting={isUpdating}
           onCancel={() => setIsEditDialogOpen(false)}
           onSubmit={handleEditSubmit}
