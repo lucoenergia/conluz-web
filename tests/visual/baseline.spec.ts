@@ -276,6 +276,14 @@ const FIXED_SHARING_AGREEMENTS = [
  *   - all 5 endState values: OPEN (1,2), OPEN_ORPHAN (3), PENDING_SUCCESSION (4), DERIVED (5), CLOSED (6)
  *   - a coefficient: 0 row (row 6) — meaningful (a supply that left distribution), never hidden
  *   - fileSum = 1.00 (100%); appliedSum = 0.75 (75%, below 100% — exercises the informational card)
+ *
+ * Also doubles as the DRAFT defensive-fallback fixture: paired with
+ * DRAFT_AGREEMENT it represents a state the backend guarantees can't occur
+ * (APPLIED requires publishing first; revert-to-draft is refused once
+ * anything is applied), used only to prove the frontend doesn't silently
+ * drop unexpected data if that guarantee is ever violated. Don't "clean up"
+ * this fixture into an all-PENDING set — see FIXED_COEFFICIENTS_ALL_PENDING
+ * below for what a real DRAFT looks like.
  */
 const FIXED_COEFFICIENTS_MIXED = [
   {
@@ -326,6 +334,35 @@ const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2024-03-01T00:00:00Z",
     endState: "CLOSED",
     endDate: "2024-05-01T00:00:00Z",
+  },
+];
+
+/**
+ * What a real DRAFT looks like: the backend guarantees every coefficient is
+ * PENDING/OPEN until the agreement is published, so this is the canonical
+ * fixture for the DRAFT detail baseline — no state columns, no filter chips.
+ */
+const FIXED_COEFFICIENTS_ALL_PENDING = [
+  {
+    coefficientId: "coef-1",
+    supply: { id: "supply-1", name: "Vivienda A", code: "ES0031300000000001AA" },
+    coefficient: 0.4,
+    applicationState: "PENDING",
+    endState: "OPEN",
+  },
+  {
+    coefficientId: "coef-2",
+    supply: { id: "supply-2", name: "Vivienda B", code: "ES0031300000000002BB" },
+    coefficient: 0.35,
+    applicationState: "PENDING",
+    endState: "OPEN",
+  },
+  {
+    coefficientId: "coef-3",
+    supply: { id: "supply-3", name: "Local C", code: "ES0031300000000003CC" },
+    coefficient: 0.25,
+    applicationState: "PENDING",
+    endState: "OPEN",
   },
 ];
 
@@ -548,6 +585,36 @@ async function mockSharingAgreementDetailRoutes(
       fileStatus === 404
         ? route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({}) })
         : route.fulfill({ status: 200, contentType: "application/octet-stream", body: "fake-file-bytes" }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: override the file route's POST with a 400 rejection carrying both a
+// file-level and a line-level error. Registered AFTER
+// mockSharingAgreementDetailRoutes() so it wins for POST while GET still
+// falls through (via route.fallback()) to that helper's 404/200 GET mock.
+// ---------------------------------------------------------------------------
+
+async function mockSharingAgreementFileUploadRejection(page: Page, plantId: string, agreementId: string) {
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${plantId}/sharing-agreements/${agreementId}/file`),
+    (route: Route) => {
+      if (route.request().method() !== "POST") return route.fallback();
+      return route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({
+          errors: [
+            { message: "Coefficient sum invalid", code: "DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID" },
+            {
+              message: "Unknown CUPS",
+              code: "DISTRIBUTOR_FILE_CUPS_UNKNOWN",
+              params: { line: "3", cups: "ES0031300000000099ZZ" },
+            },
+          ],
+        }),
+      });
+    },
   );
 }
 
@@ -899,7 +966,7 @@ test.describe("Visual baselines", () => {
   // Community-admin fixture tests: sharing-agreement detail page.
   // Same CommunityAdminRoute cold-navigation limitation as the list page (see
   // file header) — reached by navigating through the list and clicking a
-  // card's own "Ver detalle" menu item, never via a cold page.goto().
+  // card's own title link, never via a cold page.goto().
   //
   // The file panel never probes the file endpoint on page load (by design —
   // the download is click-triggered, see SharingAgreementFilePanel), so its
@@ -912,8 +979,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreements(page);
 
     const agreementCard = page.locator(".MuiCard-root").filter({ hasText: agreementName });
-    await agreementCard.getByRole("button").click();
-    await page.getByRole("menuitem", { name: /Ver detalle/i }).click();
+    await agreementCard.getByRole("link", { name: agreementName }).click();
 
     await expect(page.getByText("Suma del fichero")).toBeVisible();
     await stabilizePage(page);
@@ -928,11 +994,40 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_ALL_PENDING, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+
+    // A real DRAFT is all-PENDING/OPEN, so the application/end-state columns
+    // and filter chips are hidden entirely — this is what a real user sees.
+    await expect(page.getByText("Estado de aplicación")).toHaveCount(0);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }) => {
+    // FIXED_COEFFICIENTS_MIXED represents a state the backend guarantees a
+    // real DRAFT can never reach (APPLIED requires publishing first; revert-
+    // to-draft is refused once anything is applied). This test exists solely
+    // to prove the frontend still renders the columns rather than silently
+    // dropping unexpected data if that backend guarantee is ever violated.
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
+    // "Estado de aplicación" itself is a desktop-table-only column header —
+    // on mobile it stays mounted but CSS-hidden (the card layout shows the
+    // state value without a label), so it's not a reliable visible/hidden
+    // signal across both viewports. The application-state filter chips are
+    // shared by both layouts and only render when showStateColumns is true,
+    // so "Sin aplicar" being visible proves the same thing on either viewport.
+    await expect(page.getByRole("button", { name: "Sin aplicar" })).toBeVisible();
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png", { fullPage: true });
   });
 
   test("sharing agreement detail page (draft, empty coefficient set)", async ({ page }) => {
@@ -1022,6 +1117,177 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-delete-confirmation.png", { fullPage: true });
+  });
+
+  test("sharing agreement upload dialog (idle)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Subir fichero" }).click();
+
+    await expect(page.getByText(`${FIXED_PLANT.regulatoryCode}_AAAA.txt`)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-upload-dialog-idle.png", { fullPage: true });
+  });
+
+  test("sharing agreement upload dialog (rejected lines)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementFileUploadRejection(page, FIXED_PLANT_ID, DRAFT_AGREEMENT.id);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Subir fichero" }).click();
+
+    await page.setInputFiles('input[type="file"]', {
+      name: `${FIXED_PLANT.regulatoryCode}_2026.txt`,
+      mimeType: "text/plain",
+      buffer: Buffer.from("ES0031300000000001AA;0,500000\n"),
+    });
+    await page.getByRole("button", { name: "Subir fichero" }).last().click();
+
+    await expect(page.getByText("Errores del fichero")).toBeVisible();
+    await expect(page.getByText("Errores por línea")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-upload-dialog-rejected.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient editor (empty draft, add-supply picker open)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Añadir suministro" }).click();
+
+    await expect(page.getByText(FIXED_SUPPLY.name)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-add-supply-picker.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient editor (mid-edit, sum below 100%)", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "Removing a row targets the desktop table instance specifically — both the table and card render in the DOM regardless of viewport (CSS-only toggle), so exercising this on mobile would need a second, separately-scoped interaction just to avoid strict-mode ambiguity, for no additional coverage.",
+    );
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+
+    // FIXED_COEFFICIENTS_MIXED sums to exactly 100%; removing Vivienda A's
+    // 30% coefficient brings the live sum to 70%, below the full-sum copy.
+    await page.getByRole("button", { name: /Quitar Vivienda A/ }).first().click();
+
+    // Plain string, not regex: the percent formatter's U+00A0 before "%" is
+    // normalized against a regular space by getByText's string matcher, but
+    // not by its regex matcher.
+    await expect(page.getByText("Suma del fichero: 70,0000 %")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-mid-edit.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient editor (row empty-value error)", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "Targets the desktop table's input specifically to avoid strict-mode ambiguity with the always-present, CSS-hidden mobile card instance.",
+    );
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+
+    // Editor opens in kW mode by default.
+    await page.getByPlaceholder("0,00").first().fill("");
+
+    await expect(page.getByText("Obligatorio").first()).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-empty-value-error.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient editor (toggled to percentage, values converted and kept)", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "Same duplicate-DOM-instance rationale as the other interactive editor specs above.",
+    );
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await expect(page.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
+
+    await page.getByRole("button", { name: "Coeficiente" }).click();
+
+    // Vivienda A's 0.3 coefficient (13,50 kW of the 45 kW installed) survives
+    // the toggle as "0,300000" — converted, not cleared, fixed at 6dp, and not
+    // rounding-drifted.
+    await expect(page.locator("tr", { hasText: "Vivienda A" }).getByRole("textbox")).toHaveValue("0,300000");
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-toggled-to-percentage.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient editor (kW rounds to installed but coefficient sum isn't exact)", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "Same duplicate-DOM-instance rationale as the other interactive editor specs above.",
+    );
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    // Three rows of 0.333333 sum to 999,999 units (short by one) but each
+    // row's kW, rounded to 2dp on a 45 kW plant, still totals to 45,00 kW.
+    const roundingCaveatAgreement = { ...DRAFT_AGREEMENT, installedPowerKw: 45 };
+    const roundingCaveatCoefficients = [
+      { coefficientId: "1", supply: { id: "supply-1", name: "Vivienda A", code: "ES0031300000000001AA" }, coefficient: 0.333333 },
+      { coefficientId: "2", supply: { id: "supply-2", name: "Vivienda B", code: "ES0031300000000002BB" }, coefficient: 0.333333 },
+      { coefficientId: "3", supply: { id: "supply-3", name: "Local C", code: "ES0031300000000003CC" }, coefficient: 0.333333 },
+    ];
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, roundingCaveatAgreement, roundingCaveatCoefficients, 404);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+
+    await expect(page.getByText("Suma del fichero: 99,9999 %")).toBeVisible();
+    // Plain strings, not regex — same NBSP-normalization rationale as the
+    // percentage assertion above: getByText's string matcher normalizes the
+    // formatter's U+00A0 against a regular space; its regex matcher does not.
+    await expect(page.getByText("(con redondeo a céntimos)", { exact: false })).toBeVisible();
+    await expect(page.getByText("faltan 0,0001 % por ajustar en modo porcentaje.", { exact: false })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-kw-rounding-caveat.png", { fullPage: true });
   });
 
   // Note: "import partners modal" is intentionally omitted. See file header.

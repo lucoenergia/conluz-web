@@ -8,6 +8,7 @@ import {
 } from "../../api/sharing-agreements/sharing-agreements";
 import type { CreateSharingAgreementBody, SharingAgreementResponse, UpdateSharingAgreementBody } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
+import { useSuccessDispatch } from "../../context/success.context";
 import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 
 export interface SharingAgreementMutations {
@@ -22,6 +23,7 @@ export interface SharingAgreementMutations {
 export function useSharingAgreementMutations(plantId: string): SharingAgreementMutations {
   const queryClient = useQueryClient();
   const errorDispatch = useErrorDispatch();
+  const successDispatch = useSuccessDispatch();
 
   const createMutation = useCreateSharingAgreement();
   const updateMutation = useUpdateSharingAgreement();
@@ -68,6 +70,7 @@ export function useSharingAgreementMutations(plantId: string): SharingAgreementM
       // right after a successful delete.
       queryClient.removeQueries({ queryKey: getGetSharingAgreementByIdQueryKey(plantId, sharingAgreementId) });
       invalidateList();
+      successDispatch("Acuerdo de reparto eliminado correctamente");
       return true;
     } catch (error) {
       errorDispatch(

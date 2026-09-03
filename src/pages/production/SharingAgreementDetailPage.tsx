@@ -100,7 +100,13 @@ export const SharingAgreementDetailPage: FC = () => {
 
           {!isLoading && !error && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementCoefficientSet coefficients={coefficients} installedPowerKw={agreement?.installedPowerKw} />
+              <SharingAgreementCoefficientSet
+                plantId={plantId}
+                sharingAgreementId={sharingAgreementId}
+                coefficients={coefficients}
+                installedPowerKw={agreement?.installedPowerKw}
+                agreementStatus={agreement?.status}
+              />
             </Box>
           )}
 
@@ -110,6 +116,7 @@ export const SharingAgreementDetailPage: FC = () => {
                 plantId={plantId}
                 sharingAgreementId={sharingAgreementId}
                 agreementStatus={agreement?.status}
+                plantRegulatoryCode={plant?.regulatoryCode}
               />
             </Box>
           )}
@@ -126,6 +133,7 @@ export const SharingAgreementDetailPage: FC = () => {
             notes: agreement.notes,
             installedPowerKw: agreement.installedPowerKw,
           }}
+          hasCoefficients={coefficients.length > 0}
           isSubmitting={isUpdating}
           onCancel={() => setIsEditDialogOpen(false)}
           onSubmit={handleEditSubmit}

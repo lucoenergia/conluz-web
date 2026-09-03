@@ -9,7 +9,6 @@ import type { SharingAgreementResponse, SharingAgreementResponseStatus as Status
 export interface SharingAgreementTimelineProps {
   plantId: string;
   agreements: SharingAgreementResponse[];
-  onEdit?: (agreement: SharingAgreementResponse) => void;
   onDeleteRequest?: (agreement: SharingAgreementResponse) => void;
 }
 
@@ -68,7 +67,6 @@ const TimelineDot: FC<TimelineDotProps> = ({ status }) => {
 export const SharingAgreementTimeline: FC<SharingAgreementTimelineProps> = ({
   plantId,
   agreements,
-  onEdit,
   onDeleteRequest,
 }) => (
   <Fade in timeout={500}>
@@ -97,12 +95,7 @@ export const SharingAgreementTimeline: FC<SharingAgreementTimelineProps> = ({
                 )}
               </Box>
               <Box sx={{ flex: 1, minWidth: 0, pb: isLast ? 0 : 3 }}>
-                <SharingAgreementCard
-                  plantId={plantId}
-                  agreement={agreement}
-                  onEdit={onEdit}
-                  onDeleteRequest={onDeleteRequest}
-                />
+                <SharingAgreementCard plantId={plantId} agreement={agreement} onDeleteRequest={onDeleteRequest} />
               </Box>
             </Box>
           </Grow>

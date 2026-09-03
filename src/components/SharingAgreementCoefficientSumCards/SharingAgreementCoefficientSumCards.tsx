@@ -6,10 +6,10 @@ import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { alphas, colors, radii } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { formatPercentage } from "../../utils/formatPercentage";
 import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
+  formatCoefficientPercentage,
   isFullSum,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { SharingAgreementResponseStatus } from "../../api/models";
@@ -51,7 +51,7 @@ export const SharingAgreementCoefficientSumCards: FC<SharingAgreementCoefficient
           <DescriptionOutlinedIcon sx={{ color: "primary.main", fontSize: 24 }} />
           <Box>
             <Typography variant="body1" fontWeight="600">
-              {formatPercentage(fileSumUnits / COEFFICIENT_SCALE)}
+              {formatCoefficientPercentage(fileSumUnits / COEFFICIENT_SCALE)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Suma del fichero
@@ -78,7 +78,7 @@ export const SharingAgreementCoefficientSumCards: FC<SharingAgreementCoefficient
               )}
               <Box>
                 <Typography variant="body1" fontWeight="600">
-                  {formatPercentage(appliedSumUnits / COEFFICIENT_SCALE)}
+                  {formatCoefficientPercentage(appliedSumUnits / COEFFICIENT_SCALE)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Suma aplicada

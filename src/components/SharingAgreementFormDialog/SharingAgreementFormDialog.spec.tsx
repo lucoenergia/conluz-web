@@ -135,6 +135,87 @@ describe("SharingAgreementFormDialog", () => {
     expect(screen.queryByText(/poner en vigor/)).not.toBeInTheDocument();
   });
 
+  const CAPACITY_WARNING = /cambiar la capacidad no modifica los coeficientes ya guardados/i;
+
+  test("warns when hasCoefficients and the capacity is changed to a different valid value", async () => {
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementFormDialog
+        isOpen
+        mode="edit"
+        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        hasCoefficients
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(CAPACITY_WARNING)).not.toBeInTheDocument();
+
+    const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
+    await user.clear(capacityField);
+    await user.type(capacityField, "20");
+
+    expect(screen.getByText(CAPACITY_WARNING)).toBeInTheDocument();
+  });
+
+  test("does not warn while the capacity field is cleared mid-edit", async () => {
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementFormDialog
+        isOpen
+        mode="edit"
+        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        hasCoefficients
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    await user.clear(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }));
+
+    expect(screen.queryByText(CAPACITY_WARNING)).not.toBeInTheDocument();
+  });
+
+  test("does not warn when the capacity is retyped to the same value", async () => {
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementFormDialog
+        isOpen
+        mode="edit"
+        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        hasCoefficients
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
+    await user.clear(capacityField);
+    await user.type(capacityField, "8");
+
+    expect(screen.queryByText(CAPACITY_WARNING)).not.toBeInTheDocument();
+  });
+
+  test("does not warn when hasCoefficients is false, even if capacity changes", async () => {
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementFormDialog
+        isOpen
+        mode="edit"
+        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
+    await user.clear(capacityField);
+    await user.type(capacityField, "20");
+
+    expect(screen.queryByText(CAPACITY_WARNING)).not.toBeInTheDocument();
+  });
+
   test("cancel button calls onCancel without submitting", async () => {
     const onCancel = vi.fn();
     const onSubmit = vi.fn();

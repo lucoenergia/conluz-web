@@ -6,7 +6,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { AppModal } from "../Modals/AppModal";
 import { sxStyles } from "../../theme/sx";
 import { fontSizes, shadows } from "../../theme/tokens";
-import { formatDecimalForInput, parseDecimalInput } from "./parseDecimalInput";
+import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
 
 export interface SharingAgreementFormValues {
   name: string;
@@ -26,6 +26,8 @@ export interface SharingAgreementFormDialogProps {
   /** Only used in create mode, for the "se creará para {plantName}" intro line. */
   plantName?: string;
   initialValues?: SharingAgreementFormInitialValues;
+  /** When true, warns if the capacity value is changed — the agreement already has coefficients whose kW interpretation depends on it. */
+  hasCoefficients?: boolean;
   isSubmitting?: boolean;
   onCancel: () => void;
   onSubmit: (values: SharingAgreementFormValues) => void;
@@ -33,10 +35,17 @@ export interface SharingAgreementFormDialogProps {
 
 const NAME_REQUIRED_MESSAGE = "El nombre es obligatorio";
 const CAPACITY_INVALID_MESSAGE = "Introduce una potencia en kW mayor que 0";
+// Compare capacity values at 0.001 kW granularity so retyping the same figure in a
+// different textual form (e.g. "150" vs "150,00") never registers as a change.
+const CAPACITY_COMPARISON_SCALE = 1000;
 
 function isCapacityValid(raw: string): boolean {
   const value = parseDecimalInput(raw);
   return !isNaN(value) && value > 0;
+}
+
+function toComparableCapacity(value: number): number {
+  return Math.round(value * CAPACITY_COMPARISON_SCALE);
 }
 
 export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = ({
@@ -44,6 +53,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
   mode,
   plantName,
   initialValues,
+  hasCoefficients = false,
   isSubmitting = false,
   onCancel,
   onSubmit,
@@ -56,6 +66,13 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
   const [nameError, setNameError] = useState<string | undefined>();
   const [capacityError, setCapacityError] = useState<string | undefined>();
   const theme = useTheme();
+
+  const parsedCapacity = parseDecimalInput(capacityInput);
+  const capacityChanged =
+    hasCoefficients &&
+    initialValues?.installedPowerKw !== undefined &&
+    isCapacityValid(capacityInput) &&
+    toComparableCapacity(parsedCapacity) !== toComparableCapacity(initialValues.installedPowerKw);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -170,6 +187,13 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
               input: { endAdornment: <InputAdornment position="end">kW</InputAdornment> },
             }}
           />
+
+          {capacityChanged && (
+            <Alert severity="info">
+              Cambiar la capacidad no modifica los coeficientes ya guardados, pero sí cambia la potencia
+              en kW que corresponde a cada suministro según esos coeficientes.
+            </Alert>
+          )}
 
           <TextField
             label="Nombre del acuerdo"

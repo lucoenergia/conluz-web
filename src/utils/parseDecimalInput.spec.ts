@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDecimalForInput, parseDecimalInput } from "./parseDecimalInput";
+import { formatDecimalForInput, formatFixedDecimalForInput, parseDecimalInput } from "./parseDecimalInput";
 
 describe("parseDecimalInput", () => {
   it("parses a Spanish decimal comma", () => {
@@ -35,5 +35,23 @@ describe("formatDecimalForInput", () => {
 
   it("formats an integer without a separator", () => {
     expect(formatDecimalForInput(42)).toBe("42");
+  });
+});
+
+describe("formatFixedDecimalForInput", () => {
+  it("pads a value with fewer natural decimals to the requested fixed count", () => {
+    expect(formatFixedDecimalForInput(0.5, 6)).toBe("0,500000");
+    expect(formatFixedDecimalForInput(20, 2)).toBe("20,00");
+  });
+
+  it("rounds a value with more natural decimals down to the requested fixed count", () => {
+    // The exact bug reported: a raw float division can produce far more
+    // digits than the requested precision — must round, not truncate-leak.
+    expect(formatFixedDecimalForInput(1.5 / 48.4, 6)).toBe("0,030992");
+  });
+
+  it("formats an exact zero padded, not as a bare '0'", () => {
+    expect(formatFixedDecimalForInput(0, 6)).toBe("0,000000");
+    expect(formatFixedDecimalForInput(0, 2)).toBe("0,00");
   });
 });

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
-import { COEFFICIENT_SCALE, computeSharingAgreementCoefficientSums, isFullSum, toIntegerUnits } from "./sharingAgreementCoefficientSums";
+import {
+  COEFFICIENT_SCALE,
+  computeSharingAgreementCoefficientSums,
+  formatCoefficientPercentage,
+  isFullSum,
+  toIntegerUnits,
+} from "./sharingAgreementCoefficientSums";
 
 const { APPLIED, PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
 
@@ -59,6 +65,22 @@ describe("sharingAgreementCoefficientSums", () => {
 
     it("is true exactly at the scale", () => {
       expect(isFullSum(1_000_000)).toBe(true);
+    });
+  });
+
+  describe("formatCoefficientPercentage", () => {
+    it("always pads to 4 fixed decimals, matching formatPercentage's generic default", () => {
+      expect(formatCoefficientPercentage(1)).toBe("100,0000 %");
+      expect(formatCoefficientPercentage(0.7)).toBe("70,0000 %");
+    });
+
+    it("rounds a value with more natural digits to exactly 4 decimals", () => {
+      // 999,999 / 1,000,000 units — the exact "one short" scenario from isFullSum.
+      expect(formatCoefficientPercentage(999_999 / COEFFICIENT_SCALE)).toBe("99,9999 %");
+    });
+
+    it("formats a tiny gap (1 unit) without collapsing to 0", () => {
+      expect(formatCoefficientPercentage(1 / COEFFICIENT_SCALE)).toBe("0,0001 %");
     });
   });
 });

@@ -12,6 +12,8 @@ import { useLoggedUser, useLoggedUserDispatch } from "../context/logged-user.con
 import { useLogout } from "../hooks/useLogout";
 import { ErrorProvider } from "../context/error.context";
 import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
+import { SuccessProvider } from "../context/success.context";
+import { SuccessDisplay } from "../components/Success/SuccessDisplay";
 import { useActiveCommunity } from "../context/community.context";
 import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
 import { CommunityRole } from "../api/models";
@@ -80,13 +82,16 @@ export const AuthenticatedLayout: FC = () => {
         <Toolbar />
         <AuthErrorBoundry onError={logout}>
           <ErrorProvider>
-            {loggedUser === null ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <Outlet />
-            )}
+            <SuccessProvider>
+              {loggedUser === null ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <Outlet />
+              )}
+              <SuccessDisplay />
+            </SuccessProvider>
             <ErrorDisplay />
           </ErrorProvider>
         </AuthErrorBoundry>

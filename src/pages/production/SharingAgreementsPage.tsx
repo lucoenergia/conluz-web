@@ -38,15 +38,13 @@ export const SharingAgreementsPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { agreements, plant, counts, isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
-  const { createAgreement, updateAgreement, deleteAgreement, isCreating, isUpdating, isDeleting } =
-    useSharingAgreementMutations(plantId);
+  const { createAgreement, deleteAgreement, isCreating, isDeleting } = useSharingAgreementMutations(plantId);
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<SharingAgreementStatusFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<SharingAgreementResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SharingAgreementResponse | null>(null);
 
   useEffect(() => {
@@ -71,12 +69,6 @@ export const SharingAgreementsPage: FC = () => {
     if (response.id) {
       navigate(`/production/${plantId}/sharing-agreements/${response.id}`);
     }
-  };
-
-  const handleEditSubmit = async (values: SharingAgreementFormValues) => {
-    if (!editTarget?.id) return;
-    const success = await updateAgreement(editTarget.id, values);
-    if (success) setEditTarget(null);
   };
 
   const handleDeleteConfirm = async () => {
@@ -210,7 +202,6 @@ export const SharingAgreementsPage: FC = () => {
               <SharingAgreementTimeline
                 plantId={plantId}
                 agreements={filteredAgreements}
-                onEdit={setEditTarget}
                 onDeleteRequest={setDeleteTarget}
               />
             </Box>
@@ -242,22 +233,6 @@ export const SharingAgreementsPage: FC = () => {
           isSubmitting={isCreating}
           onCancel={() => setIsCreateDialogOpen(false)}
           onSubmit={handleCreateSubmit}
-        />
-      )}
-
-      {editTarget && (
-        <SharingAgreementFormDialog
-          key={editTarget.id ?? "edit"}
-          isOpen
-          mode="edit"
-          initialValues={{
-            name: editTarget.name,
-            notes: editTarget.notes,
-            installedPowerKw: editTarget.installedPowerKw,
-          }}
-          isSubmitting={isUpdating}
-          onCancel={() => setEditTarget(null)}
-          onSubmit={handleEditSubmit}
         />
       )}
 

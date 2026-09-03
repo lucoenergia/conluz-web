@@ -11,6 +11,7 @@ import type { SharingAgreementResponseStatus as StatusValue } from "../../api/mo
 
 const mockErrorDispatch = vi.fn();
 const mockDownload = vi.fn();
+const mockUploadMutateAsync = vi.fn();
 
 vi.mock("../../context/error.context", () => ({
   useErrorDispatch: () => mockErrorDispatch,
@@ -20,12 +21,31 @@ vi.mock("./downloadSharingAgreementFile", () => ({
   downloadSharingAgreementFile: (...args: unknown[]) => mockDownload(...args),
 }));
 
+vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
+  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
+    "../../api/sharing-agreements/sharing-agreements",
+  );
+  return {
+    ...actual,
+    useUploadSharingAgreementFile: () => ({
+      mutateAsync: mockUploadMutateAsync,
+      isPending: false,
+      reset: vi.fn(),
+    }),
+  };
+});
+
 function renderPanel(agreementStatus: StatusValue = SharingAgreementResponseStatus.PUBLISHED) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <SharingAgreementFilePanel plantId="plant-1" sharingAgreementId="agreement-1" agreementStatus={agreementStatus} />
+        <SharingAgreementFilePanel
+          plantId="plant-1"
+          sharingAgreementId="agreement-1"
+          agreementStatus={agreementStatus}
+          plantRegulatoryCode="CAU0001"
+        />
       </ThemeProvider>
     </QueryClientProvider>,
   );
@@ -35,6 +55,7 @@ describe("SharingAgreementFilePanel", () => {
   beforeEach(() => {
     mockErrorDispatch.mockClear();
     mockDownload.mockClear();
+    mockUploadMutateAsync.mockClear();
   });
 
   it("always shows the download action by default — never probes on load", () => {
@@ -91,5 +112,34 @@ describe("SharingAgreementFilePanel", () => {
 
     await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
     expect(screen.getByRole("button", { name: "Descargar fichero" })).toBeInTheDocument();
+  });
+
+  it("shows the upload action only for a DRAFT agreement", () => {
+    renderPanel(SharingAgreementResponseStatus.DRAFT);
+    expect(screen.getByRole("button", { name: "Subir fichero" })).toBeInTheDocument();
+  });
+
+  it("does not show the upload action for a non-DRAFT agreement", () => {
+    renderPanel(SharingAgreementResponseStatus.PUBLISHED);
+    expect(screen.queryByRole("button", { name: "Subir fichero" })).not.toBeInTheDocument();
+  });
+
+  it("clears the empty-state message once a file is successfully uploaded", async () => {
+    mockDownload.mockRejectedValue({ response: { status: 404 } });
+    mockUploadMutateAsync.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    renderPanel(SharingAgreementResponseStatus.DRAFT);
+
+    await user.click(screen.getByRole("button", { name: "Descargar fichero" }));
+    expect(await screen.findByText(/todavía no tiene un fichero adjunto/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Subir fichero" }));
+    const file = new File(["CUPS;0,5"], "CAU0001_2026.txt", { type: "text/plain" });
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, file);
+    await user.click(screen.getByRole("button", { name: "Subir fichero" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Descargar fichero" })).toBeInTheDocument());
+    expect(screen.queryByText(/todavía no tiene un fichero adjunto/)).not.toBeInTheDocument();
   });
 });

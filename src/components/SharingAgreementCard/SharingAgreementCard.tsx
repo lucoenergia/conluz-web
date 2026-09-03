@@ -1,11 +1,10 @@
 import { useState, type FC } from "react";
-import { Box, CardContent, Divider, IconButton, MenuItem, Typography } from "@mui/material";
-import { Link as RouterLink } from "react-router";
+import { Box, CardContent, IconButton, MenuItem, Typography } from "@mui/material";
+import { Link as RouterLink, useNavigate } from "react-router";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import BoltIcon from "@mui/icons-material/Bolt";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii, alphas, colors } from "../../theme/tokens";
@@ -19,7 +18,6 @@ import type { SharingAgreementResponse } from "../../api/models";
 export interface SharingAgreementCardProps {
   plantId: string;
   agreement: SharingAgreementResponse;
-  onEdit?: (agreement: SharingAgreementResponse) => void;
   onDeleteRequest?: (agreement: SharingAgreementResponse) => void;
 }
 
@@ -43,11 +41,19 @@ function excerpt(text: string | undefined, maxLength: number): string | undefine
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 }
 
-export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, agreement, onEdit, onDeleteRequest }) => {
+export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, agreement, onDeleteRequest }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const notesExcerpt = excerpt(agreement.notes, NOTES_EXCERPT_LENGTH);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const isDraft = agreement.status === SharingAgreementResponseStatus.DRAFT;
+  const detailPath = agreement.id ? `/production/${plantId}/sharing-agreements/${agreement.id}` : undefined;
+
+  const handleCardClick = () => {
+    if (!detailPath) return;
+    if (window.getSelection()?.toString()) return;
+    navigate(detailPath);
+  };
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
@@ -61,13 +67,6 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
     setAnchorElement(null);
   };
 
-  const handleEditClick = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    handleCloseMenu();
-    onEdit?.(agreement);
-  };
-
   const handleDeleteClick = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -77,51 +76,53 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
 
   return (
     <AppCard
+      onClick={detailPath ? handleCardClick : undefined}
+      sx={
+        detailPath
+          ? {
+              cursor: "pointer",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              "&:hover": {
+                transform: "translateY(-4px)",
+              },
+            }
+          : undefined
+      }
       header={
         <>
-          <Typography variant="h6">{agreement.name || "Sin nombre"}</Typography>
-          {agreement.id && (
-            <Box sx={{ flexShrink: 0 }}>
-              <IconButton
-                onClick={handleOpenMenu}
-                sx={{
-                  color: "white",
-                  minWidth: 40,
-                  minHeight: 40,
-                  "&:hover": {
-                    backgroundColor: alphas.white.hairline,
-                  },
-                }}
-              >
-                <MoreVertIcon />
-              </IconButton>
-              <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
-                <Box sx={{ py: 1 }}>
-                  <Box
-                    component={RouterLink}
-                    to={`/production/${plantId}/sharing-agreements/${agreement.id}`}
-                    sx={{ textDecoration: "none", color: "inherit" }}
+          {detailPath ? (
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to={detailPath}
+              onClick={(event) => event.stopPropagation()}
+              sx={{ textDecoration: "none", color: "inherit" }}
+            >
+              {agreement.name || "Sin nombre"}
+            </Typography>
+          ) : (
+            <Typography variant="h6">{agreement.name || "Sin nombre"}</Typography>
+          )}
+          {detailPath && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
+              <ChevronRightIcon aria-hidden sx={{ color: "white", opacity: 0.7 }} />
+              {isDraft && (
+                <>
+                  <IconButton
+                    onClick={handleOpenMenu}
+                    sx={{
+                      color: "white",
+                      minWidth: 40,
+                      minHeight: 40,
+                      "&:hover": {
+                        backgroundColor: alphas.white.hairline,
+                      },
+                    }}
                   >
-                    <MenuItem>
-                      <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                        Ver detalle
-                      </Typography>
-                    </MenuItem>
-                  </Box>
-
-                  {isDraft && (
-                    <MenuItem onClick={handleEditClick}>
-                      <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                        Editar
-                      </Typography>
-                    </MenuItem>
-                  )}
-
-                  {isDraft && (
-                    <>
-                      <Divider sx={{ my: 1 }} />
+                    <MoreVertIcon />
+                  </IconButton>
+                  <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
+                    <Box sx={{ py: 1 }}>
                       <MenuItem
                         onClick={handleDeleteClick}
                         sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
@@ -131,10 +132,10 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
                           Eliminar
                         </Typography>
                       </MenuItem>
-                    </>
-                  )}
-                </Box>
-              </MenuTemplate>
+                    </Box>
+                  </MenuTemplate>
+                </>
+              )}
             </Box>
           )}
         </>
