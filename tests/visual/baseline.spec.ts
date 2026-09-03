@@ -1019,7 +1019,13 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
-    await expect(page.getByText("Estado de aplicación")).toBeVisible();
+    // "Estado de aplicación" itself is a desktop-table-only column header —
+    // on mobile it stays mounted but CSS-hidden (the card layout shows the
+    // state value without a label), so it's not a reliable visible/hidden
+    // signal across both viewports. The application-state filter chips are
+    // shared by both layouts and only render when showStateColumns is true,
+    // so "Sin aplicar" being visible proves the same thing on either viewport.
+    await expect(page.getByRole("button", { name: "Sin aplicar" })).toBeVisible();
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png", { fullPage: true });
   });
