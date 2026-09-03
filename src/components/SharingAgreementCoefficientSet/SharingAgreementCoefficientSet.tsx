@@ -384,7 +384,16 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       )}
 
       {isEditing && (
-        <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
           <Tooltip title={activeCommunityId ? "" : "Selecciona una comunidad activa para añadir suministros"}>
             <span>
               <Button
@@ -397,13 +406,14 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               </Button>
             </span>
           </Tooltip>
-          <Box sx={{ flexGrow: 1 }} />
-          <Button variant="outlined" onClick={handleCancelEditing} disabled={isReplacing}>
-            Cancelar
-          </Button>
-          <Button variant="contained" onClick={handleSave} disabled={!canSave || isReplacing}>
-            {isReplacing ? "Guardando…" : "Guardar"}
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" onClick={handleCancelEditing} disabled={isReplacing}>
+              Cancelar
+            </Button>
+            <Button variant="contained" onClick={handleSave} disabled={!canSave || isReplacing}>
+              {isReplacing ? "Guardando…" : "Guardar"}
+            </Button>
+          </Box>
         </Box>
       )}
 
