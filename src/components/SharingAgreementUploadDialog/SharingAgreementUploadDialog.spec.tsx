@@ -28,7 +28,7 @@ vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
   };
 });
 
-function renderDialog(regulatoryCode: string | undefined) {
+function renderDialog(regulatoryCode: string | undefined, onUploadSuccess?: () => void) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -39,6 +39,7 @@ function renderDialog(regulatoryCode: string | undefined) {
           sharingAgreementId="agreement-1"
           regulatoryCode={regulatoryCode}
           onClose={vi.fn()}
+          onUploadSuccess={onUploadSuccess}
         />
       </ThemeProvider>
     </QueryClientProvider>,
@@ -88,6 +89,20 @@ describe("SharingAgreementUploadDialog", () => {
     expect(screen.getByText("Errores por línea")).toBeInTheDocument();
     expect(screen.getByText(/no se ha modificado ningún coeficiente/i)).toBeInTheDocument();
     expect(mockErrorDispatch).not.toHaveBeenCalled();
+  });
+
+  it("calls onUploadSuccess after a successful upload", async () => {
+    mockMutateAsync.mockResolvedValue(undefined);
+    const onUploadSuccess = vi.fn();
+    const user = userEvent.setup();
+    renderDialog("CAU0001", onUploadSuccess);
+
+    const file = new File(["CUPS;0,5"], "CAU0001_2026.txt", { type: "text/plain" });
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, file);
+    await user.click(screen.getByRole("button", { name: "Subir fichero" }));
+
+    await waitFor(() => expect(onUploadSuccess).toHaveBeenCalled());
   });
 
   it("on a non-400 error, dispatches a toast and stays on the file picker", async () => {

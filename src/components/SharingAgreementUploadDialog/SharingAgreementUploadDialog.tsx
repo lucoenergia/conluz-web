@@ -20,6 +20,7 @@ export interface SharingAgreementUploadDialogProps {
   sharingAgreementId: string;
   regulatoryCode: string | undefined;
   onClose: () => void;
+  onUploadSuccess?: () => void;
 }
 
 function isBadRequest(error: unknown): boolean {
@@ -32,6 +33,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
   sharingAgreementId,
   regulatoryCode,
   onClose,
+  onUploadSuccess,
 }) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
@@ -71,6 +73,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
         queryKey: getGetSharingAgreementPartitionCoefficientsQueryKey(plantId, sharingAgreementId),
       });
       queryClient.invalidateQueries({ queryKey: getGetSharingAgreementByIdQueryKey(plantId, sharingAgreementId) });
+      onUploadSuccess?.();
       handleClose();
     } catch (error) {
       if (isBadRequest(error)) {

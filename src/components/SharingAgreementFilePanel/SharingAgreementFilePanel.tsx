@@ -93,6 +93,7 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
         sharingAgreementId={sharingAgreementId}
         regulatoryCode={plantRegulatoryCode}
         onClose={() => setIsUploadDialogOpen(false)}
+        onUploadSuccess={() => downloadMutation.reset()}
       />
     </Paper>
   );
