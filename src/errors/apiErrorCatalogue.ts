@@ -28,19 +28,19 @@ const API_ERROR_TEMPLATES: Partial<Record<RestErrorDetailCode, string>> = {
   [RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_LENGTH_INVALID]:
     "Línea {line}: el CUPS {cups} no tiene una longitud válida.",
   [RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_DUPLICATE]:
-    "Línea {line}: el CUPS {cups} aparece más de una vez en el fichero.",
+    "El CUPS {cups} aparece más de una vez en el fichero.",
   [RestErrorDetailCode.DISTRIBUTOR_FILE_VALUE_DECIMAL_SEPARATOR_INVALID]:
-    "Línea {line}: el separador decimal del coeficiente no es válido.",
+    "Línea {line}: el separador decimal del coeficiente no es válido, es obligatorio usar la coma.",
   [RestErrorDetailCode.DISTRIBUTOR_FILE_VALUE_SCALE_INVALID]:
-    "Línea {line}: el coeficiente tiene más decimales de los permitidos.",
+    "Línea {line}: el coeficiente tiene más decimales de los seis permitidos.",
 
   // File-level distributor-file errors (no params.line).
   [RestErrorDetailCode.DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID]:
     "La suma de los coeficientes del fichero no es válida.",
   [RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID]:
-    "El nombre del fichero no sigue el formato esperado: {regulatoryCode}_AAAA.txt.",
+    "El nombre del fichero «{filename}» no sigue el formato esperado: CAU_AAAA.txt. Reemplaza CAU por el código de la planta y AAAA por el año con cuatro dígitos.",
   [RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH]:
-    "El nombre del fichero no corresponde al código regulatorio de esta planta ({regulatoryCode}).",
+    "El CAU del nombre del fichero no coincide con el de esta planta (esperado «{expected}», recibido «{actual}»).",
   [RestErrorDetailCode.DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING]:
     "Esta planta no tiene código regulatorio asignado, por lo que no se puede validar el fichero. Añádelo desde la ficha de la planta.",
 

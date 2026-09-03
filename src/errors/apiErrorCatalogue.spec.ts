@@ -83,6 +83,33 @@ describe("distributor-file and sharing-agreement error templates", () => {
     expect(message).not.toBe("raw server message");
   });
 
+  it("interpolates the actual filename into DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID, with no leftover placeholder", () => {
+    const message = translateErrorDetail(
+      {
+        message: "raw server message",
+        code: RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID,
+        params: { filename: "ABC123_2025.txt" },
+      },
+      "fallback",
+    );
+    expect(message).toContain("ABC123_2025.txt");
+    expect(message).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+
+  it("interpolates expected/actual into DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH, with no leftover placeholder", () => {
+    const message = translateErrorDetail(
+      {
+        message: "raw server message",
+        code: RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH,
+        params: { expected: "ES0031406319070001XX", actual: "ES0031406319070002YY" },
+      },
+      "fallback",
+    );
+    expect(message).toContain("ES0031406319070001XX");
+    expect(message).toContain("ES0031406319070002YY");
+    expect(message).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+
   it("translates SHARING_AGREEMENT_DUPLICATE_SUPPLY distinctly from DISTRIBUTOR_FILE_CUPS_DUPLICATE", () => {
     const manual = translateErrorDetail(
       { message: "raw", code: RestErrorDetailCode.SHARING_AGREEMENT_DUPLICATE_SUPPLY },
