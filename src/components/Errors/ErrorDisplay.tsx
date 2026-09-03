@@ -5,7 +5,7 @@ import { Alert, Box, Slide, Snackbar } from "@mui/material";
 export const ErrorDisplay: FC = () => {
   const errors = useError();
   return (
-    <Box sx={{ position: "fixed", bottom: 0, right: 0, display: "grid", gap: 2 }}>
+    <Box sx={{ position: "fixed", top: 0, right: 0, display: "grid", gap: 2 }}>
       {errors?.map((error, index) => (
         <Snackbar
           key={index}
