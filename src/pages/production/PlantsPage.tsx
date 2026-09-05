@@ -163,8 +163,8 @@ export const PlantsPage: FC = () => {
                 name={item.name}
                 address={item.address}
                 totalPower={item.totalPower}
-                connectionDate={item.connectionDate}
-                description={item.description}
+                connectionDate={item.connectionDate ?? undefined}
+                description={item.description ?? undefined}
                 onDelete={deletePlantHandler}
               />
             )}

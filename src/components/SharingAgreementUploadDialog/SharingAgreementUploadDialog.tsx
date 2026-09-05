@@ -90,7 +90,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
     <AppModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Subir fichero de la distribuidora"
+      title="Importar un fichero que ya tengas"
       icon={<UploadFileOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}
       actions={
@@ -136,7 +136,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
         {!regulatoryCode ? (
           <Alert severity="warning">
             Esta planta no tiene código regulatorio (CAU) asignado, por lo que no se puede validar el nombre del
-            fichero. Añádelo desde la ficha de la planta antes de subir el fichero de la distribuidora.
+            fichero. Añádelo desde la ficha de la planta antes de importar el fichero.
           </Alert>
         ) : groupedErrors ? (
           <RejectedLinesScreen groupedErrors={groupedErrors} onChooseAnotherFile={handleChooseAnotherFile} />

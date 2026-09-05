@@ -7,5 +7,5 @@
  */
 
 export interface GetShellyConfigResponse {
-  enabled?: boolean;
+  enabled: boolean;
 }

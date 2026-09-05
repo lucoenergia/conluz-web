@@ -10,6 +10,20 @@ import {
   updateRowInput,
   type EditableCoefficientRow,
 } from "./sharingAgreementCoefficientEditing";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementPartitionCoefficientResponseEndState,
+} from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+
+// A clean pending/never-applied default for the response fields these tests don't care about.
+const PENDING_FIELDS = {
+  validFrom: null,
+  validTo: null,
+  applicationState: SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
+  endState: SharingAgreementPartitionCoefficientResponseEndState.OPEN,
+  endDate: null,
+} as const;
 
 const mockErrorDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
@@ -35,7 +49,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 const row = (supplyId: string, value: number | undefined): EditableCoefficientRow => ({
   supplyId,
-  coefficient: {},
+  coefficient: {} as SharingAgreementPartitionCoefficientResponse,
   value,
   inputText: value === undefined ? "" : String(value),
 });
@@ -104,12 +118,13 @@ describe("useSharingAgreementCoefficientMutations", () => {
     const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
 
     const installedPowerKw = 48.4;
+    // Only id/name are exercised by buildEditableRowFromSupply; the rest of SupplyResponse is irrelevant here.
     const supplies = [
       { id: "s1", name: "A" },
       { id: "s2", name: "B" },
       { id: "s3", name: "C" },
       { id: "s4", name: "D" },
-    ];
+    ] as SupplyResponse[];
     const kwText = ["1,5", "3,2", "1,0", "2,0"];
     const rows = supplies.map((supply, i) => {
       const empty = buildEditableRowFromSupply(supply);
@@ -134,9 +149,9 @@ describe("useSharingAgreementCoefficientMutations", () => {
     const installedPowerKw = 45;
     const seeded = buildEditableRowsFromCoefficients(
       [
-        { supply: { id: "s1" }, coefficient: 0.333333 },
-        { supply: { id: "s2" }, coefficient: 0.333333 },
-        { supply: { id: "s3" }, coefficient: 0.333334 },
+        { coefficientId: "c1", supply: { id: "s1", name: "A", code: "CUPS1" }, coefficient: 0.333333, ...PENDING_FIELDS },
+        { coefficientId: "c2", supply: { id: "s2", name: "B", code: "CUPS2" }, coefficient: 0.333333, ...PENDING_FIELDS },
+        { coefficientId: "c3", supply: { id: "s3", name: "C", code: "CUPS3" }, coefficient: 0.333334, ...PENDING_FIELDS },
       ],
       "coefficient",
       installedPowerKw,

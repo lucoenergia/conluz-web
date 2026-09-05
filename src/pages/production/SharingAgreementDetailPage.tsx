@@ -7,12 +7,13 @@ import { colors } from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
-import { SharingAgreementCoefficientSumCards } from "../../components/SharingAgreementCoefficientSumCards";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
+import { SharingAgreementDraftProgressStrip } from "../../components/SharingAgreementDraftProgressStrip";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
+import { SharingAgreementResponseStatus } from "../../api/models";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 
@@ -92,9 +93,9 @@ export const SharingAgreementDetailPage: FC = () => {
             />
           </Box>
 
-          {!isLoading && !error && (
+          {!isLoading && !error && agreement?.status === SharingAgreementResponseStatus.DRAFT && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementCoefficientSumCards coefficients={coefficients} agreementStatus={agreement?.status} />
+              <SharingAgreementDraftProgressStrip coefficients={coefficients} hasFile={!!agreement.file} />
             </Box>
           )}
 
@@ -115,8 +116,9 @@ export const SharingAgreementDetailPage: FC = () => {
               <SharingAgreementFilePanel
                 plantId={plantId}
                 sharingAgreementId={sharingAgreementId}
-                agreementStatus={agreement?.status}
-                plantRegulatoryCode={plant?.regulatoryCode}
+                agreement={agreement}
+                coefficients={coefficients}
+                plantRegulatoryCode={plant?.regulatoryCode ?? undefined}
               />
             </Box>
           )}
@@ -130,7 +132,7 @@ export const SharingAgreementDetailPage: FC = () => {
           mode="edit"
           initialValues={{
             name: agreement.name,
-            notes: agreement.notes,
+            notes: agreement.notes ?? undefined,
             installedPowerKw: agreement.installedPowerKw,
           }}
           hasCoefficients={coefficients.length > 0}

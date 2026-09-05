@@ -1,5 +1,4 @@
-import { RestErrorDetailCode } from "../api/models";
-import type { RestError, RestErrorDetail } from "../api/models";
+import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/models";
 
 /**
  * code -> Spanish message template. Templates may reference `{paramName}`
@@ -17,40 +16,32 @@ import type { RestError, RestErrorDetail } from "../api/models";
  * save-success `coefficientSumWarning` string (a different, code-less field —
  * see SharingAgreementCoefficientSet's save handler).
  */
-const API_ERROR_TEMPLATES: Partial<Record<RestErrorDetailCode, string>> = {
-  [RestErrorDetailCode.SHARING_AGREEMENT_NOT_DRAFT]:
-    "Este acuerdo ya no está en borrador, por lo que no se puede modificar ni eliminar.",
+const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, string>> = {
+  SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, por lo que no se puede modificar ni eliminar.",
 
   // Line-level distributor-file errors (carry params.line, and usually params.cups).
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED]: "Línea {line}: el formato de la línea no es válido.",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_UNKNOWN]:
-    "Línea {line}: el CUPS {cups} no pertenece a ningún suministro de la comunidad.",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_LENGTH_INVALID]:
-    "Línea {line}: el CUPS {cups} no tiene una longitud válida.",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_DUPLICATE]:
-    "El CUPS {cups} aparece más de una vez en el fichero.",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_VALUE_DECIMAL_SEPARATOR_INVALID]:
+  DISTRIBUTOR_FILE_LINE_MALFORMED: "Línea {line}: el formato de la línea no es válido.",
+  DISTRIBUTOR_FILE_CUPS_UNKNOWN: "Línea {line}: el CUPS {cups} no pertenece a ningún suministro de la comunidad.",
+  DISTRIBUTOR_FILE_CUPS_LENGTH_INVALID: "Línea {line}: el CUPS {cups} no tiene una longitud válida.",
+  DISTRIBUTOR_FILE_CUPS_DUPLICATE: "El CUPS {cups} aparece más de una vez en el fichero.",
+  DISTRIBUTOR_FILE_VALUE_DECIMAL_SEPARATOR_INVALID:
     "Línea {line}: el separador decimal del coeficiente no es válido, es obligatorio usar la coma.",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_VALUE_SCALE_INVALID]:
-    "Línea {line}: el coeficiente tiene más decimales de los seis permitidos.",
+  DISTRIBUTOR_FILE_VALUE_SCALE_INVALID: "Línea {line}: el coeficiente tiene más decimales de los seis permitidos.",
 
   // File-level distributor-file errors (no params.line).
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID]:
-    "La suma de los coeficientes del fichero no es válida.",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID]:
+  DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID: "La suma de los coeficientes del fichero no es válida.",
+  DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID:
     "El nombre del fichero «{filename}» no sigue el formato esperado: CAU_AAAA.txt. Reemplaza CAU por el código de la planta y AAAA por el año con cuatro dígitos.",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH]:
+  DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH:
     "El CAU del nombre del fichero no coincide con el de esta planta (esperado «{expected}», recibido «{actual}»).",
-  [RestErrorDetailCode.DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING]:
+  DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING:
     "Esta planta no tiene código regulatorio asignado, por lo que no se puede validar el fichero. Añádelo desde la ficha de la planta.",
 
   // Manual-authoring duplicate, keyed by supplyId — distinct from the
   // file-path DISTRIBUTOR_FILE_CUPS_DUPLICATE (keyed by CUPS) above.
-  [RestErrorDetailCode.SHARING_AGREEMENT_DUPLICATE_SUPPLY]:
-    "Hay un suministro repetido en el conjunto de coeficientes.",
+  SHARING_AGREEMENT_DUPLICATE_SUPPLY: "Hay un suministro repetido en el conjunto de coeficientes.",
 
-  [RestErrorDetailCode.SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID]:
-    "La suma de los coeficientes del acuerdo no es válida.",
+  SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID: "La suma de los coeficientes del acuerdo no es válida.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {
@@ -66,7 +57,7 @@ function interpolate(template: string, params?: Record<string, string>): string 
 export function translateErrorDetail(detail: RestErrorDetail | null | undefined, fallback: string): string {
   if (!detail) return fallback;
   const template = detail.code ? API_ERROR_TEMPLATES[detail.code] : undefined;
-  if (template) return interpolate(template, detail.params);
+  if (template) return interpolate(template, detail.params ?? undefined);
   return detail.message || fallback;
 }
 

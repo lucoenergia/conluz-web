@@ -5,12 +5,15 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { SupplyShellyResponseMacAddress } from './supplyShellyResponseMacAddress';
+import type { SupplyShellyResponseId } from './supplyShellyResponseId';
+import type { SupplyShellyResponseMqttPrefix } from './supplyShellyResponseMqttPrefix';
 
 export interface SupplyShellyResponse {
   /** MAC address of the Shelly */
-  macAddress?: string;
+  macAddress: SupplyShellyResponseMacAddress;
   /** Unique identifier of the Shelly */
-  id?: string;
+  id: SupplyShellyResponseId;
   /** MQTT prefix for the Shelly */
-  mqttPrefix?: string;
+  mqttPrefix: SupplyShellyResponseMqttPrefix;
 }

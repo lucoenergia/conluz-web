@@ -118,9 +118,15 @@ export function buildEditableRowFromSupply(supply: SupplyResponse): EditableCoef
   return {
     supplyId: supply.id!,
     coefficient: {
-      supply: { id: supply.id, name: supply.name, code: supply.code },
+      // Not yet persisted — no server-assigned id or coefficient value exist yet.
+      coefficientId: "",
+      supply: { id: supply.id, name: supply.name ?? "", code: supply.code },
+      coefficient: 0,
+      validFrom: null,
+      validTo: null,
       applicationState: SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
       endState: SharingAgreementPartitionCoefficientResponseEndState.OPEN,
+      endDate: null,
     },
     // Empty, never zero — an unset value must block save, not silently count as 0.
     // Unit-independent: an empty row starts empty regardless of which unit is active.

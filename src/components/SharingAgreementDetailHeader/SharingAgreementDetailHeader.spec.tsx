@@ -7,19 +7,22 @@ import { SharingAgreementResponseStatus } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 
 describe("SharingAgreementDetailHeader", () => {
-  const mockAgreement: SharingAgreementResponse = {
+  const mockAgreement = {
     id: "agreement-1",
+    plantId: "plant-1",
     name: "Acuerdo Comunidad Sur",
     status: SharingAgreementResponseStatus.PUBLISHED,
     installedPowerKw: 42.5,
     createdAt: "2024-05-23T10:30:00Z",
+    createdBy: "user-1",
     notes: "Revisión anual pendiente",
-  };
+    file: null,
+  } as unknown as SharingAgreementResponse;
 
-  const mockPlant: PlantResponse = {
+  const mockPlant = {
     id: "plant-1",
     regulatoryCode: "ES0031300296192001MB",
-  };
+  } as PlantResponse;
 
   it("renders agreement name, CAU and tiles", () => {
     render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} />);
@@ -40,7 +43,12 @@ describe("SharingAgreementDetailHeader", () => {
   });
 
   it("renders default texts and CAU fallback when data is missing", () => {
-    render(<SharingAgreementDetailHeader agreement={{}} plant={{}} />);
+    render(
+      <SharingAgreementDetailHeader
+        agreement={{} as SharingAgreementResponse}
+        plant={{} as PlantResponse}
+      />,
+    );
 
     expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
     expect(screen.getByText("CAU no disponible")).toBeInTheDocument();

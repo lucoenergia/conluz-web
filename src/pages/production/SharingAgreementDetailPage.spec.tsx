@@ -8,6 +8,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "../../theme";
 import { SharingAgreementDetailPage } from "./SharingAgreementDetailPage";
 import { SharingAgreementResponseStatus } from "../../api/models";
+import type { PlantResponse, SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
 
@@ -45,6 +46,10 @@ function mockData(overrides: Partial<SharingAgreementDetailData> = {}) {
   mockUseSharingAgreementDetailData.mockReturnValue({ ...baseData(), ...overrides });
 }
 
+// Fixtures deliberately stay minimal — only the fields these tests actually
+// exercise — and are cast rather than fully populated to every now-required
+// field on the generated types, matching the pattern used elsewhere in this
+// codebase for partial test fixtures.
 function baseData(): SharingAgreementDetailData {
   return {
     agreement: {
@@ -54,8 +59,9 @@ function baseData(): SharingAgreementDetailData {
       installedPowerKw: 12.5,
       notes: "Nota original",
       createdAt: "2026-01-15T10:00:00Z",
-    },
-    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" },
+      file: null,
+    } as unknown as SharingAgreementResponse,
+    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" } as PlantResponse,
     coefficients: [],
     isLoading: false,
     isNotFound: false,
@@ -103,7 +109,7 @@ describe("SharingAgreementDetailPage", () => {
         name: "Reparto 2025",
         status: SharingAgreementResponseStatus.PUBLISHED,
         installedPowerKw: 12.5,
-      },
+      } as SharingAgreementResponse,
     });
     setup();
 
@@ -134,7 +140,7 @@ describe("SharingAgreementDetailPage", () => {
   });
 
   test("warns that changing capacity shifts each supply's kW when the agreement already has coefficients", async () => {
-    mockData({ coefficients: [{ coefficientId: "c1" }] });
+    mockData({ coefficients: [{ coefficientId: "c1" }] as SharingAgreementPartitionCoefficientResponse[] });
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 

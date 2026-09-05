@@ -58,9 +58,16 @@ describe("SharingAgreementUploadDialog", () => {
     expect(screen.getByText(/sustituye por completo/)).toBeInTheDocument();
   });
 
+  it("titles the dialog as importing a file you already have, never as the distributor's file", () => {
+    renderDialog("CAU0001");
+    expect(screen.getByRole("heading", { name: "Importar un fichero que ya tengas" })).toBeInTheDocument();
+    expect(screen.queryByText(/de la distribuidora/)).not.toBeInTheDocument();
+  });
+
   it("when the plant has no regulatory code, explains the fix is on the plant and shows no file picker", () => {
     renderDialog(undefined);
     expect(screen.getByText(/no tiene código regulatorio/)).toBeInTheDocument();
+    expect(screen.queryByText(/de la distribuidora/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Seleccionar fichero" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Subir fichero" })).not.toBeInTheDocument();
   });

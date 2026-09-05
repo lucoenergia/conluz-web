@@ -6,24 +6,27 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { SharingAgreementCoefficientSupplyResponse } from './sharingAgreementCoefficientSupplyResponse';
+import type { SharingAgreementPartitionCoefficientResponseValidFrom } from './sharingAgreementPartitionCoefficientResponseValidFrom';
+import type { SharingAgreementPartitionCoefficientResponseValidTo } from './sharingAgreementPartitionCoefficientResponseValidTo';
 import type { SharingAgreementPartitionCoefficientResponseApplicationState } from './sharingAgreementPartitionCoefficientResponseApplicationState';
 import type { SharingAgreementPartitionCoefficientResponseEndState } from './sharingAgreementPartitionCoefficientResponseEndState';
+import type { SharingAgreementPartitionCoefficientResponseEndDate } from './sharingAgreementPartitionCoefficientResponseEndDate';
 
 export interface SharingAgreementPartitionCoefficientResponse {
   /** Internal unique identifier of this coefficient */
-  coefficientId?: string;
+  coefficientId: string;
   /** Supply this coefficient belongs to */
-  supply?: SharingAgreementCoefficientSupplyResponse;
+  supply: SharingAgreementCoefficientSupplyResponse;
   /** Partition coefficient value, on a 0-1 scale */
-  coefficient?: number;
+  coefficient: number;
   /** Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated. */
-  validFrom?: string;
+  validFrom: SharingAgreementPartitionCoefficientResponseValidFrom;
   /** End of the period (exclusive), as stored. Null unless explicitly closed. */
-  validTo?: string;
+  validTo: SharingAgreementPartitionCoefficientResponseValidTo;
   /** Whether the distributor has applied this coefficient yet */
-  applicationState?: SharingAgreementPartitionCoefficientResponseApplicationState;
+  applicationState: SharingAgreementPartitionCoefficientResponseApplicationState;
   /** How/why this coefficient's coverage ends */
-  endState?: SharingAgreementPartitionCoefficientResponseEndState;
+  endState: SharingAgreementPartitionCoefficientResponseEndState;
   /** The effective end of this coefficient's coverage. Present only when endState is DERIVED or CLOSED. */
-  endDate?: string;
+  endDate: SharingAgreementPartitionCoefficientResponseEndDate;
 }

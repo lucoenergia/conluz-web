@@ -5,8 +5,9 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { RestErrorDetailParamsAnyOf } from './restErrorDetailParamsAnyOf';
 
 /**
  * Structured data for this error, keyed in camelCase for use as i18n interpolation variables. Null when the error carries no such data.
  */
-export type RestErrorDetailParams = {[key: string]: string};
+export type RestErrorDetailParams = RestErrorDetailParamsAnyOf | null;

@@ -104,10 +104,10 @@ export const EditSupplyPage: FC = () => {
           {!isLoading && !error && (
             <SupplyForm
               initialValues={{
-                name: supplyPoint?.name,
+                name: supplyPoint?.name ?? undefined,
                 cups: supplyPoint?.code,
                 address: supplyPoint?.address,
-                addressRef: supplyPoint?.addressRef,
+                addressRef: supplyPoint?.addressRef ?? undefined,
                 personalId: supplyPoint?.user?.personalId,
               }}
               handleSubmit={handleSubmit}

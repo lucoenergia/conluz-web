@@ -112,12 +112,12 @@ export const EditPlantPage: FC = () => {
             <PlantForm
               initialValues={{
                 providerCode: plant?.providerCode,
-                regulatoryCode: plant?.regulatoryCode,
+                regulatoryCode: plant?.regulatoryCode ?? undefined,
                 name: plant?.name,
                 address: plant?.address,
-                description: plant?.description,
+                description: plant?.description ?? undefined,
                 totalPower: plant?.totalPower,
-                connectionDate: plant?.connectionDate,
+                connectionDate: plant?.connectionDate ?? undefined,
                 supplyCode: plant?.supply?.code,
               }}
               handleSubmit={handleSubmit}

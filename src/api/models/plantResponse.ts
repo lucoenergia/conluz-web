@@ -5,20 +5,23 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { PlantResponseRegulatoryCode } from './plantResponseRegulatoryCode';
 import type { SupplyResponse } from './supplyResponse';
+import type { PlantResponseDescription } from './plantResponseDescription';
 import type { PlantResponseInverterProvider } from './plantResponseInverterProvider';
+import type { PlantResponseConnectionDate } from './plantResponseConnectionDate';
 
 export interface PlantResponse {
-  id?: string;
+  id: string;
   /** The plant identifier assigned by the inverter provider (currently Huawei). Used verbatim as the station_code tag in InfluxDB: this is the join key between the PostgreSQL plant row and its time series. It is not a CUPS and not a CAU -- the regulator's code is regulatory_code. */
-  providerCode?: string;
+  providerCode: string;
   /** The identifier assigned by the regulator. In Spain this is the CAU (Codigo de Autoconsumo). It is not the provider's station code (provider_code) and not a CUPS. */
-  regulatoryCode?: string;
-  supply?: SupplyResponse;
-  name?: string;
-  address?: string;
-  description?: string;
-  inverterProvider?: PlantResponseInverterProvider;
-  totalPower?: number;
-  connectionDate?: string;
+  regulatoryCode: PlantResponseRegulatoryCode;
+  supply: SupplyResponse;
+  name: string;
+  address: string;
+  description: PlantResponseDescription;
+  inverterProvider: PlantResponseInverterProvider;
+  totalPower: number;
+  connectionDate: PlantResponseConnectionDate;
 }

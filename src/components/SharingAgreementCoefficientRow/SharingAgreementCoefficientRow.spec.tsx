@@ -16,18 +16,22 @@ const { OPEN, DERIVED } = SharingAgreementPartitionCoefficientResponseEndState;
 
 const pendingCoefficient: SharingAgreementPartitionCoefficientResponse = {
   coefficientId: "1",
-  supply: { name: "Vivienda A", code: "ES0031300000000001AB" },
+  supply: { id: "8f6a1a2c-1e8b-4b3a-9b8b-0a1b2c3d4e5f", name: "Vivienda A", code: "ES0031300000000001AB" },
   coefficient: 0.25,
+  validFrom: null,
+  validTo: null,
   applicationState: PENDING,
   endState: OPEN,
+  endDate: null,
 };
 
 const derivedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   coefficientId: "2",
-  supply: { name: "Vivienda B", code: "ES0031300000000002CD" },
+  supply: { id: "3d2c1b0a-4e5f-4b3a-9b8b-1a2b3c4d5e6f", name: "Vivienda B", code: "ES0031300000000002CD" },
   coefficient: 0.75,
-  applicationState: APPLIED,
   validFrom: "2024-05-23T00:00:00Z",
+  validTo: null,
+  applicationState: APPLIED,
   endState: DERIVED,
   endDate: "2025-01-01T00:00:00Z",
 };

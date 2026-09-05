@@ -5,23 +5,28 @@ import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "../../theme";
 import { SharingAgreementCoefficientSumCards } from "./SharingAgreementCoefficientSumCards";
 import { SharingAgreementPartitionCoefficientResponseApplicationState, SharingAgreementResponseStatus } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import type { SharingAgreementCoefficientSumCardsProps } from "./SharingAgreementCoefficientSumCards";
 
 const { APPLIED, PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
+type CoefficientFixture = SharingAgreementCoefficientSumCardsProps["coefficients"][number];
 
 function renderWithTheme(ui: React.ReactElement) {
   return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
 }
 
 describe("SharingAgreementCoefficientSumCards", () => {
-  const fullSet: SharingAgreementPartitionCoefficientResponse[] = [
+  const fullSet: CoefficientFixture[] = [
     { coefficient: 0.5, applicationState: APPLIED },
     { coefficient: 0.5, applicationState: APPLIED },
   ];
 
-  const partialSet: SharingAgreementPartitionCoefficientResponse[] = [
+  const partialSet: CoefficientFixture[] = [
     { coefficient: 0.5, applicationState: APPLIED },
     { coefficient: 0.5, applicationState: PENDING },
+  ];
+
+  const partialFileSumSet: CoefficientFixture[] = [
+    { coefficient: 0.3, applicationState: PENDING },
   ];
 
   it("always renders the file sum", () => {
@@ -57,5 +62,34 @@ describe("SharingAgreementCoefficientSumCards", () => {
       <SharingAgreementCoefficientSumCards coefficients={fullSet} agreementStatus={SharingAgreementResponseStatus.PUBLISHED} />,
     );
     expect(screen.queryByText(/normal en transición/)).not.toBeInTheDocument();
+  });
+
+  it("shows a blocking warning when the file sum is below 100% on a DRAFT agreement", () => {
+    renderWithTheme(
+      <SharingAgreementCoefficientSumCards
+        coefficients={partialFileSumSet}
+        agreementStatus={SharingAgreementResponseStatus.DRAFT}
+      />,
+    );
+    expect(
+      screen.getByText(/La suma del fichero debe ser exactamente 100\s% para poder generar el fichero de reparto/),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the blocking warning when the file sum is full", () => {
+    renderWithTheme(
+      <SharingAgreementCoefficientSumCards coefficients={fullSet} agreementStatus={SharingAgreementResponseStatus.DRAFT} />,
+    );
+    expect(screen.queryByText(/para poder generar el fichero de reparto/)).not.toBeInTheDocument();
+  });
+
+  it("does not show the blocking warning on a non-DRAFT agreement even if the file sum is partial", () => {
+    renderWithTheme(
+      <SharingAgreementCoefficientSumCards
+        coefficients={partialFileSumSet}
+        agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+      />,
+    );
+    expect(screen.queryByText(/para poder generar el fichero de reparto/)).not.toBeInTheDocument();
   });
 });

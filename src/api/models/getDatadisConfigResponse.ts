@@ -5,10 +5,11 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { GetDatadisConfigResponseUsername } from './getDatadisConfigResponseUsername';
 
 export interface GetDatadisConfigResponse {
-  username?: string;
-  passwordSet?: boolean;
-  baseUrl?: string;
-  enabled?: boolean;
+  username: GetDatadisConfigResponseUsername;
+  passwordSet: boolean;
+  baseUrl: string;
+  enabled: boolean;
 }

@@ -7,10 +7,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { theme } from "../../theme";
 import { ErrorProvider } from "../../context/error.context";
 import { SharingAgreementCoefficientSet, type SharingAgreementCoefficientSetProps } from "./SharingAgreementCoefficientSet";
-import { SharingAgreementPartitionCoefficientResponseApplicationState, SharingAgreementResponseStatus } from "../../api/models";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementPartitionCoefficientResponseEndState,
+  SharingAgreementResponseStatus,
+} from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
+const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
+// Real coefficients never omit these; unused by any assertion in this file, so
+// every fixture below spreads this in and only overrides what it's testing.
+const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
 
 const mockMutateAsync = vi.fn();
 
@@ -57,9 +65,9 @@ function renderWithTheme(props: Partial<SharingAgreementCoefficientSetProps> & P
 }
 
 const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
-  { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: APPLIED },
-  { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING },
-  { coefficientId: "3", supply: { id: "s3", name: "Nave Vacía", code: "ES0031300000000003EF" }, coefficient: 0, applicationState: APPLIED },
+  { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: APPLIED, ...OPEN_UNCLOSED },
+  { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING, ...OPEN_UNCLOSED },
+  { coefficientId: "3", supply: { id: "s3", name: "Nave Vacía", code: "ES0031300000000003EF" }, coefficient: 0, applicationState: APPLIED, ...OPEN_UNCLOSED },
 ];
 
 describe("SharingAgreementCoefficientSet", () => {
@@ -88,7 +96,7 @@ describe("SharingAgreementCoefficientSet", () => {
 
   it("renders the filtered-empty state (distinct copy) when a chip filter matches nothing", () => {
     const allPending: SharingAgreementPartitionCoefficientResponse[] = [
-      { coefficientId: "1", supply: { name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: PENDING },
+      { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: PENDING, ...OPEN_UNCLOSED },
     ];
     renderWithTheme({ coefficients: allPending });
 
@@ -106,6 +114,11 @@ describe("SharingAgreementCoefficientSet", () => {
     expect(screen.getAllByText("Vivienda B").length).toBeGreaterThan(0);
     expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument();
   });
+
+  it("renders the coefficient sum cards in read mode", () => {
+    renderWithTheme({ coefficients });
+    expect(screen.getByText("Suma del fichero")).toBeInTheDocument();
+  });
 });
 
 describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
@@ -116,6 +129,16 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
   it("shows the edit action only for a DRAFT agreement", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
     expect(screen.queryByRole("button", { name: "Editar coeficientes" })).not.toBeInTheDocument();
+  });
+
+  it("hides the coefficient sum cards while editing, in favor of the live readout", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    expect(screen.getByText("Suma del fichero")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+
+    expect(screen.queryByText("Suma del fichero")).not.toBeInTheDocument();
+    expect(screen.getByText(/Suma del fichero:/)).toBeInTheDocument();
   });
 
   it("entering edit mode opens in kW mode by default, seeding inputs in kW including a real zero", () => {
@@ -181,7 +204,15 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
   it("save is disabled while any row is empty, and enabled once every row is valid", async () => {
     const user = userEvent.setup();
     renderWithTheme({
-      coefficients: [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A" }, coefficient: undefined }],
+      coefficients: [
+        {
+          coefficientId: "c1",
+          supply: { id: "s1", name: "Vivienda A", code: "X" },
+          coefficient: undefined as unknown as number,
+          applicationState: PENDING,
+          ...OPEN_UNCLOSED,
+        },
+      ],
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
@@ -199,7 +230,9 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
     const user = userEvent.setup();
     renderWithTheme({
-      coefficients: [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A" }, coefficient: 0.5 }],
+      coefficients: [
+        { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+      ],
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
@@ -214,7 +247,9 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: "coefficient set sum is 0.4, expected 1" });
     const user = userEvent.setup();
     renderWithTheme({
-      coefficients: [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A" }, coefficient: 0.4 }],
+      coefficients: [
+        { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+      ],
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
@@ -244,9 +279,9 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     // Three rows summing to 999,999 units (short by one) but each row's kW,
     // rounded to 2dp, still totals to exactly the 60 kW installed.
     const rows: SharingAgreementPartitionCoefficientResponse[] = [
-      { coefficientId: "1", supply: { id: "s1", name: "A" }, coefficient: 0.333333 },
-      { coefficientId: "2", supply: { id: "s2", name: "B" }, coefficient: 0.333333 },
-      { coefficientId: "3", supply: { id: "s3", name: "C" }, coefficient: 0.333333 },
+      { coefficientId: "1", supply: { id: "s1", name: "A", code: "X1" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "2", supply: { id: "s2", name: "B", code: "X2" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "3", supply: { id: "s3", name: "C", code: "X3" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
     ];
     renderWithTheme({ coefficients: rows, installedPowerKw: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
@@ -265,8 +300,8 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
   // requires publishing first, and revert-to-draft is refused once anything
   // is applied. This is what a real user sees.
   const cleanDraftCoefficients: SharingAgreementPartitionCoefficientResponse[] = [
-    { coefficientId: "1", supply: { name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: PENDING },
-    { coefficientId: "2", supply: { name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING },
+    { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING, ...OPEN_UNCLOSED },
   ];
 
   it("hides the state columns and filter chips for a clean DRAFT", () => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
   formatCoefficientPercentage,
   isFullSum,
   toIntegerUnits,
+  type CoefficientSummable,
 } from "./sharingAgreementCoefficientSums";
 
 const { APPLIED, PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -14,7 +14,7 @@ const { APPLIED, PENDING } = SharingAgreementPartitionCoefficientResponseApplica
 function coefficient(
   value: number,
   applicationState: SharingAgreementPartitionCoefficientResponseApplicationState = PENDING,
-): SharingAgreementPartitionCoefficientResponse {
+): CoefficientSummable {
   return { coefficient: value, applicationState };
 }
 
@@ -50,7 +50,7 @@ describe("sharingAgreementCoefficientSums", () => {
 
   it("treats a missing coefficient value as 0", () => {
     expect(toIntegerUnits(undefined)).toBe(0);
-    expect(computeSharingAgreementCoefficientSums([{ applicationState: PENDING }]).fileSumUnits).toBe(0);
+    expect(computeSharingAgreementCoefficientSums([{ coefficient: undefined, applicationState: PENDING }]).fileSumUnits).toBe(0);
   });
 
   it("never hides or skips a zero coefficient — it still contributes 0 units, not omitted", () => {

@@ -44,7 +44,7 @@ function excerpt(text: string | undefined, maxLength: number): string | undefine
 export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, agreement, onDeleteRequest }) => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const notesExcerpt = excerpt(agreement.notes, NOTES_EXCERPT_LENGTH);
+  const notesExcerpt = excerpt(agreement.notes ?? undefined, NOTES_EXCERPT_LENGTH);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const isDraft = agreement.status === SharingAgreementResponseStatus.DRAFT;
   const detailPath = agreement.id ? `/production/${plantId}/sharing-agreements/${agreement.id}` : undefined;

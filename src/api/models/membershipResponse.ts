@@ -9,10 +9,10 @@ import type { UserResponse } from './userResponse';
 import type { MembershipResponseRole } from './membershipResponseRole';
 
 export interface MembershipResponse {
-  id?: string;
+  id: string;
   /** User associated with the membership */
-  user?: UserResponse;
-  communityId?: string;
-  role?: MembershipResponseRole;
-  enabled?: boolean;
+  user: UserResponse;
+  communityId: string;
+  role: MembershipResponseRole;
+  enabled: boolean;
 }

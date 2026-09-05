@@ -1,22 +1,22 @@
 import type { FC } from "react";
-import { Box, Paper, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { alphas, colors, radii } from "../../theme/tokens";
-import { sxStyles } from "../../theme/sx";
 import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
   formatCoefficientPercentage,
   isFullSum,
+  type CoefficientSummable,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponseStatus as StatusValue } from "../../api/models";
+import type { SharingAgreementResponseStatus as StatusValue } from "../../api/models";
 
 export interface SharingAgreementCoefficientSumCardsProps {
-  coefficients: SharingAgreementPartitionCoefficientResponse[];
+  coefficients: CoefficientSummable[];
   agreementStatus: StatusValue | undefined;
 }
 
@@ -28,9 +28,10 @@ export const SharingAgreementCoefficientSumCards: FC<SharingAgreementCoefficient
   const { fileSumUnits, appliedSumUnits } = computeSharingAgreementCoefficientSums(coefficients);
   const showAppliedSum = agreementStatus !== SharingAgreementResponseStatus.DRAFT;
   const appliedSumIsFull = isFullSum(appliedSumUnits);
+  const fileSumIsFull = isFullSum(fileSumUnits);
 
   return (
-    <Paper elevation={0} sx={sxStyles.softPanel}>
+    <Box sx={{ mb: 3 }}>
       <Box
         sx={{
           display: "grid",
@@ -95,6 +96,13 @@ export const SharingAgreementCoefficientSumCards: FC<SharingAgreementCoefficient
           </Box>
         )}
       </Box>
-    </Paper>
+
+      {!fileSumIsFull && agreementStatus === SharingAgreementResponseStatus.DRAFT && (
+        <Alert severity="warning" sx={{ mt: 1.5 }}>
+          La suma del fichero debe ser exactamente 100&nbsp;% para poder generar el fichero de reparto o poner el
+          acuerdo en vigor.
+        </Alert>
+      )}
+    </Box>
   );
 };

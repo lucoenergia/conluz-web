@@ -18,9 +18,14 @@ export interface SharingAgreementCoefficientSums {
   appliedSumUnits: number;
 }
 
+export interface CoefficientSummable {
+  coefficient: number | undefined;
+  applicationState?: SharingAgreementPartitionCoefficientResponse["applicationState"];
+}
+
 /** Pure reducer — integer-unit sums, never compares raw floats. */
 export function computeSharingAgreementCoefficientSums(
-  coefficients: SharingAgreementPartitionCoefficientResponse[],
+  coefficients: CoefficientSummable[],
 ): SharingAgreementCoefficientSums {
   let fileSumUnits = 0;
   let appliedSumUnits = 0;

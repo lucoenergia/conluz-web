@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface UploadSharingAgreementFileResponse {
+export interface SharingAgreementFileResponse {
   /** Internal unique identifier of the stored file */
-  fileId: string;
-  /** Original uploaded filename */
+  id: string;
+  /** Original filename as uploaded */
   filename: string;
-  /** Number of coefficient entries materialised as pending rows */
-  entriesMaterialized: number;
+  /** Date and time the file was uploaded */
+  uploadedAt: string;
 }

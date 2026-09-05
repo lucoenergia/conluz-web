@@ -7,5 +7,5 @@
  */
 
 export interface GetInfoResponse {
-  version?: string;
+  version: string;
 }

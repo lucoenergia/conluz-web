@@ -95,7 +95,7 @@ export function getEndStateLabel(coefficient: SharingAgreementPartitionCoefficie
       return "Pendiente del siguiente acuerdo";
     case DERIVED:
     case CLOSED:
-      return formatCalendarDate(coefficient.endDate);
+      return formatCalendarDate(coefficient.endDate ?? undefined);
     default:
       return "—";
   }

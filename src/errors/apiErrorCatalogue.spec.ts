@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { RestErrorDetailCode } from "../api/models";
+import type { RestErrorDetailCode } from "../api/models";
 import { getFirstApiErrorMessage, getGroupedApiErrorDetails, translateErrorDetail } from "./apiErrorCatalogue";
 
-const DISTRIBUTOR_FILE_CODES = [
-  RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_UNKNOWN,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_LENGTH_INVALID,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_DUPLICATE,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_VALUE_DECIMAL_SEPARATOR_INVALID,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_VALUE_SCALE_INVALID,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH,
-  RestErrorDetailCode.DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING,
+const DISTRIBUTOR_FILE_CODES: RestErrorDetailCode[] = [
+  "DISTRIBUTOR_FILE_LINE_MALFORMED",
+  "DISTRIBUTOR_FILE_CUPS_UNKNOWN",
+  "DISTRIBUTOR_FILE_CUPS_LENGTH_INVALID",
+  "DISTRIBUTOR_FILE_CUPS_DUPLICATE",
+  "DISTRIBUTOR_FILE_VALUE_DECIMAL_SEPARATOR_INVALID",
+  "DISTRIBUTOR_FILE_VALUE_SCALE_INVALID",
+  "DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID",
+  "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
+  "DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH",
+  "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
 ];
 
 describe("translateErrorDetail", () => {
@@ -23,7 +23,7 @@ describe("translateErrorDetail", () => {
 
   it("returns the registered Spanish template for a known code", () => {
     expect(
-      translateErrorDetail({ message: "not draft", code: RestErrorDetailCode.SHARING_AGREEMENT_NOT_DRAFT }, "fallback"),
+      translateErrorDetail({ message: "not draft", code: "SHARING_AGREEMENT_NOT_DRAFT" }, "fallback"),
     ).toBe("Este acuerdo ya no está en borrador, por lo que no se puede modificar ni eliminar.");
   });
 
@@ -33,7 +33,7 @@ describe("translateErrorDetail", () => {
 
   it("falls back to detail.message when code has no registered template", () => {
     expect(
-      translateErrorDetail({ message: "server message", code: RestErrorDetailCode.PLANT_MISSING_REGULATORY_CODE }, "fallback"),
+      translateErrorDetail({ message: "server message", code: "PLANT_MISSING_REGULATORY_CODE" }, "fallback"),
     ).toBe("server message");
   });
 
@@ -47,7 +47,7 @@ describe("getFirstApiErrorMessage", () => {
     const error = {
       response: {
         data: {
-          errors: [{ message: "not draft", code: RestErrorDetailCode.SHARING_AGREEMENT_NOT_DRAFT }],
+          errors: [{ message: "not draft", code: "SHARING_AGREEMENT_NOT_DRAFT" }],
         },
       },
     };
@@ -76,7 +76,7 @@ describe("distributor-file and sharing-agreement error templates", () => {
 
   it("translates SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID to a non-empty Spanish message, distinct from the raw server message", () => {
     const message = translateErrorDetail(
-      { message: "raw server message", code: RestErrorDetailCode.SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID },
+      { message: "raw server message", code: "SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID" },
       "fallback",
     );
     expect(message).not.toBe("");
@@ -87,7 +87,7 @@ describe("distributor-file and sharing-agreement error templates", () => {
     const message = translateErrorDetail(
       {
         message: "raw server message",
-        code: RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID,
+        code: "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
         params: { filename: "ABC123_2025.txt" },
       },
       "fallback",
@@ -100,7 +100,7 @@ describe("distributor-file and sharing-agreement error templates", () => {
     const message = translateErrorDetail(
       {
         message: "raw server message",
-        code: RestErrorDetailCode.DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH,
+        code: "DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH",
         params: { expected: "ES0031406319070001XX", actual: "ES0031406319070002YY" },
       },
       "fallback",
@@ -112,11 +112,11 @@ describe("distributor-file and sharing-agreement error templates", () => {
 
   it("translates SHARING_AGREEMENT_DUPLICATE_SUPPLY distinctly from DISTRIBUTOR_FILE_CUPS_DUPLICATE", () => {
     const manual = translateErrorDetail(
-      { message: "raw", code: RestErrorDetailCode.SHARING_AGREEMENT_DUPLICATE_SUPPLY },
+      { message: "raw", code: "SHARING_AGREEMENT_DUPLICATE_SUPPLY" },
       "fallback",
     );
     const fromFile = translateErrorDetail(
-      { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_CUPS_DUPLICATE, params: { line: "1", cups: "ES1" } },
+      { message: "raw", code: "DISTRIBUTOR_FILE_CUPS_DUPLICATE", params: { line: "1", cups: "ES1" } },
       "fallback",
     );
     expect(manual).not.toBe(fromFile);
@@ -129,8 +129,8 @@ describe("getGroupedApiErrorDetails", () => {
       response: {
         data: {
           errors: [
-            { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID },
-            { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED, params: { line: "2" } },
+            { message: "raw", code: "DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID" },
+            { message: "raw", code: "DISTRIBUTOR_FILE_LINE_MALFORMED", params: { line: "2" } },
           ],
         },
       },
@@ -146,9 +146,9 @@ describe("getGroupedApiErrorDetails", () => {
       response: {
         data: {
           errors: [
-            { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED, params: { line: "10" } },
-            { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED, params: { line: "2" } },
-            { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED, params: { line: "9" } },
+            { message: "raw", code: "DISTRIBUTOR_FILE_LINE_MALFORMED", params: { line: "10" } },
+            { message: "raw", code: "DISTRIBUTOR_FILE_LINE_MALFORMED", params: { line: "2" } },
+            { message: "raw", code: "DISTRIBUTOR_FILE_LINE_MALFORMED", params: { line: "9" } },
           ],
         },
       },
@@ -161,7 +161,7 @@ describe("getGroupedApiErrorDetails", () => {
     const error = {
       response: {
         data: {
-          errors: [{ message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED, params: {} }],
+          errors: [{ message: "raw", code: "DISTRIBUTOR_FILE_LINE_MALFORMED", params: {} }],
         },
       },
     };
@@ -176,8 +176,8 @@ describe("getGroupedApiErrorDetails", () => {
       response: {
         data: {
           errors: [
-            { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED, params: { line: "not-a-number" } },
-            { message: "raw", code: RestErrorDetailCode.DISTRIBUTOR_FILE_LINE_MALFORMED, params: { line: "1" } },
+            { message: "raw", code: "DISTRIBUTOR_FILE_LINE_MALFORMED", params: { line: "not-a-number" } },
+            { message: "raw", code: "DISTRIBUTOR_FILE_LINE_MALFORMED", params: { line: "1" } },
           ],
         },
       },

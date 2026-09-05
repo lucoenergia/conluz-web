@@ -26,6 +26,7 @@ import { colors, radii } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
 import { SearchBar } from "../SearchBar/SearchBar";
+import { SharingAgreementCoefficientSumCards } from "../SharingAgreementCoefficientSumCards";
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
@@ -251,6 +252,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
+      {!isEditing && <SharingAgreementCoefficientSumCards coefficients={coefficients} agreementStatus={agreementStatus} />}
+
       {sumWarning && (
         <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setSumWarning(undefined)}>
           Los coeficientes se han guardado, pero la suma es {sumWarning} (se esperaba 100,0000 %).
