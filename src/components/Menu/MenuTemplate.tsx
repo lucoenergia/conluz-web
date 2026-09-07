@@ -1,4 +1,4 @@
-import { Menu } from "@mui/material";
+import { Menu, type MenuProps } from "@mui/material";
 import { type FC, type ReactNode } from "react";
 import { radii, shadows, colors } from "../../theme/tokens";
 
@@ -7,10 +7,21 @@ interface MenuTemplateProps {
   anchorElement: HTMLElement | null;
   onClose: (event: React.MouseEvent) => void;
   compactPadding?: boolean;
+  /** Forwarded to the inner MUI `Menu`'s `MenuListProps` — e.g. `{ disabledItemsFocusable: true }`
+   * so an `aria-disabled` item stays reachable by arrow keys. Only opt in per-menu; other
+   * `MenuTemplate` consumers are unaffected when this is omitted. */
+  menuListProps?: MenuProps["MenuListProps"];
 }
-export const MenuTemplate: FC<MenuTemplateProps> = ({ anchorElement, onClose, compactPadding = false, children }) => {
+export const MenuTemplate: FC<MenuTemplateProps> = ({
+  anchorElement,
+  onClose,
+  compactPadding = false,
+  menuListProps,
+  children,
+}) => {
   return (
     <Menu
+      MenuListProps={menuListProps}
       sx={{
         mt: 1,
         "& .MuiPaper-root": {

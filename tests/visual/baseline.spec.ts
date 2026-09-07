@@ -383,6 +383,28 @@ const FIXED_COEFFICIENTS_ALL_PENDING = [
 
 const FIXED_COEFFICIENTS_EMPTY: unknown[] = [];
 
+/**
+ * A DRAFT set that genuinely doesn't sum to 100% (0.4 + 0.35 = 0.75), for the
+ * "Poner en vigor" gated-kebab baseline — distinct from FIXED_COEFFICIENTS_ALL_PENDING,
+ * which sums to exactly 1.
+ */
+const FIXED_COEFFICIENTS_INCOMPLETE = [
+  {
+    coefficientId: "coef-1",
+    supply: { id: "supply-1", name: "Vivienda A", code: "ES0031300000000001AA" },
+    coefficient: 0.4,
+    applicationState: "PENDING",
+    endState: "OPEN",
+  },
+  {
+    coefficientId: "coef-2",
+    supply: { id: "supply-2", name: "Vivienda B", code: "ES0031300000000002BB" },
+    coefficient: 0.35,
+    applicationState: "PENDING",
+    endState: "OPEN",
+  },
+];
+
 // ---------------------------------------------------------------------------
 // Helper: set up all API route mocks on a given page
 //
@@ -1179,6 +1201,83 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-delete-confirmation.png", { fullPage: true });
+  });
+
+  test("sharing agreement kebab (Poner en vigor gated, incomplete sum)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(
+      page,
+      DRAFT_AGREEMENT.id,
+      DRAFT_AGREEMENT,
+      FIXED_COEFFICIENTS_INCOMPLETE,
+      200,
+    );
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+
+    const publishItem = page.getByText("Poner en vigor").locator('xpath=ancestor::*[@role="menuitem"]');
+    await expect(publishItem).toHaveAttribute("aria-disabled", "true");
+    // The disabled reason is visible text nested under the item's label, never a tooltip — it
+    // must be visible the instant the menu opens, with no hover required. Scoped to this specific
+    // caption's id: the same gap sentence also legitimately appears in the sum card and next-step
+    // panel elsewhere on this same page (the "three places" the gap message is expected to appear).
+    await expect(page.locator("#publish-disabled-reason")).toBeVisible();
+    await expect(page.locator("#publish-disabled-reason")).toHaveText(/Faltan .* para llegar al 100,0000/);
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-kebab-publish-gated.png", { fullPage: true });
+  });
+
+  test("sharing agreement publish confirmation", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(
+      page,
+      DRAFT_AGREEMENT.id,
+      DRAFT_AGREEMENT,
+      FIXED_COEFFICIENTS_ALL_PENDING,
+      200,
+    );
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("menuitem", { name: "Poner en vigor" }).click();
+
+    await expect(page.getByRole("heading", { name: "Poner en vigor" })).toBeVisible();
+    await expect(page.getByText(/Poner en vigor no aplica nada por sí mismo/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-publish-confirmation.png", { fullPage: true });
+  });
+
+  test("sharing agreement revert-to-draft confirmation", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(
+      page,
+      PUBLISHED_AGREEMENT.id,
+      PUBLISHED_AGREEMENT,
+      FIXED_COEFFICIENTS_ALL_PENDING,
+      200,
+    );
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("menuitem", { name: "Volver a borrador" }).click();
+
+    await expect(page.getByRole("heading", { name: "Volver a borrador" })).toBeVisible();
+    await expect(page.getByText(/tendrás que enviarle uno corregido/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-revert-confirmation.png", { fullPage: true });
   });
 
   test("sharing agreement upload dialog (idle)", async ({ page }) => {
