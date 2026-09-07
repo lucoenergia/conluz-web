@@ -46,7 +46,7 @@ const GenerateButton: FC<GenerateButtonProps> = ({ size = "medium", label, disab
       {label}
     </Button>
     {disabledReason && (
-      <Typography variant="caption" color="error" sx={{ display: "block", mt: 0.5 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
         {disabledReason}
       </Typography>
     )}

@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Alert, Box, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
@@ -12,6 +12,7 @@ import {
   isFullSum,
   type CoefficientSummable,
 } from "../../pages/production/sharingAgreementCoefficientSums";
+import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponseStatus as StatusValue } from "../../api/models";
 
@@ -29,6 +30,13 @@ export const SharingAgreementCoefficientSumCards: FC<SharingAgreementCoefficient
   const showAppliedSum = agreementStatus !== SharingAgreementResponseStatus.DRAFT;
   const appliedSumIsFull = isFullSum(appliedSumUnits);
   const fileSumIsFull = isFullSum(fileSumUnits);
+  // Only meaningful while still DRAFT: once published, the file sum can
+  // legitimately include closed/superseded coefficients and no longer needs
+  // to read as "incomplete" the way an in-progress draft does.
+  const fileGapMessage =
+    !fileSumIsFull && agreementStatus === SharingAgreementResponseStatus.DRAFT
+      ? formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits)
+      : null;
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -39,25 +47,33 @@ export const SharingAgreementCoefficientSumCards: FC<SharingAgreementCoefficient
           gap: 2,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
-            borderRadius: radii.default,
-            bgcolor: alpha(theme.palette.primary.main, 0.08),
-          }}
-        >
-          <DescriptionOutlinedIcon sx={{ color: "primary.main", fontSize: 24 }} />
-          <Box>
-            <Typography variant="body1" fontWeight="600">
-              {formatCoefficientPercentage(fileSumUnits / COEFFICIENT_SCALE)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Suma del fichero
-            </Typography>
+        <Box>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              p: 1.5,
+              borderRadius: radii.default,
+              bgcolor: alpha(theme.palette.primary.main, 0.08),
+            }}
+          >
+            <DescriptionOutlinedIcon sx={{ color: "primary.main", fontSize: 24 }} />
+            <Box>
+              <Typography variant="body1" fontWeight="600">
+                {formatCoefficientPercentage(fileSumUnits / COEFFICIENT_SCALE)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Suma de los coeficientes
+              </Typography>
+            </Box>
           </Box>
+
+          {fileGapMessage && (
+            <Typography variant="caption" sx={{ display: "block", mt: 1, color: colors.text.subtle }}>
+              {fileGapMessage}
+            </Typography>
+          )}
         </Box>
 
         {showAppliedSum && (
@@ -96,13 +112,6 @@ export const SharingAgreementCoefficientSumCards: FC<SharingAgreementCoefficient
           </Box>
         )}
       </Box>
-
-      {!fileSumIsFull && agreementStatus === SharingAgreementResponseStatus.DRAFT && (
-        <Alert severity="warning" sx={{ mt: 1.5 }}>
-          La suma del fichero debe ser exactamente 100&nbsp;% para poder generar el fichero de reparto o poner el
-          acuerdo en vigor.
-        </Alert>
-      )}
     </Box>
   );
 };

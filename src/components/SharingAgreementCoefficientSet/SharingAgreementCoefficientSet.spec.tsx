@@ -117,7 +117,7 @@ describe("SharingAgreementCoefficientSet", () => {
 
   it("renders the coefficient sum cards in read mode", () => {
     renderWithTheme({ coefficients });
-    expect(screen.getByText("Suma del fichero")).toBeInTheDocument();
+    expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
   });
 });
 
@@ -133,11 +133,11 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
   it("hides the coefficient sum cards while editing, in favor of the live readout", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
-    expect(screen.getByText("Suma del fichero")).toBeInTheDocument();
+    expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
 
-    expect(screen.queryByText("Suma del fichero")).not.toBeInTheDocument();
+    expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
     expect(screen.getByText(/Suma del fichero:/)).toBeInTheDocument();
   });
 

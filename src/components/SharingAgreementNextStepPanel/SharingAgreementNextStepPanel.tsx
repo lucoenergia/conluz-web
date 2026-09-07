@@ -139,7 +139,7 @@ const PanelBody: FC<{ content: PanelContent }> = ({ content }) => (
       </Typography>
     )}
     {content.requirement && (
-      <Typography variant="body2" fontWeight="600" color="error.dark">
+      <Typography variant="body2" fontWeight="600" color="text.secondary">
         {content.requirement}
       </Typography>
     )}
