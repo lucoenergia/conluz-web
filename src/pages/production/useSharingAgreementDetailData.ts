@@ -7,6 +7,8 @@ export interface SharingAgreementDetailData {
   agreement?: SharingAgreementResponse;
   plant?: PlantResponse;
   coefficients: SharingAgreementPartitionCoefficientResponse[];
+  /** Raw, non-defaulted query result — `undefined` while still loading, as opposed to `coefficients`'s resolved-empty-array default. */
+  coefficientsData: SharingAgreementPartitionCoefficientResponse[] | undefined;
   isLoading: boolean;
   isNotFound: boolean;
   error: unknown;
@@ -20,7 +22,7 @@ export function useSharingAgreementDetailData(plantId: string, sharingAgreementI
   } = useGetSharingAgreementById(plantId, sharingAgreementId);
 
   const {
-    data: coefficients = [],
+    data: coefficientsData,
     isLoading: isLoadingCoefficients,
     error: coefficientsError,
   } = useGetSharingAgreementPartitionCoefficients(plantId, sharingAgreementId);
@@ -36,7 +38,8 @@ export function useSharingAgreementDetailData(plantId: string, sharingAgreementI
   return {
     agreement,
     plant,
-    coefficients,
+    coefficients: coefficientsData ?? [],
+    coefficientsData,
     isLoading: isLoadingAgreement || isLoadingCoefficients || isLoadingPlant,
     isNotFound: notFound,
     error: notFound ? null : (agreementError ?? coefficientsError ?? plantError),

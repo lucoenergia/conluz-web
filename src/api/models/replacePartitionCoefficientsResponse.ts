@@ -6,10 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PartitionCoefficientResponse } from './partitionCoefficientResponse';
+import type { ReplacePartitionCoefficientsResponseCoefficientSumWarning } from './replacePartitionCoefficientsResponseCoefficientSumWarning';
 
 export interface ReplacePartitionCoefficientsResponse {
   /** The agreement's new, full pending coefficient set. */
-  coefficients?: PartitionCoefficientResponse[];
+  coefficients: PartitionCoefficientResponse[];
   /** Warning message when the sum of the replaced coefficient set deviates from 1 by more than 0.0001. Null when the sum is correct. */
-  coefficientSumWarning?: string;
+  coefficientSumWarning: ReplacePartitionCoefficientsResponseCoefficientSumWarning;
 }

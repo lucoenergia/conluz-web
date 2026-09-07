@@ -9,17 +9,17 @@ describe("computeSharingAgreementCounts", () => {
   });
 
   test("counts vigentes, drafts and históricos independently", () => {
-    const agreements: SharingAgreementResponse[] = [
+    const agreements = [
       { status: SharingAgreementResponseStatus.DRAFT },
       { status: SharingAgreementResponseStatus.DRAFT },
       { status: SharingAgreementResponseStatus.PUBLISHED },
       { status: SharingAgreementResponseStatus.SUPERSEDED },
-    ];
+    ] as SharingAgreementResponse[];
     expect(computeSharingAgreementCounts(agreements)).toEqual({ vigentes: 1, drafts: 2, historicos: 1 });
   });
 
   test("treats an undefined or unrecognized status as neither vigente, draft nor histórico", () => {
-    const agreements: SharingAgreementResponse[] = [{ status: undefined }, {}];
+    const agreements = [{ status: undefined }, {}] as unknown as SharingAgreementResponse[];
     expect(computeSharingAgreementCounts(agreements)).toEqual({ vigentes: 0, drafts: 0, historicos: 0 });
   });
 });

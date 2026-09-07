@@ -5,20 +5,22 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { PartitionCoefficientResponseValidFrom } from './partitionCoefficientResponseValidFrom';
+import type { PartitionCoefficientResponseValidTo } from './partitionCoefficientResponseValidTo';
 
 export interface PartitionCoefficientResponse {
   /** Internal unique identifier */
-  id?: string;
+  id: string;
   /** Supply this coefficient belongs to */
-  supplyId?: string;
+  supplyId: string;
   /** Plant this coefficient belongs to. Disambiguates a supply's timeline when it participates in more than one plant. */
-  plantId?: string;
+  plantId: string;
   /** Partition coefficient value */
-  coefficient?: number;
+  coefficient: number;
   /** Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated. */
-  validFrom?: string;
+  validFrom: PartitionCoefficientResponseValidFrom;
   /** End of the period (exclusive). Null means this is the currently active coefficient. */
-  validTo?: string;
+  validTo: PartitionCoefficientResponseValidTo;
   /** Timestamp when this record was created */
-  createdAt?: string;
+  createdAt: string;
 }

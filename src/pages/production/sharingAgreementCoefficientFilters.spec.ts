@@ -1,14 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementPartitionCoefficientResponseEndState,
+} from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { filterSharingAgreementCoefficients } from "./sharingAgreementCoefficientFilters";
 
 const { APPLIED, PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
+const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
 
 const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
-  { coefficientId: "1", supply: { name: "Vivienda Histórico", code: "ES0031300000000001AB" }, coefficient: 0.3, applicationState: APPLIED },
-  { coefficientId: "2", supply: { name: "Local Comercial", code: "ES0031300000000002CD" }, coefficient: 0.5, applicationState: PENDING },
-  { coefficientId: "3", supply: { name: "Nave Industrial", code: "ES0031300000000003EF" }, coefficient: 0, applicationState: APPLIED },
+  {
+    coefficientId: "1",
+    supply: { id: "s1", name: "Vivienda Histórico", code: "ES0031300000000001AB" },
+    coefficient: 0.3,
+    validFrom: "2024-01-01T00:00:00Z",
+    validTo: null,
+    applicationState: APPLIED,
+    endState: OPEN,
+    endDate: null,
+  },
+  {
+    coefficientId: "2",
+    supply: { id: "s2", name: "Local Comercial", code: "ES0031300000000002CD" },
+    coefficient: 0.5,
+    validFrom: null,
+    validTo: null,
+    applicationState: PENDING,
+    endState: OPEN,
+    endDate: null,
+  },
+  {
+    coefficientId: "3",
+    supply: { id: "s3", name: "Nave Industrial", code: "ES0031300000000003EF" },
+    coefficient: 0,
+    validFrom: "2024-02-01T00:00:00Z",
+    validTo: null,
+    applicationState: APPLIED,
+    endState: OPEN,
+    endDate: null,
+  },
 ];
 
 describe("filterSharingAgreementCoefficients", () => {

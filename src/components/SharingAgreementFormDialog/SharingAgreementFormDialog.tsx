@@ -157,9 +157,9 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
           <>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               Se creará para <strong>{plantName || "la planta"}</strong> en estado <strong>Borrador</strong>. Desde
-              ahí podrás elegir entre dos caminos: adjuntar el fichero TXT que ya te haya facilitado la
-              distribuidora, o introducir los coeficientes a mano — generar el fichero para la distribuidora es
-              opcional y está disponible en cualquier momento del borrador.
+              ahí podrás elegir entre dos caminos: adjuntar el fichero TXT que ya tengas hecho por otro medio, o
+              introducir los coeficientes a mano — generar el fichero para la distribuidora es opcional y está
+              disponible en cualquier momento del borrador.
             </Typography>
 
             <Alert icon={<LockOutlinedIcon fontSize="small" />} severity="info" sx={{ mb: 3 }}>

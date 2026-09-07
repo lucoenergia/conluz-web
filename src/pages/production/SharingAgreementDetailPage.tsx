@@ -7,24 +7,26 @@ import { colors } from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
-import { SharingAgreementCoefficientSumCards } from "../../components/SharingAgreementCoefficientSumCards";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
+import { SharingAgreementNextStepPanel } from "../../components/SharingAgreementNextStepPanel";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
+import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 
 export const SharingAgreementDetailPage: FC = () => {
   const { plantId = "", sharingAgreementId = "" } = useParams();
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const { agreement, plant, coefficients, isLoading, isNotFound, error } = useSharingAgreementDetailData(
+  const { agreement, plant, coefficients, coefficientsData, isLoading, isNotFound, error } = useSharingAgreementDetailData(
     plantId,
     sharingAgreementId,
   );
   const { updateAgreement, deleteAgreement, isUpdating, isDeleting } = useSharingAgreementMutations(plantId);
+  const nextStep = selectSharingAgreementNextStep(agreement, coefficientsData, plant?.regulatoryCode ?? undefined);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
@@ -92,9 +94,9 @@ export const SharingAgreementDetailPage: FC = () => {
             />
           </Box>
 
-          {!isLoading && !error && (
+          {!isLoading && !error && nextStep.kind !== "NONE" && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementCoefficientSumCards coefficients={coefficients} agreementStatus={agreement?.status} />
+              <SharingAgreementNextStepPanel nextStep={nextStep} />
             </Box>
           )}
 
@@ -115,8 +117,9 @@ export const SharingAgreementDetailPage: FC = () => {
               <SharingAgreementFilePanel
                 plantId={plantId}
                 sharingAgreementId={sharingAgreementId}
-                agreementStatus={agreement?.status}
-                plantRegulatoryCode={plant?.regulatoryCode}
+                agreement={agreement}
+                coefficients={coefficients}
+                plantRegulatoryCode={plant?.regulatoryCode ?? undefined}
               />
             </Box>
           )}
@@ -130,7 +133,7 @@ export const SharingAgreementDetailPage: FC = () => {
           mode="edit"
           initialValues={{
             name: agreement.name,
-            notes: agreement.notes,
+            notes: agreement.notes ?? undefined,
             installedPowerKw: agreement.installedPowerKw,
           }}
           hasCoefficients={coefficients.length > 0}

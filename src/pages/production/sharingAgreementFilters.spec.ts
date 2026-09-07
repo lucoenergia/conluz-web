@@ -14,11 +14,11 @@ describe("normalizeForSearch", () => {
 });
 
 describe("filterSharingAgreements", () => {
-  const agreements: SharingAgreementResponse[] = [
+  const agreements = [
     { id: "1", name: "Acuerdo Histórico Norte", notes: "", status: SharingAgreementResponseStatus.SUPERSEDED },
     { id: "2", name: "Reparto vecinos", notes: "Pendiente de revisión histórica", status: SharingAgreementResponseStatus.DRAFT },
     { id: "3", name: "Reparto activo", notes: "", status: SharingAgreementResponseStatus.PUBLISHED },
-  ];
+  ] as SharingAgreementResponse[];
 
   test("matches an accent-insensitive, case-insensitive query against name", () => {
     const result = filterSharingAgreements(agreements, "historico", "all");

@@ -12,9 +12,30 @@ describe("SupplyDetailHeader", () => {
     address: "Calle Test 123",
     addressRef: "REF123456",
     enabled: true,
+    contract: {
+      validDateFrom: "2020-01-01",
+    },
+    distributor: {
+      name: "Test Distributor",
+      code: "D001",
+      pointType: 5,
+    },
+    shelly: {
+      macAddress: "AA:BB:CC:DD:EE:FF",
+      id: "shelly-1",
+      mqttPrefix: "shellies/test",
+    },
     user: {
       id: "user1",
+      personalId: "12345678A",
+      number: 1,
       fullName: "John Doe",
+      address: "Calle Test 1",
+      email: "john.doe@example.com",
+      phoneNumber: "600000000",
+      enabled: true,
+      memberships: {},
+      isPlatformAdmin: false,
     },
   };
 
@@ -47,14 +68,14 @@ describe("SupplyDetailHeader", () => {
   });
 
   it("renders default texts when supply point data is missing", () => {
-    render(<SupplyDetailHeader supplyPoint={{}} />);
+    render(<SupplyDetailHeader />);
 
     expect(screen.getByText("Punto de Suministro")).toBeInTheDocument();
     expect(screen.getByText("Dirección no disponible")).toBeInTheDocument();
   });
 
   it("renders placeholders for missing supply details", () => {
-    render(<SupplyDetailHeader supplyPoint={{}} />);
+    render(<SupplyDetailHeader />);
 
     // Should render 3 dashes for missing data
     const dashes = screen.getAllByText("-");

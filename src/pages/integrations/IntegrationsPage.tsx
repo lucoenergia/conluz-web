@@ -109,14 +109,13 @@ export const IntegrationsPage: FC = () => {
 
   useEffect(() => {
     if (datadisConfig && !configLoaded.datadis) {
-      const config = datadisConfig as ConfigureDatadisBody;
       setState(prev => ({
         ...prev,
         datadis: {
-          enabled: config.enabled ?? false,
-          username: config.username || "",
+          enabled: datadisConfig.enabled ?? false,
+          username: datadisConfig.username ?? "",
           password: "", // Never prefill - security
-          baseUrl: config.baseUrl || "",
+          baseUrl: datadisConfig.baseUrl || "",
         }
       }));
       setConfigLoaded(prev => ({ ...prev, datadis: true }));

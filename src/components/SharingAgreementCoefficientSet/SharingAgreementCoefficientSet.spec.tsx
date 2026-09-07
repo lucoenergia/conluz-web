@@ -7,17 +7,30 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { theme } from "../../theme";
 import { ErrorProvider } from "../../context/error.context";
 import { SharingAgreementCoefficientSet, type SharingAgreementCoefficientSetProps } from "./SharingAgreementCoefficientSet";
-import { SharingAgreementPartitionCoefficientResponseApplicationState, SharingAgreementResponseStatus } from "../../api/models";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementPartitionCoefficientResponseEndState,
+  SharingAgreementResponseStatus,
+} from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
+const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
+// Real coefficients never omit these; unused by any assertion in this file, so
+// every fixture below spreads this in and only overrides what it's testing.
+const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
 
 const mockMutateAsync = vi.fn();
+const mockSuccessDispatch = vi.fn();
 
 vi.mock("../../context/community.context", async () => {
   const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
   return { ...actual, useActiveCommunity: () => "community-1" };
 });
+
+vi.mock("../../context/success.context", () => ({
+  useSuccessDispatch: () => mockSuccessDispatch,
+}));
 
 vi.mock("../../api/supplies/supplies", () => ({
   getAllSupplies: vi.fn().mockResolvedValue({
@@ -57,9 +70,9 @@ function renderWithTheme(props: Partial<SharingAgreementCoefficientSetProps> & P
 }
 
 const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
-  { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: APPLIED },
-  { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING },
-  { coefficientId: "3", supply: { id: "s3", name: "Nave Vacía", code: "ES0031300000000003EF" }, coefficient: 0, applicationState: APPLIED },
+  { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: APPLIED, ...OPEN_UNCLOSED },
+  { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING, ...OPEN_UNCLOSED },
+  { coefficientId: "3", supply: { id: "s3", name: "Nave Vacía", code: "ES0031300000000003EF" }, coefficient: 0, applicationState: APPLIED, ...OPEN_UNCLOSED },
 ];
 
 describe("SharingAgreementCoefficientSet", () => {
@@ -88,7 +101,7 @@ describe("SharingAgreementCoefficientSet", () => {
 
   it("renders the filtered-empty state (distinct copy) when a chip filter matches nothing", () => {
     const allPending: SharingAgreementPartitionCoefficientResponse[] = [
-      { coefficientId: "1", supply: { name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: PENDING },
+      { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: PENDING, ...OPEN_UNCLOSED },
     ];
     renderWithTheme({ coefficients: allPending });
 
@@ -106,16 +119,32 @@ describe("SharingAgreementCoefficientSet", () => {
     expect(screen.getAllByText("Vivienda B").length).toBeGreaterThan(0);
     expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument();
   });
+
+  it("renders the coefficient sum cards in read mode", () => {
+    renderWithTheme({ coefficients });
+    expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
+  });
 });
 
 describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
   beforeEach(() => {
     mockMutateAsync.mockReset();
+    mockSuccessDispatch.mockClear();
   });
 
   it("shows the edit action only for a DRAFT agreement", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
     expect(screen.queryByRole("button", { name: "Editar coeficientes" })).not.toBeInTheDocument();
+  });
+
+  it("hides the coefficient sum cards while editing, in favor of the live readout", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+
+    expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
+    expect(screen.getByText(/Suma del fichero:/)).toBeInTheDocument();
   });
 
   it("entering edit mode opens in kW mode by default, seeding inputs in kW including a real zero", () => {
@@ -181,7 +210,15 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
   it("save is disabled while any row is empty, and enabled once every row is valid", async () => {
     const user = userEvent.setup();
     renderWithTheme({
-      coefficients: [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A" }, coefficient: undefined }],
+      coefficients: [
+        {
+          coefficientId: "c1",
+          supply: { id: "s1", name: "Vivienda A", code: "X" },
+          coefficient: undefined as unknown as number,
+          applicationState: PENDING,
+          ...OPEN_UNCLOSED,
+        },
+      ],
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
@@ -199,7 +236,9 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
     const user = userEvent.setup();
     renderWithTheme({
-      coefficients: [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A" }, coefficient: 0.5 }],
+      coefficients: [
+        { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+      ],
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
@@ -210,23 +249,44 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument());
   });
 
-  it("shows a fully Spanish warning with the client-computed sum when the backend flags an invalid sum", async () => {
+  it("dispatches a transient save confirmation on success, never rendering the raw backend coefficientSumWarning string", async () => {
+    // The backend's coefficientSumWarning is informational for API consumers with
+    // no UI; this screen already shows the resulting sum persistently in the KPI,
+    // so the save confirmation stays generic regardless of whether it's present.
     mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: "coefficient set sum is 0.4, expected 1" });
     const user = userEvent.setup();
     renderWithTheme({
-      coefficients: [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A" }, coefficient: 0.4 }],
+      coefficients: [
+        { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+        { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "Y" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+      ],
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
-    await waitFor(() =>
-      expect(
-        screen.getByText("Los coeficientes se han guardado, pero la suma es 40,0000 % (se esperaba 100,0000 %)."),
-      ).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Coeficientes guardados."));
     expect(screen.queryByText(/coefficient set sum/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/se esperaba 100,0000/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("dispatches the same save confirmation when the backend reports no sum warning at all", async () => {
+    mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: null });
+    const user = userEvent.setup();
+    renderWithTheme({
+      coefficients: [
+        { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+        { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "Y" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+      ],
+      agreementStatus: SharingAgreementResponseStatus.DRAFT,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Coeficientes guardados."));
   });
 
   it("the percentage sum line is always shown, even in kW mode, and is never demoted", () => {
@@ -244,9 +304,9 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     // Three rows summing to 999,999 units (short by one) but each row's kW,
     // rounded to 2dp, still totals to exactly the 60 kW installed.
     const rows: SharingAgreementPartitionCoefficientResponse[] = [
-      { coefficientId: "1", supply: { id: "s1", name: "A" }, coefficient: 0.333333 },
-      { coefficientId: "2", supply: { id: "s2", name: "B" }, coefficient: 0.333333 },
-      { coefficientId: "3", supply: { id: "s3", name: "C" }, coefficient: 0.333333 },
+      { coefficientId: "1", supply: { id: "s1", name: "A", code: "X1" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "2", supply: { id: "s2", name: "B", code: "X2" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "3", supply: { id: "s3", name: "C", code: "X3" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
     ];
     renderWithTheme({ coefficients: rows, installedPowerKw: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
@@ -265,8 +325,8 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
   // requires publishing first, and revert-to-draft is refused once anything
   // is applied. This is what a real user sees.
   const cleanDraftCoefficients: SharingAgreementPartitionCoefficientResponse[] = [
-    { coefficientId: "1", supply: { name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: PENDING },
-    { coefficientId: "2", supply: { name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING },
+    { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING, ...OPEN_UNCLOSED },
   ];
 
   it("hides the state columns and filter chips for a clean DRAFT", () => {

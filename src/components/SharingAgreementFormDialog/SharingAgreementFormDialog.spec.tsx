@@ -15,6 +15,13 @@ describe("SharingAgreementFormDialog", () => {
     expect(screen.getByRole("heading", { name: "Nuevo acuerdo de reparto" })).toBeInTheDocument();
   });
 
+  test("create mode describes attaching a file you already have, never one facilitated by the distributor", () => {
+    render(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={vi.fn()} />);
+
+    expect(screen.getByText(/el fichero TXT que ya tengas hecho por otro medio/)).toBeInTheDocument();
+    expect(screen.queryByText(/te haya facilitado la distribuidora/)).not.toBeInTheDocument();
+  });
+
   test("create mode prefills capacity from the plant's totalPower, formatted with a Spanish comma", () => {
     render(
       <SharingAgreementFormDialog

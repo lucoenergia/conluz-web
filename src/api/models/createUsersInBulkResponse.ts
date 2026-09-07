@@ -8,6 +8,6 @@
 import type { CreateUsersInBulkError } from './createUsersInBulkError';
 
 export interface CreateUsersInBulkResponse {
-  created?: string[];
-  errors?: CreateUsersInBulkError[];
+  created: string[];
+  errors: CreateUsersInBulkError[];
 }

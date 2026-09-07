@@ -5,23 +5,28 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { SharingAgreementResponseNotes } from './sharingAgreementResponseNotes';
 import type { SharingAgreementResponseStatus } from './sharingAgreementResponseStatus';
+import type { SharingAgreementResponseCreatedBy } from './sharingAgreementResponseCreatedBy';
+import type { SharingAgreementFileResponse } from './sharingAgreementFileResponse';
 
 export interface SharingAgreementResponse {
   /** Internal unique identifier of the sharing agreement */
-  id?: string;
+  id: string;
   /** Identifier of the plant this agreement distributes production from */
-  plantId?: string;
+  plantId: string;
   /** Human-readable label for the agreement */
-  name?: string;
+  name: string;
   /** Free-text notes about the agreement */
-  notes?: string;
+  notes: SharingAgreementResponseNotes;
   /** Status of the agreement: DRAFT, PUBLISHED or SUPERSEDED */
-  status?: SharingAgreementResponseStatus;
+  status: SharingAgreementResponseStatus;
   /** Snapshot of the plant's installed power at authoring time, in kW */
-  installedPowerKw?: number;
+  installedPowerKw: number;
   /** Date and time the agreement was created */
-  createdAt?: string;
+  createdAt: string;
   /** Identifier of the user who created the agreement. Null means it was created by the system (a migration), not by a person */
-  createdBy?: string;
+  createdBy: SharingAgreementResponseCreatedBy;
+  /** Metadata of the latest evidence file uploaded for this agreement. Null means no file has been uploaded, never that it wasn't loaded */
+  file: SharingAgreementFileResponse;
 }

@@ -20,7 +20,7 @@ import type {
 } from '.././models';
 
 
-export const getGetInfoResponseMock = (overrideResponse: Partial< GetInfoResponse > = {}): GetInfoResponse => ({version: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
+export const getGetInfoResponseMock = (overrideResponse: Partial< GetInfoResponse > = {}): GetInfoResponse => ({version: faker.string.alpha({length: {min: 10, max: 20}}), ...overrideResponse})
 
 
 export const getGetInfoMockHandler = (overrideResponse?: GetInfoResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<GetInfoResponse> | GetInfoResponse)) => {

@@ -8,9 +8,9 @@
 
 export interface CoefficientAtTimestampResponse {
   /** Supply UUID */
-  supplyId?: string;
+  supplyId: string;
   /** Queried timestamp */
-  timestamp?: string;
+  timestamp: string;
   /** Coefficient active at the queried timestamp */
-  coefficient?: number;
+  coefficient: number;
 }

@@ -59,7 +59,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({
 
     <DetailTile label="Fecha de conexión">
       <Typography variant="body1" fontWeight="bold">
-        {formatDate(plant?.connectionDate)}
+        {formatDate(plant?.connectionDate ?? undefined)}
       </Typography>
     </DetailTile>
 

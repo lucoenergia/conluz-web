@@ -9,8 +9,6 @@ import type { EditableCoefficientRow } from "./sharingAgreementCoefficientEditin
 
 export interface ReplaceCoefficientsResult {
   success: boolean;
-  /** Informational only — the save succeeded even when this is present. */
-  sumWarning?: string;
 }
 
 export interface SharingAgreementCoefficientMutations {
@@ -34,7 +32,12 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
       // re-parses text, so this is unit-independent: the admin could have
       // typed in kW, percentage, or a mix across a toggle, and the payload is
       // identical either way.
-      const response = await replaceMutation.mutateAsync({
+      // coefficientSumWarning on the response is intentionally not surfaced: it's
+      // useful to an API consumer with no UI, but on this screen the resulting
+      // sum is already visible as persistent state in the coefficient-set KPI —
+      // the backend sending a string doesn't oblige the UI to render it as a
+      // one-off event too.
+      await replaceMutation.mutateAsync({
         plantId,
         sharingAgreementId,
         data: {
@@ -47,7 +50,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
       queryClient.invalidateQueries({
         queryKey: getGetSharingAgreementPartitionCoefficientsQueryKey(plantId, sharingAgreementId),
       });
-      return { success: true, sumWarning: response.coefficientSumWarning ?? undefined };
+      return { success: true };
     } catch (error) {
       errorDispatch(
         getFirstApiErrorMessage(error, "Ha habido un problema al guardar los coeficientes. Por favor, inténtalo más tarde"),

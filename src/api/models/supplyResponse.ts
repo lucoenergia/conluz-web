@@ -6,29 +6,31 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { UserResponse } from './userResponse';
+import type { SupplyResponseName } from './supplyResponseName';
+import type { SupplyResponseAddressRef } from './supplyResponseAddressRef';
 import type { SupplyContractResponse } from './supplyContractResponse';
 import type { SupplyDistributorResponse } from './supplyDistributorResponse';
 import type { SupplyShellyResponse } from './supplyShellyResponse';
 
 export interface SupplyResponse {
   /** Internal unique identifier of the supply */
-  id?: string;
+  id: string;
   /** Code that identifies the supply */
-  code?: string;
+  code: string;
   /** Owner of the supply */
-  user?: UserResponse;
+  user: UserResponse;
   /** Name of the supply */
-  name?: string;
+  name: SupplyResponseName;
   /** Address of the supply */
-  address?: string;
+  address: string;
   /** Reference ID of the address */
-  addressRef?: string;
+  addressRef: SupplyResponseAddressRef;
   /** Whether the supply is enabled or disabled */
-  enabled?: boolean;
+  enabled: boolean;
   /** Contract information of the supply */
-  contract?: SupplyContractResponse;
+  contract: SupplyContractResponse;
   /** Distributor information of the supply */
-  distributor?: SupplyDistributorResponse;
+  distributor: SupplyDistributorResponse;
   /** Shelly device information of the supply */
-  shelly?: SupplyShellyResponse;
+  shelly: SupplyShellyResponse;
 }

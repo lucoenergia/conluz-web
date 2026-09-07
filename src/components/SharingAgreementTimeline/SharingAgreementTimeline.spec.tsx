@@ -14,11 +14,11 @@ function renderTimeline(agreements: SharingAgreementResponse[]) {
   );
 }
 
-const agreements: SharingAgreementResponse[] = [
+const agreements = [
   { id: "a1", name: "Reparto 2026 H2", status: SharingAgreementResponseStatus.DRAFT },
   { id: "a2", name: "Reparto 2025-2026", status: SharingAgreementResponseStatus.PUBLISHED },
   { id: "a3", name: "Recálculo enero 2024", status: SharingAgreementResponseStatus.SUPERSEDED },
-];
+] as SharingAgreementResponse[];
 
 describe("SharingAgreementTimeline", () => {
   test("renders one rail dot per agreement, in order", () => {

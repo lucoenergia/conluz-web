@@ -236,7 +236,16 @@ const PAGED_PLANTS = {
   number: 0,
 };
 
-/** Three agreements, one per status, so the populated baseline exercises every chip/badge colour. */
+/**
+ * Three agreements, one per status, so the populated baseline exercises every chip/badge colour.
+ *
+ * `file`: the DRAFT agreement carries a populated file on purpose — a draft
+ * whose coefficients started from an imported TXT is the common case (every
+ * agreement whose reparto came from outside Conluz), not an edge case, so the
+ * canonical draft baselines below show file-panel state B (with its
+ * subordinate Generar/Importar actions), not state A. State A (no file yet)
+ * gets its own dedicated fixture and baseline (NO_FILE_DRAFT_AGREEMENT).
+ */
 const FIXED_SHARING_AGREEMENTS = [
   {
     id: "eeeeeeee-ffff-0000-1111-222222222222",
@@ -247,6 +256,7 @@ const FIXED_SHARING_AGREEMENTS = [
     installedPowerKw: 120.5,
     createdAt: "2024-06-15T10:00:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
+    file: { id: "file-published", filename: "ES1234567890123456AB1F_2024.txt", uploadedAt: "2024-06-20T09:15:00Z" },
   },
   {
     id: "ffffffff-0000-1111-2222-333333333333",
@@ -257,6 +267,7 @@ const FIXED_SHARING_AGREEMENTS = [
     installedPowerKw: 45,
     createdAt: "2024-09-01T09:30:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
+    file: { id: "file-draft", filename: "ES1234567890123456AB1F_2025.txt", uploadedAt: "2025-01-10T08:00:00Z" },
   },
   {
     id: "00000000-1111-2222-3333-444444444444",
@@ -267,8 +278,12 @@ const FIXED_SHARING_AGREEMENTS = [
     installedPowerKw: 80,
     createdAt: "2022-02-01T08:00:00Z",
     createdBy: null,
+    file: null,
   },
 ];
+
+/** State A (no file, DRAFT) needs its own fixture, since the canonical DRAFT_AGREEMENT above now has a file. */
+const NO_FILE_DRAFT_AGREEMENT = { ...FIXED_SHARING_AGREEMENTS[1], file: null };
 
 /**
  * Coefficient set covering every case the detail-page baselines must exercise:
@@ -549,6 +564,10 @@ async function mockSharingAgreementsPlantRoutes(page: Page, agreements: unknown[
 // registered there would otherwise return the plain list for these URLs too.
 // ---------------------------------------------------------------------------
 
+// `fileStatus` controls only the response to a Descargar click (GET .../file)
+// — the file panel's displayed state (filename/date vs. empty-state copy)
+// comes from `agreement.file` itself, read directly off the `agreement`
+// fixture passed in above, never from probing this route.
 async function mockSharingAgreementDetailRoutes(
   page: Page,
   agreementId: string,
@@ -615,6 +634,20 @@ async function mockSharingAgreementFileUploadRejection(page: Page, plantId: stri
         }),
       });
     },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: mock the generate-file POST as a successful binary download.
+// Registered AFTER mockSharingAgreementDetailRoutes() for the same
+// GET-falls-through-via-route.fallback() reason as the upload-rejection helper.
+// ---------------------------------------------------------------------------
+
+async function mockSharingAgreementGenerateFile(page: Page, plantId: string, agreementId: string) {
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${plantId}/sharing-agreements/${agreementId}/generate-file`),
+    (route: Route) =>
+      route.fulfill({ status: 200, contentType: "application/octet-stream", body: "fake-generated-file-bytes" }),
   );
 }
 
@@ -968,12 +1001,12 @@ test.describe("Visual baselines", () => {
   // file header) — reached by navigating through the list and clicking a
   // card's own title link, never via a cold page.goto().
   //
-  // The file panel never probes the file endpoint on page load (by design —
-  // the download is click-triggered, see SharingAgreementFilePanel), so its
-  // initial render always shows the "Descargar fichero" button regardless of
-  // the mocked file status. These baselines therefore all capture the same
-  // file-panel state; the 404 empty-state copy is exercised by unit tests
-  // (SharingAgreementFilePanel.spec.tsx), not by a visual baseline.
+  // The file panel is driven entirely by `agreement.file` from the already-
+  // loaded agreement response (no separate probe/fetch to learn whether a
+  // file exists), so its rendered state differs per fixture below: state A
+  // (no file, DRAFT — Generar/Importar primary actions), state B (file
+  // present — filename/date + Descargar, plus subordinate actions in DRAFT),
+  // state C (no file, sealed — explained-and-closed, no action button).
 
   async function navigateToSharingAgreementDetail(page: Page, agreementName: string) {
     await navigateToSharingAgreements(page);
@@ -981,7 +1014,10 @@ test.describe("Visual baselines", () => {
     const agreementCard = page.locator(".MuiCard-root").filter({ hasText: agreementName });
     await agreementCard.getByRole("link", { name: agreementName }).click();
 
-    await expect(page.getByText("Suma del fichero")).toBeVisible();
+    // The file panel's title always renders on load regardless of file/coefficient
+    // state, so it's a reliable "detail page finished loading" signal across every
+    // fixture — unlike "Suma del fichero", which is absent when coefficients is empty.
+    await expect(page.getByText(/Fichero (para|enviado a) la distribuidora/)).toBeVisible();
     await stabilizePage(page);
   }
 
@@ -994,7 +1030,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_ALL_PENDING, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_ALL_PENDING, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
@@ -1015,7 +1051,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
@@ -1035,7 +1071,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
@@ -1066,6 +1102,32 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-detail-superseded.png", { fullPage: true });
   });
 
+  test("sharing agreement detail page (draft, no file)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(
+      page,
+      NO_FILE_DRAFT_AGREEMENT.id,
+      NO_FILE_DRAFT_AGREEMENT,
+      FIXED_COEFFICIENTS_EMPTY,
+      404,
+    );
+
+    await navigateToSharingAgreementDetail(page, NO_FILE_DRAFT_AGREEMENT.name);
+
+    await expect(page.getByText("Todavía no hay ningún fichero guardado.")).toBeVisible();
+    // The disabled reason is visible text, never a tooltip — critical on the
+    // ~90% mobile user base, which has no hover.
+    await expect(page.getByRole("button", { name: "Generar fichero" })).toBeDisabled();
+    await expect(
+      page.getByText("La suma de los coeficientes debe ser exactamente 100 % para generar el fichero."),
+    ).toBeVisible();
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-no-file.png", { fullPage: true });
+  });
+
   test("sharing agreement detail page (mobile coefficient cards)", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "Mobile-only card layout — not rendered on the desktop viewport.");
 
@@ -1090,7 +1152,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.locator('button:has([data-testid="MoreVertIcon"])').click();
@@ -1107,7 +1169,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.locator('button:has([data-testid="MoreVertIcon"])').click();
@@ -1124,10 +1186,10 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Subir fichero" }).click();
+    await page.getByRole("button", { name: "Importar otro fichero" }).click();
 
     await expect(page.getByText(`${FIXED_PLANT.regulatoryCode}_AAAA.txt`)).toBeVisible();
     await stabilizePage(page);
@@ -1140,11 +1202,11 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
     await mockSharingAgreementFileUploadRejection(page, FIXED_PLANT_ID, DRAFT_AGREEMENT.id);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Subir fichero" }).click();
+    await page.getByRole("button", { name: "Importar otro fichero" }).click();
 
     await page.setInputFiles('input[type="file"]', {
       name: `${FIXED_PLANT.regulatoryCode}_2026.txt`,
@@ -1160,12 +1222,36 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-upload-dialog-rejected.png", { fullPage: true });
   });
 
+  test("sharing agreement generate dialog (year pre-filled)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(
+      page,
+      NO_FILE_DRAFT_AGREEMENT.id,
+      NO_FILE_DRAFT_AGREEMENT,
+      FIXED_COEFFICIENTS_ALL_PENDING,
+      404,
+    );
+    await mockSharingAgreementGenerateFile(page, FIXED_PLANT_ID, NO_FILE_DRAFT_AGREEMENT.id);
+
+    await navigateToSharingAgreementDetail(page, NO_FILE_DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Generar fichero" }).click();
+
+    await expect(page.getByRole("heading", { name: "Generar fichero" })).toBeVisible();
+    await expect(page.getByLabel("Año")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-generate-dialog.png", { fullPage: true });
+  });
+
   test("sharing agreement coefficient editor (empty draft, add-supply picker open)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar coeficientes" }).click();
@@ -1187,7 +1273,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar coeficientes" }).click();
@@ -1215,7 +1301,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar coeficientes" }).click();
@@ -1239,7 +1325,7 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar coeficientes" }).click();
@@ -1274,7 +1360,7 @@ test.describe("Visual baselines", () => {
       { coefficientId: "2", supply: { id: "supply-2", name: "Vivienda B", code: "ES0031300000000002BB" }, coefficient: 0.333333 },
       { coefficientId: "3", supply: { id: "supply-3", name: "Local C", code: "ES0031300000000003CC" }, coefficient: 0.333333 },
     ];
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, roundingCaveatAgreement, roundingCaveatCoefficients, 404);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, roundingCaveatAgreement, roundingCaveatCoefficients, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar coeficientes" }).click();

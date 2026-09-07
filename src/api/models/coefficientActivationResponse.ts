@@ -9,5 +9,5 @@ import type { PartitionCoefficientResponse } from './partitionCoefficientRespons
 
 export interface CoefficientActivationResponse {
   /** Every coefficient actually touched by this call -- the requested targets and any predecessor cascaded as a result. Empty when the whole batch was a no-op. */
-  coefficients?: PartitionCoefficientResponse[];
+  coefficients: PartitionCoefficientResponse[];
 }

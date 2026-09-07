@@ -37,12 +37,15 @@ describe("SharingAgreementCard", () => {
   test("renders name, status label and installed power for a fully-populated agreement", () => {
     renderCard({
       id: "agreement-1",
+      plantId: "plant-1",
       name: "Reparto vecinos bloque A",
       status: SharingAgreementResponseStatus.PUBLISHED,
       installedPowerKw: 42.5,
       createdAt: "2026-01-15T10:00:00Z",
+      createdBy: "user-1",
       notes: "Acuerdo firmado en la reunión de la comunidad",
-    });
+      file: null,
+    } as unknown as SharingAgreementResponse);
 
     expect(screen.getByText("Reparto vecinos bloque A")).toBeInTheDocument();
     expect(screen.getByText("Vigente")).toBeInTheDocument();
@@ -51,7 +54,7 @@ describe("SharingAgreementCard", () => {
   });
 
   test("renders the title as a link to the detail page when the agreement has an id", () => {
-    renderCard({ id: "agreement-2", name: "Con enlace" });
+    renderCard({ id: "agreement-2", name: "Con enlace" } as SharingAgreementResponse);
 
     const link = screen.getByRole("link", { name: "Con enlace" });
     expect(link).toHaveAttribute("href", "/production/plant-1/sharing-agreements/agreement-2");
@@ -59,7 +62,7 @@ describe("SharingAgreementCard", () => {
 
   test("clicking the card body navigates to the detail page", async () => {
     const user = userEvent.setup();
-    const { container } = renderCard({ id: "agreement-2", name: "Con enlace" });
+    const { container } = renderCard({ id: "agreement-2", name: "Con enlace" } as SharingAgreementResponse);
 
     await user.click(container.querySelector(".MuiCardContent-root") as HTMLElement);
 
@@ -71,7 +74,7 @@ describe("SharingAgreementCard", () => {
       toString: () => "some selected notes",
     } as Selection);
     const user = userEvent.setup();
-    const { container } = renderCard({ id: "agreement-2", name: "Con enlace" });
+    const { container } = renderCard({ id: "agreement-2", name: "Con enlace" } as SharingAgreementResponse);
 
     await user.click(container.querySelector(".MuiCardContent-root") as HTMLElement);
 
@@ -81,7 +84,9 @@ describe("SharingAgreementCard", () => {
 
   test("clicking the kebab button opens the menu instead of navigating", async () => {
     const user = userEvent.setup();
-    renderCard({ id: "agreement-3", name: "Borrador", status: SharingAgreementResponseStatus.DRAFT });
+    renderCard(
+      { id: "agreement-3", name: "Borrador", status: SharingAgreementResponseStatus.DRAFT } as SharingAgreementResponse,
+    );
 
     await user.click(getKebabButton());
 
@@ -91,7 +96,7 @@ describe("SharingAgreementCard", () => {
 
   test("renders no kebab menu, no title link and no chevron when id is missing, without crashing", async () => {
     const user = userEvent.setup();
-    const { container } = renderCard({ name: "Sin id" });
+    const { container } = renderCard({ name: "Sin id" } as SharingAgreementResponse);
 
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(screen.queryByRole("link", { name: "Sin id" })).not.toBeInTheDocument();
@@ -102,7 +107,7 @@ describe("SharingAgreementCard", () => {
   });
 
   test("falls back visibly for every missing optional field", () => {
-    renderCard({});
+    renderCard({} as SharingAgreementResponse);
 
     expect(screen.getByText("Sin nombre")).toBeInTheDocument();
     expect(screen.getByText("Desconocido")).toBeInTheDocument();
@@ -112,7 +117,11 @@ describe("SharingAgreementCard", () => {
   test("shows Eliminar for a DRAFT agreement and wires it to onDeleteRequest", async () => {
     const onDeleteRequest = vi.fn();
     const user = userEvent.setup();
-    const agreement = { id: "agreement-3", name: "Borrador", status: SharingAgreementResponseStatus.DRAFT };
+    const agreement = {
+      id: "agreement-3",
+      name: "Borrador",
+      status: SharingAgreementResponseStatus.DRAFT,
+    } as SharingAgreementResponse;
     renderCard(agreement, { onDeleteRequest });
 
     await user.click(getKebabButton());
@@ -123,7 +132,9 @@ describe("SharingAgreementCard", () => {
   });
 
   test("renders no kebab at all for a non-DRAFT agreement, while keeping the card navigable", () => {
-    renderCard({ id: "agreement-4", name: "Vigente", status: SharingAgreementResponseStatus.PUBLISHED });
+    renderCard(
+      { id: "agreement-4", name: "Vigente", status: SharingAgreementResponseStatus.PUBLISHED } as SharingAgreementResponse,
+    );
 
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(screen.getByRole("link", { name: "Vigente" })).toBeInTheDocument();
@@ -133,7 +144,7 @@ describe("SharingAgreementCard", () => {
 
   test("truncates long notes with an ellipsis", () => {
     const longNotes = "a".repeat(200);
-    renderCard({ name: "Con notas largas", notes: longNotes });
+    renderCard({ name: "Con notas largas", notes: longNotes } as SharingAgreementResponse);
 
     const rendered = screen.getByText(/a{100,}…/);
     expect(rendered.textContent?.endsWith("…")).toBe(true);

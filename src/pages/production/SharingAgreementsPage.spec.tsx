@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { SharingAgreementsPage } from "./SharingAgreementsPage";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { SharingAgreementResponse } from "../../api/models";
+import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import type { SharingAgreementsData } from "./useSharingAgreementsData";
 import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
 
@@ -40,11 +40,11 @@ vi.mock("react-router", async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-const AGREEMENTS: SharingAgreementResponse[] = [
+const AGREEMENTS = [
   { id: "1", name: "Reparto vecinos bloque A", status: SharingAgreementResponseStatus.PUBLISHED },
   { id: "2", name: "Borrador reciente", status: SharingAgreementResponseStatus.DRAFT, installedPowerKw: 5 },
   { id: "3", name: "Acuerdo histórico norte", status: SharingAgreementResponseStatus.SUPERSEDED },
-];
+] as SharingAgreementResponse[];
 
 function mockData(overrides: Partial<SharingAgreementsData> = {}) {
   mockUseSharingAgreementsData.mockReturnValue({ ...baseData(), ...overrides });
@@ -53,7 +53,7 @@ function mockData(overrides: Partial<SharingAgreementsData> = {}) {
 function baseData(): SharingAgreementsData {
   return {
     agreements: AGREEMENTS,
-    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" },
+    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" } as PlantResponse,
     counts: { vigentes: 5, drafts: 1, historicos: 2 },
     isLoading: false,
     isNotFound: false,
@@ -152,7 +152,9 @@ describe("SharingAgreementsPage", () => {
   });
 
   test("create dialog prefills capacity from the plant's totalPower and navigates to the new agreement on submit", async () => {
-    mockData({ plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123", totalPower: 30 } });
+    mockData({
+      plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123", totalPower: 30 } as PlantResponse,
+    });
     mockCreateAgreement.mockResolvedValue({ id: "new-agreement", name: "Reparto nuevo" });
     const user = userEvent.setup();
     setup("plant-42");

@@ -5,6 +5,9 @@ import type { CommunityResponse } from "../../api/models";
 const community = (overrides: Partial<CommunityResponse>): CommunityResponse => ({
   id: "id",
   name: "Community",
+  code: "COMM-1",
+  legalId: "B12345678",
+  address: "Calle Test 1",
   enabled: true,
   adminNames: ["Admin One"],
   memberCount: 5,

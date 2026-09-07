@@ -3,6 +3,7 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import {
   getApplicationStateColor,
   getApplicationStateDetail,
@@ -11,6 +12,11 @@ import {
   getEndStateLabel,
   isEndStateReadOnly,
 } from "./sharingAgreementCoefficientState";
+
+// These tests exercise a single field at a time against otherwise-irrelevant
+// partial fixtures, so each literal is cast rather than fully fabricated.
+const asCoefficient = (partial: Partial<SharingAgreementPartitionCoefficientResponse>) =>
+  partial as SharingAgreementPartitionCoefficientResponse;
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, OPEN_ORPHAN, PENDING_SUCCESSION, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -31,21 +37,21 @@ describe("getApplicationStateLabel", () => {
 
 describe("getApplicationStateHeadline", () => {
   it("headlines PENDING", () => {
-    expect(getApplicationStateHeadline({ applicationState: PENDING })).toBe("Sin fecha de aplicación");
+    expect(getApplicationStateHeadline(asCoefficient({ applicationState: PENDING }))).toBe("Sin fecha de aplicación");
   });
 
   it("headlines APPLIED with the validFrom date", () => {
-    expect(getApplicationStateHeadline({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" })).toBe(
+    expect(getApplicationStateHeadline(asCoefficient({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" }))).toBe(
       "En vigor desde 23 de mayo de 2024",
     );
   });
 
   it("headlines APPLIED without a validFrom as just 'En vigor', never a nonsense date", () => {
-    expect(getApplicationStateHeadline({ applicationState: APPLIED })).toBe("En vigor");
+    expect(getApplicationStateHeadline(asCoefficient({ applicationState: APPLIED }))).toBe("En vigor");
   });
 
   it("falls back for an unexpected state", () => {
-    expect(getApplicationStateHeadline({})).toBe("-");
+    expect(getApplicationStateHeadline(asCoefficient({}))).toBe("-");
   });
 });
 
@@ -65,39 +71,39 @@ describe("getApplicationStateColor", () => {
 
 describe("getApplicationStateDetail", () => {
   it("tells the admin to register it when the distributor applies it, for PENDING", () => {
-    expect(getApplicationStateDetail({ applicationState: PENDING })).toBe(
+    expect(getApplicationStateDetail(asCoefficient({ applicationState: PENDING }))).toBe(
       "Regístrala cuando la distribuidora lo aplique",
     );
   });
 
   it("has no caption for APPLIED — the date lives in the headline instead", () => {
-    expect(getApplicationStateDetail({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" })).toBeUndefined();
+    expect(getApplicationStateDetail(asCoefficient({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" }))).toBeUndefined();
   });
 });
 
 describe("getEndStateLabel — all 5 endState values", () => {
   it("OPEN renders as an em dash", () => {
-    expect(getEndStateLabel({ endState: OPEN })).toBe("—");
+    expect(getEndStateLabel(asCoefficient({ endState: OPEN }))).toBe("—");
   });
 
   it("OPEN_ORPHAN renders as 'Sin cerrar'", () => {
-    expect(getEndStateLabel({ endState: OPEN_ORPHAN })).toBe("Sin cerrar");
+    expect(getEndStateLabel(asCoefficient({ endState: OPEN_ORPHAN }))).toBe("Sin cerrar");
   });
 
   it("PENDING_SUCCESSION renders as 'Pendiente del siguiente acuerdo'", () => {
-    expect(getEndStateLabel({ endState: PENDING_SUCCESSION })).toBe("Pendiente del siguiente acuerdo");
+    expect(getEndStateLabel(asCoefficient({ endState: PENDING_SUCCESSION }))).toBe("Pendiente del siguiente acuerdo");
   });
 
   it("DERIVED renders the endDate", () => {
-    expect(getEndStateLabel({ endState: DERIVED, endDate: "2025-01-01T00:00:00Z" })).toBe("1 de enero de 2025");
+    expect(getEndStateLabel(asCoefficient({ endState: DERIVED, endDate: "2025-01-01T00:00:00Z" }))).toBe("1 de enero de 2025");
   });
 
   it("CLOSED renders the endDate", () => {
-    expect(getEndStateLabel({ endState: CLOSED, endDate: "2025-06-15T00:00:00Z" })).toBe("15 de junio de 2025");
+    expect(getEndStateLabel(asCoefficient({ endState: CLOSED, endDate: "2025-06-15T00:00:00Z" }))).toBe("15 de junio de 2025");
   });
 
   it("falls back to an em dash for undefined", () => {
-    expect(getEndStateLabel({})).toBe("—");
+    expect(getEndStateLabel(asCoefficient({}))).toBe("—");
   });
 });
 

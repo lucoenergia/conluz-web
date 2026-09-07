@@ -10,11 +10,26 @@ import {
   type EditableCoefficientRow,
 } from "./sharingAgreementCoefficientEditing";
 import { computeSharingAgreementCoefficientSums, COEFFICIENT_SCALE } from "./sharingAgreementCoefficientSums";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementPartitionCoefficientResponseEndState,
+} from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+
+// Fields every SharingAgreementPartitionCoefficientResponse fixture now needs but that
+// these tests don't care about — a clean pending/never-applied default.
+const PENDING_FIELDS = {
+  validFrom: null,
+  validTo: null,
+  applicationState: SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
+  endState: SharingAgreementPartitionCoefficientResponseEndState.OPEN,
+  endDate: null,
+} as const;
 
 describe("buildEditableRowsFromCoefficients", () => {
   it("seeds value from the exact server coefficient and inputText fixed at 6 decimals", () => {
     const rows = buildEditableRowsFromCoefficients(
-      [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 0.3 }],
+      [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 0.3, ...PENDING_FIELDS }],
       "coefficient",
       100,
     );
@@ -24,37 +39,74 @@ describe("buildEditableRowsFromCoefficients", () => {
   });
 
   it("seeds an explicit zero coefficient as value 0 and inputText '0,000000', not empty", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 0 }], "coefficient", 100);
+    const rows = buildEditableRowsFromCoefficients(
+      [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 0, ...PENDING_FIELDS }],
+      "coefficient",
+      100,
+    );
     expect(rows[0].value).toBe(0);
     expect(rows[0].inputText).toBe("0,000000");
   });
 
   it("seeds kW-unit text derived from value * installedPowerKw, fixed at 2 decimals", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 0.5 }], "kw", 60);
+    const rows = buildEditableRowsFromCoefficients(
+      [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 0.5, ...PENDING_FIELDS }],
+      "kw",
+      60,
+    );
     expect(rows[0].value).toBe(0.5);
     expect(rows[0].inputText).toBe("30,00");
   });
 
   it("drops entries with no supply id rather than crashing", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: undefined, coefficient: 0.5 }], "coefficient", 100);
+    const rows = buildEditableRowsFromCoefficients(
+      [
+        {
+          coefficientId: "c1",
+          // Intentionally absent — this is the exact case under test.
+          supply: undefined as unknown as SharingAgreementPartitionCoefficientResponse["supply"],
+          coefficient: 0.5,
+          ...PENDING_FIELDS,
+        },
+      ],
+      "coefficient",
+      100,
+    );
     expect(rows).toHaveLength(0);
   });
 
   it("re-rounds a drifted legacy coefficient to 6 decimals on load, so re-saving it untouched can't re-propagate the drift", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: 1 / 3 }], "coefficient", 100);
+    const rows = buildEditableRowsFromCoefficients(
+      [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 1 / 3, ...PENDING_FIELDS }],
+      "coefficient",
+      100,
+    );
     expect(rows[0].value).toBe(0.333333);
     expect(rows[0].inputText).toBe("0,333333");
   });
 
   it("leaves value undefined when the server coefficient is missing, never defaulting it to 0", () => {
-    const rows = buildEditableRowsFromCoefficients([{ supply: { id: "s1" }, coefficient: undefined }], "coefficient", 100);
+    const rows = buildEditableRowsFromCoefficients(
+      [
+        {
+          coefficientId: "c1",
+          supply: { id: "s1", name: "Vivienda A", code: "CUPS1" },
+          // Intentionally absent — this is the exact case under test.
+          coefficient: undefined as unknown as number,
+          ...PENDING_FIELDS,
+        },
+      ],
+      "coefficient",
+      100,
+    );
     expect(rows[0].value).toBeUndefined();
   });
 });
 
 describe("buildEditableRowFromSupply", () => {
   it("starts with an empty inputText and undefined value, never '0'/0", () => {
-    const row = buildEditableRowFromSupply({ id: "s2", name: "Local B", code: "CUPS2" });
+    // Only id/name/code are exercised by this function; the rest of SupplyResponse is irrelevant here.
+    const row = buildEditableRowFromSupply({ id: "s2", name: "Local B", code: "CUPS2" } as SupplyResponse);
     expect(row.inputText).toBe("");
     expect(row.value).toBeUndefined();
     expect(row.supplyId).toBe("s2");
@@ -151,8 +203,8 @@ describe("isValidCoefficientValue", () => {
 
 describe("updateRowInput", () => {
   const rows: EditableCoefficientRow[] = [
-    { supplyId: "s1", coefficient: {}, value: 0.3, inputText: "0,3" },
-    { supplyId: "s2", coefficient: {}, value: 0.5, inputText: "0,5" },
+    { supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.3, inputText: "0,3" },
+    { supplyId: "s2", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.5, inputText: "0,5" },
   ];
 
   it("stores the typed text verbatim and derives value, leaving other rows untouched", () => {
@@ -196,9 +248,9 @@ describe("retextRowsForUnit — toggle invariance", () => {
     const installedPowerKw = 45;
     // Exact 6-decimal coefficients summing to exactly 1,000,000 units.
     const original: EditableCoefficientRow[] = [
-      { supplyId: "s1", coefficient: {}, value: 0.333333, inputText: "0,333333" },
-      { supplyId: "s2", coefficient: {}, value: 0.333333, inputText: "0,333333" },
-      { supplyId: "s3", coefficient: {}, value: 0.333334, inputText: "0,333334" },
+      { supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.333333, inputText: "0,333333" },
+      { supplyId: "s2", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.333333, inputText: "0,333333" },
+      { supplyId: "s3", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.333334, inputText: "0,333334" },
     ];
     const sumOf = (rows: EditableCoefficientRow[]) =>
       computeSharingAgreementCoefficientSums(rows.map((r) => ({ coefficient: r.value }))).fileSumUnits;
@@ -219,13 +271,13 @@ describe("retextRowsForUnit — toggle invariance", () => {
     // 0.016670 * 60 = 1.0002 kW, which rounds to "1,00" at 2dp — retextRowsForUnit
     // must not re-derive value from that rounded text: it always re-derives text
     // from the still-precise value, never the reverse.
-    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {}, value: 0.01667, inputText: "0,01667" }];
+    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.01667, inputText: "0,01667" }];
     const toggled = retextRowsForUnit(retextRowsForUnit(rows, "kw", 60), "coefficient", 60);
     expect(toggled[0].value).toBe(0.01667);
   });
 
   it("formats a row with no value as empty text, in either direction", () => {
-    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {}, value: undefined, inputText: "" }];
+    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: undefined, inputText: "" }];
     expect(retextRowsForUnit(rows, "kw", 60)[0].inputText).toBe("");
     expect(retextRowsForUnit(rows, "coefficient", 60)[0].inputText).toBe("");
   });

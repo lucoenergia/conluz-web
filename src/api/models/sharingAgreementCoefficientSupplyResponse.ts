@@ -8,9 +8,9 @@
 
 export interface SharingAgreementCoefficientSupplyResponse {
   /** Internal unique identifier of the supply */
-  id?: string;
+  id: string;
   /** Code of the supply */
-  code?: string;
+  code: string;
   /** Display name of the supply */
-  name?: string;
+  name: string;
 }

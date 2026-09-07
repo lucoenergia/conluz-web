@@ -21,9 +21,9 @@ import type {
 } from '.././models';
 
 
-export const getGetShellyConfigResponseMock = (overrideResponse: Partial< GetShellyConfigResponse > = {}): GetShellyConfigResponse => ({enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
+export const getGetShellyConfigResponseMock = (overrideResponse: Partial< GetShellyConfigResponse > = {}): GetShellyConfigResponse => ({enabled: faker.datatype.boolean(), ...overrideResponse})
 
-export const getGetDatadisConfigResponseMock = (overrideResponse: Partial< GetDatadisConfigResponse > = {}): GetDatadisConfigResponse => ({username: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), passwordSet: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), baseUrl: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), enabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
+export const getGetDatadisConfigResponseMock = (overrideResponse: Partial< GetDatadisConfigResponse > = {}): GetDatadisConfigResponse => ({username: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), passwordSet: faker.datatype.boolean(), baseUrl: faker.string.alpha({length: {min: 10, max: 20}}), enabled: faker.datatype.boolean(), ...overrideResponse})
 
 export const getGetDatadisConsumptionHourlyCsvReportResponseMock = (): string => (faker.word.sample())
 

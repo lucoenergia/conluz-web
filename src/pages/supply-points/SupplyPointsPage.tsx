@@ -252,7 +252,7 @@ export const SupplyPointsPage: FC = () => {
               <SupplyCard
                 id={item.id}
                 code={item.code}
-                name={item.name}
+                name={item.name ?? undefined}
                 address={item.address}
                 enabled={item.enabled}
                 lastConnection="Hace 2 horas"
