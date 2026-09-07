@@ -63,6 +63,7 @@ function baseData(): SharingAgreementDetailData {
     } as unknown as SharingAgreementResponse,
     plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" } as PlantResponse,
     coefficients: [],
+    coefficientsData: [],
     isLoading: false,
     isNotFound: false,
     error: null,
