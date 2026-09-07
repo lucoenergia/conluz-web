@@ -4,7 +4,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
 import { colors, radii } from "../../theme/tokens";
 import { AppAccordion } from "../AppAccordion/AppAccordion";
-import { COEFFICIENT_SCALE, formatCoefficientPercentage } from "../../pages/production/sharingAgreementCoefficientSums";
+import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
 import type { SharingAgreementNextStep } from "../../pages/production/selectSharingAgreementNextStep";
 
 export interface SharingAgreementNextStepPanelProps {
@@ -36,10 +36,6 @@ function currentStageFor(nextStep: SharingAgreementNextStep): StageNumber | unde
   }
 }
 
-function formatDelta(deltaMillionths: number): string {
-  return formatCoefficientPercentage(Math.abs(deltaMillionths) / COEFFICIENT_SCALE);
-}
-
 interface PanelContent {
   title: string;
   body?: string;
@@ -60,10 +56,7 @@ function contentFor(nextStep: Exclude<SharingAgreementNextStep, { kind: "NONE" }
       return {
         title: "Ajusta el reparto",
         body: "Los coeficientes deben sumar 100,0000 % antes de poder generar el fichero o poner el acuerdo en vigor.",
-        requirement:
-          nextStep.deltaMillionths > 0
-            ? `Faltan ${formatDelta(nextStep.deltaMillionths)} para llegar al 100,0000 %.`
-            : `Sobran ${formatDelta(nextStep.deltaMillionths)} sobre el 100,0000 %.`,
+        requirement: formatCoefficientGapMessage(nextStep.deltaMillionths) ?? undefined,
       };
 
     case "GENERATE_AND_SEND":
