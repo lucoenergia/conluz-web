@@ -10,6 +10,7 @@ import type { SupplyResponse } from './supplyResponse';
 import type { PlantResponseDescription } from './plantResponseDescription';
 import type { PlantResponseInverterProvider } from './plantResponseInverterProvider';
 import type { PlantResponseConnectionDate } from './plantResponseConnectionDate';
+import type { PlantCommunityResponse } from './plantCommunityResponse';
 
 export interface PlantResponse {
   id: string;
@@ -24,4 +25,6 @@ export interface PlantResponse {
   inverterProvider: PlantResponseInverterProvider;
   totalPower: number;
   connectionDate: PlantResponseConnectionDate;
+  /** The community that owns the plant. */
+  community: PlantCommunityResponse;
 }

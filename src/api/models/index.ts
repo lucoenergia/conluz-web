@@ -88,6 +88,7 @@ export * from './pagedResultUserResponse';
 export * from './partitionCoefficientResponse';
 export * from './partitionCoefficientResponseValidFrom';
 export * from './partitionCoefficientResponseValidTo';
+export * from './plantCommunityResponse';
 export * from './plantResponse';
 export * from './plantResponseConnectionDate';
 export * from './plantResponseDescription';
