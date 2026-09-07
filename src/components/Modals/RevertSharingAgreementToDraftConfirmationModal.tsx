@@ -33,8 +33,7 @@ export const RevertSharingAgreementToDraftConfirmationModal: FC<
           lineHeight: 1.6,
         }}
       >
-        El acuerdo dejará de estar en vigor y sus coeficientes volverán a ser editables. Si ya enviaste el fichero a
-        la distribuidora, tendrás que enviarle uno corregido cuando vuelvas a ponerlo en vigor.
+        El acuerdo dejará de estar en vigor y sus coeficientes volverán a ser editables.
       </Typography>
     </ConfirmationModal>
   );
