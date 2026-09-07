@@ -94,7 +94,7 @@ export const SharingAgreementDetailPage: FC = () => {
             />
           </Box>
 
-          {!isLoading && !error && (
+          {!isLoading && !error && nextStep.kind !== "NONE" && (
             <Box sx={sxStyles.pageContainer}>
               <SharingAgreementNextStepPanel nextStep={nextStep} />
             </Box>
