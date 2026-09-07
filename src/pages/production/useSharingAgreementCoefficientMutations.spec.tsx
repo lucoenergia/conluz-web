@@ -104,13 +104,13 @@ describe("useSharingAgreementCoefficientMutations", () => {
     );
   });
 
-  it("returns the sumWarning from the response informationally on success", async () => {
+  it("does not surface the backend's coefficientSumWarning string on the result, even when present", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: "La suma se aleja del 100%" });
     const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
 
-    const outcome = await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5)]);
+    const outcome = await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5), row("s2", 0.4)]);
 
-    expect(outcome).toEqual({ success: true, sumWarning: "La suma se aleja del 100%" });
+    expect(outcome).toEqual({ success: true });
   });
 
   it("reproduction case: rows entered in kW mode against a 48,40 kW plant reach the request body as exact 6-decimal values", async () => {

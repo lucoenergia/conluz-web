@@ -21,11 +21,16 @@ const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
 const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
 
 const mockMutateAsync = vi.fn();
+const mockSuccessDispatch = vi.fn();
 
 vi.mock("../../context/community.context", async () => {
   const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
   return { ...actual, useActiveCommunity: () => "community-1" };
 });
+
+vi.mock("../../context/success.context", () => ({
+  useSuccessDispatch: () => mockSuccessDispatch,
+}));
 
 vi.mock("../../api/supplies/supplies", () => ({
   getAllSupplies: vi.fn().mockResolvedValue({
@@ -124,6 +129,7 @@ describe("SharingAgreementCoefficientSet", () => {
 describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
   beforeEach(() => {
     mockMutateAsync.mockReset();
+    mockSuccessDispatch.mockClear();
   });
 
   it("shows the edit action only for a DRAFT agreement", () => {
@@ -243,12 +249,16 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument());
   });
 
-  it("shows a fully Spanish warning with the client-computed sum when the backend flags an invalid sum", async () => {
+  it("dispatches a transient save confirmation on success, never rendering the raw backend coefficientSumWarning string", async () => {
+    // The backend's coefficientSumWarning is informational for API consumers with
+    // no UI; this screen already shows the resulting sum persistently in the KPI,
+    // so the save confirmation stays generic regardless of whether it's present.
     mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: "coefficient set sum is 0.4, expected 1" });
     const user = userEvent.setup();
     renderWithTheme({
       coefficients: [
         { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+        { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "Y" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
       ],
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
@@ -256,12 +266,27 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
-    await waitFor(() =>
-      expect(
-        screen.getByText("Los coeficientes se han guardado, pero la suma es 40,0000 % (se esperaba 100,0000 %)."),
-      ).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Coeficientes guardados."));
     expect(screen.queryByText(/coefficient set sum/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/se esperaba 100,0000/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("dispatches the same save confirmation when the backend reports no sum warning at all", async () => {
+    mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: null });
+    const user = userEvent.setup();
+    renderWithTheme({
+      coefficients: [
+        { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+        { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "Y" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+      ],
+      agreementStatus: SharingAgreementResponseStatus.DRAFT,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Coeficientes guardados."));
   });
 
   it("the percentage sum line is always shown, even in kW mode, and is never demoted", () => {

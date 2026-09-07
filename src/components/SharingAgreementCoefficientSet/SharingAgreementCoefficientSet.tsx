@@ -1,6 +1,5 @@
 import { useMemo, useState, type FC } from "react";
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -33,6 +32,7 @@ import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } 
 import { useDebounce } from "../../utils/useDebounce";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { useActiveCommunity } from "../../context/community.context";
+import { useSuccessDispatch } from "../../context/success.context";
 import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -131,6 +131,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 }) => {
   const theme = useTheme();
   const activeCommunityId = useActiveCommunity();
+  const successDispatch = useSuccessDispatch();
   const { replaceCoefficients, isReplacing } = useSharingAgreementCoefficientMutations(plantId);
 
   const [searchText, setSearchText] = useState("");
@@ -141,7 +142,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [inputUnit, setInputUnit] = useState<CoefficientInputUnit>("kw");
   const [rows, setRows] = useState<EditableCoefficientRow[]>([]);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [sumWarning, setSumWarning] = useState<string | undefined>();
 
   useUnsavedChangesGuard(isEditing);
 
@@ -187,7 +187,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "coefficient";
     setInputUnit(startingUnit);
     setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, installedPowerKw));
-    setSumWarning(undefined);
     setIsEditing(true);
   };
 
@@ -219,8 +218,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     const outcome = await replaceCoefficients(sharingAgreementId, rows);
     if (outcome.success) {
       setIsEditing(false);
-      setSumWarning(outcome.sumWarning ? formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE) : undefined);
       setRows([]);
+      successDispatch("Coeficientes guardados.");
     }
   };
 
@@ -253,12 +252,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
       {!isEditing && <SharingAgreementCoefficientSumCards coefficients={coefficients} agreementStatus={agreementStatus} />}
-
-      {sumWarning && (
-        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setSumWarning(undefined)}>
-          Los coeficientes se han guardado, pero la suma es {sumWarning} (se esperaba 100,0000 %).
-        </Alert>
-      )}
 
       {/* Row 1, editing mode: unit toggle (fixed shape) + search — search still
           filters `rows` while editing, so it must stay available here too. */}

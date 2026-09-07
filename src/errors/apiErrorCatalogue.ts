@@ -14,7 +14,7 @@ import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/mod
  * catalogue doesn't need touching again once that flow lands. It isn't
  * reachable from any endpoint the app calls today, and it's unrelated to the
  * save-success `coefficientSumWarning` string (a different, code-less field —
- * see SharingAgreementCoefficientSet's save handler).
+ * see useSharingAgreementCoefficientMutations's replaceCoefficients).
  */
 const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, string>> = {
   SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, por lo que no se puede modificar ni eliminar.",

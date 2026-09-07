@@ -13,6 +13,7 @@ import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData
 import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
 
 const mockErrorDispatch = vi.fn();
+const mockSuccessDispatch = vi.fn();
 const mockUseSharingAgreementDetailData = vi.fn();
 const mockUpdateAgreement = vi.fn();
 const mockDeleteAgreement = vi.fn();
@@ -20,6 +21,10 @@ const mockNavigate = vi.fn();
 
 vi.mock("../../context/error.context", () => ({
   useErrorDispatch: () => mockErrorDispatch,
+}));
+
+vi.mock("../../context/success.context", () => ({
+  useSuccessDispatch: () => mockSuccessDispatch,
 }));
 
 vi.mock("./useSharingAgreementDetailData", () => ({
