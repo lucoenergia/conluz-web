@@ -21,7 +21,7 @@ describe("PublishSharingAgreementConfirmationModal", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Podrás volver a borrador mientras la distribuidora no haya aplicado ningún coeficiente. En cuanto aplique alguno, dejará de ser posible y cualquier cambio exigirá un acuerdo nuevo.",
+        "Podrás volver a borrador mientras no se haya aplicado ningún coeficiente. En cuanto aplique alguno, dejará de ser posible y cualquier cambio exigirá un acuerdo nuevo.",
       ),
     ).toBeInTheDocument();
   });

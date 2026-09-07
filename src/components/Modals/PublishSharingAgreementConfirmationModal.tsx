@@ -45,7 +45,7 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
           del despliegue.
         </Box>
         <Box component="span" sx={{ display: "block", mt: 1 }}>
-          Podrás volver a borrador mientras la distribuidora no haya aplicado ningún coeficiente. En cuanto aplique
+          Podrás volver a borrador mientras no se haya aplicado ningún coeficiente. En cuanto aplique
           alguno, dejará de ser posible y cualquier cambio exigirá un acuerdo nuevo.
         </Box>
       </Alert>
