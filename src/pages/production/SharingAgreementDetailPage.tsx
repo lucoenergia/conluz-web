@@ -8,24 +8,25 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
-import { SharingAgreementDraftProgressStrip } from "../../components/SharingAgreementDraftProgressStrip";
+import { SharingAgreementNextStepPanel } from "../../components/SharingAgreementNextStepPanel";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
-import { SharingAgreementResponseStatus } from "../../api/models";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
+import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 
 export const SharingAgreementDetailPage: FC = () => {
   const { plantId = "", sharingAgreementId = "" } = useParams();
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const { agreement, plant, coefficients, isLoading, isNotFound, error } = useSharingAgreementDetailData(
+  const { agreement, plant, coefficients, coefficientsData, isLoading, isNotFound, error } = useSharingAgreementDetailData(
     plantId,
     sharingAgreementId,
   );
   const { updateAgreement, deleteAgreement, isUpdating, isDeleting } = useSharingAgreementMutations(plantId);
+  const nextStep = selectSharingAgreementNextStep(agreement, coefficientsData, plant?.regulatoryCode ?? undefined);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
@@ -93,9 +94,9 @@ export const SharingAgreementDetailPage: FC = () => {
             />
           </Box>
 
-          {!isLoading && !error && agreement?.status === SharingAgreementResponseStatus.DRAFT && (
+          {!isLoading && !error && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementDraftProgressStrip coefficients={coefficients} hasFile={!!agreement.file} />
+              <SharingAgreementNextStepPanel nextStep={nextStep} />
             </Box>
           )}
 
