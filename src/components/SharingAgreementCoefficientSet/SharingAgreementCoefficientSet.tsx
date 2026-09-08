@@ -213,7 +213,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   };
 
   const handleSelectAllPending = () => {
-    setSelectedIds(new Set(pendingCoefficients.map((c) => c.coefficientId)));
+    // Operates on the *visible* pending rows (post filter/search), never the
+    // full unfiltered set — selecting rows the user can't currently see is
+    // the same defect this whole redesign exists to fix, in the opposite
+    // direction: clicking with "Sin aplicar" + a search active must not
+    // silently select rows outside that view.
+    setSelectedIds(new Set(visiblePendingCoefficients.map((c) => c.coefficientId)));
   };
 
   const handleApplyDate = async () => {
@@ -248,6 +253,14 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const filteredCoefficients = useMemo(
     () => filterSharingAgreementCoefficients(coefficients, debouncedSearchText, applicationStateFilter),
     [coefficients, debouncedSearchText, applicationStateFilter],
+  );
+
+  // The set select-all/the header checkbox/the visible-vs-hidden count all
+  // reason about — reuses filterSharingAgreementCoefficients rather than
+  // reimplementing the search/status predicate.
+  const visiblePendingCoefficients = useMemo(
+    () => filteredCoefficients.filter(isPendingActivation),
+    [filteredCoefficients],
   );
 
   const filteredRows = useMemo(() => filterEditableRows(rows, debouncedSearchText), [rows, debouncedSearchText]);
