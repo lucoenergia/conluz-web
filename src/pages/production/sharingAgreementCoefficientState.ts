@@ -110,3 +110,13 @@ export function isEndStateReadOnly(
 ): boolean {
   return endState === DERIVED || endState === PENDING_SUCCESSION;
 }
+
+/**
+ * Whether a coefficient is eligible for batch activation — the only
+ * selection/checkbox eligibility test for the pending-activation batch bar.
+ * Independent of endState: a PENDING coefficient is always OPEN per the
+ * backend's own invariants (DRAFT/pending rows can't be CLOSED or DERIVED).
+ */
+export function isPendingActivation(coefficient: SharingAgreementPartitionCoefficientResponse): boolean {
+  return coefficient.applicationState === PENDING;
+}

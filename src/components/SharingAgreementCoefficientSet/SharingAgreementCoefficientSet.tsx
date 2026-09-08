@@ -1,8 +1,10 @@
-import { useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import {
+  Alert,
   Box,
   Button,
   Chip,
+  CircularProgress,
   Paper,
   Table,
   TableBody,
@@ -16,12 +18,17 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs, { type Dayjs } from "dayjs";
+import "dayjs/locale/es";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { colors, radii } from "../../theme/tokens";
+import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
 import { SearchBar } from "../SearchBar/SearchBar";
@@ -44,7 +51,11 @@ import {
   filterSharingAgreementCoefficients,
   type SharingAgreementCoefficientApplicationStateFilter,
 } from "../../pages/production/sharingAgreementCoefficientFilters";
-import { getApplicationStateColor, getApplicationStateLabel } from "../../pages/production/sharingAgreementCoefficientState";
+import {
+  getApplicationStateColor,
+  getApplicationStateLabel,
+  isPendingActivation,
+} from "../../pages/production/sharingAgreementCoefficientState";
 import { normalizeForSearch } from "../../pages/production/sharingAgreementFilters";
 import {
   buildEditableRowFromSupply,
@@ -63,6 +74,16 @@ import {
   type SharingAgreementCoefficientSums,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { useSharingAgreementCoefficientMutations } from "../../pages/production/useSharingAgreementCoefficientMutations";
+
+// Mobile-only, and authoritative rather than measured: this constant *sets*
+// the fixed bar's height and the matching spacer's height, rather than
+// describing whatever the content happens to render at. The disabled-reason
+// line below reserves its own space (minHeight) so the bar's real content
+// never exceeds this regardless of which of the three reasons is showing.
+// Confirmed against the Playwright capture at the narrowest supported
+// viewport (390px, mobile project) — see tests/visual for the assertion that
+// nothing clips inside it.
+const BATCH_BAR_HEIGHT_MOBILE = 208;
 
 export interface SharingAgreementCoefficientSetProps {
   plantId: string;
@@ -132,7 +153,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const theme = useTheme();
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
-  const { replaceCoefficients, isReplacing } = useSharingAgreementCoefficientMutations(plantId);
+  const { replaceCoefficients, isReplacing, activateCoefficients, isActivating } =
+    useSharingAgreementCoefficientMutations(plantId);
 
   const [searchText, setSearchText] = useState("");
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
@@ -143,10 +165,68 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [rows, setRows] = useState<EditableCoefficientRow[]>([]);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const [dateValidationError, setDateValidationError] = useState<string | null>(null);
+  const [activationErrors, setActivationErrors] = useState<string[] | null>(null);
+  const errorPanelRef = useRef<HTMLDivElement>(null);
+
   useUnsavedChangesGuard(isEditing);
+
+  useEffect(() => {
+    if (activationErrors !== null) {
+      errorPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [activationErrors]);
 
   const isDraft = agreementStatus === SharingAgreementResponseStatus.DRAFT;
   const kwModeAvailable = installedPowerKw !== undefined && installedPowerKw > 0;
+  // Selection UI only ever applies to a published/superseded agreement — a
+  // DRAFT is guaranteed all-PENDING/all-OPEN, but the activate/deactivate/
+  // close/reopen endpoints reject DRAFT with 409, so offering checkboxes
+  // there would just be a dead end.
+  const showSelectionColumn = !isEditing && !isDraft;
+  const pendingCoefficients = useMemo(() => coefficients.filter(isPendingActivation), [coefficients]);
+  const hasPendingCoefficients = pendingCoefficients.length > 0;
+  // The bar (and its page-clearing spacer) mount only once something is
+  // selected — not merely because a PENDING coefficient exists. One shared
+  // condition, computed once, so the bar and spacer can never disagree about
+  // whether they're mounted.
+  const isBatchBarMounted = selectedIds.size > 0;
+  const isSelectedDateValid =
+    selectedDate !== null && selectedDate.isValid() && !selectedDate.isAfter(dayjs(), "day") && dateValidationError === null;
+  const applyDisabledReason = !selectedDate
+    ? "Selecciona una fecha"
+    : !isSelectedDateValid
+      ? "La fecha no puede ser futura ni inválida"
+      : isActivating
+        ? "Aplicando la fecha…"
+        : null;
+
+  const toggleSelected = (coefficientId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(coefficientId)) next.delete(coefficientId);
+      else next.add(coefficientId);
+      return next;
+    });
+  };
+
+  const handleSelectAllPending = () => {
+    setSelectedIds(new Set(pendingCoefficients.map((c) => c.coefficientId)));
+  };
+
+  const handleApplyDate = async () => {
+    if (!selectedDate || applyDisabledReason) return;
+    const result = await activateCoefficients(sharingAgreementId, Array.from(selectedIds), selectedDate);
+    if (result.success) {
+      setSelectedIds(new Set());
+      setSelectedDate(null);
+      setActivationErrors(null);
+    } else {
+      setActivationErrors(result.errorMessages);
+    }
+  };
 
   // Anomaly means an explicit unexpected value, not missing data: a real DRAFT
   // is guaranteed all-PENDING/all-OPEN by the backend (APPLIED requires
@@ -363,6 +443,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             </Box>
           )}
 
+          {showSelectionColumn && hasPendingCoefficients && (
+            <Button variant="text" size="small" onClick={handleSelectAllPending}>
+              Seleccionar todos los pendientes
+            </Button>
+          )}
+
           <SearchBar value={searchText} onChange={setSearchText} placeholder="Buscar por punto o CUPS" />
         </Box>
       )}
@@ -432,6 +518,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ backgroundColor: colors.background.surface }}>
+                  {showSelectionColumn && <TableCell padding="checkbox" />}
                   <TableCell>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                       Punto
@@ -491,6 +578,9 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         coefficient={coefficient}
                         installedPowerKw={installedPowerKw}
                         showStateColumns={showStateColumns}
+                        showSelectionColumn={showSelectionColumn}
+                        selected={selectedIds.has(coefficient.coefficientId)}
+                        onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
                       />
                     ))}
               </TableBody>
@@ -520,11 +610,94 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     coefficient={coefficient}
                     installedPowerKw={installedPowerKw}
                     showStateColumns={showStateColumns}
+                    showSelectionColumn={showSelectionColumn}
+                    selected={selectedIds.has(coefficient.coefficientId)}
+                    onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
                   />
                 ))}
           </Box>
         </>
       )}
+
+      {activationErrors && (
+        <Box ref={errorPanelRef}>
+          <Alert severity="error" onClose={() => setActivationErrors(null)} sx={{ mb: 2 }}>
+            No se ha activado ningún coeficiente.
+            {activationErrors.length > 0 ? (
+              activationErrors.map((message, index) => (
+                <Typography key={index} variant="body2" sx={{ mt: 0.5 }}>
+                  • {message}
+                </Typography>
+              ))
+            ) : (
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                No se ha podido activar la selección. Inténtalo de nuevo en unos instantes.
+              </Typography>
+            )}
+          </Alert>
+        </Box>
+      )}
+
+      {isBatchBarMounted && (
+        <Box
+          sx={{
+            position: { xs: "fixed", sm: "static" },
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: (t) => t.zIndex.appBar,
+            height: { xs: BATCH_BAR_HEIGHT_MOBILE, sm: "auto" },
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            gap: 1.5,
+            p: 2,
+            bgcolor: colors.background.paper,
+            borderTop: { xs: `1px solid ${colors.divider}`, sm: "none" },
+            boxSizing: "border-box",
+            paddingBottom: { xs: "env(safe-area-inset-bottom)", sm: 2 },
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {selectedIds.size} seleccionado{selectedIds.size === 1 ? "" : "s"}
+          </Typography>
+
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1.5 }}>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+              <DatePicker
+                value={selectedDate}
+                onChange={(value) => setSelectedDate(value)}
+                maxDate={dayjs()}
+                onError={(reason) => setDateValidationError(reason)}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    helperText: "No se permiten fechas futuras",
+                    sx: { "& .MuiOutlinedInput-root": { fontSize: fontSizes.lg, height: "40px" } },
+                  },
+                }}
+              />
+            </LocalizationProvider>
+
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Button
+                variant="contained"
+                onClick={handleApplyDate}
+                disabled={applyDisabledReason !== null}
+                sx={{ boxShadow: shadows.medium }}
+              >
+                {isActivating ? <CircularProgress size={24} color="inherit" /> : "Aplicar fecha a selección"}
+              </Button>
+              <Typography variant="caption" sx={{ color: colors.text.subtle, minHeight: "1.2em" }}>
+                {applyDisabledReason ?? ""}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      <Box sx={{ height: { xs: isBatchBarMounted ? BATCH_BAR_HEIGHT_MOBILE : 0, sm: 0 } }} />
 
       {isDraft && (
         <AddSupplyDialog

@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Box, IconButton, InputAdornment, TableCell, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Checkbox, IconButton, InputAdornment, TableCell, TableRow, TextField, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
@@ -11,6 +11,7 @@ import {
   getApplicationStateHeadline,
   getEndStateLabel,
   isEndStateReadOnly,
+  isPendingActivation,
 } from "../../pages/production/sharingAgreementCoefficientState";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
@@ -28,6 +29,11 @@ export interface SharingAgreementCoefficientRowProps {
   onRemove?: () => void;
   /** Whether the applicationState/endState cells render. Defaults to true; the container hides them for a clean DRAFT. */
   showStateColumns?: boolean;
+  /** Whether the batch-activation checkbox column/slot renders at all (the desktop table needs a matching header cell). */
+  showSelectionColumn?: boolean;
+  selected?: boolean;
+  /** Present only when the row is eligible (PENDING) and selection is offered — its mere presence doesn't render a checkbox, `isPendingActivation` still gates that. */
+  onToggleSelected?: () => void;
 }
 
 function formatAssignedEnergy(coefficientValue: number | undefined, installedPowerKw: number | undefined): string {
@@ -95,6 +101,9 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   onCoefficientChange,
   onRemove,
   showStateColumns = true,
+  showSelectionColumn = false,
+  selected,
+  onToggleSelected,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
@@ -102,6 +111,17 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
 
   return (
     <TableRow>
+      {showSelectionColumn && (
+        <TableCell padding="checkbox">
+          {onToggleSelected && isPendingActivation(coefficient) && (
+            <Checkbox
+              checked={!!selected}
+              onChange={onToggleSelected}
+              inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+            />
+          )}
+        </TableCell>
+      )}
       <TableCell>
         <Typography variant="body2" fontWeight="600">
           {coefficient.supply?.name || "-"}
@@ -173,10 +193,14 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   onCoefficientChange,
   onRemove,
   showStateColumns = true,
+  showSelectionColumn = false,
+  selected,
+  onToggleSelected,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
+  const showCheckbox = showSelectionColumn && !!onToggleSelected && isPendingActivation(coefficient);
 
   return (
     <Box
@@ -189,9 +213,19 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
       }}
     >
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-        <Typography variant="body2" fontWeight="600">
-          {coefficient.supply?.name || "-"}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {showCheckbox && (
+            <Checkbox
+              checked={!!selected}
+              onChange={onToggleSelected}
+              size="small"
+              inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+            />
+          )}
+          <Typography variant="body2" fontWeight="600">
+            {coefficient.supply?.name || "-"}
+          </Typography>
+        </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           {isEditing && inputUnit && onCoefficientChange ? (
             <CoefficientInput
