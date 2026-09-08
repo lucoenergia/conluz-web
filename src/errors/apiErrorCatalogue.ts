@@ -22,8 +22,31 @@ import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/mod
  * back as either SHARING_AGREEMENT_NOT_PUBLISHED or SHARING_AGREEMENT_NOT_REVERTIBLE
  * — the API description doesn't bind one specifically to that case — so both
  * are mapped rather than guessing.
+ *
+ * The 7 SHARING_AGREEMENT_* coefficient-lifecycle codes below (activate/
+ * deactivate/close/reopen) use a function template instead of a plain string.
+ * `interpolate` (below) silently renders a literal `{key}` when a referenced
+ * param is absent — acceptable for the older codes above, whose params are
+ * always present when the code fires, but not for these: the params key that
+ * would name the affected supply is unconfirmed (`cups`, by report — never
+ * verified against a real 409). A function template sidesteps `interpolate`
+ * entirely and degrades to a generic, supply-less sentence if `cups` is
+ * missing or the key guess is wrong — silently, by design, never a literal
+ * placeholder. Check this against a real 409 the next time the backend is
+ * running; if `cups` isn't the actual key, every one of these messages is
+ * quietly generic today.
  */
-const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, string>> = {
+type ApiErrorTemplate = string | ((params: Record<string, string> | undefined) => string);
+
+/** `full` runs only when params.cups is present and non-empty; otherwise `generic`. */
+function withOptionalCups(full: (cups: string) => string, generic: string): ApiErrorTemplate {
+  return (params) => {
+    const cups = params?.cups;
+    return cups ? full(cups) : generic;
+  };
+}
+
+const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, ApiErrorTemplate>> = {
   SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, así que esta acción no está disponible.",
   SHARING_AGREEMENT_HAS_NO_COEFFICIENTS:
     "Este acuerdo todavía no tiene coeficientes, así que no se puede poner en vigor.",
@@ -55,6 +78,39 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, st
   SHARING_AGREEMENT_DUPLICATE_SUPPLY: "Hay un suministro repetido en el conjunto de coeficientes.",
 
   SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID: "La suma de los coeficientes del acuerdo no es válida.",
+
+  // Coefficient date-lifecycle codes (activate/deactivate/close/reopen). See
+  // the file-level doc comment above for why these use withOptionalCups
+  // instead of a plain interpolated string.
+  SHARING_AGREEMENT_DATE_IN_FUTURE: withOptionalCups(
+    (cups) => `La fecha indicada no puede ser una fecha futura (afecta a ${cups}).`,
+    "La fecha indicada no puede ser una fecha futura.",
+  ),
+  SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR: withOptionalCups(
+    (cups) => `La fecha de activación debe ser posterior a la del coeficiente anterior de ${cups}.`,
+    "La fecha de activación debe ser posterior a la del coeficiente anterior de este suministro.",
+  ),
+  SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR: withOptionalCups(
+    (cups) => `La fecha de activación debe ser anterior a la del siguiente coeficiente de ${cups}.`,
+    "La fecha de activación debe ser anterior a la del siguiente coeficiente de este suministro.",
+  ),
+  SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION: withOptionalCups(
+    (cups) => `La fecha de cierre debe ser posterior a la fecha de activación del coeficiente de ${cups}.`,
+    "La fecha de cierre debe ser posterior a la fecha de activación de este coeficiente.",
+  ),
+  SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE: withOptionalCups(
+    (cups) => `El coeficiente de ${cups} no está activo, así que no se puede cerrar.`,
+    "Este coeficiente no está activo, así que no se puede cerrar.",
+  ),
+  SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR: withOptionalCups(
+    (cups) =>
+      `El coeficiente de ${cups} no se puede reabrir porque su cierre se generó automáticamente al activar otro coeficiente.`,
+    "Este coeficiente no se puede reabrir porque su cierre se generó automáticamente al activar otro coeficiente.",
+  ),
+  SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT: withOptionalCups(
+    (cups) => `El coeficiente de ${cups} no pertenece a este acuerdo de reparto.`,
+    "Uno de los coeficientes seleccionados no pertenece a este acuerdo de reparto.",
+  ),
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {
@@ -70,6 +126,7 @@ function interpolate(template: string, params?: Record<string, string>): string 
 export function translateErrorDetail(detail: RestErrorDetail | null | undefined, fallback: string): string {
   if (!detail) return fallback;
   const template = detail.code ? API_ERROR_TEMPLATES[detail.code] : undefined;
+  if (typeof template === "function") return template(detail.params ?? undefined);
   if (template) return interpolate(template, detail.params ?? undefined);
   return detail.message || fallback;
 }
