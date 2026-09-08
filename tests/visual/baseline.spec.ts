@@ -1274,7 +1274,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("menuitem", { name: "Volver a borrador" }).click();
 
     await expect(page.getByRole("heading", { name: "Volver a borrador" })).toBeVisible();
-    await expect(page.getByText(/tendrás que enviarle uno corregido/)).toBeVisible();
+    await expect(page.getByText(/mientras no se haya aplicado ningún coeficiente/)).toBeVisible();
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-revert-confirmation.png", { fullPage: true });

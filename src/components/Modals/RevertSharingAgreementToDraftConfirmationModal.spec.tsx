@@ -10,7 +10,6 @@ describe("RevertSharingAgreementToDraftConfirmationModal", () => {
 
     expect(screen.getByRole("heading", { name: "Volver a borrador" })).toBeInTheDocument();
     expect(screen.getByText(/dejará de estar en vigor y sus coeficientes volverán a ser editables/)).toBeInTheDocument();
-    expect(screen.getByText(/tendrás que enviarle uno corregido/)).toBeInTheDocument();
   });
 
   test("uses a non-error confirm color, since reverting is undoable by publishing again", () => {
