@@ -85,6 +85,13 @@ import { useSharingAgreementCoefficientMutations } from "../../pages/production/
 // supported viewport (390px, mobile project) — see tests/visual for the
 // assertion that nothing clips inside it.
 const BATCH_BAR_HEIGHT_MOBILE = 208;
+// Desktop: measured (not guessed from the mobile value) against a real
+// Chromium render of the bar's tallest content state — both count-text
+// lines, the date field with its permanent helper text, and the reserved
+// reason line populated — at the 1440px desktop viewport: 137.8px measured,
+// rounded up with headroom on the same generous basis as the mobile
+// constant. Confirmed against the Playwright capture that nothing clips.
+const BATCH_BAR_HEIGHT_DESKTOP = 160;
 
 export interface SharingAgreementCoefficientSetProps {
   plantId: string;
@@ -227,6 +234,10 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     });
   };
 
+  // Unlike the header checkbox, clears the *real* selection — visible and
+  // hidden alike. That asymmetry is the whole reason both controls exist.
+  const handleClearSelection = () => setSelectedIds(new Set());
+
   const handleApplyDate = async () => {
     if (!selectedDate || applyDisabledReason) return;
     const result = await activateCoefficients(sharingAgreementId, Array.from(selectedIds), selectedDate);
@@ -278,9 +289,14 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     () => filteredCoefficients.filter((c) => selectedIds.has(c.coefficientId)).length,
     [filteredCoefficients, selectedIds],
   );
+  const hiddenSelectedCount = selectedIds.size - visibleSelectedCount;
   const allVisiblePendingSelected =
     visiblePendingCoefficients.length > 0 && visibleSelectedCount === visiblePendingCoefficients.length;
   const someVisiblePendingSelected = visibleSelectedCount > 0 && !allVisiblePendingSelected;
+  const selectionCountText =
+    hiddenSelectedCount > 0
+      ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"} · ${hiddenSelectedCount} oculto${hiddenSelectedCount === 1 ? "" : "s"} por el filtro`
+      : `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"}`;
 
   const filteredRows = useMemo(() => filterEditableRows(rows, debouncedSearchText), [rows, debouncedSearchText]);
 
@@ -694,12 +710,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       {isBatchBarMounted && (
         <Box
           sx={{
-            position: { xs: "fixed", sm: "static" },
+            // Fixed at every breakpoint now — static on desktop left the bar
+            // far below the fold with a long table, off-screen from the rows
+            // being selected at the top. left mirrors the layout's own
+            // sidebar offset via the CSS variable it exposes (0 when there's
+            // no such ancestor, e.g. in isolation), so the bar's content
+            // lines up with the table column above it rather than spanning
+            // the true viewport edge-to-edge.
+            position: "fixed",
             bottom: 0,
-            left: 0,
+            left: "var(--content-inset-left, 0px)",
             right: 0,
             zIndex: (t) => t.zIndex.appBar,
-            height: { xs: BATCH_BAR_HEIGHT_MOBILE, sm: "auto" },
+            height: { xs: BATCH_BAR_HEIGHT_MOBILE, sm: BATCH_BAR_HEIGHT_DESKTOP },
             display: "flex",
             flexDirection: { xs: "column", sm: "row" },
             alignItems: { xs: "stretch", sm: "center" },
@@ -707,14 +730,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             gap: 1.5,
             p: 2,
             bgcolor: colors.background.paper,
-            borderTop: { xs: `1px solid ${colors.divider}`, sm: "none" },
+            borderTop: `1px solid ${colors.divider}`,
             boxSizing: "border-box",
-            paddingBottom: { xs: "env(safe-area-inset-bottom)", sm: 2 },
+            paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {selectedIds.size} seleccionado{selectedIds.size === 1 ? "" : "s"}
-          </Typography>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {selectionCountText}
+            </Typography>
+            <Button variant="text" size="small" onClick={handleClearSelection}>
+              Limpiar selección
+            </Button>
+          </Box>
 
           <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1.5 }}>
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
@@ -750,7 +778,14 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         </Box>
       )}
 
-      <Box sx={{ height: { xs: isBatchBarMounted ? BATCH_BAR_HEIGHT_MOBILE : 0, sm: 0 } }} />
+      <Box
+        sx={{
+          height: {
+            xs: isBatchBarMounted ? BATCH_BAR_HEIGHT_MOBILE : 0,
+            sm: isBatchBarMounted ? BATCH_BAR_HEIGHT_DESKTOP : 0,
+          },
+        }}
+      />
 
       {isDraft && (
         <AddSupplyDialog
