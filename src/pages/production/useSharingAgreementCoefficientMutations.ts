@@ -1,25 +1,38 @@
 import { useQueryClient } from "@tanstack/react-query";
+import type { Dayjs } from "dayjs";
 import {
   getGetSharingAgreementPartitionCoefficientsQueryKey,
+  useActivatePartitionCoefficients,
   useReplacePartitionCoefficients,
 } from "../../api/sharing-agreements/sharing-agreements";
 import { useErrorDispatch } from "../../context/error.context";
-import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { useSuccessDispatch } from "../../context/success.context";
+import { getFirstApiErrorMessage, getGroupedApiErrorDetails } from "../../errors/apiErrorCatalogue";
 import type { EditableCoefficientRow } from "./sharingAgreementCoefficientEditing";
 
 export interface ReplaceCoefficientsResult {
   success: boolean;
 }
 
+export type CoefficientActivationResult = { success: true } | { success: false; errorMessages: string[] };
+
 export interface SharingAgreementCoefficientMutations {
   replaceCoefficients: (sharingAgreementId: string, rows: EditableCoefficientRow[]) => Promise<ReplaceCoefficientsResult>;
+  activateCoefficients: (
+    sharingAgreementId: string,
+    coefficientIds: string[],
+    appliedOn: Dayjs,
+  ) => Promise<CoefficientActivationResult>;
   isReplacing: boolean;
+  isActivating: boolean;
 }
 
 export function useSharingAgreementCoefficientMutations(plantId: string): SharingAgreementCoefficientMutations {
   const queryClient = useQueryClient();
   const errorDispatch = useErrorDispatch();
+  const successDispatch = useSuccessDispatch();
   const replaceMutation = useReplacePartitionCoefficients();
+  const activateMutation = useActivatePartitionCoefficients();
 
   const replaceCoefficients = async (
     sharingAgreementId: string,
@@ -59,5 +72,73 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     }
   };
 
-  return { replaceCoefficients, isReplacing: replaceMutation.isPending };
+  /**
+   * Invalidates every sharing-agreement query for this plant (list, every
+   * cached agreement-by-id, every cached coefficient set) via a predicate on
+   * the URL prefix, not a specific query key. Necessary because `activate`
+   * cascades onto a predecessor coefficient that may belong to a *different*
+   * agreement, and `PartitionCoefficientResponse` carries no
+   * `sharingAgreementId` to map it back — there is no way to invalidate only
+   * the "right" agreement, so the whole plant subtree is invalidated instead.
+   * Agreements per plant are few and only mounted queries actually refetch,
+   * so this is cheap.
+   */
+  const invalidatePlantSharingAgreements = () => {
+    queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === "string" && key.startsWith(`/api/v1/plants/${plantId}/sharing-agreements`);
+      },
+    });
+  };
+
+  const activateCoefficients = async (
+    sharingAgreementId: string,
+    coefficientIds: string[],
+    appliedOn: Dayjs,
+  ): Promise<CoefficientActivationResult> => {
+    try {
+      await activateMutation.mutateAsync({
+        plantId,
+        sharingAgreementId,
+        data: {
+          coefficientIds,
+          // Never .toISOString()/.toJSON(): those convert to UTC first, and
+          // local midnight in Madrid becomes 22:00/23:00 the *previous* day,
+          // silently shifting appliedOn back one calendar day. This is the
+          // date production gets attributed from, on data that reaches
+          // billing — mirrors the hazard formatCalendarDate documents on the
+          // read path (src/utils/formatCalendarDate.ts).
+          appliedOn: appliedOn.format("YYYY-MM-DD"),
+        },
+      });
+      invalidatePlantSharingAgreements();
+      // A no-op batch (200, empty `coefficients` array in the response) is
+      // still success: it's not an error, and the state the caller asked for
+      // is the state that now holds. Not distinguished from a real batch —
+      // the case is close to unreachable from this UI (checkboxes only ever
+      // exist on already-PENDING rows), so the same confirmation applies.
+      successDispatch("Fechas de aplicación registradas.");
+      return { success: true };
+    } catch (error) {
+      // No errorDispatch/toast here: a batch rejection can carry several
+      // details at once (one per failing coefficientId), and the caller
+      // renders them as a persistent, readable work list instead of stacked
+      // toasts that auto-dismiss before nine rows' worth of problems can be
+      // read.
+      // fileLevel is a general "ungrouped" bucket, not file-upload-specific
+      // despite the name — it's just every detail whose params carry no
+      // `line` key. Coefficient-lifecycle errors carry params.cups/
+      // coefficientId, never params.line, so every one of them lands here;
+      // lineLevel is always empty for this call.
+      return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    }
+  };
+
+  return {
+    replaceCoefficients,
+    activateCoefficients,
+    isReplacing: replaceMutation.isPending,
+    isActivating: activateMutation.isPending,
+  };
 }
