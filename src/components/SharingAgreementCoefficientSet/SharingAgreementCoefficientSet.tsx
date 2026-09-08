@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Paper,
@@ -75,14 +76,14 @@ import {
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { useSharingAgreementCoefficientMutations } from "../../pages/production/useSharingAgreementCoefficientMutations";
 
-// Mobile-only, and authoritative rather than measured: this constant *sets*
-// the fixed bar's height and the matching spacer's height, rather than
+// Authoritative rather than measured: these constants *set* the fixed bar's
+// height (and the matching spacer's height) at each breakpoint, rather than
 // describing whatever the content happens to render at. The disabled-reason
-// line below reserves its own space (minHeight) so the bar's real content
-// never exceeds this regardless of which of the three reasons is showing.
-// Confirmed against the Playwright capture at the narrowest supported
-// viewport (390px, mobile project) — see tests/visual for the assertion that
-// nothing clips inside it.
+// line reserves its own space (minHeight) so the bar's real content never
+// exceeds these regardless of which state is showing.
+// Mobile: confirmed against the Playwright capture at the narrowest
+// supported viewport (390px, mobile project) — see tests/visual for the
+// assertion that nothing clips inside it.
 const BATCH_BAR_HEIGHT_MOBILE = 208;
 
 export interface SharingAgreementCoefficientSetProps {
@@ -186,8 +187,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // close/reopen endpoints reject DRAFT with 409, so offering checkboxes
   // there would just be a dead end.
   const showSelectionColumn = !isEditing && !isDraft;
-  const pendingCoefficients = useMemo(() => coefficients.filter(isPendingActivation), [coefficients]);
-  const hasPendingCoefficients = pendingCoefficients.length > 0;
   // The bar (and its page-clearing spacer) mount only once something is
   // selected — not merely because a PENDING coefficient exists. One shared
   // condition, computed once, so the bar and spacer can never disagree about
@@ -212,13 +211,20 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     });
   };
 
-  const handleSelectAllPending = () => {
-    // Operates on the *visible* pending rows (post filter/search), never the
-    // full unfiltered set — selecting rows the user can't currently see is
-    // the same defect this whole redesign exists to fix, in the opposite
-    // direction: clicking with "Sin aplicar" + a search active must not
-    // silently select rows outside that view.
-    setSelectedIds(new Set(visiblePendingCoefficients.map((c) => c.coefficientId)));
+  // Tri-state: indeterminate and unchecked both select every visible
+  // pending row; only the fully-checked state deselects — the header
+  // control always moves toward "select all" first, standard tri-state
+  // behaviour. Never touches a row hidden by the filter in either direction.
+  const handleToggleAllVisiblePending = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allVisiblePendingSelected) {
+        visiblePendingCoefficients.forEach((c) => next.delete(c.coefficientId));
+      } else {
+        visiblePendingCoefficients.forEach((c) => next.add(c.coefficientId));
+      }
+      return next;
+    });
   };
 
   const handleApplyDate = async () => {
@@ -262,6 +268,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     () => filteredCoefficients.filter(isPendingActivation),
     [filteredCoefficients],
   );
+
+  // One pass over filteredCoefficients answers both "how much of the
+  // selection is currently visible" (drives the tri-state checkbox, since
+  // selectedIds only ever holds pending coefficientIds by construction) and
+  // "how many selected rows are hidden by the filter" (drives the bar's
+  // count text).
+  const visibleSelectedCount = useMemo(
+    () => filteredCoefficients.filter((c) => selectedIds.has(c.coefficientId)).length,
+    [filteredCoefficients, selectedIds],
+  );
+  const allVisiblePendingSelected =
+    visiblePendingCoefficients.length > 0 && visibleSelectedCount === visiblePendingCoefficients.length;
+  const someVisiblePendingSelected = visibleSelectedCount > 0 && !allVisiblePendingSelected;
 
   const filteredRows = useMemo(() => filterEditableRows(rows, debouncedSearchText), [rows, debouncedSearchText]);
 
@@ -456,10 +475,20 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             </Box>
           )}
 
-          {showSelectionColumn && hasPendingCoefficients && (
-            <Button variant="text" size="small" onClick={handleSelectAllPending}>
-              Seleccionar todos los pendientes
-            </Button>
+          {/* Mobile-only: the desktop equivalent lives in the table head's
+              checkbox column, which doesn't exist on the card list. Labelled
+              rather than a bare checkbox, since there's no column header
+              here to imply what it does. */}
+          {showSelectionColumn && visiblePendingCoefficients.length > 0 && (
+            <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5 }}>
+              <Checkbox
+                checked={allVisiblePendingSelected}
+                indeterminate={someVisiblePendingSelected}
+                onChange={handleToggleAllVisiblePending}
+                inputProps={{ "aria-label": "Seleccionar todos los pendientes" }}
+              />
+              <Typography variant="body2">Seleccionar pendientes</Typography>
+            </Box>
           )}
 
           <SearchBar value={searchText} onChange={setSearchText} placeholder="Buscar por punto o CUPS" />
@@ -531,7 +560,18 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ backgroundColor: colors.background.surface }}>
-                  {showSelectionColumn && <TableCell padding="checkbox" />}
+                  {showSelectionColumn && (
+                    <TableCell padding="checkbox">
+                      {visiblePendingCoefficients.length > 0 && (
+                        <Checkbox
+                          checked={allVisiblePendingSelected}
+                          indeterminate={someVisiblePendingSelected}
+                          onChange={handleToggleAllVisiblePending}
+                          inputProps={{ "aria-label": "Seleccionar todos los pendientes" }}
+                        />
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                       Punto
