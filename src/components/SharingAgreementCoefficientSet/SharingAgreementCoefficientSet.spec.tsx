@@ -382,6 +382,14 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
   const allApplied: SharingAgreementPartitionCoefficientResponse[] = [
     { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: APPLIED, ...OPEN_UNCLOSED },
   ];
+  // Three PENDING rows, two sharing a search term — lets a test narrow the
+  // visible set via search (name/code) rather than only the status chip,
+  // which can never hide a PENDING row on its own.
+  const threePending: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c3", supply: { id: "s3", name: "Local C", code: "X3" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
 
   beforeEach(() => {
     mockActivateMutateAsync.mockReset();
@@ -390,20 +398,110 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     Element.prototype.scrollIntoView = vi.fn();
   });
 
-  it("the header's 'Seleccionar todos los pendientes' control selects exactly the PENDING rows, leaving APPLIED untouched", async () => {
+  it("header checkbox: unchecked when nothing is selected, click selects every visible pending row", async () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
 
-    await user.click(screen.getByRole("button", { name: "Seleccionar todos los pendientes" }));
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0];
+    expect(checkbox).not.toBeChecked();
+
+    await user.click(checkbox);
 
     expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
     // Only PENDING rows ever render a checkbox at all (verified by the row
     // spec); this proves the *count* matches "all pending", not more.
   });
 
-  it("hides the 'Seleccionar todos los pendientes' control entirely when no coefficient is PENDING", () => {
+  it("header checkbox: indeterminate when some but not all visible pending rows are selected", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await selectPendingRow(user, "Vivienda A");
+
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0];
+    expect(checkbox).toHaveAttribute("data-indeterminate", "true");
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it("header checkbox: checked when every visible pending row is selected, and clicking then deselects only the visible ones", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    // Select all 3, then narrow to 2 via search — the 3rd stays selected but hidden.
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]);
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0];
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+
+    // Only the 2 visible were deselected — Local C (hidden) stays selected.
+    expect(screen.getByText("1 seleccionado · 1 oculto por el filtro")).toBeInTheDocument();
+  });
+
+  it("hides the header checkbox entirely when no visible row is pending", () => {
     renderWithTheme({ coefficients: allApplied });
-    expect(screen.queryByRole("button", { name: "Seleccionar todos los pendientes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Seleccionar todos los pendientes" })).not.toBeInTheDocument();
+  });
+
+  it("regression: selecting all with an active filter never selects a row outside the filtered set", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.queryByText("Local C")).not.toBeInTheDocument(), { timeout: 1000 });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]);
+
+    // Exactly the 2 visible rows — never Local C, which the filter hides.
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+  });
+
+  it("filtering with a live selection switches the count to the two-part form, with the correct hidden count", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Local");
+
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 2 ocultos por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+  });
+
+  it("zero visible rows with a live selection: the header checkbox disappears, the bar stays, and everything selected reads as hidden", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await selectPendingRow(user, "Vivienda A");
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "no-such-supply-xyz");
+
+    await waitFor(() => expect(screen.getByText("No se encontraron coeficientes")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+    expect(screen.queryByRole("checkbox", { name: "Seleccionar todos los pendientes" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeInTheDocument();
+    expect(screen.getByText("1 seleccionado · 1 oculto por el filtro")).toBeInTheDocument();
+  });
+
+  it("'Limpiar selección' empties the selection entirely, including rows hidden by the filter", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Limpiar selección" }));
+
+    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
   });
 
   it("the batch bar mounts only once something is selected — not merely because a PENDING row exists — and unmounts again when the last selection is cleared", async () => {
