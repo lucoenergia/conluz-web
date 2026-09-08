@@ -17,6 +17,8 @@ const mockSuccessDispatch = vi.fn();
 const mockUseSharingAgreementDetailData = vi.fn();
 const mockUpdateAgreement = vi.fn();
 const mockDeleteAgreement = vi.fn();
+const mockPublishAgreement = vi.fn();
+const mockRevertAgreementToDraft = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock("../../context/error.context", () => ({
@@ -36,9 +38,13 @@ vi.mock("./useSharingAgreementMutations", () => ({
     createAgreement: vi.fn(),
     updateAgreement: mockUpdateAgreement,
     deleteAgreement: mockDeleteAgreement,
+    publishAgreement: mockPublishAgreement,
+    revertAgreementToDraft: mockRevertAgreementToDraft,
     isCreating: false,
     isUpdating: false,
     isDeleting: false,
+    isPublishing: false,
+    isReverting: false,
   }),
 }));
 

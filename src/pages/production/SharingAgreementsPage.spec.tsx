@@ -29,9 +29,13 @@ vi.mock("./useSharingAgreementMutations", () => ({
     createAgreement: mockCreateAgreement,
     updateAgreement: mockUpdateAgreement,
     deleteAgreement: mockDeleteAgreement,
+    publishAgreement: vi.fn(),
+    revertAgreementToDraft: vi.fn(),
     isCreating: false,
     isUpdating: false,
     isDeleting: false,
+    isPublishing: false,
+    isReverting: false,
   }),
 }));
 

@@ -24,7 +24,7 @@ describe("translateErrorDetail", () => {
   it("returns the registered Spanish template for a known code", () => {
     expect(
       translateErrorDetail({ message: "not draft", code: "SHARING_AGREEMENT_NOT_DRAFT" }, "fallback"),
-    ).toBe("Este acuerdo ya no está en borrador, por lo que no se puede modificar ni eliminar.");
+    ).toBe("Este acuerdo ya no está en borrador, así que esta acción no está disponible.");
   });
 
   it("falls back to detail.message when code is null", () => {
@@ -52,7 +52,7 @@ describe("getFirstApiErrorMessage", () => {
       },
     };
     expect(getFirstApiErrorMessage(error, "fallback")).toBe(
-      "Este acuerdo ya no está en borrador, por lo que no se puede modificar ni eliminar.",
+      "Este acuerdo ya no está en borrador, así que esta acción no está disponible.",
     );
   });
 
@@ -108,6 +108,48 @@ describe("distributor-file and sharing-agreement error templates", () => {
     expect(message).toContain("ES0031406319070001XX");
     expect(message).toContain("ES0031406319070002YY");
     expect(message).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+
+  it("translates SHARING_AGREEMENT_HAS_NO_COEFFICIENTS to a non-empty Spanish message, distinct from the raw server message", () => {
+    const message = translateErrorDetail(
+      { message: "raw server message", code: "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS" },
+      "fallback",
+    );
+    expect(message).not.toBe("");
+    expect(message).not.toBe("raw server message");
+  });
+
+  it("translates SHARING_AGREEMENT_NOT_PUBLISHED to a non-empty Spanish message, distinct from the raw server message", () => {
+    const message = translateErrorDetail(
+      { message: "raw server message", code: "SHARING_AGREEMENT_NOT_PUBLISHED" },
+      "fallback",
+    );
+    expect(message).not.toBe("");
+    expect(message).not.toBe("raw server message");
+  });
+
+  it("translates SHARING_AGREEMENT_NOT_REVERTIBLE to a non-empty Spanish message, distinct from the raw server message", () => {
+    const message = translateErrorDetail(
+      { message: "raw server message", code: "SHARING_AGREEMENT_NOT_REVERTIBLE" },
+      "fallback",
+    );
+    expect(message).not.toBe("");
+    expect(message).not.toBe("raw server message");
+  });
+
+  it("translates SHARING_AGREEMENT_HAS_APPLIED_COEFFICIENTS to a non-empty Spanish message, distinct from the raw server message", () => {
+    const message = translateErrorDetail(
+      { message: "raw server message", code: "SHARING_AGREEMENT_HAS_APPLIED_COEFFICIENTS" },
+      "fallback",
+    );
+    expect(message).not.toBe("");
+    expect(message).not.toBe("raw server message");
+  });
+
+  it("translates SHARING_AGREEMENT_NOT_PUBLISHED and SHARING_AGREEMENT_NOT_REVERTIBLE distinctly, since either may be the real revert-to-draft 'not PUBLISHED' code", () => {
+    const notPublished = translateErrorDetail({ message: "raw", code: "SHARING_AGREEMENT_NOT_PUBLISHED" }, "fallback");
+    const notRevertible = translateErrorDetail({ message: "raw", code: "SHARING_AGREEMENT_NOT_REVERTIBLE" }, "fallback");
+    expect(notPublished).not.toBe(notRevertible);
   });
 
   it("translates SHARING_AGREEMENT_DUPLICATE_SUPPLY distinctly from DISTRIBUTOR_FILE_CUPS_DUPLICATE", () => {

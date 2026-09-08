@@ -5,19 +5,32 @@ import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/mod
  * placeholders, interpolated from the detail's `params` map.
  *
  * Scoped to the codes reachable from the endpoints this app actually calls
- * today. Codes belonging to publishing, reverting, or file generation (e.g.
- * PLANT_MISSING_REGULATORY_CODE) are deliberately absent — add them when the
- * issue that reaches them lands.
+ * today. Codes belonging to file generation (e.g. PLANT_MISSING_REGULATORY_CODE)
+ * are deliberately absent — add them when the issue that reaches them lands.
  *
- * SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID is an exception: it's added ahead
- * of the publish/file-validate flow that will actually surface it, so the
- * catalogue doesn't need touching again once that flow lands. It isn't
- * reachable from any endpoint the app calls today, and it's unrelated to the
- * save-success `coefficientSumWarning` string (a different, code-less field —
- * see useSharingAgreementCoefficientMutations's replaceCoefficients).
+ * SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID was added ahead of the
+ * publish/file-validate flow that surfaces it, so the catalogue didn't need
+ * touching again once that flow landed (it has, via publish — see below). It
+ * is unrelated to the save-success `coefficientSumWarning` string (a
+ * different, code-less field — see useSharingAgreementCoefficientMutations's
+ * replaceCoefficients).
+ *
+ * The publish/revert-to-draft lifecycle (see useSharingAgreementMutations)
+ * added SHARING_AGREEMENT_HAS_NO_COEFFICIENTS, SHARING_AGREEMENT_NOT_PUBLISHED,
+ * SHARING_AGREEMENT_NOT_REVERTIBLE, and SHARING_AGREEMENT_HAS_APPLIED_COEFFICIENTS.
+ * The revert-to-draft 409 for "not in PUBLISHED status" could plausibly come
+ * back as either SHARING_AGREEMENT_NOT_PUBLISHED or SHARING_AGREEMENT_NOT_REVERTIBLE
+ * — the API description doesn't bind one specifically to that case — so both
+ * are mapped rather than guessing.
  */
 const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, string>> = {
-  SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, por lo que no se puede modificar ni eliminar.",
+  SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, así que esta acción no está disponible.",
+  SHARING_AGREEMENT_HAS_NO_COEFFICIENTS:
+    "Este acuerdo todavía no tiene coeficientes, así que no se puede poner en vigor.",
+  SHARING_AGREEMENT_NOT_PUBLISHED: "Este acuerdo no está vigente, por lo que no se puede volver a borrador.",
+  SHARING_AGREEMENT_NOT_REVERTIBLE: "Este acuerdo no se puede volver a borrador.",
+  SHARING_AGREEMENT_HAS_APPLIED_COEFFICIENTS:
+    "Este acuerdo ya tiene coeficientes aplicados por la distribuidora, por lo que no se puede volver a borrador.",
 
   // Line-level distributor-file errors (carry params.line, and usually params.cups).
   DISTRIBUTOR_FILE_LINE_MALFORMED: "Línea {line}: el formato de la línea no es válido.",

@@ -4,7 +4,12 @@ import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { SharingAgreementResponseStatus } from "../../api/models";
+import PublishOutlinedIcon from "@mui/icons-material/PublishOutlined";
+import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementResponseStatus,
+} from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import { DetailHeader, DetailTile } from "../DetailHeader";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
@@ -12,14 +17,31 @@ import { MenuTemplate } from "../Menu/MenuTemplate";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { alphas, colors } from "../../theme/tokens";
+import {
+  COEFFICIENT_SCALE,
+  computeSharingAgreementCoefficientSums,
+  isFullSum,
+  type CoefficientSummable,
+} from "../../pages/production/sharingAgreementCoefficientSums";
+import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
 
 export interface SharingAgreementDetailHeaderProps {
   agreement?: SharingAgreementResponse;
   plant?: PlantResponse;
   isLoading?: boolean;
   error?: unknown;
+  /**
+   * The raw, non-defaulted partition-coefficients query result: `undefined` while still in
+   * flight, as opposed to a resolved `[]` — mirrors `selectSharingAgreementNextStep`'s own
+   * distinction. Conflating the two would let a PUBLISHED agreement with applied coefficients
+   * briefly show "Volver a borrador" (since `[].every(...)` is vacuously true), and would render
+   * "sin coeficientes" for a DRAFT that actually has them, for a fraction of a second on every load.
+   */
+  coefficients?: CoefficientSummable[];
   onEdit?: () => void;
   onDeleteRequest?: () => void;
+  onPublishRequest?: () => void;
+  onRevertRequest?: () => void;
 }
 
 export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps> = ({
@@ -27,12 +49,34 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   plant,
   isLoading = false,
   error = null,
+  coefficients,
   onEdit,
   onDeleteRequest,
+  onPublishRequest,
+  onRevertRequest,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const isDraft = agreement?.status === SharingAgreementResponseStatus.DRAFT;
-  const showActions = !isLoading && !error && isDraft;
+  const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
+
+  const publishDisabledReason = (() => {
+    if (coefficients === undefined) return undefined;
+    if (coefficients.length === 0) return "Este acuerdo todavía no tiene coeficientes.";
+    const { fileSumUnits } = computeSharingAgreementCoefficientSums(coefficients);
+    if (isFullSum(fileSumUnits)) return undefined;
+    return formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits) ?? undefined;
+  })();
+
+  const isInert =
+    coefficients !== undefined &&
+    coefficients.every(
+      (coefficient) =>
+        coefficient.applicationState !== SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
+    );
+
+  const showPublish = isDraft && coefficients !== undefined;
+  const showRevert = isPublished && coefficients !== undefined && isInert;
+  const showActions = !isLoading && !error && (isDraft || showRevert);
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
@@ -50,6 +94,17 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   const handleDeleteClick = () => {
     handleCloseMenu();
     onDeleteRequest?.();
+  };
+
+  const handlePublishClick = () => {
+    if (publishDisabledReason) return;
+    handleCloseMenu();
+    onPublishRequest?.();
+  };
+
+  const handleRevertClick = () => {
+    handleCloseMenu();
+    onRevertRequest?.();
   };
 
   return (
@@ -74,24 +129,85 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
             >
               <MoreVertIcon />
             </IconButton>
-            <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
+            <MenuTemplate
+              anchorElement={anchorElement}
+              onClose={handleCloseMenu}
+              menuListProps={{ disabledItemsFocusable: true }}
+            >
               <Box sx={{ py: 1 }}>
-                <MenuItem onClick={handleEditClick}>
-                  <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                  <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                    Editar
-                  </Typography>
-                </MenuItem>
-                <Divider sx={{ my: 1 }} />
-                <MenuItem
-                  onClick={handleDeleteClick}
-                  sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
-                >
-                  <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
-                  <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
-                    Eliminar
-                  </Typography>
-                </MenuItem>
+                {isDraft && (
+                  <MenuItem onClick={handleEditClick}>
+                    <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                      Editar
+                    </Typography>
+                  </MenuItem>
+                )}
+                {showPublish && (
+                  <MenuItem
+                    aria-disabled={!!publishDisabledReason}
+                    aria-describedby={publishDisabledReason ? "publish-disabled-reason" : undefined}
+                    disableRipple={!!publishDisabledReason}
+                    onClick={handlePublishClick}
+                    sx={{
+                      display: "block",
+                      cursor: publishDisabledReason ? "default" : "pointer",
+                      ...(publishDisabledReason && { "&:hover": { backgroundColor: "transparent" } }),
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <PublishOutlinedIcon
+                        sx={{
+                          mr: 2,
+                          fontSize: 20,
+                          flexShrink: 0,
+                          color: publishDisabledReason ? colors.text.muted : colors.text.subtle,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: publishDisabledReason ? colors.text.muted : colors.text.body,
+                          fontWeight: 500,
+                          textAlign: "left",
+                        }}
+                      >
+                        Poner en vigor
+                      </Typography>
+                    </Box>
+                    {publishDisabledReason && (
+                      <Typography
+                        id="publish-disabled-reason"
+                        variant="caption"
+                        sx={{ display: "block", mt: 0.5, ml: 4.5, color: colors.text.subtle }}
+                      >
+                        {publishDisabledReason}
+                      </Typography>
+                    )}
+                  </MenuItem>
+                )}
+                {showRevert && (
+                  <MenuItem onClick={handleRevertClick}>
+                    <UndoOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                      Volver a borrador
+                    </Typography>
+                  </MenuItem>
+                )}
+                {isDraft && (
+                  <>
+                    <Divider sx={{ my: 1 }} />
+                    <MenuItem
+                      onClick={handleDeleteClick}
+                      sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
+                    >
+                      <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
+                        Eliminar
+                      </Typography>
+                    </MenuItem>
+                  </>
+                )}
               </Box>
             </MenuTemplate>
           </Box>

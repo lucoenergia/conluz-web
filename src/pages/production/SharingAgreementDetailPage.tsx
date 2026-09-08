@@ -12,6 +12,8 @@ import { SharingAgreementNextStepPanel } from "../../components/SharingAgreement
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
+import { PublishSharingAgreementConfirmationModal } from "../../components/Modals/PublishSharingAgreementConfirmationModal";
+import { RevertSharingAgreementToDraftConfirmationModal } from "../../components/Modals/RevertSharingAgreementToDraftConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
@@ -25,11 +27,22 @@ export const SharingAgreementDetailPage: FC = () => {
     plantId,
     sharingAgreementId,
   );
-  const { updateAgreement, deleteAgreement, isUpdating, isDeleting } = useSharingAgreementMutations(plantId);
+  const {
+    updateAgreement,
+    deleteAgreement,
+    publishAgreement,
+    revertAgreementToDraft,
+    isUpdating,
+    isDeleting,
+    isPublishing,
+    isReverting,
+  } = useSharingAgreementMutations(plantId);
   const nextStep = selectSharingAgreementNextStep(agreement, coefficientsData, plant?.regulatoryCode ?? undefined);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [isPublishConfirmationOpen, setIsPublishConfirmationOpen] = useState(false);
+  const [isRevertConfirmationOpen, setIsRevertConfirmationOpen] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -45,6 +58,16 @@ export const SharingAgreementDetailPage: FC = () => {
   const handleDeleteConfirm = async () => {
     const success = await deleteAgreement(sharingAgreementId);
     if (success) navigate(`/production/${plantId}/sharing-agreements`);
+  };
+
+  const handlePublishConfirm = async () => {
+    const success = await publishAgreement(sharingAgreementId);
+    if (success) setIsPublishConfirmationOpen(false);
+  };
+
+  const handleRevertConfirm = async () => {
+    const success = await revertAgreementToDraft(sharingAgreementId);
+    if (success) setIsRevertConfirmationOpen(false);
   };
 
   return (
@@ -89,8 +112,11 @@ export const SharingAgreementDetailPage: FC = () => {
               plant={plant}
               isLoading={isLoading}
               error={error}
+              coefficients={coefficientsData}
               onEdit={() => setIsEditDialogOpen(true)}
               onDeleteRequest={() => setIsDeleteConfirmationOpen(true)}
+              onPublishRequest={() => setIsPublishConfirmationOpen(true)}
+              onRevertRequest={() => setIsRevertConfirmationOpen(true)}
             />
           </Box>
 
@@ -149,6 +175,20 @@ export const SharingAgreementDetailPage: FC = () => {
         isDeleting={isDeleting}
         onCancel={() => setIsDeleteConfirmationOpen(false)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <PublishSharingAgreementConfirmationModal
+        isOpen={isPublishConfirmationOpen}
+        isPublishing={isPublishing}
+        onCancel={() => setIsPublishConfirmationOpen(false)}
+        onConfirm={handlePublishConfirm}
+      />
+
+      <RevertSharingAgreementToDraftConfirmationModal
+        isOpen={isRevertConfirmationOpen}
+        isReverting={isReverting}
+        onCancel={() => setIsRevertConfirmationOpen(false)}
+        onConfirm={handleRevertConfirm}
       />
     </Box>
   );
