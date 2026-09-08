@@ -442,3 +442,116 @@ describe("SharingAgreementCoefficientCard", () => {
     expect(screen.queryByText("Regístrala cuando la distribuidora lo aplique")).not.toBeInTheDocument();
   });
 });
+
+describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () => {
+  it("renders a checkbox for a PENDING coefficient when selection is offered, and calls onToggleSelected", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn
+            selected={false}
+            onToggleSelected={onToggleSelected}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda A" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
+  });
+
+  it("never renders a checkbox for an APPLIED coefficient, even when selection is offered", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={derivedCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn
+            selected={false}
+            onToggleSelected={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("never renders a checkbox when showSelectionColumn is false, even for a PENDING coefficient with onToggleSelected present", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn={false}
+            onToggleSelected={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("reflects a checked selection state", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn
+            selected
+            onToggleSelected={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Seleccionar Vivienda A" })).toBeChecked();
+  });
+});
+
+describe("SharingAgreementCoefficientCard (batch-activation checkbox)", () => {
+  it("renders a checkbox for a PENDING coefficient when selection is offered, and calls onToggleSelected", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={pendingCoefficient}
+        installedPowerKw={100}
+        showSelectionColumn
+        selected={false}
+        onToggleSelected={onToggleSelected}
+      />,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda A" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
+  });
+
+  it("never renders a checkbox for an APPLIED coefficient, even when selection is offered", () => {
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={derivedCoefficient}
+        installedPowerKw={100}
+        showSelectionColumn
+        selected={false}
+        onToggleSelected={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+});

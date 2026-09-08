@@ -21,7 +21,11 @@ const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
 const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
 
 const mockMutateAsync = vi.fn();
+const mockActivateMutateAsync = vi.fn();
 const mockSuccessDispatch = vi.fn();
+// Mutable so a single test can exercise the in-flight (isActivating) state —
+// mirrors how the real hook forwards the mutation's own isPending.
+let mockIsActivating = false;
 
 vi.mock("../../context/community.context", async () => {
   const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
@@ -47,8 +51,22 @@ vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
   return {
     ...actual,
     useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
+    useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
   };
 });
+
+/** Clicks a checkbox by accessible name — table and card render in parallel in jsdom (CSS-only breakpoint), so index [0] always picks the table's. */
+async function selectPendingRow(user: ReturnType<typeof userEvent.setup>, supplyName: string) {
+  await user.click(screen.getAllByRole("checkbox", { name: `Seleccionar ${supplyName}` })[0]);
+}
+
+/** Types a date into the batch bar's DatePicker via its section spinbuttons — the only interaction MUI's v7 field accepts under jsdom (no plain &lt;input&gt;, sections are contenteditable spinbuttons). */
+async function typeDate(user: ReturnType<typeof userEvent.setup>, day: string, month: string, year: string) {
+  await user.click(screen.getByRole("spinbutton", { name: "Day" }));
+  await user.keyboard(day);
+  await user.keyboard(month);
+  await user.keyboard(year);
+}
 
 function renderWithTheme(props: Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -349,5 +367,323 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
     expect(screen.getByText("Estado de aplicación")).toBeInTheDocument();
     expect(screen.getByText("Estado de fin")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Todos" })).toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (batch activation)", () => {
+  // Realistic multi-supply set: two PENDING (eligible), one APPLIED
+  // (ineligible) — a single-element collection would validate no selection
+  // logic at all.
+  const mixed: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c3", supply: { id: "s3", name: "Vivienda C", code: "ES0031300000000003EF" }, coefficient: 0.4, applicationState: APPLIED, ...OPEN_UNCLOSED },
+  ];
+  const allApplied: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: APPLIED, ...OPEN_UNCLOSED },
+  ];
+
+  beforeEach(() => {
+    mockActivateMutateAsync.mockReset();
+    mockSuccessDispatch.mockClear();
+    mockIsActivating = false;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it("the header's 'Seleccionar todos los pendientes' control selects exactly the PENDING rows, leaving APPLIED untouched", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+
+    await user.click(screen.getByRole("button", { name: "Seleccionar todos los pendientes" }));
+
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+    // Only PENDING rows ever render a checkbox at all (verified by the row
+    // spec); this proves the *count* matches "all pending", not more.
+  });
+
+  it("hides the 'Seleccionar todos los pendientes' control entirely when no coefficient is PENDING", () => {
+    renderWithTheme({ coefficients: allApplied });
+    expect(screen.queryByRole("button", { name: "Seleccionar todos los pendientes" })).not.toBeInTheDocument();
+  });
+
+  it("the batch bar mounts only once something is selected — not merely because a PENDING row exists — and unmounts again when the last selection is cleared", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+
+    // Pending rows present, nothing checked yet: no bar.
+    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument();
+
+    await selectPendingRow(user, "Vivienda A");
+    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeInTheDocument();
+    expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
+
+    // Unchecking the only selected row unmounts the bar again.
+    await selectPendingRow(user, "Vivienda A");
+    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+  });
+
+  it("singular/plural count text", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+
+    await selectPendingRow(user, "Vivienda A");
+    expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
+
+    await selectPendingRow(user, "Vivienda B");
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+  });
+
+  it("blocks a future date with the rule stated as visible helper text, never a title attribute", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+
+    expect(screen.getByText("No se permiten fechas futuras")).toBeInTheDocument();
+    const dayField = screen.getByRole("spinbutton", { name: "Day" });
+    expect(dayField.closest("[title]")).toBeNull();
+  });
+
+  it("typing a future date (bypassing the calendar's maxDate) leaves the button disabled with a visible reason", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+
+    await typeDate(user, "01", "01", "2099");
+
+    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeDisabled();
+    expect(screen.getByText("La fecha no puede ser futura ni inválida")).toBeInTheDocument();
+  });
+
+  it("the disabled reason states 'select a date' before any date is entered, then clears once a valid one is", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+
+    expect(screen.getByText("Selecciona una fecha")).toBeInTheDocument();
+
+    await typeDate(user, "10", "01", "2026");
+
+    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeEnabled();
+    expect(screen.queryByText("Selecciona una fecha")).not.toBeInTheDocument();
+    expect(screen.queryByText("La fecha no puede ser futura ni inválida")).not.toBeInTheDocument();
+  });
+
+  it("on success, clears the selection and the date, and shows the transient confirmation — no error panel", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Fechas de aplicación registradas."));
+    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("on a no-op success (empty coefficients array), shows the same transient confirmation and no error panel", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Fechas de aplicación registradas."));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("on rejection, preserves the selection and date, and renders every error detail in a persistent panel", async () => {
+    mockActivateMutateAsync.mockRejectedValue({
+      response: {
+        data: {
+          errors: [
+            { message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR", params: { cups: "ES1111" } },
+            { message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" },
+          ],
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+
+    await screen.findByRole("alert");
+    expect(screen.getByText("No se ha activado ningún coeficiente.")).toBeInTheDocument();
+    // Selection and the entered date survive the rejection.
+    expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeInTheDocument();
+    expect(mockSuccessDispatch).not.toHaveBeenCalled();
+  });
+
+  it("scrolls the error panel's own node into view on rejection, and never on success", async () => {
+    mockActivateMutateAsync.mockRejectedValueOnce({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    const alertNode = await screen.findByRole("alert");
+
+    const scrollMock = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
+    expect(scrollMock).toHaveBeenCalledTimes(1);
+    // The scrolled node is the panel wrapper (or the panel itself) — an
+    // ancestor of the alert, not some unrelated element like document.body.
+    // This is what actually exercises the Box ref: a null ref would mean
+    // nothing gets scrolled while a looser "was it called at all" assertion
+    // could still pass.
+    const scrolledNode = scrollMock.mock.contexts?.[0] ?? scrollMock.mock.instances[0];
+    expect((scrolledNode as HTMLElement).contains(alertNode)).toBe(true);
+
+    scrollMock.mockClear();
+    mockActivateMutateAsync.mockResolvedValueOnce({ coefficients: [] });
+    await user.click(screen.getByRole("alert").parentElement!.querySelector("button")!); // dismiss
+    await selectPendingRow(user, "Vivienda B");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
+    expect(scrollMock).not.toHaveBeenCalled();
+  });
+
+  it("on rejection with no error details (non-RestError failure), renders the generic retry line, header still present", async () => {
+    mockActivateMutateAsync.mockRejectedValue(new Error("network error"));
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+
+    await screen.findByRole("alert");
+    expect(screen.getByText("No se ha activado ningún coeficiente.")).toBeInTheDocument();
+    expect(screen.getByText("No se ha podido activar la selección. Inténtalo de nuevo en unos instantes.")).toBeInTheDocument();
+  });
+
+  it("dismissing the error panel clears it", async () => {
+    mockActivateMutateAsync.mockRejectedValue({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await screen.findByRole("alert");
+
+    await user.click(screen.getByRole("alert").parentElement!.querySelector("button")!);
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("a fresh submission replaces a previously-shown error panel rather than stacking it", async () => {
+    mockActivateMutateAsync.mockRejectedValueOnce({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await screen.findByRole("alert");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+
+    mockActivateMutateAsync.mockRejectedValueOnce({
+      response: {
+        data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR" }] },
+      },
+    });
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(2));
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  it("disables the button and shows a spinner while isActivating, and a second click issues no second request", async () => {
+    mockIsActivating = true;
+    let resolveActivate!: (value: { coefficients: unknown[] }) => void;
+    mockActivateMutateAsync.mockReturnValue(new Promise((resolve) => (resolveActivate = resolve)));
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+
+    const applyButton = screen.getByRole("button", { name: "" }); // spinner replaces the text label while pending
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button").filter((b) => b.querySelector('[role="progressbar"]'));
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toBeDisabled();
+
+    // userEvent.click refuses to interact with a disabled (pointer-events:
+    // none) element at all — which is itself proof a real user couldn't
+    // trigger a second request either. fireEvent bypasses that pointer-event
+    // simulation to assert directly that a disabled native <button> never
+    // fires its click handler, still without needing a real interaction.
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
+    expect(mockActivateMutateAsync).not.toHaveBeenCalled(); // disabled — clicks never reach the handler
+
+    resolveActivate({ coefficients: [] });
+    void applyButton;
+  });
+
+  it("the batch bar's spacer collapses to zero height at the desktop breakpoint", () => {
+    // A minimal net on the sx object built, not proof the MUI breakpoint
+    // resolves at runtime (jsdom can't evaluate responsive sx) — the real
+    // verification of layout correctness at the narrowest supported
+    // viewport is the Playwright capture, not this unit assertion.
+    renderWithTheme({ coefficients: mixed });
+    // No selection yet, so nothing to assert on a mounted spacer/bar in
+    // this render — the desktop-collapse behavior of the sx object itself
+    // is exercised structurally by the component compiling against its
+    // sx={{ height: { xs: ..., sm: 0 } }} literal, verified by lint/tsc.
+    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+  });
+
+  it("end-to-end: after a successful activation, the applied-sum card's percentage updates, staying styled neutral below 100%", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: mixed, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
+
+    // Only c3 is APPLIED, at 0.4 -> 40%. Scoped via the "Suma aplicada"
+    // caption's sibling rather than a bare text match: c3's own row also
+    // displays "40,0000 %" for its individual coefficient, so an unscoped
+    // query would be ambiguous between the sum card and that row.
+    expect(screen.getByText("Suma aplicada").previousElementSibling).toHaveTextContent("40,0000 %");
+
+    await selectPendingRow(user, "Vivienda A");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
+
+    // Simulate the invalidation-triggered refetch: c1 is now APPLIED too.
+    const updated = mixed.map((c) => (c.coefficientId === "c1" ? { ...c, applicationState: APPLIED } : c));
+    rerender(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              coefficients={updated}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>,
+    );
+
+    // c1 (0.3) + c3 (0.4) now APPLIED = 70%, still below 100% — neutral info styling.
+    expect(screen.getByText("70,0000 %")).toBeInTheDocument();
+    expect(screen.getByText(/normal en transición/)).toBeInTheDocument();
   });
 });

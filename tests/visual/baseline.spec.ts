@@ -1169,6 +1169,70 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-detail-mobile.png", { fullPage: true });
   });
 
+  test("sharing agreement detail page (batch activation bar, selection active)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    // FIXED_COEFFICIENTS_MIXED has exactly one PENDING row (Vivienda B) among
+    // several APPLIED ones — selecting it is what mounts the batch bar at all.
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await expect(page.getByText("1 seleccionado")).toBeVisible();
+
+    const applyButton = page.getByRole("button", { name: "Aplicar fecha a selección" });
+    await expect(applyButton).toBeDisabled();
+    await expect(page.getByText("Selecciona una fecha")).toBeVisible();
+
+    await stabilizePage(page);
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-selection.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (mobile batch bar doesn't cover the last card)", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Fixed bottom bar is mobile-only — desktop's bar is static in-flow.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await expect(page.getByRole("button", { name: "Aplicar fecha a selección" })).toBeVisible();
+
+    await page.addStyleTag({
+      content: `*, *::before, *::after { animation: none !important; transition: none !important; }`,
+    });
+    await page.waitForFunction(() => document.fonts.ready);
+
+    // Scroll the real page (not a fullPage stitch, which wouldn't exercise a
+    // fixed element's actual on-screen overlap) to the very bottom, so the
+    // last card and the fixed bar are both on screen at once — this is the
+    // assertion the screenshot exists to make: the reserved spacer must
+    // leave the last card's bottom edge visible above the bar, not under it.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(300);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    // "Ático F" is the last row in FIXED_COEFFICIENTS_MIXED.
+    const lastCard = page.getByText("Ático F").last();
+    await expect(lastCard).toBeVisible();
+    const cardBox = await lastCard.boundingBox();
+    const barBox = await page.getByRole("button", { name: "Aplicar fecha a selección" }).boundingBox();
+    expect(cardBox).not.toBeNull();
+    expect(barBox).not.toBeNull();
+    // The last card's bottom edge must sit above (a smaller y than) the top
+    // of the fixed bar — i.e. not underneath it.
+    expect(cardBox!.y + cardBox!.height).toBeLessThanOrEqual(barBox!.y);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-mobile-last-card.png");
+  });
+
   test("sharing agreement edit dialog (seeded with existing values)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
