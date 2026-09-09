@@ -71,14 +71,14 @@ export const getHuaweiConfig = (
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/production/huawei/config/${plantId}`, method: 'GET', signal
+      {url: `/api/v1/plants/${plantId}/production/huawei/config`, method: 'GET', signal
     },
       );
     }
   
 
 export const getGetHuaweiConfigQueryKey = (plantId: string,) => {
-    return [`/api/v1/production/huawei/config/${plantId}`] as const;
+    return [`/api/v1/plants/${plantId}/production/huawei/config`] as const;
     }
 
     
@@ -185,7 +185,7 @@ export const configureHuawei = (
       
       
       return customInstance<unknown>(
-      {url: `/api/v1/production/huawei/config/${plantId}`, method: 'PUT',
+      {url: `/api/v1/plants/${plantId}/production/huawei/config`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: configureHuaweiBody
     },
