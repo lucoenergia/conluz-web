@@ -120,3 +120,35 @@ export function isEndStateReadOnly(
 export function isPendingActivation(coefficient: SharingAgreementPartitionCoefficientResponse): boolean {
   return coefficient.applicationState === PENDING;
 }
+
+export type CoefficientRowAction = "correct" | "deactivate" | "close" | "reopen";
+
+/**
+ * The row-menu actions available for a coefficient, as two independent axes:
+ * applicationState gates "correct"/"deactivate" (only once APPLIED — a
+ * PENDING row keeps the checkbox/batch-activation flow instead, never a
+ * menu), endState separately gates the end-of-coverage action. Never widen
+ * the endState table below: OPEN is deliberately excluded even though the
+ * backend accepts closing an active coefficient.
+ */
+/**
+ * Identifies a coefficient by CUPS, never the raw supply UUID — most rows in
+ * real data have no supply name, and a dialog naming a UUID tells the admin
+ * nothing about which real-world point is affected.
+ */
+export function getCoefficientCupsLabel(coefficient: SharingAgreementPartitionCoefficientResponse | undefined): string {
+  if (!coefficient?.supply) return "";
+  return coefficient.supply.name ? `${coefficient.supply.name} (CUPS ${coefficient.supply.code})` : `CUPS ${coefficient.supply.code}`;
+}
+
+export function getAvailableCoefficientActions(
+  applicationState: SharingAgreementPartitionCoefficientResponseApplicationState | undefined,
+  endState: SharingAgreementPartitionCoefficientResponseEndState | undefined,
+): CoefficientRowAction[] {
+  if (applicationState !== APPLIED) return [];
+
+  const actions: CoefficientRowAction[] = ["correct", "deactivate"];
+  if (endState === OPEN_ORPHAN) actions.push("close");
+  else if (endState === CLOSED) actions.push("reopen");
+  return actions;
+}

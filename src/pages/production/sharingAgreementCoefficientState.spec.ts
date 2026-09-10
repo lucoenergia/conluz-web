@@ -9,6 +9,8 @@ import {
   getApplicationStateDetail,
   getApplicationStateHeadline,
   getApplicationStateLabel,
+  getAvailableCoefficientActions,
+  getCoefficientCupsLabel,
   getEndStateLabel,
   isEndStateReadOnly,
 } from "./sharingAgreementCoefficientState";
@@ -117,5 +119,42 @@ describe("isEndStateReadOnly — truth table", () => {
     [undefined, false],
   ])("%s -> %s", (endState, expected) => {
     expect(isEndStateReadOnly(endState)).toBe(expected);
+  });
+});
+
+describe("getAvailableCoefficientActions — every producible applicationState × endState combination", () => {
+  it.each([
+    // PENDING is only ever OPEN per the backend's own invariants — CLOSED/DERIVED are impossible and not tested.
+    [PENDING, OPEN, []],
+    [APPLIED, OPEN, ["correct", "deactivate"]],
+    [APPLIED, OPEN_ORPHAN, ["correct", "deactivate", "close"]],
+    [APPLIED, PENDING_SUCCESSION, ["correct", "deactivate"]],
+    [APPLIED, DERIVED, ["correct", "deactivate"]],
+    [APPLIED, CLOSED, ["correct", "deactivate", "reopen"]],
+  ] as const)("%s × %s -> %s", (applicationState, endState, expected) => {
+    expect(getAvailableCoefficientActions(applicationState, endState)).toEqual(expected);
+  });
+
+  it("returns no actions when applicationState is undefined, regardless of endState", () => {
+    expect(getAvailableCoefficientActions(undefined, OPEN_ORPHAN)).toEqual([]);
+  });
+});
+
+describe("getCoefficientCupsLabel", () => {
+  it("names the supply and its CUPS when a name exists", () => {
+    expect(getCoefficientCupsLabel(asCoefficient({ supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" } }))).toBe(
+      "Vivienda A (CUPS ES0031300000000001AB)",
+    );
+  });
+
+  it("falls back to CUPS only, never the supply UUID, when the supply has no name", () => {
+    expect(getCoefficientCupsLabel(asCoefficient({ supply: { id: "d8e14158-41fa-405b-ab48-4abd9a126079", name: "", code: "ES0031300000000001AB" } }))).toBe(
+      "CUPS ES0031300000000001AB",
+    );
+  });
+
+  it("returns an empty string when there's no coefficient or no supply at all", () => {
+    expect(getCoefficientCupsLabel(undefined)).toBe("");
+    expect(getCoefficientCupsLabel(asCoefficient({}))).toBe("");
   });
 });
