@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { ThemeProvider } from "@mui/material/styles";
@@ -15,13 +15,16 @@ import {
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
-const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
+const { OPEN, OPEN_ORPHAN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 // Real coefficients never omit these; unused by any assertion in this file, so
 // every fixture below spreads this in and only overrides what it's testing.
 const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
 
 const mockMutateAsync = vi.fn();
 const mockActivateMutateAsync = vi.fn();
+const mockDeactivateMutateAsync = vi.fn();
+const mockCloseMutateAsync = vi.fn();
+const mockReopenMutateAsync = vi.fn();
 const mockSuccessDispatch = vi.fn();
 // Mutable so a single test can exercise the in-flight (isActivating) state —
 // mirrors how the real hook forwards the mutation's own isPending.
@@ -52,6 +55,9 @@ vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
     ...actual,
     useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
     useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
+    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: false }),
+    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: false }),
+    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: false }),
   };
 });
 
@@ -783,5 +789,221 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     // c1 (0.3) + c3 (0.4) now APPLIED = 70%, still below 100% — neutral info styling.
     expect(screen.getByText("70,0000 %")).toBeInTheDocument();
     expect(screen.getByText(/normal en transición/)).toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
+  // Realistic multi-supply set covering both end-action states plus a
+  // PENDING row (no menu at all) and a supply with no name (CUPS-only naming).
+  const lifecycleMixed: SharingAgreementPartitionCoefficientResponse[] = [
+    {
+      coefficientId: "c1",
+      supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" },
+      coefficient: 0.3,
+      applicationState: APPLIED,
+      validFrom: "2024-01-01T00:00:00Z",
+      validTo: null,
+      endState: OPEN_ORPHAN,
+      endDate: null,
+    },
+    {
+      coefficientId: "c2",
+      supply: { id: "s2", name: "", code: "ES0031300000000002CD" },
+      coefficient: 0.3,
+      applicationState: APPLIED,
+      validFrom: "2024-01-01T00:00:00Z",
+      validTo: "2024-06-01T00:00:00Z",
+      endState: CLOSED,
+      endDate: "2024-06-01T00:00:00Z",
+    },
+    {
+      coefficientId: "c3",
+      supply: { id: "s3", name: "Vivienda C", code: "ES0031300000000003EF" },
+      coefficient: 0.4,
+      applicationState: PENDING,
+      ...OPEN_UNCLOSED,
+    },
+  ];
+
+  const allPendingLifecycle: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "p1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "p2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  beforeEach(() => {
+    mockActivateMutateAsync.mockReset();
+    mockDeactivateMutateAsync.mockReset();
+    mockCloseMutateAsync.mockReset();
+    mockReopenMutateAsync.mockReset();
+    mockSuccessDispatch.mockClear();
+    mockIsActivating = false;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  function coefficientSetElement(props: Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">) {
+    return (
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              {...props}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  /** Opens the row menu via its accessible name — matches the ⋯ button's own aria-label (supply name, or CUPS when there's no name). */
+  async function openRowMenu(user: ReturnType<typeof userEvent.setup>, label: string) {
+    const buttons = screen.getAllByRole("button", { name: `Más acciones para ${label}` });
+    await user.click(buttons[0]);
+  }
+
+  it("renders no actions column when every visible row is PENDING", () => {
+    renderWithTheme({ coefficients: allPendingLifecycle });
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+  });
+
+  it("renders the actions column once at least one visible row is actionable, and hides it again once a filter leaves only non-actionable rows", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    expect(screen.getAllByRole("button", { name: /Más acciones/ }).length).toBeGreaterThan(0);
+
+    // "Sin aplicar" leaves only c3 (PENDING) visible — no actionable rows.
+    await user.click(screen.getByRole("button", { name: "Sin aplicar" }));
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+  });
+
+  it("names the CUPS with the supply name when one exists", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Corregir fecha" }));
+
+    expect(screen.getByText("Vivienda A (CUPS ES0031300000000001AB)")).toBeInTheDocument();
+  });
+
+  it("names the CUPS only, never the UUID, when the supply has no name", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "ES0031300000000002CD");
+    await user.click(screen.getByRole("menuitem", { name: "Reabrir" }));
+
+    expect(screen.getByText("CUPS ES0031300000000002CD")).toBeInTheDocument();
+    expect(screen.queryByText("s2")).not.toBeInTheDocument();
+  });
+
+  it("correcting an APPLIED coefficient calls activateCoefficients, not a new mutation", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Corregir fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Confirmar y recalcular" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    expect(mockActivateMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ coefficientIds: ["c1"], appliedOn: "2026-01-10" }) }),
+    );
+    expect(mockDeactivateMutateAsync).not.toHaveBeenCalled();
+    expect(mockCloseMutateAsync).not.toHaveBeenCalled();
+    expect(mockReopenMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("on rejection, the close dialog stays open and renders every returned message", async () => {
+    mockCloseMutateAsync.mockRejectedValue({
+      response: {
+        data: {
+          errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE", params: { cups: "ES0031300000000001AB" } }],
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Cerrar (baja)" }));
+
+    await waitFor(() => expect(mockCloseMutateAsync).toHaveBeenCalledTimes(1));
+    // The bullet prefix ("• ") lives in the same text node as the message, so
+    // match on the message content rather than the full exact string.
+    expect(
+      await screen.findByText(/El coeficiente de ES0031300000000001AB no está activo, así que no se puede cerrar\./),
+    ).toBeInTheDocument();
+    // The dialog itself is still open — its own confirm button is still present.
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+  });
+
+  it("closes the dialog silently, with no error, when the underlying coefficient's actions no longer include the open action", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    // c1 is no longer OPEN_ORPHAN — "close" is no longer among its actions.
+    const updated = lifecycleMixed.map((c) => (c.coefficientId === "c1" ? { ...c, endState: CLOSED, endDate: "2026-01-01T00:00:00Z" } : c));
+    rerender(coefficientSetElement({ coefficients: updated }));
+
+    expect(screen.queryByRole("button", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("closes the dialog silently when the underlying coefficient disappears entirely", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    const withoutC1 = lifecycleMixed.filter((c) => c.coefficientId !== "c1");
+    rerender(coefficientSetElement({ coefficients: withoutC1 }));
+
+    expect(screen.queryByRole("button", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
+  });
+
+  it("changing the filter to hide the dialog's row leaves the dialog open — it resolves from the full list, not the filtered one", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    // "Sin aplicar" hides c1 (APPLIED) from the visible list entirely. The
+    // open modal marks the rest of the page aria-hidden, so the chip must be
+    // queried with hidden:true — same as a screen-reader user, a sighted one
+    // still can't reach it behind the modal, which is exactly the point:
+    // this proves the *state* survives, not that it's reachable mid-dialog.
+    await user.click(screen.getByRole("button", { name: "Sin aplicar", hidden: true }));
+
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+  });
+
+  it("reserves the same fixed-width action cell on every row, whether or not it has a visible button", () => {
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    const dataRows = screen.getAllByRole("row").slice(1); // drop the header row
+    expect(dataRows).toHaveLength(3);
+    for (const row of dataRows) {
+      const cells = within(row).getAllByRole("cell");
+      const actionCell = cells[cells.length - 1];
+      expect(actionCell.className).toContain("MuiTableCell-paddingCheckbox");
+    }
   });
 });

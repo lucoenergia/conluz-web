@@ -1191,6 +1191,62 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-selection.png", { fullPage: true });
   });
 
+  test("sharing agreement coefficient row actions menu (⋯ open)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    // Vivienda A (coef-1) is APPLIED/OPEN — "Corregir fecha" and "Desactivar"
+    // only, no end-of-coverage action, the minimal (two-item) menu shape.
+    await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
+    await expect(page.getByRole("menuitem", { name: "Corregir fecha" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Desactivar" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-row-actions-menu.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient recalculation dialog (Corregir fecha)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+    await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
+    await page.getByRole("menuitem", { name: "Corregir fecha" }).click();
+
+    await expect(page.getByRole("heading", { name: "Corregir fecha de aplicación" })).toBeVisible();
+    await expect(page.getByText(/producción ya atribuida a este suministro/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-coefficient-recalculation-dialog.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient close dialog (Cerrar (baja))", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+    // Local C (coef-3) is the OPEN_ORPHAN row — the only one offering "Cerrar (baja)".
+    await page.getByRole("button", { name: "Más acciones para Local C" }).first().click();
+    await page.getByRole("menuitem", { name: "Cerrar (baja)" }).click();
+
+    await expect(page.getByRole("heading", { name: "Cerrar coeficiente" })).toBeVisible();
+    await expect(page.getByText(/dejará de recibir atribución de producción/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-coefficient-close-dialog.png", { fullPage: true });
+  });
+
   test("sharing agreement detail page (mobile batch bar doesn't cover the last card)", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "Fixed bottom bar is mobile-only — desktop's bar is static in-flow.");
 

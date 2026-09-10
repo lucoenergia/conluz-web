@@ -12,7 +12,7 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
 import { colors } from "../../theme/tokens";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
-const { OPEN, DERIVED } = SharingAgreementPartitionCoefficientResponseEndState;
+const { OPEN, DERIVED, OPEN_ORPHAN } = SharingAgreementPartitionCoefficientResponseEndState;
 
 const pendingCoefficient: SharingAgreementPartitionCoefficientResponse = {
   coefficientId: "1",
@@ -518,6 +518,110 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
     );
 
     expect(screen.getByRole("checkbox", { name: "Seleccionar Vivienda A" })).toBeChecked();
+  });
+});
+
+describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
+  const appliedOrphanCoefficient: SharingAgreementPartitionCoefficientResponse = {
+    ...derivedCoefficient,
+    coefficientId: "3",
+    endState: OPEN_ORPHAN,
+    endDate: null,
+  };
+
+  it("renders no menu button for a PENDING row — getAvailableCoefficientActions returns none", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showActionsColumn
+            onOpenActionsMenu={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+  });
+
+  it("renders no menu button when showActionsColumn is false, even for an actionable row", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={appliedOrphanCoefficient}
+            installedPowerKw={100}
+            showActionsColumn={false}
+            onOpenActionsMenu={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+  });
+
+  it("renders the menu button for an actionable row and calls onOpenActionsMenu with the coefficient", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={appliedOrphanCoefficient}
+            installedPowerKw={100}
+            showActionsColumn
+            onOpenActionsMenu={onOpenActionsMenu}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda B" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+    expect(onOpenActionsMenu.mock.calls[0][1]).toBe(appliedOrphanCoefficient);
+  });
+});
+
+describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
+  const appliedOrphanCoefficient: SharingAgreementPartitionCoefficientResponse = {
+    ...derivedCoefficient,
+    coefficientId: "3",
+    endState: OPEN_ORPHAN,
+    endDate: null,
+  };
+
+  it("renders no menu button for a PENDING row", () => {
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={pendingCoefficient}
+        installedPowerKw={100}
+        showActionsColumn
+        onOpenActionsMenu={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+  });
+
+  it("renders the menu button for an actionable row and calls onOpenActionsMenu", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={appliedOrphanCoefficient}
+        installedPowerKw={100}
+        showActionsColumn
+        onOpenActionsMenu={onOpenActionsMenu}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda B" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
   });
 });
 
