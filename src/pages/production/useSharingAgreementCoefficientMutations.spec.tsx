@@ -37,6 +37,9 @@ const mockErrorDispatch = vi.fn();
 const mockSuccessDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
 const mockActivateMutateAsync = vi.fn();
+const mockDeactivateMutateAsync = vi.fn();
+const mockCloseMutateAsync = vi.fn();
+const mockReopenMutateAsync = vi.fn();
 
 vi.mock("../../context/error.context", () => ({
   useErrorDispatch: () => mockErrorDispatch,
@@ -54,6 +57,9 @@ vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
     ...actual,
     useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
     useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: false }),
+    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: false }),
+    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: false }),
+    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: false }),
   };
 });
 
@@ -309,5 +315,188 @@ describe("activateCoefficients", () => {
     // Does not match: a different plant, or an unrelated endpoint on this plant.
     expect(matches("/api/v1/plants/plant-2/sharing-agreements")).toBe(false);
     expect(matches("/api/v1/plants/plant-1/consumption")).toBe(false);
+  });
+});
+
+describe("deactivateCoefficients", () => {
+  beforeEach(() => {
+    mockErrorDispatch.mockClear();
+    mockSuccessDispatch.mockClear();
+    mockDeactivateMutateAsync.mockClear();
+  });
+
+  it("sends coefficientIds only, invalidates the plant subtree, and dispatches the transient confirmation", async () => {
+    mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+
+    expect(mockDeactivateMutateAsync).toHaveBeenCalledWith({
+      plantId: "plant-1",
+      sharingAgreementId: "agreement-1",
+      data: { coefficientIds: ["c1"] },
+    });
+    expect(outcome).toEqual({ success: true });
+    expect(mockSuccessDispatch).toHaveBeenCalledWith("Activación revertida.");
+  });
+
+  it("treats an empty coefficients response (no-op) as success", async () => {
+    mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+
+    expect(outcome).toEqual({ success: true });
+  });
+
+  it("on rejection, returns every translated detail and does not dispatch a toast", async () => {
+    mockDeactivateMutateAsync.mockRejectedValue({
+      response: {
+        data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT", params: {} }] },
+      },
+    });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+
+    expect(outcome.success).toBe(false);
+    if (!outcome.success) expect(outcome.errorMessages).toHaveLength(1);
+    expect(mockErrorDispatch).not.toHaveBeenCalled();
+    expect(mockSuccessDispatch).not.toHaveBeenCalled();
+  });
+
+  it("invalidates every sharing-agreement query for the plant on success", async () => {
+    mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { queryClient, Wrapper } = makeWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper: Wrapper });
+
+    await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("closeCoefficients", () => {
+  beforeEach(() => {
+    mockErrorDispatch.mockClear();
+    mockSuccessDispatch.mockClear();
+    mockCloseMutateAsync.mockClear();
+  });
+
+  it("serialises closedOn with .format('YYYY-MM-DD'), never a UTC-converting method — proven by asserting on the request body actually sent", async () => {
+    mockCloseMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    // Local midnight on a fixed date — same hazard as activateCoefficients'
+    // appliedOn test: .toISOString() would shift this to the previous day
+    // under Europe/Madrid's +1/+2 offset (process.env.TZ set at top of file).
+    const localMidnight = dayjs("2026-03-15T00:00:00");
+
+    await result.current.closeCoefficients("agreement-1", ["c1"], localMidnight);
+
+    expect(mockCloseMutateAsync).toHaveBeenCalledWith({
+      plantId: "plant-1",
+      sharingAgreementId: "agreement-1",
+      data: { coefficientIds: ["c1"], closedOn: "2026-03-15" },
+    });
+  });
+
+  it("treats an empty coefficients response (no-op) as success and dispatches the transient confirmation", async () => {
+    mockCloseMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+
+    expect(outcome).toEqual({ success: true });
+    expect(mockSuccessDispatch).toHaveBeenCalledWith("Cierre registrado.");
+  });
+
+  it("on rejection, returns every translated detail and does not dispatch a toast", async () => {
+    mockCloseMutateAsync.mockRejectedValue({
+      response: {
+        data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE", params: { cups: "ES1111111111111111AA" } }] },
+      },
+    });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+
+    expect(outcome.success).toBe(false);
+    if (!outcome.success) expect(outcome.errorMessages).toHaveLength(1);
+    expect(mockErrorDispatch).not.toHaveBeenCalled();
+    expect(mockSuccessDispatch).not.toHaveBeenCalled();
+  });
+
+  it("invalidates every sharing-agreement query for the plant on success", async () => {
+    mockCloseMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { queryClient, Wrapper } = makeWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper: Wrapper });
+
+    await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("reopenCoefficients", () => {
+  beforeEach(() => {
+    mockErrorDispatch.mockClear();
+    mockSuccessDispatch.mockClear();
+    mockReopenMutateAsync.mockClear();
+  });
+
+  it("sends coefficientIds only, invalidates the plant subtree, and dispatches the transient confirmation", async () => {
+    mockReopenMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
+
+    expect(mockReopenMutateAsync).toHaveBeenCalledWith({
+      plantId: "plant-1",
+      sharingAgreementId: "agreement-1",
+      data: { coefficientIds: ["c1"] },
+    });
+    expect(outcome).toEqual({ success: true });
+    expect(mockSuccessDispatch).toHaveBeenCalledWith("Coeficiente reabierto.");
+  });
+
+  it("treats an empty coefficients response (no-op) as success", async () => {
+    mockReopenMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
+
+    expect(outcome).toEqual({ success: true });
+  });
+
+  it("on rejection, returns every translated detail and does not dispatch a toast", async () => {
+    mockReopenMutateAsync.mockRejectedValue({
+      response: {
+        data: {
+          errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR", params: { cups: "ES1111111111111111AA" } }],
+        },
+      },
+    });
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+
+    const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
+
+    expect(outcome.success).toBe(false);
+    if (!outcome.success) expect(outcome.errorMessages).toHaveLength(1);
+    expect(mockErrorDispatch).not.toHaveBeenCalled();
+    expect(mockSuccessDispatch).not.toHaveBeenCalled();
+  });
+
+  it("invalidates every sharing-agreement query for the plant on success", async () => {
+    mockReopenMutateAsync.mockResolvedValue({ coefficients: [] });
+    const { queryClient, Wrapper } = makeWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper: Wrapper });
+
+    await result.current.reopenCoefficients("agreement-1", ["c1"]);
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
   });
 });

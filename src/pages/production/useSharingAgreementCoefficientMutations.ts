@@ -3,6 +3,9 @@ import type { Dayjs } from "dayjs";
 import {
   getGetSharingAgreementPartitionCoefficientsQueryKey,
   useActivatePartitionCoefficients,
+  useClosePartitionCoefficients,
+  useDeactivatePartitionCoefficients,
+  useReopenPartitionCoefficients,
   useReplacePartitionCoefficients,
 } from "../../api/sharing-agreements/sharing-agreements";
 import { useErrorDispatch } from "../../context/error.context";
@@ -23,8 +26,18 @@ export interface SharingAgreementCoefficientMutations {
     coefficientIds: string[],
     appliedOn: Dayjs,
   ) => Promise<CoefficientActivationResult>;
+  deactivateCoefficients: (sharingAgreementId: string, coefficientIds: string[]) => Promise<CoefficientActivationResult>;
+  closeCoefficients: (
+    sharingAgreementId: string,
+    coefficientIds: string[],
+    closedOn: Dayjs,
+  ) => Promise<CoefficientActivationResult>;
+  reopenCoefficients: (sharingAgreementId: string, coefficientIds: string[]) => Promise<CoefficientActivationResult>;
   isReplacing: boolean;
   isActivating: boolean;
+  isDeactivating: boolean;
+  isClosing: boolean;
+  isReopening: boolean;
 }
 
 export function useSharingAgreementCoefficientMutations(plantId: string): SharingAgreementCoefficientMutations {
@@ -33,6 +46,9 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
   const successDispatch = useSuccessDispatch();
   const replaceMutation = useReplacePartitionCoefficients();
   const activateMutation = useActivatePartitionCoefficients();
+  const deactivateMutation = useDeactivatePartitionCoefficients();
+  const closeMutation = useClosePartitionCoefficients();
+  const reopenMutation = useReopenPartitionCoefficients();
 
   const replaceCoefficients = async (
     sharingAgreementId: string,
@@ -135,10 +151,69 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     }
   };
 
+  const deactivateCoefficients = async (
+    sharingAgreementId: string,
+    coefficientIds: string[],
+  ): Promise<CoefficientActivationResult> => {
+    try {
+      await deactivateMutation.mutateAsync({ plantId, sharingAgreementId, data: { coefficientIds } });
+      invalidatePlantSharingAgreements();
+      successDispatch("Activación revertida.");
+      return { success: true };
+    } catch (error) {
+      return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    }
+  };
+
+  const closeCoefficients = async (
+    sharingAgreementId: string,
+    coefficientIds: string[],
+    closedOn: Dayjs,
+  ): Promise<CoefficientActivationResult> => {
+    try {
+      await closeMutation.mutateAsync({
+        plantId,
+        sharingAgreementId,
+        data: {
+          coefficientIds,
+          // Never .toISOString()/.toJSON(): same UTC-conversion hazard as
+          // appliedOn above — this is the date production stops being
+          // attributed from, on data that reaches billing.
+          closedOn: closedOn.format("YYYY-MM-DD"),
+        },
+      });
+      invalidatePlantSharingAgreements();
+      successDispatch("Cierre registrado.");
+      return { success: true };
+    } catch (error) {
+      return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    }
+  };
+
+  const reopenCoefficients = async (
+    sharingAgreementId: string,
+    coefficientIds: string[],
+  ): Promise<CoefficientActivationResult> => {
+    try {
+      await reopenMutation.mutateAsync({ plantId, sharingAgreementId, data: { coefficientIds } });
+      invalidatePlantSharingAgreements();
+      successDispatch("Coeficiente reabierto.");
+      return { success: true };
+    } catch (error) {
+      return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    }
+  };
+
   return {
     replaceCoefficients,
     activateCoefficients,
+    deactivateCoefficients,
+    closeCoefficients,
+    reopenCoefficients,
     isReplacing: replaceMutation.isPending,
     isActivating: activateMutation.isPending,
+    isDeactivating: deactivateMutation.isPending,
+    isClosing: closeMutation.isPending,
+    isReopening: reopenMutation.isPending,
   };
 }
