@@ -1,6 +1,7 @@
-import type { FC } from "react";
+import type { FC, MouseEvent } from "react";
 import { Box, Checkbox, IconButton, InputAdornment, TableCell, TableRow, TextField, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatDecimalForInput } from "../../utils/parseDecimalInput";
@@ -9,6 +10,7 @@ import { formatCoefficientPercentage } from "../../pages/production/sharingAgree
 import {
   getApplicationStateDetail,
   getApplicationStateHeadline,
+  getAvailableCoefficientActions,
   getEndStateLabel,
   isEndStateReadOnly,
   isPendingActivation,
@@ -34,6 +36,10 @@ export interface SharingAgreementCoefficientRowProps {
   selected?: boolean;
   /** Present only when the row is eligible (PENDING) and selection is offered — its mere presence doesn't render a checkbox, `isPendingActivation` still gates that. */
   onToggleSelected?: () => void;
+  /** Whether the lifecycle-actions ⋯ column/slot renders at all — the container only mounts it when at least one visible row has an action. */
+  showActionsColumn?: boolean;
+  /** Opens the row-actions menu for this coefficient. The button itself only renders when `getAvailableCoefficientActions` returns something — never a disabled button. */
+  onOpenActionsMenu?: (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => void;
 }
 
 function formatAssignedEnergy(coefficientValue: number | undefined, installedPowerKw: number | undefined): string {
@@ -104,10 +110,13 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   showSelectionColumn = false,
   selected,
   onToggleSelected,
+  showActionsColumn = false,
+  onOpenActionsMenu,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
+  const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
 
   return (
     <TableRow>
@@ -179,6 +188,19 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           )}
         </TableCell>
       )}
+      {showActionsColumn && (
+        <TableCell padding="checkbox">
+          {availableActions.length > 0 && onOpenActionsMenu && (
+            <IconButton
+              size="small"
+              onClick={(event) => onOpenActionsMenu(event, coefficient)}
+              aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          )}
+        </TableCell>
+      )}
     </TableRow>
   );
 };
@@ -196,11 +218,14 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   showSelectionColumn = false,
   selected,
   onToggleSelected,
+  showActionsColumn = false,
+  onOpenActionsMenu,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const showCheckbox = showSelectionColumn && !!onToggleSelected && isPendingActivation(coefficient);
+  const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
 
   return (
     <Box
@@ -249,6 +274,15 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
           {isEditing && onRemove && (
             <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>
               <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          )}
+          {!isEditing && showActionsColumn && availableActions.length > 0 && onOpenActionsMenu && (
+            <IconButton
+              size="small"
+              onClick={(event) => onOpenActionsMenu(event, coefficient)}
+              aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
+            >
+              <MoreVertIcon fontSize="small" />
             </IconButton>
           )}
         </Box>

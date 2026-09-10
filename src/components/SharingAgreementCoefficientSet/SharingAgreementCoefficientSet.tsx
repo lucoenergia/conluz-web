@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useEffect, useMemo, useRef, useState, type FC, type MouseEvent, type ReactNode } from "react";
 import {
   Alert,
   Box,
@@ -6,6 +6,11 @@ import {
   Checkbox,
   Chip,
   CircularProgress,
+  Divider,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -29,6 +34,10 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import EventBusyOutlinedIcon from "@mui/icons-material/EventBusyOutlined";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
@@ -37,6 +46,9 @@ import { SharingAgreementCoefficientSumCards } from "../SharingAgreementCoeffici
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
+import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoefficientDateConfirmationModal";
+import { DeactivateOrReopenCoefficientConfirmationModal } from "../Modals/DeactivateOrReopenCoefficientConfirmationModal";
+import { CloseCoefficientConfirmationModal } from "../Modals/CloseCoefficientConfirmationModal";
 import { useDebounce } from "../../utils/useDebounce";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { useActiveCommunity } from "../../context/community.context";
@@ -55,7 +67,9 @@ import {
 import {
   getApplicationStateColor,
   getApplicationStateLabel,
+  getAvailableCoefficientActions,
   isPendingActivation,
+  type CoefficientRowAction,
 } from "../../pages/production/sharingAgreementCoefficientState";
 import { normalizeForSearch } from "../../pages/production/sharingAgreementFilters";
 import {
@@ -110,6 +124,29 @@ const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilt
   SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
 ];
 
+// getAvailableCoefficientActions always orders its result [correct,
+// deactivate, (close|reopen)] — "correct" is the only plain edit, everything
+// after it rewrites history retroactively, hence the single divider always
+// sitting right after index 0.
+const ROW_ACTION_LABEL: Record<CoefficientRowAction, string> = {
+  correct: "Corregir fecha",
+  deactivate: "Desactivar",
+  close: "Cerrar (baja)",
+  reopen: "Reabrir",
+};
+
+const ROW_ACTION_ICON: Record<CoefficientRowAction, ReactNode> = {
+  correct: <EditCalendarOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
+  deactivate: <RemoveCircleOutlineIcon fontSize="small" sx={{ color: "error.main" }} />,
+  close: <EventBusyOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
+  reopen: <LockOpenOutlinedIcon fontSize="small" sx={{ color: "error.main" }} />,
+};
+
+const ROW_ACTION_TEXT_COLOR: Partial<Record<CoefficientRowAction, string>> = {
+  deactivate: "error.main",
+  reopen: "error.main",
+};
+
 function filterEditableRows(rows: EditableCoefficientRow[], searchText: string): EditableCoefficientRow[] {
   const trimmed = searchText.trim();
   if (!trimmed) return rows;
@@ -161,8 +198,18 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const theme = useTheme();
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
-  const { replaceCoefficients, isReplacing, activateCoefficients, isActivating } =
-    useSharingAgreementCoefficientMutations(plantId);
+  const {
+    replaceCoefficients,
+    isReplacing,
+    activateCoefficients,
+    isActivating,
+    deactivateCoefficients,
+    isDeactivating,
+    closeCoefficients,
+    isClosing,
+    reopenCoefficients,
+    isReopening,
+  } = useSharingAgreementCoefficientMutations(plantId);
 
   const [searchText, setSearchText] = useState("");
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
@@ -179,6 +226,17 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [activationErrors, setActivationErrors] = useState<string[] | null>(null);
   const errorPanelRef = useRef<HTMLDivElement>(null);
 
+  // Lifecycle row-actions menu/dialogs (Part B) — entirely separate from the
+  // batch-activation state above. Holds only the id, not the coefficient
+  // object: every mutation invalidates the whole plant subtree, which can
+  // replace row objects while the menu or a dialog is still open (a cascade,
+  // or another session acting on the same agreement), so the row is
+  // re-resolved live on every render instead of trusting a captured snapshot.
+  const [actionsAnchorEl, setActionsAnchorEl] = useState<HTMLElement | null>(null);
+  const [actionsMenuCoefficientId, setActionsMenuCoefficientId] = useState<string | null>(null);
+  const [activeDialog, setActiveDialog] = useState<CoefficientRowAction | null>(null);
+  const [dialogErrors, setDialogErrors] = useState<string[] | null>(null);
+
   useUnsavedChangesGuard(isEditing);
 
   useEffect(() => {
@@ -186,6 +244,36 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       errorPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [activationErrors]);
+
+  // Resolved from the *full* coefficients list, never filteredCoefficients —
+  // a dialog must not close just because the user changed the filter behind
+  // it, only because the underlying row genuinely changed or vanished.
+  const actionsMenuCoefficient = actionsMenuCoefficientId
+    ? coefficients.find((c) => c.coefficientId === actionsMenuCoefficientId)
+    : undefined;
+
+  useEffect(() => {
+    if (!actionsMenuCoefficientId) return;
+    // The row disappeared (removed from the agreement, or the id was stale
+    // to begin with) — nothing failed, there's simply nothing left to act on.
+    if (!actionsMenuCoefficient) {
+      setActionsAnchorEl(null);
+      setActionsMenuCoefficientId(null);
+      setActiveDialog(null);
+      setDialogErrors(null);
+      return;
+    }
+    // The row is still there, but a cascade/refetch moved it out of the
+    // state the open dialog was for (e.g. it closed elsewhere while
+    // "Cerrar (baja)" was still open here) — close silently, same reasoning.
+    if (
+      activeDialog &&
+      !getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState).includes(activeDialog)
+    ) {
+      setActiveDialog(null);
+      setDialogErrors(null);
+    }
+  }, [coefficients, actionsMenuCoefficientId, actionsMenuCoefficient, activeDialog]);
 
   const isDraft = agreementStatus === SharingAgreementResponseStatus.DRAFT;
   const kwModeAvailable = installedPowerKw !== undefined && installedPowerKw > 0;
@@ -250,6 +338,62 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     }
   };
 
+  const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
+    setActionsAnchorEl(event.currentTarget);
+    setActionsMenuCoefficientId(coefficient.coefficientId);
+  };
+
+  const handleCloseActionsMenu = () => setActionsAnchorEl(null);
+
+  const handleSelectAction = (action: CoefficientRowAction) => {
+    setActionsAnchorEl(null);
+    setDialogErrors(null);
+    setActiveDialog(action);
+  };
+
+  const handleCancelDialog = () => {
+    setActiveDialog(null);
+    setActionsMenuCoefficientId(null);
+    setDialogErrors(null);
+  };
+
+  const handleConfirmCorrect = async (date: Dayjs) => {
+    if (!actionsMenuCoefficient) return;
+    const result = await activateCoefficients(sharingAgreementId, [actionsMenuCoefficient.coefficientId], date);
+    if (result.success) {
+      setActiveDialog(null);
+      setActionsMenuCoefficientId(null);
+      setDialogErrors(null);
+    } else {
+      setDialogErrors(result.errorMessages);
+    }
+  };
+
+  const handleConfirmDeactivateOrReopen = async () => {
+    if (!actionsMenuCoefficient || (activeDialog !== "deactivate" && activeDialog !== "reopen")) return;
+    const mutate = activeDialog === "deactivate" ? deactivateCoefficients : reopenCoefficients;
+    const result = await mutate(sharingAgreementId, [actionsMenuCoefficient.coefficientId]);
+    if (result.success) {
+      setActiveDialog(null);
+      setActionsMenuCoefficientId(null);
+      setDialogErrors(null);
+    } else {
+      setDialogErrors(result.errorMessages);
+    }
+  };
+
+  const handleConfirmClose = async (date: Dayjs) => {
+    if (!actionsMenuCoefficient) return;
+    const result = await closeCoefficients(sharingAgreementId, [actionsMenuCoefficient.coefficientId], date);
+    if (result.success) {
+      setActiveDialog(null);
+      setActionsMenuCoefficientId(null);
+      setDialogErrors(null);
+    } else {
+      setDialogErrors(result.errorMessages);
+    }
+  };
+
   // Anomaly means an explicit unexpected value, not missing data: a real DRAFT
   // is guaranteed all-PENDING/all-OPEN by the backend (APPLIED requires
   // publishing first; revert-to-draft is refused once anything is applied).
@@ -297,6 +441,17 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     hiddenSelectedCount > 0
       ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"} · ${hiddenSelectedCount} oculto${hiddenSelectedCount === 1 ? "" : "s"} por el filtro`
       : `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"}`;
+
+  // Mounts only when a currently *visible* row actually has an action —
+  // mirrors isBatchBarMounted's "mount only when there's something to act
+  // on" rule. Gated on filteredCoefficients, not the full coefficients prop,
+  // so the column also disappears when a filter leaves only non-actionable
+  // rows visible (and reappears once the filter clears).
+  const hasAnyRowActions = useMemo(
+    () => filteredCoefficients.some((c) => getAvailableCoefficientActions(c.applicationState, c.endState).length > 0),
+    [filteredCoefficients],
+  );
+  const showActionsColumn = !isEditing && !isDraft && hasAnyRowActions;
 
   const filteredRows = useMemo(() => filterEditableRows(rows, debouncedSearchText), [rows, debouncedSearchText]);
 
@@ -623,6 +778,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     </TableCell>
                   )}
                   {isEditing && <TableCell />}
+                  {showActionsColumn && <TableCell padding="checkbox" />}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -650,6 +806,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         showSelectionColumn={showSelectionColumn}
                         selected={selectedIds.has(coefficient.coefficientId)}
                         onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
+                        showActionsColumn={showActionsColumn}
+                        onOpenActionsMenu={handleOpenActionsMenu}
                       />
                     ))}
               </TableBody>
@@ -682,6 +840,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     showSelectionColumn={showSelectionColumn}
                     selected={selectedIds.has(coefficient.coefficientId)}
                     onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
+                    showActionsColumn={showActionsColumn}
+                    onOpenActionsMenu={handleOpenActionsMenu}
                   />
                 ))}
           </Box>
@@ -796,6 +956,55 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           onConfirm={handleConfirmAddSupplies}
         />
       )}
+
+      <Menu
+        anchorEl={actionsAnchorEl}
+        open={Boolean(actionsAnchorEl)}
+        onClose={handleCloseActionsMenu}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+      >
+        {(actionsMenuCoefficient
+          ? getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState)
+          : []
+        ).flatMap((action, index) => [
+          ...(index === 1 ? [<Divider key="divider" />] : []),
+          <MenuItem key={action} onClick={() => handleSelectAction(action)}>
+            <ListItemIcon>{ROW_ACTION_ICON[action]}</ListItemIcon>
+            <ListItemText sx={ROW_ACTION_TEXT_COLOR[action] ? { color: ROW_ACTION_TEXT_COLOR[action] } : undefined}>
+              {ROW_ACTION_LABEL[action]}
+            </ListItemText>
+          </MenuItem>,
+        ])}
+      </Menu>
+
+      <CorrectCoefficientDateConfirmationModal
+        isOpen={activeDialog === "correct"}
+        coefficient={actionsMenuCoefficient}
+        isPending={isActivating}
+        errorMessages={dialogErrors}
+        onCancel={handleCancelDialog}
+        onConfirm={handleConfirmCorrect}
+      />
+
+      <DeactivateOrReopenCoefficientConfirmationModal
+        isOpen={activeDialog === "deactivate" || activeDialog === "reopen"}
+        action={activeDialog === "reopen" ? "reopen" : "deactivate"}
+        coefficient={actionsMenuCoefficient}
+        isPending={activeDialog === "reopen" ? isReopening : isDeactivating}
+        errorMessages={dialogErrors}
+        onCancel={handleCancelDialog}
+        onConfirm={handleConfirmDeactivateOrReopen}
+      />
+
+      <CloseCoefficientConfirmationModal
+        isOpen={activeDialog === "close"}
+        coefficient={actionsMenuCoefficient}
+        isPending={isClosing}
+        errorMessages={dialogErrors}
+        onCancel={handleCancelDialog}
+        onConfirm={handleConfirmClose}
+      />
     </Paper>
   );
 };
