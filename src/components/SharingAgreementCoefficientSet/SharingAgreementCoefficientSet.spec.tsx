@@ -29,6 +29,9 @@ const mockSuccessDispatch = vi.fn();
 // Mutable so a single test can exercise the in-flight (isActivating) state —
 // mirrors how the real hook forwards the mutation's own isPending.
 let mockIsActivating = false;
+let mockIsDeactivating = false;
+let mockIsClosing = false;
+let mockIsReopening = false;
 
 vi.mock("../../context/community.context", async () => {
   const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
@@ -55,9 +58,9 @@ vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
     ...actual,
     useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
     useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
-    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: false }),
-    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: false }),
-    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: false }),
+    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: mockIsDeactivating }),
+    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: mockIsClosing }),
+    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: mockIsReopening }),
   };
 });
 
@@ -401,6 +404,9 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     mockActivateMutateAsync.mockReset();
     mockSuccessDispatch.mockClear();
     mockIsActivating = false;
+    mockIsDeactivating = false;
+    mockIsClosing = false;
+    mockIsReopening = false;
     Element.prototype.scrollIntoView = vi.fn();
   });
 
@@ -837,6 +843,9 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     mockReopenMutateAsync.mockReset();
     mockSuccessDispatch.mockClear();
     mockIsActivating = false;
+    mockIsDeactivating = false;
+    mockIsClosing = false;
+    mockIsReopening = false;
     Element.prototype.scrollIntoView = vi.fn();
   });
 
@@ -991,6 +1000,38 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     // still can't reach it behind the modal, which is exactly the point:
     // this proves the *state* survives, not that it's reachable mid-dialog.
     await user.click(screen.getByRole("button", { name: "Sin aplicar", hidden: true }));
+
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+  });
+
+  it("disables every row's ⋯ button while any coefficient mutation is pending, not just the one in flight", () => {
+    // A deactivate elsewhere on the page is pending — every row's menu
+    // button must freeze, not only the row whose action is actually running,
+    // since re-opening another row's menu would act on data the in-flight
+    // mutation's refetch hasn't refreshed yet.
+    mockIsDeactivating = true;
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    const buttons = screen.getAllByRole("button", { name: /Más acciones/ });
+    expect(buttons.length).toBeGreaterThan(0);
+    buttons.forEach((button) => expect(button).toBeDisabled());
+  });
+
+  it("a dialog cannot be dismissed via Cancel while its own mutation is pending", async () => {
+    // Escape and backdrop-click route through the same onCancel handler as
+    // the Cancel button, so guarding it here guards all three dismissal
+    // vectors at once.
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    mockIsClosing = true;
+    rerender(coefficientSetElement({ coefficients: lifecycleMixed }));
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
     expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
   });

@@ -584,6 +584,24 @@ describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
     expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
     expect(onOpenActionsMenu.mock.calls[0][1]).toBe(appliedOrphanCoefficient);
   });
+
+  it("disables the menu button when actionsDisabled is set, even for an actionable row", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={appliedOrphanCoefficient}
+            installedPowerKw={100}
+            showActionsColumn
+            onOpenActionsMenu={vi.fn()}
+            actionsDisabled
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByRole("button", { name: "Más acciones para Vivienda B" })).toBeDisabled();
+  });
 });
 
 describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
@@ -622,6 +640,20 @@ describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
     const button = screen.getByRole("button", { name: "Más acciones para Vivienda B" });
     await user.click(button);
     expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the menu button when actionsDisabled is set, even for an actionable row", () => {
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={appliedOrphanCoefficient}
+        installedPowerKw={100}
+        showActionsColumn
+        onOpenActionsMenu={vi.fn()}
+        actionsDisabled
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Más acciones para Vivienda B" })).toBeDisabled();
   });
 });
 

@@ -40,6 +40,8 @@ export interface SharingAgreementCoefficientRowProps {
   showActionsColumn?: boolean;
   /** Opens the row-actions menu for this coefficient. The button itself only renders when `getAvailableCoefficientActions` returns something — never a disabled button. */
   onOpenActionsMenu?: (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => void;
+  /** True while any coefficient lifecycle mutation (any row's, or the batch bar's) is pending — freezes every row's menu button so a second action can't fire against data the in-flight one hasn't refreshed yet. */
+  actionsDisabled?: boolean;
 }
 
 function formatAssignedEnergy(coefficientValue: number | undefined, installedPowerKw: number | undefined): string {
@@ -112,6 +114,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   onToggleSelected,
   showActionsColumn = false,
   onOpenActionsMenu,
+  actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
@@ -193,6 +196,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           {availableActions.length > 0 && onOpenActionsMenu && (
             <IconButton
               size="small"
+              disabled={actionsDisabled}
               onClick={(event) => onOpenActionsMenu(event, coefficient)}
               aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
             >
@@ -220,6 +224,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   onToggleSelected,
   showActionsColumn = false,
   onOpenActionsMenu,
+  actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
@@ -279,6 +284,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
           {!isEditing && showActionsColumn && availableActions.length > 0 && onOpenActionsMenu && (
             <IconButton
               size="small"
+              disabled={actionsDisabled}
               onClick={(event) => onOpenActionsMenu(event, coefficient)}
               aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
             >

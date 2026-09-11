@@ -212,6 +212,17 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     isReopening,
   } = useSharingAgreementCoefficientMutations(plantId);
 
+  // One shared in-flight gate across the row-dialog and batch-bar paths.
+  // Each mutation's own isPending now spans its post-success refetch (see
+  // useSharingAgreementCoefficientMutations), but a second lifecycle action
+  // fired anywhere on this page while *any* of the four is still settling
+  // would still read stale applicationState/endState — the endpoints treat
+  // that as a legal correction, not an error, so nothing would reject it.
+  // Disables every row's ⋯ button, the bar's own control, every dialog's
+  // confirm button, and blocks dialog dismissal (Escape/backdrop/Cancel)
+  // while any of the four is pending.
+  const isAnyCoefficientActionPending = isActivating || isDeactivating || isClosing || isReopening;
+
   const [searchText, setSearchText] = useState("");
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
@@ -288,7 +299,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // condition, computed once, so the bar and spacer can never disagree about
   // whether they're mounted.
   const isBatchBarMounted = selectedIds.size > 0;
-  const applyDisabledReason = getCoefficientDateDisabledReason(selectedDate, dateValidationError, isActivating, "Aplicando la fecha…");
+  const applyDisabledReason = getCoefficientDateDisabledReason(
+    selectedDate,
+    dateValidationError,
+    isAnyCoefficientActionPending,
+    "Aplicando la fecha…",
+  );
 
   const toggleSelected = (coefficientId: string) => {
     setSelectedIds((prev) => {
@@ -344,7 +360,13 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     setActiveDialog(action);
   };
 
+  // A pending mutation can't be cancelled from here, and closing the dialog
+  // while it's in flight would let the user re-open it (or another row's)
+  // against data that isn't fresh yet — Escape, backdrop click and the
+  // Cancel button all route through this one handler, so no-oping here
+  // blocks all three at once.
   const handleCancelDialog = () => {
+    if (isAnyCoefficientActionPending) return;
     setActiveDialog(null);
     setActionsMenuCoefficientId(null);
     setDialogErrors(null);
@@ -801,6 +823,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
                         showActionsColumn={showActionsColumn}
                         onOpenActionsMenu={handleOpenActionsMenu}
+                        actionsDisabled={isAnyCoefficientActionPending}
                       />
                     ))}
               </TableBody>
@@ -835,6 +858,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
                     showActionsColumn={showActionsColumn}
                     onOpenActionsMenu={handleOpenActionsMenu}
+                    actionsDisabled={isAnyCoefficientActionPending}
                   />
                 ))}
           </Box>
@@ -974,7 +998,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       <CorrectCoefficientDateConfirmationModal
         isOpen={activeDialog === "correct"}
         coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
-        isPending={isActivating}
+        isPending={isAnyCoefficientActionPending}
         errorMessages={dialogErrors}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmCorrect}
@@ -984,7 +1008,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         isOpen={activeDialog === "deactivate" || activeDialog === "reopen"}
         action={activeDialog === "reopen" ? "reopen" : "deactivate"}
         coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
-        isPending={activeDialog === "reopen" ? isReopening : isDeactivating}
+        isPending={isAnyCoefficientActionPending}
         errorMessages={dialogErrors}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmDeactivateOrReopen}
@@ -993,7 +1017,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       <CloseCoefficientConfirmationModal
         isOpen={activeDialog === "close"}
         coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
-        isPending={isClosing}
+        isPending={isAnyCoefficientActionPending}
         errorMessages={dialogErrors}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmClose}

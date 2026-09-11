@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Dayjs } from "dayjs";
 import {
@@ -50,6 +51,21 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
   const closeMutation = useClosePartitionCoefficients();
   const reopenMutation = useReopenPartitionCoefficients();
 
+  // Each underlying mutation's own isPending flips false the instant its HTTP
+  // response arrives — well before the invalidation-triggered refetch below
+  // has delivered fresh data. Acting again in that window (e.g. reopening a
+  // row's menu and firing another lifecycle action) would target stale
+  // applicationState/endState: the endpoints can't reject it, since e.g.
+  // activating an already-applied coefficient is a legal *correction*, not
+  // an error — so the request would silently mean something the user didn't
+  // intend. These flags span the whole call, success or failure, through the
+  // awaited invalidation, and are OR-combined with the raw mutation flag
+  // (never replacing it) so anything driving that flag directly keeps working.
+  const [isActivatingAfterInvalidate, setIsActivatingAfterInvalidate] = useState(false);
+  const [isDeactivatingAfterInvalidate, setIsDeactivatingAfterInvalidate] = useState(false);
+  const [isClosingAfterInvalidate, setIsClosingAfterInvalidate] = useState(false);
+  const [isReopeningAfterInvalidate, setIsReopeningAfterInvalidate] = useState(false);
+
   const replaceCoefficients = async (
     sharingAgreementId: string,
     rows: EditableCoefficientRow[],
@@ -98,9 +114,15 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
    * the "right" agreement, so the whole plant subtree is invalidated instead.
    * Agreements per plant are few and only mounted queries actually refetch,
    * so this is cheap.
+   *
+   * Returns the promise `invalidateQueries` returns — which resolves only
+   * once every matching *active* query has actually refetched, not merely
+   * once they're marked stale. Callers must await it before treating the
+   * mutation as fully settled; skipping the await was the whole bug this
+   * flag exists to fix (see isActivatingAfterInvalidate above).
    */
   const invalidatePlantSharingAgreements = () => {
-    queryClient.invalidateQueries({
+    return queryClient.invalidateQueries({
       predicate: (query) => {
         const key = query.queryKey[0];
         return typeof key === "string" && key.startsWith(`/api/v1/plants/${plantId}/sharing-agreements`);
@@ -113,6 +135,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     coefficientIds: string[],
     appliedOn: Dayjs,
   ): Promise<CoefficientActivationResult> => {
+    setIsActivatingAfterInvalidate(true);
     try {
       await activateMutation.mutateAsync({
         plantId,
@@ -128,7 +151,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
           appliedOn: appliedOn.format("YYYY-MM-DD"),
         },
       });
-      invalidatePlantSharingAgreements();
+      await invalidatePlantSharingAgreements();
       // A no-op batch (200, empty `coefficients` array in the response) is
       // still success: it's not an error, and the state the caller asked for
       // is the state that now holds. Not distinguished from a real batch —
@@ -148,6 +171,8 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
       // coefficientId, never params.line, so every one of them lands here;
       // lineLevel is always empty for this call.
       return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    } finally {
+      setIsActivatingAfterInvalidate(false);
     }
   };
 
@@ -155,13 +180,16 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     sharingAgreementId: string,
     coefficientIds: string[],
   ): Promise<CoefficientActivationResult> => {
+    setIsDeactivatingAfterInvalidate(true);
     try {
       await deactivateMutation.mutateAsync({ plantId, sharingAgreementId, data: { coefficientIds } });
-      invalidatePlantSharingAgreements();
+      await invalidatePlantSharingAgreements();
       successDispatch("Activación revertida.");
       return { success: true };
     } catch (error) {
       return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    } finally {
+      setIsDeactivatingAfterInvalidate(false);
     }
   };
 
@@ -170,6 +198,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     coefficientIds: string[],
     closedOn: Dayjs,
   ): Promise<CoefficientActivationResult> => {
+    setIsClosingAfterInvalidate(true);
     try {
       await closeMutation.mutateAsync({
         plantId,
@@ -182,11 +211,13 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
           closedOn: closedOn.format("YYYY-MM-DD"),
         },
       });
-      invalidatePlantSharingAgreements();
+      await invalidatePlantSharingAgreements();
       successDispatch("Cierre registrado.");
       return { success: true };
     } catch (error) {
       return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    } finally {
+      setIsClosingAfterInvalidate(false);
     }
   };
 
@@ -194,13 +225,16 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     sharingAgreementId: string,
     coefficientIds: string[],
   ): Promise<CoefficientActivationResult> => {
+    setIsReopeningAfterInvalidate(true);
     try {
       await reopenMutation.mutateAsync({ plantId, sharingAgreementId, data: { coefficientIds } });
-      invalidatePlantSharingAgreements();
+      await invalidatePlantSharingAgreements();
       successDispatch("Coeficiente reabierto.");
       return { success: true };
     } catch (error) {
       return { success: false, errorMessages: getGroupedApiErrorDetails(error).fileLevel };
+    } finally {
+      setIsReopeningAfterInvalidate(false);
     }
   };
 
@@ -211,9 +245,9 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     closeCoefficients,
     reopenCoefficients,
     isReplacing: replaceMutation.isPending,
-    isActivating: activateMutation.isPending,
-    isDeactivating: deactivateMutation.isPending,
-    isClosing: closeMutation.isPending,
-    isReopening: reopenMutation.isPending,
+    isActivating: activateMutation.isPending || isActivatingAfterInvalidate,
+    isDeactivating: deactivateMutation.isPending || isDeactivatingAfterInvalidate,
+    isClosing: closeMutation.isPending || isClosingAfterInvalidate,
+    isReopening: reopenMutation.isPending || isReopeningAfterInvalidate,
   };
 }
