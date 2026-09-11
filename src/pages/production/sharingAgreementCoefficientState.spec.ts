@@ -13,6 +13,8 @@ import {
   getCoefficientCupsLabel,
   getEndStateLabel,
   isEndStateReadOnly,
+  isFullyAvailable,
+  summarizeSelectionActions,
 } from "./sharingAgreementCoefficientState";
 
 // These tests exercise a single field at a time against otherwise-irrelevant
@@ -137,6 +139,55 @@ describe("getAvailableCoefficientActions â€” every producible applicationState Ã
 
   it("returns no actions when applicationState is undefined, regardless of endState", () => {
     expect(getAvailableCoefficientActions(undefined, OPEN_ORPHAN)).toEqual([]);
+  });
+});
+
+describe("summarizeSelectionActions / isFullyAvailable", () => {
+  const pending = asCoefficient({ applicationState: PENDING, endState: OPEN });
+  const appliedOpen = asCoefficient({ applicationState: APPLIED, endState: OPEN });
+  const appliedOrphan = asCoefficient({ applicationState: APPLIED, endState: OPEN_ORPHAN });
+  const appliedClosed = asCoefficient({ applicationState: APPLIED, endState: CLOSED });
+
+  it("an empty selection offers no action", () => {
+    expect(summarizeSelectionActions([])).toEqual([]);
+  });
+
+  it("an action is fully available only when every selected row supports it", () => {
+    const result = summarizeSelectionActions([appliedOpen, appliedOpen]);
+    const correct = result.find((item) => item.action === "correct")!;
+    expect(correct).toEqual({ action: "correct", eligibleCount: 2, selectedCount: 2 });
+    expect(isFullyAvailable(correct)).toBe(true);
+  });
+
+  it("an action supported by some selected rows is reported with its eligible count and is not fully available", () => {
+    const result = summarizeSelectionActions([appliedOpen, pending]);
+    const correct = result.find((item) => item.action === "correct")!;
+    expect(correct).toEqual({ action: "correct", eligibleCount: 1, selectedCount: 2 });
+    expect(isFullyAvailable(correct)).toBe(false);
+  });
+
+  it("an action supported by no selected row is not reported", () => {
+    const result = summarizeSelectionActions([pending, pending]);
+    expect(result).toEqual([]);
+  });
+
+  it("a pending row never contributes close or reopen, even outnumbering the applied row in the selection", () => {
+    const result = summarizeSelectionActions([pending, pending, pending, appliedOrphan]);
+    const close = result.find((item) => item.action === "close")!;
+    expect(close).toEqual({ action: "close", eligibleCount: 1, selectedCount: 4 });
+    expect(isFullyAvailable(close)).toBe(false);
+    expect(result.some((item) => item.action === "reopen")).toBe(false);
+  });
+
+  it("a selection mixing pending and applied rows has no fully available action", () => {
+    const result = summarizeSelectionActions([pending, appliedOpen, appliedClosed]);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result.every((item) => !isFullyAvailable(item))).toBe(true);
+  });
+
+  it("orders results the same way the row menu does: correct, deactivate, then close/reopen", () => {
+    const result = summarizeSelectionActions([appliedOrphan, appliedClosed]);
+    expect(result.map((item) => item.action)).toEqual(["correct", "deactivate", "close", "reopen"]);
   });
 });
 
