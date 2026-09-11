@@ -78,6 +78,15 @@ export const CoefficientActionsMenuItems: FC<CoefficientActionsMenuItemsProps> =
           if (!isDisabled) onSelectAction(item.action);
         }}
         aria-disabled={isDisabled || undefined}
+        sx={
+          isDisabled
+            ? {
+                opacity: 0.5,
+                cursor: "default",
+                "&:hover": { backgroundColor: "transparent" },
+              }
+            : undefined
+        }
       >
         <ListItemIcon>{COEFFICIENT_ACTION_ICON[item.action]}</ListItemIcon>
         <ListItemText
