@@ -320,6 +320,22 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     });
   };
 
+  // A successful row-path action is a specific, more recent decision about
+  // that one row, superseding whatever the selection expressed earlier —
+  // without this, a later batch action either reports "N-1 of N eligible"
+  // with no indication of which row to deselect (possibly one hidden by the
+  // filter), or silently overwrites this row's individual correction. Never
+  // called on failure: an untouched selection is exactly what a failed
+  // action should leave behind.
+  const dropFromSelection = (coefficientId: string) => {
+    setSelectedIds((prev) => {
+      if (!prev.has(coefficientId)) return prev;
+      const next = new Set(prev);
+      next.delete(coefficientId);
+      return next;
+    });
+  };
+
   // Tri-state: indeterminate and unchecked both select every visible
   // pending row; only the fully-checked state deselects — the header
   // control always moves toward "select all" first, standard tri-state
@@ -385,6 +401,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     if (!actionsMenuCoefficient) return;
     const result = await activateCoefficients(sharingAgreementId, [actionsMenuCoefficient.coefficientId], date);
     if (result.success) {
+      dropFromSelection(actionsMenuCoefficient.coefficientId);
       setActiveDialog(null);
       setActionsMenuCoefficientId(null);
       setDialogErrors(null);
@@ -398,6 +415,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     const mutate = activeDialog === "deactivate" ? deactivateCoefficients : reopenCoefficients;
     const result = await mutate(sharingAgreementId, [actionsMenuCoefficient.coefficientId]);
     if (result.success) {
+      dropFromSelection(actionsMenuCoefficient.coefficientId);
       setActiveDialog(null);
       setActionsMenuCoefficientId(null);
       setDialogErrors(null);
@@ -410,6 +428,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     if (!actionsMenuCoefficient) return;
     const result = await closeCoefficients(sharingAgreementId, [actionsMenuCoefficient.coefficientId], date);
     if (result.success) {
+      dropFromSelection(actionsMenuCoefficient.coefficientId);
       setActiveDialog(null);
       setActionsMenuCoefficientId(null);
       setDialogErrors(null);

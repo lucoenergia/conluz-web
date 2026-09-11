@@ -1057,6 +1057,54 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
   });
 
+  it("a successful row-path action drops that row from a live selection, leaving the others selected", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "p1" }] });
+    const threePendingRows: SharingAgreementPartitionCoefficientResponse[] = [
+      { coefficientId: "p1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "p2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "p3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+    ];
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePendingRows });
+
+    await selectPendingRow(user, "Vivienda A");
+    await selectPendingRow(user, "Vivienda B");
+    await selectPendingRow(user, "Vivienda C");
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(screen.getByText("2 seleccionados")).toBeInTheDocument());
+    expect(screen.getAllByRole("checkbox", { name: "Seleccionar Vivienda A" })[0]).not.toBeChecked();
+  });
+
+  it("a failed row-path action leaves the selection untouched", async () => {
+    mockActivateMutateAsync.mockRejectedValue({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const threePendingRows: SharingAgreementPartitionCoefficientResponse[] = [
+      { coefficientId: "p1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "p2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    ];
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePendingRows });
+
+    await selectPendingRow(user, "Vivienda A");
+    await selectPendingRow(user, "Vivienda B");
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+  });
+
   it("disables every row's ⋯ button while any coefficient mutation is pending, not just the one in flight", () => {
     // A deactivate elsewhere on the page is pending — every row's menu
     // button must freeze, not only the row whose action is actually running,
