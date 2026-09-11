@@ -89,6 +89,7 @@ import {
   type SharingAgreementCoefficientSums,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { useSharingAgreementCoefficientMutations } from "../../pages/production/useSharingAgreementCoefficientMutations";
+import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 
 // Authoritative rather than measured: these constants *set* the fixed bar's
 // height (and the matching spacer's height) at each breakpoint, rather than
@@ -287,15 +288,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // condition, computed once, so the bar and spacer can never disagree about
   // whether they're mounted.
   const isBatchBarMounted = selectedIds.size > 0;
-  const isSelectedDateValid =
-    selectedDate !== null && selectedDate.isValid() && !selectedDate.isAfter(dayjs(), "day") && dateValidationError === null;
-  const applyDisabledReason = !selectedDate
-    ? "Selecciona una fecha"
-    : !isSelectedDateValid
-      ? "La fecha no puede ser futura ni inválida"
-      : isActivating
-        ? "Aplicando la fecha…"
-        : null;
+  const applyDisabledReason = getCoefficientDateDisabledReason(selectedDate, dateValidationError, isActivating, "Aplicando la fecha…");
 
   const toggleSelected = (coefficientId: string) => {
     setSelectedIds((prev) => {

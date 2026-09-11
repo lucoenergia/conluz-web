@@ -10,6 +10,7 @@ import { ConfirmationModal } from "./ConfirmationModal";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
+import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 import { CoefficientDialogErrorPanel } from "./coefficientLifecycleDialogHelpers";
 
 interface CorrectCoefficientDateConfirmationModalProps {
@@ -41,15 +42,7 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
     }
   }, [isOpen]);
 
-  const isSelectedDateValid =
-    selectedDate !== null && selectedDate.isValid() && !selectedDate.isAfter(dayjs(), "day") && dateValidationError === null;
-  const confirmDisabledReason = !selectedDate
-    ? "Selecciona una fecha"
-    : !isSelectedDateValid
-      ? "La fecha no puede ser futura ni inválida"
-      : isPending
-        ? "Guardando…"
-        : null;
+  const confirmDisabledReason = getCoefficientDateDisabledReason(selectedDate, dateValidationError, isPending, "Guardando…");
 
   const handleConfirm = () => {
     if (!selectedDate || confirmDisabledReason) return;
