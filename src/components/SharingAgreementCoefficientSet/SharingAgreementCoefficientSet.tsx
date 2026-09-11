@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FC, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FC, type MouseEvent } from "react";
 import {
   Alert,
   Box,
@@ -6,11 +6,7 @@ import {
   Checkbox,
   Chip,
   CircularProgress,
-  Divider,
-  ListItemIcon,
-  ListItemText,
   Menu,
-  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -34,11 +30,6 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import EventBusyOutlinedIcon from "@mui/icons-material/EventBusyOutlined";
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
@@ -47,6 +38,7 @@ import { SharingAgreementCoefficientSumCards } from "../SharingAgreementCoeffici
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
+import { CoefficientActionsMenuItems } from "../CoefficientActionsMenu";
 import { ApplyCoefficientDateConfirmationModal } from "../Modals/ApplyCoefficientDateConfirmationModal";
 import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoefficientDateConfirmationModal";
 import { DeactivateOrReopenCoefficientConfirmationModal } from "../Modals/DeactivateOrReopenCoefficientConfirmationModal";
@@ -126,32 +118,6 @@ const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilt
   SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
   SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
 ];
-
-// getAvailableCoefficientActions returns a single-item ["apply"] for a
-// PENDING row (no divider — there's only ever one item), or, once APPLIED,
-// [correct, deactivate, (close|reopen)] — "correct" is the only plain edit
-// among those, everything after it rewrites history retroactively, hence
-// the divider always sitting right after index 0 in that case.
-const ROW_ACTION_LABEL: Record<CoefficientAction, string> = {
-  apply: "Registrar fecha",
-  correct: "Corregir fecha",
-  deactivate: "Desactivar",
-  close: "Cerrar (baja)",
-  reopen: "Reabrir",
-};
-
-const ROW_ACTION_ICON: Record<CoefficientAction, ReactNode> = {
-  apply: <EventAvailableOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
-  correct: <EditCalendarOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
-  deactivate: <RemoveCircleOutlineIcon fontSize="small" sx={{ color: "error.main" }} />,
-  close: <EventBusyOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
-  reopen: <LockOpenOutlinedIcon fontSize="small" sx={{ color: "error.main" }} />,
-};
-
-const ROW_ACTION_TEXT_COLOR: Partial<Record<CoefficientAction, string>> = {
-  deactivate: "error.main",
-  reopen: "error.main",
-};
 
 function filterEditableRows(rows: EditableCoefficientRow[], searchText: string): EditableCoefficientRow[] {
   const trimmed = searchText.trim();
@@ -1009,18 +975,14 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
       >
-        {(actionsMenuCoefficient
-          ? getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState)
-          : []
-        ).flatMap((action, index) => [
-          ...(index === 1 ? [<Divider key="divider" />] : []),
-          <MenuItem key={action} onClick={() => handleSelectAction(action)}>
-            <ListItemIcon>{ROW_ACTION_ICON[action]}</ListItemIcon>
-            <ListItemText sx={ROW_ACTION_TEXT_COLOR[action] ? { color: ROW_ACTION_TEXT_COLOR[action] } : undefined}>
-              {ROW_ACTION_LABEL[action]}
-            </ListItemText>
-          </MenuItem>,
-        ])}
+        <CoefficientActionsMenuItems
+          actions={
+            actionsMenuCoefficient
+              ? getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState)
+              : []
+          }
+          onSelectAction={handleSelectAction}
+        />
       </Menu>
 
       <ApplyCoefficientDateConfirmationModal
