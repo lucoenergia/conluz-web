@@ -10,7 +10,7 @@ import { CoefficientDialogErrorPanel } from "./coefficientLifecycleDialogHelpers
 interface DeactivateOrReopenCoefficientConfirmationModalProps {
   isOpen: boolean;
   action: "deactivate" | "reopen";
-  coefficient: SharingAgreementPartitionCoefficientResponse | undefined;
+  coefficients: readonly [SharingAgreementPartitionCoefficientResponse, ...SharingAgreementPartitionCoefficientResponse[]] | undefined;
   isPending: boolean;
   errorMessages: string[] | null;
   onCancel: (event: MouseEvent<HTMLElement>) => void;
@@ -33,7 +33,7 @@ const COPY = {
 export const DeactivateOrReopenCoefficientConfirmationModal: FC<DeactivateOrReopenCoefficientConfirmationModalProps> = ({
   isOpen,
   action,
-  coefficient,
+  coefficients,
   isPending,
   errorMessages,
   onCancel,
@@ -63,7 +63,7 @@ export const DeactivateOrReopenCoefficientConfirmationModal: FC<DeactivateOrReop
           borderRadius: radii.default,
         }}
       >
-        {getCoefficientCupsLabel(coefficient)}
+        {getCoefficientCupsLabel(coefficients?.[0])}
       </Typography>
       <Typography sx={{ fontSize: fontSizes.lg, color: "text.secondary", lineHeight: 1.6 }}>{copy.effect}</Typography>
       <CoefficientDialogErrorPanel errorMessages={errorMessages} />

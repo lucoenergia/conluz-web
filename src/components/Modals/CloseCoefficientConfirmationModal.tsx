@@ -14,7 +14,7 @@ import { CoefficientDialogErrorPanel } from "./coefficientLifecycleDialogHelpers
 
 interface CloseCoefficientConfirmationModalProps {
   isOpen: boolean;
-  coefficient: SharingAgreementPartitionCoefficientResponse | undefined;
+  coefficients: readonly [SharingAgreementPartitionCoefficientResponse, ...SharingAgreementPartitionCoefficientResponse[]] | undefined;
   isPending: boolean;
   errorMessages: string[] | null;
   onCancel: (event: MouseEvent<HTMLElement>) => void;
@@ -23,7 +23,7 @@ interface CloseCoefficientConfirmationModalProps {
 
 export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationModalProps> = ({
   isOpen,
-  coefficient,
+  coefficients,
   isPending,
   errorMessages,
   onCancel,
@@ -77,7 +77,7 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
           borderRadius: radii.default,
         }}
       >
-        {getCoefficientCupsLabel(coefficient)}
+        {getCoefficientCupsLabel(coefficients?.[0])}
       </Typography>
       <Typography sx={{ fontSize: fontSizes.lg, color: "text.secondary", lineHeight: 1.6, mb: 2 }}>
         A partir de la fecha indicada, este suministro dejará de recibir atribución de producción en este acuerdo.

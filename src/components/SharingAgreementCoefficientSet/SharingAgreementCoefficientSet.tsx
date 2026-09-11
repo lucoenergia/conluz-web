@@ -980,7 +980,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       <CorrectCoefficientDateConfirmationModal
         isOpen={activeDialog === "correct"}
-        coefficient={actionsMenuCoefficient}
+        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
         isPending={isActivating}
         errorMessages={dialogErrors}
         onCancel={handleCancelDialog}
@@ -990,7 +990,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       <DeactivateOrReopenCoefficientConfirmationModal
         isOpen={activeDialog === "deactivate" || activeDialog === "reopen"}
         action={activeDialog === "reopen" ? "reopen" : "deactivate"}
-        coefficient={actionsMenuCoefficient}
+        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
         isPending={activeDialog === "reopen" ? isReopening : isDeactivating}
         errorMessages={dialogErrors}
         onCancel={handleCancelDialog}
@@ -999,7 +999,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       <CloseCoefficientConfirmationModal
         isOpen={activeDialog === "close"}
-        coefficient={actionsMenuCoefficient}
+        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
         isPending={isClosing}
         errorMessages={dialogErrors}
         onCancel={handleCancelDialog}

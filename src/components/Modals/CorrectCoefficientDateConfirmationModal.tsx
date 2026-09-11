@@ -14,7 +14,7 @@ import { CoefficientDialogErrorPanel } from "./coefficientLifecycleDialogHelpers
 
 interface CorrectCoefficientDateConfirmationModalProps {
   isOpen: boolean;
-  coefficient: SharingAgreementPartitionCoefficientResponse | undefined;
+  coefficients: readonly [SharingAgreementPartitionCoefficientResponse, ...SharingAgreementPartitionCoefficientResponse[]] | undefined;
   isPending: boolean;
   errorMessages: string[] | null;
   onCancel: (event: MouseEvent<HTMLElement>) => void;
@@ -23,7 +23,7 @@ interface CorrectCoefficientDateConfirmationModalProps {
 
 export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateConfirmationModalProps> = ({
   isOpen,
-  coefficient,
+  coefficients,
   isPending,
   errorMessages,
   onCancel,
@@ -78,7 +78,7 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
           borderRadius: radii.default,
         }}
       >
-        {getCoefficientCupsLabel(coefficient)}
+        {getCoefficientCupsLabel(coefficients?.[0])}
       </Typography>
       <Typography sx={{ fontSize: fontSizes.lg, color: "text.secondary", lineHeight: 1.6, mb: 2 }}>
         La producción ya atribuida a este suministro —que puede haberse mostrado o facturado ya— cambiará de forma
