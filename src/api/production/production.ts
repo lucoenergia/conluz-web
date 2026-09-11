@@ -584,7 +584,7 @@ export const useSyncMonthlyDatadisProduction = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions , queryClient);
     }
     /**
- * Offers real-time insights into the instantaneous energy production of the plants of the community identified by the path `communityId`. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it. When a `supplyId` is provided, only the supply owner or a Community Admin of the supply's community may access it, and the supply must belong to the community in the path.
+ * Offers real-time insights into the instantaneous energy production of the plants of the community identified by the path `communityId`. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
  * @summary Delivers real-time energy production details of a community.
  */
 export const getInstantProduction = (
@@ -680,7 +680,7 @@ export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getIns
 
 
 /**
- * Retrieves yearly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it. When a `supplyId` is provided, only the supply owner or a Community Admin of the supply's community may access it, and the supply must belong to the community in the path.
+ * Retrieves yearly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
  * @summary Retrieves yearly energy production data of a community within a given date interval.
  */
 export const getYearlyProduction = (
@@ -776,7 +776,7 @@ export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYear
 
 
 /**
- * Retrieves monthly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it. When a `supplyId` is provided, only the supply owner or a Community Admin of the supply's community may access it, and the supply must belong to the community in the path.
+ * Retrieves monthly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
  * @summary Retrieves monthly energy production data of a community within a given date interval.
  */
 export const getMonthlyProduction = (
@@ -872,7 +872,7 @@ export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMon
 
 
 /**
- * Retrieves hourly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it. When a `supplyId` is provided, only the supply owner or a Community Admin of the supply's community may access it, and the supply must belong to the community in the path.
+ * Retrieves hourly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
  * @summary Retrieves hourly energy production data of a community within a given date interval.
  */
 export const getHourlyProduction = (
@@ -1384,7 +1384,7 @@ export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof g
 
 
 /**
- * Retrieves daily energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it. When a `supplyId` is provided, only the supply owner or a Community Admin of the supply's community may access it, and the supply must belong to the community in the path.
+ * Retrieves daily energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
  * @summary Retrieves daily energy production data of a community within a given date interval.
  */
 export const getDailyProduction = (

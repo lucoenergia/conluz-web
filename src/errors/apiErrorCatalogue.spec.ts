@@ -173,6 +173,7 @@ const LIFECYCLE_CODES: RestErrorDetailCode[] = [
   "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
   "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
   "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
+  "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
 ];
 
 describe("coefficient-lifecycle error templates (activate/deactivate/close/reopen)", () => {
@@ -228,6 +229,15 @@ describe("coefficient-lifecycle error templates (activate/deactivate/close/reope
     expect(grouped.fileLevel).toHaveLength(3);
     expect(grouped.lineLevel).toHaveLength(0);
     expect(new Set(grouped.fileLevel).size).toBe(3);
+  });
+
+  it("translates SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT to a non-empty Spanish message, distinct from the raw server message", () => {
+    const message = translateErrorDetail(
+      { message: "raw server message", code: "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT" },
+      "fallback",
+    );
+    expect(message).not.toBe("");
+    expect(message).not.toBe("raw server message");
   });
 });
 

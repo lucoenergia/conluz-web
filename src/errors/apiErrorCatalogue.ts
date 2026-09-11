@@ -23,7 +23,7 @@ import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/mod
  * — the API description doesn't bind one specifically to that case — so both
  * are mapped rather than guessing.
  *
- * The 7 SHARING_AGREEMENT_* coefficient-lifecycle codes below (activate/
+ * The 8 SHARING_AGREEMENT_* coefficient-lifecycle codes below (activate/
  * deactivate/close/reopen) use a function template instead of a plain string.
  * `interpolate` (below) silently renders a literal `{key}` when a referenced
  * param is absent — acceptable for the older codes above, whose params are
@@ -35,6 +35,11 @@ import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/mod
  * placeholder. Check this against a real 409 the next time the backend is
  * running; if `cups` isn't the actual key, every one of these messages is
  * quietly generic today.
+ *
+ * SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT is a residual, batch-wide
+ * guard (surfaces once a whole batch's cascading splices conflict, not a
+ * single coefficient's own two neighbouring dates) and never names a single
+ * CUPS, so it stays a plain string rather than joining withOptionalCups.
  */
 type ApiErrorTemplate = string | ((params: Record<string, string> | undefined) => string);
 
@@ -111,6 +116,12 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     (cups) => `El coeficiente de ${cups} no pertenece a este acuerdo de reparto.`,
     "Uno de los coeficientes seleccionados no pertenece a este acuerdo de reparto.",
   ),
+  SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP: withOptionalCups(
+    (cups) => `CUPS ${cups}: con esa fecha, su periodo se solaparía con otro coeficiente del mismo suministro.`,
+    "Con esa fecha, el periodo de un coeficiente se solaparía con otro del mismo suministro.",
+  ),
+  SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT:
+    "No se ha podido guardar: el cambio haría que se solapen dos periodos de un mismo suministro. Recarga la página y revisa las fechas.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

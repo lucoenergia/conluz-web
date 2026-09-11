@@ -52,11 +52,13 @@ import type { ErrorType } from '.././custom-instance';
 /**
  * This endpoint retrieves detailed information about a specific sharing agreement of a plant.
 
-**Required: any member of the plant's community (any role).**
+**Required: community admin of the plant's community.**
 
 Returns 404 if the plant does not exist, if the caller is not a member of its
 community, or if the sharing agreement does not exist or does not belong to
 this plant, to avoid leaking the existence of plants or agreements by ID.
+Returns 403 if the caller is an enabled member of the plant's community but
+not a community admin.
 
 Authentication is required using a Bearer token.
 
@@ -311,11 +313,13 @@ endState) so callers never need to derive interval/successor logic themselves.
 Ordered by CUPS ascending. Works regardless of the agreement's status (DRAFT,
 PUBLISHED or SUPERSEDED).
 
-**Required: any member of the plant's community (any role).**
+**Required: community admin of the plant's community.**
 
 Returns 404 if the plant does not exist, if the caller is not a member of its
 community, or if the sharing agreement does not exist or does not belong to this
 plant, to avoid leaking the existence of plants or agreements by ID.
+Returns 403 if the caller is an enabled member of the plant's community but
+not a community admin.
 
 Authentication is required using a Bearer token.
 
@@ -496,10 +500,11 @@ export const useReplacePartitionCoefficients = <TError = ErrorType<RestError>,
     /**
  * Returns the sharing agreements of the given plant, newest first, optionally filtered by status.
 
-**Required: any member of the plant's community (any role).**
+**Required: community admin of the plant's community.**
 
-Returns 404 if the plant does not exist OR if the caller is not a member of its
-community, to avoid leaking the existence of plants by ID.
+Returns 404 if the plant does not exist or if the caller is not a member of its
+community, to avoid leaking the existence of plants by ID. Returns 403 if the
+caller is an enabled member of the plant's community but not a community admin.
 
 Authentication is required using a Bearer token.
 
@@ -1258,12 +1263,13 @@ export const useGenerateSharingAgreementDistributorFile = <TError = ErrorType<Re
     /**
  * Returns the most recently uploaded evidence file of the sharing agreement, unmodified.
 
-**Required: any member of the plant's community (any role).**
+**Required: community admin of the plant's community.**
 
 Returns 404 if the plant does not exist, if the caller is not a member of its
 community, if the sharing agreement does not exist or does not belong to this
 plant, or if the agreement has no file uploaded, to avoid leaking the existence
-of plants or agreements by ID.
+of plants or agreements by ID. Returns 403 if the caller is an enabled member
+of the plant's community but not a community admin.
 
 Authentication is required using a Bearer token.
 
