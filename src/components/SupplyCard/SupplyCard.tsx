@@ -124,7 +124,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 label={enabled ? "Activo" : "Inactivo"}
                 size="small"
                 sx={{
-                  backgroundColor: enabled ? colors.success : colors.error.main,
+                  backgroundColor: enabled ? colors.success.main : colors.error.main,
                   color: "white",
                   fontWeight: 600,
                   display: { xs: "none", sm: "flex" },

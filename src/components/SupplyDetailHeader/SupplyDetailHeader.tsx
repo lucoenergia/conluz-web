@@ -31,7 +31,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
             sx={{
               fontWeight: 600,
               color: "white",
-              backgroundColor: supplyPoint?.enabled ? colors.success : colors.error,
+              backgroundColor: supplyPoint?.enabled ? colors.success.main : colors.error.main,
             }}
           />
         )}

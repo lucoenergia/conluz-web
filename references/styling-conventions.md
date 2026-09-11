@@ -41,7 +41,7 @@ import { colors } from "../../theme/tokens";
 
 sx={{ color: colors.text.subtle }}        // #6b7280
 sx={{ color: colors.text.body }}          // #374151
-sx={{ color: colors.error.dark }}         // #dc2626
+sx={{ color: colors.error.dark }}         // #b5041c
 sx={{ bgcolor: colors.background.default }} // #f5f7fa
 sx={{ bgcolor: colors.background.surface }} // #f8fafc
 ```

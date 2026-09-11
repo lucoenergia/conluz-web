@@ -48,7 +48,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, section
                 '& .MuiListItemIcon-root': { color: 'white' },
                 '& .MuiListItemText-primary': { color: 'white', fontWeight: 600 },
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #5a67d8 0%, #6b4298 100%)',
+                  background: colors.brand.dark,
                 },
               },
               '&:not(.Mui-selected)': {

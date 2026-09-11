@@ -493,12 +493,12 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
       {
         name: "Autoconsumo",
         data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
-        color: colors.success, // Green
+        color: colors.success.vivid, // Green
       },
       {
         name: "Excedentes",
         data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
-        color: colors.warning, // Amber
+        color: colors.warning.vivid, // Amber
       },
     ];
 

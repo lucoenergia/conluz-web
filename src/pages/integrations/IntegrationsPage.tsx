@@ -49,7 +49,7 @@ const PROVIDERS = [
     id: "shelly" as const,
     name: "Shelly",
     icon: "sensors",
-    color: colors.success,
+    color: colors.success.main,
     description:
       "Lecturas en tiempo real desde dispositivos Shelly instalados en la comunidad. No requiere credenciales adicionales.",
     fields: [] as string[],

@@ -18,9 +18,15 @@ export const theme = createTheme({
     h6: { fontSize: "1.25rem", fontWeight: 600 },
   },
   palette: {
+    // `.main` is the tone that is safe in every direction — as type on white, as
+    // an icon, and as a fill behind white text — so MUI's own components (Button,
+    // Chip, Alert) are accessible by default without any call site opting in.
+    // `.light` carries the vivid decorative tone for chart marks and large fills;
+    // it is ~3:1 and must never sit behind small text.
     primary: {
       main: colors.brand.main,
       dark: colors.brand.dark,
+      light: colors.brand.light,
       contrastText: colors.brand.contrastText,
     },
     secondary: {
@@ -28,17 +34,28 @@ export const theme = createTheme({
       dark: colors.secondary.dark,
     },
     success: {
-      main: colors.success,
+      main: colors.success.main,
+      dark: colors.success.dark,
+      light: colors.success.vivid,
+      contrastText: colors.brand.contrastText,
     },
     error: {
       main: colors.error.main,
       dark: colors.error.dark,
+      light: colors.error.vivid,
+      contrastText: colors.brand.contrastText,
     },
     warning: {
-      main: colors.warning,
+      main: colors.warning.main,
+      dark: colors.warning.dark,
+      light: colors.warning.vivid,
+      contrastText: colors.brand.contrastText,
     },
     info: {
-      main: colors.info,
+      main: colors.info.main,
+      dark: colors.info.dark,
+      light: colors.info.vivid,
+      contrastText: colors.brand.contrastText,
     },
     text: {
       primary: colors.text.primary,

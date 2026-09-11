@@ -37,12 +37,32 @@ Brand-tinted shadows are computed at call sites using `alpha(theme.palette.prima
 
 ## `colors` — Colour palette
 
+Every hue is a set of **roles**, not one value. The role you pick decides which
+contrast bar the colour has to clear, which is how a call site stays accessible
+without anyone re-measuring it. `main` is deliberately the safe one, so the
+obvious choice is also the correct one.
+
+| Role | What it is for | Bar it clears |
+|---|---|---|
+| `main` | the working tone — type, icons, and fills behind white text | ≥ 4.5:1 **both** as type on white and behind white text |
+| `dark` | hover / active | ≥ 7:1 |
+| `vivid` | **decorative only** — chart marks, large fills | ~3:1 — a graphic-object bar, *never* put type on it |
+| `onBrand` | type sitting on `brand.panel` | ≥ 4.5:1 on that panel |
+| `surface` | the tint behind `main` type | explicit hex, never an alpha overlay |
+
+Values were derived in OKLCH (hue preserved, lightness solved to the target
+ratio, chroma tapered toward the extremes) and every pair is verified.
+
 ### Brand
-| Token | Value |
-|---|---|
-| `colors.brand.main` | `#667eea` |
-| `colors.brand.dark` | `#5568d3` |
-| `colors.brand.contrastText` | `#fff` |
+| Token | Value | Use |
+|---|---|---|
+| `colors.brand.light` | `#667eea` | **Decorative only** — 3.66:1. Large fills and gradient ends. Never behind white text, never under small type. |
+| `colors.brand.main` | `#5267cd` | Actions, banners, brand-coloured type. 5.02:1 on white, 4.80:1 on `background.surface`, and carries white text at 5.01:1. |
+| `colors.brand.dark` | `#3e50b2` | Hover / active — white text at 7.01:1 |
+| `colors.brand.panel` | `#3443a1` | Inset well on a brand banner — white text at 8.52:1 |
+| `colors.brand.onSoft` | `#eff3ff` | Secondary type on `brand.main` (4.53:1). Use instead of `opacity: 0.9` on white. |
+| `colors.brand.surface` | `#f0f2fd` | Brand-tinted chip background |
+| `colors.brand.contrastText` | `#fff` | |
 
 ### Secondary
 | Token | Value |
@@ -51,12 +71,17 @@ Brand-tinted shadows are computed at call sites using `alpha(theme.palette.prima
 | `colors.secondary.dark` | `#1e293b` |
 
 ### Semantic
-| Token | Value |
-|---|---|
-| `colors.success` | `#10b981` |
-| `colors.error.main` | `#ef4444` |
-| `colors.error.dark` | `#dc2626` |
-| `colors.warning` | `#f59e0b` |
+| Hue | `main` | `dark` | `vivid` | `onBrand` | `surface` |
+|---|---|---|---|---|---|
+| success | `#008058` | `#006646` | `#00a975` | `#49d49b` | `#e7f8f2` |
+| error | `#d12a30` | `#b5041c` | `#ef4444` | `#ffa59c` | `#fdecec` |
+| warning | `#9f6400` | `#7e4e00` | `#d08400` | `#ffab33` | `#fef5e7` |
+| info | `#0077aa` | `#005f89` | `#009ee1` | `#66c6ff` | `#e7f6fd` |
+
+In the MUI palette these map so that MUI's own components are accessible by
+default: `palette.<hue>.main` → `main`, `.dark` → `dark`, `.light` → `vivid`.
+A `<Chip color="success">` or `<Button color="error">` is therefore safe with no
+call-site opt-in. `.light` is the vivid tone — never put small text on it.
 
 ### Text
 | Token | Value | Use |
@@ -65,8 +90,9 @@ Brand-tinted shadows are computed at call sites using `alpha(theme.palette.prima
 | `colors.text.secondary` | `#64748b` | Secondary / supporting text |
 | `colors.text.body` | `#374151` | Card body text |
 | `colors.text.subtle` | `#6b7280` | De-emphasized body / caption |
-| `colors.text.muted` | `#9ca3af` | Disabled / very de-emphasized |
-| `colors.text.placeholder` | `#94a3b8` | Empty-state icons, search placeholder |
+| `colors.text.muted` | `#717782` | De-emphasized text that is still text — 4.50:1 |
+| `colors.text.disabled` | `#9ca3af` | **Disabled controls only** — 2.54:1, exempt from WCAG 1.4.3. Never for live text. |
+| `colors.text.placeholder` | `#6a788a` | Input placeholders, empty-state icons — 4.50:1 |
 
 ### Structure
 | Token | Value | Use |

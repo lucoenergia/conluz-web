@@ -1,6 +1,5 @@
 import type { FC } from "react";
 import { Chip } from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryIcon from "@mui/icons-material/History";
@@ -12,18 +11,17 @@ import { getSharingAgreementStatusLabel } from "../../pages/production/sharingAg
 export interface SharingAgreementStatusChipProps {
   status: StatusValue | undefined;
   /**
-   * "onLight" (default) is tuned for a white card background (SharingAgreementCard).
-   * "onDark" forces a near-opaque white pill instead of the tinted backgrounds below —
-   * those tint colors are the same hue as the theme's primary.main banner background
-   * (SharingAgreementDetailHeader), so on a solid primary-colored banner the PUBLISHED
-   * variant in particular renders with zero contrast (blue text on a blue-tinted chip
-   * on a solid blue banner). Icon/text colors are unchanged in both tones.
+   * "onLight" (default) is tuned for a white card background (SharingAgreementCard):
+   * an explicit `surface` tint carrying the matching `text` tone at >= 4.5:1.
+   * "onDark" forces a near-opaque white pill instead, because the tints share the
+   * hue of the primary banner behind them (SharingAgreementDetailHeader) and would
+   * otherwise sit invisibly on it. Both tones use the same `text` tone, which clears
+   * 4.5:1 on the white pill as well.
    */
   tone?: "onLight" | "onDark";
 }
 
 export const SharingAgreementStatusChip: FC<SharingAgreementStatusChipProps> = ({ status, tone = "onLight" }) => {
-  const theme = useTheme();
   const label = getSharingAgreementStatusLabel(status);
   const onDark = tone === "onDark";
 
@@ -35,10 +33,10 @@ export const SharingAgreementStatusChip: FC<SharingAgreementStatusChipProps> = (
           label={label}
           size="small"
           sx={{
-            bgcolor: onDark ? alphas.white.strong : alpha(theme.palette.primary.main, 0.12),
-            color: "primary.main",
+            bgcolor: onDark ? alphas.white.strong : colors.brand.surface,
+            color: colors.brand.main,
             fontWeight: 600,
-            "& .MuiChip-icon": { color: "primary.main" },
+            "& .MuiChip-icon": { color: colors.brand.main },
           }}
         />
       );
@@ -49,10 +47,10 @@ export const SharingAgreementStatusChip: FC<SharingAgreementStatusChipProps> = (
           label={label}
           size="small"
           sx={{
-            bgcolor: onDark ? alphas.white.strong : alphas.warning.light,
-            color: "warning.main",
+            bgcolor: onDark ? alphas.white.strong : colors.warning.surface,
+            color: colors.warning.main,
             fontWeight: 600,
-            "& .MuiChip-icon": { color: "warning.main" },
+            "& .MuiChip-icon": { color: colors.warning.main },
           }}
         />
       );

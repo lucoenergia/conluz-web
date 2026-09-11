@@ -127,8 +127,8 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
                         onClick={handleDeleteClick}
                         sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
                       >
-                        <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
-                        <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
+                        <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.main", flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
                           Eliminar
                         </Typography>
                       </MenuItem>

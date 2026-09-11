@@ -120,8 +120,8 @@ export const CommunitiesPage: FC = () => {
         subtitle="Administra las comunidades energéticas de la plataforma"
         stats={[
           { value: communities.length, label: "Total" },
-          { value: totalActive, label: "Activas", color: colors.success },
-          { value: totalInactive, label: "Inactivas", color: colors.error.main },
+          { value: totalActive, label: "Activas", color: colors.success.onBrand },
+          { value: totalInactive, label: "Inactivas", color: colors.error.onBrand },
         ]}
       />
 

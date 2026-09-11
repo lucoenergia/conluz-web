@@ -235,7 +235,7 @@ export const ContactPage: FC = () => {
                 height: 48,
               }}
             >
-              <MessageIcon sx={{ color: colors.warning, fontSize: 24 }} />
+              <MessageIcon sx={{ color: colors.warning.main, fontSize: 24 }} />
             </Avatar>
             <Box>
               {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#2d3748); no matching token */}

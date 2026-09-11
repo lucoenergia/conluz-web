@@ -139,8 +139,8 @@ export const PartnerSupplyPointsPage: FC = () => {
           subtitle={isLoadingPartner ? "Cargando..." : `Socio: ${partner?.fullName || "Desconocido"}`}
           stats={[
             { value: stats.total, label: "Total" },
-            { value: stats.active, label: "Activos", color: colors.success },
-            { value: stats.inactive, label: "Inactivos", color: colors.error.main },
+            { value: stats.active, label: "Activos", color: colors.success.onBrand },
+            { value: stats.inactive, label: "Inactivos", color: colors.error.onBrand },
           ]}
         />
       </Box>

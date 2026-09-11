@@ -29,30 +29,75 @@ export const shadows = {
 } as const;
 
 // ─── Colours ─────────────────────────────────────────────────────────────────
+// Every hue is a set of ROLES, not a single value, and `main` is deliberately
+// the safe one so the obvious call site is also the correct one:
+//
+//   main     the working tone. ≥ 4.5:1 as text on white AND behind white text,
+//            so it is safe as type, as an icon, and as a fill — all directions.
+//   dark     hover / active. ≥ 7:1.
+//   vivid    decorative ONLY — chart marks and large fills. ~3:1, which is the
+//            bar for a graphic object but NOT for text. Never put type on it.
+//   onBrand  type sitting on `brand.panel`. ≥ 4.5:1 on that panel.
+//   surface  the tint behind `main` type. Explicit, never an alpha overlay:
+//            alpha made the effective contrast depend on whatever was beneath.
+//
+// Derived in OKLCH — hue preserved, lightness solved to the target ratio, chroma
+// tapered toward the extremes — and every pair verified rather than eyeballed.
 export const colors = {
   brand: {
-    main: "#667eea",
-    dark: "#5568d3",
+    // Decorative only: large fills and gradient ends. 3.66:1, so it can never
+    // carry small text and can never sit behind white text.
+    light: "#667eea",
+    // The working brand tone: actions, banners, brand-coloured type.
+    // 5.02:1 on white, 4.79:1 on background.surface, 4.50:1 on brand.surface,
+    // and carries white text at 5.01:1 — one value safe in every direction.
+    main: "#5267cd",
+    dark: "#3e50b2",    // hover / active — white text at 7.01:1
+    panel: "#3443a1",   // inset well on a brand banner — white text at 8.52:1
+    onSoft: "#eff3ff",  // secondary type on brand.main (4.52:1); replaces opacity:0.9
+    surface: "#f0f2fd", // brand-tinted chip background
     contrastText: "#fff",
+  },
+  success: {
+    main:    "#008058", // 4.97:1 either direction
+    dark:    "#006646", // 7.03:1
+    vivid:   "#00a975", // 3.03:1 — chart marks / large fills only
+    onBrand: "#49d49b", // 4.54:1 on brand.panel
+    surface: "#e7f8f2", // `main` clears 4.52:1 on this tint
+  },
+  error: {
+    main:    "#d12a30", // 5.14:1 either direction
+    dark:    "#b5041c", // 7.00:1 — destructive hover
+    vivid:   "#ef4444", // 3.76:1 — chart marks / large fills only
+    onBrand: "#ffa59c", // 4.51:1 on brand.panel
+    surface: "#fdecec", // `main` clears 4.50:1 on this tint
+  },
+  warning: {
+    main:    "#9f6400", // 4.89:1 either direction
+    dark:    "#7e4e00", // 7.05:1
+    vivid:   "#d08400", // 3.01:1 — chart marks / large fills only
+    onBrand: "#ffab33", // 4.52:1 on brand.panel
+    surface: "#fef5e7", // `main` clears 4.52:1 on this tint
+  },
+  info: {
+    main:    "#0077aa", // 4.98:1 either direction
+    dark:    "#005f89", // 7.00:1
+    vivid:   "#009ee1", // 3.01:1 — chart marks / large fills only
+    onBrand: "#66c6ff", // 4.50:1 on brand.panel
+    surface: "#e7f6fd", // `main` clears 4.50:1 on this tint
   },
   secondary: {
     main: "#475569",
     dark: "#1e293b",
   },
-  success: "#10b981",
-  error: {
-    main: "#ef4444",
-    dark: "#dc2626", // destructive action hover / darker danger variant
-  },
-  warning: "#f59e0b",
-  info: "#0ea5e9",
   text: {
     primary:     "#1e293b",
     secondary:   "#64748b",
     body:        "#374151", // card body text, slightly lighter than primary
     subtle:      "#6b7280", // deemphasized body / caption text
-    muted:       "#9ca3af", // disabled / very deemphasized text
-    placeholder: "#94a3b8", // empty-state icons, search placeholder
+    muted:       "#717782", // deemphasized text that is still text — 4.50:1
+    disabled:    "#9ca3af", // disabled controls ONLY — 2.54:1, exempt from 1.4.3
+    placeholder: "#6a788a", // input placeholders / empty-state icons — 4.50:1
   },
   divider: "#e5e7eb",
   border: {

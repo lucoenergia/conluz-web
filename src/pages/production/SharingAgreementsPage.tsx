@@ -119,7 +119,7 @@ export const SharingAgreementsPage: FC = () => {
               subtitle={plant?.regulatoryCode ? `CAU: ${plant.regulatoryCode}` : "CAU no disponible"}
               stats={[
                 { value: counts.vigentes, label: "Vigente" },
-                { value: counts.drafts, label: "Borradores", color: colors.warning },
+                { value: counts.drafts, label: "Borradores", color: colors.warning.onBrand },
                 { value: counts.historicos, label: "Históricos" },
               ]}
             />

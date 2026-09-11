@@ -476,12 +476,12 @@ export const SupplyDetailPage: FC = () => {
       {
         name: "Autoconsumo",
         data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
-        color: colors.success, // Green
+        color: colors.success.vivid, // Green
       },
       {
         name: "Excedentes",
         data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
-        color: colors.warning, // Amber
+        color: colors.warning.vivid, // Amber
       },
     ];
 
@@ -562,7 +562,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.selfConsumptionTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
-              color: colors.success,
+              color: colors.success.main,
             },
             {
               label: "Excedentes",
@@ -570,7 +570,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.surplusTrend !== undefined ? Math.round(consumptionMetrics.surplusTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <EvStationIcon sx={{ fontSize: 24 }} />,
-              color: colors.warning,
+              color: colors.warning.main,
             },
           ]}
         />

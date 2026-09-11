@@ -209,7 +209,7 @@ export const MembersPage: FC = () => {
         subtitle="Administra los miembros de la comunidad activa"
         stats={[
           { value: memberships.length, label: "Total" },
-          { value: activeCount, label: "Activos", color: colors.success },
+          { value: activeCount, label: "Activos", color: colors.success.onBrand },
           { value: adminCount, label: "Admins", color: theme.palette.primary.main },
         ]}
       />

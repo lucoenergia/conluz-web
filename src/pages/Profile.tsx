@@ -189,7 +189,7 @@ export const ProfilePage: FC = () => {
                     sx={{
                       fontSize: fontSizes.md,
                       fontWeight: 600,
-                      backgroundColor: colors.success,
+                      backgroundColor: colors.success.main,
                       color: "white",
                       px: 1,
                       py: 2.5,

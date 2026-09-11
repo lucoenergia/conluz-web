@@ -103,7 +103,7 @@ export const PlantsPage: FC = () => {
           subtitle="Gestiona las plantas de producción de la comunidad energética"
           stats={[
             { value: stats.total, label: "Total plantas" },
-            { value: `${stats.totalPower} kW`, label: "Potencia total", color: colors.success },
+            { value: `${stats.totalPower} kW`, label: "Potencia total", color: colors.success.onBrand },
           ]}
         />
       </Box>
