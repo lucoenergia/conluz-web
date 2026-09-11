@@ -12,7 +12,7 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
 import { colors } from "../../theme/tokens";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
-const { OPEN, DERIVED } = SharingAgreementPartitionCoefficientResponseEndState;
+const { OPEN, DERIVED, OPEN_ORPHAN } = SharingAgreementPartitionCoefficientResponseEndState;
 
 const pendingCoefficient: SharingAgreementPartitionCoefficientResponse = {
   coefficientId: "1",
@@ -440,5 +440,274 @@ describe("SharingAgreementCoefficientCard", () => {
 
     expect(screen.queryByText("Sin fecha de aplicación")).not.toBeInTheDocument();
     expect(screen.queryByText("Regístrala cuando la distribuidora lo aplique")).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () => {
+  it("renders a checkbox for a PENDING coefficient when selection is offered, and calls onToggleSelected", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn
+            selected={false}
+            onToggleSelected={onToggleSelected}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda A" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a checkbox for an APPLIED coefficient too, now that it's actionable (correct/deactivate)", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={derivedCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn
+            selected={false}
+            onToggleSelected={onToggleSelected}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda B" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
+  });
+
+  it("never renders a checkbox when showSelectionColumn is false, even for a PENDING coefficient with onToggleSelected present", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn={false}
+            onToggleSelected={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("reflects a checked selection state", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showSelectionColumn
+            selected
+            onToggleSelected={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Seleccionar Vivienda A" })).toBeChecked();
+  });
+});
+
+describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
+  const appliedOrphanCoefficient: SharingAgreementPartitionCoefficientResponse = {
+    ...derivedCoefficient,
+    coefficientId: "3",
+    endState: OPEN_ORPHAN,
+    endDate: null,
+  };
+
+  it("renders a menu button offering apply for a PENDING row — getAvailableCoefficientActions now returns [\"apply\"]", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            showActionsColumn
+            onOpenActionsMenu={onOpenActionsMenu}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda A" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+    expect(onOpenActionsMenu.mock.calls[0][1]).toBe(pendingCoefficient);
+  });
+
+  it("renders no menu button when showActionsColumn is false, even for an actionable row", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={appliedOrphanCoefficient}
+            installedPowerKw={100}
+            showActionsColumn={false}
+            onOpenActionsMenu={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+  });
+
+  it("renders the menu button for an actionable row and calls onOpenActionsMenu with the coefficient", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={appliedOrphanCoefficient}
+            installedPowerKw={100}
+            showActionsColumn
+            onOpenActionsMenu={onOpenActionsMenu}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda B" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+    expect(onOpenActionsMenu.mock.calls[0][1]).toBe(appliedOrphanCoefficient);
+  });
+
+  it("disables the menu button when actionsDisabled is set, even for an actionable row", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={appliedOrphanCoefficient}
+            installedPowerKw={100}
+            showActionsColumn
+            onOpenActionsMenu={vi.fn()}
+            actionsDisabled
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByRole("button", { name: "Más acciones para Vivienda B" })).toBeDisabled();
+  });
+});
+
+describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
+  const appliedOrphanCoefficient: SharingAgreementPartitionCoefficientResponse = {
+    ...derivedCoefficient,
+    coefficientId: "3",
+    endState: OPEN_ORPHAN,
+    endDate: null,
+  };
+
+  it("renders a menu button offering apply for a PENDING row", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={pendingCoefficient}
+        installedPowerKw={100}
+        showActionsColumn
+        onOpenActionsMenu={onOpenActionsMenu}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda A" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+    expect(onOpenActionsMenu.mock.calls[0][1]).toBe(pendingCoefficient);
+  });
+
+  it("renders the menu button for an actionable row and calls onOpenActionsMenu", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={appliedOrphanCoefficient}
+        installedPowerKw={100}
+        showActionsColumn
+        onOpenActionsMenu={onOpenActionsMenu}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda B" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the menu button when actionsDisabled is set, even for an actionable row", () => {
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={appliedOrphanCoefficient}
+        installedPowerKw={100}
+        showActionsColumn
+        onOpenActionsMenu={vi.fn()}
+        actionsDisabled
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Más acciones para Vivienda B" })).toBeDisabled();
+  });
+});
+
+describe("SharingAgreementCoefficientCard (batch-activation checkbox)", () => {
+  it("renders a checkbox for a PENDING coefficient when selection is offered, and calls onToggleSelected", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={pendingCoefficient}
+        installedPowerKw={100}
+        showSelectionColumn
+        selected={false}
+        onToggleSelected={onToggleSelected}
+      />,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda A" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a checkbox for an APPLIED coefficient too, now that it's actionable (correct/deactivate)", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SharingAgreementCoefficientCard
+        coefficient={derivedCoefficient}
+        installedPowerKw={100}
+        showSelectionColumn
+        selected={false}
+        onToggleSelected={onToggleSelected}
+      />,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda B" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
   });
 });

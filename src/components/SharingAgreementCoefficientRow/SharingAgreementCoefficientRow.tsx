@@ -1,6 +1,7 @@
-import type { FC } from "react";
-import { Box, IconButton, InputAdornment, TableCell, TableRow, TextField, Typography } from "@mui/material";
+import type { FC, MouseEvent } from "react";
+import { Box, Checkbox, IconButton, InputAdornment, TableCell, TableRow, TextField, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatDecimalForInput } from "../../utils/parseDecimalInput";
@@ -9,6 +10,7 @@ import { formatCoefficientPercentage } from "../../pages/production/sharingAgree
 import {
   getApplicationStateDetail,
   getApplicationStateHeadline,
+  getAvailableCoefficientActions,
   getEndStateLabel,
   isEndStateReadOnly,
 } from "../../pages/production/sharingAgreementCoefficientState";
@@ -28,6 +30,17 @@ export interface SharingAgreementCoefficientRowProps {
   onRemove?: () => void;
   /** Whether the applicationState/endState cells render. Defaults to true; the container hides them for a clean DRAFT. */
   showStateColumns?: boolean;
+  /** Whether the batch-activation checkbox column/slot renders at all (the desktop table needs a matching header cell). */
+  showSelectionColumn?: boolean;
+  selected?: boolean;
+  /** Present only when the row has at least one available action and selection is offered — its mere presence doesn't render a checkbox, `getAvailableCoefficientActions` still gates that. */
+  onToggleSelected?: () => void;
+  /** Whether the lifecycle-actions ⋯ column/slot renders at all — the container only mounts it when at least one visible row has an action. */
+  showActionsColumn?: boolean;
+  /** Opens the row-actions menu for this coefficient. The button itself only renders when `getAvailableCoefficientActions` returns something — never a disabled button. */
+  onOpenActionsMenu?: (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => void;
+  /** True while any coefficient lifecycle mutation (any row's, or the batch bar's) is pending — freezes every row's menu button so a second action can't fire against data the in-flight one hasn't refreshed yet. */
+  actionsDisabled?: boolean;
 }
 
 function formatAssignedEnergy(coefficientValue: number | undefined, installedPowerKw: number | undefined): string {
@@ -95,13 +108,31 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   onCoefficientChange,
   onRemove,
   showStateColumns = true,
+  showSelectionColumn = false,
+  selected,
+  onToggleSelected,
+  showActionsColumn = false,
+  onOpenActionsMenu,
+  actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
+  const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
 
   return (
     <TableRow>
+      {showSelectionColumn && (
+        <TableCell padding="checkbox">
+          {onToggleSelected && availableActions.length > 0 && (
+            <Checkbox
+              checked={!!selected}
+              onChange={onToggleSelected}
+              inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+            />
+          )}
+        </TableCell>
+      )}
       <TableCell>
         <Typography variant="body2" fontWeight="600">
           {coefficient.supply?.name || "-"}
@@ -159,6 +190,20 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           )}
         </TableCell>
       )}
+      {showActionsColumn && (
+        <TableCell padding="checkbox">
+          {availableActions.length > 0 && onOpenActionsMenu && (
+            <IconButton
+              size="small"
+              disabled={actionsDisabled}
+              onClick={(event) => onOpenActionsMenu(event, coefficient)}
+              aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          )}
+        </TableCell>
+      )}
     </TableRow>
   );
 };
@@ -173,10 +218,18 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   onCoefficientChange,
   onRemove,
   showStateColumns = true,
+  showSelectionColumn = false,
+  selected,
+  onToggleSelected,
+  showActionsColumn = false,
+  onOpenActionsMenu,
+  actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
+  const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
+  const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
 
   return (
     <Box
@@ -189,9 +242,19 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
       }}
     >
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-        <Typography variant="body2" fontWeight="600">
-          {coefficient.supply?.name || "-"}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {showCheckbox && (
+            <Checkbox
+              checked={!!selected}
+              onChange={onToggleSelected}
+              size="small"
+              inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+            />
+          )}
+          <Typography variant="body2" fontWeight="600">
+            {coefficient.supply?.name || "-"}
+          </Typography>
+        </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           {isEditing && inputUnit && onCoefficientChange ? (
             <CoefficientInput
@@ -215,6 +278,16 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
           {isEditing && onRemove && (
             <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>
               <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          )}
+          {!isEditing && showActionsColumn && availableActions.length > 0 && onOpenActionsMenu && (
+            <IconButton
+              size="small"
+              disabled={actionsDisabled}
+              onClick={(event) => onOpenActionsMenu(event, coefficient)}
+              aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
+            >
+              <MoreVertIcon fontSize="small" />
             </IconButton>
           )}
         </Box>

@@ -1169,6 +1169,163 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-detail-mobile.png", { fullPage: true });
   });
 
+  test("sharing agreement detail page (batch activation bar, selection active)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    // FIXED_COEFFICIENTS_MIXED has exactly one PENDING row (Vivienda B) among
+    // several APPLIED ones — selecting it is what mounts the batch bar at all.
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await expect(page.getByText("1 seleccionado")).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Acciones", exact: true })).toBeEnabled();
+
+    await stabilizePage(page);
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-selection.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (batch bar Acciones menu, single action fully available)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await page.getByRole("button", { name: "Acciones", exact: true }).click();
+    await expect(page.getByRole("menuitem", { name: "Registrar fecha" })).toBeVisible();
+
+    await stabilizePage(page);
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-acciones-menu.png", { fullPage: true });
+  });
+
+  test("sharing agreement batch registration dialog (Registrar fecha, opened from Acciones)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await page.getByRole("button", { name: "Acciones", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Registrar fecha" }).click();
+
+    await expect(page.getByRole("heading", { name: "Registrar fecha de aplicación" })).toBeVisible();
+    const confirmButton = page.getByRole("button", { name: "Registrar fecha" });
+    await expect(confirmButton).toBeDisabled();
+    await expect(page.getByText("Selecciona una fecha")).toBeVisible();
+
+    await stabilizePage(page);
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-registration-dialog.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient row actions menu (⋯ open)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    // Vivienda A (coef-1) is APPLIED/OPEN — "Corregir fecha" and "Desactivar"
+    // only, no end-of-coverage action, the minimal (two-item) menu shape.
+    await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
+    await expect(page.getByRole("menuitem", { name: "Corregir fecha" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Desactivar" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-row-actions-menu.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient recalculation dialog (Corregir fecha)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+    await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
+    await page.getByRole("menuitem", { name: "Corregir fecha" }).click();
+
+    await expect(page.getByRole("heading", { name: "Corregir fecha de aplicación" })).toBeVisible();
+    await expect(page.getByText(/producción ya atribuida a este suministro/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-coefficient-recalculation-dialog.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient close dialog (Cerrar (baja))", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+    // Local C (coef-3) is the OPEN_ORPHAN row — the only one offering "Cerrar (baja)".
+    await page.getByRole("button", { name: "Más acciones para Local C" }).first().click();
+    await page.getByRole("menuitem", { name: "Cerrar (baja)" }).click();
+
+    await expect(page.getByRole("heading", { name: "Cerrar coeficiente" })).toBeVisible();
+    await expect(page.getByText(/dejará de recibir atribución de producción/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-coefficient-close-dialog.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (mobile batch bar doesn't cover the last card)", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Fixed bottom bar is mobile-only — desktop's bar is static in-flow.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await expect(page.getByRole("button", { name: "Acciones", exact: true })).toBeVisible();
+
+    await page.addStyleTag({
+      content: `*, *::before, *::after { animation: none !important; transition: none !important; }`,
+    });
+    await page.waitForFunction(() => document.fonts.ready);
+
+    // Scroll the real page (not a fullPage stitch, which wouldn't exercise a
+    // fixed element's actual on-screen overlap) to the very bottom, so the
+    // last card and the fixed bar are both on screen at once — this is the
+    // assertion the screenshot exists to make: the reserved spacer must
+    // leave the last card's bottom edge visible above the bar, not under it.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(300);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    // "Ático F" is the last row in FIXED_COEFFICIENTS_MIXED.
+    const lastCard = page.getByText("Ático F").last();
+    await expect(lastCard).toBeVisible();
+    const cardBox = await lastCard.boundingBox();
+    const barBox = await page.getByRole("button", { name: "Acciones", exact: true }).boundingBox();
+    expect(cardBox).not.toBeNull();
+    expect(barBox).not.toBeNull();
+    // The last card's bottom edge must sit above (a smaller y than) the top
+    // of the fixed bar — i.e. not underneath it.
+    expect(cardBox!.y + cardBox!.height).toBeLessThanOrEqual(barBox!.y);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-mobile-last-card.png");
+  });
+
   test("sharing agreement edit dialog (seeded with existing values)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -1270,7 +1427,12 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    // Scoped by label, not the generic MoreVertIcon locator other tests in
+    // this file use — FIXED_COEFFICIENTS_ALL_PENDING rows now carry their
+    // own "Más acciones para X" kebabs too (apply is a row action), so the
+    // unscoped locator is ambiguous here in a way it isn't for the other
+    // tests' DRAFT agreements, which never show row-level kebabs at all.
+    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
     await page.getByRole("menuitem", { name: "Volver a borrador" }).click();
 
     await expect(page.getByRole("heading", { name: "Volver a borrador" })).toBeVisible();

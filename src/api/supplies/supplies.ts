@@ -1593,8 +1593,9 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
 filtering and sorting. Requires authentication through a Bearer Token.
 
 **Visibility:** Community admins of the community see all of its supplies.
-Regular members see only the supplies they own within the community. Returns 404 if the community
-does not exist or the caller is not a member of it.
+Regular members see only the supplies they own within the community. **Required: any member of the
+community.** Returns 404 if the community does not exist or the caller is not a member of it, and
+403 for a non-member platform admin.
  * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
  */
 export const getAllSupplies = (

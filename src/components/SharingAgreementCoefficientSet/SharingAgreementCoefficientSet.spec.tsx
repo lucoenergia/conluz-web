@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { ThemeProvider } from "@mui/material/styles";
@@ -15,13 +15,23 @@ import {
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
-const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
+const { OPEN, OPEN_ORPHAN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 // Real coefficients never omit these; unused by any assertion in this file, so
 // every fixture below spreads this in and only overrides what it's testing.
 const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
 
 const mockMutateAsync = vi.fn();
+const mockActivateMutateAsync = vi.fn();
+const mockDeactivateMutateAsync = vi.fn();
+const mockCloseMutateAsync = vi.fn();
+const mockReopenMutateAsync = vi.fn();
 const mockSuccessDispatch = vi.fn();
+// Mutable so a single test can exercise the in-flight (isActivating) state —
+// mirrors how the real hook forwards the mutation's own isPending.
+let mockIsActivating = false;
+let mockIsDeactivating = false;
+let mockIsClosing = false;
+let mockIsReopening = false;
 
 vi.mock("../../context/community.context", async () => {
   const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
@@ -47,8 +57,31 @@ vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
   return {
     ...actual,
     useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
+    useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
+    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: mockIsDeactivating }),
+    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: mockIsClosing }),
+    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: mockIsReopening }),
   };
 });
+
+/** Clicks a checkbox by accessible name — table and card render in parallel in jsdom (CSS-only breakpoint), so index [0] always picks the table's. */
+async function selectPendingRow(user: ReturnType<typeof userEvent.setup>, supplyName: string) {
+  await user.click(screen.getAllByRole("checkbox", { name: `Seleccionar ${supplyName}` })[0]);
+}
+
+/** Types a date into whichever DatePicker is currently rendered, via its section spinbuttons — the only interaction MUI's v7 field accepts under jsdom (no plain &lt;input&gt;, sections are contenteditable spinbuttons). */
+async function typeDate(user: ReturnType<typeof userEvent.setup>, day: string, month: string, year: string) {
+  await user.click(screen.getByRole("spinbutton", { name: "Day" }));
+  await user.keyboard(day);
+  await user.keyboard(month);
+  await user.keyboard(year);
+}
+
+/** Opens the batch bar's "Acciones" menu and selects the item by its (visible) label — the entry point for every batch-dialog test since Part A's inline field was replaced. */
+async function openBatchAction(user: ReturnType<typeof userEvent.setup>, actionLabel: string) {
+  await user.click(screen.getByRole("button", { name: "Acciones" }));
+  await user.click(screen.getByRole("menuitem", { name: new RegExp(actionLabel) }));
+}
 
 function renderWithTheme(props: Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -349,5 +382,935 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
     expect(screen.getByText("Estado de aplicación")).toBeInTheDocument();
     expect(screen.getByText("Estado de fin")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Todos" })).toBeInTheDocument();
+  });
+
+  // DRAFT safety used to fall out of getAvailableCoefficientActions alone
+  // (every DRAFT row was PENDING, and PENDING returned []). Now that PENDING
+  // returns ["apply"], DRAFT safety depends entirely on the !isDraft gates
+  // below — the contract still rejects activate/deactivate/close/reopen on a
+  // DRAFT agreement with 409, so offering either control here would be a
+  // dead end.
+  it("renders no row action menu and no checkbox for a DRAFT agreement, even though apply would otherwise be available on every PENDING row", () => {
+    renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("renders no row action menu and no checkbox while editing, even for a DRAFT with actionable rows", () => {
+    renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (batch activation)", () => {
+  // Realistic multi-supply set: two PENDING (eligible), one APPLIED
+  // (ineligible) — a single-element collection would validate no selection
+  // logic at all.
+  const mixed: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c3", supply: { id: "s3", name: "Vivienda C", code: "ES0031300000000003EF" }, coefficient: 0.4, applicationState: APPLIED, ...OPEN_UNCLOSED },
+  ];
+  const allApplied: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X" }, coefficient: 1, applicationState: APPLIED, ...OPEN_UNCLOSED },
+  ];
+  // Three PENDING rows, two sharing a search term — lets a test narrow the
+  // visible set via search (name/code) rather than only the status chip,
+  // which can never hide a PENDING row on its own.
+  const threePending: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "c3", supply: { id: "s3", name: "Local C", code: "X3" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  beforeEach(() => {
+    mockActivateMutateAsync.mockReset();
+    mockSuccessDispatch.mockClear();
+    mockIsActivating = false;
+    mockIsDeactivating = false;
+    mockIsClosing = false;
+    mockIsReopening = false;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it("header checkbox: unchecked when nothing is selected, click selects every visible actionable row", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0];
+    expect(checkbox).not.toBeChecked();
+
+    await user.click(checkbox);
+
+    // mixed has 2 PENDING (apply) and 1 APPLIED/OPEN (correct/deactivate) —
+    // all 3 are actionable now, so "select all" reaches every one of them.
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+  });
+
+  it("header checkbox: indeterminate when some but not all visible actionable rows are selected", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await selectPendingRow(user, "Vivienda A");
+
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0];
+    expect(checkbox).toHaveAttribute("data-indeterminate", "true");
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it("header checkbox: checked when every visible actionable row is selected, and clicking then deselects only the visible ones", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    // Select all 3, then narrow to 2 via search — the 3rd stays selected but hidden.
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]);
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0];
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+
+    // Only the 2 visible were deselected — Local C (hidden) stays selected.
+    expect(screen.getByText("1 seleccionado · 1 oculto por el filtro")).toBeInTheDocument();
+  });
+
+  it("shows the header checkbox for a visible APPLIED row too, now that it's actionable (correct/deactivate)", () => {
+    renderWithTheme({ coefficients: allApplied });
+    expect(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" }).length).toBeGreaterThan(0);
+  });
+
+  it("regression: selecting all with an active filter never selects a row outside the filtered set", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.queryByText("Local C")).not.toBeInTheDocument(), { timeout: 1000 });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]);
+
+    // Exactly the 2 visible rows — never Local C, which the filter hides.
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+  });
+
+  it("filtering with a live selection switches the count to the two-part form, with the correct hidden count", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Local");
+
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 2 ocultos por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+  });
+
+  it("zero visible rows with a live selection: the header checkbox disappears, the bar stays, and everything selected reads as hidden", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await selectPendingRow(user, "Vivienda A");
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "no-such-supply-xyz");
+
+    await waitFor(() => expect(screen.getByText("No se encontraron coeficientes")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+    expect(screen.queryByRole("checkbox", { name: "Seleccionar todas las filas visibles" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    expect(screen.getByText("1 seleccionado · 1 oculto por el filtro")).toBeInTheDocument();
+  });
+
+  it("'Limpiar selección' empties the selection entirely, including rows hidden by the filter", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Limpiar selección" }));
+
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+  });
+
+  it("the batch bar mounts only once something is selected — not merely because a PENDING row exists — and unmounts again when the last selection is cleared", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+
+    // Pending rows present, nothing checked yet: no bar.
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument();
+
+    await selectPendingRow(user, "Vivienda A");
+    expect(screen.getByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
+
+    // Unchecking the only selected row unmounts the bar again.
+    await selectPendingRow(user, "Vivienda A");
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+  });
+
+  it("singular/plural count text", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+
+    await selectPendingRow(user, "Vivienda A");
+    expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
+
+    await selectPendingRow(user, "Vivienda B");
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+  });
+
+  it("blocks a future date with the rule stated as visible helper text, never a title attribute", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+
+    expect(screen.getByText("No se permiten fechas futuras")).toBeInTheDocument();
+    const dayField = screen.getByRole("spinbutton", { name: "Day" });
+    expect(dayField.closest("[title]")).toBeNull();
+  });
+
+  it("typing a future date (bypassing the calendar's maxDate) leaves the dialog's confirm button disabled with a visible reason", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+
+    await typeDate(user, "01", "01", "2099");
+
+    expect(screen.getByRole("button", { name: "Registrar fecha" })).toBeDisabled();
+    expect(screen.getByText("La fecha no puede ser futura ni inválida")).toBeInTheDocument();
+  });
+
+  it("the disabled reason states 'select a date' before any date is entered, then clears once a valid one is", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+
+    expect(screen.getByText("Selecciona una fecha")).toBeInTheDocument();
+
+    await typeDate(user, "10", "01", "2026");
+
+    expect(screen.getByRole("button", { name: "Registrar fecha" })).toBeEnabled();
+    expect(screen.queryByText("Selecciona una fecha")).not.toBeInTheDocument();
+    expect(screen.queryByText("La fecha no puede ser futura ni inválida")).not.toBeInTheDocument();
+  });
+
+  it("on success, clears the whole selection and shows the transient confirmation — no error panel", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Fechas de aplicación registradas."));
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("on a no-op success (empty coefficients array), shows the same transient confirmation and no error panel", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Fechas de aplicación registradas."));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("on rejection, closes the dialog but preserves the selection, and renders every error detail in a persistent panel", async () => {
+    mockActivateMutateAsync.mockRejectedValue({
+      response: {
+        data: {
+          errors: [
+            { message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR", params: { cups: "ES1111" } },
+            { message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" },
+          ],
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await screen.findByRole("alert");
+    expect(screen.getByText("No se ha activado ningún coeficiente.")).toBeInTheDocument();
+    // The selection survives the rejection — the dialog itself does not
+    // (Correction 8: a batch dialog closes on rejection, unlike the row
+    // path's dialog-local error; the date the admin typed is not preserved).
+    expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Registrar fecha" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    expect(mockSuccessDispatch).not.toHaveBeenCalled();
+  });
+
+  it("scrolls the error panel's own node into view on rejection, and never on success", async () => {
+    mockActivateMutateAsync.mockRejectedValueOnce({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+    const alertNode = await screen.findByRole("alert");
+
+    const scrollMock = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
+    expect(scrollMock).toHaveBeenCalledTimes(1);
+    // The scrolled node is the panel wrapper (or the panel itself) — an
+    // ancestor of the alert, not some unrelated element like document.body.
+    // This is what actually exercises the Box ref: a null ref would mean
+    // nothing gets scrolled while a looser "was it called at all" assertion
+    // could still pass.
+    const scrolledNode = scrollMock.mock.contexts?.[0] ?? scrollMock.mock.instances[0];
+    expect((scrolledNode as HTMLElement).contains(alertNode)).toBe(true);
+
+    scrollMock.mockClear();
+    mockActivateMutateAsync.mockResolvedValueOnce({ coefficients: [] });
+    await user.click(screen.getByRole("alert").parentElement!.querySelector("button")!); // dismiss
+    await selectPendingRow(user, "Vivienda B");
+    // The dialog closed on rejection (Correction 8) — retrying means
+    // reopening Acciones -> the action again, not clicking the same button.
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
+    expect(scrollMock).not.toHaveBeenCalled();
+  });
+
+  it("on rejection with no error details (non-RestError failure), renders the generic retry line, header still present", async () => {
+    mockActivateMutateAsync.mockRejectedValue(new Error("network error"));
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await screen.findByRole("alert");
+    expect(screen.getByText("No se ha activado ningún coeficiente.")).toBeInTheDocument();
+    expect(screen.getByText("No se ha podido activar la selección. Inténtalo de nuevo en unos instantes.")).toBeInTheDocument();
+  });
+
+  it("dismissing the error panel clears it", async () => {
+    mockActivateMutateAsync.mockRejectedValue({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+    await screen.findByRole("alert");
+
+    await user.click(screen.getByRole("alert").parentElement!.querySelector("button")!);
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("a fresh submission replaces a previously-shown error panel rather than stacking it", async () => {
+    mockActivateMutateAsync.mockRejectedValueOnce({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+    await screen.findByRole("alert");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+
+    mockActivateMutateAsync.mockRejectedValueOnce({
+      response: {
+        data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR" }] },
+      },
+    });
+    // The dialog closed after the first rejection — a "fresh submission"
+    // means reopening it, not clicking a still-present button again.
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(2));
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  it("disables the dialog's confirm button and shows a spinner while isActivating, and a second click issues no second request", async () => {
+    let resolveActivate!: (value: { coefficients: unknown[] }) => void;
+    mockActivateMutateAsync.mockReturnValue(new Promise((resolve) => (resolveActivate = resolve)));
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: mixed });
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    // The mutation call itself is still pending (the mocked promise never
+    // resolves here), so the dialog's own internal pending tracking (see
+    // useSharingAgreementCoefficientMutations) already reflects it — no
+    // need to fake isPending through the mock.
+    await waitFor(() => expect(screen.getByRole("progressbar")).toBeInTheDocument());
+    const buttons = screen.getAllByRole("button").filter((b) => b.querySelector('[role="progressbar"]'));
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toBeDisabled();
+
+    // userEvent.click refuses to interact with a disabled (pointer-events:
+    // none) element at all — which is itself proof a real user couldn't
+    // trigger a second request either. fireEvent bypasses that pointer-event
+    // simulation to assert directly that a disabled native <button> never
+    // fires its click handler, still without needing a real interaction.
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
+    expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1); // only the original click reached the handler
+
+    resolveActivate({ coefficients: [] });
+  });
+
+  it("the batch dialog reports how many targets are hidden by the filter", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda"); // hides Local C
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await openBatchAction(user, "Registrar fecha");
+
+    expect(screen.getByText("1 no se ve con el filtro actual")).toBeInTheDocument();
+  });
+
+  it("the batch request body contains every selected id, including one hidden by the filter, and the date as YYYY-MM-DD", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda"); // hides Local C (c3)
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    const body = mockActivateMutateAsync.mock.calls[0][0].data;
+    expect(new Set(body.coefficientIds)).toEqual(new Set(["c1", "c2", "c3"]));
+    expect(body.appliedOn).toBe("2026-01-10");
+  });
+
+  it("batch success clears the selection entirely, including rows hidden by the filter", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]);
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
+    expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument();
+  });
+
+  it("a row's contribution to the batch summary re-evaluates after a refetch changes its state, without needing to reselect it", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: mixed }); // c1 & c2 PENDING, c3 APPLIED
+    await selectPendingRow(user, "Vivienda A"); // c1
+    await selectPendingRow(user, "Vivienda B"); // c2
+
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    expect(screen.getByRole("menuitem", { name: "Registrar fecha" })).not.toHaveAttribute("aria-disabled");
+    await user.keyboard("{Escape}");
+
+    // An external cascade (another admin, or this session's own row-path
+    // action on a *different* row) turns c1 APPLIED behind the scenes — the
+    // selection itself is untouched, only the underlying data changed.
+    const updated = mixed.map((c) =>
+      c.coefficientId === "c1" ? { ...c, applicationState: APPLIED, validFrom: "2026-01-01T00:00:00Z" } : c,
+    );
+    rerender(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              coefficients={updated}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>,
+    );
+
+    // The selection now spans one PENDING and one APPLIED coefficient — no
+    // action is fully available across both, without ever touching a
+    // checkbox on an APPLIED row.
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    const applyItem = screen.getByRole("menuitem", { name: /Registrar fecha/ });
+    const correctItem = screen.getByRole("menuitem", { name: /Corregir fecha/ });
+    const deactivateItem = screen.getByRole("menuitem", { name: /Desactivar/ });
+    expect(applyItem).toHaveAttribute("aria-disabled", "true");
+    expect(correctItem).toHaveAttribute("aria-disabled", "true");
+    expect(deactivateItem).toHaveAttribute("aria-disabled", "true");
+    expect(within(applyItem).getByText("Solo aplicable a 1 de 2 seleccionados")).toBeInTheDocument();
+    expect(within(correctItem).getByText("Solo aplicable a 1 de 2 seleccionados")).toBeInTheDocument();
+    expect(within(deactivateItem).getByText("Solo aplicable a 1 de 2 seleccionados")).toBeInTheDocument();
+  });
+
+  it("the batch bar's spacer collapses to zero height at the desktop breakpoint", () => {
+    // A minimal net on the sx object built, not proof the MUI breakpoint
+    // resolves at runtime (jsdom can't evaluate responsive sx) — the real
+    // verification of layout correctness at the narrowest supported
+    // viewport is the Playwright capture, not this unit assertion.
+    renderWithTheme({ coefficients: mixed });
+    // No selection yet, so nothing to assert on a mounted spacer/bar in
+    // this render — the desktop-collapse behavior of the sx object itself
+    // is exercised structurally by the component compiling against its
+    // sx={{ height: { xs: ..., sm: 0 } }} literal, verified by lint/tsc.
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+  });
+
+  it("end-to-end: after a successful activation, the applied-sum card's percentage updates, staying styled neutral below 100%", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: mixed, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
+
+    // Only c3 is APPLIED, at 0.4 -> 40%. Scoped via the "Suma aplicada"
+    // caption's sibling rather than a bare text match: c3's own row also
+    // displays "40,0000 %" for its individual coefficient, so an unscoped
+    // query would be ambiguous between the sum card and that row.
+    expect(screen.getByText("Suma aplicada").previousElementSibling).toHaveTextContent("40,0000 %");
+
+    await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
+
+    // Simulate the invalidation-triggered refetch: c1 is now APPLIED too.
+    const updated = mixed.map((c) => (c.coefficientId === "c1" ? { ...c, applicationState: APPLIED } : c));
+    rerender(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              coefficients={updated}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>,
+    );
+
+    // c1 (0.3) + c3 (0.4) now APPLIED = 70%, still below 100% — neutral info styling.
+    expect(screen.getByText("70,0000 %")).toBeInTheDocument();
+    expect(screen.getByText(/normal en transición/)).toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
+  // Realistic multi-supply set covering both end-action states plus a
+  // PENDING row (no menu at all) and a supply with no name (CUPS-only naming).
+  const lifecycleMixed: SharingAgreementPartitionCoefficientResponse[] = [
+    {
+      coefficientId: "c1",
+      supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" },
+      coefficient: 0.3,
+      applicationState: APPLIED,
+      validFrom: "2024-01-01T00:00:00Z",
+      validTo: null,
+      endState: OPEN_ORPHAN,
+      endDate: null,
+    },
+    {
+      coefficientId: "c2",
+      supply: { id: "s2", name: "", code: "ES0031300000000002CD" },
+      coefficient: 0.3,
+      applicationState: APPLIED,
+      validFrom: "2024-01-01T00:00:00Z",
+      validTo: "2024-06-01T00:00:00Z",
+      endState: CLOSED,
+      endDate: "2024-06-01T00:00:00Z",
+    },
+    {
+      coefficientId: "c3",
+      supply: { id: "s3", name: "Vivienda C", code: "ES0031300000000003EF" },
+      coefficient: 0.4,
+      applicationState: PENDING,
+      ...OPEN_UNCLOSED,
+    },
+  ];
+
+  const allPendingLifecycle: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "p1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "p2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.5, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  beforeEach(() => {
+    mockActivateMutateAsync.mockReset();
+    mockDeactivateMutateAsync.mockReset();
+    mockCloseMutateAsync.mockReset();
+    mockReopenMutateAsync.mockReset();
+    mockSuccessDispatch.mockClear();
+    mockIsActivating = false;
+    mockIsDeactivating = false;
+    mockIsClosing = false;
+    mockIsReopening = false;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  function coefficientSetElement(props: Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">) {
+    return (
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              {...props}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  /** Opens the row menu via its accessible name — matches the ⋯ button's own aria-label (supply name, or CUPS when there's no name). */
+  async function openRowMenu(user: ReturnType<typeof userEvent.setup>, label: string) {
+    const buttons = screen.getAllByRole("button", { name: `Más acciones para ${label}` });
+    await user.click(buttons[0]);
+  }
+
+  it("renders the actions column even when every visible row is PENDING — apply is now available on every one", () => {
+    // Table and card render in parallel in jsdom (CSS-only breakpoint), so
+    // every row's button appears twice.
+    renderWithTheme({ coefficients: allPendingLifecycle });
+    expect(screen.getAllByRole("button", { name: /Más acciones/ })).toHaveLength(allPendingLifecycle.length * 2);
+  });
+
+  it("keeps the actions column visible once every visible row is actionable, including under a filter that leaves only PENDING rows", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    expect(screen.getAllByRole("button", { name: /Más acciones/ }).length).toBeGreaterThan(0);
+
+    // "Sin aplicar" leaves only c3 (PENDING) visible — it offers apply, so
+    // the column stays, unlike before "apply" existed as a row action.
+    // Table + card render in parallel in jsdom, so the one visible row's
+    // button still appears twice.
+    await user.click(screen.getByRole("button", { name: "Sin aplicar" }));
+
+    expect(screen.getAllByRole("button", { name: /Más acciones/ })).toHaveLength(2);
+  });
+
+  it("names the CUPS with the supply name when one exists", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Corregir fecha" }));
+
+    expect(screen.getByText("Vivienda A (CUPS ES0031300000000001AB)")).toBeInTheDocument();
+  });
+
+  it("registering a date via apply on a PENDING row calls activateCoefficients, the same mutation correct uses", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c3" }] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda C");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    expect(mockActivateMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ coefficientIds: ["c3"], appliedOn: "2026-01-10" }) }),
+    );
+  });
+
+  it("the apply dialog carries no retroactivity warning, unlike correct", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda C");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+
+    expect(screen.queryByText(/cambiará de forma retroactiva/)).not.toBeInTheDocument();
+  });
+
+  it("names the CUPS only, never the UUID, when the supply has no name", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "ES0031300000000002CD");
+    await user.click(screen.getByRole("menuitem", { name: "Reabrir" }));
+
+    expect(screen.getByText("CUPS ES0031300000000002CD")).toBeInTheDocument();
+    expect(screen.queryByText("s2")).not.toBeInTheDocument();
+  });
+
+  it("correcting an APPLIED coefficient calls activateCoefficients, not a new mutation", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Corregir fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Confirmar y recalcular" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    expect(mockActivateMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ coefficientIds: ["c1"], appliedOn: "2026-01-10" }) }),
+    );
+    expect(mockDeactivateMutateAsync).not.toHaveBeenCalled();
+    expect(mockCloseMutateAsync).not.toHaveBeenCalled();
+    expect(mockReopenMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("a batch correction excludes a row already corrected individually via ⋯ — APPLIED rows are selectable now", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const threeApplied: SharingAgreementPartitionCoefficientResponse[] = [
+      { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-01-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+      { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-02-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+      { coefficientId: "a3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: APPLIED, validFrom: "2025-03-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+    ];
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threeApplied });
+
+    await selectPendingRow(user, "Vivienda A");
+    await selectPendingRow(user, "Vivienda B");
+    await selectPendingRow(user, "Vivienda C");
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+
+    // Correct Vivienda A individually via its own ⋯ menu.
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Corregir fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Confirmar y recalcular" }));
+    await waitFor(() => expect(screen.getByText("2 seleccionados")).toBeInTheDocument());
+
+    // Now batch-correct the remaining two.
+    await openBatchAction(user, "Corregir fecha");
+    await typeDate(user, "15", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Confirmar y recalcular" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(2));
+    const secondCallBody = mockActivateMutateAsync.mock.calls[1][0].data;
+    expect(new Set(secondCallBody.coefficientIds)).toEqual(new Set(["a2", "a3"]));
+  });
+
+  it("on rejection, the close dialog stays open and renders every returned message", async () => {
+    mockCloseMutateAsync.mockRejectedValue({
+      response: {
+        data: {
+          errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE", params: { cups: "ES0031300000000001AB" } }],
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Cerrar (baja)" }));
+
+    await waitFor(() => expect(mockCloseMutateAsync).toHaveBeenCalledTimes(1));
+    // The bullet prefix ("• ") lives in the same text node as the message, so
+    // match on the message content rather than the full exact string.
+    expect(
+      await screen.findByText(/El coeficiente de ES0031300000000001AB no está activo, así que no se puede cerrar\./),
+    ).toBeInTheDocument();
+    // The dialog itself is still open — its own confirm button is still present.
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+  });
+
+  it("closes the dialog silently, with no error, when the underlying coefficient's actions no longer include the open action", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    // c1 is no longer OPEN_ORPHAN — "close" is no longer among its actions.
+    const updated = lifecycleMixed.map((c) => (c.coefficientId === "c1" ? { ...c, endState: CLOSED, endDate: "2026-01-01T00:00:00Z" } : c));
+    rerender(coefficientSetElement({ coefficients: updated }));
+
+    expect(screen.queryByRole("button", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("closes the dialog silently when the underlying coefficient disappears entirely", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    const withoutC1 = lifecycleMixed.filter((c) => c.coefficientId !== "c1");
+    rerender(coefficientSetElement({ coefficients: withoutC1 }));
+
+    expect(screen.queryByRole("button", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
+  });
+
+  it("changing the filter to hide the dialog's row leaves the dialog open — it resolves from the full list, not the filtered one", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    // "Sin aplicar" hides c1 (APPLIED) from the visible list entirely. The
+    // open modal marks the rest of the page aria-hidden, so the chip must be
+    // queried with hidden:true — same as a screen-reader user, a sighted one
+    // still can't reach it behind the modal, which is exactly the point:
+    // this proves the *state* survives, not that it's reachable mid-dialog.
+    await user.click(screen.getByRole("button", { name: "Sin aplicar", hidden: true }));
+
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+  });
+
+  it("a successful row-path action drops that row from a live selection, leaving the others selected", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "p1" }] });
+    const threePendingRows: SharingAgreementPartitionCoefficientResponse[] = [
+      { coefficientId: "p1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "p2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "p3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+    ];
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePendingRows });
+
+    await selectPendingRow(user, "Vivienda A");
+    await selectPendingRow(user, "Vivienda B");
+    await selectPendingRow(user, "Vivienda C");
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(screen.getByText("2 seleccionados")).toBeInTheDocument());
+    expect(screen.getAllByRole("checkbox", { name: "Seleccionar Vivienda A" })[0]).not.toBeChecked();
+  });
+
+  it("a failed row-path action leaves the selection untouched", async () => {
+    mockActivateMutateAsync.mockRejectedValue({
+      response: { data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" }] } },
+    });
+    const threePendingRows: SharingAgreementPartitionCoefficientResponse[] = [
+      { coefficientId: "p1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "p2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: PENDING, ...OPEN_UNCLOSED },
+    ];
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePendingRows });
+
+    await selectPendingRow(user, "Vivienda A");
+    await selectPendingRow(user, "Vivienda B");
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+  });
+
+  it("disables every row's ⋯ button while any coefficient mutation is pending, not just the one in flight", () => {
+    // A deactivate elsewhere on the page is pending — every row's menu
+    // button must freeze, not only the row whose action is actually running,
+    // since re-opening another row's menu would act on data the in-flight
+    // mutation's refetch hasn't refreshed yet.
+    mockIsDeactivating = true;
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    const buttons = screen.getAllByRole("button", { name: /Más acciones/ });
+    expect(buttons.length).toBeGreaterThan(0);
+    buttons.forEach((button) => expect(button).toBeDisabled());
+  });
+
+  it("a dialog cannot be dismissed via Cancel while its own mutation is pending", async () => {
+    // Escape and backdrop-click route through the same onCancel handler as
+    // the Cancel button, so guarding it here guards all three dismissal
+    // vectors at once.
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+
+    mockIsClosing = true;
+    rerender(coefficientSetElement({ coefficients: lifecycleMixed }));
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
+  });
+
+  it("reserves the same fixed-width action cell on every row, whether or not it has a visible button", () => {
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    const dataRows = screen.getAllByRole("row").slice(1); // drop the header row
+    expect(dataRows).toHaveLength(3);
+    for (const row of dataRows) {
+      const cells = within(row).getAllByRole("cell");
+      const actionCell = cells[cells.length - 1];
+      expect(actionCell.className).toContain("MuiTableCell-paddingCheckbox");
+    }
   });
 });

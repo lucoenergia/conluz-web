@@ -165,6 +165,82 @@ describe("distributor-file and sharing-agreement error templates", () => {
   });
 });
 
+const LIFECYCLE_CODES: RestErrorDetailCode[] = [
+  "SHARING_AGREEMENT_DATE_IN_FUTURE",
+  "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+  "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
+  "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
+  "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
+  "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
+  "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
+  "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+];
+
+describe("coefficient-lifecycle error templates (activate/deactivate/close/reopen)", () => {
+  it.each(LIFECYCLE_CODES)("translates %s to a non-empty Spanish message naming the supply when params.cups is present", (code) => {
+    const withCups = translateErrorDetail({ message: "raw", code, params: { cups: "ES1234000000000001JN0F" } }, "fallback");
+    const withoutCups = translateErrorDetail({ message: "raw", code }, "fallback");
+
+    expect(withCups).not.toBe("");
+    expect(withCups).not.toBe("raw");
+    expect(withCups).toContain("ES1234000000000001JN0F");
+
+    expect(withoutCups).not.toBe("");
+    expect(withoutCups).not.toBe("raw");
+    // The two variants must differ (the cups-present one names the supply)
+    // but neither may ever leak a literal, un-substituted placeholder.
+    expect(withoutCups).not.toBe(withCups);
+  });
+
+  it.each(LIFECYCLE_CODES)("never renders a literal {cups} placeholder for %s when params.cups is absent", (code) => {
+    const message = translateErrorDetail({ message: "raw", code }, "fallback");
+    expect(message).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+
+  it.each(LIFECYCLE_CODES)("never renders a literal {cups} placeholder for %s when params is present but cups is empty", (code) => {
+    const message = translateErrorDetail({ message: "raw", code, params: { coefficientId: "c1" } }, "fallback");
+    expect(message).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+
+  it("a batch rejection with three lifecycle details renders three distinct messages, not one", () => {
+    const error = {
+      response: {
+        data: {
+          errors: [
+            {
+              message: "raw",
+              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+              params: { cups: "ES1111111111111111AA", coefficientId: "c1" },
+            },
+            {
+              message: "raw",
+              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+              params: { cups: "ES2222222222222222BB", coefficientId: "c2" },
+            },
+            { message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE", params: { coefficientId: "c3" } },
+          ],
+        },
+      },
+    };
+    // No detail carries params.line, so every one lands in the flat
+    // "ungrouped" fileLevel bucket — exactly the N-details -> N-messages
+    // list a batch rejection needs.
+    const grouped = getGroupedApiErrorDetails(error);
+    expect(grouped.fileLevel).toHaveLength(3);
+    expect(grouped.lineLevel).toHaveLength(0);
+    expect(new Set(grouped.fileLevel).size).toBe(3);
+  });
+
+  it("translates SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT to a non-empty Spanish message, distinct from the raw server message", () => {
+    const message = translateErrorDetail(
+      { message: "raw server message", code: "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT" },
+      "fallback",
+    );
+    expect(message).not.toBe("");
+    expect(message).not.toBe("raw server message");
+  });
+});
+
 describe("getGroupedApiErrorDetails", () => {
   it("partitions details by the presence of params.line", () => {
     const error = {

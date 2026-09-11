@@ -74,6 +74,7 @@ export const AuthenticatedLayout: FC = () => {
       <Box
         sx={{
           marginLeft: `${contentMargin}px`,
+          "--content-inset-left": `${contentMargin}px`,
           transition: "margin 225ms cubic-bezier(0.0, 0, 0.2, 1) 0ms",
           boxSizing: "border-box",
         }}

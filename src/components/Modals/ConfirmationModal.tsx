@@ -1,4 +1,5 @@
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import { alpha } from "@mui/material/styles";
 import { AppModal } from "./AppModal";
 import { shadows, fontSizes } from "../../theme/tokens";
@@ -11,6 +12,8 @@ interface ConfirmationModalProps {
   confirmLabel: string;
   confirmColor?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
   confirmDisabled?: boolean;
+  /** Swaps the confirm button's label for a spinner. Opt-in and false by default — every other confirmation dialog using this component keeps its unchanged static-label behaviour. */
+  confirmPending?: boolean;
   title?: string;
   icon?: ReactNode;
   iconBg?: string;
@@ -24,6 +27,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
   confirmLabel,
   confirmColor = "error",
   confirmDisabled = false,
+  confirmPending = false,
   title,
   icon,
   iconBg,
@@ -77,7 +81,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
               },
             }}
           >
-            {confirmLabel}
+            {confirmPending ? <CircularProgress size={20} color="inherit" /> : confirmLabel}
           </Button>
         </>
       }
