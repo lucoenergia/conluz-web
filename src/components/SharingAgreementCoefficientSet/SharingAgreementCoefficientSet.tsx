@@ -119,6 +119,38 @@ const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilt
   SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
 ];
 
+interface BatchActionErrorState {
+  action: CoefficientAction;
+  errorMessages: string[];
+}
+
+// Copy for the persistent batch-rejection panel, keyed by action rather than
+// hardcoded to activation — "apply"'s wording says "activado"/"activar"
+// (matching the underlying mutation, not the row-menu label) to keep it
+// byte-identical to what shipped before this action was parameterised.
+const BATCH_ACTION_ERROR_COPY: Record<CoefficientAction, { heading: string; fallback: string }> = {
+  apply: {
+    heading: "No se ha activado ningún coeficiente.",
+    fallback: "No se ha podido activar la selección. Inténtalo de nuevo en unos instantes.",
+  },
+  correct: {
+    heading: "No se ha corregido la fecha de ningún coeficiente.",
+    fallback: "No se ha podido corregir la selección. Inténtalo de nuevo en unos instantes.",
+  },
+  deactivate: {
+    heading: "No se ha desactivado ningún coeficiente.",
+    fallback: "No se ha podido desactivar la selección. Inténtalo de nuevo en unos instantes.",
+  },
+  close: {
+    heading: "No se ha cerrado ningún coeficiente.",
+    fallback: "No se ha podido cerrar la selección. Inténtalo de nuevo en unos instantes.",
+  },
+  reopen: {
+    heading: "No se ha reabierto ningún coeficiente.",
+    fallback: "No se ha podido reabrir la selección. Inténtalo de nuevo en unos instantes.",
+  },
+};
+
 function filterEditableRows(rows: EditableCoefficientRow[], searchText: string): EditableCoefficientRow[] {
   const trimmed = searchText.trim();
   if (!trimmed) return rows;
@@ -206,7 +238,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [dateValidationError, setDateValidationError] = useState<string | null>(null);
-  const [activationErrors, setActivationErrors] = useState<string[] | null>(null);
+  const [batchActionError, setBatchActionError] = useState<BatchActionErrorState | null>(null);
   const errorPanelRef = useRef<HTMLDivElement>(null);
 
   // Lifecycle row-actions menu/dialogs (Part B) — entirely separate from the
@@ -223,10 +255,10 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   useUnsavedChangesGuard(isEditing);
 
   useEffect(() => {
-    if (activationErrors !== null) {
+    if (batchActionError !== null) {
       errorPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [activationErrors]);
+  }, [batchActionError]);
 
   // Resolved from the *full* coefficients list, never filteredCoefficients —
   // a dialog must not close just because the user changed the filter behind
@@ -328,9 +360,9 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     if (result.success) {
       setSelectedIds(new Set());
       setSelectedDate(null);
-      setActivationErrors(null);
+      setBatchActionError(null);
     } else {
-      setActivationErrors(result.errorMessages);
+      setBatchActionError({ action: "apply", errorMessages: result.errorMessages });
     }
   };
 
@@ -859,19 +891,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         </>
       )}
 
-      {activationErrors && (
+      {batchActionError && (
         <Box ref={errorPanelRef}>
-          <Alert severity="error" onClose={() => setActivationErrors(null)} sx={{ mb: 2 }}>
-            No se ha activado ningún coeficiente.
-            {activationErrors.length > 0 ? (
-              activationErrors.map((message, index) => (
+          <Alert severity="error" onClose={() => setBatchActionError(null)} sx={{ mb: 2 }}>
+            {BATCH_ACTION_ERROR_COPY[batchActionError.action].heading}
+            {batchActionError.errorMessages.length > 0 ? (
+              batchActionError.errorMessages.map((message, index) => (
                 <Typography key={index} variant="body2" sx={{ mt: 0.5 }}>
                   • {message}
                 </Typography>
               ))
             ) : (
               <Typography variant="body2" sx={{ mt: 0.5 }}>
-                No se ha podido activar la selección. Inténtalo de nuevo en unos instantes.
+                {BATCH_ACTION_ERROR_COPY[batchActionError.action].fallback}
               </Typography>
             )}
           </Alert>
