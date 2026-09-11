@@ -59,7 +59,6 @@ import {
   getApplicationStateLabel,
   getAvailableCoefficientActions,
   isFullyAvailable,
-  isPendingActivation,
   summarizeSelectionActions,
   type CoefficientAction,
 } from "../../pages/production/sharingAgreementCoefficientState";
@@ -367,16 +366,16 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   };
 
   // Tri-state: indeterminate and unchecked both select every visible
-  // pending row; only the fully-checked state deselects — the header
+  // actionable row; only the fully-checked state deselects — the header
   // control always moves toward "select all" first, standard tri-state
   // behaviour. Never touches a row hidden by the filter in either direction.
-  const handleToggleAllVisiblePending = () => {
+  const handleToggleAllVisibleActionable = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (allVisiblePendingSelected) {
-        visiblePendingCoefficients.forEach((c) => next.delete(c.coefficientId));
+      if (allVisibleActionableSelected) {
+        visibleActionableCoefficients.forEach((c) => next.delete(c.coefficientId));
       } else {
-        visiblePendingCoefficients.forEach((c) => next.add(c.coefficientId));
+        visibleActionableCoefficients.forEach((c) => next.add(c.coefficientId));
       }
       return next;
     });
@@ -494,26 +493,27 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   );
 
   // The set select-all/the header checkbox/the visible-vs-hidden count all
-  // reason about — reuses filterSharingAgreementCoefficients rather than
+  // reason about — any row with at least one available action, not only a
+  // PENDING one. Reuses filterSharingAgreementCoefficients rather than
   // reimplementing the search/status predicate.
-  const visiblePendingCoefficients = useMemo(
-    () => filteredCoefficients.filter(isPendingActivation),
+  const visibleActionableCoefficients = useMemo(
+    () => filteredCoefficients.filter((c) => getAvailableCoefficientActions(c.applicationState, c.endState).length > 0),
     [filteredCoefficients],
   );
 
   // One pass over filteredCoefficients answers both "how much of the
-  // selection is currently visible" (drives the tri-state checkbox, since
-  // selectedIds only ever holds pending coefficientIds by construction) and
-  // "how many selected rows are hidden by the filter" (drives the bar's
-  // count text).
+  // selection is currently visible" (drives the tri-state checkbox) and "how
+  // many selected rows are hidden by the filter" (drives the bar's count
+  // text). selectedIds can hold any actionable coefficient's id now, not
+  // only PENDING ones — checked live against filteredCoefficients either way.
   const visibleSelectedCount = useMemo(
     () => filteredCoefficients.filter((c) => selectedIds.has(c.coefficientId)).length,
     [filteredCoefficients, selectedIds],
   );
   const hiddenSelectedCount = selectedIds.size - visibleSelectedCount;
-  const allVisiblePendingSelected =
-    visiblePendingCoefficients.length > 0 && visibleSelectedCount === visiblePendingCoefficients.length;
-  const someVisiblePendingSelected = visibleSelectedCount > 0 && !allVisiblePendingSelected;
+  const allVisibleActionableSelected =
+    visibleActionableCoefficients.length > 0 && visibleSelectedCount === visibleActionableCoefficients.length;
+  const someVisibleActionableSelected = visibleSelectedCount > 0 && !allVisibleActionableSelected;
   const selectionCountText =
     hiddenSelectedCount > 0
       ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"} · ${hiddenSelectedCount} oculto${hiddenSelectedCount === 1 ? "" : "s"} por el filtro`
@@ -744,15 +744,15 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               checkbox column, which doesn't exist on the card list. Labelled
               rather than a bare checkbox, since there's no column header
               here to imply what it does. */}
-          {showSelectionColumn && visiblePendingCoefficients.length > 0 && (
+          {showSelectionColumn && visibleActionableCoefficients.length > 0 && (
             <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5 }}>
               <Checkbox
-                checked={allVisiblePendingSelected}
-                indeterminate={someVisiblePendingSelected}
-                onChange={handleToggleAllVisiblePending}
-                inputProps={{ "aria-label": "Seleccionar todos los pendientes" }}
+                checked={allVisibleActionableSelected}
+                indeterminate={someVisibleActionableSelected}
+                onChange={handleToggleAllVisibleActionable}
+                inputProps={{ "aria-label": "Seleccionar todas las filas visibles" }}
               />
-              <Typography variant="body2">Seleccionar pendientes</Typography>
+              <Typography variant="body2">Seleccionar todas</Typography>
             </Box>
           )}
 
@@ -827,12 +827,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                 <TableRow sx={{ backgroundColor: colors.background.surface }}>
                   {showSelectionColumn && (
                     <TableCell padding="checkbox">
-                      {visiblePendingCoefficients.length > 0 && (
+                      {visibleActionableCoefficients.length > 0 && (
                         <Checkbox
-                          checked={allVisiblePendingSelected}
-                          indeterminate={someVisiblePendingSelected}
-                          onChange={handleToggleAllVisiblePending}
-                          inputProps={{ "aria-label": "Seleccionar todos los pendientes" }}
+                          checked={allVisibleActionableSelected}
+                          indeterminate={someVisibleActionableSelected}
+                          onChange={handleToggleAllVisibleActionable}
+                          inputProps={{ "aria-label": "Seleccionar todas las filas visibles" }}
                         />
                       )}
                     </TableCell>

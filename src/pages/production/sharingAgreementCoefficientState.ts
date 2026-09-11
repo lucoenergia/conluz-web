@@ -111,19 +111,9 @@ export function isEndStateReadOnly(
   return endState === DERIVED || endState === PENDING_SUCCESSION;
 }
 
-/** The single definition of "pending" — never copy `=== PENDING` a second time; both isPendingActivation and getAvailableCoefficientActions read this one. */
+/** The single definition of "pending" — never copy `=== PENDING` a second time; getAvailableCoefficientActions reads this one. */
 function isPendingState(applicationState: SharingAgreementPartitionCoefficientResponseApplicationState | undefined): boolean {
   return applicationState === PENDING;
-}
-
-/**
- * Whether a coefficient is eligible for batch activation — the only
- * selection/checkbox eligibility test for the pending-activation batch bar.
- * Independent of endState: a PENDING coefficient is always OPEN per the
- * backend's own invariants (DRAFT/pending rows can't be CLOSED or DERIVED).
- */
-export function isPendingActivation(coefficient: SharingAgreementPartitionCoefficientResponse): boolean {
-  return isPendingState(coefficient.applicationState);
 }
 
 export type CoefficientAction = "apply" | "correct" | "deactivate" | "close" | "reopen";

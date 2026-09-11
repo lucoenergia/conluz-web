@@ -438,43 +438,43 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     Element.prototype.scrollIntoView = vi.fn();
   });
 
-  it("header checkbox: unchecked when nothing is selected, click selects every visible pending row", async () => {
+  it("header checkbox: unchecked when nothing is selected, click selects every visible actionable row", async () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
 
-    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0];
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0];
     expect(checkbox).not.toBeChecked();
 
     await user.click(checkbox);
 
-    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
-    // Only PENDING rows ever render a checkbox at all (verified by the row
-    // spec); this proves the *count* matches "all pending", not more.
+    // mixed has 2 PENDING (apply) and 1 APPLIED/OPEN (correct/deactivate) —
+    // all 3 are actionable now, so "select all" reaches every one of them.
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
   });
 
-  it("header checkbox: indeterminate when some but not all visible pending rows are selected", async () => {
+  it("header checkbox: indeterminate when some but not all visible actionable rows are selected", async () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threePending });
 
     await selectPendingRow(user, "Vivienda A");
 
-    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0];
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0];
     expect(checkbox).toHaveAttribute("data-indeterminate", "true");
     expect(checkbox).not.toBeChecked();
   });
 
-  it("header checkbox: checked when every visible pending row is selected, and clicking then deselects only the visible ones", async () => {
+  it("header checkbox: checked when every visible actionable row is selected, and clicking then deselects only the visible ones", async () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threePending });
 
     // Select all 3, then narrow to 2 via search — the 3rd stays selected but hidden.
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]);
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]);
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
     await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
       timeout: 1000,
     });
 
-    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0];
+    const checkbox = screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0];
     expect(checkbox).toBeChecked();
 
     await user.click(checkbox);
@@ -483,9 +483,9 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     expect(screen.getByText("1 seleccionado · 1 oculto por el filtro")).toBeInTheDocument();
   });
 
-  it("hides the header checkbox entirely when no visible row is pending", () => {
+  it("shows the header checkbox for a visible APPLIED row too, now that it's actionable (correct/deactivate)", () => {
     renderWithTheme({ coefficients: allApplied });
-    expect(screen.queryByRole("checkbox", { name: "Seleccionar todos los pendientes" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" }).length).toBeGreaterThan(0);
   });
 
   it("regression: selecting all with an active filter never selects a row outside the filtered set", async () => {
@@ -495,7 +495,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
     await waitFor(() => expect(screen.queryByText("Local C")).not.toBeInTheDocument(), { timeout: 1000 });
 
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]);
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]);
 
     // Exactly the 2 visible rows — never Local C, which the filter hides.
     expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
@@ -506,7 +506,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threePending });
 
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Local");
 
     await waitFor(() => expect(screen.getByText("3 seleccionados · 2 ocultos por el filtro")).toBeInTheDocument(), {
@@ -524,7 +524,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     await waitFor(() => expect(screen.getByText("No se encontraron coeficientes")).toBeInTheDocument(), {
       timeout: 1000,
     });
-    expect(screen.queryByRole("checkbox", { name: "Seleccionar todos los pendientes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Seleccionar todas las filas visibles" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Acciones" })).toBeInTheDocument();
     expect(screen.getByText("1 seleccionado · 1 oculto por el filtro")).toBeInTheDocument();
   });
@@ -533,7 +533,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threePending });
 
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
     await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
       timeout: 1000,
@@ -801,7 +801,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threePending });
 
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda"); // hides Local C
     await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
       timeout: 1000,
@@ -817,7 +817,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threePending });
 
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]); // selects all 3
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda"); // hides Local C (c3)
     await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
       timeout: 1000,
@@ -838,7 +838,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threePending });
 
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]);
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todas las filas visibles" })[0]);
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
     await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
       timeout: 1000,
@@ -1114,6 +1114,38 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     expect(mockDeactivateMutateAsync).not.toHaveBeenCalled();
     expect(mockCloseMutateAsync).not.toHaveBeenCalled();
     expect(mockReopenMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("a batch correction excludes a row already corrected individually via ⋯ — APPLIED rows are selectable now", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const threeApplied: SharingAgreementPartitionCoefficientResponse[] = [
+      { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-01-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+      { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-02-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+      { coefficientId: "a3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: APPLIED, validFrom: "2025-03-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+    ];
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threeApplied });
+
+    await selectPendingRow(user, "Vivienda A");
+    await selectPendingRow(user, "Vivienda B");
+    await selectPendingRow(user, "Vivienda C");
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+
+    // Correct Vivienda A individually via its own ⋯ menu.
+    await openRowMenu(user, "Vivienda A");
+    await user.click(screen.getByRole("menuitem", { name: "Corregir fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Confirmar y recalcular" }));
+    await waitFor(() => expect(screen.getByText("2 seleccionados")).toBeInTheDocument());
+
+    // Now batch-correct the remaining two.
+    await openBatchAction(user, "Corregir fecha");
+    await typeDate(user, "15", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Confirmar y recalcular" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(2));
+    const secondCallBody = mockActivateMutateAsync.mock.calls[1][0].data;
+    expect(new Set(secondCallBody.coefficientIds)).toEqual(new Set(["a2", "a3"]));
   });
 
   it("on rejection, the close dialog stays open and renders every returned message", async () => {

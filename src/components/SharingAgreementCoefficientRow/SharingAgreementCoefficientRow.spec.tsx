@@ -467,7 +467,9 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
     expect(onToggleSelected).toHaveBeenCalledTimes(1);
   });
 
-  it("never renders a checkbox for an APPLIED coefficient, even when selection is offered", () => {
+  it("renders a checkbox for an APPLIED coefficient too, now that it's actionable (correct/deactivate)", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
     render(
       <Table>
         <TableBody>
@@ -476,13 +478,16 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
             installedPowerKw={100}
             showSelectionColumn
             selected={false}
-            onToggleSelected={vi.fn()}
+            onToggleSelected={onToggleSelected}
           />
         </TableBody>
       </Table>,
     );
 
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda B" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
   });
 
   it("never renders a checkbox when showSelectionColumn is false, even for a PENDING coefficient with onToggleSelected present", () => {
@@ -687,17 +692,22 @@ describe("SharingAgreementCoefficientCard (batch-activation checkbox)", () => {
     expect(onToggleSelected).toHaveBeenCalledTimes(1);
   });
 
-  it("never renders a checkbox for an APPLIED coefficient, even when selection is offered", () => {
+  it("renders a checkbox for an APPLIED coefficient too, now that it's actionable (correct/deactivate)", async () => {
+    const onToggleSelected = vi.fn();
+    const user = userEvent.setup();
     render(
       <SharingAgreementCoefficientCard
         coefficient={derivedCoefficient}
         installedPowerKw={100}
         showSelectionColumn
         selected={false}
-        onToggleSelected={vi.fn()}
+        onToggleSelected={onToggleSelected}
       />,
     );
 
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    const checkbox = screen.getByRole("checkbox", { name: "Seleccionar Vivienda B" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onToggleSelected).toHaveBeenCalledTimes(1);
   });
 });

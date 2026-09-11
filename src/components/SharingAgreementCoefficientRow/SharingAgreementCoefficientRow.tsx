@@ -13,7 +13,6 @@ import {
   getAvailableCoefficientActions,
   getEndStateLabel,
   isEndStateReadOnly,
-  isPendingActivation,
 } from "../../pages/production/sharingAgreementCoefficientState";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
@@ -34,7 +33,7 @@ export interface SharingAgreementCoefficientRowProps {
   /** Whether the batch-activation checkbox column/slot renders at all (the desktop table needs a matching header cell). */
   showSelectionColumn?: boolean;
   selected?: boolean;
-  /** Present only when the row is eligible (PENDING) and selection is offered — its mere presence doesn't render a checkbox, `isPendingActivation` still gates that. */
+  /** Present only when the row has at least one available action and selection is offered — its mere presence doesn't render a checkbox, `getAvailableCoefficientActions` still gates that. */
   onToggleSelected?: () => void;
   /** Whether the lifecycle-actions ⋯ column/slot renders at all — the container only mounts it when at least one visible row has an action. */
   showActionsColumn?: boolean;
@@ -125,7 +124,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
     <TableRow>
       {showSelectionColumn && (
         <TableCell padding="checkbox">
-          {onToggleSelected && isPendingActivation(coefficient) && (
+          {onToggleSelected && availableActions.length > 0 && (
             <Checkbox
               checked={!!selected}
               onChange={onToggleSelected}
@@ -229,8 +228,8 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
-  const showCheckbox = showSelectionColumn && !!onToggleSelected && isPendingActivation(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
+  const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
 
   return (
     <Box
