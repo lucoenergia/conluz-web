@@ -2,18 +2,19 @@ import { describe, expect, it } from "vitest";
 import { formatCalendarDate } from "./formatCalendarDate";
 
 describe("formatCalendarDate", () => {
-  it("formats a Z-suffixed instant using its date component", () => {
+  it("formats a Z-suffixed instant that stays on the same Madrid calendar day", () => {
     expect(formatCalendarDate("2024-05-23T00:00:00Z")).toBe("23 de mayo de 2024");
   });
 
-  it("trusts the date digits as written, never reinterpreting a non-UTC offset in UTC", () => {
-    // Madrid midnight (+02:00) — a naive `new Date(x).toLocaleDateString(..., { timeZone: "UTC" })`
-    // would reinterpret this instant in UTC and roll the day back to June 1st.
-    expect(formatCalendarDate("2025-06-02T00:00:00+02:00")).toBe("2 de junio de 2025");
+  it("rolls a Z-suffixed instant forward into the next Madrid calendar day (CEST, UTC+2)", () => {
+    // Backend derives validFrom as `appliedOn.atStartOfDay(Europe/Madrid).toInstant()`, so
+    // registering the 10th in summer produces this exact wire value — reading only the raw
+    // "2026-09-09" prefix (the previous, buggy approach) would display the 9th instead.
+    expect(formatCalendarDate("2026-09-09T22:00:00Z")).toBe("10 de septiembre de 2026");
   });
 
-  it("trusts the date digits even when the offset would push the instant into the next UTC day", () => {
-    expect(formatCalendarDate("2025-01-01T23:00:00-05:00")).toBe("1 de enero de 2025");
+  it("rolls a Z-suffixed instant forward into the next Madrid calendar day (CET, UTC+1)", () => {
+    expect(formatCalendarDate("2025-01-01T23:00:00Z")).toBe("2 de enero de 2025");
   });
 
   it("returns a dash for undefined input", () => {
