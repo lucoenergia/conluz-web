@@ -1183,12 +1183,49 @@ test.describe("Visual baselines", () => {
     await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
     await expect(page.getByText("1 seleccionado")).toBeVisible();
 
-    const applyButton = page.getByRole("button", { name: "Aplicar fecha a selección" });
-    await expect(applyButton).toBeDisabled();
-    await expect(page.getByText("Selecciona una fecha")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Acciones", exact: true })).toBeEnabled();
 
     await stabilizePage(page);
     await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-selection.png", { fullPage: true });
+  });
+
+  test("sharing agreement detail page (batch bar Acciones menu, single action fully available)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await page.getByRole("button", { name: "Acciones", exact: true }).click();
+    await expect(page.getByRole("menuitem", { name: "Registrar fecha" })).toBeVisible();
+
+    await stabilizePage(page);
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-acciones-menu.png", { fullPage: true });
+  });
+
+  test("sharing agreement batch registration dialog (Registrar fecha, opened from Acciones)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await page.getByRole("button", { name: "Acciones", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Registrar fecha" }).click();
+
+    await expect(page.getByRole("heading", { name: "Registrar fecha de aplicación" })).toBeVisible();
+    const confirmButton = page.getByRole("button", { name: "Registrar fecha" });
+    await expect(confirmButton).toBeDisabled();
+    await expect(page.getByText("Selecciona una fecha")).toBeVisible();
+
+    await stabilizePage(page);
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-registration-dialog.png", { fullPage: true });
   });
 
   test("sharing agreement coefficient row actions menu (⋯ open)", async ({ page }) => {
@@ -1259,7 +1296,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
 
     await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
-    await expect(page.getByRole("button", { name: "Aplicar fecha a selección" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Acciones", exact: true })).toBeVisible();
 
     await page.addStyleTag({
       content: `*, *::before, *::after { animation: none !important; transition: none !important; }`,
@@ -1279,7 +1316,7 @@ test.describe("Visual baselines", () => {
     const lastCard = page.getByText("Ático F").last();
     await expect(lastCard).toBeVisible();
     const cardBox = await lastCard.boundingBox();
-    const barBox = await page.getByRole("button", { name: "Aplicar fecha a selección" }).boundingBox();
+    const barBox = await page.getByRole("button", { name: "Acciones", exact: true }).boundingBox();
     expect(cardBox).not.toBeNull();
     expect(barBox).not.toBeNull();
     // The last card's bottom edge must sit above (a smaller y than) the top

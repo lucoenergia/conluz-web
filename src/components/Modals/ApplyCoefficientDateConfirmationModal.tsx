@@ -11,11 +11,13 @@ import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
 import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
-import { CoefficientDialogErrorPanel } from "./coefficientLifecycleDialogHelpers";
+import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
 
 interface ApplyCoefficientDateConfirmationModalProps {
   isOpen: boolean;
   coefficients: readonly [SharingAgreementPartitionCoefficientResponse, ...SharingAgreementPartitionCoefficientResponse[]] | undefined;
+  /** How many of `coefficients` are currently hidden by the filter behind the modal — 0 for the row path, since a hidden row can never open its own menu. */
+  hiddenCount?: number;
   isPending: boolean;
   errorMessages: string[] | null;
   onCancel: (event: MouseEvent<HTMLElement>) => void;
@@ -28,9 +30,13 @@ interface ApplyCoefficientDateConfirmationModalProps {
 // carries no consequence warning, no error-toned icon or CUPS chip. Same
 // underlying activate endpoint as "correct" (see the container's
 // handleConfirmActivate), same shared date-validation rule, different intent.
+// The confirm button swaps its label for a spinner while pending — the one
+// coefficient dialog that does, because it directly succeeds Part A's batch
+// bar button, which had the same spinner-swap.
 export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfirmationModalProps> = ({
   isOpen,
   coefficients,
+  hiddenCount = 0,
   isPending,
   errorMessages,
   onCancel,
@@ -62,24 +68,29 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
       confirmLabel="Registrar fecha"
       confirmColor="primary"
       confirmDisabled={confirmDisabledReason !== null}
+      confirmPending={isPending}
       onConfirm={handleConfirm}
       title="Registrar fecha de aplicación"
       icon={<EventAvailableOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
     >
-      <Typography
-        sx={{
-          fontSize: fontSizes.md,
-          fontWeight: 600,
-          color: "secondary.main",
-          mb: 2,
-          backgroundColor: alphas.info.subtle,
-          padding: "8px 12px",
-          borderRadius: radii.default,
-        }}
-      >
-        {getCoefficientCupsLabel(coefficients?.[0])}
-      </Typography>
+      {coefficients && coefficients.length > 1 ? (
+        <CoefficientTargetSummary coefficients={coefficients} hiddenCount={hiddenCount} />
+      ) : (
+        <Typography
+          sx={{
+            fontSize: fontSizes.md,
+            fontWeight: 600,
+            color: "secondary.main",
+            mb: 2,
+            backgroundColor: alphas.info.subtle,
+            padding: "8px 12px",
+            borderRadius: radii.default,
+          }}
+        >
+          {getCoefficientCupsLabel(coefficients?.[0])}
+        </Typography>
+      )}
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         <DatePicker
           label="Fecha de aplicación"

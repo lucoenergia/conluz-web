@@ -42,4 +42,24 @@ describe("ConfirmationModal", () => {
     expect(mockOnConfirm).toHaveBeenCalledTimes(1);
     expect(mockOnCancel).not.toHaveBeenCalled();
   });
+
+  it("keeps the static label by default while pending — confirmPending is opt-in, off unless a caller asks for it", () => {
+    render(
+      <ConfirmationModal isOpen confirmLabel="Deshabilitar" confirmDisabled onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
+        Deshabilitar punto de suministro
+      </ConfirmationModal>,
+    );
+    expect(screen.getByRole("button", { name: "Deshabilitar" })).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+  });
+
+  it("swaps the label for a spinner when confirmPending is set", () => {
+    render(
+      <ConfirmationModal isOpen confirmLabel="Deshabilitar" confirmPending onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
+        Deshabilitar punto de suministro
+      </ConfirmationModal>,
+    );
+    expect(screen.queryByRole("button", { name: "Deshabilitar" })).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+  });
 });

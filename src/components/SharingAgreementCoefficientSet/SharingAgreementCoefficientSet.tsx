@@ -5,7 +5,6 @@ import {
   Button,
   Checkbox,
   Chip,
-  CircularProgress,
   Menu,
   Paper,
   Table,
@@ -20,17 +19,14 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import dayjs, { type Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
+import { colors, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
 import { SearchBar } from "../SearchBar/SearchBar";
@@ -62,7 +58,9 @@ import {
   getApplicationStateColor,
   getApplicationStateLabel,
   getAvailableCoefficientActions,
+  isFullyAvailable,
   isPendingActivation,
+  summarizeSelectionActions,
   type CoefficientAction,
 } from "../../pages/production/sharingAgreementCoefficientState";
 import { normalizeForSearch } from "../../pages/production/sharingAgreementFilters";
@@ -82,25 +80,30 @@ import {
   isFullSum,
   type SharingAgreementCoefficientSums,
 } from "../../pages/production/sharingAgreementCoefficientSums";
-import { useSharingAgreementCoefficientMutations } from "../../pages/production/useSharingAgreementCoefficientMutations";
-import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
+import {
+  useSharingAgreementCoefficientMutations,
+  type CoefficientActivationResult,
+} from "../../pages/production/useSharingAgreementCoefficientMutations";
 
 // Authoritative rather than measured: these constants *set* the fixed bar's
 // height (and the matching spacer's height) at each breakpoint, rather than
-// describing whatever the content happens to render at. The disabled-reason
-// line reserves its own space (minHeight) so the bar's real content never
-// exceeds these regardless of which state is showing.
-// Mobile: confirmed against the Playwright capture at the narrowest
-// supported viewport (390px, mobile project) — see tests/visual for the
-// assertion that nothing clips inside it.
-const BATCH_BAR_HEIGHT_MOBILE = 208;
-// Desktop: measured (not guessed from the mobile value) against a real
-// Chromium render of the bar's tallest content state — both count-text
-// lines, the date field with its permanent helper text, and the reserved
-// reason line populated — at the 1440px desktop viewport: 137.8px measured,
-// rounded up with headroom on the same generous basis as the mobile
-// constant. Confirmed against the Playwright capture that nothing clips.
-const BATCH_BAR_HEIGHT_DESKTOP = 160;
+// describing whatever the content happens to render at.
+//
+// Re-derived for the Acciones-menu bar (no more inline DatePicker, helper
+// text, or reason caption — that content moved into the per-action dialogs).
+// Measured via a real Chromium render (temporarily freeing the sx height to
+// read the content's natural height), worst case: the two-part hidden-count
+// text ("N seleccionados · M ocultos por el filtro"), which did not wrap to
+// a second line at either viewport.
+// Mobile (390px, mobile project): 124.3px natural content height (count
+// text + "Limpiar selección" stacked above the "Acciones" button) —
+// rounded up with headroom for a device's safe-area-inset-bottom, which
+// this measurement doesn't simulate.
+const BATCH_BAR_HEIGHT_MOBILE = 144;
+// Desktop (1440px): 53.5px natural content height (count text, "Limpiar
+// selección" and "Acciones" all on one row) — rounded up with headroom on
+// the same basis as the mobile constant.
+const BATCH_BAR_HEIGHT_DESKTOP = 72;
 
 export interface SharingAgreementCoefficientSetProps {
   plantId: string;
@@ -122,6 +125,20 @@ const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilt
 interface BatchActionErrorState {
   action: CoefficientAction;
   errorMessages: string[];
+}
+
+/**
+ * The one dialog-state value shared by the row path (source: "row", always
+ * a single target) and the batch path (source: "batch", the whole
+ * selection). `source` decides where a rejection is reported: "row" keeps
+ * a dialog-local error and the date the admin typed; "batch" closes the
+ * dialog and reports through the page-level persistent panel instead,
+ * naming every affected CUPS — see handleDialogOutcome.
+ */
+interface ActiveCoefficientDialog {
+  action: CoefficientAction;
+  targetIds: readonly [string, ...string[]];
+  source: "row" | "batch";
 }
 
 // Copy for the persistent batch-rejection panel, keyed by action rather than
@@ -236,20 +253,22 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-  const [dateValidationError, setDateValidationError] = useState<string | null>(null);
   const [batchActionError, setBatchActionError] = useState<BatchActionErrorState | null>(null);
   const errorPanelRef = useRef<HTMLDivElement>(null);
 
-  // Lifecycle row-actions menu/dialogs (Part B) — entirely separate from the
-  // batch-activation state above. Holds only the id, not the coefficient
-  // object: every mutation invalidates the whole plant subtree, which can
-  // replace row objects while the menu or a dialog is still open (a cascade,
-  // or another session acting on the same agreement), so the row is
-  // re-resolved live on every render instead of trusting a captured snapshot.
+  // The row `⋯` menu and the bar's `Acciones` menu each own their own
+  // anchor — distinct popovers, so one's positioning can never leak into
+  // the other's, even though only one is ever open in practice.
   const [actionsAnchorEl, setActionsAnchorEl] = useState<HTMLElement | null>(null);
   const [actionsMenuCoefficientId, setActionsMenuCoefficientId] = useState<string | null>(null);
-  const [activeDialog, setActiveDialog] = useState<CoefficientAction | null>(null);
+  const [batchActionsAnchorEl, setBatchActionsAnchorEl] = useState<HTMLElement | null>(null);
+
+  // Holds only ids, not coefficient objects: every mutation invalidates the
+  // whole plant subtree, which can replace row objects while a dialog is
+  // still open (a cascade, or another session acting on the same
+  // agreement), so targets are re-resolved live on every render instead of
+  // trusting a captured snapshot.
+  const [activeDialog, setActiveDialog] = useState<ActiveCoefficientDialog | null>(null);
   const [dialogErrors, setDialogErrors] = useState<string[] | null>(null);
 
   useUnsavedChangesGuard(isEditing);
@@ -261,34 +280,53 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   }, [batchActionError]);
 
   // Resolved from the *full* coefficients list, never filteredCoefficients —
-  // a dialog must not close just because the user changed the filter behind
-  // it, only because the underlying row genuinely changed or vanished.
+  // a menu/dialog must not close just because the user changed the filter
+  // behind it, only because the underlying target genuinely changed or
+  // vanished.
   const actionsMenuCoefficient = actionsMenuCoefficientId
     ? coefficients.find((c) => c.coefficientId === actionsMenuCoefficientId)
     : undefined;
+  const targetCoefficients = useMemo(
+    () => (activeDialog ? coefficients.filter((c) => activeDialog.targetIds.includes(c.coefficientId)) : []),
+    [activeDialog, coefficients],
+  );
+  const dialogCoefficients =
+    targetCoefficients.length > 0
+      ? (targetCoefficients as [SharingAgreementPartitionCoefficientResponse, ...SharingAgreementPartitionCoefficientResponse[]])
+      : undefined;
 
+  // The row `⋯` menu closes if its own coefficient disappears while open —
+  // nothing failed, there's simply nothing left to act on.
   useEffect(() => {
     if (!actionsMenuCoefficientId) return;
-    // The row disappeared (removed from the agreement, or the id was stale
-    // to begin with) — nothing failed, there's simply nothing left to act on.
     if (!actionsMenuCoefficient) {
       setActionsAnchorEl(null);
       setActionsMenuCoefficientId(null);
+    }
+  }, [actionsMenuCoefficientId, actionsMenuCoefficient]);
+
+  // A dialog (row- or batch-sourced) closes silently — no error — the
+  // moment any one of its targets no longer supports the action it was
+  // opened for, whether the row vanished entirely or a cascade/refetch
+  // moved it to a different state (e.g. it closed elsewhere while "Cerrar
+  // (baja)" was still open here for it, or for a sibling in the same
+  // batch). The four endpoints are atomic, so one ineligible target already
+  // guarantees the request would fail — better to close than let the admin
+  // submit into a rejection they can't act on.
+  useEffect(() => {
+    if (!activeDialog) return;
+    const stillValid = activeDialog.targetIds.every((id) => {
+      const coefficient = coefficients.find((c) => c.coefficientId === id);
+      return (
+        !!coefficient &&
+        getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState).includes(activeDialog.action)
+      );
+    });
+    if (!stillValid) {
       setActiveDialog(null);
       setDialogErrors(null);
-      return;
     }
-    // The row is still there, but a cascade/refetch moved it out of the
-    // state the open dialog was for (e.g. it closed elsewhere while
-    // "Cerrar (baja)" was still open here) — close silently, same reasoning.
-    if (
-      activeDialog &&
-      !getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState).includes(activeDialog)
-    ) {
-      setActiveDialog(null);
-      setDialogErrors(null);
-    }
-  }, [coefficients, actionsMenuCoefficientId, actionsMenuCoefficient, activeDialog]);
+  }, [coefficients, activeDialog]);
 
   const isDraft = agreementStatus === SharingAgreementResponseStatus.DRAFT;
   const kwModeAvailable = installedPowerKw !== undefined && installedPowerKw > 0;
@@ -302,12 +340,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // condition, computed once, so the bar and spacer can never disagree about
   // whether they're mounted.
   const isBatchBarMounted = selectedIds.size > 0;
-  const applyDisabledReason = getCoefficientDateDisabledReason(
-    selectedDate,
-    dateValidationError,
-    isAnyCoefficientActionPending,
-    "Aplicando la fecha…",
-  );
 
   const toggleSelected = (coefficientId: string) => {
     setSelectedIds((prev) => {
@@ -354,18 +386,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // hidden alike. That asymmetry is the whole reason both controls exist.
   const handleClearSelection = () => setSelectedIds(new Set());
 
-  const handleApplyDate = async () => {
-    if (!selectedDate || applyDisabledReason) return;
-    const result = await activateCoefficients(sharingAgreementId, Array.from(selectedIds), selectedDate);
-    if (result.success) {
-      setSelectedIds(new Set());
-      setSelectedDate(null);
-      setBatchActionError(null);
-    } else {
-      setBatchActionError({ action: "apply", errorMessages: result.errorMessages });
-    }
-  };
-
   const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
     setActionsAnchorEl(event.currentTarget);
     setActionsMenuCoefficientId(coefficient.coefficientId);
@@ -373,10 +393,20 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const handleCloseActionsMenu = () => setActionsAnchorEl(null);
 
-  const handleSelectAction = (action: CoefficientAction) => {
+  const handleSelectRowAction = (action: CoefficientAction) => {
+    if (!actionsMenuCoefficientId) return;
     setActionsAnchorEl(null);
     setDialogErrors(null);
-    setActiveDialog(action);
+    setActiveDialog({ action, targetIds: [actionsMenuCoefficientId], source: "row" });
+  };
+
+  const handleOpenBatchActionsMenu = (event: MouseEvent<HTMLElement>) => setBatchActionsAnchorEl(event.currentTarget);
+  const handleCloseBatchActionsMenu = () => setBatchActionsAnchorEl(null);
+
+  const handleSelectBatchAction = (action: CoefficientAction) => {
+    setBatchActionsAnchorEl(null);
+    if (selectedIds.size === 0) return;
+    setActiveDialog({ action, targetIds: Array.from(selectedIds) as [string, ...string[]], source: "batch" });
   };
 
   // A pending mutation can't be cancelled from here, and closing the dialog
@@ -391,48 +421,54 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     setDialogErrors(null);
   };
 
+  // Routes a settled mutation result by the dialog's own source: "row" keeps
+  // Part B's dialog-local error and drops only that one row from a live
+  // selection; "batch" closes the dialog on rejection (no dialog-local error
+  // ever shown there) and reports through the page-level persistent panel
+  // instead, or clears the whole selection on success.
+  const handleDialogOutcome = (result: CoefficientActivationResult, dialog: ActiveCoefficientDialog) => {
+    if (result.success) {
+      if (dialog.source === "row") {
+        dropFromSelection(dialog.targetIds[0]);
+      } else {
+        setSelectedIds(new Set());
+      }
+      setActiveDialog(null);
+      setActionsMenuCoefficientId(null);
+      setDialogErrors(null);
+    } else if (dialog.source === "row") {
+      setDialogErrors(result.errorMessages);
+    } else {
+      setActiveDialog(null);
+      setActionsMenuCoefficientId(null);
+      setBatchActionError({ action: dialog.action, errorMessages: result.errorMessages });
+    }
+  };
+
   // "apply" (registering a PENDING row's first date) and "correct"
   // (rewriting an APPLIED row's date) are the same activate call — the
   // backend distinguishes them by the coefficient's current state, not by a
   // different endpoint.
   const handleConfirmActivate = async (date: Dayjs) => {
-    if (!actionsMenuCoefficient) return;
-    const result = await activateCoefficients(sharingAgreementId, [actionsMenuCoefficient.coefficientId], date);
-    if (result.success) {
-      dropFromSelection(actionsMenuCoefficient.coefficientId);
-      setActiveDialog(null);
-      setActionsMenuCoefficientId(null);
-      setDialogErrors(null);
-    } else {
-      setDialogErrors(result.errorMessages);
-    }
+    if (!activeDialog) return;
+    const dialog = activeDialog;
+    const result = await activateCoefficients(sharingAgreementId, [...dialog.targetIds], date);
+    handleDialogOutcome(result, dialog);
   };
 
   const handleConfirmDeactivateOrReopen = async () => {
-    if (!actionsMenuCoefficient || (activeDialog !== "deactivate" && activeDialog !== "reopen")) return;
-    const mutate = activeDialog === "deactivate" ? deactivateCoefficients : reopenCoefficients;
-    const result = await mutate(sharingAgreementId, [actionsMenuCoefficient.coefficientId]);
-    if (result.success) {
-      dropFromSelection(actionsMenuCoefficient.coefficientId);
-      setActiveDialog(null);
-      setActionsMenuCoefficientId(null);
-      setDialogErrors(null);
-    } else {
-      setDialogErrors(result.errorMessages);
-    }
+    if (!activeDialog || (activeDialog.action !== "deactivate" && activeDialog.action !== "reopen")) return;
+    const dialog = activeDialog;
+    const mutate = dialog.action === "deactivate" ? deactivateCoefficients : reopenCoefficients;
+    const result = await mutate(sharingAgreementId, [...dialog.targetIds]);
+    handleDialogOutcome(result, dialog);
   };
 
   const handleConfirmClose = async (date: Dayjs) => {
-    if (!actionsMenuCoefficient) return;
-    const result = await closeCoefficients(sharingAgreementId, [actionsMenuCoefficient.coefficientId], date);
-    if (result.success) {
-      dropFromSelection(actionsMenuCoefficient.coefficientId);
-      setActiveDialog(null);
-      setActionsMenuCoefficientId(null);
-      setDialogErrors(null);
-    } else {
-      setDialogErrors(result.errorMessages);
-    }
+    if (!activeDialog) return;
+    const dialog = activeDialog;
+    const result = await closeCoefficients(sharingAgreementId, [...dialog.targetIds], date);
+    handleDialogOutcome(result, dialog);
   };
 
   // Anomaly means an explicit unexpected value, not missing data: a real DRAFT
@@ -493,6 +529,23 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     [filteredCoefficients],
   );
   const showActionsColumn = !isEditing && !isDraft && hasAnyRowActions;
+
+  // How many of the currently open dialog's targets are hidden by the
+  // filter behind it — always 0 for the row path (a hidden row can't open
+  // its own menu), non-zero for a batch dialog whose selection spans hidden
+  // rows too.
+  const hiddenTargetCount = activeDialog
+    ? activeDialog.targetIds.filter((id) => !filteredCoefficients.some((c) => c.coefficientId === id)).length
+    : 0;
+
+  // The whole selection resolved against the current coefficient data,
+  // hidden rows included — so a row acted on individually is re-evaluated
+  // here too once its own mutation's refetch lands, with no extra handling.
+  const selectedCoefficients = useMemo(
+    () => coefficients.filter((c) => selectedIds.has(c.coefficientId)),
+    [coefficients, selectedIds],
+  );
+  const selectionActionSummary = useMemo(() => summarizeSelectionActions(selectedCoefficients), [selectedCoefficients]);
 
   const filteredRows = useMemo(() => filterEditableRows(rows, debouncedSearchText), [rows, debouncedSearchText]);
 
@@ -947,39 +1000,35 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             </Button>
           </Box>
 
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1.5 }}>
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-              <DatePicker
-                value={selectedDate}
-                onChange={(value) => setSelectedDate(value)}
-                maxDate={dayjs()}
-                onError={(reason) => setDateValidationError(reason)}
-                slotProps={{
-                  textField: {
-                    size: "small",
-                    helperText: "No se permiten fechas futuras",
-                    sx: { "& .MuiOutlinedInput-root": { fontSize: fontSizes.lg, height: "40px" } },
-                  },
-                }}
-              />
-            </LocalizationProvider>
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Button
-                variant="contained"
-                onClick={handleApplyDate}
-                disabled={applyDisabledReason !== null}
-                sx={{ boxShadow: shadows.medium }}
-              >
-                {isActivating ? <CircularProgress size={24} color="inherit" /> : "Aplicar fecha a selección"}
-              </Button>
-              <Typography variant="caption" sx={{ color: colors.text.subtle, minHeight: "1.2em" }}>
-                {applyDisabledReason ?? ""}
-              </Typography>
-            </Box>
-          </Box>
+          <Button
+            variant="contained"
+            onClick={handleOpenBatchActionsMenu}
+            disabled={isAnyCoefficientActionPending || selectionActionSummary.length === 0}
+            sx={{ boxShadow: shadows.medium }}
+          >
+            Acciones
+          </Button>
         </Box>
       )}
+
+      <Menu
+        anchorEl={batchActionsAnchorEl}
+        open={Boolean(batchActionsAnchorEl)}
+        onClose={handleCloseBatchActionsMenu}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        slotProps={{ list: { disabledItemsFocusable: true } }}
+      >
+        <CoefficientActionsMenuItems
+          items={selectionActionSummary.map((item) => ({
+            action: item.action,
+            disabledReason: isFullyAvailable(item)
+              ? undefined
+              : `Solo aplicable a ${item.eligibleCount} de ${item.selectedCount} seleccionados`,
+          }))}
+          onSelectAction={handleSelectBatchAction}
+        />
+      </Menu>
 
       <Box
         sx={{
@@ -1008,48 +1057,51 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         transformOrigin={{ horizontal: "right", vertical: "top" }}
       >
         <CoefficientActionsMenuItems
-          actions={
-            actionsMenuCoefficient
-              ? getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState)
-              : []
-          }
-          onSelectAction={handleSelectAction}
+          items={(actionsMenuCoefficient
+            ? getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState)
+            : []
+          ).map((action) => ({ action }))}
+          onSelectAction={handleSelectRowAction}
         />
       </Menu>
 
       <ApplyCoefficientDateConfirmationModal
-        isOpen={activeDialog === "apply"}
-        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
+        isOpen={activeDialog?.action === "apply"}
+        coefficients={dialogCoefficients}
+        hiddenCount={hiddenTargetCount}
         isPending={isAnyCoefficientActionPending}
-        errorMessages={dialogErrors}
+        errorMessages={activeDialog?.source === "row" ? dialogErrors : null}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmActivate}
       />
 
       <CorrectCoefficientDateConfirmationModal
-        isOpen={activeDialog === "correct"}
-        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
+        isOpen={activeDialog?.action === "correct"}
+        coefficients={dialogCoefficients}
+        hiddenCount={hiddenTargetCount}
         isPending={isAnyCoefficientActionPending}
-        errorMessages={dialogErrors}
+        errorMessages={activeDialog?.source === "row" ? dialogErrors : null}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmActivate}
       />
 
       <DeactivateOrReopenCoefficientConfirmationModal
-        isOpen={activeDialog === "deactivate" || activeDialog === "reopen"}
-        action={activeDialog === "reopen" ? "reopen" : "deactivate"}
-        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
+        isOpen={activeDialog?.action === "deactivate" || activeDialog?.action === "reopen"}
+        action={activeDialog?.action === "reopen" ? "reopen" : "deactivate"}
+        coefficients={dialogCoefficients}
+        hiddenCount={hiddenTargetCount}
         isPending={isAnyCoefficientActionPending}
-        errorMessages={dialogErrors}
+        errorMessages={activeDialog?.source === "row" ? dialogErrors : null}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmDeactivateOrReopen}
       />
 
       <CloseCoefficientConfirmationModal
-        isOpen={activeDialog === "close"}
-        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
+        isOpen={activeDialog?.action === "close"}
+        coefficients={dialogCoefficients}
+        hiddenCount={hiddenTargetCount}
         isPending={isAnyCoefficientActionPending}
-        errorMessages={dialogErrors}
+        errorMessages={activeDialog?.source === "row" ? dialogErrors : null}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmClose}
       />

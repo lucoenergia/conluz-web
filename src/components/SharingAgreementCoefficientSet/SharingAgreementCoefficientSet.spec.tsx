@@ -69,12 +69,18 @@ async function selectPendingRow(user: ReturnType<typeof userEvent.setup>, supply
   await user.click(screen.getAllByRole("checkbox", { name: `Seleccionar ${supplyName}` })[0]);
 }
 
-/** Types a date into the batch bar's DatePicker via its section spinbuttons — the only interaction MUI's v7 field accepts under jsdom (no plain &lt;input&gt;, sections are contenteditable spinbuttons). */
+/** Types a date into whichever DatePicker is currently rendered, via its section spinbuttons — the only interaction MUI's v7 field accepts under jsdom (no plain &lt;input&gt;, sections are contenteditable spinbuttons). */
 async function typeDate(user: ReturnType<typeof userEvent.setup>, day: string, month: string, year: string) {
   await user.click(screen.getByRole("spinbutton", { name: "Day" }));
   await user.keyboard(day);
   await user.keyboard(month);
   await user.keyboard(year);
+}
+
+/** Opens the batch bar's "Acciones" menu and selects the item by its (visible) label — the entry point for every batch-dialog test since Part A's inline field was replaced. */
+async function openBatchAction(user: ReturnType<typeof userEvent.setup>, actionLabel: string) {
+  await user.click(screen.getByRole("button", { name: "Acciones" }));
+  await user.click(screen.getByRole("menuitem", { name: new RegExp(actionLabel) }));
 }
 
 function renderWithTheme(props: Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">) {
@@ -519,7 +525,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
       timeout: 1000,
     });
     expect(screen.queryByRole("checkbox", { name: "Seleccionar todos los pendientes" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acciones" })).toBeInTheDocument();
     expect(screen.getByText("1 seleccionado · 1 oculto por el filtro")).toBeInTheDocument();
   });
 
@@ -535,7 +541,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
 
     await user.click(screen.getByRole("button", { name: "Limpiar selección" }));
 
-    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
   });
 
   it("the batch bar mounts only once something is selected — not merely because a PENDING row exists — and unmounts again when the last selection is cleared", async () => {
@@ -543,16 +549,16 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     renderWithTheme({ coefficients: mixed });
 
     // Pending rows present, nothing checked yet: no bar.
-    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
     expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument();
 
     await selectPendingRow(user, "Vivienda A");
-    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acciones" })).toBeInTheDocument();
     expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
 
     // Unchecking the only selected row unmounts the bar again.
     await selectPendingRow(user, "Vivienda A");
-    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
   });
 
   it("singular/plural count text", async () => {
@@ -570,20 +576,22 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
 
     expect(screen.getByText("No se permiten fechas futuras")).toBeInTheDocument();
     const dayField = screen.getByRole("spinbutton", { name: "Day" });
     expect(dayField.closest("[title]")).toBeNull();
   });
 
-  it("typing a future date (bypassing the calendar's maxDate) leaves the button disabled with a visible reason", async () => {
+  it("typing a future date (bypassing the calendar's maxDate) leaves the dialog's confirm button disabled with a visible reason", async () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
 
     await typeDate(user, "01", "01", "2099");
 
-    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Registrar fecha" })).toBeDisabled();
     expect(screen.getByText("La fecha no puede ser futura ni inválida")).toBeInTheDocument();
   });
 
@@ -591,27 +599,29 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
 
     expect(screen.getByText("Selecciona una fecha")).toBeInTheDocument();
 
     await typeDate(user, "10", "01", "2026");
 
-    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Registrar fecha" })).toBeEnabled();
     expect(screen.queryByText("Selecciona una fecha")).not.toBeInTheDocument();
     expect(screen.queryByText("La fecha no puede ser futura ni inválida")).not.toBeInTheDocument();
   });
 
-  it("on success, clears the selection and the date, and shows the transient confirmation — no error panel", async () => {
+  it("on success, clears the whole selection and shows the transient confirmation — no error panel", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
 
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
 
     await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Fechas de aplicación registradas."));
-    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -620,15 +630,16 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
 
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
 
     await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Fechas de aplicación registradas."));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("on rejection, preserves the selection and date, and renders every error detail in a persistent panel", async () => {
+  it("on rejection, closes the dialog but preserves the selection, and renders every error detail in a persistent panel", async () => {
     mockActivateMutateAsync.mockRejectedValue({
       response: {
         data: {
@@ -642,15 +653,19 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
 
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
 
     await screen.findByRole("alert");
     expect(screen.getByText("No se ha activado ningún coeficiente.")).toBeInTheDocument();
-    // Selection and the entered date survive the rejection.
+    // The selection survives the rejection — the dialog itself does not
+    // (Correction 8: a batch dialog closes on rejection, unlike the row
+    // path's dialog-local error; the date the admin typed is not preserved).
     expect(screen.getByText("1 seleccionado")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Aplicar fecha/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Registrar fecha" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acciones" })).toBeInTheDocument();
     expect(mockSuccessDispatch).not.toHaveBeenCalled();
   });
 
@@ -661,9 +676,10 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
 
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
     const alertNode = await screen.findByRole("alert");
 
     const scrollMock = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
@@ -680,8 +696,11 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     mockActivateMutateAsync.mockResolvedValueOnce({ coefficients: [] });
     await user.click(screen.getByRole("alert").parentElement!.querySelector("button")!); // dismiss
     await selectPendingRow(user, "Vivienda B");
+    // The dialog closed on rejection (Correction 8) — retrying means
+    // reopening Acciones -> the action again, not clicking the same button.
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
     await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
     expect(scrollMock).not.toHaveBeenCalled();
   });
@@ -691,9 +710,10 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
 
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
 
     await screen.findByRole("alert");
     expect(screen.getByText("No se ha activado ningún coeficiente.")).toBeInTheDocument();
@@ -707,8 +727,9 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
     await screen.findByRole("alert");
 
     await user.click(screen.getByRole("alert").parentElement!.querySelector("button")!);
@@ -723,8 +744,9 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
     await screen.findByRole("alert");
     expect(screen.getAllByRole("alert")).toHaveLength(1);
 
@@ -733,23 +755,32 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
         data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR" }] },
       },
     });
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    // The dialog closed after the first rejection — a "fresh submission"
+    // means reopening it, not clicking a still-present button again.
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
 
     await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(2));
     expect(screen.getAllByRole("alert")).toHaveLength(1);
   });
 
-  it("disables the button and shows a spinner while isActivating, and a second click issues no second request", async () => {
-    mockIsActivating = true;
+  it("disables the dialog's confirm button and shows a spinner while isActivating, and a second click issues no second request", async () => {
     let resolveActivate!: (value: { coefficients: unknown[] }) => void;
     mockActivateMutateAsync.mockReturnValue(new Promise((resolve) => (resolveActivate = resolve)));
     const user = userEvent.setup();
     renderWithTheme({ coefficients: mixed });
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
 
-    const applyButton = screen.getByRole("button", { name: "" }); // spinner replaces the text label while pending
-    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    // The mutation call itself is still pending (the mocked promise never
+    // resolves here), so the dialog's own internal pending tracking (see
+    // useSharingAgreementCoefficientMutations) already reflects it — no
+    // need to fake isPending through the mock.
+    await waitFor(() => expect(screen.getByRole("progressbar")).toBeInTheDocument());
     const buttons = screen.getAllByRole("button").filter((b) => b.querySelector('[role="progressbar"]'));
     expect(buttons).toHaveLength(1);
     expect(buttons[0]).toBeDisabled();
@@ -761,10 +792,111 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     // fires its click handler, still without needing a real interaction.
     fireEvent.click(buttons[0]);
     fireEvent.click(buttons[0]);
-    expect(mockActivateMutateAsync).not.toHaveBeenCalled(); // disabled — clicks never reach the handler
+    expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1); // only the original click reached the handler
 
     resolveActivate({ coefficients: [] });
-    void applyButton;
+  });
+
+  it("the batch dialog reports how many targets are hidden by the filter", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda"); // hides Local C
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await openBatchAction(user, "Registrar fecha");
+
+    expect(screen.getByText("1 no se ve con el filtro actual")).toBeInTheDocument();
+  });
+
+  it("the batch request body contains every selected id, including one hidden by the filter, and the date as YYYY-MM-DD", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]); // selects all 3
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda"); // hides Local C (c3)
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    const body = mockActivateMutateAsync.mock.calls[0][0].data;
+    expect(new Set(body.coefficientIds)).toEqual(new Set(["c1", "c2", "c3"]));
+    expect(body.appliedOn).toBe("2026-01-10");
+  });
+
+  it("batch success clears the selection entirely, including rows hidden by the filter", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: threePending });
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar todos los pendientes" })[0]);
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Vivienda");
+    await waitFor(() => expect(screen.getByText("3 seleccionados · 1 oculto por el filtro")).toBeInTheDocument(), {
+      timeout: 1000,
+    });
+
+    await openBatchAction(user, "Registrar fecha");
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
+    expect(screen.queryByText(/seleccionad/)).not.toBeInTheDocument();
+  });
+
+  it("a row's contribution to the batch summary re-evaluates after a refetch changes its state, without needing to reselect it", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithTheme({ coefficients: mixed }); // c1 & c2 PENDING, c3 APPLIED
+    await selectPendingRow(user, "Vivienda A"); // c1
+    await selectPendingRow(user, "Vivienda B"); // c2
+
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    expect(screen.getByRole("menuitem", { name: "Registrar fecha" })).not.toHaveAttribute("aria-disabled");
+    await user.keyboard("{Escape}");
+
+    // An external cascade (another admin, or this session's own row-path
+    // action on a *different* row) turns c1 APPLIED behind the scenes — the
+    // selection itself is untouched, only the underlying data changed.
+    const updated = mixed.map((c) =>
+      c.coefficientId === "c1" ? { ...c, applicationState: APPLIED, validFrom: "2026-01-01T00:00:00Z" } : c,
+    );
+    rerender(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              coefficients={updated}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>,
+    );
+
+    // The selection now spans one PENDING and one APPLIED coefficient — no
+    // action is fully available across both, without ever touching a
+    // checkbox on an APPLIED row.
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    const applyItem = screen.getByRole("menuitem", { name: /Registrar fecha/ });
+    const correctItem = screen.getByRole("menuitem", { name: /Corregir fecha/ });
+    const deactivateItem = screen.getByRole("menuitem", { name: /Desactivar/ });
+    expect(applyItem).toHaveAttribute("aria-disabled", "true");
+    expect(correctItem).toHaveAttribute("aria-disabled", "true");
+    expect(deactivateItem).toHaveAttribute("aria-disabled", "true");
+    expect(within(applyItem).getByText("Solo aplicable a 1 de 2 seleccionados")).toBeInTheDocument();
+    expect(within(correctItem).getByText("Solo aplicable a 1 de 2 seleccionados")).toBeInTheDocument();
+    expect(within(deactivateItem).getByText("Solo aplicable a 1 de 2 seleccionados")).toBeInTheDocument();
   });
 
   it("the batch bar's spacer collapses to zero height at the desktop breakpoint", () => {
@@ -777,7 +909,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     // this render — the desktop-collapse behavior of the sx object itself
     // is exercised structurally by the component compiling against its
     // sx={{ height: { xs: ..., sm: 0 } }} literal, verified by lint/tsc.
-    expect(screen.queryByRole("button", { name: /Aplicar fecha/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
   });
 
   it("end-to-end: after a successful activation, the applied-sum card's percentage updates, staying styled neutral below 100%", async () => {
@@ -792,8 +924,9 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     expect(screen.getByText("Suma aplicada").previousElementSibling).toHaveTextContent("40,0000 %");
 
     await selectPendingRow(user, "Vivienda A");
+    await openBatchAction(user, "Registrar fecha");
     await typeDate(user, "10", "01", "2026");
-    await user.click(screen.getByRole("button", { name: /Aplicar fecha/ }));
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
     await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
 
     // Simulate the invalidation-triggered refetch: c1 is now APPLIED too.
