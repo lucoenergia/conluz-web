@@ -3,6 +3,9 @@ import { useNavigate, Link } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
+import { RecordList } from "../../components/RecordList";
+import useWindowDimensions from "../../utils/useWindowDimensions";
+import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import {
   Box,
   Typography,
@@ -61,6 +64,10 @@ interface FilterState {
 }
 
 export const PartnersPage: FC = () => {
+  const { width } = useWindowDimensions();
+  // Render ONE layout, not two hidden copies: a stacked list below the
+  // project's desktop breakpoint, the table above it.
+  const isNarrow = width < MIN_DESKTOP_WIDTH;
   const theme = useTheme();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -386,6 +393,7 @@ export const PartnersPage: FC = () => {
             </Alert>
           ) : (
             <>
+              {!isNarrow && (
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -536,6 +544,44 @@ export const PartnersPage: FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+              )}
+
+              {isNarrow && (
+              <Box sx={{ p: 2 }}>
+                <RecordList
+                  label="Socios"
+                  isLoading={isLoading}
+                  emptyMessage="No se encontraron socios"
+                  items={paginatedUsers.map((user) => ({
+                    id: user.id || "",
+                    title: user.fullName || "Sin nombre",
+                    status: (
+                      <Chip
+                        label={user.enabled ? "Activo" : "Inactivo"}
+                        color={user.enabled ? "success" : "error"}
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    ),
+                    actions: (
+                      <IconButton
+                        aria-label={`Más acciones para ${user.fullName || 'el socio'}`}
+                        onClick={(e) => handleMenuOpen(e, user.id || '', user.fullName || 'Sin nombre', user.enabled || false)}
+                        sx={sxStyles.touchTarget}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    ),
+                    fields: [
+                      { label: "Nº Socio", value: user.number ?? "-" },
+                      { label: "NIF/CIF", value: user.personalId || "-" },
+                      { label: "Email", value: user.email || "-" },
+                      { label: "Teléfono", value: user.phoneNumber || "-" },
+                    ],
+                  }))}
+                />
+              </Box>
+              )}
 
               {/* Pagination */}
               <TablePagination

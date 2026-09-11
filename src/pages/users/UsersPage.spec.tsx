@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
 const mockNavigate = vi.fn();
@@ -167,6 +167,44 @@ describe("UsersPage", () => {
       </MemoryRouter>,
     );
   };
+
+  describe("narrow viewport", () => {
+    const setViewport = (width: number) => {
+      Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: width });
+    };
+
+    afterEach(() => setViewport(1024));
+
+    it("reaches row actions without horizontal scrolling", async () => {
+      // The bug this guards: on a phone the table scrolled sideways and the
+      // actions column — the only route to edit or disable a user — sat
+      // off-canvas with no affordance suggesting it was there.
+      setViewport(390);
+      setup();
+
+      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+      const list = screen.getByRole("list", { name: "Usuarios" });
+      expect(within(list).getByRole("button", { name: "Más acciones para Ana García" })).toBeVisible();
+    });
+
+    it("still shows each user's data, not just their name", () => {
+      setViewport(390);
+      setup();
+
+      expect(screen.getByText("ana@example.com")).toBeInTheDocument();
+      expect(screen.getByText("11111111A")).toBeInTheDocument();
+      expect(screen.getByText("600000001")).toBeInTheDocument();
+    });
+
+    it("renders the table and no stacked list above the breakpoint", () => {
+      setViewport(1024);
+      setup();
+
+      expect(screen.getByRole("table")).toBeInTheDocument();
+      expect(screen.queryByRole("list", { name: "Usuarios" })).not.toBeInTheDocument();
+    });
+  });
 
   it("renders the page title and breadcrumb with user terminology", () => {
     setup();

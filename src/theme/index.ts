@@ -70,6 +70,25 @@ export const theme = createTheme({
     // call sites that need it outside of the theme palette shorthand.
   },
   components: {
+    MuiIconButton: {
+      styleOverrides: {
+        // `size="small"` resolves to 5px padding around an 18px glyph — a 28px
+        // target. That clears WCAG 2.5.8 (24px) but misses 2.5.5 (44px) and the
+        // platform guidelines (Apple 44pt, Material 48dp).
+        //
+        // Keyed off the POINTER rather than the viewport: a mouse can hit 28px
+        // precisely and dense tables benefit from staying dense, while a finger
+        // cannot. Touch and stylus get the full target; nothing moves for mouse
+        // users. This also covers touchscreen laptops, which a width-based
+        // breakpoint would miss entirely.
+        sizeSmall: {
+          "@media (pointer: coarse)": {
+            minWidth: 44,
+            minHeight: 44,
+          },
+        },
+      },
+    },
     MuiTypography: {
       defaultProps: {
         // MUI maps subtitle1/subtitle2 onto <h6> elements by default, so every

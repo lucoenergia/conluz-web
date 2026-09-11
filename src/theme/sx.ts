@@ -22,6 +22,16 @@ export const sxStyles = {
     flexDirection: "column" as const,
     gap: 3,
   },
+  // Unconditional 44px hit area for an icon-only control.
+  //
+  // The theme already grows `size="small"` buttons on coarse pointers. Use this
+  // where the control belongs to a layout that is mobile BY DESIGN rather than
+  // by input method — the stacked RecordList, which also renders in a narrow
+  // desktop window where the pointer is still fine.
+  touchTarget: {
+    minWidth: 44,
+    minHeight: 44,
+  },
   // Padded white surface: responsive radius and soft drop-shadow.
   softPanel: {
     p: { xs: 2, sm: 3 },

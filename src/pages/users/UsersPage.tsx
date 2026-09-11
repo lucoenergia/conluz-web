@@ -32,6 +32,9 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar";
 import { PageHeaderWithStats } from "../../components/PageHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
+import { RecordList } from "../../components/RecordList";
+import useWindowDimensions from "../../utils/useWindowDimensions";
+import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import type { FC } from "react";
 
 import PeopleIcon from "@mui/icons-material/People";
@@ -124,6 +127,11 @@ interface FilterState {
 }
 
 export const UsersPage: FC = () => {
+  const { width } = useWindowDimensions();
+  // Render ONE layout, not two hidden copies: a stacked list below the
+  // project's desktop breakpoint, the table above it.
+  const isNarrow = width < MIN_DESKTOP_WIDTH;
+
   const theme = useTheme();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -444,6 +452,7 @@ export const UsersPage: FC = () => {
             </Alert>
           ) : (
             <>
+              {!isNarrow && (
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -608,6 +617,78 @@ export const UsersPage: FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+              )}
+
+              {isNarrow && (
+              <Box sx={{ p: 2 }}>
+                <RecordList
+                  label="Usuarios"
+                  isLoading={isLoading}
+                  emptyMessage="No se encontraron usuarios"
+                  items={paginatedUsers.map((user) => ({
+                    id: user.id || "",
+                    avatar: (
+                      <Avatar
+                        sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}
+                      >
+                        {user.fullName?.charAt(0).toUpperCase() || "?"}
+                      </Avatar>
+                    ),
+                    title: user.fullName || "Sin nombre",
+                    badge: user.isPlatformAdmin ? (
+                      <Chip
+                        icon={<AdminPanelSettingsIcon />}
+                        label="Admin plataforma"
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        aria-label="Administrador de plataforma"
+                        sx={{ fontSize: fontSizes.xs }}
+                      />
+                    ) : undefined,
+                    status: (
+                      <Chip
+                        label={user.enabled ? "Activo" : "Inactivo"}
+                        color={user.enabled ? "success" : "error"}
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    ),
+                    actions: (
+                      <IconButton
+                        aria-label={`Más acciones para ${user.fullName || "el usuario"}`}
+                        onClick={(e) =>
+                          handleMenuOpen(
+                            e,
+                            user.id || "",
+                            user.fullName || "Sin nombre",
+                            user.enabled || false,
+                            user.isPlatformAdmin || false,
+                          )
+                        }
+                        sx={sxStyles.touchTarget}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    ),
+                    fields: [
+                      { label: "NIF/CIF", value: user.personalId || "-" },
+                      { label: "Email", value: user.email || "-" },
+                      { label: "Teléfono", value: user.phoneNumber || "-" },
+                      {
+                        label: "Comunidades",
+                        value: (
+                          <UserCommunitiesCell
+                            memberships={user.memberships as Record<string, string> | undefined}
+                            communities={communitiesList}
+                          />
+                        ),
+                      },
+                    ],
+                  }))}
+                />
+              </Box>
+              )}
 
               <TablePagination
                 rowsPerPageOptions={[10, 25, 50]}
