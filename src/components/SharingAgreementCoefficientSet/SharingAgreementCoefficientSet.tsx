@@ -69,7 +69,7 @@ import {
   getApplicationStateLabel,
   getAvailableCoefficientActions,
   isPendingActivation,
-  type CoefficientRowAction,
+  type CoefficientAction,
 } from "../../pages/production/sharingAgreementCoefficientState";
 import { normalizeForSearch } from "../../pages/production/sharingAgreementFilters";
 import {
@@ -128,21 +128,21 @@ const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilt
 // deactivate, (close|reopen)] — "correct" is the only plain edit, everything
 // after it rewrites history retroactively, hence the single divider always
 // sitting right after index 0.
-const ROW_ACTION_LABEL: Record<CoefficientRowAction, string> = {
+const ROW_ACTION_LABEL: Record<CoefficientAction, string> = {
   correct: "Corregir fecha",
   deactivate: "Desactivar",
   close: "Cerrar (baja)",
   reopen: "Reabrir",
 };
 
-const ROW_ACTION_ICON: Record<CoefficientRowAction, ReactNode> = {
+const ROW_ACTION_ICON: Record<CoefficientAction, ReactNode> = {
   correct: <EditCalendarOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
   deactivate: <RemoveCircleOutlineIcon fontSize="small" sx={{ color: "error.main" }} />,
   close: <EventBusyOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
   reopen: <LockOpenOutlinedIcon fontSize="small" sx={{ color: "error.main" }} />,
 };
 
-const ROW_ACTION_TEXT_COLOR: Partial<Record<CoefficientRowAction, string>> = {
+const ROW_ACTION_TEXT_COLOR: Partial<Record<CoefficientAction, string>> = {
   deactivate: "error.main",
   reopen: "error.main",
 };
@@ -234,7 +234,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // re-resolved live on every render instead of trusting a captured snapshot.
   const [actionsAnchorEl, setActionsAnchorEl] = useState<HTMLElement | null>(null);
   const [actionsMenuCoefficientId, setActionsMenuCoefficientId] = useState<string | null>(null);
-  const [activeDialog, setActiveDialog] = useState<CoefficientRowAction | null>(null);
+  const [activeDialog, setActiveDialog] = useState<CoefficientAction | null>(null);
   const [dialogErrors, setDialogErrors] = useState<string[] | null>(null);
 
   useUnsavedChangesGuard(isEditing);
@@ -345,7 +345,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const handleCloseActionsMenu = () => setActionsAnchorEl(null);
 
-  const handleSelectAction = (action: CoefficientRowAction) => {
+  const handleSelectAction = (action: CoefficientAction) => {
     setActionsAnchorEl(null);
     setDialogErrors(null);
     setActiveDialog(action);

@@ -121,7 +121,7 @@ export function isPendingActivation(coefficient: SharingAgreementPartitionCoeffi
   return coefficient.applicationState === PENDING;
 }
 
-export type CoefficientRowAction = "correct" | "deactivate" | "close" | "reopen";
+export type CoefficientAction = "correct" | "deactivate" | "close" | "reopen";
 
 /**
  * The row-menu actions available for a coefficient, as two independent axes:
@@ -144,10 +144,10 @@ export function getCoefficientCupsLabel(coefficient: SharingAgreementPartitionCo
 export function getAvailableCoefficientActions(
   applicationState: SharingAgreementPartitionCoefficientResponseApplicationState | undefined,
   endState: SharingAgreementPartitionCoefficientResponseEndState | undefined,
-): CoefficientRowAction[] {
+): CoefficientAction[] {
   if (applicationState !== APPLIED) return [];
 
-  const actions: CoefficientRowAction[] = ["correct", "deactivate"];
+  const actions: CoefficientAction[] = ["correct", "deactivate"];
   if (endState === OPEN_ORPHAN) actions.push("close");
   else if (endState === CLOSED) actions.push("reopen");
   return actions;
