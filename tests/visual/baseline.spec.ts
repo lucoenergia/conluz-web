@@ -1427,7 +1427,12 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    // Scoped by label, not the generic MoreVertIcon locator other tests in
+    // this file use — FIXED_COEFFICIENTS_ALL_PENDING rows now carry their
+    // own "Más acciones para X" kebabs too (apply is a row action), so the
+    // unscoped locator is ambiguous here in a way it isn't for the other
+    // tests' DRAFT agreements, which never show row-level kebabs at all.
+    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
     await page.getByRole("menuitem", { name: "Volver a borrador" }).click();
 
     await expect(page.getByRole("heading", { name: "Volver a borrador" })).toBeVisible();

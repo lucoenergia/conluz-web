@@ -109,7 +109,7 @@ describe("SharingAgreementDetailPage", () => {
     const user = userEvent.setup();
     setup();
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     expect(await screen.findByText("Editar")).toBeInTheDocument();
     expect(screen.getByText("Eliminar")).toBeInTheDocument();
   });
@@ -134,7 +134,7 @@ describe("SharingAgreementDetailPage", () => {
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Editar"));
 
     expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Reparto 2025");
@@ -156,7 +156,7 @@ describe("SharingAgreementDetailPage", () => {
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Editar"));
 
     const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
@@ -173,7 +173,7 @@ describe("SharingAgreementDetailPage", () => {
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Editar"));
 
     const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
@@ -189,7 +189,7 @@ describe("SharingAgreementDetailPage", () => {
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Eliminar"));
 
     expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
@@ -205,7 +205,7 @@ describe("SharingAgreementDetailPage", () => {
     const user = userEvent.setup();
     setup();
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Eliminar"));
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 

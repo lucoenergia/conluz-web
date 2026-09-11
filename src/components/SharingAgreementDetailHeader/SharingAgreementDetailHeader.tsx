@@ -120,6 +120,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
           <Box sx={{ flexShrink: 0 }}>
             <IconButton
               onClick={handleOpenMenu}
+              aria-label="Más opciones del acuerdo"
               sx={{
                 color: "white",
                 minWidth: 40,
