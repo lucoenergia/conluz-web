@@ -210,6 +210,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                       <InputAdornment position="end">
                         <IconButton
                           size="small"
+                          aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
                           onClick={() => setShowPwd((v) => !v)}
                           edge="end"
                         >

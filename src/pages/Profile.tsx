@@ -143,7 +143,7 @@ export const ProfilePage: FC = () => {
             <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4">Mi perfil</Typography>
+            <Typography variant="h4" component="h1">Mi perfil</Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>Gestiona tu información personal</Typography>
           </Box>
         </Box>

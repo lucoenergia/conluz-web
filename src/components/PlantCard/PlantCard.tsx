@@ -134,6 +134,7 @@ export const PlantCard: FC<PlantCardProps> = ({
             <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
               <IconButton
                 onClick={handleOpenMenu}
+                aria-label={`Más acciones para ${name || "la planta"}`}
                 sx={{
                   color: "white",
                   minWidth: 40,

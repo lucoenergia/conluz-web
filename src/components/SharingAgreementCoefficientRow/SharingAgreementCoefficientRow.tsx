@@ -69,7 +69,9 @@ function CoefficientInput({
   installedPowerKw,
   onCoefficientChange,
   align,
+  supplyLabel,
 }: {
+  supplyLabel: string;
   coefficientInput: string;
   editedValue: number | undefined;
   unit: CoefficientInputUnit;
@@ -82,6 +84,7 @@ function CoefficientInput({
   return (
     <TextField
       size="small"
+      aria-label={`Coeficiente de ${supplyLabel}`}
       value={coefficientInput}
       onChange={(event) => onCoefficientChange(event.target.value)}
       error={isInvalid || isEmpty}
@@ -152,6 +155,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
             installedPowerKw={installedPowerKw}
             onCoefficientChange={onCoefficientChange}
             align="end"
+            supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
           />
         ) : (
           <Typography variant="body2" fontWeight="600">
@@ -264,6 +268,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               installedPowerKw={installedPowerKw}
               onCoefficientChange={onCoefficientChange}
               align="start"
+              supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
             />
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>

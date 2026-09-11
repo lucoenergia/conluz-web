@@ -110,6 +110,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
                 <>
                   <IconButton
                     onClick={handleOpenMenu}
+                    aria-label={`Más acciones para ${agreement.name || "el acuerdo"}`}
                     sx={{
                       color: "white",
                       minWidth: 40,

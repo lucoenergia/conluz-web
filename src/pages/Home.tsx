@@ -3,6 +3,7 @@ import { Box, Typography, Autocomplete, TextField, CircularProgress } from "@mui
 import { sxStyles } from "../theme/sx";
 import { colors } from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
+import { visuallyHidden } from "@mui/utils";
 import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
 import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
@@ -271,6 +272,10 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
+      <Typography variant="h1" component="h1" sx={visuallyHidden}>
+        Resumen de energía
+      </Typography>
+
       <GraphCard
         title="Producción Asignada"
         subtitle="Energía asignada al punto de suministro seleccionado - Últimos 7 días"
@@ -296,6 +301,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: colors.chart.violet, mb: 0.5 }}
               >
                 {totalProduction.toFixed(2)} kWh
@@ -330,6 +336,7 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: colors.chart.blue, mb: 0.5 }}
               >
                 {peakPower.toFixed(2)} kW
@@ -546,6 +553,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: "error.main", mb: 0.5 }}
               >
                 {totalConsumption.toFixed(2)} kWh
@@ -580,6 +588,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: "success.main", mb: 0.5 }}
               >
                 {totalSelfConsumption.toFixed(2)} kWh
@@ -614,6 +623,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: "warning.main", mb: 0.5 }}
               >
                 {totalSurplus.toFixed(2)} kWh

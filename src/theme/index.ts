@@ -70,6 +70,26 @@ export const theme = createTheme({
     // call sites that need it outside of the theme palette shorthand.
   },
   components: {
+    MuiTypography: {
+      defaultProps: {
+        // MUI maps subtitle1/subtitle2 onto <h6> elements by default, so every
+        // subtitle in the app emitted a heading — including the user's name in
+        // the profile menu, which landed in the document outline above the
+        // page's own <h1>. Subtitles are styling, not document structure.
+        variantMapping: {
+          subtitle1: "p",
+          subtitle2: "p",
+        },
+      },
+    },
+    // Every CircularProgress already ships role="progressbar", but without an
+    // accessible name a screen reader announces an anonymous progress bar.
+    // Naming it here covers every spinner in the app at once.
+    MuiCircularProgress: {
+      defaultProps: {
+        "aria-label": "Cargando",
+      },
+    },
     // MenuItem defaults: standard nav-item layout and hover colour
     // encoded once instead of repeated in ProfileMenu, DisplayMenu, PlantCard.
     // Danger/success hover colours remain in local sx (they win over this default).

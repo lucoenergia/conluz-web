@@ -83,7 +83,7 @@ export const CreateUserPage: FC = () => {
             <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4">Crear nuevo usuario</Typography>
+            <Typography variant="h4" component="h1">Crear nuevo usuario</Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
               Registra un nuevo usuario en la plataforma
             </Typography>

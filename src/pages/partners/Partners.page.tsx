@@ -519,6 +519,7 @@ export const PartnersPage: FC = () => {
                           <TableCell align="center">
                             <IconButton
                               size="small"
+                              aria-label={`Más acciones para ${user.fullName || 'el socio'}`}
                               onClick={(e) => handleMenuOpen(e, user.id || '', user.fullName || 'Sin nombre', user.enabled || false)}
                               sx={{
                                 color: colors.text.subtle,

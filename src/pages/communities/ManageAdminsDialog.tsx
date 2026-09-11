@@ -156,6 +156,7 @@ export const ManageAdminsDialog: FC<Props> = ({ community, open, onClose }) => {
                       <IconButton
                         edge="end"
                         size="small"
+                        aria-label={`Eliminar administrador ${membership.user?.fullName ?? ""}`.trim()}
                         disabled={isMutating}
                         onClick={() => membership.user?.id && handleRemove(membership.user.id)}
                         sx={{ color: colors.error.main }}

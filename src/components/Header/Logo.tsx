@@ -37,6 +37,7 @@ export const Logo: FC<LogoProps> = ({ responsive: hide = false }) => {
       {/* Logo Text */}
       <Typography
         variant="h6"
+        component="span"
         sx={{
           fontWeight: 700,
           // Solid ink, not gradient text: the amber lives in the sun mark, the

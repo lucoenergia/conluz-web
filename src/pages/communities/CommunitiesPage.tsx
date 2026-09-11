@@ -295,6 +295,7 @@ export const CommunitiesPage: FC = () => {
                         <TableCell align="center">
                           <IconButton
                             size="small"
+                            aria-label={`Más acciones para ${community.name || "la comunidad"}`}
                             onClick={(e) => handleMenuOpen(e, community)}
                             sx={{ color: colors.text.subtle }}
                           >

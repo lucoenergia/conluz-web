@@ -320,7 +320,7 @@ export const PlatformPage: FC = () => {
       }}
     >
       <Box>
-        <Typography variant="h4" gutterBottom sx={{ color: colors.text.primary }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ color: colors.text.primary }}>
           Administración de plataforma
         </Typography>
         <Typography sx={{ color: colors.text.subtle }}>

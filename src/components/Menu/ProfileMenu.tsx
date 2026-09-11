@@ -39,7 +39,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
   return (
     <>
-      <IconButton sx={{ p: 0 }} onClick={handleOpenUserMenu}>
+      <IconButton sx={{ p: 0 }} aria-label="Abrir menú de usuario" onClick={handleOpenUserMenu}>
         <Avatar alt="Icono de usuario" sx={{ width: 40, height: 40 }} />
       </IconButton>
       <MenuTemplate anchorElement={anchorElement} onClose={handleCloseUserMenu}>

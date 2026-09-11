@@ -114,7 +114,7 @@ export const CreateCommunityPage: FC = () => {
             <BusinessIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4">Crear nueva comunidad</Typography>
+            <Typography variant="h4" component="h1">Crear nueva comunidad</Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
               Registra una nueva comunidad energética en la plataforma
             </Typography>

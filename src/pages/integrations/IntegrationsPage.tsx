@@ -239,7 +239,7 @@ export const IntegrationsPage: FC = () => {
               <ExtensionIcon sx={{ fontSize: 32, color: "white" }} />
             </Avatar>
             <Box>
-              <Typography variant="h4" sx={{ letterSpacing: "-0.5px" }}>
+              <Typography variant="h4" component="h1" sx={{ letterSpacing: "-0.5px" }}>
                 Integraciones
               </Typography>
               <Typography variant="body1" sx={{ opacity: 0.9 }}>

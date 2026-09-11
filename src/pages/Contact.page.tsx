@@ -98,7 +98,7 @@ export const ContactPage: FC = () => {
               <HeadsetMicIcon sx={{ fontSize: 32 }} />
             </Avatar>
             <Box>
-              <Typography variant="h3" sx={{ fontSize: { xs: "1.8rem", sm: "2.5rem" } }}>
+              <Typography variant="h3" component="h1" sx={{ fontSize: { xs: "1.8rem", sm: "2.5rem" } }}>
                 Contacto
               </Typography>
               <Typography variant="body1" sx={{ opacity: 0.9 }}>

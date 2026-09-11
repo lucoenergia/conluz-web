@@ -31,7 +31,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({
   <DetailHeader
     icon={<SolarPowerIcon sx={{ fontSize: 32 }} />}
     title={
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" component="h1" gutterBottom>
         {plant?.name || "Planta de Producción"}
       </Typography>
     }

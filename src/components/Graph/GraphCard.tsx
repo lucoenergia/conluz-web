@@ -80,7 +80,7 @@ export const GraphCard: FC<GraphCardProps> = ({
         }}
       >
         <Box>
-          <Typography variant="h6">
+          <Typography variant="h6" component="h2">
             {title}
           </Typography>
           {subtitle && (

@@ -341,6 +341,7 @@ export const MembersPage: FC = () => {
                         <TableCell align="center">
                           <IconButton
                             size="small"
+                            aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
                             onClick={(e) => handleMenuOpen(e, membership)}
                             sx={{
                               color: colors.text.subtle,

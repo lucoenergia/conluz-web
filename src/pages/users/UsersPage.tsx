@@ -583,6 +583,7 @@ export const UsersPage: FC = () => {
                           <TableCell align="center">
                             <IconButton
                               size="small"
+                              aria-label={`Más acciones para ${user.fullName || "el usuario"}`}
                               onClick={(e) =>
                                 handleMenuOpen(
                                   e,

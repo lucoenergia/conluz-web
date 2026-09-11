@@ -92,7 +92,11 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, section
         }
       }}
     >
-      <Box sx={{ width: SIDEMENU_WIDTH, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box
+        component="nav"
+        aria-label="Navegación principal"
+        sx={{ width: SIDEMENU_WIDTH, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}
+      >
         <Toolbar />
 
         <Box sx={{ flex: 1, overflowY: 'auto', pt: 2 }}>
@@ -113,7 +117,7 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, section
               >
                 {section.title}
               </Typography>
-              <List sx={{ px: 2, py: 0 }}>
+              <List sx={{ px: 2, py: 0 }} aria-label={section.title}>
                 {section.items.map(renderItem)}
               </List>
             </Box>

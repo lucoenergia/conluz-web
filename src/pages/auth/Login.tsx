@@ -103,6 +103,7 @@ export const Login: FC = () => {
           </Avatar>
           <Typography
             variant="h4"
+            component="h1"
             sx={{ mb: 1 }}
           >
             Bienvenide a ConLuz

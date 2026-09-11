@@ -50,6 +50,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
     <>
       <IconButton
         onClick={handleOpenUserMenu}
+        aria-label="Más acciones del punto de suministro"
         sx={{
           color: "white",
           minWidth: 40,

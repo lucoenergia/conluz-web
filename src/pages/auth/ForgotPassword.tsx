@@ -49,7 +49,7 @@ export const ForgotPassword: FC = () => {
           <Avatar sx={{ bgcolor: alphas.white.soft, width: 64, height: 64, margin: "0 auto 16px" }}>
             <LockResetIcon sx={{ fontSize: 36 }} />
           </Avatar>
-          <Typography variant="h4" sx={{ mb: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
             ¿Olvidaste tu contraseña?
           </Typography>
           <Typography variant="body1" sx={{ opacity: 0.95 }}>

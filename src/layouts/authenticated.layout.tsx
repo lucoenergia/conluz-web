@@ -5,6 +5,7 @@ import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
 import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
 import { Box, CircularProgress, Toolbar } from "@mui/material";
+import { radii } from "../theme/tokens";
 import { ProtectedRoute } from "../components/Auth/ProtectedRoute";
 import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
 import { useGetCurrentUser } from "../api/users/users";
@@ -61,6 +62,26 @@ export const AuthenticatedLayout: FC = () => {
 
   return (
     <ProtectedRoute>
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: "absolute",
+          left: 8,
+          top: -64,
+          zIndex: (theme) => theme.zIndex.tooltip + 1,
+          px: 2,
+          py: 1,
+          borderRadius: radii.default,
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+          textDecoration: "none",
+          fontWeight: 600,
+          "&:focus": { top: 8 },
+        }}
+      >
+        Saltar al contenido
+      </Box>
       <Header
         onMenuClick={() => setIsMenuOpened(!isMenuOpened)}
         username={loggedUser?.fullName}
@@ -79,6 +100,8 @@ export const AuthenticatedLayout: FC = () => {
           boxSizing: "border-box",
         }}
         component="main"
+        id="main-content"
+        tabIndex={-1}
       >
         <Toolbar />
         <AuthErrorBoundry onError={logout}>
