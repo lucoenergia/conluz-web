@@ -377,6 +377,28 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
     expect(screen.getByText("Estado de fin")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Todos" })).toBeInTheDocument();
   });
+
+  // DRAFT safety used to fall out of getAvailableCoefficientActions alone
+  // (every DRAFT row was PENDING, and PENDING returned []). Now that PENDING
+  // returns ["apply"], DRAFT safety depends entirely on the !isDraft gates
+  // below — the contract still rejects activate/deactivate/close/reopen on a
+  // DRAFT agreement with 409, so offering either control here would be a
+  // dead end.
+  it("renders no row action menu and no checkbox for a DRAFT agreement, even though apply would otherwise be available on every PENDING row", () => {
+    renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("renders no row action menu and no checkbox while editing, even for a DRAFT with actionable rows", () => {
+    renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
 });
 
 describe("SharingAgreementCoefficientSet (batch activation)", () => {
@@ -873,21 +895,26 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     await user.click(buttons[0]);
   }
 
-  it("renders no actions column when every visible row is PENDING", () => {
+  it("renders the actions column even when every visible row is PENDING — apply is now available on every one", () => {
+    // Table and card render in parallel in jsdom (CSS-only breakpoint), so
+    // every row's button appears twice.
     renderWithTheme({ coefficients: allPendingLifecycle });
-    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Más acciones/ })).toHaveLength(allPendingLifecycle.length * 2);
   });
 
-  it("renders the actions column once at least one visible row is actionable, and hides it again once a filter leaves only non-actionable rows", async () => {
+  it("keeps the actions column visible once every visible row is actionable, including under a filter that leaves only PENDING rows", async () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: lifecycleMixed });
 
     expect(screen.getAllByRole("button", { name: /Más acciones/ }).length).toBeGreaterThan(0);
 
-    // "Sin aplicar" leaves only c3 (PENDING) visible — no actionable rows.
+    // "Sin aplicar" leaves only c3 (PENDING) visible — it offers apply, so
+    // the column stays, unlike before "apply" existed as a row action.
+    // Table + card render in parallel in jsdom, so the one visible row's
+    // button still appears twice.
     await user.click(screen.getByRole("button", { name: "Sin aplicar" }));
 
-    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Más acciones/ })).toHaveLength(2);
   });
 
   it("names the CUPS with the supply name when one exists", async () => {
@@ -898,6 +925,32 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     await user.click(screen.getByRole("menuitem", { name: "Corregir fecha" }));
 
     expect(screen.getByText("Vivienda A (CUPS ES0031300000000001AB)")).toBeInTheDocument();
+  });
+
+  it("registering a date via apply on a PENDING row calls activateCoefficients, the same mutation correct uses", async () => {
+    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c3" }] });
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda C");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+    await typeDate(user, "10", "01", "2026");
+    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
+
+    await waitFor(() => expect(mockActivateMutateAsync).toHaveBeenCalledTimes(1));
+    expect(mockActivateMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ coefficientIds: ["c3"], appliedOn: "2026-01-10" }) }),
+    );
+  });
+
+  it("the apply dialog carries no retroactivity warning, unlike correct", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients: lifecycleMixed });
+
+    await openRowMenu(user, "Vivienda C");
+    await user.click(screen.getByRole("menuitem", { name: "Registrar fecha" }));
+
+    expect(screen.queryByText(/cambiará de forma retroactiva/)).not.toBeInTheDocument();
   });
 
   it("names the CUPS only, never the UUID, when the supply has no name", async () => {

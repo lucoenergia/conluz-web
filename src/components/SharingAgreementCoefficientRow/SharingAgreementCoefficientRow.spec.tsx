@@ -529,7 +529,9 @@ describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
     endDate: null,
   };
 
-  it("renders no menu button for a PENDING row — getAvailableCoefficientActions returns none", () => {
+  it("renders a menu button offering apply for a PENDING row — getAvailableCoefficientActions now returns [\"apply\"]", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
     render(
       <Table>
         <TableBody>
@@ -537,13 +539,16 @@ describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             showActionsColumn
-            onOpenActionsMenu={vi.fn()}
+            onOpenActionsMenu={onOpenActionsMenu}
           />
         </TableBody>
       </Table>,
     );
 
-    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda A" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+    expect(onOpenActionsMenu.mock.calls[0][1]).toBe(pendingCoefficient);
   });
 
   it("renders no menu button when showActionsColumn is false, even for an actionable row", () => {
@@ -612,17 +617,22 @@ describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
     endDate: null,
   };
 
-  it("renders no menu button for a PENDING row", () => {
+  it("renders a menu button offering apply for a PENDING row", async () => {
+    const onOpenActionsMenu = vi.fn();
+    const user = userEvent.setup();
     render(
       <SharingAgreementCoefficientCard
         coefficient={pendingCoefficient}
         installedPowerKw={100}
         showActionsColumn
-        onOpenActionsMenu={vi.fn()}
+        onOpenActionsMenu={onOpenActionsMenu}
       />,
     );
 
-    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "Más acciones para Vivienda A" });
+    await user.click(button);
+    expect(onOpenActionsMenu).toHaveBeenCalledTimes(1);
+    expect(onOpenActionsMenu.mock.calls[0][1]).toBe(pendingCoefficient);
   });
 
   it("renders the menu button for an actionable row and calls onOpenActionsMenu", async () => {

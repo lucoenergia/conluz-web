@@ -111,6 +111,11 @@ export function isEndStateReadOnly(
   return endState === DERIVED || endState === PENDING_SUCCESSION;
 }
 
+/** The single definition of "pending" — never copy `=== PENDING` a second time; both isPendingActivation and getAvailableCoefficientActions read this one. */
+function isPendingState(applicationState: SharingAgreementPartitionCoefficientResponseApplicationState | undefined): boolean {
+  return applicationState === PENDING;
+}
+
 /**
  * Whether a coefficient is eligible for batch activation — the only
  * selection/checkbox eligibility test for the pending-activation batch bar.
@@ -118,19 +123,11 @@ export function isEndStateReadOnly(
  * backend's own invariants (DRAFT/pending rows can't be CLOSED or DERIVED).
  */
 export function isPendingActivation(coefficient: SharingAgreementPartitionCoefficientResponse): boolean {
-  return coefficient.applicationState === PENDING;
+  return isPendingState(coefficient.applicationState);
 }
 
-export type CoefficientAction = "correct" | "deactivate" | "close" | "reopen";
+export type CoefficientAction = "apply" | "correct" | "deactivate" | "close" | "reopen";
 
-/**
- * The row-menu actions available for a coefficient, as two independent axes:
- * applicationState gates "correct"/"deactivate" (only once APPLIED — a
- * PENDING row keeps the checkbox/batch-activation flow instead, never a
- * menu), endState separately gates the end-of-coverage action. Never widen
- * the endState table below: OPEN is deliberately excluded even though the
- * backend accepts closing an active coefficient.
- */
 /**
  * Identifies a coefficient by CUPS, never the raw supply UUID — most rows in
  * real data have no supply name, and a dialog naming a UUID tells the admin
@@ -141,10 +138,22 @@ export function getCoefficientCupsLabel(coefficient: SharingAgreementPartitionCo
   return coefficient.supply.name ? `${coefficient.supply.name} (CUPS ${coefficient.supply.code})` : `CUPS ${coefficient.supply.code}`;
 }
 
+/**
+ * The row-menu actions available for a coefficient, as two independent axes:
+ * a PENDING coefficient offers only "apply" (registering its first
+ * application date — the same activate endpoint "correct" uses later).
+ * Once APPLIED, applicationState gates "correct"/"deactivate", and endState
+ * separately gates the end-of-coverage action. Never widen the endState
+ * table below: OPEN is deliberately excluded even though the backend
+ * accepts closing an active coefficient. DRAFT safety no longer falls out
+ * of this function alone (a DRAFT coefficient is PENDING and now gets
+ * "apply" too) — every consumer must gate on `!isDraft` itself.
+ */
 export function getAvailableCoefficientActions(
   applicationState: SharingAgreementPartitionCoefficientResponseApplicationState | undefined,
   endState: SharingAgreementPartitionCoefficientResponseEndState | undefined,
 ): CoefficientAction[] {
+  if (isPendingState(applicationState)) return ["apply"];
   if (applicationState !== APPLIED) return [];
 
   const actions: CoefficientAction[] = ["correct", "deactivate"];
@@ -155,11 +164,11 @@ export function getAvailableCoefficientActions(
 
 // The single canonical ordering for every surface that lists more than one
 // CoefficientAction (the row menu's divider placement, the batch summary
-// below) — "apply" joins this once it exists as an action. Never derived
-// from a single getAvailableCoefficientActions call: no coefficient ever
-// carries both "close" and "reopen" at once, so only a fixed, domain-wide
-// list can express their relative order for a mixed *selection*.
-const ACTION_ORDER: readonly CoefficientAction[] = ["correct", "deactivate", "close", "reopen"];
+// above). Never derived from a single getAvailableCoefficientActions call:
+// no coefficient ever carries both "apply" and "correct", or "close" and
+// "reopen", at once, so only a fixed, domain-wide list can express their
+// relative order for a mixed *selection*.
+const ACTION_ORDER: readonly CoefficientAction[] = ["apply", "correct", "deactivate", "close", "reopen"];
 
 export interface SelectionActionAvailability {
   action: CoefficientAction;

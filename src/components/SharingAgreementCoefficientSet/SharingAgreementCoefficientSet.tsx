@@ -38,6 +38,7 @@ import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import EventBusyOutlinedIcon from "@mui/icons-material/EventBusyOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
@@ -46,6 +47,7 @@ import { SharingAgreementCoefficientSumCards } from "../SharingAgreementCoeffici
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
+import { ApplyCoefficientDateConfirmationModal } from "../Modals/ApplyCoefficientDateConfirmationModal";
 import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoefficientDateConfirmationModal";
 import { DeactivateOrReopenCoefficientConfirmationModal } from "../Modals/DeactivateOrReopenCoefficientConfirmationModal";
 import { CloseCoefficientConfirmationModal } from "../Modals/CloseCoefficientConfirmationModal";
@@ -125,11 +127,13 @@ const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilt
   SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
 ];
 
-// getAvailableCoefficientActions always orders its result [correct,
-// deactivate, (close|reopen)] — "correct" is the only plain edit, everything
-// after it rewrites history retroactively, hence the single divider always
-// sitting right after index 0.
+// getAvailableCoefficientActions returns a single-item ["apply"] for a
+// PENDING row (no divider — there's only ever one item), or, once APPLIED,
+// [correct, deactivate, (close|reopen)] — "correct" is the only plain edit
+// among those, everything after it rewrites history retroactively, hence
+// the divider always sitting right after index 0 in that case.
 const ROW_ACTION_LABEL: Record<CoefficientAction, string> = {
+  apply: "Registrar fecha",
   correct: "Corregir fecha",
   deactivate: "Desactivar",
   close: "Cerrar (baja)",
@@ -137,6 +141,7 @@ const ROW_ACTION_LABEL: Record<CoefficientAction, string> = {
 };
 
 const ROW_ACTION_ICON: Record<CoefficientAction, ReactNode> = {
+  apply: <EventAvailableOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
   correct: <EditCalendarOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
   deactivate: <RemoveCircleOutlineIcon fontSize="small" sx={{ color: "error.main" }} />,
   close: <EventBusyOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />,
@@ -372,7 +377,11 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     setDialogErrors(null);
   };
 
-  const handleConfirmCorrect = async (date: Dayjs) => {
+  // "apply" (registering a PENDING row's first date) and "correct"
+  // (rewriting an APPLIED row's date) are the same activate call — the
+  // backend distinguishes them by the coefficient's current state, not by a
+  // different endpoint.
+  const handleConfirmActivate = async (date: Dayjs) => {
     if (!actionsMenuCoefficient) return;
     const result = await activateCoefficients(sharingAgreementId, [actionsMenuCoefficient.coefficientId], date);
     if (result.success) {
@@ -995,13 +1004,22 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         ])}
       </Menu>
 
+      <ApplyCoefficientDateConfirmationModal
+        isOpen={activeDialog === "apply"}
+        coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
+        isPending={isAnyCoefficientActionPending}
+        errorMessages={dialogErrors}
+        onCancel={handleCancelDialog}
+        onConfirm={handleConfirmActivate}
+      />
+
       <CorrectCoefficientDateConfirmationModal
         isOpen={activeDialog === "correct"}
         coefficients={actionsMenuCoefficient ? [actionsMenuCoefficient] : undefined}
         isPending={isAnyCoefficientActionPending}
         errorMessages={dialogErrors}
         onCancel={handleCancelDialog}
-        onConfirm={handleConfirmCorrect}
+        onConfirm={handleConfirmActivate}
       />
 
       <DeactivateOrReopenCoefficientConfirmationModal

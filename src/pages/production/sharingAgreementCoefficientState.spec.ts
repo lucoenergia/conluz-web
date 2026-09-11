@@ -127,7 +127,7 @@ describe("isEndStateReadOnly — truth table", () => {
 describe("getAvailableCoefficientActions — every producible applicationState × endState combination", () => {
   it.each([
     // PENDING is only ever OPEN per the backend's own invariants — CLOSED/DERIVED are impossible and not tested.
-    [PENDING, OPEN, []],
+    [PENDING, OPEN, ["apply"]],
     [APPLIED, OPEN, ["correct", "deactivate"]],
     [APPLIED, OPEN_ORPHAN, ["correct", "deactivate", "close"]],
     [APPLIED, PENDING_SUCCESSION, ["correct", "deactivate"]],
@@ -167,8 +167,10 @@ describe("summarizeSelectionActions / isFullyAvailable", () => {
   });
 
   it("an action supported by no selected row is not reported", () => {
-    const result = summarizeSelectionActions([pending, pending]);
-    expect(result).toEqual([]);
+    // Neither row is ever eligible for close/reopen/apply — appliedOpen only
+    // ever supports correct/deactivate.
+    const result = summarizeSelectionActions([appliedOpen, appliedOpen]);
+    expect(result.map((item) => item.action).sort()).toEqual(["correct", "deactivate"]);
   });
 
   it("a pending row never contributes close or reopen, even outnumbering the applied row in the selection", () => {
