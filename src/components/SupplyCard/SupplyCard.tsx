@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Chip, Avatar } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, alphas, colors, interactiveTransition} from "../../theme/tokens";
+import { radii, alphas, colors, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -103,7 +103,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
           minWidth: 0,
           transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
           "&:hover": {
-            transform: "translateY(-4px)",
+            transform: `translateY(${motion.liftCard})`,
           },
         }}
         header={

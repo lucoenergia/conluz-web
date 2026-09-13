@@ -7,7 +7,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, alphas, colors, interactiveTransition} from "../../theme/tokens";
+import { radii, alphas, colors, interactiveTransition, motion} from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { AppCard } from "../AppCard";
 import { MenuTemplate } from "../Menu/MenuTemplate";
@@ -83,7 +83,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
               cursor: "pointer",
               transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
               "&:hover": {
-                transform: "translateY(-4px)",
+                transform: `translateY(${motion.liftCard})`,
               },
             }
           : undefined

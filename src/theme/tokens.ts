@@ -183,3 +183,16 @@ const INTERACTIVE_PROPERTIES = [
 
 export const interactiveTransition = (duration = "0.3s", easing = "ease") =>
   INTERACTIVE_PROPERTIES.map((property) => `${property} ${duration} ${easing}`).join(", ");
+
+// ─── Motion ───────────────────────────────────────────────────────────────────
+// Spatial hover movement, expressed as CSS custom properties so a single
+// `prefers-reduced-motion` rule in main.tsx can collapse the distance to zero
+// without touching any call site — and without disabling the colour, border and
+// shadow transitions that actually tell the user their action registered.
+//
+// Reduced motion means less movement, not less feedback.
+export const motion = {
+  lift: "var(--motion-lift, -2px)",       // buttons, rows, small surfaces
+  liftCard: "var(--motion-lift-card, -4px)", // cards
+  nudge: "var(--motion-nudge, 2px)",      // breadcrumb / directional hint
+} as const;

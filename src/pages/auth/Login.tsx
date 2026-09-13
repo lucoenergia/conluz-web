@@ -1,6 +1,6 @@
 import { useState, type FC } from "react";
 import { alpha } from "@mui/material/styles";
-import { radii, shadows, alphas, fontSizes, interactiveTransition} from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import {
   Box,
@@ -250,7 +250,7 @@ export const Login: FC = () => {
                 transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
                 "&:hover": {
                   boxShadow: `0 6px 16px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
-                  transform: "translateY(-2px)",
+                  transform: `translateY(${motion.lift})`,
                 },
               })}
             >

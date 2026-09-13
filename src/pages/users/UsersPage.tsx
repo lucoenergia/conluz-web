@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows, colors, fontSizes, interactiveTransition} from "../../theme/tokens";
+import { radii, shadows, colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import {
   Box,
@@ -412,7 +412,7 @@ export const UsersPage: FC = () => {
                   py: 1.5,
                   boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                   "&:hover": {
-                    transform: "translateY(-2px)",
+                    transform: `translateY(${motion.lift})`,
                     boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                   },
                   transition: interactiveTransition("0.3s", "ease"),

@@ -1,6 +1,6 @@
 import { Box, Typography, Paper, Avatar, Grow, Fade } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { radii, shadows, alphas, colors } from "../theme/tokens";
+import { radii, shadows, alphas, colors, motion} from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
 import type { FC } from "react";
 
@@ -143,7 +143,7 @@ export const ContactPage: FC = () => {
                   transition: "transform 0.3s ease, box-shadow 0.3s ease",
                   cursor: "pointer",
                   "&:hover": {
-                    transform: "translateY(-4px)",
+                    transform: `translateY(${motion.liftCard})`,
                     // eslint-disable-next-line no-restricted-syntax -- contact-card hover shadow; heavier lift effect, no matching token
                     boxShadow: "0 8px 30px 0 rgba(0,0,0,0.12)",
                   },

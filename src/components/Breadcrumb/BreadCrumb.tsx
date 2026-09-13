@@ -4,7 +4,7 @@ import { Link as RouterLink } from "react-router";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import HomeIcon from "@mui/icons-material/Home";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import { radii, shadows, colors, interactiveTransition} from "../../theme/tokens";
+import { radii, shadows, colors, interactiveTransition, motion} from "../../theme/tokens";
 
 interface BreadCrumbStep {
   label: string;
@@ -90,7 +90,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
                 transition: interactiveTransition("0.3s", "ease"),
                 "&:hover": {
                   color: "primary.main",
-                  transform: "translateX(2px)",
+                  transform: `translateX(${motion.nudge})`,
                 },
               }}
             >
