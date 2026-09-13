@@ -44,7 +44,7 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
       </IconButton>
       <MenuTemplate anchorElement={anchorElement} onClose={handleCloseUserMenu}>
         {/* User Profile Header */}
-        <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2, borderBottom: '1px solid #e0e0e0' }}>
+        <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2, borderBottom: `1px solid ${colors.divider}` }}>
           <Avatar
             alt={username}
             sx={{

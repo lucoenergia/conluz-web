@@ -20,10 +20,19 @@ Import only what you need. Paths are relative — components use `../../theme/to
 
 ## Color — hex literals
 
+The lint rule matches a hex colour **anywhere inside a string**, including
+composite values and template literals — not just a literal that is entirely a
+colour. It previously only caught the anchored form, so gradient stops,
+`1px solid #e5e7eb`, and colours inlined into chart-tooltip HTML slipped
+through while the contract read as fully enforced.
+
 **Wrong:**
 ```tsx
 sx={{ color: "#667eea" }}
 sx={{ backgroundColor: "#1e293b" }}
+sx={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" }}  // composite
+sx={{ borderBottom: "1px solid #e5e7eb" }}                                // composite
+tooltip = `<span style="color: #64748b">`                                 // template literal
 ```
 
 **Right — MUI palette shorthand (preferred when the color maps to a semantic role):**

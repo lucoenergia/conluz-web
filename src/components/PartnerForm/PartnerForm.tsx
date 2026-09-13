@@ -176,7 +176,7 @@ export const PartnerForm: FC<PartnerFormProps> = ({
             fontSize: fontSizes.xl,
             fontWeight: 600,
             "&:hover": {
-              background: `linear-gradient(135deg, ${colors.brand.dark} 0%, #6a3f8f 100%)`,
+              background: `linear-gradient(135deg, ${colors.brand.dark} 0%, ${colors.brand.panel} 100%)`,
             },
           }}
         >

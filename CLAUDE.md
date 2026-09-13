@@ -179,7 +179,7 @@ The Docker setup includes nginx configuration for proper SPA routing and dynamic
 
 ### Styling Contract
 
-**Never** write raw hex colors, rgba strings, hand-written shadow strings, rem/em font-size literals, or Tailwind `className` in component code. ESLint enforces this with `no-restricted-syntax` rules.
+**Never** write raw hex colors, rgba strings, hand-written shadow strings, rem/em font-size literals, or Tailwind `className` in component code. ESLint enforces this with `no-restricted-syntax` rules, which match a colour **anywhere inside a string** — composite values like `1px solid #e5e7eb`, gradient stops, and template literals all count.
 
 Token files (read these before touching any sx prop):
 - `src/theme/tokens.ts` — `colors`, `alphas`, `shadows`, `radii`, `fontSizes`

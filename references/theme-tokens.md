@@ -30,6 +30,7 @@ All tokens are `as const` — TypeScript will catch typos at the call site.
 | `shadows.auth` | `0 8px 32px 0 rgba(0,0,0,0.2)` | Auth-page login card |
 | `shadows.breadcrumb` | `0 2px 8px 0 rgba(0,0,0,0.08)` | Subtle separator from page bg |
 | `shadows.dropdown` | `0 10px 25px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)` | Dropdown / popover menu |
+| `shadows.menuFilter` | `drop-shadow(0px 2px 8px rgba(0,0,0,0.32))` | Row-actions menu. Apply to **`filter`**, not `boxShadow` — a box-shadow traces the paper's rectangle and cuts off the arrow pseudo-element. |
 
 Brand-tinted shadows are computed at call sites using `alpha(theme.palette.primary.main, 0.4/0.5)`.
 

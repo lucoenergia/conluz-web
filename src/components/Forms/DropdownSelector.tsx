@@ -69,10 +69,10 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                 "& .MuiAutocomplete-option": {
                   transition: interactiveTransition("0.2s", "ease"),
                   "&:hover": {
-                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, rgba(118,75,162,0.1) 100%)`,
+                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`,
                   },
                   "&[aria-selected='true']": {
-                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, rgba(118,75,162,0.15) 100%)`,
+                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.dark, 0.15)} 100%)`,
                     fontWeight: 600,
                   },
                 },
@@ -153,7 +153,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                 "&.Mui-focused fieldset": {
                   borderColor: theme.palette.primary.main,
                   borderWidth: 2,
-                  background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, rgba(118,75,162,0.05) 100%)`,
+                  background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.dark, 0.05)} 100%)`,
                 },
               },
             }}

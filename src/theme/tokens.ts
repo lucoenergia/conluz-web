@@ -26,6 +26,11 @@ export const shadows = {
   breadcrumb:   "0 2px 8px 0 rgba(0,0,0,0.08)",
   // Dropdown / popover menu shadow
   dropdown:     "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+  // Row-actions menu elevation. Expressed as a `filter` value rather than a
+  // box-shadow so the arrow pseudo-element is included in the silhouette —
+  // box-shadow would trace the paper's rectangle and cut the arrow off.
+  // Applied to `filter`, not `boxShadow`.
+  menuFilter:   "drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.32))",
 } as const;
 
 // ─── Colours ─────────────────────────────────────────────────────────────────

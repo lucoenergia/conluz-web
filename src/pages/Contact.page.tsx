@@ -17,7 +17,6 @@ export const ContactPage: FC = () => {
     {
       icon: LocalPhoneIcon,
       title: "Teléfono",
-      gradient: theme.palette.primary.main,
       items: [
         { label: "Bob", value: "666 777 888" },
         { label: "John", value: "666 555 444" },
@@ -27,7 +26,6 @@ export const ContactPage: FC = () => {
     {
       icon: EmailIcon,
       title: "Email",
-      gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
       items: [
         { label: "General", value: "lucoenergia@gmail.com" },
         { label: "Soporte", value: "soporte@lucoenergia.com" },
@@ -36,7 +34,6 @@ export const ContactPage: FC = () => {
     {
       icon: PlaceIcon,
       title: "Dirección",
-      gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
       items: [
         { label: "", value: "Calle False 123" },
         { label: "", value: "44361 Luco de Jiloca" },
@@ -46,7 +43,6 @@ export const ContactPage: FC = () => {
     {
       icon: AccessTimeIcon,
       title: "Horario",
-      gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
       items: [
         { label: "Lunes - Viernes", value: "9:00 - 18:00" },
         { label: "Sábados", value: "10:00 - 14:00" },
@@ -158,7 +154,7 @@ export const ContactPage: FC = () => {
                     width: 56,
                     height: 56,
                     borderRadius: radii.default,
-                    background: method.gradient,
+                    background: colors.brand.main,
                     mb: 2,
                   }}
                 >

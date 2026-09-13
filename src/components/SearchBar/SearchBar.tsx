@@ -44,7 +44,7 @@ export const SearchBar: FC<SearchBarProps> = ({
         maxWidth: { xs: "100%", sm: 400 },
         borderRadius: radii.large,
         background: isFocused
-          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, rgba(118,75,162,0.08) 100%)`
+          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.dark, 0.08)} 100%)`
           : "white",
         border: "2px solid",
         borderColor: isFocused ? theme.palette.primary.main : colors.border.light,

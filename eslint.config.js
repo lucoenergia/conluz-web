@@ -12,33 +12,53 @@ import { globalIgnores } from "eslint/config";
 const stylingRules = {
   "no-restricted-syntax": [
     "error",
-    // 1. Hardcoded hex colour strings (use theme.palette.* or token constants)
+    // 1. Hardcoded hex colour, ANYWHERE inside a string — not just as the whole
+    //    value. The earlier anchored form (/^#[0-9a-f]{6}$/) only saw a literal
+    //    that WAS a colour, so every hex embedded in a longer declaration slipped
+    //    through untouched: gradient stops, `1px solid #e5e7eb`, and colours
+    //    inlined into chart-tooltip HTML. That blind spot covered the loudest
+    //    brand surfaces in the app while the contract read as fully enforced.
     {
-      selector: "Literal[value=/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/]",
+      selector:
+        "Literal[value=/#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]",
       message:
-        "Use theme.palette.* or a token from src/theme/tokens.ts instead of a hardcoded hex colour. See docs/styling-conventions.md",
+        "Use theme.palette.* or a token from src/theme/tokens.ts instead of a hardcoded hex colour — including inside gradients, borders and other composite values. See references/styling-conventions.md",
     },
-    // 2. rgb/rgba literal strings (use alphas.* tokens or alpha() from @mui/material)
+    // 2. The same blind spot for template literals: a `${...}` string is made of
+    //    TemplateElement nodes, never a Literal, so no Literal selector can see
+    //    a colour written inside one.
     {
-      selector: "Literal[value=/^rgba?\\(/]",
+      selector:
+        "TemplateElement[value.raw=/#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]",
       message:
-        "Use alphas.* tokens from src/theme/tokens.ts or alpha() from @mui/material instead of an inline rgb/rgba string. See docs/styling-conventions.md",
+        "Use theme.palette.* or a token from src/theme/tokens.ts instead of a hardcoded hex colour inside a template string. See references/styling-conventions.md",
     },
-    // 3. Hand-written boxShadow string literals (use shadows.* tokens)
+    // 3. rgb/rgba anywhere in a string, and inside template literals
+    {
+      selector: "Literal[value=/rgba?\\(/]",
+      message:
+        "Use alphas.* tokens from src/theme/tokens.ts or alpha() from @mui/material instead of an inline rgb/rgba string. See references/styling-conventions.md",
+    },
+    {
+      selector: "TemplateElement[value.raw=/rgba?\\(/]",
+      message:
+        "Use alphas.* tokens from src/theme/tokens.ts or alpha() from @mui/material instead of an inline rgb/rgba string inside a template. See references/styling-conventions.md",
+    },
+    // 5. Hand-written boxShadow string literals (use shadows.* tokens)
     {
       selector:
         "Property[key.name='boxShadow'] > Literal",
       message:
         "Use a named shadow token from src/theme/tokens.ts instead of a hand-written boxShadow string. See docs/styling-conventions.md",
     },
-    // 4. Inline fontSize rem/em strings (use fontSizes.* tokens or Typography variants)
+    // 6. Inline fontSize rem/em strings (use fontSizes.* tokens or Typography variants)
     {
       selector:
         "Property[key.name='fontSize'] > Literal[value=/^[\\d.]+r?em$/]",
       message:
         "Use a fontSizes.* token from src/theme/tokens.ts or a MUI Typography variant instead of an inline rem/em fontSize. See docs/styling-conventions.md",
     },
-    // 5. Phantom Tailwind utility-class strings in className props
+    // 7. Phantom Tailwind utility-class strings in className props
     {
       selector:
         "JSXAttribute[name.name='className'] > Literal[value=/\\b(p-\\d|px-\\d|py-\\d|m-\\d|gap-\\d|rounded|text-xs|text-sm|text-base|text-lg|text-xl|text-2xl|font-bold|font-semibold|font-medium|items-center|items-start|justify-center|justify-between|justify-start|w-full|h-full|grid-flow-col)\\b/]",
