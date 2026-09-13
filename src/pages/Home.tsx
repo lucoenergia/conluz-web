@@ -296,13 +296,13 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
           >
             {/* Producción Total */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.chart.violet }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.accent.violet }}>
                 <BoltIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
                 component="p"
-                sx={{ color: colors.chart.violet, mb: 0.5 }}
+                sx={{ color: colors.accent.violet, mb: 0.5 }}
               >
                 {totalProduction.toFixed(2)} kWh
               </Typography>
@@ -331,13 +331,13 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
 
             {/* Pico Máximo */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.chart.blue }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.accent.blue }}>
                 <ElectricMeterIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
                 component="p"
-                sx={{ color: colors.chart.blue, mb: 0.5 }}
+                sx={{ color: colors.accent.blue, mb: 0.5 }}
               >
                 {peakPower.toFixed(2)} kW
               </Typography>
@@ -495,7 +495,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
       {
         name: "Consumo de Red",
         data: consumptionData.map((item) => item.consumptionKWh || 0),
-        color: colors.error.main, // Red
+        color: colors.error.vivid, // Red
       },
       {
         name: "Autoconsumo",

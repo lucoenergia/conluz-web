@@ -37,14 +37,14 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const getChartColors = () => {
+  const getChartColors = (): string[] => {
     switch (variant) {
       case "consumption":
-        return [themeColors.error.main, themeColors.success, themeColors.warning]; // Red, Green, Amber
+        return [themeColors.error.vivid, themeColors.success.vivid, themeColors.warning.vivid]; // Red, Green, Amber
       case "production":
-        return [themeColors.chart.violet, themeColors.chart.blue, themeColors.success]; // Purple, Blue, Green
+        return [themeColors.accent.violet, themeColors.accent.blue, themeColors.success.vivid]; // Purple, Blue, Green
       default:
-        return [themeColors.chart.blue, themeColors.chart.violet, themeColors.success]; // Blue, Purple, Green
+        return [themeColors.accent.blue, themeColors.accent.violet, themeColors.success.vivid]; // Blue, Purple, Green
     }
   };
 

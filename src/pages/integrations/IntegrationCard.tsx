@@ -1,3 +1,4 @@
+import { alpha } from "@mui/material/styles";
 import { radii, shadows, colors } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import {
@@ -74,7 +75,9 @@ const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
         width: 48,
         height: 48,
         borderRadius: radii.default,
-        background: `${color}15`,
+        // alpha() rather than appending hex digits: `${color}15` silently
+        // breaks for any colour not written as 6-digit hex.
+        background: alpha(color, 0.08),
         color: color,
         display: "flex",
         alignItems: "center",

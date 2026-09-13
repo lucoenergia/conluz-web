@@ -111,12 +111,17 @@ call-site opt-in. `.light` is the vivid tone — never put small text on it.
 | `colors.background.inactive` | `#f9fafb` | Inactive dropzone / input |
 | `colors.background.errorFaint` | `#fef2f2` | Very-light error tint (hover) |
 
-### Chart
+### Accent
 | Token | Value | Use |
 |---|---|---|
-| `colors.chart.violet` | `#8b5cf6` | Production energy stat |
-| `colors.chart.blue` | `#3b82f6` | Consumption energy stat |
-| `colors.chart.cyan` | `#0ea5e9` | Integration status colour |
+| `colors.accent.violet` | `#8050e8` | Production figures — 4.96:1 |
+| `colors.accent.blue` | `#286cdb` | Consumption figures — 4.93:1 |
+| `colors.accent.cyan` | `#0078ac` | Integration provider marks — 4.90:1 |
+
+Named `accent`, not `chart`: no chart series uses them — series take the `vivid`
+tones of the semantic hues. Unlike `vivid`, each accent is safe in every
+direction (≥ 4.5:1 as type on white, behind white text, and on its own 8% tint),
+so it can carry a figure or a glyph without a second check.
 
 ---
 

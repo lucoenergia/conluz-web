@@ -28,7 +28,7 @@ const PROVIDERS = [
     id: "datadis" as const,
     name: "Datadis",
     icon: "electric_meter",
-    color: colors.chart.cyan,
+    color: colors.accent.cyan,
     description:
       "Plataforma oficial de las distribuidoras eléctricas para acceder a datos de consumo de los socios.",
     fields: ["credentials"] as string[],

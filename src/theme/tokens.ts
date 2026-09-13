@@ -116,10 +116,19 @@ export const colors = {
     inactive: "#f9fafb", // inactive dropzone / input background
     errorFaint: "#fef2f2", // very-light error tint
   },
-  chart: {
-    violet: "#8b5cf6", // production energy stat
-    blue:   "#3b82f6", // consumption energy stat
-    cyan:   "#0ea5e9", // integration status colour
+  // Accent hues: stat figures, provider marks, and the production chart series.
+  // Named `accent` rather than `chart` because most uses are not charts — the
+  // old name sent people looking for series colours and hid the fact that these
+  // carry TYPE on the member's home screen.
+  //
+  // Each value is safe in every direction (>= 4.5:1 as type on white, behind
+  // white text, and on its own 8% tint), so unlike `vivid` these can carry a
+  // figure or a glyph without a second check. The semantic hues' `vivid` tones
+  // remain the right choice for a series mark that only needs the 3:1 bar.
+  accent: {
+    violet: "#8050e8", // production figures — 4.96:1
+    blue:   "#286cdb", // consumption figures — 4.93:1
+    cyan:   "#0078ac", // integration provider marks — 4.90:1
   },
 } as const;
 

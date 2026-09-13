@@ -471,7 +471,7 @@ export const SupplyDetailPage: FC = () => {
       {
         name: "Consumo de Red",
         data: consumptionData.map((item) => item.consumptionKWh || 0),
-        color: colors.error.main, // Red
+        color: colors.error.vivid, // Red
       },
       {
         name: "Autoconsumo",
@@ -587,7 +587,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.selfConsumptionPercentageTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
-              color: colors.chart.violet,
+              color: colors.accent.violet,
             },
             {
               label: "Porcentaje de aprovechamiento",
@@ -595,7 +595,7 @@ export const SupplyDetailPage: FC = () => {
               trend: consumptionMetrics.utilizationPercentageTrend !== undefined ? Math.round(consumptionMetrics.utilizationPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
-              color: colors.chart.blue,
+              color: colors.accent.blue,
             },
           ]}
         />
