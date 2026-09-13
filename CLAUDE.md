@@ -207,6 +207,7 @@ Key rules:
 
 Full guide: `references/styling-conventions.md`
 Full token catalogue: `references/theme-tokens.md`
+Fonts (self-hosted Inter — do not move back to a CDN): `references/fonts.md`
 
 Verification gates (both must pass before committing styling changes):
 ```bash

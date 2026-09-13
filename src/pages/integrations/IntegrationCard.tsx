@@ -142,7 +142,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
           {/* eslint-disable-next-line no-restricted-syntax -- near-black provider name (#111827); no matching token */}
-          <Typography variant="h6" sx={{ color: "#111827" }}>
+          <Typography component="h2" variant="h6" sx={{ color: "#111827" }}>
               {provider.name}
             </Typography>
           </Box>

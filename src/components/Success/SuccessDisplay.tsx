@@ -13,7 +13,10 @@ export const SuccessDisplay: FC = () => {
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           slots={{ transition: Slide }}
         >
-          <Alert severity="success">{message}</Alert>
+          {/* role="status" (polite) not MUI's default role="alert": a
+              confirmation should not interrupt what is being read. Errors keep
+              the assertive default. */}
+          <Alert severity="success" role="status">{message}</Alert>
         </Snackbar>
       ))}
     </Box>

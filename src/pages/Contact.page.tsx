@@ -103,7 +103,7 @@ export const ContactPage: FC = () => {
             </Box>
           </Box>
 
-          <Typography variant="h6" sx={{ mt: 3, opacity: 0.95 }}>
+          <Typography component="h2" variant="h6" sx={{ mt: 3, opacity: 0.95 }}>
             ¿Tienes alguna pregunta?
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.85 }}>
@@ -163,7 +163,7 @@ export const ContactPage: FC = () => {
 
                 {/* Title */}
                 <Typography
-                  variant="h6"
+                  component="h2" variant="h6"
                   sx={{
                     // eslint-disable-next-line no-restricted-syntax -- contact page gray (#2d3748 Slate-800); no matching token
                     color: "#2d3748",
@@ -235,7 +235,7 @@ export const ContactPage: FC = () => {
             </Avatar>
             <Box>
               {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#2d3748); no matching token */}
-              <Typography variant="h6" sx={{ color: "#2d3748" }}>
+              <Typography component="h2" variant="h6" sx={{ color: "#2d3748" }}>
                 ¿Prefieres escribirnos?
               </Typography>
               {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#718096); no matching token */}

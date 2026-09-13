@@ -37,7 +37,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
       }}
     >
       <Icon sx={{ fontSize: iconSize, color: iconColor, mb: 2 }} />
-      <Typography variant="h6" color="text.secondary" gutterBottom>
+      <Typography component="h2" variant="h6" color="text.secondary" gutterBottom>
         {title}
       </Typography>
       {subtitle && (

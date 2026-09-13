@@ -113,7 +113,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 {enabled ? <PowerIcon /> : <PowerOffIcon />}
               </Avatar>
               <Box>
-                <Typography variant="h6">{name || "Sin nombre"}</Typography>
+                <Typography component="h2" variant="h6">{name || "Sin nombre"}</Typography>
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
                   {code}
                 </Typography>
@@ -166,7 +166,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
             >
               <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" color={theme.palette.primary.main}>
+                <Typography component="p" variant="h5" color={theme.palette.primary.main}>
                   {lastMeasurement || 0} kWh
                 </Typography>
                 <Typography variant="caption" color="text.secondary">

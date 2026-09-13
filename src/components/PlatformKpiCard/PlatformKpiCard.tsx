@@ -43,7 +43,7 @@ export const PlatformKpiCard: FC<PlatformKpiCardProps> = ({ label, value, sublab
     >
       {label}
     </Typography>
-    <Typography variant="h4" sx={{ color: colors.text.primary, my: 0.5 }}>
+    <Typography component="p" variant="h4" sx={{ color: colors.text.primary, my: 0.5 }}>
       {value}
     </Typography>
     <Typography variant="body2" sx={{ color: colors.text.secondary }}>

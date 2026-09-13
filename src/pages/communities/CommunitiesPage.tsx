@@ -31,6 +31,7 @@ import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import { radii, shadows, colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
+import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -176,6 +177,13 @@ export const CommunitiesPage: FC = () => {
             </Alert>
           ) : (
             <>
+            <ResultStatus
+              isLoading={isLoading}
+              count={communities.length}
+              noun={{ one: "comunidad", other: "comunidades" }}
+              emptyMessage="No se encontraron comunidades"
+            />
+
             {!isNarrow && (
             <TableContainer>
               <Table>

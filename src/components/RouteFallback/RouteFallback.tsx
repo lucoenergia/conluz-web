@@ -10,7 +10,7 @@ import { Box, CircularProgress } from "@mui/material";
  * MuiCircularProgress default, so the wait is announced rather than silent.
  */
 export const RouteFallback: FC = () => (
-  <Box sx={{ display: "flex", justifyContent: "center", pt: 8 }}>
+  <Box role="status" sx={{ display: "flex", justifyContent: "center", pt: 8 }}>
     <CircularProgress />
   </Box>
 );

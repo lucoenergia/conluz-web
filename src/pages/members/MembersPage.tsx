@@ -41,6 +41,7 @@ import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
+import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -261,6 +262,13 @@ export const MembersPage: FC = () => {
             </Alert>
           ) : (
             <>
+            <ResultStatus
+              isLoading={isLoading}
+              count={memberships.length}
+              noun={{ one: "miembro", other: "miembros" }}
+              emptyMessage="No se encontraron miembros"
+            />
+
             {!isNarrow && (
             <TableContainer>
               <Table>

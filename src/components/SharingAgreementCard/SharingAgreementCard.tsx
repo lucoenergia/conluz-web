@@ -101,7 +101,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
               {agreement.name || "Sin nombre"}
             </Typography>
           ) : (
-            <Typography variant="h6">{agreement.name || "Sin nombre"}</Typography>
+            <Typography component="h2" variant="h6">{agreement.name || "Sin nombre"}</Typography>
           )}
           {detailPath && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>

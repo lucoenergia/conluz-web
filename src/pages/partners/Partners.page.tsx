@@ -4,6 +4,7 @@ import { useTheme, alpha } from "@mui/material/styles";
 import { radii, shadows, colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
+import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import {
@@ -393,6 +394,13 @@ export const PartnersPage: FC = () => {
             </Alert>
           ) : (
             <>
+              <ResultStatus
+                isLoading={isLoading}
+                count={filteredUsers.length}
+                noun={{ one: "socio", other: "socios" }}
+                emptyMessage="No se encontraron socios"
+              />
+
               {!isNarrow && (
               <TableContainer>
                 <Table>

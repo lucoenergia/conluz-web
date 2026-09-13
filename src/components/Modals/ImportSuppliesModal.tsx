@@ -93,7 +93,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
       {step === "upload" && (
         <>
           <Typography
-            variant="h6"
+            component="h2" variant="h6"
             sx={{ color: "text.primary", mb: 3 }}
           >
             Importar Puntos de Suministro desde CSV
@@ -315,7 +315,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({
             </Box>
 
             <Typography
-              variant="h6"
+              component="h2" variant="h6"
               sx={{
                 fontSize: fontSizes["2xl"],
                 color: "text.primary",

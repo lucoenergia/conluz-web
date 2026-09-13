@@ -33,6 +33,7 @@ import { SearchBar } from "../../components/SearchBar";
 import { PageHeaderWithStats } from "../../components/PageHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
 import { RecordList } from "../../components/RecordList";
+import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import type { FC } from "react";
@@ -452,6 +453,13 @@ export const UsersPage: FC = () => {
             </Alert>
           ) : (
             <>
+              <ResultStatus
+                isLoading={isLoading}
+                count={filteredUsers.length}
+                noun={{ one: "usuario", other: "usuarios" }}
+                emptyMessage="No se encontraron usuarios"
+              />
+
               {!isNarrow && (
               <TableContainer>
                 <Table>
