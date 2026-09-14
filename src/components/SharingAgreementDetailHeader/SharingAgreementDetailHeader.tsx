@@ -76,7 +76,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
 
   const showPublish = isDraft && coefficients !== undefined;
   const showRevert = isPublished && coefficients !== undefined && isInert;
-  const showActions = !isLoading && !error && (isDraft || showRevert);
+  const showActions = !isLoading && !error;
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
@@ -136,14 +136,12 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
               menuListProps={{ disabledItemsFocusable: true }}
             >
               <Box sx={{ py: 1 }}>
-                {isDraft && (
-                  <MenuItem onClick={handleEditClick}>
-                    <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                      Editar
-                    </Typography>
-                  </MenuItem>
-                )}
+                <MenuItem onClick={handleEditClick}>
+                  <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                  <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                    Editar
+                  </Typography>
+                </MenuItem>
                 {showPublish && (
                   <MenuItem
                     aria-disabled={!!publishDisabledReason}
