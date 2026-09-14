@@ -1,7 +1,9 @@
 import { createTheme } from "@mui/material";
+import { esES } from "@mui/material/locale";
+import { esES as pickersEsES } from "@mui/x-date-pickers/locales";
 import { colors, shadows, radii } from "./tokens";
 
-export const theme = createTheme({
+const themeOptions: Parameters<typeof createTheme>[0] = {
   shape: {
     // Canonical base radius (px). radii.default = "8px" in tokens.ts.
     // MUI sx numeric shorthand (e.g. borderRadius: 2) is NOT used in this
@@ -70,6 +72,29 @@ export const theme = createTheme({
     // call sites that need it outside of the theme palette shorthand.
   },
   components: {
+    // Controls whose drawn size is smaller than a fingertip. Each grows its HIT
+    // AREA under a coarse pointer without changing what is drawn, so the visual
+    // density survives while the target clears 44px. Keyed off the pointer, not
+    // the viewport, so a touchscreen laptop is covered too.
+    MuiChip: {
+      styleOverrides: {
+        // Only clickable chips: a status chip in a table is not a target.
+        clickable: {
+          "@media (pointer: coarse)": {
+            position: "relative",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: "50%",
+              transform: "translateY(-50%)",
+              height: 44,
+            },
+          },
+        },
+      },
+    },
     MuiIconButton: {
       styleOverrides: {
         // `size="small"` resolves to 5px padding around an 18px glyph — a 28px
@@ -81,7 +106,7 @@ export const theme = createTheme({
         // cannot. Touch and stylus get the full target; nothing moves for mouse
         // users. This also covers touchscreen laptops, which a width-based
         // breakpoint would miss entirely.
-        sizeSmall: {
+        root: {
           "@media (pointer: coarse)": {
             minWidth: 44,
             minHeight: 44,
@@ -115,6 +140,8 @@ export const theme = createTheme({
     MuiMenuItem: {
       styleOverrides: {
         root: {
+          // Finger-sized under a coarse pointer; 27px drawn is not.
+          "@media (pointer: coarse)": { minHeight: 44 },
           paddingLeft: 24,
           paddingRight: 24,
           paddingTop: 12,
@@ -146,6 +173,8 @@ export const theme = createTheme({
         root: {
           textTransform: "none",
           borderRadius: radii.default,
+          // 41px drawn is close, but a finger target should clear 44.
+          "@media (pointer: coarse)": { minHeight: 44 },
         },
         contained: {
           boxShadow: shadows.medium,
@@ -195,4 +224,16 @@ export const theme = createTheme({
       },
     },
   },
-});
+};
+
+/**
+ * Locale bundles are passed as trailing arguments so every MUI component picks
+ * up Spanish strings at once.
+ *
+ * Without them the interface leaked English into assistive technology on a
+ * Spanish UI — the pagination arrows announced "Go to previous page". Those
+ * strings live inside MUI's defaults, so no amount of application copy reaches
+ * them; only the locale bundle does. The pickers bundle is included because
+ * @mui/x-date-pickers is already a dependency and would leak the same way.
+ */
+export const theme = createTheme(themeOptions, esES, pickersEsES);

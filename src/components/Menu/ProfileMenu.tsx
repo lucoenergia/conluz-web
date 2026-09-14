@@ -70,32 +70,26 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
 
         {/* Menu Items */}
         <Box sx={{ py: 1 }}>
-          <Box component={Link} to="/profile" sx={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem onClick={handleCloseUserMenu}>
-              <PersonIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
-                Mi perfil
-              </Typography>
-            </MenuItem>
-          </Box>
+          <MenuItem component={Link} to="/profile" onClick={handleCloseUserMenu} sx={{ textDecoration: "none", color: "inherit" }}>
+            <PersonIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
+              Mi perfil
+            </Typography>
+          </MenuItem>
 
-          <Box component={Link} to="/change-password" sx={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem onClick={handleCloseUserMenu}>
-              <KeyIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
-                Cambiar contraseña
-              </Typography>
-            </MenuItem>
-          </Box>
+          <MenuItem component={Link} to="/change-password" onClick={handleCloseUserMenu} sx={{ textDecoration: "none", color: "inherit" }}>
+            <KeyIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
+              Cambiar contraseña
+            </Typography>
+          </MenuItem>
 
-          <Box component={Link} to="/contact" sx={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem onClick={handleCloseUserMenu}>
-              <HelpOutlineIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
-                ¿Necesitas ayuda?
-              </Typography>
-            </MenuItem>
-          </Box>
+          <MenuItem component={Link} to="/contact" onClick={handleCloseUserMenu} sx={{ textDecoration: "none", color: "inherit" }}>
+            <HelpOutlineIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
+              ¿Necesitas ayuda?
+            </Typography>
+          </MenuItem>
         </Box>
 
         {/* Logout Button */}

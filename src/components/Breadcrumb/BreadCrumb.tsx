@@ -5,6 +5,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import HomeIcon from "@mui/icons-material/Home";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { radii, shadows, colors, interactiveTransition, motion} from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
 
 interface BreadCrumbStep {
   label: string;
@@ -83,6 +84,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
               component={RouterLink}
               to={step.href}
               sx={{
+                ...sxStyles.coarseHitArea,
                 display: "flex",
                 alignItems: "center",
                 color: "secondary.main",

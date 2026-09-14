@@ -65,24 +65,20 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
       <MenuTemplate anchorElement={anchorElement} onClose={handleCloseUserMenu}>
         <Box sx={{ py: 1 }}>
           {/* Ver */}
-          <Box component={Link} to={`/supply-points/${supplyPointId}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem>
-              <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
-                Ver
-              </Typography>
-            </MenuItem>
-          </Box>
+          <MenuItem component={Link} to={`/supply-points/${supplyPointId}`} sx={{ textDecoration: "none", color: "inherit" }}>
+            <VisibilityOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
+              Ver
+            </Typography>
+          </MenuItem>
 
           {/* Editar */}
-          <Box component={Link} to={`/supply-points/${supplyPointId}/edit`} sx={{ textDecoration: 'none', color: 'inherit' }}>
-            <MenuItem>
-              <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
-                Editar
-              </Typography>
-            </MenuItem>
-          </Box>
+          <MenuItem component={Link} to={`/supply-points/${supplyPointId}/edit`} sx={{ textDecoration: "none", color: "inherit" }}>
+            <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
+              Editar
+            </Typography>
+          </MenuItem>
 
           <Divider sx={{ my: 1 }} />
 
