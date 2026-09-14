@@ -65,6 +65,8 @@ interface IntegrationCardProps {
   onChange: (id: string, patch: Record<string, unknown>) => void;
   onSave: (id: string) => void;
   isSaving: boolean;
+  /** This provider's stored configuration is still in flight. */
+  isLoading?: boolean;
 }
 
 const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
@@ -105,6 +107,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   onChange,
   onSave,
   isSaving,
+  isLoading = false,
 }) => {
   const [showPwd, setShowPwd] = useState(false);
 
@@ -150,6 +153,15 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
             {provider.description}
           </Typography>
         </Box>
+        {isLoading ? (
+          // Occupies the switch's exact footprint so nothing shifts when the
+          // real control arrives. Disabled by omission rather than decoration:
+          // toggling before the stored config lands would be silently
+          // overwritten by the prefill effect the moment it does.
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 58, height: 38 }}>
+            <CircularProgress size={20} aria-label={`Cargando configuración de ${provider.name}`} />
+          </Box>
+        ) : (
         <Switch
           checked={enabled}
           onChange={(e) => onChange(provider.id, { enabled: e.target.checked })}
@@ -158,6 +170,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
             "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: accent },
           }}
         />
+        )}
       </Box>
 
       {/* Body — only for providers with credentials */}
@@ -289,7 +302,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
       >
         <Button
           variant="contained"
-          disabled={isSaving}
+          disabled={isSaving || isLoading}
           onClick={handleSave}
           startIcon={
             isSaving ? (

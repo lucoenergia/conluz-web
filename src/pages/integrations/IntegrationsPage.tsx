@@ -1,7 +1,7 @@
 import { radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { useState, useCallback, useEffect, type FC } from "react";
-import { Box, Typography, Paper, Snackbar, Alert, Avatar, CircularProgress } from "@mui/material";
+import { Box, Typography, Paper, Snackbar, Alert, Avatar } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { useConfigureDatadis } from "../../api/consumption/consumption";
 import { useConfigureHuawei } from "../../api/production/production";
@@ -16,6 +16,17 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import type { ConfigureDatadisBody, ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
 import { colors, alphas } from "../../theme/tokens";
 import { useActiveCommunity } from "../../context/community.context";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetShellyConfigQueryKey, getGetDatadisConfigQueryKey } from "../../api/consumption/consumption";
+import { getGetHuaweiConfigQueryKey } from "../../api/production/production";
+
+/**
+ * Integration credentials change only when someone edits them on this page, so
+ * refetching on every visit bought nothing and cost a full round trip each
+ * time. Five minutes keeps a return visit instant; `save()` invalidates
+ * explicitly, so an edit is never served from a stale cache.
+ */
+const CONFIG_STALE_TIME = 5 * 60 * 1000;
 
 interface IntegrationState {
   datadis: { enabled: boolean; username: string; password: string; baseUrl: string };
@@ -60,6 +71,7 @@ const ACCENT = colors.brand.main;
 
 export const IntegrationsPage: FC = () => {
   const activeCommunityId = useActiveCommunity();
+  const queryClient = useQueryClient();
 
   const [state, setState] = useState<IntegrationState>({
     datadis: { enabled: false, username: "", password: "", baseUrl: "" },
@@ -71,24 +83,24 @@ export const IntegrationsPage: FC = () => {
   const [snack, setSnack] = useState<string | null>(null);
   const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
 
-  const { data: plantsData } = useGetAllPlants(
+  const { data: plantsData, isLoading: plantsLoading } = useGetAllPlants(
     activeCommunityId ?? "",
     { size: 1 },
-    { query: { enabled: !!activeCommunityId } },
+    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
   const firstPlantId = plantsData?.items?.[0]?.id ?? "";
 
   const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig(
     activeCommunityId ?? "",
-    { query: { enabled: !!activeCommunityId } },
+    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
   const { data: datadisConfig, isLoading: datadisLoading } = useGetDatadisConfig(
     activeCommunityId ?? "",
-    { query: { enabled: !!activeCommunityId } },
+    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
   const { data: huaweiConfig, isLoading: huaweiLoading } = useGetHuaweiConfig(
     firstPlantId,
-    { query: { enabled: !!firstPlantId } },
+    { query: { enabled: !!firstPlantId, staleTime: CONFIG_STALE_TIME } },
   );
 
   const configureDatadis = useConfigureDatadis();
@@ -181,6 +193,13 @@ export const IntegrationsPage: FC = () => {
           });
           setSnack("Shelly Cloud guardado correctamente");
         }
+        // The cache is now stale by definition — without this the staleTime
+        // above would keep serving the pre-save values for up to five minutes.
+        const key =
+          id === "datadis" ? getGetDatadisConfigQueryKey(activeCommunityId ?? "")
+          : id === "shelly" ? getGetShellyConfigQueryKey(activeCommunityId ?? "")
+          : getGetHuaweiConfigQueryKey(firstPlantId);
+        await queryClient.invalidateQueries({ queryKey: key });
       } catch (error) {
         console.error("Error saving integration:", error);
         setSnack("Error al guardar la configuración");
@@ -188,19 +207,26 @@ export const IntegrationsPage: FC = () => {
         setSaving((prev) => ({ ...prev, [id]: false }));
       }
     },
-    [state, activeCommunityId, firstPlantId, configureDatadis, configureHuawei, configureShelly],
+    [state, activeCommunityId, firstPlantId, configureDatadis, configureHuawei, configureShelly, queryClient],
   );
 
   const activeCount = Object.values(state).filter((v) => v.enabled).length;
-  const isLoading = shellyLoading || datadisLoading || huaweiLoading;
-
-  if (isLoading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // Per provider, not per page. The old gate was
+  // `shellyLoading || datadisLoading || huaweiLoading` in front of an early
+  // return, so the breadcrumb, the title and the two cards that were already
+  // resolved all waited on the slowest request — and Huawei is necessarily the
+  // slowest, because its config is keyed by plant id and cannot even start
+  // until the plants request comes back. Measured: chrome appeared at the same
+  // moment as the cards, a full extra round trip after it could have.
+  //
+  // Huawei counts `plantsLoading` too: while plants is in flight its own query
+  // is disabled, so it reports "not loading" while very much not being ready.
+  const loadingByProvider: Record<string, boolean> = {
+    datadis: datadisLoading,
+    shelly: shellyLoading,
+    huawei: plantsLoading || huaweiLoading,
+  };
+  const anyConfigLoading = Object.values(loadingByProvider).some(Boolean);
 
   return (
     <Box
@@ -268,7 +294,12 @@ export const IntegrationsPage: FC = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <BoltIcon sx={{ fontSize: 18, color: "success.main" }} />
             <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500 }}>
-              {activeCount} de {PROVIDERS.length} integraciones activas
+              {/* Not "0 de 3" or "1 de 3" while requests are still landing: a
+                  partial count is a wrong statement, and it visibly jumps when
+                  the rest arrive. Say what is actually known. */}
+              {anyConfigLoading
+                ? "Comprobando integraciones…"
+                : `${activeCount} de ${PROVIDERS.length} integraciones activas`}
             </Typography>
           </Box>
           <Box sx={{ flex: 1 }} />
@@ -297,6 +328,7 @@ export const IntegrationsPage: FC = () => {
             onChange={update}
             onSave={save}
             isSaving={!!saving[p.id]}
+            isLoading={loadingByProvider[p.id]}
           />
         ))}
       </Box>
