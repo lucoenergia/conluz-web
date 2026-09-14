@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { Card, Box, type CardProps } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { radii, shadows } from "../../theme/tokens";
+import { radii, shadows, interactiveTransition} from "../../theme/tokens";
 
 interface AppCardProps extends Omit<CardProps, "children"> {
   children: ReactNode;
@@ -18,7 +18,7 @@ export const AppCard: FC<AppCardProps> = ({ children, header, sx, ...rest }) => 
         borderRadius: radii.default,
         overflow: "hidden",
         boxShadow: shadows.dataCard,
-        transition: "all 0.3s ease",
+        transition: interactiveTransition("0.3s", "ease"),
         "&:hover": {
           boxShadow: shadows.dataCardHover,
         },

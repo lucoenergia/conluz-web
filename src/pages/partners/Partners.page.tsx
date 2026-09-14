@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
+import { radii, shadows, colors, fontSizes, interactiveTransition} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -331,7 +331,7 @@ export const PartnersPage: FC = () => {
                     transform: "translateY(-2px)",
                     boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                   },
-                  transition: "all 0.3s ease",
+                  transition: interactiveTransition("0.3s", "ease"),
                 }}
               >
                 Nuevo Socio
@@ -350,7 +350,7 @@ export const PartnersPage: FC = () => {
                     borderColor: theme.palette.primary.dark,
                     backgroundColor: alpha(theme.palette.primary.main, 0.04),
                   },
-                  transition: "all 0.3s ease",
+                  transition: interactiveTransition("0.3s", "ease"),
                 }}
               >
                 Importar CSV

@@ -28,7 +28,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
-import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
+import { radii, shadows, colors, fontSizes, interactiveTransition} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -150,7 +150,7 @@ export const CommunitiesPage: FC = () => {
                   transform: "translateY(-2px)",
                   boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                 },
-                transition: "all 0.3s ease",
+                transition: interactiveTransition("0.3s", "ease"),
               }}
             >
               Nueva Comunidad

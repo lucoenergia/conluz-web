@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { AppModal } from "./AppModal";
 import { Button, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes, interactiveTransition} from "../../theme/tokens";
 
 interface DeleteSuccessModalProps {
   onClose: (event: React.MouseEvent<HTMLElement>) => void;
@@ -59,7 +59,7 @@ export const DeleteSuccessModal: FC<DeleteSuccessModalProps> = ({ onClose, isOpe
           minWidth: "120px",
           padding: "8px 24px",
           fontSize: fontSizes.lg,
-          transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
           backgroundColor: (theme) => theme.palette.primary.main,
           color: "white",
           boxShadow: shadows.medium,

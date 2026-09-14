@@ -162,3 +162,24 @@ export const fontSizes = {
   xl:  "1rem",       // 16px — MUI body1 equivalent
   "2xl": "1.125rem", // 18px
 } as const;
+
+// ─── Transitions ──────────────────────────────────────────────────────────────
+// The properties every interactive surface in this app actually animates on
+// hover, focus and press. None of them drive layout, so they stay on the
+// compositor / paint path.
+//
+// Use this instead of `transition: "all ..."`. `all` asks the browser to watch
+// every animatable property, and — more importantly — it silently starts
+// animating width, height, padding or margin the moment someone adds one to a
+// hover rule, turning a cheap effect into a reflow per frame. Naming the
+// properties makes that a deliberate choice rather than an accident.
+const INTERACTIVE_PROPERTIES = [
+  "transform",
+  "box-shadow",
+  "border-color",
+  "background-color",
+  "color",
+] as const;
+
+export const interactiveTransition = (duration = "0.3s", easing = "ease") =>
+  INTERACTIVE_PROPERTIES.map((property) => `${property} ${duration} ${easing}`).join(", ");

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
-import { colors } from "../../theme/tokens";
+import { colors, interactiveTransition} from "../../theme/tokens";
 import { useGetAllPlants, useDeletePlant } from "../../api/plants/plants";
 import type { PlantResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -138,7 +138,7 @@ export const PlantsPage: FC = () => {
                 transform: "translateY(-2px)",
                 boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
               },
-              transition: "all 0.3s ease",
+              transition: interactiveTransition("0.3s", "ease"),
             }}
           >
             Nueva Planta

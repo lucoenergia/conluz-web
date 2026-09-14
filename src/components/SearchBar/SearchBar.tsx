@@ -1,6 +1,6 @@
 import { InputBase, Paper, InputAdornment, IconButton } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows, colors } from "../../theme/tokens";
+import { radii, shadows, colors, interactiveTransition} from "../../theme/tokens";
 import { useState, type FC } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -48,7 +48,7 @@ export const SearchBar: FC<SearchBarProps> = ({
           : "white",
         border: "2px solid",
         borderColor: isFocused ? theme.palette.primary.main : colors.border.light,
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
         boxShadow: isFocused
           ? `0 10px 40px 0 ${alpha(theme.palette.primary.main, 0.15)}`
           : shadows.soft,

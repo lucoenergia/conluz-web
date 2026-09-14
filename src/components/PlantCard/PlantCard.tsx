@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, alphas, colors } from "../../theme/tokens";
+import { radii, alphas, colors, interactiveTransition} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -113,7 +113,7 @@ export const PlantCard: FC<PlantCardProps> = ({
         sx={{
           cursor: "pointer",
           minWidth: 0,
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
           "&:hover": {
             transform: "translateY(-4px)",
           },

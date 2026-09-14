@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from "react";
+import { Suspense, useEffect, useMemo, useState, type FC } from "react";
 import { Header } from "../components/Header/Header";
 import { Outlet, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
@@ -6,6 +6,7 @@ import useWindowDimensions from "../utils/useWindowDimensions";
 import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
 import { Box, CircularProgress, Toolbar } from "@mui/material";
 import { radii } from "../theme/tokens";
+import { RouteFallback } from "../components/RouteFallback";
 import { ProtectedRoute } from "../components/Auth/ProtectedRoute";
 import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
 import { useGetCurrentUser } from "../api/users/users";
@@ -112,7 +113,9 @@ export const AuthenticatedLayout: FC = () => {
                   <CircularProgress />
                 </Box>
               ) : (
-                <Outlet />
+                <Suspense fallback={<RouteFallback />}>
+                  <Outlet />
+                </Suspense>
               )}
               <SuccessDisplay />
             </SuccessProvider>

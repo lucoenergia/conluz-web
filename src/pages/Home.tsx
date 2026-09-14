@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Typography, Autocomplete, TextField, CircularProgress } from "@mui/material";
 import { sxStyles } from "../theme/sx";
-import { colors } from "../theme/tokens";
+import { colors, interactiveTransition} from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { visuallyHidden } from "@mui/utils";
 import { GraphCard } from "../components/Graph/GraphCard";
@@ -42,7 +42,7 @@ export const HomePage: FC = () => {
         background: colors.background.default,
         boxSizing: "border-box",
         overflow: "hidden",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
       }}
     >
       <BreadCrumb steps={[{ label: "Inicio", href: "/" }]} />
@@ -58,7 +58,7 @@ export const HomePage: FC = () => {
           },
           gap: { xs: 2, sm: 2.5, md: 3 },
           width: "100%",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
           "& > *": {
             minWidth: 0,
             maxWidth: "100%",

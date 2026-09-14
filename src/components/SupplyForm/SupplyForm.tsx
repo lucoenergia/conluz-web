@@ -2,7 +2,7 @@ import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
-import { fontSizes } from "../../theme/tokens";
+import { fontSizes, interactiveTransition} from "../../theme/tokens";
 import { useGetAllUsers } from "../../api/users/users";
 import type { UserResponse } from "../../api/models";
 
@@ -163,7 +163,7 @@ export const SupplyForm: FC<SupplyFormProps> = ({
               transform: "translateY(-2px)",
               boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
             },
-            transition: "all 0.3s ease",
+            transition: interactiveTransition("0.3s", "ease"),
           })}
         >
           {initialName ? "Guardar cambios" : "Crear punto de suministro"}

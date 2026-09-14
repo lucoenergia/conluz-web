@@ -2,7 +2,7 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { alpha } from "@mui/material/styles";
 import { AppModal } from "./AppModal";
-import { shadows, fontSizes } from "../../theme/tokens";
+import { shadows, fontSizes, interactiveTransition} from "../../theme/tokens";
 import type { FC, MouseEvent, ReactNode } from "react";
 
 interface ConfirmationModalProps {
@@ -54,7 +54,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
               minWidth: "64px",
               padding: "5px 15px",
               fontSize: fontSizes.lg,
-              transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
               borderColor: (theme) => theme.palette.primary.main,
               color: (theme) => theme.palette.primary.main,
               "&:hover": {
@@ -74,7 +74,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
               minWidth: "64px",
               padding: "5px 15px",
               fontSize: fontSizes.lg,
-              transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
               boxShadow: shadows.medium,
               "&:hover": {
                 boxShadow: shadows.strong,
