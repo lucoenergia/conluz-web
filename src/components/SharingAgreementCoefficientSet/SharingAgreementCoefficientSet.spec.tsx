@@ -71,7 +71,7 @@ async function selectPendingRow(user: ReturnType<typeof userEvent.setup>, supply
 
 /** Types a date into whichever DatePicker is currently rendered, via its section spinbuttons — the only interaction MUI's v7 field accepts under jsdom (no plain &lt;input&gt;, sections are contenteditable spinbuttons). */
 async function typeDate(user: ReturnType<typeof userEvent.setup>, day: string, month: string, year: string) {
-  await user.click(screen.getByRole("spinbutton", { name: "Day" }));
+  await user.click(screen.getByRole("spinbutton", { name: "Dia" }));
   await user.keyboard(day);
   await user.keyboard(month);
   await user.keyboard(year);
@@ -579,7 +579,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     await openBatchAction(user, "Registrar fecha");
 
     expect(screen.getByText("No se permiten fechas futuras")).toBeInTheDocument();
-    const dayField = screen.getByRole("spinbutton", { name: "Day" });
+    const dayField = screen.getByRole("spinbutton", { name: "Dia" });
     expect(dayField.closest("[title]")).toBeNull();
   });
 
