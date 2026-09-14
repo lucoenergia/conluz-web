@@ -121,6 +121,8 @@ export * from './sharingAgreementResponse';
 export * from './sharingAgreementResponseCreatedBy';
 export * from './sharingAgreementResponseNotes';
 export * from './sharingAgreementResponseStatus';
+export * from './sharingAgreementResponseUpdatedAt';
+export * from './sharingAgreementResponseUpdatedBy';
 export * from './supplyContractResponse';
 export * from './supplyContractResponseValidDateFrom';
 export * from './supplyDatadisResponse';
