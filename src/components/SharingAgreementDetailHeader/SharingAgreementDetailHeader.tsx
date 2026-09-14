@@ -11,6 +11,7 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
+import { useGetUserById } from "../../api/users/users";
 import { DetailHeader, DetailTile } from "../DetailHeader";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
 import { MenuTemplate } from "../Menu/MenuTemplate";
@@ -56,6 +57,9 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   onRevertRequest,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+  const { data: updatedByUser } = useGetUserById(agreement?.updatedBy ?? "", {
+    query: { enabled: !!agreement?.updatedBy },
+  });
   const isDraft = agreement?.status === SharingAgreementResponseStatus.DRAFT;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
 
@@ -234,6 +238,15 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
         {agreement?.notes || "-"}
       </Typography>
     </DetailTile>
+
+    {agreement?.updatedAt && (
+      <DetailTile label="Última edición">
+        <Typography variant="body1" fontWeight="bold">
+          {formatCalendarDate(agreement.updatedAt)}
+          {agreement.updatedBy && ` · ${updatedByUser?.fullName ?? "..."}`}
+        </Typography>
+      </DetailTile>
+    )}
   </DetailHeader>
   );
 };
