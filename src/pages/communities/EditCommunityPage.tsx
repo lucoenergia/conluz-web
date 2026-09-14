@@ -138,7 +138,7 @@ export const EditCommunityPage: FC = () => {
             <BusinessIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4">Editar comunidad</Typography>
+            <Typography variant="h4" component="h1">Editar comunidad</Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
               {communityData.name}
             </Typography>

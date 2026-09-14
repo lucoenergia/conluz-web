@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Avatar, IconButton, MenuItem, Divider } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, alphas, colors } from "../../theme/tokens";
+import { radii, alphas, colors, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -113,9 +113,9 @@ export const PlantCard: FC<PlantCardProps> = ({
         sx={{
           cursor: "pointer",
           minWidth: 0,
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
           "&:hover": {
-            transform: "translateY(-4px)",
+            transform: `translateY(${motion.liftCard})`,
           },
         }}
         header={
@@ -125,7 +125,7 @@ export const PlantCard: FC<PlantCardProps> = ({
                 <SolarPowerIcon />
               </Avatar>
               <Box>
-                <Typography variant="h6">{name || "Sin nombre"}</Typography>
+                <Typography component="h2" variant="h6">{name || "Sin nombre"}</Typography>
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
                   {code}
                 </Typography>
@@ -134,6 +134,7 @@ export const PlantCard: FC<PlantCardProps> = ({
             <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
               <IconButton
                 onClick={handleOpenMenu}
+                aria-label={`Más acciones para ${name || "la planta"}`}
                 sx={{
                   color: "white",
                   minWidth: 40,
@@ -194,8 +195,8 @@ export const PlantCard: FC<PlantCardProps> = ({
                       backgroundColor: colors.background.errorFaint,
                     } }}
                   >
-                    <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
+                    <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.main", flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
                       Eliminar
                     </Typography>
                   </MenuItem>
@@ -229,7 +230,7 @@ export const PlantCard: FC<PlantCardProps> = ({
             >
               <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" color={theme.palette.primary.main}>
+                <Typography component="p" variant="h5" color={theme.palette.primary.main}>
                   {totalPower || 0} kW
                 </Typography>
                 <Typography variant="caption" color="text.secondary">

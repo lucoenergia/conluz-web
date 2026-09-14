@@ -1,7 +1,7 @@
 import { useState, type FC } from "react";
 import { CardContent, Box, Typography, Chip, Avatar } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, alphas, colors } from "../../theme/tokens";
+import { radii, alphas, colors, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -101,9 +101,9 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         sx={{
           cursor: "pointer",
           minWidth: 0,
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
           "&:hover": {
-            transform: "translateY(-4px)",
+            transform: `translateY(${motion.liftCard})`,
           },
         }}
         header={
@@ -113,7 +113,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 {enabled ? <PowerIcon /> : <PowerOffIcon />}
               </Avatar>
               <Box>
-                <Typography variant="h6">{name || "Sin nombre"}</Typography>
+                <Typography component="h2" variant="h6">{name || "Sin nombre"}</Typography>
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
                   {code}
                 </Typography>
@@ -124,7 +124,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 label={enabled ? "Activo" : "Inactivo"}
                 size="small"
                 sx={{
-                  backgroundColor: enabled ? colors.success : colors.error.main,
+                  backgroundColor: enabled ? colors.success.main : colors.error.main,
                   color: "white",
                   fontWeight: 600,
                   display: { xs: "none", sm: "flex" },
@@ -166,7 +166,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
             >
               <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
-                <Typography variant="h5" color={theme.palette.primary.main}>
+                <Typography component="p" variant="h5" color={theme.palette.primary.main}>
                   {lastMeasurement || 0} kWh
                 </Typography>
                 <Typography variant="caption" color="text.secondary">

@@ -1,6 +1,6 @@
 import { InputBase, Paper, InputAdornment, IconButton } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows, colors } from "../../theme/tokens";
+import { radii, shadows, colors, interactiveTransition} from "../../theme/tokens";
 import { useState, type FC } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -10,6 +10,9 @@ export interface SearchBarProps {
   onChange?: (value: string) => void;
   placeholder?: string;
   className?: string;
+  /** Accessible name for the field. Defaults to the placeholder, which
+   *  disappears on input and so cannot be the only label. */
+  label?: string;
 }
 
 export const SearchBar: FC<SearchBarProps> = ({
@@ -17,6 +20,7 @@ export const SearchBar: FC<SearchBarProps> = ({
   onChange,
   placeholder = "Buscar punto de suministro...",
   className,
+  label,
 }) => {
   const theme = useTheme();
   const [isFocused, setIsFocused] = useState(false);
@@ -40,11 +44,11 @@ export const SearchBar: FC<SearchBarProps> = ({
         maxWidth: { xs: "100%", sm: 400 },
         borderRadius: radii.large,
         background: isFocused
-          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, rgba(118,75,162,0.08) 100%)`
+          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.dark, 0.08)} 100%)`
           : "white",
         border: "2px solid",
         borderColor: isFocused ? theme.palette.primary.main : colors.border.light,
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
         boxShadow: isFocused
           ? `0 10px 40px 0 ${alpha(theme.palette.primary.main, 0.15)}`
           : shadows.soft,
@@ -56,6 +60,7 @@ export const SearchBar: FC<SearchBarProps> = ({
     >
       <InputBase
         value={value}
+        inputProps={{ "aria-label": label ?? placeholder, type: "search" }}
         onChange={handleChange}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
@@ -89,6 +94,7 @@ export const SearchBar: FC<SearchBarProps> = ({
             <InputAdornment position="end">
               <IconButton
                 size="small"
+                aria-label="Borrar búsqueda"
                 onClick={handleClear}
                 sx={{
                   mr: 0.5,

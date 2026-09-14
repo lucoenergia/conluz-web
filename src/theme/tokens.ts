@@ -26,33 +26,83 @@ export const shadows = {
   breadcrumb:   "0 2px 8px 0 rgba(0,0,0,0.08)",
   // Dropdown / popover menu shadow
   dropdown:     "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+  // Row-actions menu elevation. Expressed as a `filter` value rather than a
+  // box-shadow so the arrow pseudo-element is included in the silhouette —
+  // box-shadow would trace the paper's rectangle and cut the arrow off.
+  // Applied to `filter`, not `boxShadow`.
+  menuFilter:   "drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.32))",
 } as const;
 
 // ─── Colours ─────────────────────────────────────────────────────────────────
+// Every hue is a set of ROLES, not a single value, and `main` is deliberately
+// the safe one so the obvious call site is also the correct one:
+//
+//   main     the working tone. ≥ 4.5:1 as text on white AND behind white text,
+//            so it is safe as type, as an icon, and as a fill — all directions.
+//   dark     hover / active. ≥ 7:1.
+//   vivid    decorative ONLY — chart marks and large fills. ~3:1, which is the
+//            bar for a graphic object but NOT for text. Never put type on it.
+//   onBrand  type sitting on `brand.panel`. ≥ 4.5:1 on that panel.
+//   surface  the tint behind `main` type. Explicit, never an alpha overlay:
+//            alpha made the effective contrast depend on whatever was beneath.
+//
+// Derived in OKLCH — hue preserved, lightness solved to the target ratio, chroma
+// tapered toward the extremes — and every pair verified rather than eyeballed.
 export const colors = {
   brand: {
-    main: "#667eea",
-    dark: "#5568d3",
+    // Decorative only: large fills and gradient ends. 3.66:1, so it can never
+    // carry small text and can never sit behind white text.
+    light: "#667eea",
+    // The working brand tone: actions, banners, brand-coloured type.
+    // 5.02:1 on white, 4.79:1 on background.surface, 4.50:1 on brand.surface,
+    // and carries white text at 5.01:1 — one value safe in every direction.
+    main: "#5267cd",
+    dark: "#3e50b2",    // hover / active — white text at 7.01:1
+    panel: "#3443a1",   // inset well on a brand banner — white text at 8.52:1
+    onSoft: "#eff3ff",  // secondary type on brand.main (4.52:1); replaces opacity:0.9
+    surface: "#f0f2fd", // brand-tinted chip background
     contrastText: "#fff",
+  },
+  success: {
+    main:    "#008058", // 4.97:1 either direction
+    dark:    "#006646", // 7.03:1
+    vivid:   "#00a975", // 3.03:1 — chart marks / large fills only
+    onBrand: "#49d49b", // 4.54:1 on brand.panel
+    surface: "#e7f8f2", // `main` clears 4.52:1 on this tint
+  },
+  error: {
+    main:    "#d12a30", // 5.14:1 either direction
+    dark:    "#b5041c", // 7.00:1 — destructive hover
+    vivid:   "#ef4444", // 3.76:1 — chart marks / large fills only
+    onBrand: "#ffa59c", // 4.51:1 on brand.panel
+    surface: "#fdecec", // `main` clears 4.50:1 on this tint
+  },
+  warning: {
+    main:    "#9f6400", // 4.89:1 either direction
+    dark:    "#7e4e00", // 7.05:1
+    vivid:   "#d08400", // 3.01:1 — chart marks / large fills only
+    onBrand: "#ffab33", // 4.52:1 on brand.panel
+    surface: "#fef5e7", // `main` clears 4.52:1 on this tint
+  },
+  info: {
+    main:    "#0077aa", // 4.98:1 either direction
+    dark:    "#005f89", // 7.00:1
+    vivid:   "#009ee1", // 3.01:1 — chart marks / large fills only
+    onBrand: "#66c6ff", // 4.50:1 on brand.panel
+    surface: "#e7f6fd", // `main` clears 4.50:1 on this tint
   },
   secondary: {
     main: "#475569",
     dark: "#1e293b",
   },
-  success: "#10b981",
-  error: {
-    main: "#ef4444",
-    dark: "#dc2626", // destructive action hover / darker danger variant
-  },
-  warning: "#f59e0b",
-  info: "#0ea5e9",
   text: {
     primary:     "#1e293b",
     secondary:   "#64748b",
     body:        "#374151", // card body text, slightly lighter than primary
     subtle:      "#6b7280", // deemphasized body / caption text
-    muted:       "#9ca3af", // disabled / very deemphasized text
-    placeholder: "#94a3b8", // empty-state icons, search placeholder
+    muted:       "#717782", // deemphasized text that is still text — 4.50:1
+    disabled:    "#9ca3af", // disabled controls ONLY — 2.54:1, exempt from 1.4.3
+    placeholder: "#6a788a", // input placeholders / empty-state icons — 4.50:1
   },
   divider: "#e5e7eb",
   border: {
@@ -66,10 +116,19 @@ export const colors = {
     inactive: "#f9fafb", // inactive dropzone / input background
     errorFaint: "#fef2f2", // very-light error tint
   },
-  chart: {
-    violet: "#8b5cf6", // production energy stat
-    blue:   "#3b82f6", // consumption energy stat
-    cyan:   "#0ea5e9", // integration status colour
+  // Accent hues: stat figures, provider marks, and the production chart series.
+  // Named `accent` rather than `chart` because most uses are not charts — the
+  // old name sent people looking for series colours and hid the fact that these
+  // carry TYPE on the member's home screen.
+  //
+  // Each value is safe in every direction (>= 4.5:1 as type on white, behind
+  // white text, and on its own 8% tint), so unlike `vivid` these can carry a
+  // figure or a glyph without a second check. The semantic hues' `vivid` tones
+  // remain the right choice for a series mark that only needs the 3:1 bar.
+  accent: {
+    violet: "#8050e8", // production figures — 4.96:1
+    blue:   "#286cdb", // consumption figures — 4.93:1
+    cyan:   "#0078ac", // integration provider marks — 4.90:1
   },
 } as const;
 
@@ -116,4 +175,38 @@ export const fontSizes = {
   lg:  "0.9375rem",  // 15px — between body2 and body1
   xl:  "1rem",       // 16px — MUI body1 equivalent
   "2xl": "1.125rem", // 18px
+} as const;
+
+// ─── Transitions ──────────────────────────────────────────────────────────────
+// The properties every interactive surface in this app actually animates on
+// hover, focus and press. None of them drive layout, so they stay on the
+// compositor / paint path.
+//
+// Use this instead of `transition: "all ..."`. `all` asks the browser to watch
+// every animatable property, and — more importantly — it silently starts
+// animating width, height, padding or margin the moment someone adds one to a
+// hover rule, turning a cheap effect into a reflow per frame. Naming the
+// properties makes that a deliberate choice rather than an accident.
+const INTERACTIVE_PROPERTIES = [
+  "transform",
+  "box-shadow",
+  "border-color",
+  "background-color",
+  "color",
+] as const;
+
+export const interactiveTransition = (duration = "0.3s", easing = "ease") =>
+  INTERACTIVE_PROPERTIES.map((property) => `${property} ${duration} ${easing}`).join(", ");
+
+// ─── Motion ───────────────────────────────────────────────────────────────────
+// Spatial hover movement, expressed as CSS custom properties so a single
+// `prefers-reduced-motion` rule in main.tsx can collapse the distance to zero
+// without touching any call site — and without disabling the colour, border and
+// shadow transitions that actually tell the user their action registered.
+//
+// Reduced motion means less movement, not less feedback.
+export const motion = {
+  lift: "var(--motion-lift, -2px)",       // buttons, rows, small surfaces
+  liftCard: "var(--motion-lift-card, -4px)", // cards
+  nudge: "var(--motion-nudge, 2px)",      // breadcrumb / directional hint
 } as const;

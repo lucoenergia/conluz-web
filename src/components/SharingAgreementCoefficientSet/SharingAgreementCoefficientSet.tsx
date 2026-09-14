@@ -26,7 +26,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { colors, radii, shadows } from "../../theme/tokens";
+import { colors, radii, shadows, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
 import { SearchBar } from "../SearchBar/SearchBar";
@@ -708,10 +708,10 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                   background: theme.palette.primary.main,
                   boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                   "&:hover": {
-                    transform: "translateY(-2px)",
+                    transform: `translateY(${motion.lift})`,
                     boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                   },
-                  transition: "all 0.3s ease",
+                  transition: interactiveTransition("0.3s", "ease"),
                 }}
               >
                 Editar coeficientes

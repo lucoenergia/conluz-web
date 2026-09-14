@@ -1,5 +1,5 @@
 import { Card, CardContent, Typography, Box, IconButton, Tooltip, useMediaQuery, useTheme, ClickAwayListener } from "@mui/material";
-import { radii, shadows, alphas } from "../../theme/tokens";
+import { radii, shadows, alphas, interactiveTransition} from "../../theme/tokens";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { FC, ReactNode } from "react";
 import { useState } from "react";
@@ -61,7 +61,7 @@ export const GraphCard: FC<GraphCardProps> = ({
       sx={{
         width: "100%",
         borderRadius: radii.default,
-        transition: "all 0.3s ease",
+        transition: interactiveTransition("0.3s", "ease"),
         boxShadow: shadows.dataCard,
         overflow: "hidden",
         "&:hover": {
@@ -80,7 +80,7 @@ export const GraphCard: FC<GraphCardProps> = ({
         }}
       >
         <Box>
-          <Typography variant="h6">
+          <Typography variant="h6" component="h2">
             {title}
           </Typography>
           {subtitle && (

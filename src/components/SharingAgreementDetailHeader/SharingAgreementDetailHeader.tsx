@@ -113,7 +113,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
     title={
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, mb: 1 }}>
-          <Typography variant="h4">{agreement?.name || "Acuerdo de reparto"}</Typography>
+          <Typography variant="h4" component="h1">{agreement?.name || "Acuerdo de reparto"}</Typography>
           {!isLoading && !error && <SharingAgreementStatusChip status={agreement?.status} tone="onDark" />}
         </Box>
         {showActions && (
@@ -202,8 +202,8 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
                       onClick={handleDeleteClick}
                       sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
                     >
-                      <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
+                      <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.main", flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
                         Eliminar
                       </Typography>
                     </MenuItem>

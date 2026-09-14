@@ -1,7 +1,7 @@
 import { useState, useEffect, type FC } from "react";
 import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { sxStyles } from "../../theme/sx";
-import { fontSizes } from "../../theme/tokens";
+import { fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -312,10 +312,10 @@ export const PlantForm: FC<PlantFormProps> = ({
             fontSize: fontSizes.xl,
             boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
             "&:hover": {
-              transform: "translateY(-2px)",
+              transform: `translateY(${motion.lift})`,
               boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
             },
-            transition: "all 0.3s ease",
+            transition: interactiveTransition("0.3s", "ease"),
           })}
         >
           {initialName ? "Guardar cambios" : "Crear planta"}

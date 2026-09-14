@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
+import { radii, shadows, colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import {
   Box,
@@ -32,6 +32,10 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar";
 import { PageHeaderWithStats } from "../../components/PageHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
+import { RecordList } from "../../components/RecordList";
+import { ResultStatus } from "../../components/ResultStatus";
+import useWindowDimensions from "../../utils/useWindowDimensions";
+import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import type { FC } from "react";
 
 import PeopleIcon from "@mui/icons-material/People";
@@ -124,6 +128,11 @@ interface FilterState {
 }
 
 export const UsersPage: FC = () => {
+  const { width } = useWindowDimensions();
+  // Render ONE layout, not two hidden copies: a stacked list below the
+  // project's desktop breakpoint, the table above it.
+  const isNarrow = width < MIN_DESKTOP_WIDTH;
+
   const theme = useTheme();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -375,8 +384,8 @@ export const UsersPage: FC = () => {
         subtitle="Administra los usuarios de la plataforma"
         stats={[
           { value: stats.total, label: "Total" },
-          { value: stats.active, label: "Activos", color: colors.success },
-          { value: stats.inactive, label: "Inactivos", color: colors.error.main },
+          { value: stats.active, label: "Activos", color: colors.success.onBrand },
+          { value: stats.inactive, label: "Inactivos", color: colors.error.onBrand },
         ]}
       />
 
@@ -404,10 +413,10 @@ export const UsersPage: FC = () => {
                   py: 1.5,
                   boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                   "&:hover": {
-                    transform: "translateY(-2px)",
+                    transform: `translateY(${motion.lift})`,
                     boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                   },
-                  transition: "all 0.3s ease",
+                  transition: interactiveTransition("0.3s", "ease"),
                 }}
               >
                 Nuevo Usuario
@@ -444,6 +453,14 @@ export const UsersPage: FC = () => {
             </Alert>
           ) : (
             <>
+              <ResultStatus
+                isLoading={isLoading}
+                count={filteredUsers.length}
+                noun={{ one: "usuario", other: "usuarios" }}
+                emptyMessage="No se encontraron usuarios"
+              />
+
+              {!isNarrow && (
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -583,6 +600,7 @@ export const UsersPage: FC = () => {
                           <TableCell align="center">
                             <IconButton
                               size="small"
+                              aria-label={`Más acciones para ${user.fullName || "el usuario"}`}
                               onClick={(e) =>
                                 handleMenuOpen(
                                   e,
@@ -607,6 +625,78 @@ export const UsersPage: FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+              )}
+
+              {isNarrow && (
+              <Box sx={{ p: 2 }}>
+                <RecordList
+                  label="Usuarios"
+                  isLoading={isLoading}
+                  emptyMessage="No se encontraron usuarios"
+                  items={paginatedUsers.map((user) => ({
+                    id: user.id || "",
+                    avatar: (
+                      <Avatar
+                        sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}
+                      >
+                        {user.fullName?.charAt(0).toUpperCase() || "?"}
+                      </Avatar>
+                    ),
+                    title: user.fullName || "Sin nombre",
+                    badge: user.isPlatformAdmin ? (
+                      <Chip
+                        icon={<AdminPanelSettingsIcon />}
+                        label="Admin plataforma"
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        aria-label="Administrador de plataforma"
+                        sx={{ fontSize: fontSizes.xs }}
+                      />
+                    ) : undefined,
+                    status: (
+                      <Chip
+                        label={user.enabled ? "Activo" : "Inactivo"}
+                        color={user.enabled ? "success" : "error"}
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    ),
+                    actions: (
+                      <IconButton
+                        aria-label={`Más acciones para ${user.fullName || "el usuario"}`}
+                        onClick={(e) =>
+                          handleMenuOpen(
+                            e,
+                            user.id || "",
+                            user.fullName || "Sin nombre",
+                            user.enabled || false,
+                            user.isPlatformAdmin || false,
+                          )
+                        }
+                        sx={sxStyles.touchTarget}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    ),
+                    fields: [
+                      { label: "NIF/CIF", value: user.personalId || "-" },
+                      { label: "Email", value: user.email || "-" },
+                      { label: "Teléfono", value: user.phoneNumber || "-" },
+                      {
+                        label: "Comunidades",
+                        value: (
+                          <UserCommunitiesCell
+                            memberships={user.memberships as Record<string, string> | undefined}
+                            communities={communitiesList}
+                          />
+                        ),
+                      },
+                    ],
+                  }))}
+                />
+              </Box>
+              )}
 
               <TablePagination
                 rowsPerPageOptions={[10, 25, 50]}
@@ -636,7 +726,7 @@ export const UsersPage: FC = () => {
           elevation: 0,
           sx: {
             overflow: "visible",
-            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+            filter: shadows.menuFilter,
             mt: 1.5,
             minWidth: 200,
             "& .MuiAvatar-root": { width: 32, height: 32, ml: -0.5, mr: 1 },

@@ -1,37 +1,63 @@
+import { lazy, type ComponentType } from "react";
 import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
-import { SupplyPointsPage } from "./pages/supply-points/SupplyPointsPage";
 import { LoginLayout } from "./layouts/login.layout";
-import { Login } from "./pages/auth/Login";
-import { ForgotPassword } from "./pages/auth/ForgotPassword";
-import { NewPassword } from "./pages/auth/NewPassword";
-import { SupplyDetailPage } from "./pages/supply-points/SupplyDetailPage";
-import { CreateSupplyPage } from "./pages/supply-points/CreateSupply";
-import { EditSupplyPage } from "./pages/supply-points/EditSupply";
-import { HomePage } from "./pages/Home";
-import { ContactPage } from "./pages/Contact.page";
 import { DynamicLayout } from "./layouts/dynamic.layout";
-import { ChangePasswordPage } from "./pages/auth/ChangePassword";
-import { ProfilePage } from "./pages/Profile";
-import { PlantsPage } from "./pages/production/PlantsPage";
-import { CreatePlantPage } from "./pages/production/CreatePlantPage";
-import { EditPlantPage } from "./pages/production/EditPlantPage";
-import { PlantDetailPage } from "./pages/production/PlantDetailPage";
-import { IntegrationsPage } from "./pages/integrations/IntegrationsPage";
-import { CommunitiesPage } from "./pages/communities/CommunitiesPage";
-import { CreateCommunityPage } from "./pages/communities/CreateCommunityPage";
-import { EditCommunityPage } from "./pages/communities/EditCommunityPage";
-import { MembersPage } from "./pages/members/MembersPage";
 import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
 import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
 import { CommunityOrPlatformAdminRoute } from "./components/Auth/CommunityOrPlatformAdminRoute";
-import { SharingAgreementsPage } from "./pages/production/SharingAgreementsPage";
-import { SharingAgreementDetailPage } from "./pages/production/SharingAgreementDetailPage";
-import { UsersPage } from "./pages/users/UsersPage";
-import { CreateUserPage } from "./pages/users/CreateUser";
-import { EditUserPage } from "./pages/users/EditUser";
-import { PlatformPage } from "./pages/platform/PlatformPage";
-import { NoCommunityPage } from "./pages/no-community/NoCommunityPage";
+
+/**
+ * Route-level code splitting.
+ *
+ * Layouts and route guards stay eager — they are small, always needed, and
+ * keeping them in the entry means the app shell paints without waiting on a
+ * second request. Every page is loaded on demand instead, so reaching the login
+ * form no longer downloads the charting library, the sharing-agreement editor
+ * and every admin screen first. Each layout renders its own <Suspense> around
+ * <Outlet>, so the chrome stays put while a page arrives.
+ *
+ * The pages use named exports, so each import is mapped onto `default`.
+ */
+function lazyPage<M, K extends keyof M>(loader: () => Promise<M>, name: K) {
+  return lazy(() =>
+    loader().then((module) => ({ default: module[name] as ComponentType })),
+  );
+}
+
+const Login = lazyPage(() => import("./pages/auth/Login"), "Login");
+const ForgotPassword = lazyPage(() => import("./pages/auth/ForgotPassword"), "ForgotPassword");
+const NewPassword = lazyPage(() => import("./pages/auth/NewPassword"), "NewPassword");
+const ChangePasswordPage = lazyPage(() => import("./pages/auth/ChangePassword"), "ChangePasswordPage");
+
+const HomePage = lazyPage(() => import("./pages/Home"), "HomePage");
+const ProfilePage = lazyPage(() => import("./pages/Profile"), "ProfilePage");
+const ContactPage = lazyPage(() => import("./pages/Contact.page"), "ContactPage");
+const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityPage"), "NoCommunityPage");
+
+const SupplyPointsPage = lazyPage(() => import("./pages/supply-points/SupplyPointsPage"), "SupplyPointsPage");
+const SupplyDetailPage = lazyPage(() => import("./pages/supply-points/SupplyDetailPage"), "SupplyDetailPage");
+const CreateSupplyPage = lazyPage(() => import("./pages/supply-points/CreateSupply"), "CreateSupplyPage");
+const EditSupplyPage = lazyPage(() => import("./pages/supply-points/EditSupply"), "EditSupplyPage");
+
+const PlantsPage = lazyPage(() => import("./pages/production/PlantsPage"), "PlantsPage");
+const CreatePlantPage = lazyPage(() => import("./pages/production/CreatePlantPage"), "CreatePlantPage");
+const EditPlantPage = lazyPage(() => import("./pages/production/EditPlantPage"), "EditPlantPage");
+const PlantDetailPage = lazyPage(() => import("./pages/production/PlantDetailPage"), "PlantDetailPage");
+const SharingAgreementsPage = lazyPage(() => import("./pages/production/SharingAgreementsPage"), "SharingAgreementsPage");
+const SharingAgreementDetailPage = lazyPage(() => import("./pages/production/SharingAgreementDetailPage"), "SharingAgreementDetailPage");
+
+const IntegrationsPage = lazyPage(() => import("./pages/integrations/IntegrationsPage"), "IntegrationsPage");
+const MembersPage = lazyPage(() => import("./pages/members/MembersPage"), "MembersPage");
+
+const CommunitiesPage = lazyPage(() => import("./pages/communities/CommunitiesPage"), "CommunitiesPage");
+const CreateCommunityPage = lazyPage(() => import("./pages/communities/CreateCommunityPage"), "CreateCommunityPage");
+const EditCommunityPage = lazyPage(() => import("./pages/communities/EditCommunityPage"), "EditCommunityPage");
+
+const PlatformPage = lazyPage(() => import("./pages/platform/PlatformPage"), "PlatformPage");
+const UsersPage = lazyPage(() => import("./pages/users/UsersPage"), "UsersPage");
+const CreateUserPage = lazyPage(() => import("./pages/users/CreateUser"), "CreateUserPage");
+const EditUserPage = lazyPage(() => import("./pages/users/EditUser"), "EditUserPage");
 
 function App() {
   return (

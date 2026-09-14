@@ -30,6 +30,7 @@ All tokens are `as const` — TypeScript will catch typos at the call site.
 | `shadows.auth` | `0 8px 32px 0 rgba(0,0,0,0.2)` | Auth-page login card |
 | `shadows.breadcrumb` | `0 2px 8px 0 rgba(0,0,0,0.08)` | Subtle separator from page bg |
 | `shadows.dropdown` | `0 10px 25px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)` | Dropdown / popover menu |
+| `shadows.menuFilter` | `drop-shadow(0px 2px 8px rgba(0,0,0,0.32))` | Row-actions menu. Apply to **`filter`**, not `boxShadow` — a box-shadow traces the paper's rectangle and cuts off the arrow pseudo-element. |
 
 Brand-tinted shadows are computed at call sites using `alpha(theme.palette.primary.main, 0.4/0.5)`.
 
@@ -37,12 +38,32 @@ Brand-tinted shadows are computed at call sites using `alpha(theme.palette.prima
 
 ## `colors` — Colour palette
 
+Every hue is a set of **roles**, not one value. The role you pick decides which
+contrast bar the colour has to clear, which is how a call site stays accessible
+without anyone re-measuring it. `main` is deliberately the safe one, so the
+obvious choice is also the correct one.
+
+| Role | What it is for | Bar it clears |
+|---|---|---|
+| `main` | the working tone — type, icons, and fills behind white text | ≥ 4.5:1 **both** as type on white and behind white text |
+| `dark` | hover / active | ≥ 7:1 |
+| `vivid` | **decorative only** — chart marks, large fills | ~3:1 — a graphic-object bar, *never* put type on it |
+| `onBrand` | type sitting on `brand.panel` | ≥ 4.5:1 on that panel |
+| `surface` | the tint behind `main` type | explicit hex, never an alpha overlay |
+
+Values were derived in OKLCH (hue preserved, lightness solved to the target
+ratio, chroma tapered toward the extremes) and every pair is verified.
+
 ### Brand
-| Token | Value |
-|---|---|
-| `colors.brand.main` | `#667eea` |
-| `colors.brand.dark` | `#5568d3` |
-| `colors.brand.contrastText` | `#fff` |
+| Token | Value | Use |
+|---|---|---|
+| `colors.brand.light` | `#667eea` | **Decorative only** — 3.66:1. Large fills and gradient ends. Never behind white text, never under small type. |
+| `colors.brand.main` | `#5267cd` | Actions, banners, brand-coloured type. 5.02:1 on white, 4.80:1 on `background.surface`, and carries white text at 5.01:1. |
+| `colors.brand.dark` | `#3e50b2` | Hover / active — white text at 7.01:1 |
+| `colors.brand.panel` | `#3443a1` | Inset well on a brand banner — white text at 8.52:1 |
+| `colors.brand.onSoft` | `#eff3ff` | Secondary type on `brand.main` (4.53:1). Use instead of `opacity: 0.9` on white. |
+| `colors.brand.surface` | `#f0f2fd` | Brand-tinted chip background |
+| `colors.brand.contrastText` | `#fff` | |
 
 ### Secondary
 | Token | Value |
@@ -51,12 +72,17 @@ Brand-tinted shadows are computed at call sites using `alpha(theme.palette.prima
 | `colors.secondary.dark` | `#1e293b` |
 
 ### Semantic
-| Token | Value |
-|---|---|
-| `colors.success` | `#10b981` |
-| `colors.error.main` | `#ef4444` |
-| `colors.error.dark` | `#dc2626` |
-| `colors.warning` | `#f59e0b` |
+| Hue | `main` | `dark` | `vivid` | `onBrand` | `surface` |
+|---|---|---|---|---|---|
+| success | `#008058` | `#006646` | `#00a975` | `#49d49b` | `#e7f8f2` |
+| error | `#d12a30` | `#b5041c` | `#ef4444` | `#ffa59c` | `#fdecec` |
+| warning | `#9f6400` | `#7e4e00` | `#d08400` | `#ffab33` | `#fef5e7` |
+| info | `#0077aa` | `#005f89` | `#009ee1` | `#66c6ff` | `#e7f6fd` |
+
+In the MUI palette these map so that MUI's own components are accessible by
+default: `palette.<hue>.main` → `main`, `.dark` → `dark`, `.light` → `vivid`.
+A `<Chip color="success">` or `<Button color="error">` is therefore safe with no
+call-site opt-in. `.light` is the vivid tone — never put small text on it.
 
 ### Text
 | Token | Value | Use |
@@ -65,8 +91,9 @@ Brand-tinted shadows are computed at call sites using `alpha(theme.palette.prima
 | `colors.text.secondary` | `#64748b` | Secondary / supporting text |
 | `colors.text.body` | `#374151` | Card body text |
 | `colors.text.subtle` | `#6b7280` | De-emphasized body / caption |
-| `colors.text.muted` | `#9ca3af` | Disabled / very de-emphasized |
-| `colors.text.placeholder` | `#94a3b8` | Empty-state icons, search placeholder |
+| `colors.text.muted` | `#717782` | De-emphasized text that is still text — 4.50:1 |
+| `colors.text.disabled` | `#9ca3af` | **Disabled controls only** — 2.54:1, exempt from WCAG 1.4.3. Never for live text. |
+| `colors.text.placeholder` | `#6a788a` | Input placeholders, empty-state icons — 4.50:1 |
 
 ### Structure
 | Token | Value | Use |
@@ -84,12 +111,17 @@ Brand-tinted shadows are computed at call sites using `alpha(theme.palette.prima
 | `colors.background.inactive` | `#f9fafb` | Inactive dropzone / input |
 | `colors.background.errorFaint` | `#fef2f2` | Very-light error tint (hover) |
 
-### Chart
+### Accent
 | Token | Value | Use |
 |---|---|---|
-| `colors.chart.violet` | `#8b5cf6` | Production energy stat |
-| `colors.chart.blue` | `#3b82f6` | Consumption energy stat |
-| `colors.chart.cyan` | `#0ea5e9` | Integration status colour |
+| `colors.accent.violet` | `#8050e8` | Production figures — 4.96:1 |
+| `colors.accent.blue` | `#286cdb` | Consumption figures — 4.93:1 |
+| `colors.accent.cyan` | `#0078ac` | Integration provider marks — 4.90:1 |
+
+Named `accent`, not `chart`: no chart series uses them — series take the `vivid`
+tones of the semantic hues. Unlike `vivid`, each accent is safe in every
+direction (≥ 4.5:1 as type on white, behind white text, and on its own 8% tint),
+so it can carry a figure or a glyph without a second check.
 
 ---
 

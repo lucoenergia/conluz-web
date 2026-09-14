@@ -12,7 +12,7 @@ export const AppAccordion: FC<AppAccordionProps> = ({ title, className, children
   return (
     <Accordion className={className}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="h5">{title}</Typography>
+        <Typography component="h2" variant="h5">{title}</Typography>
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>
     </Accordion>

@@ -75,3 +75,23 @@ test("ProfileMenu closes menu when removing focus", async () => {
   expect(screen.getByText("¿Necesitas ayuda?")).not.toBeVisible();
   expect(screen.getByText("Salir")).not.toBeVisible();
 });
+
+test("menu items are single links, never an anchor wrapping a menuitem", async () => {
+  // Regression guard. These used to be `<Box component={Link}><MenuItem/></Box>`,
+  // which nests an interactive role="menuitem" inside an <a> — invalid, and
+  // ambiguous to announce. Each entry must be ONE element that is both.
+  const user = userEvent.setup();
+  setup();
+  await user.click(screen.getByRole("button", { name: "Abrir menú de usuario" }));
+
+  const nested = Array.from(document.querySelectorAll("a[href]")).filter((a) =>
+    a.querySelector('button, [role="menuitem"], [role="button"], a[href]'),
+  );
+  expect(nested).toEqual([]);
+
+  for (const label of ["Mi perfil", "Cambiar contraseña", "¿Necesitas ayuda?"]) {
+    const item = screen.getByRole("menuitem", { name: label });
+    expect(item.tagName).toBe("A");
+    expect(item).toHaveAttribute("href");
+  }
+});

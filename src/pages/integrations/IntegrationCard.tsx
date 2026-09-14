@@ -1,3 +1,4 @@
+import { alpha } from "@mui/material/styles";
 import { radii, shadows, colors } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import {
@@ -64,6 +65,8 @@ interface IntegrationCardProps {
   onChange: (id: string, patch: Record<string, unknown>) => void;
   onSave: (id: string) => void;
   isSaving: boolean;
+  /** This provider's stored configuration is still in flight. */
+  isLoading?: boolean;
 }
 
 const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
@@ -74,7 +77,9 @@ const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
         width: 48,
         height: 48,
         borderRadius: radii.default,
-        background: `${color}15`,
+        // alpha() rather than appending hex digits: `${color}15` silently
+        // breaks for any colour not written as 6-digit hex.
+        background: alpha(color, 0.08),
         color: color,
         display: "flex",
         alignItems: "center",
@@ -102,6 +107,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   onChange,
   onSave,
   isSaving,
+  isLoading = false,
 }) => {
   const [showPwd, setShowPwd] = useState(false);
 
@@ -139,7 +145,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
           {/* eslint-disable-next-line no-restricted-syntax -- near-black provider name (#111827); no matching token */}
-          <Typography variant="h6" sx={{ color: "#111827" }}>
+          <Typography component="h2" variant="h6" sx={{ color: "#111827" }}>
               {provider.name}
             </Typography>
           </Box>
@@ -147,6 +153,15 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
             {provider.description}
           </Typography>
         </Box>
+        {isLoading ? (
+          // Occupies the switch's exact footprint so nothing shifts when the
+          // real control arrives. Disabled by omission rather than decoration:
+          // toggling before the stored config lands would be silently
+          // overwritten by the prefill effect the moment it does.
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 58, height: 38 }}>
+            <CircularProgress size={20} aria-label={`Cargando configuración de ${provider.name}`} />
+          </Box>
+        ) : (
         <Switch
           checked={enabled}
           onChange={(e) => onChange(provider.id, { enabled: e.target.checked })}
@@ -155,6 +170,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
             "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: accent },
           }}
         />
+        )}
       </Box>
 
       {/* Body — only for providers with credentials */}
@@ -210,6 +226,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                       <InputAdornment position="end">
                         <IconButton
                           size="small"
+                          aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
                           onClick={() => setShowPwd((v) => !v)}
                           edge="end"
                         >
@@ -285,7 +302,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
       >
         <Button
           variant="contained"
-          disabled={isSaving}
+          disabled={isSaving || isLoading}
           onClick={handleSave}
           startIcon={
             isSaving ? (

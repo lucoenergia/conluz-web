@@ -20,7 +20,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
     icon={<ElectricMeterIcon sx={{ fontSize: 32 }} />}
     title={
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, mb: 1 }}>
-        <Typography variant="h4">
+        <Typography variant="h4" component="h1">
           {supplyPoint?.name || "Punto de Suministro"}
         </Typography>
         {!isLoading && !error && (
@@ -31,7 +31,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
             sx={{
               fontWeight: 600,
               color: "white",
-              backgroundColor: supplyPoint?.enabled ? colors.success : colors.error,
+              backgroundColor: supplyPoint?.enabled ? colors.success.main : colors.error.main,
             }}
           />
         )}

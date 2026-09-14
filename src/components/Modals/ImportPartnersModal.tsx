@@ -9,7 +9,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import { AppModal } from "./AppModal";
 import { useCreateUsersWithFile } from "../../api/users/users";
 import type { CreateUsersInBulkResponse } from "../../api/models";
-import { radii, shadows, alphas, colors, fontSizes } from "../../theme/tokens";
+import { radii, shadows, alphas, colors, fontSizes, interactiveTransition} from "../../theme/tokens";
 
 interface ImportPartnersModalProps {
   isOpen: boolean;
@@ -93,7 +93,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
       {step === "upload" && (
         <>
           <Typography
-            variant="h6"
+            component="h2" variant="h6"
             sx={{ color: "text.primary", mb: 3 }}
           >
             Importar miembros desde CSV
@@ -112,7 +112,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
               backgroundColor: file
                 ? alpha(theme.palette.primary.main, 0.04)
                 : colors.background.inactive,
-              transition: "all 0.2s ease",
+              transition: interactiveTransition("0.2s", "ease"),
               "&:hover": {
                 borderColor: theme.palette.primary.main,
                 backgroundColor: alpha(theme.palette.primary.main, 0.04),
@@ -316,7 +316,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             </Box>
 
             <Typography
-              variant="h6"
+              component="h2" variant="h6"
               sx={{
                 fontSize: fontSizes["2xl"],
                 color: "text.primary",

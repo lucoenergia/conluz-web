@@ -27,7 +27,7 @@ export const NewPassword: FC = () => {
 
   return (
     <Box component="form" sx={{ p: 7, width: "100%" }} action={handleSubmit}>
-      <Typography gutterBottom>
+      <Typography component="h1" gutterBottom>
         Introduce tu nueva contraseña
       </Typography>
       <FormGroup>

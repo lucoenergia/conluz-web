@@ -25,7 +25,7 @@ export const LoadingSupplyDetailCard: FC = () => {
             width: "100%",
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>
+          <Typography component="h2" variant="h5" sx={{ fontWeight: 800 }}>
             <Skeleton />
           </Typography>
           <SupplyDetailContent />

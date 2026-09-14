@@ -1,6 +1,6 @@
 import { useState, type FC } from "react";
 import { alpha } from "@mui/material/styles";
-import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import {
   Box,
@@ -103,6 +103,7 @@ export const Login: FC = () => {
           </Avatar>
           <Typography
             variant="h4"
+            component="h1"
             sx={{ mb: 1 }}
           >
             Bienvenide a ConLuz
@@ -246,10 +247,10 @@ export const Login: FC = () => {
                 padding: "12px", // 12px intentionally off-grid for button vertical rhythm
                 background: theme.palette.primary.main,
                 boxShadow: `0 4px 12px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
-                transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+                transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
                 "&:hover": {
                   boxShadow: `0 6px 16px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
-                  transform: "translateY(-2px)",
+                  transform: `translateY(${motion.lift})`,
                 },
               })}
             >

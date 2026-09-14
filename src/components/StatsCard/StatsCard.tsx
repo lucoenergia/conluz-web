@@ -39,7 +39,7 @@ export const StatsCard: FC<StatsCardProps> = ({
       header={
         <>
           <Box>
-            <Typography variant="h6">{title}</Typography>
+            <Typography variant="h6" component="h2">{title}</Typography>
             {subtitle && (
               <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
                 {subtitle}
@@ -93,7 +93,7 @@ export const StatsCard: FC<StatsCardProps> = ({
                 </Box>
               )}
 
-              <Typography variant="h4" sx={{ color: stat.color || "text.primary", mb: 0.5 }}>
+              <Typography variant="h4" component="p" sx={{ color: stat.color || "text.primary", mb: 0.5 }}>
                 {stat.value}
               </Typography>
 

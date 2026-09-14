@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PageHeaderWithStats } from "./PageHeaderWithStats";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import { colors } from "../../theme/tokens";
 
 describe("PageHeaderWithStats", () => {
   const mockStats = [
@@ -69,7 +70,7 @@ describe("PageHeaderWithStats", () => {
     );
 
     const paper = container.querySelector(".MuiPaper-root");
-    expect(paper).toHaveStyle({ background: "#667eea" });
+    expect(paper).toHaveStyle({ background: colors.brand.main });
   });
 
   it("renders empty stats array without errors", () => {

@@ -7,7 +7,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, alphas, colors } from "../../theme/tokens";
+import { radii, alphas, colors, interactiveTransition, motion} from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { AppCard } from "../AppCard";
 import { MenuTemplate } from "../Menu/MenuTemplate";
@@ -81,9 +81,9 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
         detailPath
           ? {
               cursor: "pointer",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
               "&:hover": {
-                transform: "translateY(-4px)",
+                transform: `translateY(${motion.liftCard})`,
               },
             }
           : undefined
@@ -101,7 +101,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
               {agreement.name || "Sin nombre"}
             </Typography>
           ) : (
-            <Typography variant="h6">{agreement.name || "Sin nombre"}</Typography>
+            <Typography component="h2" variant="h6">{agreement.name || "Sin nombre"}</Typography>
           )}
           {detailPath && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
@@ -110,6 +110,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
                 <>
                   <IconButton
                     onClick={handleOpenMenu}
+                    aria-label={`Más acciones para ${agreement.name || "el acuerdo"}`}
                     sx={{
                       color: "white",
                       minWidth: 40,
@@ -127,8 +128,8 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
                         onClick={handleDeleteClick}
                         sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
                       >
-                        <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.dark", flexShrink: 0 }} />
-                        <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, textAlign: "left" }}>
+                        <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.main", flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
                           Eliminar
                         </Typography>
                       </MenuItem>

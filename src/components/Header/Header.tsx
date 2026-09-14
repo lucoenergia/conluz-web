@@ -21,7 +21,7 @@ export const Header: FC<HeaderProps> = ({ onMenuClick, username = "" }) => {
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
         backgroundColor: colors.background.paper,
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: `1px solid ${colors.divider}`,
         // eslint-disable-next-line no-restricted-syntax -- app-bar divider shadow; no matching token (0.05 opacity, very subtle)
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
       }}

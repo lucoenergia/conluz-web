@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
-import { colors } from "../../theme/tokens";
+import { colors, interactiveTransition, motion} from "../../theme/tokens";
 import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
 import { useGetSuppliesByUserId, useGetUserById } from "../../api/users/users";
 import type { SupplyResponse } from "../../api/models";
@@ -170,8 +170,8 @@ export const SupplyPointsPage: FC = () => {
           }
           stats={[
             { value: stats.total, label: "Total" },
-            { value: stats.active, label: "Activos", color: colors.success },
-            { value: stats.inactive, label: "Inactivos", color: colors.error.main },
+            { value: stats.active, label: "Activos", color: colors.success.onBrand },
+            { value: stats.inactive, label: "Inactivos", color: colors.error.onBrand },
           ]}
         />
       </Box>
@@ -204,10 +204,10 @@ export const SupplyPointsPage: FC = () => {
                 py: 1.5,
                 boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                 "&:hover": {
-                  transform: "translateY(-2px)",
+                  transform: `translateY(${motion.lift})`,
                   boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                 },
-                transition: "all 0.3s ease",
+                transition: interactiveTransition("0.3s", "ease"),
               }}
             >
               Nuevo Punto de Suministro
@@ -222,11 +222,11 @@ export const SupplyPointsPage: FC = () => {
                 borderColor: theme.palette.primary.main,
                 color: theme.palette.primary.main,
                 "&:hover": {
-                  transform: "translateY(-2px)",
+                  transform: `translateY(${motion.lift})`,
                   borderColor: theme.palette.primary.dark,
                   backgroundColor: alpha(theme.palette.primary.main, 0.04),
                 },
-                transition: "all 0.3s ease",
+                transition: interactiveTransition("0.3s", "ease"),
               }}
             >
               Importar CSV

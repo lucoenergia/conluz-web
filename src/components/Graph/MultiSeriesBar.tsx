@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, type FC } from "react";
 import Chart from "react-apexcharts";
 import { useTheme } from "@mui/material/styles";
-import { colors as themeColors } from "../../theme/tokens";
+import { colors as themeColors, shadows } from "../../theme/tokens";
 
 interface SeriesData {
   name: string;
@@ -37,14 +37,14 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const getChartColors = () => {
+  const getChartColors = (): string[] => {
     switch (variant) {
       case "consumption":
-        return [themeColors.error.main, themeColors.success, themeColors.warning]; // Red, Green, Amber
+        return [themeColors.error.vivid, themeColors.success.vivid, themeColors.warning.vivid]; // Red, Green, Amber
       case "production":
-        return [themeColors.chart.violet, themeColors.chart.blue, themeColors.success]; // Purple, Blue, Green
+        return [themeColors.accent.violet, themeColors.accent.blue, themeColors.success.vivid]; // Purple, Blue, Green
       default:
-        return [themeColors.chart.blue, themeColors.chart.violet, themeColors.success]; // Blue, Purple, Green
+        return [themeColors.accent.blue, themeColors.accent.violet, themeColors.success.vivid]; // Blue, Purple, Green
     }
   };
 
@@ -174,8 +174,8 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
           };
         }) {
           const category = w.globals.labels[dataPointIndex];
-          let tooltipContent = `<div style="padding: 8px 12px; background: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">`;
-          tooltipContent += `<div style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${category}</div>`;
+          let tooltipContent = `<div style="padding: 8px 12px; background: white; border-radius: 4px; box-shadow: ${shadows.dropdown};">`;
+          tooltipContent += `<div style="font-weight: 600; margin-bottom: 8px; color: ${themeColors.text.primary};">${category}</div>`;
 
           // Only show visible series (not hidden by legend click)
           w.config.series.forEach((s: { name: string }, index: number) => {
@@ -190,8 +190,8 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
             tooltipContent += `
               <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
-                <span style="color: #64748b; font-size: 12px;">${seriesName}:</span>
-                <span style="font-weight: 600; color: #1f2937; font-size: 12px;">${value !== undefined && value !== null ? value.toFixed(2) : '0.00'} kWh</span>
+                <span style="color: ${themeColors.text.secondary}; font-size: 12px;">${seriesName}:</span>
+                <span style="font-weight: 600; color: ${themeColors.text.primary}; font-size: 12px;">${value !== undefined && value !== null ? value.toFixed(2) : '0.00'} kWh</span>
               </div>
             `;
           });

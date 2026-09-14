@@ -1,6 +1,6 @@
 import { Box, Typography, Paper, Avatar, Grow, Fade } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { radii, shadows, alphas, colors } from "../theme/tokens";
+import { radii, shadows, alphas, colors, motion} from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
 import type { FC } from "react";
 
@@ -17,7 +17,6 @@ export const ContactPage: FC = () => {
     {
       icon: LocalPhoneIcon,
       title: "Teléfono",
-      gradient: theme.palette.primary.main,
       items: [
         { label: "Bob", value: "666 777 888" },
         { label: "John", value: "666 555 444" },
@@ -27,7 +26,6 @@ export const ContactPage: FC = () => {
     {
       icon: EmailIcon,
       title: "Email",
-      gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
       items: [
         { label: "General", value: "lucoenergia@gmail.com" },
         { label: "Soporte", value: "soporte@lucoenergia.com" },
@@ -36,7 +34,6 @@ export const ContactPage: FC = () => {
     {
       icon: PlaceIcon,
       title: "Dirección",
-      gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
       items: [
         { label: "", value: "Calle False 123" },
         { label: "", value: "44361 Luco de Jiloca" },
@@ -46,7 +43,6 @@ export const ContactPage: FC = () => {
     {
       icon: AccessTimeIcon,
       title: "Horario",
-      gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
       items: [
         { label: "Lunes - Viernes", value: "9:00 - 18:00" },
         { label: "Sábados", value: "10:00 - 14:00" },
@@ -98,7 +94,7 @@ export const ContactPage: FC = () => {
               <HeadsetMicIcon sx={{ fontSize: 32 }} />
             </Avatar>
             <Box>
-              <Typography variant="h3" sx={{ fontSize: { xs: "1.8rem", sm: "2.5rem" } }}>
+              <Typography variant="h3" component="h1" sx={{ fontSize: { xs: "1.8rem", sm: "2.5rem" } }}>
                 Contacto
               </Typography>
               <Typography variant="body1" sx={{ opacity: 0.9 }}>
@@ -107,7 +103,7 @@ export const ContactPage: FC = () => {
             </Box>
           </Box>
 
-          <Typography variant="h6" sx={{ mt: 3, opacity: 0.95 }}>
+          <Typography component="h2" variant="h6" sx={{ mt: 3, opacity: 0.95 }}>
             ¿Tienes alguna pregunta?
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.85 }}>
@@ -143,7 +139,7 @@ export const ContactPage: FC = () => {
                   transition: "transform 0.3s ease, box-shadow 0.3s ease",
                   cursor: "pointer",
                   "&:hover": {
-                    transform: "translateY(-4px)",
+                    transform: `translateY(${motion.liftCard})`,
                     // eslint-disable-next-line no-restricted-syntax -- contact-card hover shadow; heavier lift effect, no matching token
                     boxShadow: "0 8px 30px 0 rgba(0,0,0,0.12)",
                   },
@@ -158,7 +154,7 @@ export const ContactPage: FC = () => {
                     width: 56,
                     height: 56,
                     borderRadius: radii.default,
-                    background: method.gradient,
+                    background: colors.brand.main,
                     mb: 2,
                   }}
                 >
@@ -167,7 +163,7 @@ export const ContactPage: FC = () => {
 
                 {/* Title */}
                 <Typography
-                  variant="h6"
+                  component="h2" variant="h6"
                   sx={{
                     // eslint-disable-next-line no-restricted-syntax -- contact page gray (#2d3748 Slate-800); no matching token
                     color: "#2d3748",
@@ -235,11 +231,11 @@ export const ContactPage: FC = () => {
                 height: 48,
               }}
             >
-              <MessageIcon sx={{ color: colors.warning, fontSize: 24 }} />
+              <MessageIcon sx={{ color: colors.warning.main, fontSize: 24 }} />
             </Avatar>
             <Box>
               {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#2d3748); no matching token */}
-              <Typography variant="h6" sx={{ color: "#2d3748" }}>
+              <Typography component="h2" variant="h6" sx={{ color: "#2d3748" }}>
                 ¿Prefieres escribirnos?
               </Typography>
               {/* eslint-disable-next-line no-restricted-syntax -- contact page gray (#718096); no matching token */}

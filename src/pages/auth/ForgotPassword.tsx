@@ -1,7 +1,7 @@
 import { Box, Button, Link, TextField, Typography, Paper, Avatar } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useState, type FC } from "react";
-import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -49,7 +49,7 @@ export const ForgotPassword: FC = () => {
           <Avatar sx={{ bgcolor: alphas.white.soft, width: 64, height: 64, margin: "0 auto 16px" }}>
             <LockResetIcon sx={{ fontSize: 36 }} />
           </Avatar>
-          <Typography variant="h4" sx={{ mb: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
             ¿Olvidaste tu contraseña?
           </Typography>
           <Typography variant="body1" sx={{ opacity: 0.95 }}>
@@ -86,10 +86,10 @@ export const ForgotPassword: FC = () => {
                 fontWeight: 600,
                 padding: "12px", // 12px intentionally off-grid for button vertical rhythm
                 boxShadow: `0 4px 12px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
-                transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+                transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
                 "&:hover": {
                   boxShadow: `0 6px 16px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
-                  transform: "translateY(-2px)",
+                  transform: `translateY(${motion.lift})`,
                 },
               })}
             >

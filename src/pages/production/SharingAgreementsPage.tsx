@@ -6,7 +6,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import { sxStyles } from "../../theme/sx";
-import { colors } from "../../theme/tokens";
+import { colors, interactiveTransition, motion} from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
 import { PageHeaderWithStats } from "../../components/PageHeader";
@@ -119,7 +119,7 @@ export const SharingAgreementsPage: FC = () => {
               subtitle={plant?.regulatoryCode ? `CAU: ${plant.regulatoryCode}` : "CAU no disponible"}
               stats={[
                 { value: counts.vigentes, label: "Vigente" },
-                { value: counts.drafts, label: "Borradores", color: colors.warning },
+                { value: counts.drafts, label: "Borradores", color: colors.warning.onBrand },
                 { value: counts.historicos, label: "Históricos" },
               ]}
             />
@@ -146,10 +146,10 @@ export const SharingAgreementsPage: FC = () => {
                     py: 1.5,
                     boxShadow: (theme) => `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
                     "&:hover": {
-                      transform: "translateY(-2px)",
+                      transform: `translateY(${motion.lift})`,
                       boxShadow: (theme) => `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
                     },
-                    transition: "all 0.3s ease",
+                    transition: interactiveTransition("0.3s", "ease"),
                   }}
                 >
                   Nuevo acuerdo de reparto

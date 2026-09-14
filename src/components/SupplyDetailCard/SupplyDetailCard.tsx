@@ -37,7 +37,7 @@ export const SupplyDetailCard: FC<SupplyDetailCardProps> = ({
             width: "100%",
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>{name}</Typography>
+          <Typography component="h2" variant="h5" sx={{ fontWeight: 800 }}>{name}</Typography>
           <SupplyDetailContent cups={cups} address={address} partitionCoeficient={partitionCoeficient} />
         </Card>
       )}

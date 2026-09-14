@@ -6,7 +6,7 @@ import { colors } from "../../theme/tokens";
 export const NoCommunityPage: FC = () => {
   return (
     <Box sx={{ ...sxStyles.pageContainer, p: { xs: 3, sm: 4 }, maxWidth: 640 }}>
-      <Typography variant="h4" gutterBottom sx={{ color: colors.text.primary }}>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ color: colors.text.primary }}>
         Sin comunidad asignada
       </Typography>
       <Typography sx={{ color: colors.text.subtle }}>

@@ -179,12 +179,23 @@ The Docker setup includes nginx configuration for proper SPA routing and dynamic
 
 ### Styling Contract
 
-**Never** write raw hex colors, rgba strings, hand-written shadow strings, rem/em font-size literals, or Tailwind `className` in component code. ESLint enforces this with `no-restricted-syntax` rules.
+**Never** write raw hex colors, rgba strings, hand-written shadow strings, rem/em font-size literals, or Tailwind `className` in component code. ESLint enforces this with `no-restricted-syntax` rules, which match a colour **anywhere inside a string** — composite values like `1px solid #e5e7eb`, gradient stops, and template literals all count.
 
 Token files (read these before touching any sx prop):
 - `src/theme/tokens.ts` — `colors`, `alphas`, `shadows`, `radii`, `fontSizes`
 - `src/theme/index.ts` — MUI theme (palette maps tokens; use `theme.palette.*` shorthands in sx)
 - `src/theme/sx.ts` — shared `sxStyles` helpers (`pageContainer`, `flexRowCenter`, `softPanel`, …)
+
+**Colour roles.** Every hue is a set of roles, not one value, and `main` is the
+safe one: it clears 4.5:1 both as type on white and behind white text, so it
+works as type, as an icon, and as a fill. `vivid` is decorative only (~3:1 —
+chart marks and large fills, never type). `onBrand` is for type on
+`colors.brand.panel`; `surface` is the explicit tint behind `main` type. Full
+table in `references/theme-tokens.md`. Two traps worth naming:
+`colors.brand.light` (`#667eea`) is decorative only — it is 3.66:1 and cannot
+carry white text — and `colors.text.disabled` is for disabled controls only.
+Never express a tint as an alpha overlay when type will sit on it: alpha makes
+the effective contrast depend on whatever happens to be behind.
 
 Key rules:
 - Use `theme.palette.primary.main` / `"primary.main"` shorthand, **not** `"#667eea"`
@@ -196,6 +207,7 @@ Key rules:
 
 Full guide: `references/styling-conventions.md`
 Full token catalogue: `references/theme-tokens.md`
+Fonts (self-hosted Inter — do not move back to a CDN): `references/fonts.md`
 
 Verification gates (both must pass before committing styling changes):
 ```bash

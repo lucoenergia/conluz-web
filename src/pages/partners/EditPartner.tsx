@@ -104,7 +104,7 @@ export const EditPartnerPage: FC = () => {
             <PersonIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4">
+            <Typography variant="h4" component="h1">
               Editar socio
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>

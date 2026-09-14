@@ -1,11 +1,14 @@
 import { Box } from "@mui/material";
-import type { FC } from "react";
+import { Suspense, type FC } from "react";
 import { Outlet } from "react-router";
+import { RouteFallback } from "../components/RouteFallback";
 
 export const PublicLayout: FC = () => {
   return (
     <Box sx={{ p: 2 }}>
-      <Outlet />
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
     </Box>
   );
 };

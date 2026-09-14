@@ -88,7 +88,7 @@ export const ChangePasswordPage: FC = () => {
             <KeyIcon sx={{ fontSize: 32 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4">Cambiar contraseña</Typography>
+            <Typography variant="h4" component="h1">Cambiar contraseña</Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>Actualiza tu contraseña de acceso</Typography>
           </Box>
         </Box>

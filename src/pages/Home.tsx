@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box, Typography, Autocomplete, TextField, CircularProgress } from "@mui/material";
 import { sxStyles } from "../theme/sx";
-import { colors } from "../theme/tokens";
+import { colors, interactiveTransition} from "../theme/tokens";
 import { BreadCrumb } from "../components/Breadcrumb";
+import { visuallyHidden } from "@mui/utils";
 import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
 import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
@@ -41,7 +42,7 @@ export const HomePage: FC = () => {
         background: colors.background.default,
         boxSizing: "border-box",
         overflow: "hidden",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
       }}
     >
       <BreadCrumb steps={[{ label: "Inicio", href: "/" }]} />
@@ -57,7 +58,7 @@ export const HomePage: FC = () => {
           },
           gap: { xs: 2, sm: 2.5, md: 3 },
           width: "100%",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
           "& > *": {
             minWidth: 0,
             maxWidth: "100%",
@@ -271,6 +272,10 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
         },
       }}
     >
+      <Typography variant="h1" component="h1" sx={visuallyHidden}>
+        Resumen de energía
+      </Typography>
+
       <GraphCard
         title="Producción Asignada"
         subtitle="Energía asignada al punto de suministro seleccionado - Últimos 7 días"
@@ -291,12 +296,13 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
           >
             {/* Producción Total */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.chart.violet }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.accent.violet }}>
                 <BoltIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
-                sx={{ color: colors.chart.violet, mb: 0.5 }}
+                component="p"
+                sx={{ color: colors.accent.violet, mb: 0.5 }}
               >
                 {totalProduction.toFixed(2)} kWh
               </Typography>
@@ -325,12 +331,13 @@ const ProductionPanel: FC<ProductionPanelProps> = ({ supplyId }) => {
 
             {/* Pico Máximo */}
             <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.chart.blue }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, color: colors.accent.blue }}>
                 <ElectricMeterIcon sx={{ fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h4"
-                sx={{ color: colors.chart.blue, mb: 0.5 }}
+                component="p"
+                sx={{ color: colors.accent.blue, mb: 0.5 }}
               >
                 {peakPower.toFixed(2)} kW
               </Typography>
@@ -488,17 +495,17 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
       {
         name: "Consumo de Red",
         data: consumptionData.map((item) => item.consumptionKWh || 0),
-        color: colors.error.main, // Red
+        color: colors.error.vivid, // Red
       },
       {
         name: "Autoconsumo",
         data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
-        color: colors.success, // Green
+        color: colors.success.vivid, // Green
       },
       {
         name: "Excedentes",
         data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
-        color: colors.warning, // Amber
+        color: colors.warning.vivid, // Amber
       },
     ];
 
@@ -546,6 +553,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: "error.main", mb: 0.5 }}
               >
                 {totalConsumption.toFixed(2)} kWh
@@ -580,6 +588,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: "success.main", mb: 0.5 }}
               >
                 {totalSelfConsumption.toFixed(2)} kWh
@@ -614,6 +623,7 @@ const ConsumptionPanel: FC<ConsumptionPanelProps> = ({ supplyId }) => {
               </Box>
               <Typography
                 variant="h4"
+                component="p"
                 sx={{ color: "warning.main", mb: 0.5 }}
               >
                 {totalSurplus.toFixed(2)} kWh

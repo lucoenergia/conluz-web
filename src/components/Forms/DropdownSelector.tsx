@@ -1,6 +1,6 @@
 import { Autocomplete, TextField, Box, Paper, Chip, InputAdornment, CircularProgress } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { radii, shadows, colors, alphas } from "../../theme/tokens";
+import { radii, shadows, colors, alphas, interactiveTransition} from "../../theme/tokens";
 import React, { useMemo, type FC } from "react";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -43,7 +43,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
         borderRadius: radii.default,
         boxShadow: shadows.soft,
         p: { xs: 1.5, sm: 2 },
-        transition: "all 0.3s ease",
+        transition: interactiveTransition("0.3s", "ease"),
         "&:hover": {
           boxShadow: shadows.dataCard,
         },
@@ -67,12 +67,12 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
               overflow: "hidden",
               "& .MuiAutocomplete-listbox": {
                 "& .MuiAutocomplete-option": {
-                  transition: "all 0.2s ease",
+                  transition: interactiveTransition("0.2s", "ease"),
                   "&:hover": {
-                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, rgba(118,75,162,0.1) 100%)`,
+                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.1)} 100%)`,
                   },
                   "&[aria-selected='true']": {
-                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, rgba(118,75,162,0.15) 100%)`,
+                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.dark, 0.15)} 100%)`,
                     fontWeight: 600,
                   },
                 },
@@ -145,7 +145,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                 "& fieldset": {
                   borderColor: colors.border.light,
                   borderWidth: 2,
-                  transition: "all 0.3s ease",
+                  transition: interactiveTransition("0.3s", "ease"),
                 },
                 "&:hover fieldset": {
                   borderColor: theme.palette.primary.main,
@@ -153,7 +153,7 @@ export const DropdownSelector: FC<DropdownSelectorProps> = ({
                 "&.Mui-focused fieldset": {
                   borderColor: theme.palette.primary.main,
                   borderWidth: 2,
-                  background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, rgba(118,75,162,0.05) 100%)`,
+                  background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.dark, 0.05)} 100%)`,
                 },
               },
             }}

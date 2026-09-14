@@ -11,7 +11,7 @@ export const LoadingAppAccordion: FC<LoadingAppAccordionProps> = ({ className, c
   return (
     <Accordion className={className}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="h5">
+        <Typography component="h2" variant="h5">
           <Skeleton />
         </Typography>
       </AccordionSummary>

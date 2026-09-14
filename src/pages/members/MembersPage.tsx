@@ -40,6 +40,10 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
+import { RecordList } from "../../components/RecordList";
+import { ResultStatus } from "../../components/ResultStatus";
+import useWindowDimensions from "../../utils/useWindowDimensions";
+import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { PageHeaderWithStats } from "../../components/PageHeader";
 import { useActiveCommunity } from "../../context/community.context";
@@ -67,6 +71,10 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export const MembersPage: FC = () => {
+  const { width } = useWindowDimensions();
+  // Render ONE layout, not two hidden copies: a stacked list below the
+  // project's desktop breakpoint, the table above it.
+  const isNarrow = width < MIN_DESKTOP_WIDTH;
   const theme = useTheme();
   const navigate = useNavigate();
   const activeCommunityId = useActiveCommunity();
@@ -209,7 +217,7 @@ export const MembersPage: FC = () => {
         subtitle="Administra los miembros de la comunidad activa"
         stats={[
           { value: memberships.length, label: "Total" },
-          { value: activeCount, label: "Activos", color: colors.success },
+          { value: activeCount, label: "Activos", color: colors.success.onBrand },
           { value: adminCount, label: "Admins", color: theme.palette.primary.main },
         ]}
       />
@@ -253,6 +261,15 @@ export const MembersPage: FC = () => {
               Error al cargar los miembros. Por favor, intente de nuevo.
             </Alert>
           ) : (
+            <>
+            <ResultStatus
+              isLoading={isLoading}
+              count={memberships.length}
+              noun={{ one: "miembro", other: "miembros" }}
+              emptyMessage="No se encontraron miembros"
+            />
+
+            {!isNarrow && (
             <TableContainer>
               <Table>
                 <TableHead>
@@ -341,6 +358,7 @@ export const MembersPage: FC = () => {
                         <TableCell align="center">
                           <IconButton
                             size="small"
+                            aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
                             onClick={(e) => handleMenuOpen(e, membership)}
                             sx={{
                               color: colors.text.subtle,
@@ -357,6 +375,48 @@ export const MembersPage: FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+            )}
+
+            {isNarrow && (
+            <Box sx={{ p: 2 }}>
+              <RecordList
+                label="Miembros de la comunidad"
+                isLoading={isLoading}
+                emptyMessage="No se encontraron miembros"
+                items={memberships.map((membership) => ({
+                  id: String(membership.id ?? ""),
+                  avatar: (
+                    <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                      {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
+                    </Avatar>
+                  ),
+                  title: membership.user?.fullName ?? "Miembro desconocido",
+                  status: (
+                    <Chip
+                      label={membership.enabled ? "Activo" : "Inactivo"}
+                      color={membership.enabled ? "success" : "error"}
+                      size="small"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  ),
+                  actions: (
+                    <IconButton
+                      aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
+                      onClick={(e) => handleMenuOpen(e, membership)}
+                      sx={sxStyles.touchTarget}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  ),
+                  fields: [
+                    { label: "Email", value: membership.user?.email ?? "-" },
+                    { label: "Rol", value: ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER] },
+                  ],
+                }))}
+              />
+            </Box>
+            )}
+            </>
           )}
         </Paper>
       </Box>
@@ -375,7 +435,7 @@ export const MembersPage: FC = () => {
           elevation: 0,
           sx: {
             overflow: "visible",
-            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+            filter: shadows.menuFilter,
             mt: 1.5,
             minWidth: 200,
             "&:before": {
