@@ -1047,6 +1047,20 @@ test.describe("Visual baselines", () => {
   const PUBLISHED_AGREEMENT = FIXED_SHARING_AGREEMENTS[0];
   const SUPERSEDED_AGREEMENT = FIXED_SHARING_AGREEMENTS[2];
 
+  /**
+   * PUBLISHED_AGREEMENT is shared by ~20 baselines below (batch bar, dialogs,
+   * editor states, ...) that have nothing to do with editing. Only the
+   * dedicated "published" detail-page baseline should exercise the
+   * last-edited tile, so it gets its own derived fixture instead of adding
+   * updatedAt/updatedBy to the shared one, which would needlessly reshoot
+   * every other PUBLISHED_AGREEMENT screenshot.
+   */
+  const PUBLISHED_AGREEMENT_EDITED = {
+    ...PUBLISHED_AGREEMENT,
+    updatedAt: "2026-08-01T09:00:00Z",
+    updatedBy: FIXED_COMMUNITY_ADMIN_USER.id,
+  };
+
   test("sharing agreement detail page (draft, with coefficients)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -1105,9 +1119,22 @@ test.describe("Visual baselines", () => {
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+    await mockSharingAgreementDetailRoutes(
+      page,
+      PUBLISHED_AGREEMENT_EDITED.id,
+      PUBLISHED_AGREEMENT_EDITED,
+      FIXED_COEFFICIENTS_MIXED,
+      200,
+    );
 
-    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT_EDITED.name);
+
+    // A PUBLISHED agreement is editable now (the update endpoint no longer 409s
+    // outside DRAFT) — prove Editar is reachable, then close the menu so the
+    // screenshot below stays in the same closed-menu state as its siblings.
+    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
+    await expect(page.getByText("Editar")).toBeVisible();
+    await page.keyboard.press("Escape");
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", { fullPage: true });
   });
