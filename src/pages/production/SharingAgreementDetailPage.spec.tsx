@@ -114,7 +114,7 @@ describe("SharingAgreementDetailPage", () => {
     expect(screen.getByText("Eliminar")).toBeInTheDocument();
   });
 
-  test("hides the actions kebab for a non-DRAFT agreement", () => {
+  test("shows Editar for a non-DRAFT (PUBLISHED) agreement", async () => {
     mockData({
       agreement: {
         id: "agreement-1",
@@ -123,9 +123,91 @@ describe("SharingAgreementDetailPage", () => {
         installedPowerKw: 12.5,
       } as SharingAgreementResponse,
     });
+    const user = userEvent.setup();
     setup();
 
-    expect(screen.queryByText("Editar")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    expect(await screen.findByText("Editar")).toBeInTheDocument();
+  });
+
+  test("shows Editar for a SUPERSEDED agreement", async () => {
+    mockData({
+      agreement: {
+        id: "agreement-1",
+        name: "Reparto 2025",
+        status: SharingAgreementResponseStatus.SUPERSEDED,
+        installedPowerKw: 12.5,
+      } as SharingAgreementResponse,
+    });
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    expect(await screen.findByText("Editar")).toBeInTheDocument();
+  });
+
+  test("submits all three fields on a PUBLISHED agreement even when only the name changed (full-replacement semantics)", async () => {
+    mockData({
+      agreement: {
+        id: "agreement-1",
+        name: "Reparto 2025",
+        status: SharingAgreementResponseStatus.PUBLISHED,
+        installedPowerKw: 12.5,
+        notes: "Nota original",
+        createdAt: "2026-01-15T10:00:00Z",
+        file: null,
+      } as unknown as SharingAgreementResponse,
+    });
+    mockUpdateAgreement.mockResolvedValue(true);
+    const user = userEvent.setup();
+    setup("plant-1", "agreement-1");
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    await user.click(await screen.findByText("Editar"));
+
+    const nameInput = await screen.findByLabelText("Nombre", { exact: false });
+    await user.clear(nameInput);
+    await user.type(nameInput, "Reparto 2025 corregido");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(mockUpdateAgreement).toHaveBeenCalledWith(
+        "agreement-1",
+        expect.objectContaining({
+          name: "Reparto 2025 corregido",
+          notes: "Nota original",
+          installedPowerKw: 12.5,
+        }),
+      ),
+    );
+  });
+
+  test("a successful edit refreshes the header without a full reload", async () => {
+    mockData();
+    mockUpdateAgreement.mockImplementation(async () => {
+      mockData({
+        agreement: {
+          id: "agreement-1",
+          name: "Reparto 2025 corregido",
+          status: SharingAgreementResponseStatus.DRAFT,
+          installedPowerKw: 12.5,
+          notes: "Nota original",
+          createdAt: "2026-01-15T10:00:00Z",
+          file: null,
+        } as unknown as SharingAgreementResponse,
+      });
+      return true;
+    });
+    const user = userEvent.setup();
+    setup("plant-1", "agreement-1");
+
+    expect(screen.getByRole("heading", { name: "Reparto 2025" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    await user.click(await screen.findByText("Editar"));
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(await screen.findByRole("heading", { name: "Reparto 2025 corregido" })).toBeInTheDocument();
   });
 
   test("editing seeds the dialog with the agreement's current values and calls updateAgreement with the route's id", async () => {

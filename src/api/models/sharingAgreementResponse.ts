@@ -8,6 +8,8 @@
 import type { SharingAgreementResponseNotes } from './sharingAgreementResponseNotes';
 import type { SharingAgreementResponseStatus } from './sharingAgreementResponseStatus';
 import type { SharingAgreementResponseCreatedBy } from './sharingAgreementResponseCreatedBy';
+import type { SharingAgreementResponseUpdatedAt } from './sharingAgreementResponseUpdatedAt';
+import type { SharingAgreementResponseUpdatedBy } from './sharingAgreementResponseUpdatedBy';
 import type { SharingAgreementFileResponse } from './sharingAgreementFileResponse';
 
 export interface SharingAgreementResponse {
@@ -27,6 +29,10 @@ export interface SharingAgreementResponse {
   createdAt: string;
   /** Identifier of the user who created the agreement. Null means it was created by the system (a migration), not by a person */
   createdBy: SharingAgreementResponseCreatedBy;
+  /** Date and time the agreement was last edited. Null means it has never been edited since creation */
+  updatedAt: SharingAgreementResponseUpdatedAt;
+  /** Identifier of the user who last edited the agreement. Null means it has never been edited since creation */
+  updatedBy: SharingAgreementResponseUpdatedBy;
   /** Metadata of the latest evidence file uploaded for this agreement. Null means no file has been uploaded, never that it wasn't loaded */
   file: SharingAgreementFileResponse;
 }

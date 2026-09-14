@@ -156,20 +156,21 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
 
 
 /**
- * This endpoint replaces the name, notes and installed power of a sharing agreement.
-All three fields must be provided; this is a full replacement of the updatable
-fields, not a partial update. Its status, plant and creation metadata can never be
-changed through this endpoint.
+ * This endpoint replaces the name, notes and installed power of a sharing agreement,
+regardless of its status: DRAFT, PUBLISHED and SUPERSEDED agreements can all be
+edited this way. All three fields must be provided; this is a full replacement of
+the updatable fields, not a partial update. Its status, plant and creation metadata
+can never be changed through this endpoint. The acting user and the time of the
+edit are recorded as updatedBy/updatedAt on the returned agreement.
 
 **Required: Community Admin**
 
 Returns 404 if the plant or the agreement does not exist, does not belong to this
 plant, or the caller is not a member of its community, to avoid leaking existence.
-Returns 409 if the agreement is not in DRAFT status.
 
 Authentication is required using a Bearer token.
 
- * @summary Replaces a DRAFT sharing agreement's name, notes and installed power
+ * @summary Replaces a sharing agreement's name, notes and installed power
  */
 export const updateSharingAgreement = (
     plantId: string,
@@ -188,7 +189,7 @@ export const updateSharingAgreement = (
   
 
 
-export const getUpdateSharingAgreementMutationOptions = <TError = ErrorType<RestError>,
+export const getUpdateSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext> => {
 
@@ -215,12 +216,12 @@ const {mutation: mutationOptions} = options ?
 
     export type UpdateSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof updateSharingAgreement>>>
     export type UpdateSharingAgreementMutationBody = UpdateSharingAgreementBody
-    export type UpdateSharingAgreementMutationError = ErrorType<RestError>
+    export type UpdateSharingAgreementMutationError = ErrorType<unknown>
 
     /**
- * @summary Replaces a DRAFT sharing agreement's name, notes and installed power
+ * @summary Replaces a sharing agreement's name, notes and installed power
  */
-export const useUpdateSharingAgreement = <TError = ErrorType<RestError>,
+export const useUpdateSharingAgreement = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateSharingAgreement>>,

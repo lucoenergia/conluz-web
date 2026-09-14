@@ -11,6 +11,7 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
+import { useGetUserById } from "../../api/users/users";
 import { DetailHeader, DetailTile } from "../DetailHeader";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
 import { MenuTemplate } from "../Menu/MenuTemplate";
@@ -56,6 +57,9 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   onRevertRequest,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+  const { data: updatedByUser } = useGetUserById(agreement?.updatedBy ?? "", {
+    query: { enabled: !!agreement?.updatedBy },
+  });
   const isDraft = agreement?.status === SharingAgreementResponseStatus.DRAFT;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
 
@@ -76,7 +80,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
 
   const showPublish = isDraft && coefficients !== undefined;
   const showRevert = isPublished && coefficients !== undefined && isInert;
-  const showActions = !isLoading && !error && (isDraft || showRevert);
+  const showActions = !isLoading && !error;
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
@@ -136,14 +140,12 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
               menuListProps={{ disabledItemsFocusable: true }}
             >
               <Box sx={{ py: 1 }}>
-                {isDraft && (
-                  <MenuItem onClick={handleEditClick}>
-                    <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                      Editar
-                    </Typography>
-                  </MenuItem>
-                )}
+                <MenuItem onClick={handleEditClick}>
+                  <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                  <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                    Editar
+                  </Typography>
+                </MenuItem>
                 {showPublish && (
                   <MenuItem
                     aria-disabled={!!publishDisabledReason}
@@ -236,6 +238,15 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
         {agreement?.notes || "-"}
       </Typography>
     </DetailTile>
+
+    {agreement?.updatedAt && (
+      <DetailTile label="Última edición">
+        <Typography variant="body1" fontWeight="bold">
+          {formatCalendarDate(agreement.updatedAt)}
+          {agreement.updatedBy && ` · ${updatedByUser?.fullName ?? "..."}`}
+        </Typography>
+      </DetailTile>
+    )}
   </DetailHeader>
   );
 };

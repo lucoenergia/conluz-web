@@ -42,3 +42,5 @@ npm-debug.log*
 /.playwright-mcp
 
 .env
+
+.impeccable/
