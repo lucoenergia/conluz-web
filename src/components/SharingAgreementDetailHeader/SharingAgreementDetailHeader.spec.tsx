@@ -1,8 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { SharingAgreementDetailHeader } from "./SharingAgreementDetailHeader";
+
+const mockGetUserById = vi.fn();
+
+vi.mock("../../api/users/users", () => ({
+  useGetUserById: (id: string) => mockGetUserById(id),
+}));
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
@@ -39,6 +45,10 @@ const GENUINELY_INCOMPLETE: CoefficientSummable[] = [
 ];
 
 describe("SharingAgreementDetailHeader", () => {
+  beforeEach(() => {
+    mockGetUserById.mockReturnValue({ data: undefined, isLoading: false, error: null });
+  });
+
   const mockAgreement = {
     id: "agreement-1",
     plantId: "plant-1",
@@ -65,6 +75,26 @@ describe("SharingAgreementDetailHeader", () => {
     expect(screen.getByText("23 de mayo de 2024")).toBeInTheDocument();
     expect(screen.getByText("42,50 kW")).toBeInTheDocument();
     expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
+  });
+
+  it("renders no 'Última edición' tile when updatedAt is null", () => {
+    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} />);
+
+    expect(screen.queryByText("Última edición")).not.toBeInTheDocument();
+  });
+
+  it("renders 'Última edición' with the formatted date and resolved editor name when updatedAt is present", () => {
+    mockGetUserById.mockReturnValue({ data: { fullName: "Ana García" }, isLoading: false, error: null });
+    const editedAgreement = {
+      ...mockAgreement,
+      updatedAt: "2024-06-01T09:00:00Z",
+      updatedBy: "user-2",
+    } as SharingAgreementResponse;
+
+    render(<SharingAgreementDetailHeader agreement={editedAgreement} plant={mockPlant} />);
+
+    expect(screen.getByText("Última edición")).toBeInTheDocument();
+    expect(screen.getByText("1 de junio de 2024 · Ana García")).toBeInTheDocument();
   });
 
   it("renders the status chip with contrast against the banner (regression guard: PUBLISHED was previously invisible — blue text on a blue-tinted chip on a solid blue banner)", () => {
@@ -100,10 +130,13 @@ describe("SharingAgreementDetailHeader", () => {
     expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
   });
 
-  it("hides the actions kebab for a non-DRAFT (published) agreement", () => {
+  it("shows the kebab with Editar (but not Eliminar) for a non-DRAFT (published) agreement", async () => {
+    const user = userEvent.setup();
     render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} onEdit={vi.fn()} onDeleteRequest={vi.fn()} />);
 
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button"));
+    await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
+    expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
   });
 
   it("shows the actions kebab with Editar/Eliminar for a DRAFT agreement, wired to the callbacks", async () => {
@@ -157,9 +190,13 @@ describe("SharingAgreementDetailHeader", () => {
       expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
     });
 
-    it("hides the kebab entirely for a PUBLISHED agreement while coefficients is undefined (never shows revert transiently)", () => {
+    it("shows Editar but never Volver a borrador for a PUBLISHED agreement while coefficients is undefined", async () => {
+      const user = userEvent.setup();
       render(<SharingAgreementDetailHeader agreement={publishedAgreement} plant={mockPlant} />);
-      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button"));
+      await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
+      expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
     });
 
     it("disables Poner en vigor with a visible 'no coefficients' reason for a resolved empty set on DRAFT", async () => {
@@ -271,7 +308,8 @@ describe("SharingAgreementDetailHeader", () => {
       );
     });
 
-    it("never renders Volver a borrador (nor the kebab at all) when any coefficient has been applied", () => {
+    it("shows Editar but never Volver a borrador when any coefficient has been applied", async () => {
+      const user = userEvent.setup();
       render(
         <SharingAgreementDetailHeader
           agreement={publishedAgreement}
@@ -281,7 +319,8 @@ describe("SharingAgreementDetailHeader", () => {
         />,
       );
 
-      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button"));
+      await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
       expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
     });
 
@@ -311,12 +350,16 @@ describe("SharingAgreementDetailHeader", () => {
       expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
     });
 
-    it("never renders Volver a borrador for a SUPERSEDED agreement, regardless of coefficient state", () => {
+    it("shows Editar but never Volver a borrador or Eliminar for a SUPERSEDED agreement, regardless of coefficient state", async () => {
+      const user = userEvent.setup();
       render(
         <SharingAgreementDetailHeader agreement={supersededAgreement} plant={mockPlant} coefficients={ALL_PENDING} />,
       );
-      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button"));
+      await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
       expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
+      expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
     });
   });
 });
