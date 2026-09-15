@@ -16,7 +16,7 @@ import {
 } from "../SharingAgreementNextStepBanner";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
-import { colors, fontSizes, radii } from "../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 import { selectSharingAgreementLifecycleView } from "../../pages/production/sharingAgreementLifecycle";
 import type { SharingAgreementNextStep } from "../../pages/production/selectSharingAgreementNextStep";
@@ -163,7 +163,26 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
               ) : (
                 "CAU no disponible"
               )}
+              {isResolved && ` · Creado el ${formatCalendarDate(agreement?.createdAt)}`}
             </Typography>
+            {isResolved && agreement?.notes && (
+              <Typography
+                variant="body2"
+                title={agreement.notes}
+                sx={{
+                  mt: 0.5,
+                  color: colors.text.subtle,
+                  // Visual clamp only — the full note stays in the DOM for
+                  // assistive technology and in the title attribute for a pointer.
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: 2,
+                  overflow: "hidden",
+                }}
+              >
+                {agreement.notes}
+              </Typography>
+            )}
           </Box>
 
           {showMenu && (
@@ -234,34 +253,6 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
               : undefined
           }
         />
-      )}
-
-      {/* Reference data, not next-step data: below the banner it stops pushing
-          the actual instruction off a 390px first viewport. */}
-      {isResolved && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 3, rowGap: 0.5, px: { xs: 2, sm: 0 } }}>
-          <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-            Creado el {formatCalendarDate(agreement?.createdAt)}
-          </Typography>
-          {agreement?.notes && (
-            <Typography
-              variant="caption"
-              title={agreement.notes}
-              sx={{
-                color: colors.text.subtle,
-                // Visual clamp only — the full note stays in the DOM for
-                // assistive technology and in the title attribute for a pointer.
-                display: "-webkit-box",
-                WebkitBoxOrient: "vertical",
-                WebkitLineClamp: 2,
-                overflow: "hidden",
-                fontSize: fontSizes.xs,
-              }}
-            >
-              {agreement.notes}
-            </Typography>
-          )}
-        </Box>
       )}
 
     </Box>

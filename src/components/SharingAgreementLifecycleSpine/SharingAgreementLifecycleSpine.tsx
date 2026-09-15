@@ -79,9 +79,9 @@ function markerSx(state: StageState) {
   }
 }
 
-const StageMarker: FC<{ stage: LifecycleStageView; isFirst: boolean; spanPosition?: SpanPosition }> = ({
+const StageMarker: FC<{ stage: LifecycleStageView; isLast: boolean; spanPosition?: SpanPosition }> = ({
   stage,
-  isFirst,
+  isLast,
   spanPosition,
 }) => (
   <Box
@@ -91,9 +91,10 @@ const StageMarker: FC<{ stage: LifecycleStageView; isFirst: boolean; spanPositio
       display: "flex",
       flexDirection: "column",
       gap: 0.75,
-      // Only items that carry a leading connector may stretch. The first marker
-      // has none, so an equal share would leave a gap twice the size of the rest.
-      flex: isFirst ? "0 0 auto" : 1,
+      // Every stage takes an equal share. Sizing the first one to its content
+      // instead collapses it to the width of its numeral, and its label then
+      // overruns the next stage's.
+      flex: 1,
       minWidth: 0,
       py: 0.5,
       ...(spanPosition && { bgcolor: alphas.white.subtle }),
@@ -110,25 +111,27 @@ const StageMarker: FC<{ stage: LifecycleStageView; isFirst: boolean; spanPositio
     }}
   >
     <Box sx={{ display: "flex", alignItems: "center" }}>
-      {/* The connector belongs to the gap before a marker, so it inherits the
-          span's tint and the band reads as one continuous phase. */}
-      {!isFirst && (
-        <Box
-          aria-hidden
-          sx={{
-            flex: 1,
-            height: "1px",
-            bgcolor: stage.state === "done" || stage.state === "closed" ? alphas.white.heavy : alphas.white.cloud,
-            mx: { xs: 0.5, sm: 1 },
-          }}
-        />
-      )}
       <Box aria-hidden sx={markerSx(stage.state)}>
         {stage.state === "done" ? <CheckIcon sx={{ fontSize: 16 }} /> : null}
         {stage.state === "unverifiable" ? <MailOutlineIcon sx={{ fontSize: 14 }} /> : null}
         {stage.state !== "done" && stage.state !== "unverifiable" ? stage.number : null}
       </Box>
-      {!isFirst && <Box sx={{ flex: 1 }} />}
+      {/* The connector trails its own marker and runs to the next one, so the
+          five items join into one continuous rail. The last stage has nothing
+          to join to, and keeps the space only so every item stays the same width. */}
+      <Box
+        aria-hidden
+        sx={{
+          flex: 1,
+          height: "1px",
+          mx: { xs: 0.5, sm: 1 },
+          bgcolor: isLast
+            ? "transparent"
+            : stage.state === "done" || stage.state === "closed"
+              ? alphas.white.heavy
+              : alphas.white.cloud,
+        }}
+      />
     </Box>
     {/* Named only where there is room for it. On 390px the numerals plus the
         caption below carry the position; five truncated labels would not. */}
@@ -136,6 +139,7 @@ const StageMarker: FC<{ stage: LifecycleStageView; isFirst: boolean; spanPositio
       aria-hidden
       sx={{
         display: { xs: "none", sm: "block" },
+        pr: 1,
         fontSize: fontSizes.sm,
         lineHeight: 1.3,
         color: colors.brand.onSoft,
@@ -212,7 +216,11 @@ export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpinePr
       >
         {stages.map((stage, index) => (
           <Fragment key={stage.number}>
-            <StageMarker stage={stage} isFirst={index === 0} spanPosition={spanPositionFor(stage)} />
+            <StageMarker
+              stage={stage}
+              isLast={index === stages.length - 1}
+              spanPosition={spanPositionFor(stage)}
+            />
           </Fragment>
         ))}
       </Box>

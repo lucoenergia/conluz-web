@@ -1486,6 +1486,41 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
     expect(await screen.findByRole("button", { name: "Guardar" })).toBeInTheDocument();
   });
 
+  it("brings the section into view when the editor is opened from elsewhere on the page", async () => {
+    // The banner that asked for it sits at the top; opening a table the user
+    // cannot see is the same as not opening it.
+    const scrollIntoView = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      const { rerender } = renderWithTheme({ coefficients, agreementStatus: DRAFT, editRequestId: 0 });
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      rerender(
+        <QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { retry: false } } })}>
+          <ErrorProvider>
+            <ThemeProvider theme={theme}>
+              <SharingAgreementCoefficientSet
+                plantId="plant-1"
+                sharingAgreementId="agreement-1"
+                installedPowerKw={100}
+                coefficients={coefficients}
+                agreementStatus={DRAFT}
+                editRequestId={1}
+              />
+            </ThemeProvider>
+          </ErrorProvider>
+        </QueryClientProvider>,
+      );
+
+      expect(await screen.findByRole("button", { name: "Guardar" })).toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" }));
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
   it("does not open the editor on mount just because a request id is present", () => {
     // A page that remounts with a non-zero nonce must not land in the editor.
     renderWithTheme({ coefficients, agreementStatus: DRAFT, editRequestId: 7 });

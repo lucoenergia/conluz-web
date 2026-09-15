@@ -292,6 +292,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchActionError, setBatchActionError] = useState<BatchActionErrorState | null>(null);
   const errorPanelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // The row `⋯` menu and the bar's `Acciones` menu each own their own
   // anchor — distinct popovers, so one's positioning can never leak into
@@ -650,6 +651,13 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     if (editRequestId === lastHandledEditRequestId.current) return;
     lastHandledEditRequestId.current = editRequestId;
     handleStartEditing();
+    // The request came from the banner at the top of the page, so the editor the
+    // user just asked for is off screen. Bring the section to them rather than
+    // opening a table they cannot see.
+    panelRef.current?.scrollIntoView({
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
     // `handleStartEditing` is re-created every render; depending on it would
     // re-run this on every render instead of on every request.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -725,7 +733,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   if (coefficients.length === 0 && !isEditing) {
     return (
-      <Paper elevation={0} sx={sxStyles.softPanel}>
+      <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel}>
         {sectionHeading}
         {authoringActions}
         <EmptyState
@@ -739,7 +747,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   }
 
   return (
-    <Paper elevation={0} sx={sxStyles.softPanel}>
+    <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel}>
       {sectionHeading}
 
       {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}

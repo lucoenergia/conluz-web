@@ -61,14 +61,25 @@ describe("SharingAgreementDetailHeader", () => {
   }
 
   describe("identity", () => {
-    it("renders the agreement name, the plant's CAU, the status chip and the metadata strip", () => {
+    it("renders the agreement name, the plant's CAU, the status chip and the record's own data", () => {
       renderHeader();
 
       expect(screen.getByRole("heading", { level: 1, name: "Acuerdo Comunidad Sur" })).toBeInTheDocument();
       expect(screen.getByText("CAU ES0031300296192001MB")).toBeInTheDocument();
       expect(screen.getByText("Vigente")).toBeInTheDocument();
-      expect(screen.getByText("Creado el 23 de mayo de 2024")).toBeInTheDocument();
+      expect(screen.getByText(/Creado el 23 de mayo de 2024/)).toBeInTheDocument();
       expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
+    });
+
+    it("keeps the created date and the notes with the identity, not stranded between sections", () => {
+      // They describe the record, so they belong under its name — below the
+      // next-step banner they read as belonging to neither it nor "Reparto".
+      renderHeader();
+
+      const heading = screen.getByRole("heading", { level: 1, name: "Acuerdo Comunidad Sur" });
+      const identityBlock = heading.closest("div")?.parentElement as HTMLElement;
+      expect(identityBlock).toHaveTextContent(/Creado el 23 de mayo de 2024/);
+      expect(identityBlock).toHaveTextContent("Revisión anual pendiente");
     });
 
     it("no longer carries installed power — it moved to the coefficient panel, where kW mode actually uses it", () => {
