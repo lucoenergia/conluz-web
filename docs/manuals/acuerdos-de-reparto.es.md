@@ -24,7 +24,7 @@ Dentro de un acuerdo, preparar y desplegar el reparto sigue conceptualmente **ci
 2. **Generar el fichero** — Conluz construye el fichero TXT que hay que enviar a la distribuidora.
 3. **Enviarlo a la distribuidora** — fuera de Conluz, normalmente por email. La aplicación no puede comprobar este paso.
 4. **Ponerlo en vigor** — sellar el reparto una vez que la distribuidora lo ha aceptado.
-5. **Registrar las fechas de aplicación** — anotar, suministro a suministro, cuándo la distribuidora ha empezado a aplicar cada coeficiente.
+5. **Registrar las fechas de aplicación** — anotar, suministro a suministro, cuándo la distribuidora ha empezado a aplicar cada coeficiente. Hasta que un punto no tiene fecha, no recibe producción.
 
 ```mermaid
 flowchart TD
@@ -48,7 +48,7 @@ flowchart TD
 
     P3 -->|"4. Ponerlo en vigor"| VIGENTE
     VIGENTE -.->|"Volver a borrador<br/>(solo si nada aplicado aún)"| BORRADOR
-    VIGENTE ==>|"Se publica un acuerdo nuevo"| HISTORICO
+    VIGENTE ==>|"Todos los coeficientes<br/>quedan cerrados"| HISTORICO
 
     classDef borrador fill:#fff7e6,stroke:#d9822b,color:#5c3d00;
     classDef vigente fill:#e8f0fe,stroke:#3f51b5,color:#1a237e;
@@ -58,11 +58,31 @@ flowchart TD
     class H historico
 ```
 
-*Los pasos 1 a 3 ocurren mientras el acuerdo está en **Borrador**; el paso 4 (Poner en vigor) es la transición a **Vigente**; el paso 5 ocurre ya en estado **Vigente**. Un acuerdo pasa a **Histórico** cuando se publica un acuerdo posterior para la misma planta.*
+*Los pasos 1 a 3 ocurren mientras el acuerdo está en **Borrador**; el paso 4 (Poner en vigor) es la transición a **Vigente**; el paso 5 ocurre ya en estado **Vigente**. Un acuerdo pasa a **Histórico** cuando **todos sus coeficientes tienen fecha de fin** — normalmente porque un acuerdo posterior los ha ido cerrando.*
+
+---
+
+### Cómo se organiza la pantalla de un acuerdo
+
+La pantalla de detalle está ordenada según ese ciclo, de arriba abajo:
+
+1. **Nombre, estado y CAU**, con el menú **⋮** de opciones del acuerdo.
+2. **Siguiente paso** — una banda azul con una frase que dice qué toca hacer ahora, el botón que lo hace y,
+   si algo lo impide, el motivo escrito a la vista. Debajo, los cinco pasos en pequeño, con **Ver todos los
+   pasos** para desplegar su descripción. El paso 3 aparece siempre marcado como *fuera de Conluz*: la
+   aplicación no puede comprobar que hayas enviado el fichero.
+3. **Aplicación del reparto** — solo en acuerdos **Vigente** e **Histórico**, y en Vigente es la primera
+   sección de todas.
+4. **Reparto** — los coeficientes, su suma y las dos formas de definirlos.
+5. **Fichero para la distribuidora** — generar y descargar, y el fichero importado.
+
+Si no sabes por dónde seguir, lee el bloque **Siguiente paso**: dice siempre una sola cosa.
 
 ---
 
 ## Índice
+
+Antes de empezar: [cómo se organiza la pantalla de un acuerdo](#cómo-se-organiza-la-pantalla-de-un-acuerdo).
 
 1. [Acceder a la sección](#1-acceder-a-la-sección)
 2. [Crear un nuevo acuerdo de reparto](#2-crear-un-nuevo-acuerdo-de-reparto)
@@ -113,6 +133,12 @@ Al entrar verás:
 
 El acuerdo se crea en estado **Borrador** y la aplicación te lleva directamente a su pantalla de detalle.
 
+Para corregir después cualquiera de estos tres datos —nombre, notas o capacidad— abre el menú **⋮** de la
+pantalla de detalle y elige **Editar datos del acuerdo**. Está disponible en **todos los estados**, también en
+Vigente e Histórico: cambiarlos no toca los coeficientes. Si el acuerdo ya tiene coeficientes y modificas la
+capacidad, el formulario te avisa de que eso no cambia los coeficientes guardados, pero sí cambia la potencia
+en kW que corresponde a cada suministro según ellos.
+
 > **Aviso que verás en el formulario:** al poner en vigor un acuerdo, el conjunto de coeficientes queda fijo para siempre; cualquier cambio futuro requerirá un nuevo acuerdo. Tenlo en cuenta antes de avanzar en el ciclo de vida.
 
 <!-- SCREENSHOT: diálogo "Nuevo acuerdo de reparto" con los campos Capacidad, Nombre y Notas rellenados -->
@@ -122,26 +148,45 @@ El acuerdo se crea en estado **Borrador** y la aplicación te lleva directamente
 
 ## 3. Definir el reparto (coeficientes)
 
-Desde la pantalla de detalle de un acuerdo en **Borrador**, tienes dos formas de definir los coeficientes. Elige la que mejor se adapte a tu caso.
+Desde la pantalla de detalle de un acuerdo en **Borrador**, la sección **Reparto** reúne las dos formas de
+definir los coeficientes, una al lado de la otra: **Editar a mano** e **Importar TXT**. Elige la que mejor se
+adapte a tu caso. (Mientras el reparto esté incompleto, esos mismos dos botones aparecen arriba, en el bloque
+**Siguiente paso**.)
+
+La sección **Reparto** muestra además:
+
+- La **suma de los coeficientes**, que debe llegar exactamente a 100,0000 %, y cuánto falta o sobra.
+- La **potencia instalada** de la planta.
+- Una columna **Potencia asignada** por punto: *la parte de la potencia instalada que corresponde a cada punto
+  según su coeficiente. No es potencia garantizada: la energía que recibe depende de lo que produzca la planta
+  en cada momento.*
+
+Los coeficientes reparten la producción de la planta y son la base del cálculo de autoconsumo y excedentes en
+tiempo real.
 
 ### 3a. Introducir los coeficientes a mano
 
-1. Pulsa **Editar coeficientes**.
+1. Pulsa **Editar a mano**.
 2. Si necesitas añadir suministros al reparto, pulsa **Añadir suministro**, marca los suministros deseados en el buscador (por nombre o CUPS) y confirma con **Añadir (N)**.
-3. Para cada suministro de la tabla, escribe su coeficiente. Puedes alternar la unidad de entrada con el interruptor **Editar coeficientes en: Coeficiente | kW**, según prefieras trabajar en porcentaje o en kW.
-4. Revisa la **suma del fichero**: debe llegar exactamente a 100 %. La pantalla te indica cuánto falta o sobra mientras editas.
-5. Pulsa **Guardar** para confirmar los coeficientes, o **Cancelar** para descartar los cambios.
+3. Para cada suministro de la tabla, escribe su coeficiente. El interruptor **Editar coeficientes en: % | kW**
+   te deja trabajar en porcentaje o en kW; se guarda lo mismo en ambos casos, y cambiar de unidad no pierde
+   ningún valor.
+4. En porcentaje se admiten **cuatro decimales** (`30,0000`), que son los que caben en el fichero de la
+   distribuidora. Si escribes más, la fila te avisa con *"Como máximo 4 decimales"* y **Guardar** queda
+   bloqueado: Conluz no redondea por su cuenta una cifra que va a la distribuidora.
+5. Revisa la **suma del fichero**: debe llegar exactamente a 100,0000 %. La pantalla te indica cuánto falta o sobra mientras editas.
+6. Pulsa **Guardar** para confirmar los coeficientes, o **Cancelar** para descartar los cambios.
 
 Puedes quitar un suministro de la edición con el icono de eliminar de su fila.
 
-<!-- SCREENSHOT: tabla en modo edición de coeficientes, mostrando varios suministros con su coeficiente y el resumen de suma total -->
+<!-- SCREENSHOT: tabla en modo edición con el interruptor "% | kW", varios coeficientes en porcentaje y el resumen de suma -->
 ![Edición manual de coeficientes](placeholder-editar-coeficientes.png)
 
 ### 3b. Importar un fichero ya elaborado
 
 Si ya tienes preparado el fichero TXT del reparto (por ejemplo, generado por otro medio), puedes importarlo directamente:
 
-1. En el panel **Fichero para la distribuidora**, pulsa **Importar un fichero que ya tengas**.
+1. En la sección **Reparto**, pulsa **Importar TXT**.
 2. Selecciona el fichero con **Seleccionar fichero** (debe tener extensión `.txt` y seguir el formato de nombre `<CAU>_AAAA.txt`).
 3. Pulsa **Subir fichero**.
 
@@ -151,26 +196,38 @@ Si el fichero no es válido, la aplicación no modifica ningún coeficiente y te
 
 Si la planta no tiene CAU asignado, no podrás importar un fichero hasta añadirlo desde a la planta.
 
-<!-- SCREENSHOT: diálogo de importación de fichero, y por separado la pantalla de errores de validación de un fichero rechazado -->
+<!-- SCREENSHOT: sección "Reparto" con los botones "Editar a mano" e "Importar TXT", el diálogo de importación, y la pantalla de errores de un fichero rechazado -->
 ![Importación de fichero de reparto](placeholder-importar.png)
 
 ---
 
 ## 4. Generar el fichero para la distribuidora
 
-Una vez que la suma de los coeficientes es exactamente 100 %, puedes generar el fichero que enviarás a la distribuidora:
+Una vez que la suma de los coeficientes es exactamente 100,0000 %, puedes generar el fichero que enviarás a la
+distribuidora. La sección **Fichero para la distribuidora** tiene dos bloques:
 
-1. En el panel **Fichero para la distribuidora**, pulsa **Generar fichero**.
+- **Generar y descargar** — el fichero se construye en ese momento con los coeficientes actuales. **Conluz no lo
+  guarda**: se descarga en tu dispositivo y lo envías tú.
+- **Fichero importado** — el TXT que subiste, si subiste alguno, con su nombre y su fecha. Son cosas distintas:
+  generar no rellena este bloque.
+
+Para generarlo:
+
+1. En **Generar y descargar**, pulsa **Generar y descargar TXT**.
 2. Indica el **Año** correspondiente al reparto.
 3. Pulsa **Generar**.
 
-El fichero se descarga automáticamente con el nombre `<CAU>_<año>.txt`. Ten en cuenta que **generar el fichero no lo guarda en el acuerdo**: es una descarga puntual a partir de los coeficientes en ese momento. Si vuelves a cambiar los coeficientes, tendrás que generarlo de nuevo.
+El fichero se descarga automáticamente con el nombre `<CAU>_<año>.txt`. Si vuelves a cambiar los coeficientes,
+tendrás que generarlo de nuevo.
 
-Este botón está desactivado (con el motivo indicado debajo) cuando:
+El botón indica su motivo, con texto a la vista, cuando no puede usarse:
 - la planta no tiene CAU asignado, o
-- la suma de los coeficientes todavía no es exactamente 100 %.
+- la suma de los coeficientes todavía no llega a 100,0000 % (*"Faltan X para llegar al 100,0000 %"*).
 
-<!-- SCREENSHOT: diálogo "Generar fichero" con el campo Año, y el aviso posterior a la descarga -->
+> Si el acuerdo tiene un **fichero importado** y estás en Borrador, verás una nota permanente bajo él: *"Si
+> editas los coeficientes, este fichero deja de coincidir con el reparto."* Conluz no compara ambos por ti.
+
+<!-- SCREENSHOT: sección "Fichero para la distribuidora" con los bloques "Generar y descargar" y "Fichero importado", el diálogo del año, y el aviso posterior a la descarga -->
 ![Generación del fichero para la distribuidora](placeholder-generar.png)
 
 ---
@@ -185,36 +242,51 @@ Este paso ocurre **fuera de Conluz**: envía el fichero generado a la distribuid
 
 Cuando la distribuidora haya aceptado el reparto, sella el acuerdo:
 
-1. En la pantalla de detalle, abre el menú de tres puntos (**⋮ Más opciones del acuerdo**), junto al nombre del acuerdo.
-2. Selecciona **Poner en vigor**.
+1. En la pantalla de detalle, busca el bloque **Siguiente paso**, en la banda azul bajo el nombre del acuerdo.
+2. Pulsa **Poner en vigor**.
 3. Confirma en el diálogo.
 
 El acuerdo pasa a estado **Vigente** y sus coeficientes dejan de poder editarse.
 
-Esta opción aparece deshabilitada, con el motivo indicado, si:
-- el acuerdo todavía no tiene coeficientes, o
-- la suma de los coeficientes no es exactamente 100,0000 % (se te indica cuánto falta o sobra).
+**El botón solo aparece cuando la acción puede completarse.** Mientras el reparto no sume exactamente
+100,0000 %, Conluz no muestra **Poner en vigor** en absoluto: en su lugar el bloque **Siguiente paso** te dice
+qué falta —«Este acuerdo todavía no tiene coeficientes» o «Faltan X para llegar al 100,0000 %»— y te ofrece
+**Editar a mano** e **Importar TXT**, que es lo que toca hacer en ese momento.
 
-> **Aviso que verás en el diálogo de confirmación:** poner en vigor no aplica nada por sí mismo — es normal que, justo después, ningún coeficiente esté aún aplicado. Podrás volver a borrador mientras no se haya aplicado ninguno; en cuanto se aplique el primero, dejará de ser posible.
+> **Aviso que verás en el diálogo de confirmación:** hazlo cuando la distribuidora haya aceptado el reparto.
+> Poner en vigor no aplica nada por sí mismo: después tendrás que registrar la fecha de aplicación de cada
+> punto. Hasta entonces el acuerdo **no reparte producción**, y el autoconsumo y los excedentes solo se
+> muestran con los datos de la distribuidora, que llegan con varios días de retraso.
+> Podrás volver a borrador mientras no se haya aplicado ningún coeficiente; en cuanto se aplique el primero,
+> dejará de ser posible.
 
-<!-- SCREENSHOT: menú de tres puntos del detalle del acuerdo abierto, mostrando la opción "Poner en vigor", y el diálogo de confirmación -->
+<!-- SCREENSHOT: bloque "Siguiente paso" con el botón "Poner en vigor", y el diálogo de confirmación -->
 ![Poner un acuerdo en vigor](placeholder-poner-en-vigor.png)
 
 ---
 
 ## 7. Registrar la fecha de aplicación de cada suministro
 
-Con el acuerdo **Vigente**, a medida que la distribuidora vaya aplicando el reparto a cada suministro, regístralo en Conluz:
+**Este paso no es opcional.** Un acuerdo Vigente no reparte nada por el hecho de estar vigente: cada punto de
+suministro empieza a recibir producción **desde su fecha de aplicación**, y un punto sin fecha no recibe nada.
+Mientras no registres ninguna, verás un aviso en la cabecera: *«Vigente, pero todavía no reparte producción:
+registra las fechas de aplicación.»*
 
-1. En la tabla de coeficientes, localiza la fila del suministro (puedes filtrar por **Sin aplicar** para verlos todos).
-2. Abre su menú de acciones (**⋯**) y selecciona **Registrar fecha**.
-3. Indica la **Fecha de aplicación** (no puede ser una fecha futura) y confirma con **Registrar fecha**.
+En un acuerdo Vigente, la primera sección de la pantalla es **Aplicación del reparto**. Te dice cuántos puntos
+tienen ya fecha («3 de 12 puntos con fecha de aplicación»), recuerda la consecuencia de no tenerla, y ofrece el
+botón **Registrar fechas (N pendientes)**.
 
-### Registrar varias fechas a la vez
+Para registrar varias fechas a la vez:
 
-Si varios suministros comparten la misma fecha de aplicación, márcalos con la casilla de su fila (o **Seleccionar todas** en móvil). En la barra que aparece al pie de la pantalla, pulsa **Acciones → Registrar fecha** para aplicarlo a todos los seleccionados de una vez.
+1. Pulsa **Registrar fechas** — en la sección **Aplicación del reparto** o en el bloque **Siguiente paso**.
+   Conluz limpia los filtros y la búsqueda y marca por ti **todos** los puntos que aún no tienen fecha.
+2. Ajusta la selección si quieres, con la casilla de cada fila.
+3. En la barra que aparece al pie, pulsa **Acciones → Registrar fecha**.
+4. Indica la **Fecha de aplicación** (no puede ser una fecha futura) y confirma.
 
-<!-- SCREENSHOT: tabla de coeficientes con el filtro "Sin aplicar" activo, el menú de fila abierto en "Registrar fecha", y la barra de selección múltiple al pie -->
+Para un solo suministro, abre el menú de acciones (**⋯**) de su fila y selecciona **Registrar fecha**.
+
+<!-- SCREENSHOT: sección "Aplicación del reparto" con el progreso y el botón "Registrar fechas", y la barra de selección múltiple al pie -->
 ![Registro de fechas de aplicación](placeholder-registrar-fecha.png)
 
 ---
@@ -223,7 +295,7 @@ Si varios suministros comparten la misma fecha de aplicación, márcalos con la 
 
 Si necesitas corregir algo antes de que la distribuidora haya aplicado ningún coeficiente, puedes deshacer el paso a vigor:
 
-1. En el menú de tres puntos del detalle, selecciona **Volver a borrador**.
+1. En el bloque **Siguiente paso**, pulsa **Volver a borrador**.
 2. Confirma en el diálogo.
 
 El acuerdo vuelve a estado **Borrador** y sus coeficientes vuelven a ser editables.
@@ -267,11 +339,20 @@ Eliminar un borrador **no afecta** al historial de reparto de los miembros, ya q
 
 ## 11. Consultar un acuerdo histórico
 
-Cuando se pone en vigor un acuerdo nuevo para la misma planta, el acuerdo anterior pasa automáticamente a **Histórico**. Un acuerdo histórico es de solo consulta:
+Un acuerdo pasa a **Histórico** cuando **todos sus coeficientes tienen fecha de fin**, es decir, cuando ninguno
+sigue cubriendo el reparto. En la práctica eso ocurre al desplegar un acuerdo posterior, porque cada coeficiente
+nuevo cierra al anterior — pero lo que marca el cambio de estado es el cierre de los coeficientes, no la
+publicación del acuerdo siguiente.
 
-- No tiene menú de opciones (no se puede editar, poner en vigor, volver a borrador ni eliminar).
+Un acuerdo histórico es, en lo esencial, un registro de consulta:
+
 - Conserva la tabla de coeficientes y sus estados de aplicación tal como quedaron.
-- No permite generar ni importar un nuevo fichero.
+- **Sí** puedes editar sus datos (nombre, notas, capacidad) desde **⋮ → Editar datos del acuerdo**.
+- **No** puedes eliminarlo, ni editar sus coeficientes, ni volver a ponerlo en vigor desde el bloque
+  **Siguiente paso**.
+- **Sí** puedes generar y descargar su fichero TXT, que se construye con los coeficientes que tiene guardados.
+- **Sí** puedes corregir fechas de aplicación y **reabrir** un coeficiente cerrado desde el menú **⋯** de su
+  fila. Ten en cuenta que reabrir un coeficiente vuelve a poner el acuerdo en vigor.
 
 Úsalo para consultar cómo estaba configurado el reparto en un periodo anterior.
 
@@ -289,30 +370,55 @@ Cuando se pone en vigor un acuerdo nuevo para la misma planta, el acuerdo anteri
 
 ## 13. Qué puedo hacer en cada estado (resumen)
 
-| Estado del acuerdo | Editar coeficientes | Generar/Importar fichero | Poner en vigor | Volver a borrador | Registrar/corregir fechas | Eliminar |
-|---|---|---|---|---|---|---|
-| **Borrador** | Sí | Sí | Sí (si suma = 100 %) | — | — | Sí |
-| **Vigente**, sin nada aplicado todavía | No | No | — | Sí | Sí (registrar) | No |
-| **Vigente**, con algún coeficiente ya aplicado | No | No | — | No | Sí (registrar/corregir/desactivar/cerrar/reabrir) | No |
-| **Histórico** | No | No | — | — | No | No |
+| Estado del acuerdo | Editar coeficientes | Importar TXT | Generar y descargar TXT | Poner en vigor | Volver a borrador | Registrar/corregir fechas | Editar datos | Eliminar |
+|---|---|---|---|---|---|---|---|---|
+| **Borrador** | Sí | Sí | Sí (si suma = 100,0000 %) | Sí (si suma = 100,0000 %) | — | — | Sí | Sí |
+| **Vigente**, sin nada aplicado todavía | No | No | Sí | — | Sí | Sí (registrar) | Sí | No |
+| **Vigente**, con algún coeficiente ya aplicado | No | No | Sí | — | No | Sí (registrar/corregir/desactivar/cerrar/reabrir) | Sí | No |
+| **Histórico** | No | No | Sí | — | — | Sí (corregir/reabrir) | Sí | No |
 
-> Ten en cuenta que, en un acuerdo **Vigente con algún coeficiente ya aplicado**, el menú de tres puntos del detalle desaparece por completo: las únicas acciones posibles a partir de ese momento son las de fecha de aplicación en cada fila de la tabla de coeficientes.
+> **El menú ⋮ está en todos los estados**, pero su contenido cambia: **Editar datos del acuerdo** siempre, y
+> **Eliminar** solo en Borrador. Eliminar un acuerdo ya vigente destruiría la base de facturaciones pasadas, así
+> que no se ofrece.
+>
+> **«Poner en vigor» y «Generar y descargar TXT» no se muestran deshabilitados y sin explicación.** Cuando una
+> acción no puede completarse, Conluz te dice por qué con texto a la vista, y —en el caso de poner en vigor—
+> directamente no la ofrece, para que no pulses algo que va a fallar.
 
 ---
 
 ## 14. Solución de problemas y preguntas frecuentes
 
 **"Esta planta no tiene código regulatorio (CAU) asignado."**
-No podrás generar ni importar el fichero de reparto hasta añadir el CAU desde la ficha de la planta.
+No podrás generar ni importar el fichero de reparto hasta añadir el CAU desde la ficha de la planta. El resto
+del acuerdo —coeficientes incluidos— sí puede prepararse, y **Poner en vigor** sigue disponible: el CAU solo
+hace falta para el fichero.
 
-**"La suma de los coeficientes debe ser exactamente 100 % para generar el fichero" / mensaje de "Faltan X % / Sobran X %"**
-Revisa los coeficientes en modo edición: la suma total debe llegar exactamente a 100,0000 %, ni más ni menos, para poder generar el fichero o poner el acuerdo en vigor.
+**"Faltan X para llegar al 100,0000 %" / "Sobran X sobre el 100,0000 %"**
+Revisa los coeficientes en modo edición: la suma total debe llegar exactamente a 100,0000 %, ni más ni menos,
+para poder generar el fichero o poner el acuerdo en vigor. Es la misma frase en todas partes —en el bloque
+**Siguiente paso**, en la sección **Reparto** y en **Generar y descargar**—, así que el número que veas es
+siempre el mismo.
 
 **"El fichero no se ha podido importar. No se ha modificado ningún coeficiente del borrador."**
 El fichero importado tenía errores (de formato o de contenido, por ejemplo un CUPS que no corresponde a ningún suministro de la comunidad). La pantalla detalla los errores encontrados; corrige el fichero de origen y vuelve a intentar la importación con **Elegir otro fichero**.
 
-**No veo el menú de opciones (⋮) en un acuerdo Vigente**
-Es esperado si al menos un coeficiente del acuerdo ya ha sido aplicado: a partir de ese momento el acuerdo queda fijo salvo por el registro de fechas de aplicación por suministro (ver [sección 13](#13-qué-puedo-hacer-en-cada-estado-resumen)).
+**No veo el botón "Poner en vigor"**
+Es esperado mientras el reparto no sume exactamente 100,0000 %, o si el acuerdo todavía no tiene coeficientes:
+Conluz no ofrece una acción que la distribuidora va a rechazar. El bloque **Siguiente paso** te dice qué falta
+y te ofrece **Editar a mano** e **Importar TXT** en su lugar.
+
+**He puesto el acuerdo en vigor pero la comunidad no recibe nada**
+Poner en vigor no reparte producción por sí solo. Cada punto empieza a recibir producción **desde su fecha de
+aplicación**, así que un acuerdo vigente sin ninguna fecha registrada reparte cero. Mira la sección
+**Aplicación del reparto** (ver [sección 7](#7-registrar-la-fecha-de-aplicación-de-cada-suministro)) y registra
+las fechas pendientes. Mientras tanto, el autoconsumo y los excedentes solo se muestran con los datos de la
+distribuidora, que llegan con varios días de retraso.
+
+**Me aparece "Como máximo 4 decimales" al escribir un coeficiente**
+El editor trabaja en porcentaje y el fichero de la distribuidora admite cuatro decimales de porcentaje
+(seis del coeficiente). Conluz no redondea por su cuenta una cifra que va a la distribuidora: ajusta el valor a
+cuatro decimales y podrás guardar.
 
 **"Planta no encontrada" / "Acuerdo no encontrado"**
 La planta o el acuerdo no existen, o no pertenecen a una comunidad a la que tengas acceso. Verifica el enlace o vuelve a la lista de plantas.
