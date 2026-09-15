@@ -5,19 +5,14 @@ import CheckIcon from "@mui/icons-material/Check";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { colors, fontSizes, radii } from "../../theme/tokens";
+import {
+  SharingAgreementActionButton,
+  type SharingAgreementActionDescriptor,
+} from "../SharingAgreementActionButton";
 import { EXTERNAL_STAGE, type LifecycleStageView, type LifecycleView, type StageState } from "../../pages/production/sharingAgreementLifecycle";
 
-/**
- * An action the rail can offer. `disabledReason` keeps the control focusable and
- * described rather than removing it from the tab order — a disabled button takes
- * its own explanation out of reach of the keyboard, which is the opposite of what
- * a gated regulatory action needs.
- */
-export interface LifecycleSpineAction {
-  label: string;
-  onClick: () => void;
-  disabledReason?: string;
-}
+/** An action the rail can offer. Same shape, and same gating contract, as every other gated control. */
+export type LifecycleSpineAction = SharingAgreementActionDescriptor;
 
 export interface SharingAgreementLifecycleSpineProps {
   view: LifecycleView;
@@ -114,53 +109,6 @@ const StageMarker: FC<{ stage: LifecycleStageView; isFirst: boolean; spanPositio
     </Box>
   </Box>
 );
-
-/**
- * A gated action stays in the tab order and carries its reason through
- * `aria-describedby`; only its appearance and its click handler are suppressed.
- */
-const SpineActionButton: FC<{ action: LifecycleSpineAction; emphasis: "primary" | "secondary" | "quiet" }> = ({
-  action,
-  emphasis,
-}) => {
-  const reasonId = useId();
-  const isBlocked = !!action.disabledReason;
-
-  return (
-    <Box>
-      <Button
-        variant={emphasis === "primary" ? "contained" : emphasis === "secondary" ? "outlined" : "text"}
-        color="primary"
-        disableElevation
-        aria-disabled={isBlocked || undefined}
-        aria-describedby={isBlocked ? reasonId : undefined}
-        onClick={isBlocked ? undefined : action.onClick}
-        sx={{
-          whiteSpace: "nowrap",
-          ...(isBlocked && {
-            // Still a control, not stray text: a surface and a stroke keep it
-            // legible as a button while reading as unavailable.
-            bgcolor: colors.background.surface,
-            color: colors.text.muted,
-            borderColor: colors.border.light,
-            cursor: "default",
-            "&:hover": { bgcolor: colors.background.surface, borderColor: colors.border.light },
-          }),
-        }}
-      >
-        {action.label}
-      </Button>
-      {/* Reserved whether or not a reason is showing, so gaining one never moves the button. */}
-      <Typography
-        id={isBlocked ? reasonId : undefined}
-        variant="caption"
-        sx={{ display: "block", mt: 0.5, minHeight: 18, color: colors.text.subtle }}
-      >
-        {action.disabledReason ?? ""}
-      </Typography>
-    </Box>
-  );
-};
 
 const StageList: FC<{ stages: LifecycleStageView[] }> = ({ stages }) => (
   <Box component="ol" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -279,7 +227,7 @@ export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpinePr
           }}
         >
           {actions.map(({ action, emphasis, key }) => (
-            <SpineActionButton key={key} action={action} emphasis={emphasis} />
+            <SharingAgreementActionButton key={key} action={action} emphasis={emphasis} />
           ))}
         </Box>
       )}
