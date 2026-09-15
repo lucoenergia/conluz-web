@@ -25,6 +25,12 @@ export interface SharingAgreementFilePanelProps {
   agreement: SharingAgreementResponse | undefined;
   coefficients: CoefficientSummable[];
   plantRegulatoryCode: string | undefined;
+  /**
+   * Controlled by the page: the lifecycle rail offers "Generar fichero" for
+   * stage 2 as well, so the dialog cannot own its own open state down here.
+   */
+  isGenerateDialogOpen: boolean;
+  onGenerateDialogOpenChange: (isOpen: boolean) => void;
 }
 
 interface GenerateButtonProps {
@@ -59,10 +65,11 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   agreement,
   coefficients,
   plantRegulatoryCode,
+  isGenerateDialogOpen,
+  onGenerateDialogOpenChange,
 }) => {
   const errorDispatch = useErrorDispatch();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [showGeneratedNotice, setShowGeneratedNotice] = useState(false);
 
   // Defensive: the generated type claims `file` is never null, but the OpenAPI
@@ -77,7 +84,7 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   const generateDisabledReason = !plantRegulatoryCode
     ? "Esta planta no tiene código regulatorio (CAU) asignado."
     : !sumIsFull
-      ? "La suma de los coeficientes debe ser exactamente 100 % para generar el fichero."
+      ? "La suma de los coeficientes debe ser exactamente 100,0000 % para generar el fichero."
       : undefined;
 
   const downloadMutation = useMutation({
@@ -142,7 +149,7 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
             <GenerateButton
               label="Generar fichero"
               disabledReason={generateDisabledReason}
-              onClick={() => setIsGenerateDialogOpen(true)}
+              onClick={() => onGenerateDialogOpenChange(true)}
             />
             <Button
               variant="outlined"
@@ -176,7 +183,7 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
               size="small"
               label="Generar fichero"
               disabledReason={generateDisabledReason}
-              onClick={() => setIsGenerateDialogOpen(true)}
+              onClick={() => onGenerateDialogOpenChange(true)}
             />
             <Button
               size="small"
@@ -204,7 +211,7 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
           plantId={plantId}
           sharingAgreementId={sharingAgreementId}
           regulatoryCode={plantRegulatoryCode}
-          onClose={() => setIsGenerateDialogOpen(false)}
+          onClose={() => onGenerateDialogOpenChange(false)}
           onGenerateSuccess={() => setShowGeneratedNotice(true)}
         />
       )}

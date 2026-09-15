@@ -917,11 +917,13 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     const { rerender } = renderWithTheme({ coefficients: mixed, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
 
-    // Only c3 is APPLIED, at 0.4 -> 40%. Scoped via the "Suma aplicada"
-    // caption's sibling rather than a bare text match: c3's own row also
-    // displays "40,0000 %" for its individual coefficient, so an unscoped
-    // query would be ambiguous between the sum card and that row.
-    expect(screen.getByText("Suma aplicada").previousElementSibling).toHaveTextContent("40,0000 %");
+    // Only c3 is APPLIED, at 0.4 -> 40%. Read off the gauge's own accessible
+    // value rather than by text match: c3's row also displays "40,0000 %" for
+    // its individual coefficient, so an unscoped query would be ambiguous.
+    expect(screen.getByRole("progressbar", { name: "Suma aplicada" })).toHaveAttribute(
+      "aria-valuetext",
+      expect.stringContaining("40,0000"),
+    );
 
     await selectPendingRow(user, "Vivienda A");
     await openBatchAction(user, "Registrar fecha");
@@ -948,7 +950,10 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     );
 
     // c1 (0.3) + c3 (0.4) now APPLIED = 70%, still below 100% — neutral info styling.
-    expect(screen.getByText("70,0000 %")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Suma aplicada" })).toHaveAttribute(
+      "aria-valuetext",
+      expect.stringContaining("70,0000"),
+    );
     expect(screen.getByText(/normal en transición/)).toBeInTheDocument();
   });
 });
@@ -1312,5 +1317,73 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
       const actionCell = cells[cells.length - 1];
       expect(actionCell.className).toContain("MuiTableCell-paddingCheckbox");
     }
+  });
+});
+
+describe("SharingAgreementCoefficientSet (anomalous draft)", () => {
+  const ANOMALY_COPY = /contiene coeficientes marcados como aplicados o cerrados/;
+
+  // A DRAFT is guaranteed all-PENDING/all-OPEN by the backend: APPLIED requires
+  // publishing first, and revert-to-draft is refused once anything is applied.
+  // Rendering this combination as an ordinary draft is what guarantees nobody
+  // reports the integrity breach it represents.
+  const anomalousDraft: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.6, applicationState: APPLIED, ...OPEN_UNCLOSED },
+    { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  const healthyDraft: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "h1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.6, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "h2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  it("says so, rather than silently growing two columns and leaving the reader to notice", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    const warning = screen.getByText(ANOMALY_COPY);
+    expect(warning).toBeInTheDocument();
+    expect(warning.closest(".MuiAlert-root")).toHaveClass("MuiAlert-colorWarning");
+  });
+
+  it("names what to do about it — review before publishing or deleting", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.getByText(/antes de poner el acuerdo en vigor o eliminarlo/)).toBeInTheDocument();
+  });
+
+  it("stays silent for a healthy draft", () => {
+    renderWithTheme({ coefficients: healthyDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.queryByText(ANOMALY_COPY)).not.toBeInTheDocument();
+  });
+
+  it("stays silent for a PUBLISHED agreement, where applied coefficients are the normal shape", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
+
+    expect(screen.queryByText(ANOMALY_COPY)).not.toBeInTheDocument();
+  });
+
+  it("stays silent for a SUPERSEDED agreement", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.SUPERSEDED });
+
+    expect(screen.queryByText(ANOMALY_COPY)).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (installed power)", () => {
+  it("carries the installed power, which moved here from the banner because kW mode is what uses it", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
+
+    expect(screen.getByText("Potencia instalada: 100,00 kW")).toBeInTheDocument();
+  });
+
+  it("omits it when the agreement has none", () => {
+    renderWithTheme({
+      coefficients,
+      installedPowerKw: undefined,
+      agreementStatus: SharingAgreementResponseStatus.PUBLISHED,
+    });
+
+    expect(screen.queryByText(/^Potencia instalada:/)).not.toBeInTheDocument();
   });
 });

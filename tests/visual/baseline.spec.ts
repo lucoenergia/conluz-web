@@ -1374,16 +1374,25 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
 
-    const publishItem = page.getByText("Poner en vigor").locator('xpath=ancestor::*[@role="menuitem"]');
-    await expect(publishItem).toHaveAttribute("aria-disabled", "true");
-    // The disabled reason is visible text nested under the item's label, never a tooltip — it
-    // must be visible the instant the menu opens, with no hover required. Scoped to this specific
-    // caption's id: the same gap sentence also legitimately appears in the sum card and next-step
-    // panel elsewhere on this same page (the "three places" the gap message is expected to appear).
-    await expect(page.locator("#publish-disabled-reason")).toBeVisible();
-    await expect(page.locator("#publish-disabled-reason")).toHaveText(/Faltan .* para llegar al 100,0000/);
+    // Publishing is a labelled control on the lifecycle rail now, not a kebab item.
+    // Gated, it stays in the tab order with `aria-disabled` rather than `disabled`,
+    // so its reason remains reachable by keyboard.
+    const publishButton = page.getByRole("button", { name: "Poner en vigor" });
+    await expect(publishButton).toHaveAttribute("aria-disabled", "true");
+    // Focusable, not `disabled`. Asserted by actually focusing it: Playwright's
+    // toBeEnabled() honours aria-disabled, so it cannot distinguish "gated but
+    // still reachable" from "removed from the tab order" — which is the whole
+    // point of gating this way.
+    await publishButton.focus();
+    await expect(publishButton).toBeFocused();
+
+    // The reason is visible text under the control the instant the page renders —
+    // never a tooltip, and never requiring a hover or a menu to be opened first.
+    const reasonId = await publishButton.getAttribute("aria-describedby");
+    const reason = page.locator(`#${reasonId}`);
+    await expect(reason).toBeVisible();
+    await expect(reason).toHaveText(/Faltan .* para llegar al 100,0000/);
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-kebab-publish-gated.png", { fullPage: true });
@@ -1403,8 +1412,7 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
-    await page.getByRole("menuitem", { name: "Poner en vigor" }).click();
+    await page.getByRole("button", { name: "Poner en vigor" }).click();
 
     await expect(page.getByRole("heading", { name: "Poner en vigor" })).toBeVisible();
     await expect(page.getByText(/Poner en vigor no aplica nada por sí mismo/)).toBeVisible();
@@ -1427,13 +1435,9 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-    // Scoped by label, not the generic MoreVertIcon locator other tests in
-    // this file use — FIXED_COEFFICIENTS_ALL_PENDING rows now carry their
-    // own "Más acciones para X" kebabs too (apply is a row action), so the
-    // unscoped locator is ambiguous here in a way it isn't for the other
-    // tests' DRAFT agreements, which never show row-level kebabs at all.
-    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
-    await page.getByRole("menuitem", { name: "Volver a borrador" }).click();
+    // Reverting is a labelled control on the lifecycle rail now. The published
+    // agreement's kebab is gone entirely: editing and deleting are draft-only.
+    await page.getByRole("button", { name: "Volver a borrador" }).click();
 
     await expect(page.getByRole("heading", { name: "Volver a borrador" })).toBeVisible();
     await expect(

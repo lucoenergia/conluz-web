@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { SharingAgreementDetailHeader } from "./SharingAgreementDetailHeader";
+import { SharingAgreementDetailHeader, type SharingAgreementDetailHeaderProps } from "./SharingAgreementDetailHeader";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
@@ -14,6 +14,7 @@ import {
   type CoefficientSummable,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
+import { colors } from "../../theme/tokens";
 
 const PENDING = SharingAgreementPartitionCoefficientResponseApplicationState.PENDING;
 const APPLIED = SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED;
@@ -38,6 +39,8 @@ const GENUINELY_INCOMPLETE: CoefficientSummable[] = [
   { coefficient: 0.4, applicationState: PENDING },
 ];
 
+const KEBAB = "Más opciones del acuerdo";
+
 describe("SharingAgreementDetailHeader", () => {
   const mockAgreement = {
     id: "agreement-1",
@@ -56,136 +59,143 @@ describe("SharingAgreementDetailHeader", () => {
     regulatoryCode: "ES0031300296192001MB",
   } as PlantResponse;
 
-  it("renders agreement name, CAU and tiles", () => {
-    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} />);
+  function renderHeader(props: Partial<SharingAgreementDetailHeaderProps> = {}) {
+    return render(
+      <SharingAgreementDetailHeader
+        agreement={mockAgreement}
+        plant={mockPlant}
+        nextStep={{ kind: "NONE" }}
+        {...props}
+      />,
+    );
+  }
+
+  it("renders agreement name, CAU, status chip and the metadata strip", () => {
+    renderHeader();
 
     expect(screen.getByText("Acuerdo Comunidad Sur")).toBeInTheDocument();
     expect(screen.getByText("CAU: ES0031300296192001MB")).toBeInTheDocument();
     expect(screen.getByText("Vigente")).toBeInTheDocument();
-    expect(screen.getByText("23 de mayo de 2024")).toBeInTheDocument();
-    expect(screen.getByText("42,50 kW")).toBeInTheDocument();
+    expect(screen.getByText("Creado el 23 de mayo de 2024")).toBeInTheDocument();
     expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
   });
 
-  it("renders the status chip with contrast against the banner (regression guard: PUBLISHED was previously invisible — blue text on a blue-tinted chip on a solid blue banner)", () => {
-    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} />);
+  it("no longer carries installed power — it moved to the coefficient panel, where kW mode actually uses it", () => {
+    renderHeader();
+
+    expect(screen.queryByText("42,50 kW")).not.toBeInTheDocument();
+    expect(screen.queryByText("Potencia instalada")).not.toBeInTheDocument();
+  });
+
+  it("renders the status chip on its own explicit surface tint, not an alpha overlay (the identity card is light now, so the onDark white pill no longer applies)", () => {
+    renderHeader();
 
     const chip = screen.getByText("Vigente").closest(".MuiChip-root");
-    expect(chip).toHaveStyle({ backgroundColor: "rgba(255, 255, 255, 0.9)" });
+    // An explicit `surface` token rather than a translucent overlay: alpha would
+    // make the effective contrast depend on whatever sits behind the card.
+    expect(chip).toHaveStyle({ backgroundColor: colors.brand.surface });
+    expect(chip).toHaveStyle({ color: colors.brand.main });
   });
 
   it("renders default texts and CAU fallback when data is missing", () => {
-    render(
-      <SharingAgreementDetailHeader
-        agreement={{} as SharingAgreementResponse}
-        plant={{} as PlantResponse}
-      />,
-    );
+    renderHeader({ agreement: {} as SharingAgreementResponse, plant: {} as PlantResponse });
 
     expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
     expect(screen.getByText("CAU no disponible")).toBeInTheDocument();
   });
 
-  it("does not render tiles or status chip when loading", () => {
-    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} isLoading />);
+  it("renders neither the rail nor the status chip when loading", () => {
+    renderHeader({ isLoading: true });
 
-    expect(screen.queryByText("Fecha de creación")).not.toBeInTheDocument();
     expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver todos los pasos" })).not.toBeInTheDocument();
   });
 
-  it("does not render tiles or status chip on error", () => {
-    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} error={new Error("boom")} />);
+  it("renders neither the rail nor the status chip on error", () => {
+    renderHeader({ error: new Error("boom") });
 
-    expect(screen.queryByText("Fecha de creación")).not.toBeInTheDocument();
     expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver todos los pasos" })).not.toBeInTheDocument();
   });
 
   it("hides the actions kebab for a non-DRAFT (published) agreement", () => {
-    render(<SharingAgreementDetailHeader agreement={mockAgreement} plant={mockPlant} onEdit={vi.fn()} onDeleteRequest={vi.fn()} />);
+    renderHeader({ onEdit: vi.fn(), onDeleteRequest: vi.fn() });
 
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
   });
 
-  it("shows the actions kebab with Editar/Eliminar for a DRAFT agreement, wired to the callbacks", async () => {
+  it("keeps only Editar and Eliminar in the kebab — the lifecycle moves are labelled controls on the rail", async () => {
     const onEdit = vi.fn();
     const onDeleteRequest = vi.fn();
     const user = userEvent.setup();
-    const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
-    render(
-      <SharingAgreementDetailHeader agreement={draftAgreement} plant={mockPlant} onEdit={onEdit} onDeleteRequest={onDeleteRequest} />,
-    );
+    renderHeader({
+      agreement: { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT },
+      coefficients: ALL_PENDING,
+      nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
+      onEdit,
+      onDeleteRequest,
+      onPublishRequest: vi.fn(),
+    });
 
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: KEBAB }));
     await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
+
+    const menu = screen.getByRole("menu");
+    expect(menu).toHaveTextContent("Editar");
+    expect(menu).toHaveTextContent("Eliminar");
+    expect(menu).not.toHaveTextContent("Poner en vigor");
+    expect(menu).not.toHaveTextContent("Volver a borrador");
 
     await user.click(screen.getByText("Editar"));
     expect(onEdit).toHaveBeenCalled();
 
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: KEBAB }));
     await waitFor(() => expect(screen.getByText("Eliminar")).toBeInTheDocument());
     await user.click(screen.getByText("Eliminar"));
     expect(onDeleteRequest).toHaveBeenCalled();
   });
 
   it("hides the actions kebab while loading, even for a DRAFT agreement", () => {
-    const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
-    render(
-      <SharingAgreementDetailHeader
-        agreement={draftAgreement}
-        plant={mockPlant}
-        isLoading
-        onEdit={vi.fn()}
-        onDeleteRequest={vi.fn()}
-      />,
-    );
+    renderHeader({
+      agreement: { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT },
+      isLoading: true,
+      onEdit: vi.fn(),
+      onDeleteRequest: vi.fn(),
+    });
 
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
   });
 
-  describe("Poner en vigor / Volver a borrador", () => {
+  describe("Poner en vigor / Volver a borrador on the rail", () => {
     const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
     const publishedAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.PUBLISHED };
     const supersededAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.SUPERSEDED };
 
-    it("renders neither lifecycle item when coefficients is undefined, on a DRAFT agreement", async () => {
-      const user = userEvent.setup();
-      render(<SharingAgreementDetailHeader agreement={draftAgreement} plant={mockPlant} onEdit={vi.fn()} />);
+    it("renders neither lifecycle action while coefficients is undefined, on a DRAFT agreement", () => {
+      renderHeader({ agreement: draftAgreement, onEdit: vi.fn(), onPublishRequest: vi.fn() });
 
-      await user.click(screen.getByRole("button"));
-      await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
-      expect(screen.queryByText("Poner en vigor")).not.toBeInTheDocument();
-      expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
     });
 
-    it("hides the kebab entirely for a PUBLISHED agreement while coefficients is undefined (never shows revert transiently)", () => {
-      render(<SharingAgreementDetailHeader agreement={publishedAgreement} plant={mockPlant} />);
-      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    it("never shows revert transiently for a PUBLISHED agreement while coefficients is undefined", () => {
+      renderHeader({ agreement: publishedAgreement, onRevertRequest: vi.fn() });
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
     });
 
-    it("disables Poner en vigor with a visible 'no coefficients' reason for a resolved empty set on DRAFT", async () => {
-      const user = userEvent.setup();
-      render(<SharingAgreementDetailHeader agreement={draftAgreement} plant={mockPlant} coefficients={[]} />);
+    it("gates Poner en vigor with a visible 'no coefficients' reason for a resolved empty set on DRAFT", () => {
+      renderHeader({ agreement: draftAgreement, coefficients: [], onPublishRequest: vi.fn() });
 
-      await user.click(screen.getByRole("button"));
-      const item = await screen.findByText("Poner en vigor");
-      const menuItem = item.closest('[role="menuitem"]') as HTMLElement;
-      expect(menuItem).toHaveAttribute("aria-disabled", "true");
+      const publish = screen.getByRole("button", { name: "Poner en vigor" });
+      expect(publish).toHaveAttribute("aria-disabled", "true");
       expect(screen.getByText("Este acuerdo todavía no tiene coeficientes.")).toBeInTheDocument();
     });
 
-    it("disables Poner en vigor with the exact gap message for a genuinely incomplete sum", async () => {
-      const user = userEvent.setup();
-      render(
-        <SharingAgreementDetailHeader
-          agreement={draftAgreement}
-          plant={mockPlant}
-          coefficients={GENUINELY_INCOMPLETE}
-        />,
-      );
+    it("gates Poner en vigor with the exact gap message for a genuinely incomplete sum", () => {
+      renderHeader({ agreement: draftAgreement, coefficients: GENUINELY_INCOMPLETE, onPublishRequest: vi.fn() });
 
-      await user.click(screen.getByRole("button"));
-      const item = await screen.findByText("Poner en vigor");
-      expect(item.closest('[role="menuitem"]')).toHaveAttribute("aria-disabled", "true");
+      expect(screen.getByRole("button", { name: "Poner en vigor" })).toHaveAttribute("aria-disabled", "true");
       // Computed via the same helpers the component uses, not hand-typed — Intl inserts a
       // non-breaking space before the first "%" that's easy to get wrong by hand.
       const { fileSumUnits } = computeSharingAgreementCoefficientSums(GENUINELY_INCOMPLETE);
@@ -195,128 +205,129 @@ describe("SharingAgreementDetailHeader", () => {
       expect(screen.getByText(expectedMessage)).toBeInTheDocument();
     });
 
-    it("enables Poner en vigor for a rounding-sensitive set that sums to exactly 1 in integer units but not as raw floats", async () => {
-      const user = userEvent.setup();
-      render(
-        <SharingAgreementDetailHeader
-          agreement={draftAgreement}
-          plant={mockPlant}
-          coefficients={ROUNDING_SENSITIVE_FULL}
-        />,
-      );
+    it("enables Poner en vigor for a rounding-sensitive set that sums to exactly 1 in integer units but not as raw floats", () => {
+      renderHeader({ agreement: draftAgreement, coefficients: ROUNDING_SENSITIVE_FULL, onPublishRequest: vi.fn() });
 
-      await user.click(screen.getByRole("button"));
-      const item = await screen.findByText("Poner en vigor");
-      expect(item.closest('[role="menuitem"]')).toHaveAttribute("aria-disabled", "false");
+      expect(screen.getByRole("button", { name: "Poner en vigor" })).not.toHaveAttribute("aria-disabled");
     });
 
-    it("keeps the menu open and never calls onPublishRequest when the gated item is clicked", async () => {
+    it("never calls onPublishRequest when the gated control is clicked", async () => {
       const onPublishRequest = vi.fn();
       const user = userEvent.setup();
-      render(
-        <SharingAgreementDetailHeader
-          agreement={draftAgreement}
-          plant={mockPlant}
-          coefficients={[]}
-          onPublishRequest={onPublishRequest}
-        />,
-      );
+      renderHeader({ agreement: draftAgreement, coefficients: [], onPublishRequest });
 
-      await user.click(screen.getByRole("button"));
-      const item = await screen.findByText("Poner en vigor");
-      await user.click(item);
+      await user.click(screen.getByRole("button", { name: "Poner en vigor" }));
 
       expect(onPublishRequest).not.toHaveBeenCalled();
-      expect(screen.getByText("Poner en vigor")).toBeInTheDocument();
     });
 
-    it("closes the menu and calls onPublishRequest when the enabled item is clicked", async () => {
+    it("calls onPublishRequest when the enabled control is clicked", async () => {
       const onPublishRequest = vi.fn();
       const user = userEvent.setup();
-      render(
-        <SharingAgreementDetailHeader
-          agreement={draftAgreement}
-          plant={mockPlant}
-          coefficients={ALL_PENDING}
-          onPublishRequest={onPublishRequest}
-        />,
-      );
+      renderHeader({ agreement: draftAgreement, coefficients: ALL_PENDING, onPublishRequest });
 
-      await user.click(screen.getByRole("button"));
-      const item = await screen.findByText("Poner en vigor");
-      await user.click(item);
+      await user.click(screen.getByRole("button", { name: "Poner en vigor" }));
 
       expect(onPublishRequest).toHaveBeenCalled();
-      await waitFor(() => expect(screen.getByText("Poner en vigor")).not.toBeVisible());
     });
 
-    it("keeps the gated Poner en vigor item reachable by arrow-key navigation and exposes its reason via aria-describedby", async () => {
-      const user = userEvent.setup();
-      render(<SharingAgreementDetailHeader agreement={draftAgreement} plant={mockPlant} coefficients={[]} />);
+    it("keeps the gated Poner en vigor control in the tab order and exposes its reason via aria-describedby", () => {
+      renderHeader({ agreement: draftAgreement, coefficients: [], onPublishRequest: vi.fn() });
 
-      await user.click(screen.getByRole("button"));
-      const editItem = (await screen.findByText("Editar")).closest('[role="menuitem"]') as HTMLElement;
-      act(() => editItem.focus());
-      expect(editItem).toHaveFocus();
+      const publish = screen.getByRole("button", { name: "Poner en vigor" });
+      // `aria-disabled` rather than `disabled`: a disabled button takes its own
+      // explanation out of reach of the keyboard.
+      expect(publish).not.toBeDisabled();
+      expect(publish).toHaveAttribute("aria-disabled", "true");
 
-      await user.keyboard("{ArrowDown}");
-
-      const publishItem = screen.getByText("Poner en vigor").closest('[role="menuitem"]') as HTMLElement;
-      expect(publishItem).toHaveFocus();
-
-      const describedBy = publishItem.getAttribute("aria-describedby");
+      const describedBy = publish.getAttribute("aria-describedby");
       expect(describedBy).toBeTruthy();
       expect(document.getElementById(describedBy as string)).toHaveTextContent(
         "Este acuerdo todavía no tiene coeficientes.",
       );
     });
 
-    it("never renders Volver a borrador (nor the kebab at all) when any coefficient has been applied", () => {
-      render(
-        <SharingAgreementDetailHeader
-          agreement={publishedAgreement}
-          plant={mockPlant}
-          coefficients={ONE_APPLIED}
-          onRevertRequest={vi.fn()}
-        />,
-      );
+    it("never renders Volver a borrador when any coefficient has been applied", () => {
+      renderHeader({ agreement: publishedAgreement, coefficients: ONE_APPLIED, onRevertRequest: vi.fn() });
 
-      expect(screen.queryByRole("button")).not.toBeInTheDocument();
-      expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
     });
 
-    it("renders Volver a borrador (not disabled) for a PUBLISHED, fully-pending agreement, closing the menu on click", async () => {
+    it("renders Volver a borrador, ungated, for a PUBLISHED fully-pending agreement", async () => {
       const onRevertRequest = vi.fn();
       const user = userEvent.setup();
-      render(
-        <SharingAgreementDetailHeader
-          agreement={publishedAgreement}
-          plant={mockPlant}
-          coefficients={ALL_PENDING}
-          onRevertRequest={onRevertRequest}
-        />,
-      );
+      renderHeader({ agreement: publishedAgreement, coefficients: ALL_PENDING, onRevertRequest });
 
-      await user.click(screen.getByRole("button"));
-      const item = await screen.findByText("Volver a borrador");
-      expect(item.closest('[role="menuitem"]')).not.toHaveAttribute("aria-disabled", "true");
+      const revert = screen.getByRole("button", { name: "Volver a borrador" });
+      expect(revert).not.toHaveAttribute("aria-disabled");
 
-      await user.click(item);
+      await user.click(revert);
       expect(onRevertRequest).toHaveBeenCalled();
-      await waitFor(() => expect(screen.getByText("Volver a borrador")).not.toBeVisible());
     });
 
     it("never renders Volver a borrador for a DRAFT agreement, regardless of coefficient state", () => {
-      render(<SharingAgreementDetailHeader agreement={draftAgreement} plant={mockPlant} coefficients={ALL_PENDING} />);
-      expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
+      renderHeader({ agreement: draftAgreement, coefficients: ALL_PENDING, onRevertRequest: vi.fn() });
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
     });
 
-    it("never renders Volver a borrador for a SUPERSEDED agreement, regardless of coefficient state", () => {
-      render(
-        <SharingAgreementDetailHeader agreement={supersededAgreement} plant={mockPlant} coefficients={ALL_PENDING} />,
-      );
-      expect(screen.queryByRole("button")).not.toBeInTheDocument();
-      expect(screen.queryByText("Volver a borrador")).not.toBeInTheDocument();
+    it("renders no lifecycle action and no kebab for a SUPERSEDED agreement", () => {
+      renderHeader({
+        agreement: supersededAgreement,
+        coefficients: ALL_PENDING,
+        onRevertRequest: vi.fn(),
+        onPublishRequest: vi.fn(),
+        onEdit: vi.fn(),
+      });
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Generar fichero on the rail", () => {
+    const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
+
+    it("offers Generar fichero during the generate-and-send span", async () => {
+      const onGenerateRequest = vi.fn();
+      const user = userEvent.setup();
+      renderHeader({
+        agreement: draftAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
+        onGenerateRequest,
+      });
+
+      await user.click(screen.getByRole("button", { name: "Generar fichero" }));
+      expect(onGenerateRequest).toHaveBeenCalled();
+    });
+
+    it("gates Generar fichero on a missing CAU while leaving Poner en vigor available — the two actions in the span gate independently", () => {
+      renderHeader({
+        agreement: draftAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: false, blockedReason: "NO_REGULATORY_CODE" },
+        onGenerateRequest: vi.fn(),
+        onPublishRequest: vi.fn(),
+      });
+
+      expect(screen.getByRole("button", { name: "Generar fichero" })).toHaveAttribute("aria-disabled", "true");
+      expect(
+        screen.getByText("La planta no tiene CAU configurado. Sin él no se puede generar el fichero."),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Poner en vigor" })).not.toHaveAttribute("aria-disabled");
+    });
+
+    it("offers no Generar fichero outside the span", () => {
+      renderHeader({
+        agreement: draftAgreement,
+        coefficients: [],
+        nextStep: { kind: "AUTHOR_COEFFICIENTS", blockedReason: "NO_COEFFICIENTS" },
+        onGenerateRequest: vi.fn(),
+      });
+
+      expect(screen.queryByRole("button", { name: "Generar fichero" })).not.toBeInTheDocument();
     });
   });
 });

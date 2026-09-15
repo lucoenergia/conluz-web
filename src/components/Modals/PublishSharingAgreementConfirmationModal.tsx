@@ -2,17 +2,29 @@ import { Alert, Box, Typography } from "@mui/material";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import PublishOutlinedIcon from "@mui/icons-material/PublishOutlined";
-import { alphas, fontSizes } from "../../theme/tokens";
+import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 
 interface PublishSharingAgreementConfirmationModalProps {
   isOpen: boolean;
+  agreementName: string;
+  /** The coefficient sum, already formatted at the project's fixed precision. */
+  fileSumLabel: string;
+  coefficientCount: number;
   isPublishing?: boolean;
   onCancel: (event: MouseEvent<HTMLElement>) => void;
   onConfirm: () => void;
 }
 
+/** Plural category rather than `count === 1`, so this survives a language with more than two forms. */
+function supplyPointLabel(count: number, locale = "es-ES"): string {
+  return new Intl.PluralRules(locale).select(count) === "one" ? "punto de suministro" : "puntos de suministro";
+}
+
 export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreementConfirmationModalProps> = ({
   isOpen,
+  agreementName,
+  fileSumLabel,
+  coefficientCount,
   isPublishing = false,
   onCancel,
   onConfirm,
@@ -22,12 +34,46 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
       isOpen={isOpen}
       onCancel={onCancel}
       confirmLabel="Poner en vigor"
+      // Sealing an agreed reparto is the constructive move in this workflow. The
+      // component's default is "error", which would render it in the same red as
+      // Eliminar and read as destruction at the moment of commitment.
+      confirmColor="primary"
       confirmDisabled={isPublishing}
+      confirmPending={isPublishing}
       onConfirm={onConfirm}
       title="Poner en vigor"
       icon={<PublishOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
     >
+      <Typography
+        sx={{
+          fontSize: fontSizes.md,
+          fontWeight: 600,
+          color: "secondary.main",
+          mb: 2,
+          backgroundColor: colors.brand.surface,
+          padding: "8px 12px",
+          borderRadius: radii.default,
+        }}
+      >
+        {agreementName}
+      </Typography>
+
+      {/* What is being sealed, restated at the precision the distributor validates. */}
+      <Typography
+        sx={{
+          fontSize: fontSizes.md,
+          color: "text.secondary",
+          mb: 2,
+        }}
+      >
+        Suma de los coeficientes:{" "}
+        <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>
+          {fileSumLabel}
+        </Box>{" "}
+        · {coefficientCount} {supplyPointLabel(coefficientCount)}
+      </Typography>
+
       <Typography
         sx={{
           fontSize: fontSizes.lg,

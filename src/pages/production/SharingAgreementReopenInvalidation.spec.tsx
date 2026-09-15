@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { theme } from "../../theme";
 import { ErrorProvider } from "../../context/error.context";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
+import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
 import { useGetSharingAgreementById, useGetSharingAgreementPartitionCoefficients } from "../../api/sharing-agreements/sharing-agreements";
 import {
@@ -77,7 +78,11 @@ function Harness() {
   const { data: coefficients } = useGetSharingAgreementPartitionCoefficients(PLANT_ID, AGREEMENT_ID);
   return (
     <>
-      <SharingAgreementDetailHeader agreement={agreement} coefficients={coefficients} />
+      <SharingAgreementDetailHeader
+        agreement={agreement}
+        coefficients={coefficients}
+        nextStep={selectSharingAgreementNextStep(agreement, coefficients, undefined)}
+      />
       <SharingAgreementCoefficientSet
         plantId={PLANT_ID}
         sharingAgreementId={AGREEMENT_ID}

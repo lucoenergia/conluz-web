@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useRef, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
@@ -6,9 +6,9 @@ import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
+import { ActionStatus } from "../../components/ActionStatus";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
-import { SharingAgreementNextStepPanel } from "../../components/SharingAgreementNextStepPanel";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
@@ -18,6 +18,11 @@ import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
+import {
+  COEFFICIENT_SCALE,
+  computeSharingAgreementCoefficientSums,
+  formatCoefficientPercentage,
+} from "./sharingAgreementCoefficientSums";
 
 export const SharingAgreementDetailPage: FC = () => {
   const { plantId = "", sharingAgreementId = "" } = useParams();
@@ -43,6 +48,15 @@ export const SharingAgreementDetailPage: FC = () => {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [isPublishConfirmationOpen, setIsPublishConfirmationOpen] = useState(false);
   const [isRevertConfirmationOpen, setIsRevertConfirmationOpen] = useState(false);
+  // Owned here rather than in the file panel: the lifecycle rail offers the same
+  // action for stage 2, so both entry points need one source of truth.
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  const agreementName = agreement?.name || "Acuerdo de reparto";
+  const { fileSumUnits } = computeSharingAgreementCoefficientSums(coefficients);
+  const fileSumLabel = formatCoefficientPercentage(fileSumUnits / COEFFICIENT_SCALE);
 
   useEffect(() => {
     if (error) {
@@ -60,14 +74,30 @@ export const SharingAgreementDetailPage: FC = () => {
     if (success) navigate(`/production/${plantId}/sharing-agreements`);
   };
 
+  /**
+   * The control that opened the dialog unmounts on success — the agreement has
+   * changed status, so the rail now offers a different action. Without this,
+   * closing the dialog drops focus to `<body>` and a keyboard user loses their
+   * place at the end of the most consequential action on the page.
+   */
+  const returnFocusToHeading = () => headingRef.current?.focus();
+
   const handlePublishConfirm = async () => {
     const success = await publishAgreement(sharingAgreementId);
-    if (success) setIsPublishConfirmationOpen(false);
+    if (success) {
+      setIsPublishConfirmationOpen(false);
+      setAnnouncement(`El acuerdo «${agreementName}» está en vigor.`);
+      returnFocusToHeading();
+    }
   };
 
   const handleRevertConfirm = async () => {
     const success = await revertAgreementToDraft(sharingAgreementId);
-    if (success) setIsRevertConfirmationOpen(false);
+    if (success) {
+      setIsRevertConfirmationOpen(false);
+      setAnnouncement(`El acuerdo «${agreementName}» ha vuelto a borrador. Sus coeficientes se pueden editar de nuevo.`);
+      returnFocusToHeading();
+    }
   };
 
   return (
@@ -84,6 +114,8 @@ export const SharingAgreementDetailPage: FC = () => {
         boxSizing: "border-box",
       }}
     >
+      <ActionStatus message={announcement} />
+
       <Box sx={{ ...sxStyles.pageContainer, pt: { xs: 2, sm: 0 } }}>
         <BreadCrumb
           steps={[
@@ -113,18 +145,15 @@ export const SharingAgreementDetailPage: FC = () => {
               isLoading={isLoading}
               error={error}
               coefficients={coefficientsData}
+              nextStep={nextStep}
+              headingRef={headingRef}
               onEdit={() => setIsEditDialogOpen(true)}
               onDeleteRequest={() => setIsDeleteConfirmationOpen(true)}
               onPublishRequest={() => setIsPublishConfirmationOpen(true)}
               onRevertRequest={() => setIsRevertConfirmationOpen(true)}
+              onGenerateRequest={() => setIsGenerateDialogOpen(true)}
             />
           </Box>
-
-          {!isLoading && !error && nextStep.kind !== "NONE" && (
-            <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementNextStepPanel nextStep={nextStep} />
-            </Box>
-          )}
 
           {!isLoading && !error && (
             <Box sx={sxStyles.pageContainer}>
@@ -146,6 +175,8 @@ export const SharingAgreementDetailPage: FC = () => {
                 agreement={agreement}
                 coefficients={coefficients}
                 plantRegulatoryCode={plant?.regulatoryCode ?? undefined}
+                isGenerateDialogOpen={isGenerateDialogOpen}
+                onGenerateDialogOpenChange={setIsGenerateDialogOpen}
               />
             </Box>
           )}
@@ -171,7 +202,7 @@ export const SharingAgreementDetailPage: FC = () => {
 
       <DeleteSharingAgreementConfirmationModal
         isOpen={isDeleteConfirmationOpen}
-        agreementName={agreement?.name || "Acuerdo de reparto"}
+        agreementName={agreementName}
         isDeleting={isDeleting}
         onCancel={() => setIsDeleteConfirmationOpen(false)}
         onConfirm={handleDeleteConfirm}
@@ -179,6 +210,9 @@ export const SharingAgreementDetailPage: FC = () => {
 
       <PublishSharingAgreementConfirmationModal
         isOpen={isPublishConfirmationOpen}
+        agreementName={agreementName}
+        fileSumLabel={fileSumLabel}
+        coefficientCount={coefficients.length}
         isPublishing={isPublishing}
         onCancel={() => setIsPublishConfirmationOpen(false)}
         onConfirm={handlePublishConfirm}
@@ -186,6 +220,7 @@ export const SharingAgreementDetailPage: FC = () => {
 
       <RevertSharingAgreementToDraftConfirmationModal
         isOpen={isRevertConfirmationOpen}
+        agreementName={agreementName}
         isReverting={isReverting}
         onCancel={() => setIsRevertConfirmationOpen(false)}
         onConfirm={handleRevertConfirm}

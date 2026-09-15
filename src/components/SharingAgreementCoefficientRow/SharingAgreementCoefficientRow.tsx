@@ -212,6 +212,13 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   );
 };
 
+/**
+ * Footprint of a `size="small"` Checkbox (20px icon + 9px padding either side).
+ * Held as a minimum rather than a fixed width so the empty slot tracks the real
+ * control if MUI's metrics ever change.
+ */
+const SELECTION_SLOT_WIDTH = 38;
+
 export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowProps> = ({
   coefficient,
   installedPowerKw,
@@ -247,13 +254,24 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
     >
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          {showCheckbox && (
-            <Checkbox
-              checked={!!selected}
-              onChange={onToggleSelected}
-              size="small"
-              inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
-            />
+          {showSelectionColumn && (
+            <Box
+              sx={{
+                minWidth: SELECTION_SLOT_WIDTH,
+                display: "flex",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {showCheckbox && (
+                <Checkbox
+                  checked={!!selected}
+                  onChange={onToggleSelected}
+                  size="small"
+                  inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+                />
+              )}
+            </Box>
           )}
           <Typography variant="body2" fontWeight="600">
             {coefficient.supply?.name || "-"}

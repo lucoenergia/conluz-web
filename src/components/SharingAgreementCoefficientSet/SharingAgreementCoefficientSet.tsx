@@ -30,7 +30,7 @@ import { colors, radii, shadows, interactiveTransition, motion} from "../../them
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
 import { SearchBar } from "../SearchBar/SearchBar";
-import { SharingAgreementCoefficientSumCards } from "../SharingAgreementCoefficientSumCards";
+import { SharingAgreementCoefficientSumGauges } from "../SharingAgreementCoefficientSumGauges";
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
@@ -329,6 +329,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const isDraft = agreementStatus === SharingAgreementResponseStatus.DRAFT;
   const kwModeAvailable = installedPowerKw !== undefined && installedPowerKw > 0;
+  // Superseded is a closed CYCLE, not a read-only record: reopening a closed
+  // coefficient revives the agreement, and this selection plus the row actions
+  // menu are the only routes to it. "Closed" is therefore expressed by the
+  // lifecycle rail and by the applied sum reading as a closing figure — never
+  // by removing controls that still do something.
+  //
   // Selection UI only ever applies to a published/superseded agreement — a
   // DRAFT is guaranteed all-PENDING/all-OPEN, but the activate/deactivate/
   // close/reopen endpoints reject DRAFT with 409, so offering checkboxes
@@ -486,6 +492,9 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     [coefficients],
   );
   const showStateColumns = !isDraft || hasAnomalousRow;
+  // Extra columns appearing is the CONSEQUENCE of the anomaly; on its own it
+  // renders a broken draft as an ordinary one. This is the message.
+  const hasDraftAnomaly = isDraft && hasAnomalousRow;
 
   const filteredCoefficients = useMemo(
     () => filterSharingAgreementCoefficients(coefficients, debouncedSearchText, applicationStateFilter),
@@ -628,7 +637,20 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
-      {!isEditing && <SharingAgreementCoefficientSumCards coefficients={coefficients} agreementStatus={agreementStatus} />}
+      {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}
+
+      {!isEditing && installedPowerKw !== undefined && (
+        <Typography variant="body2" sx={{ color: colors.text.subtle, mb: 2 }}>
+          Potencia instalada: {formatKilowatts(installedPowerKw)}
+        </Typography>
+      )}
+
+      {hasDraftAnomaly && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Este borrador contiene coeficientes marcados como aplicados o cerrados, algo que no debería ser posible en un
+          borrador. Revisa los datos con la distribuidora antes de poner el acuerdo en vigor o eliminarlo.
+        </Alert>
+      )}
 
       {/* Row 1, editing mode: unit toggle (fixed shape) + search — search still
           filters `rows` while editing, so it must stay available here too. */}

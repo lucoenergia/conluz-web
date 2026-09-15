@@ -70,6 +70,9 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
             color={confirmColor}
             onClick={handleConfirm}
             disabled={confirmDisabled}
+            // The spinner replaces the label, which would otherwise leave the
+            // button with no accessible name for the duration of the request.
+            aria-label={confirmPending ? confirmLabel : undefined}
             sx={{
               minWidth: "64px",
               padding: "5px 15px",

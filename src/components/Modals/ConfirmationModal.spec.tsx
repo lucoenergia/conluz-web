@@ -53,13 +53,14 @@ describe("ConfirmationModal", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
-  it("swaps the label for a spinner when confirmPending is set", () => {
+  it("swaps the visible label for a spinner when confirmPending is set, while keeping the button's accessible name", () => {
     render(
       <ConfirmationModal isOpen confirmLabel="Deshabilitar" confirmPending onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
         Deshabilitar punto de suministro
       </ConfirmationModal>,
     );
-    expect(screen.queryByRole("button", { name: "Deshabilitar" })).not.toBeInTheDocument();
+    const confirmButton = screen.getByRole("button", { name: "Deshabilitar" });
+    expect(confirmButton).toHaveTextContent("");
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 });

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -87,16 +88,26 @@ function renderPanel(overrides: {
   // must stay undefined for the "no CAU" tests, not silently fall back.
   const plantRegulatoryCode = "plantRegulatoryCode" in overrides ? overrides.plantRegulatoryCode : "CAU0001";
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+
+  const Harness = () => {
+    const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+    return (
+      <SharingAgreementFilePanel
+        plantId="plant-1"
+        sharingAgreementId="agreement-1"
+        agreement={agreement}
+        coefficients={coefficients}
+        plantRegulatoryCode={plantRegulatoryCode}
+        isGenerateDialogOpen={isGenerateDialogOpen}
+        onGenerateDialogOpenChange={setIsGenerateDialogOpen}
+      />
+    );
+  };
+
   return render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <SharingAgreementFilePanel
-          plantId="plant-1"
-          sharingAgreementId="agreement-1"
-          agreement={agreement}
-          coefficients={coefficients}
-          plantRegulatoryCode={plantRegulatoryCode}
-        />
+        <Harness />
       </ThemeProvider>
     </QueryClientProvider>,
   );
@@ -130,7 +141,7 @@ describe("SharingAgreementFilePanel", () => {
       const button = screen.getByRole("button", { name: "Generar fichero" });
       expect(button).toBeDisabled();
       expect(
-        screen.getByText("La suma de los coeficientes debe ser exactamente 100 % para generar el fichero."),
+        screen.getByText("La suma de los coeficientes debe ser exactamente 100,0000 % para generar el fichero."),
       ).toBeInTheDocument();
     });
 
