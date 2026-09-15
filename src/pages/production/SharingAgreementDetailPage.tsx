@@ -175,6 +175,7 @@ export const SharingAgreementDetailPage: FC = () => {
                 installedPowerKw={agreement?.installedPowerKw}
                 agreementStatus={agreement?.status}
                 editRequestId={editCoefficientsRequestId}
+                onImportRequest={() => setIsUploadDialogOpen(true)}
               />
             </Box>
           )}

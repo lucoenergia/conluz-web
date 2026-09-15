@@ -18,7 +18,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
@@ -26,9 +25,11 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { colors, radii, shadows, interactiveTransition, motion} from "../../theme/tokens";
+import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
+import { SectionHeading } from "../SectionHeading";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { SearchBar } from "../SearchBar/SearchBar";
 import { SharingAgreementCoefficientSumGauges } from "../SharingAgreementCoefficientSumGauges";
 import { AddSupplyDialog } from "../AddSupplyDialog";
@@ -117,11 +118,20 @@ export interface SharingAgreementCoefficientSetProps {
    * to arrive as an event rather than as state to mirror.
    */
   editRequestId?: number;
+  /**
+   * Opens the TXT import dialog, which the page owns. Importing replaces the
+   * whole coefficient set, so it belongs beside manual editing rather than in
+   * the distributor-file panel where it used to live.
+   */
+  onImportRequest?: () => void;
 }
 
 // A deliberate 3-chip cut for this slice: applicationState only. The design
 // mock-up shows a fourth "Cerrados" chip keyed on endState instead — left for
 // a later issue, not an oversight.
+const SPLIT_SECTION_DESCRIPTION =
+  "Qué parte de la producción de la planta corresponde a cada punto de suministro.";
+
 const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilter[] = [
   "all",
   SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
@@ -222,8 +232,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   installedPowerKw,
   agreementStatus,
   editRequestId = 0,
+  onImportRequest,
 }) => {
-  const theme = useTheme();
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
   const {
@@ -630,39 +640,65 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     }
   };
 
+  const sectionHeading = (
+    <SectionHeading title="Reparto" description={SPLIT_SECTION_DESCRIPTION} />
+  );
+
+  /**
+   * The two ways of authoring a split, side by side and equally weighted.
+   * Importing a TXT replaces the whole coefficient set, which makes it an
+   * authoring action, not a file-panel action — it used to sit next to
+   * "Generar fichero", where it read as a way of managing the stored file.
+   * Both are DRAFT-only: `PUT .../partition-coefficients` and `POST .../file`
+   * both 409 outside DRAFT.
+   */
+  const authoringActions = isDraft ? (
+    <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, mb: 2.5 }}>
+      <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={handleStartEditing}>
+        Editar a mano
+      </Button>
+      {onImportRequest && (
+        <Button variant="outlined" startIcon={<UploadFileOutlinedIcon />} onClick={onImportRequest}>
+          Importar TXT
+        </Button>
+      )}
+    </Box>
+  ) : null;
+
+  const supplyPicker = isDraft ? (
+    <AddSupplyDialog
+      isOpen={isPickerOpen}
+      communityId={activeCommunityId}
+      alreadyAddedSupplyIds={alreadyAddedSupplyIds}
+      onCancel={() => setIsPickerOpen(false)}
+      onConfirm={handleConfirmAddSupplies}
+    />
+  ) : null;
+
   if (coefficients.length === 0 && !isEditing) {
     return (
-      <>
+      <Paper elevation={0} sx={sxStyles.softPanel}>
+        {sectionHeading}
+        {authoringActions}
         <EmptyState
           icon={HandshakeOutlinedIcon}
           title="Sin coeficientes de reparto"
-          subtitle="Este acuerdo todavía no tiene coeficientes. Podrás adjuntar un fichero o editarlos manualmente."
-          actionButton={
-            isDraft
-              ? { label: "Editar coeficientes", onClick: handleStartEditing, startIcon: <EditOutlinedIcon /> }
-              : undefined
-          }
+          subtitle="Este acuerdo todavía no tiene coeficientes. Añade los puntos de suministro a mano, o importa el fichero TXT que ya tengas."
         />
-        {isDraft && (
-          <AddSupplyDialog
-            isOpen={isPickerOpen}
-            communityId={activeCommunityId}
-            alreadyAddedSupplyIds={alreadyAddedSupplyIds}
-            onCancel={() => setIsPickerOpen(false)}
-            onConfirm={handleConfirmAddSupplies}
-          />
-        )}
-      </>
+        {supplyPicker}
+      </Paper>
     );
   }
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
+      {sectionHeading}
+
       {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}
 
       {!isEditing && installedPowerKw !== undefined && (
         <Typography variant="body2" sx={{ color: colors.text.subtle, mb: 2 }}>
-          Potencia instalada: {formatKilowatts(installedPowerKw)}
+          Potencia instalada de la planta: {formatKilowatts(installedPowerKw)}
         </Typography>
       )}
 
@@ -671,6 +707,23 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           Este borrador contiene coeficientes marcados como aplicados o cerrados, algo que no debería ser posible en un
           borrador. Revisa los datos con la distribuidora antes de poner el acuerdo en vigor o eliminarlo.
         </Alert>
+      )}
+
+      {!isEditing && authoringActions}
+
+      {/* Stated above the list and visible without hover: "Potencia asignada" is
+          the single most misread figure on this page. It is a share of installed
+          power, not an entitlement to energy. */}
+      {!isEditing && (
+        <Typography
+          sx={{ fontSize: fontSizes.lg, lineHeight: 1.5, color: colors.text.body, mb: 2.5, textWrap: "pretty" }}
+        >
+          <Box component="strong" sx={{ fontWeight: 600 }}>
+            Potencia asignada:
+          </Box>{" "}
+          parte de la potencia instalada que corresponde a cada punto según su coeficiente. No es potencia garantizada:
+          la energía que recibe depende de lo que produzca la planta en cada momento.
+        </Typography>
       )}
 
       {/* Row 1, editing mode: unit toggle (fixed shape) + search — search still
@@ -741,27 +794,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             mb: 2,
           }}
         >
-          {isDraft && (
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <Button
-                variant="contained"
-                startIcon={<EditOutlinedIcon />}
-                onClick={handleStartEditing}
-                sx={{
-                  background: theme.palette.primary.main,
-                  boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
-                  "&:hover": {
-                    transform: `translateY(${motion.lift})`,
-                    boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
-                  },
-                  transition: interactiveTransition("0.3s", "ease"),
-                }}
-              >
-                Editar coeficientes
-              </Button>
-            </Box>
-          )}
-
           {showStateColumns && (
             <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
               <FilterListIcon sx={{ color: colors.text.secondary, display: { xs: "none", sm: "block" } }} />
@@ -897,7 +929,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {isEditing && inputUnit === "kw" ? "% equivalente" : "Energía asignada"}
+                      {isEditing && inputUnit === "kw" ? "% equivalente" : "Potencia asignada"}
                     </Typography>
                   </TableCell>
                   {showStateColumns && (
