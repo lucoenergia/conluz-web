@@ -1530,8 +1530,8 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
 });
 
 // AC8. Three PENDING and two APPLIED: a single-element collection would prove
-// nothing about "all pending rows".
-describe("SharingAgreementCoefficientSet (registering dates in bulk)", () => {
+// nothing about which rows are surfaced.
+describe("SharingAgreementCoefficientSet (registering dates)", () => {
   const mixed: SharingAgreementPartitionCoefficientResponse[] = [
     { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
     { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
@@ -1560,45 +1560,51 @@ describe("SharingAgreementCoefficientSet (registering dates in bulk)", () => {
     );
   }
 
-  it("preselects every pending row and opens the batch bar when the page asks", async () => {
+  it("narrows the table to the rows still waiting for a date", async () => {
     const { rerender } = render(renderWithRequestId(0));
 
-    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
 
     rerender(renderWithRequestId(1));
 
-    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
-    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
-
-    for (const name of ["Local C", "Nave D", "Taller E"]) {
-      expect(screen.getAllByRole("checkbox", { name: `Seleccionar ${name}` })[0]).toBeChecked();
-    }
-    for (const name of ["Vivienda A", "Vivienda B"]) {
-      expect(screen.getAllByRole("checkbox", { name: `Seleccionar ${name}` })[0]).not.toBeChecked();
-    }
-  });
-
-  it("clears an active filter first, so no selected row stays hidden behind it", async () => {
-    const user = userEvent.setup();
-    const { rerender } = render(renderWithRequestId(0));
-
-    // Hide the pending rows behind the "En vigor" chip.
-    await user.click(screen.getByRole("button", { name: "En vigor" }));
-    expect(screen.queryByText("Local C")).not.toBeInTheDocument();
-
-    rerender(renderWithRequestId(1));
-
-    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
-    // Every selected row is visible, and the bar's count matches what is on screen.
-    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
-    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
+    expect(screen.queryByText("Vivienda B")).not.toBeInTheDocument();
     for (const name of ["Local C", "Nave D", "Taller E"]) {
       expect(screen.getAllByText(name).length).toBeGreaterThan(0);
-      expect(screen.getAllByRole("checkbox", { name: `Seleccionar ${name}` })[0]).toBeChecked();
+    }
+    expect(screen.getByRole("button", { name: "Sin aplicar" })).toHaveClass(/MuiChip-colorWarning/);
+  });
+
+  it("selects nothing — which rows share a date is the admin's judgement, not a default", async () => {
+    // The distributor rarely applies every point on the same day. Arriving with
+    // every row ticked invites a bulk action nobody decided on.
+    const { rerender } = render(renderWithRequestId(0));
+    rerender(renderWithRequestId(1));
+
+    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
+
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+    for (const checkbox of screen.queryAllByRole("checkbox")) {
+      expect(checkbox).not.toBeChecked();
     }
   });
 
-  it("clears an active search first, for the same reason", async () => {
+  it("still lets the admin select the rows it surfaced, and only then offers the batch bar", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(renderWithRequestId(0));
+    rerender(renderWithRequestId(1));
+
+    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar Local C" })[0]);
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar Nave D" })[0]);
+
+    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+  });
+
+  it("clears a leftover search, so nothing the filter surfaced stays hidden behind it", async () => {
     const user = userEvent.setup();
     const { rerender } = render(renderWithRequestId(0));
 
@@ -1607,15 +1613,31 @@ describe("SharingAgreementCoefficientSet (registering dates in bulk)", () => {
 
     rerender(renderWithRequestId(1));
 
-    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
-    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
-    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByText("Local C").length).toBeGreaterThan(0));
     expect(screen.getByPlaceholderText("Buscar por punto o CUPS")).toHaveValue("");
   });
 
-  it("does not open the batch bar on mount just because a request id is present", () => {
+  it("brings the table into view, since the panel that asked is above it", async () => {
+    const scrollIntoView = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      const { rerender } = render(renderWithRequestId(0));
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      rerender(renderWithRequestId(1));
+
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" })));
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it("does nothing on mount just because a request id is present", () => {
     render(renderWithRequestId(4));
 
+    expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
   });
 });

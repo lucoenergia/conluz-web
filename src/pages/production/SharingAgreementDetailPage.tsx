@@ -21,6 +21,7 @@ import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
+import { BATCH_BAR_HEIGHT_DESKTOP, BATCH_BAR_HEIGHT_MOBILE } from "./sharingAgreementBatchBar";
 import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
@@ -72,6 +73,10 @@ export const SharingAgreementDetailPage: FC = () => {
   // the coefficient set, and both the application panel and the next-step
   // banner's stage-5 action start it.
   const [registerDatesRequestId, setRegisterDatesRequestId] = useState(0);
+  // The batch bar is fixed over the viewport, so the room it needs has to be
+  // reserved here, after the last section — reserved inside the coefficient
+  // panel it left the distributor-file panel below it still covered.
+  const [isBatchBarMounted, setIsBatchBarMounted] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -206,6 +211,7 @@ export const SharingAgreementDetailPage: FC = () => {
                 // while authoring is the current step; the section offers them
                 // the rest of the time, so only one pair is ever on screen.
                 showAuthoringActions={nextStep.kind !== "AUTHOR_COEFFICIENTS"}
+                onBatchBarMountedChange={setIsBatchBarMounted}
               />
             </Box>
           )}
@@ -223,6 +229,15 @@ export const SharingAgreementDetailPage: FC = () => {
               />
             </Box>
           )}
+
+          <Box
+            sx={{
+              height: {
+                xs: isBatchBarMounted ? BATCH_BAR_HEIGHT_MOBILE : 0,
+                sm: isBatchBarMounted ? BATCH_BAR_HEIGHT_DESKTOP : 0,
+              },
+            }}
+          />
         </>
       )}
 

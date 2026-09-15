@@ -84,26 +84,11 @@ import {
   useSharingAgreementCoefficientMutations,
   type CoefficientActivationResult,
 } from "../../pages/production/useSharingAgreementCoefficientMutations";
+import {
+  BATCH_BAR_HEIGHT_DESKTOP,
+  BATCH_BAR_HEIGHT_MOBILE,
+} from "../../pages/production/sharingAgreementBatchBar";
 
-// Authoritative rather than measured: these constants *set* the fixed bar's
-// height (and the matching spacer's height) at each breakpoint, rather than
-// describing whatever the content happens to render at.
-//
-// Re-derived for the Acciones-menu bar (no more inline DatePicker, helper
-// text, or reason caption — that content moved into the per-action dialogs).
-// Measured via a real Chromium render (temporarily freeing the sx height to
-// read the content's natural height), worst case: the two-part hidden-count
-// text ("N seleccionados · M ocultos por el filtro"), which did not wrap to
-// a second line at either viewport.
-// Mobile (390px, mobile project): 124.3px natural content height (count
-// text + "Limpiar selección" stacked above the "Acciones" button) —
-// rounded up with headroom for a device's safe-area-inset-bottom, which
-// this measurement doesn't simulate.
-const BATCH_BAR_HEIGHT_MOBILE = 144;
-// Desktop (1440px): 53.5px natural content height (count text, "Limpiar
-// selección" and "Acciones" all on one row) — rounded up with headroom on
-// the same basis as the mobile constant.
-const BATCH_BAR_HEIGHT_DESKTOP = 72;
 
 export interface SharingAgreementCoefficientSetProps {
   plantId: string;
@@ -136,6 +121,13 @@ export interface SharingAgreementCoefficientSetProps {
    * both would put two identically-labelled buttons on one screen.
    */
   showAuthoringActions?: boolean;
+  /**
+   * Reports whether the fixed batch bar is currently up. The spacer that keeps
+   * content clear of it has to live on the page, not in this panel: the bar is
+   * `position: fixed` over the whole viewport, so reserving room here left every
+   * section below — the distributor-file panel — still covered by it.
+   */
+  onBatchBarMountedChange?: (isMounted: boolean) => void;
 }
 
 // A deliberate 3-chip cut for this slice: applicationState only. The design
@@ -248,6 +240,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   onImportRequest,
   registerDatesRequestId = 0,
   showAuthoringActions = true,
+  onBatchBarMountedChange,
 }) => {
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
@@ -385,6 +378,10 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // whether they're mounted.
   const isBatchBarMounted = selectedIds.size > 0;
 
+  useEffect(() => {
+    onBatchBarMountedChange?.(isBatchBarMounted);
+  }, [isBatchBarMounted, onBatchBarMountedChange]);
+
   const toggleSelected = (coefficientId: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -431,32 +428,32 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const handleClearSelection = () => setSelectedIds(new Set());
 
   /**
-   * Preselect every coefficient still waiting for a date, and show the batch bar.
+   * Show the coefficients still waiting for a date, and bring them into view.
    *
-   * The filter and the search are cleared *first*, deliberately. Selecting rows
-   * a live filter is hiding would put the bar's count out of step with what the
-   * user can see, and the batch dialogs would then report targets hidden by a
-   * filter the user never set — for an action they did not scope themselves.
+   * It deliberately does NOT select anything. Choosing which points share an
+   * application date is the admin's judgement — the distributor rarely applies
+   * them all on the same day — and a screen that arrives with 29 rows already
+   * ticked invites a bulk action nobody actually decided on. Narrow the list,
+   * then let them pick.
+   *
+   * The search is cleared alongside the filter so a leftover query cannot hide
+   * part of what the filter just surfaced.
    */
   const lastHandledRegisterDatesRequestId = useRef(registerDatesRequestId);
   useEffect(() => {
     if (registerDatesRequestId === lastHandledRegisterDatesRequestId.current) return;
     lastHandledRegisterDatesRequestId.current = registerDatesRequestId;
 
-    setApplicationStateFilter("all");
+    setApplicationStateFilter(SharingAgreementPartitionCoefficientResponseApplicationState.PENDING);
     setSearchText("");
-    setSelectedIds(
-      new Set(
-        coefficients
-          .filter(
-            (coefficient) =>
-              coefficient.applicationState ===
-              SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
-          )
-          .map((coefficient) => coefficient.coefficientId),
-      ),
-    );
-  }, [registerDatesRequestId, coefficients]);
+    setSelectedIds(new Set());
+    // The request came from a panel above the table, which on a long agreement
+    // is well off screen.
+    panelRef.current?.scrollIntoView({
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [registerDatesRequestId]);
 
   const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
     setActionsAnchorEl(event.currentTarget);
@@ -1160,15 +1157,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           onSelectAction={handleSelectBatchAction}
         />
       </Menu>
-
-      <Box
-        sx={{
-          height: {
-            xs: isBatchBarMounted ? BATCH_BAR_HEIGHT_MOBILE : 0,
-            sm: isBatchBarMounted ? BATCH_BAR_HEIGHT_DESKTOP : 0,
-          },
-        }}
-      />
 
       {isDraft && (
         <AddSupplyDialog

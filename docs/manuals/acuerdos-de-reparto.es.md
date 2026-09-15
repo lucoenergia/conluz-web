@@ -276,11 +276,16 @@ En un acuerdo Vigente, la primera sección de la pantalla es **Aplicación del r
 tienen ya fecha («3 de 12 puntos con fecha de aplicación»), recuerda la consecuencia de no tenerla, y ofrece el
 botón **Registrar fechas (N pendientes)**.
 
+Al pulsar **Registrar fechas** —en la sección **Aplicación del reparto** o en el bloque **Siguiente paso**—
+Conluz te lleva a la tabla de coeficientes y la filtra por **Sin aplicar**, para que veas solo los puntos que
+te faltan. **No marca ninguno**: normalmente la distribuidora no aplica todos el mismo día, así que eres tú
+quien decide qué puntos comparten fecha.
+
 Para registrar varias fechas a la vez:
 
-1. Pulsa **Registrar fechas** — en la sección **Aplicación del reparto** o en el bloque **Siguiente paso**.
-   Conluz limpia los filtros y la búsqueda y marca por ti **todos** los puntos que aún no tienen fecha.
-2. Ajusta la selección si quieres, con la casilla de cada fila.
+1. Pulsa **Registrar fechas**.
+2. Marca con la casilla de su fila los puntos que comparten la misma fecha de aplicación (en móvil tienes
+   **Seleccionar todas** para marcar de golpe los que estés viendo).
 3. En la barra que aparece al pie, pulsa **Acciones → Registrar fecha**.
 4. Indica la **Fecha de aplicación** (no puede ser una fecha futura) y confirma.
 
