@@ -2,6 +2,7 @@ import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponseStatus as StatusValue } from "../../api/models";
 import type { SharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { formatCoefficientGapMessage } from "./sharingAgreementGapMessage";
+import { pluralize } from "../../utils/pluralize";
 
 export type StageNumber = 1 | 2 | 3 | 4 | 5;
 
@@ -45,6 +46,25 @@ export interface LifecycleCurrentStep {
   secondaryLine?: string;
 }
 
+/**
+ * What the next-step block offers. The selector names the *intent*; the header
+ * binds it to a handler. Keeping handlers out means every rule about which
+ * action is available in which state stays testable without rendering, and
+ * stays in one place — this module — instead of being re-derived by whichever
+ * component happens to render a button.
+ */
+export type LifecycleActionKind =
+  | "EDIT_COEFFICIENTS"
+  | "IMPORT_FILE"
+  | "PUBLISH"
+  | "DOWNLOAD_FILE"
+  | "RECORD_DATES";
+
+export interface LifecycleActionIntent {
+  kind: LifecycleActionKind;
+  label: string;
+}
+
 export interface LifecycleView {
   stages: LifecycleStageView[];
   /**
@@ -60,6 +80,18 @@ export interface LifecycleView {
   completionNote?: string;
   isClosed: boolean;
   isIndeterminate: boolean;
+  /** The one sentence the next-step block leads with. Absent only while indeterminate. */
+  headline?: string;
+  /** Where in the cycle the rail says we are, e.g. "Paso 1 de 5 · Define el reparto". */
+  railCaption?: string;
+  primary?: LifecycleActionIntent;
+  secondary?: LifecycleActionIntent;
+  /**
+   * Why the state-advancing action is absent, as visible text. An action that
+   * would fail is not rendered at all, so the reason has to carry itself —
+   * it is never a tooltip and never hangs off a button that isn't there.
+   */
+  blockedNote?: string;
 }
 
 function buildStages(stateFor: (stage: StageNumber) => StageState): LifecycleStageView[] {
@@ -110,10 +142,11 @@ function currentStepFor(
       return {
         title: "Registra las fechas de aplicación",
         body: "Marca la fecha en la que la distribuidora aplicó cada coeficiente.",
-        requirement:
-          nextStep.pendingCount === 1
-            ? "1 coeficiente sin fecha de aplicación."
-            : `${nextStep.pendingCount} coeficientes sin fecha de aplicación.`,
+        requirement: `${nextStep.pendingCount} ${pluralize(
+          nextStep.pendingCount,
+          "coeficiente sin fecha de aplicación.",
+          "coeficientes sin fecha de aplicación.",
+        )}`,
       };
   }
 }
@@ -134,6 +167,13 @@ export function selectSharingAgreementLifecycleView(
       completionNote: "Este acuerdo fue sustituido por otro. Su ciclo está cerrado.",
       isClosed: true,
       isIndeterminate: false,
+      // Deliberately not "no se puede modificar": a superseded agreement still
+      // accepts date corrections and reopening a closed coefficient, and
+      // reopening one puts the agreement back in force. The copy has to match
+      // what the row actions actually allow.
+      headline:
+        "Este acuerdo ya no está en vigor. Puedes consultarlo y corregir fechas de aplicación; reabrir un punto vuelve a poner el acuerdo en vigor.",
+      railCaption: "Ciclo cerrado · acuerdo histórico",
     };
   }
 
@@ -155,18 +195,37 @@ export function selectSharingAgreementLifecycleView(
       completionNote: "El reparto está en vigor y todos los coeficientes tienen fecha de aplicación.",
       isClosed: false,
       isIndeterminate: false,
+      headline: `${nextStep.totalCount} ${pluralize(
+        nextStep.totalCount,
+        "punto tiene fecha de aplicación",
+        "puntos tienen fecha de aplicación",
+      )}: el reparto ya está aplicándose.`,
+      railCaption: "Los 5 pasos están hechos",
     };
   }
 
   const current = currentStepFor(nextStep);
 
   if (nextStep.kind === "AUTHOR_COEFFICIENTS") {
+    const isEmptySet = nextStep.blockedReason === "NO_COEFFICIENTS";
     return {
       stages: buildStages(withExternalStage((stage) => (stage === 1 ? "current" : "pending"))),
       isSpanActive: false,
       current,
       isClosed: false,
       isIndeterminate: false,
+      headline: isEmptySet
+        ? "Empieza por definir el reparto: añade los puntos de suministro y el coeficiente de cada uno."
+        : `Completa el reparto: ${formatCoefficientGapMessage(nextStep.deltaMillionths) ?? ""}`,
+      railCaption: "Paso 1 de 5 · Define el reparto",
+      // Authoring, not publishing. Neither "Poner en vigor" nor "Generar el
+      // fichero" is offered here at all: both would 409 on a set that doesn't
+      // sum to exactly 1, and an action that is going to fail is not rendered.
+      primary: { kind: "EDIT_COEFFICIENTS", label: "Editar a mano" },
+      secondary: { kind: "IMPORT_FILE", label: "Importar TXT" },
+      blockedNote: isEmptySet
+        ? "Este acuerdo todavía no tiene coeficientes."
+        : "«Poner en vigor» y «Generar el fichero» aparecerán cuando los coeficientes sumen 100,0000 %.",
     };
   }
 
@@ -183,6 +242,13 @@ export function selectSharingAgreementLifecycleView(
       current,
       isClosed: false,
       isIndeterminate: false,
+      headline:
+        "El reparto suma 100,0000 %. Genera el fichero, envíalo a la distribuidora y, cuando lo acepte, pon el acuerdo en vigor.",
+      railCaption: "Pasos 2, 3 y 4 en curso · Conluz no puede saber en cuál estás",
+      primary: { kind: "PUBLISH", label: "Poner en vigor" },
+      // Without a CAU the generate endpoint 409s, so the download is not
+      // offered; `current.requirement` already states why in visible text.
+      secondary: nextStep.canGenerate ? { kind: "DOWNLOAD_FILE", label: "Descargar fichero" } : undefined,
     };
   }
 
@@ -192,5 +258,16 @@ export function selectSharingAgreementLifecycleView(
     current,
     isClosed: false,
     isIndeterminate: false,
+    headline:
+      "Registra la fecha de aplicación de los puntos que faltan: un punto sin fecha no recibe producción.",
+    railCaption: "Paso 5 de 5 · Registra las fechas de aplicación",
+    primary: {
+      kind: "RECORD_DATES",
+      label: `Registrar fechas (${nextStep.pendingCount} ${pluralize(
+        nextStep.pendingCount,
+        "pendiente",
+        "pendientes",
+      )})`,
+    },
   };
 }

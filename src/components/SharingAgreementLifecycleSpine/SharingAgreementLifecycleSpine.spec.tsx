@@ -86,14 +86,14 @@ describe("SharingAgreementLifecycleSpine", () => {
     });
 
     it("shows the pending-count requirement for stage 5", () => {
-      renderSpine({ kind: "RECORD_APPLICATION_DATES", pendingCount: 3 }, PUBLISHED);
+      renderSpine({ kind: "RECORD_APPLICATION_DATES", pendingCount: 3, totalCount: 12 }, PUBLISHED);
 
       expect(screen.getByText("Registra las fechas de aplicación")).toBeInTheDocument();
       expect(screen.getByText("3 coeficientes sin fecha de aplicación.")).toBeInTheDocument();
     });
 
     it("shows a quiet completion line, and no action, once the cycle is finished", () => {
-      renderSpine({ kind: "ALL_DONE" }, PUBLISHED);
+      renderSpine({ kind: "ALL_DONE", totalCount: 12 }, PUBLISHED);
 
       expect(
         screen.getByText("El reparto está en vigor y todos los coeficientes tienen fecha de aplicación."),
