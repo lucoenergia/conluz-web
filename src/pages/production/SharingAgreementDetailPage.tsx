@@ -56,6 +56,10 @@ export const SharingAgreementDetailPage: FC = () => {
   // dialog is: importing a TXT is a way of authoring coefficients, and more than
   // one surface on this page offers it.
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  // A nonce, not a boolean: "empezar a editar" is a repeatable request with no
+  // closed state of its own, and the editor's seeding logic has to stay inside
+  // the coefficient set, which owns the rows.
+  const [editCoefficientsRequestId, setEditCoefficientsRequestId] = useState(0);
   const [announcement, setAnnouncement] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -157,6 +161,8 @@ export const SharingAgreementDetailPage: FC = () => {
               onPublishRequest={() => setIsPublishConfirmationOpen(true)}
               onRevertRequest={() => setIsRevertConfirmationOpen(true)}
               onGenerateRequest={() => setIsGenerateDialogOpen(true)}
+              onEditCoefficientsRequest={() => setEditCoefficientsRequestId((id) => id + 1)}
+              onImportRequest={() => setIsUploadDialogOpen(true)}
             />
           </Box>
 
@@ -168,6 +174,7 @@ export const SharingAgreementDetailPage: FC = () => {
                 coefficients={coefficients}
                 installedPowerKw={agreement?.installedPowerKw}
                 agreementStatus={agreement?.status}
+                editRequestId={editCoefficientsRequestId}
               />
             </Box>
           )}

@@ -17,15 +17,37 @@ export const EXTERNAL_STAGE: StageNumber = 3;
 
 export interface LifecycleStage {
   title: string;
+  /** The title trimmed to fit under a marker on a desktop rail. */
+  shortTitle: string;
   description: string;
 }
 
 export const STAGES: ReadonlyArray<LifecycleStage> = [
-  { title: "Define el reparto", description: "Sube el TXT o introduce los coeficientes a mano hasta sumar 100,0000 %." },
-  { title: "Genera el fichero", description: "Conluz construye el TXT para la distribuidora. No se guarda: se descarga." },
-  { title: "Envíalo a la distribuidora", description: "Fuera de Conluz, por email. La aplicación no puede comprobar este paso." },
-  { title: "Ponlo en vigor", description: "Sella el reparto cuando la distribuidora lo acepte. Deja de ser editable." },
-  { title: "Registra las fechas de aplicación", description: "Marca la fecha en la que la distribuidora aplicó cada coeficiente." },
+  {
+    title: "Define el reparto",
+    shortTitle: "Define el reparto",
+    description: "Sube el TXT o introduce los coeficientes a mano hasta sumar 100,0000 %.",
+  },
+  {
+    title: "Genera el fichero",
+    shortTitle: "Genera el fichero",
+    description: "Conluz construye el TXT para la distribuidora. No se guarda: se descarga.",
+  },
+  {
+    title: "Envíalo a la distribuidora",
+    shortTitle: "Envíalo (fuera de Conluz)",
+    description: "Fuera de Conluz, por email. La aplicación no puede comprobar este paso.",
+  },
+  {
+    title: "Ponlo en vigor",
+    shortTitle: "Ponlo en vigor",
+    description: "Sella el reparto cuando la distribuidora lo acepte. Deja de ser editable.",
+  },
+  {
+    title: "Registra las fechas de aplicación",
+    shortTitle: "Registra las fechas",
+    description: "Marca la fecha en la que la distribuidora aplicó cada coeficiente.",
+  },
 ];
 
 /**
@@ -247,8 +269,12 @@ export function selectSharingAgreementLifecycleView(
       railCaption: "Pasos 2, 3 y 4 en curso · Conluz no puede saber en cuál estás",
       primary: { kind: "PUBLISH", label: "Poner en vigor" },
       // Without a CAU the generate endpoint 409s, so the download is not
-      // offered; `current.requirement` already states why in visible text.
+      // offered at all — and the reason has to carry itself, since there is no
+      // button left to hang a description off.
       secondary: nextStep.canGenerate ? { kind: "DOWNLOAD_FILE", label: "Descargar fichero" } : undefined,
+      blockedNote: nextStep.canGenerate
+        ? undefined
+        : "La planta no tiene CAU configurado. Sin él no se puede generar el fichero.",
     };
   }
 

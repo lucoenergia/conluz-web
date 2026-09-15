@@ -110,6 +110,13 @@ export interface SharingAgreementCoefficientSetProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];
   installedPowerKw: number | undefined;
   agreementStatus: StatusValue | undefined;
+  /**
+   * Bumped by the page when another surface — the next-step banner — asks to
+   * start editing. A nonce rather than a controlled boolean: the rows are seeded
+   * here, from the coefficients this component already holds, so the request has
+   * to arrive as an event rather than as state to mirror.
+   */
+  editRequestId?: number;
 }
 
 // A deliberate 3-chip cut for this slice: applicationState only. The design
@@ -214,6 +221,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   coefficients,
   installedPowerKw,
   agreementStatus,
+  editRequestId = 0,
 }) => {
   const theme = useTheme();
   const activeCommunityId = useActiveCommunity();
@@ -575,6 +583,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, installedPowerKw));
     setIsEditing(true);
   };
+
+  // The page asks for the editor by bumping `editRequestId`. Seeding stays here
+  // because the rows are built from the coefficients this component holds; the
+  // mount value is ignored so a fresh page never opens straight into the editor.
+  const lastHandledEditRequestId = useRef(editRequestId);
+  useEffect(() => {
+    if (editRequestId === lastHandledEditRequestId.current) return;
+    lastHandledEditRequestId.current = editRequestId;
+    handleStartEditing();
+    // `handleStartEditing` is re-created every render; depending on it would
+    // re-run this on every render instead of on every request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editRequestId]);
 
   const handleCancelEditing = () => {
     setIsEditing(false);

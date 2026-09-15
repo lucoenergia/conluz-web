@@ -1,30 +1,22 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "../../theme";
-import { SharingAgreementLifecycleSpine, type SharingAgreementLifecycleSpineProps } from "./SharingAgreementLifecycleSpine";
+import { SharingAgreementLifecycleSpine } from "./SharingAgreementLifecycleSpine";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponseStatus as StatusValue } from "../../api/models";
 import { selectSharingAgreementLifecycleView } from "../../pages/production/sharingAgreementLifecycle";
 import type { SharingAgreementNextStep } from "../../pages/production/selectSharingAgreementNextStep";
 
 const DRAFT = SharingAgreementResponseStatus.DRAFT;
-const PUBLISHED = SharingAgreementResponseStatus.PUBLISHED;
 const SUPERSEDED = SharingAgreementResponseStatus.SUPERSEDED;
 
-function renderSpine(
-  nextStep: SharingAgreementNextStep,
-  status: StatusValue = DRAFT,
-  actions: Omit<SharingAgreementLifecycleSpineProps, "view"> = {},
-) {
+function renderSpine(nextStep: SharingAgreementNextStep, status: StatusValue = DRAFT) {
   return render(
     <ThemeProvider theme={theme}>
-      <SharingAgreementLifecycleSpine
-        view={selectSharingAgreementLifecycleView(nextStep, status)}
-        {...actions}
-      />
+      <SharingAgreementLifecycleSpine view={selectSharingAgreementLifecycleView(nextStep, status)} />
     </ThemeProvider>,
   );
 }
@@ -66,100 +58,46 @@ describe("SharingAgreementLifecycleSpine", () => {
     expect(document.querySelectorAll('[aria-current="step"]')).toHaveLength(2);
   });
 
-  describe("current-step copy", () => {
-    it("shows the NO_COEFFICIENTS title, body and requirement", () => {
-      renderSpine({ kind: "AUTHOR_COEFFICIENTS", blockedReason: "NO_COEFFICIENTS" });
-
-      expect(screen.getByText("Define el reparto")).toBeInTheDocument();
-      expect(screen.getByText("Sube el fichero TXT de reparto o introduce los coeficientes a mano.")).toBeInTheDocument();
-      expect(screen.getByText("Este acuerdo todavía no tiene coeficientes.")).toBeInTheDocument();
-    });
-
-    it("shows the generate-and-send copy, including that sending happens outside the application", () => {
+  describe("what the rail no longer carries", () => {
+    // The sentence describing the current step, and the control that performs
+    // it, live in the next-step banner. Rendering both meant one instruction
+    // printed twice on a single screen.
+    it("does not restate the current step's title or body", () => {
       renderSpine({ kind: "GENERATE_AND_SEND", canGenerate: true });
 
-      expect(screen.getByText("Genera el fichero y envíalo a la distribuidora")).toBeInTheDocument();
-      expect(screen.getByText(/El envío se hace fuera de la aplicación, por email\./)).toBeInTheDocument();
-      expect(
-        screen.getByText("Cuando la distribuidora confirme que lo ha aplicado, pon el acuerdo en vigor."),
-      ).toBeInTheDocument();
+      expect(screen.queryByText("Genera el fichero y envíalo a la distribuidora")).not.toBeInTheDocument();
+      expect(screen.queryByText(/El envío se hace fuera de la aplicación, por email\./)).not.toBeInTheDocument();
     });
 
-    it("shows the pending-count requirement for stage 5", () => {
-      renderSpine({ kind: "RECORD_APPLICATION_DATES", pendingCount: 3, totalCount: 12 }, PUBLISHED);
+    it("renders no action other than its own disclosure toggle", () => {
+      renderSpine({ kind: "GENERATE_AND_SEND", canGenerate: true });
 
-      expect(screen.getByText("Registra las fechas de aplicación")).toBeInTheDocument();
-      expect(screen.getByText("3 coeficientes sin fecha de aplicación.")).toBeInTheDocument();
-    });
-
-    it("shows a quiet completion line, and no action, once the cycle is finished", () => {
-      renderSpine({ kind: "ALL_DONE", totalCount: 12 }, PUBLISHED);
-
-      expect(
-        screen.getByText("El reparto está en vigor y todos los coeficientes tienen fecha de aplicación."),
-      ).toBeInTheDocument();
-      // The disclosure toggle is the only button the rail renders on its own.
       expect(screen.getAllByRole("button")).toHaveLength(1);
       expect(screen.getByRole("button", { name: "Ver todos los pasos" })).toBeInTheDocument();
     });
-
-    it("states that a superseded agreement's cycle is closed, with no step to act on", () => {
-      renderSpine({ kind: "NONE" }, SUPERSEDED);
-
-      expect(
-        screen.getByText("Este acuerdo fue sustituido por otro. Su ciclo está cerrado."),
-      ).toBeInTheDocument();
-      expect(document.querySelector('[aria-current="step"]')).toBeNull();
-    });
   });
 
-  describe("actions", () => {
-    it("runs the handler for an available action", async () => {
-      const publish = { label: "Poner en vigor", onClick: vi.fn() };
-      const user = userEvent.setup();
-      renderSpine({ kind: "GENERATE_AND_SEND", canGenerate: true }, DRAFT, { publish });
+  describe("position caption", () => {
+    it("names the live span rather than pretending to know which of its stages is current", () => {
+      renderSpine({ kind: "GENERATE_AND_SEND", canGenerate: true });
 
-      await user.click(screen.getByRole("button", { name: "Poner en vigor" }));
-      expect(publish.onClick).toHaveBeenCalled();
+      expect(
+        screen.getByText("Pasos 2, 3 y 4 en curso · Conluz no puede saber en cuál estás"),
+      ).toBeInTheDocument();
     });
 
-    it("keeps a gated action focusable and described instead of removing it from the tab order", () => {
-      const publish = { label: "Poner en vigor", onClick: vi.fn(), disabledReason: "Faltan coeficientes." };
-      renderSpine({ kind: "AUTHOR_COEFFICIENTS", blockedReason: "NO_COEFFICIENTS" }, DRAFT, { publish });
+    it("says nothing about position while the data is still in flight", () => {
+      renderSpine({ kind: "NONE" });
 
-      const button = screen.getByRole("button", { name: "Poner en vigor" });
-      expect(button).not.toBeDisabled();
-      expect(button).toHaveAttribute("aria-disabled", "true");
-      const describedBy = button.getAttribute("aria-describedby") as string;
-      expect(document.getElementById(describedBy)).toHaveTextContent("Faltan coeficientes.");
+      expect(screen.queryByText(/^Paso \d de 5/)).not.toBeInTheDocument();
+      expect(screen.queryByText("Ciclo cerrado · acuerdo histórico")).not.toBeInTheDocument();
     });
 
-    it("does not run the handler for a gated action", async () => {
-      const publish = { label: "Poner en vigor", onClick: vi.fn(), disabledReason: "Faltan coeficientes." };
-      const user = userEvent.setup();
-      renderSpine({ kind: "AUTHOR_COEFFICIENTS", blockedReason: "NO_COEFFICIENTS" }, DRAFT, { publish });
+    it("reads as closed, not as in progress, for a superseded agreement", () => {
+      renderSpine({ kind: "NONE" }, SUPERSEDED);
 
-      await user.click(screen.getByRole("button", { name: "Poner en vigor" }));
-      expect(publish.onClick).not.toHaveBeenCalled();
-    });
-
-    it("offers both span actions at once — the admin decides when they have sent the file", () => {
-      renderSpine({ kind: "GENERATE_AND_SEND", canGenerate: true }, DRAFT, {
-        generate: { label: "Generar fichero", onClick: vi.fn() },
-        publish: { label: "Poner en vigor", onClick: vi.fn() },
-      });
-
-      expect(screen.getByRole("button", { name: "Generar fichero" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Poner en vigor" })).toBeInTheDocument();
-    });
-
-    it("prints a shared reason once, not twice, when a gated action repeats the stage requirement", () => {
-      const reason = "La planta no tiene CAU configurado. Sin él no se puede generar el fichero.";
-      renderSpine({ kind: "GENERATE_AND_SEND", canGenerate: false, blockedReason: "NO_REGULATORY_CODE" }, DRAFT, {
-        generate: { label: "Generar fichero", onClick: vi.fn(), disabledReason: reason },
-      });
-
-      expect(screen.getAllByText(reason)).toHaveLength(1);
+      expect(screen.getByText("Ciclo cerrado · acuerdo histórico")).toBeInTheDocument();
+      expect(document.querySelector('[aria-current="step"]')).toBeNull();
     });
   });
 
@@ -176,12 +114,15 @@ describe("SharingAgreementLifecycleSpine", () => {
       expect(screen.getByText(/5\. Registra las fechas de aplicación/)).toBeInTheDocument();
     });
 
-    it("expands on click", async () => {
+    it("expands on click, and its label states what the next click will do", async () => {
       const user = userEvent.setup();
       renderSpine({ kind: "AUTHOR_COEFFICIENTS", blockedReason: "NO_COEFFICIENTS" });
 
       await user.click(screen.getByRole("button", { name: "Ver todos los pasos" }));
-      expect(screen.getByRole("button", { name: "Ver todos los pasos" })).toHaveAttribute("aria-expanded", "true");
+
+      const toggle = screen.getByRole("button", { name: "Ocultar los pasos" });
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      expect(document.getElementById(toggle.getAttribute("aria-controls") as string)).toBeInTheDocument();
     });
 
     it("bolds the current stage and leaves the others unmarked", () => {

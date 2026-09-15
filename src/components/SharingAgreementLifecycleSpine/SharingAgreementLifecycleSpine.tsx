@@ -4,24 +4,16 @@ import { visuallyHidden } from "@mui/utils";
 import CheckIcon from "@mui/icons-material/Check";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { colors, fontSizes, radii } from "../../theme/tokens";
+import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import {
-  SharingAgreementActionButton,
-  type SharingAgreementActionDescriptor,
-} from "../SharingAgreementActionButton";
-import { EXTERNAL_STAGE, type LifecycleStageView, type LifecycleView, type StageState } from "../../pages/production/sharingAgreementLifecycle";
-
-/** An action the rail can offer. Same shape, and same gating contract, as every other gated control. */
-export type LifecycleSpineAction = SharingAgreementActionDescriptor;
+  EXTERNAL_STAGE,
+  type LifecycleStageView,
+  type LifecycleView,
+  type StageState,
+} from "../../pages/production/sharingAgreementLifecycle";
 
 export interface SharingAgreementLifecycleSpineProps {
   view: LifecycleView;
-  /** Stage 2. */
-  generate?: LifecycleSpineAction;
-  /** Stage 4's forward move. */
-  publish?: LifecycleSpineAction;
-  /** The reverse move off stage 4 — not a stage of its own. */
-  revert?: LifecycleSpineAction;
 }
 
 type SpanPosition = "start" | "middle" | "end";
@@ -36,6 +28,11 @@ const STATE_LABELS: Record<StageState, string> = {
 
 const MARKER_SIZE = { xs: 26, sm: 30 };
 
+/**
+ * The rail sits in an inset well on the next-step banner, so every tone here is
+ * measured against `brand.panel` rather than against paper: white and
+ * `brand.onSoft` for type, translucent white for the structure.
+ */
 function markerSx(state: StageState) {
   const base = {
     width: MARKER_SIZE,
@@ -47,21 +44,36 @@ function markerSx(state: StageState) {
     flexShrink: 0,
     fontSize: fontSizes.sm,
     fontWeight: 700,
-    bgcolor: colors.background.paper,
+    fontVariantNumeric: "tabular-nums",
+    bgcolor: "transparent",
     border: "1px solid",
-    borderColor: colors.border.light,
-    color: colors.text.muted,
+    borderColor: alphas.white.cloud,
+    color: colors.brand.onSoft,
   };
 
   switch (state) {
     case "done":
-      return { ...base, bgcolor: colors.brand.surface, borderColor: colors.brand.surface, color: colors.brand.main };
+      return {
+        ...base,
+        bgcolor: colors.brand.contrastText,
+        borderColor: colors.brand.contrastText,
+        color: colors.brand.panel,
+      };
     case "current":
-      return { ...base, bgcolor: colors.brand.main, borderColor: colors.brand.main, color: colors.brand.contrastText };
+      return {
+        ...base,
+        bgcolor: colors.brand.contrastText,
+        borderColor: colors.brand.contrastText,
+        color: colors.brand.panel,
+        // A ring rather than a shadow: it follows the border radius, needs no
+        // hand-written shadow string, and survives forced-colours mode.
+        outline: "3px solid",
+        outlineColor: alphas.white.cloud,
+      };
     case "unverifiable":
-      return { ...base, borderStyle: "dashed" };
+      return { ...base, borderStyle: "dashed", borderColor: alphas.white.heavy };
     case "closed":
-      return { ...base, bgcolor: colors.background.surface };
+      return { ...base, bgcolor: alphas.white.subtle };
     default:
       return base;
   }
@@ -77,33 +89,61 @@ const StageMarker: FC<{ stage: LifecycleStageView; isFirst: boolean; spanPositio
     aria-current={stage.state === "current" ? "step" : undefined}
     sx={{
       display: "flex",
-      alignItems: "center",
+      flexDirection: "column",
+      gap: 0.75,
       // Only items that carry a leading connector may stretch. The first marker
       // has none, so an equal share would leave a gap twice the size of the rest.
       flex: isFirst ? "0 0 auto" : 1,
       minWidth: 0,
       py: 0.5,
-      ...(spanPosition && { bgcolor: colors.brand.surface }),
-      ...(spanPosition === "start" && { pl: 0.75, borderTopLeftRadius: radii.large, borderBottomLeftRadius: radii.large }),
-      ...(spanPosition === "end" && { pr: 0.75, borderTopRightRadius: radii.large, borderBottomRightRadius: radii.large }),
-      // The connector belongs to the gap before a marker, so it inherits the
-      // span's tint and the band reads as one continuous phase.
-      ...(!isFirst && {
-        "&::before": {
-          content: '""',
-          flex: 1,
-          height: "1px",
-          bgcolor: colors.border.light,
-          mx: { xs: 0.5, sm: 1 },
-        },
+      ...(spanPosition && { bgcolor: alphas.white.subtle }),
+      ...(spanPosition === "start" && {
+        pl: 0.75,
+        borderTopLeftRadius: radii.large,
+        borderBottomLeftRadius: radii.large,
+      }),
+      ...(spanPosition === "end" && {
+        pr: 0.75,
+        borderTopRightRadius: radii.large,
+        borderBottomRightRadius: radii.large,
       }),
     }}
   >
-    <Box aria-hidden sx={markerSx(stage.state)}>
-      {stage.state === "done" ? <CheckIcon sx={{ fontSize: 16 }} /> : null}
-      {stage.state === "unverifiable" ? <MailOutlineIcon sx={{ fontSize: 14 }} /> : null}
-      {stage.state !== "done" && stage.state !== "unverifiable" ? stage.number : null}
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+      {/* The connector belongs to the gap before a marker, so it inherits the
+          span's tint and the band reads as one continuous phase. */}
+      {!isFirst && (
+        <Box
+          aria-hidden
+          sx={{
+            flex: 1,
+            height: "1px",
+            bgcolor: stage.state === "done" || stage.state === "closed" ? alphas.white.heavy : alphas.white.cloud,
+            mx: { xs: 0.5, sm: 1 },
+          }}
+        />
+      )}
+      <Box aria-hidden sx={markerSx(stage.state)}>
+        {stage.state === "done" ? <CheckIcon sx={{ fontSize: 16 }} /> : null}
+        {stage.state === "unverifiable" ? <MailOutlineIcon sx={{ fontSize: 14 }} /> : null}
+        {stage.state !== "done" && stage.state !== "unverifiable" ? stage.number : null}
+      </Box>
+      {!isFirst && <Box sx={{ flex: 1 }} />}
     </Box>
+    {/* Named only where there is room for it. On 390px the numerals plus the
+        caption below carry the position; five truncated labels would not. */}
+    <Typography
+      aria-hidden
+      sx={{
+        display: { xs: "none", sm: "block" },
+        fontSize: fontSizes.sm,
+        lineHeight: 1.3,
+        color: colors.brand.onSoft,
+        fontWeight: stage.state === "current" ? 600 : 400,
+      }}
+    >
+      {stage.shortTitle}
+    </Typography>
     <Box component="span" sx={visuallyHidden}>
       {`Paso ${stage.number}: ${stage.title} — ${STATE_LABELS[stage.state]}`}
     </Box>
@@ -120,14 +160,14 @@ const StageList: FC<{ stages: LifecycleStageView[] }> = ({ stages }) => (
             variant="body2"
             fontWeight={stage.state === "current" ? 700 : 600}
             sx={{
-              color: isExternal ? colors.text.subtle : colors.text.primary,
+              color: isExternal ? colors.brand.onSoft : colors.brand.contrastText,
               fontStyle: isExternal ? "italic" : "normal",
             }}
           >
             {stage.number}. {stage.title}
             {isExternal ? " (fuera de Conluz)" : ""}
           </Typography>
-          <Typography variant="caption" sx={{ color: colors.text.subtle }}>
+          <Typography variant="caption" sx={{ color: colors.brand.onSoft }}>
             {stage.description}
           </Typography>
         </Box>
@@ -136,15 +176,16 @@ const StageList: FC<{ stages: LifecycleStageView[] }> = ({ stages }) => (
   </Box>
 );
 
-export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpineProps> = ({
-  view,
-  generate,
-  publish,
-  revert,
-}) => {
+/**
+ * The five-stage rail: where the agreement sits in its regulatory cycle, and
+ * nothing else. The sentence describing the current step and the control that
+ * performs it live in the next-step banner above — they were here once, and
+ * having both meant the same instruction was printed twice on one screen.
+ */
+export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpineProps> = ({ view }) => {
   const [areStepsOpen, setAreStepsOpen] = useState(false);
   const stepsId = useId();
-  const { stages, isSpanActive, current, completionNote } = view;
+  const { stages, isSpanActive, railCaption } = view;
 
   const spanPositionFor = (stage: LifecycleStageView): SpanPosition | undefined => {
     if (!isSpanActive || stage.number === 1 || stage.number === 5) return undefined;
@@ -153,27 +194,21 @@ export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpinePr
     return "middle";
   };
 
-  const actions = [
-    generate ? { action: generate, emphasis: "secondary" as const, key: "generate" } : null,
-    publish ? { action: publish, emphasis: "primary" as const, key: "publish" } : null,
-    revert ? { action: revert, emphasis: "quiet" as const, key: "revert" } : null,
-  ].filter((entry): entry is NonNullable<typeof entry> => entry !== null);
-
-  // A blocked action states its own reason beneath its button. When that is the
-  // same sentence as the stage requirement — a missing CAU blocking stage 2, for
-  // instance — printing both would repeat one fact twice on one screen.
-  const actionReasons = new Set(
-    actions.map(({ action }) => action.disabledReason).filter((reason): reason is string => !!reason),
-  );
-  const stageRequirement =
-    current?.requirement && !actionReasons.has(current.requirement) ? current.requirement : undefined;
-
   return (
-    <Box>
+    <Box
+      sx={{
+        bgcolor: colors.brand.panel,
+        borderRadius: radii.default,
+        p: { xs: 1.5, sm: 2 },
+        display: "flex",
+        flexDirection: "column",
+        gap: { xs: 1, sm: 1.5 },
+      }}
+    >
       <Box
         component="ol"
         aria-label="Ciclo del acuerdo de reparto"
-        sx={{ listStyle: "none", display: "flex", alignItems: "center", m: 0, p: 0 }}
+        sx={{ listStyle: "none", display: "flex", alignItems: "flex-start", m: 0, p: 0 }}
       >
         {stages.map((stage, index) => (
           <Fragment key={stage.number}>
@@ -182,57 +217,13 @@ export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpinePr
         ))}
       </Box>
 
-      {current && (
-        <Box sx={{ mt: 2.25 }}>
-          <Typography variant="subtitle1" fontWeight={700} sx={{ color: colors.text.primary }}>
-            {current.title}
-          </Typography>
-          {current.body && (
-            <Typography variant="body2" sx={{ mt: 0.5, color: colors.text.subtle, maxWidth: "68ch" }}>
-              {current.body}
-            </Typography>
-          )}
-          {stageRequirement && (
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.75, color: colors.text.body }}>
-              {stageRequirement}
-            </Typography>
-          )}
-          {current.secondaryLine && (
-            <Typography variant="body2" sx={{ mt: 0.5, color: colors.text.subtle, maxWidth: "68ch" }}>
-              {current.secondaryLine}
-            </Typography>
-          )}
-        </Box>
-      )}
-
-      {completionNote && (
-        <Typography variant="body2" sx={{ mt: 2.25, color: colors.text.subtle }}>
-          {completionNote}
+      {railCaption && (
+        <Typography sx={{ fontSize: fontSizes.lg, lineHeight: 1.4, color: colors.brand.onSoft }}>
+          {railCaption}
         </Typography>
       )}
 
-      {actions.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1.5,
-            flexWrap: "wrap",
-            alignItems: "flex-start",
-            mt: 2,
-            pt: 2,
-            // The action belongs to the step stated above it. A footer rule ties
-            // it to the card instead of leaving it floating in its own column.
-            borderTop: "1px solid",
-            borderColor: colors.divider,
-          }}
-        >
-          {actions.map(({ action, emphasis, key }) => (
-            <SharingAgreementActionButton key={key} action={action} emphasis={emphasis} />
-          ))}
-        </Box>
-      )}
-
-      <Box sx={{ mt: 1 }}>
+      <Box>
         <Button
           variant="text"
           size="small"
@@ -244,15 +235,23 @@ export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpinePr
               sx={{ transform: areStepsOpen ? "rotate(180deg)" : "none", transition: "transform 200ms ease-out" }}
             />
           }
-          sx={{ color: colors.text.subtle, px: 0.5, "&:hover": { color: colors.brand.main } }}
+          sx={{
+            color: colors.brand.contrastText,
+            px: 0.5,
+            textDecoration: "underline",
+            "&:hover": { bgcolor: alphas.white.subtle, textDecoration: "underline" },
+          }}
         >
-          Ver todos los pasos
+          {areStepsOpen ? "Ocultar los pasos" : "Ver todos los pasos"}
         </Button>
         {/* Stays mounted while collapsed: the stage descriptions are the rail's
             explanation of itself, and they belong to the page whether or not the
             disclosure happens to be open. */}
         <Collapse in={areStepsOpen}>
-          <Box id={stepsId} sx={{ mt: 1.5 }}>
+          <Box
+            id={stepsId}
+            sx={{ mt: 1.5, pt: 1.5, borderTop: "1px solid", borderColor: alphas.white.cloud }}
+          >
             <StageList stages={stages} />
           </Box>
         </Collapse>

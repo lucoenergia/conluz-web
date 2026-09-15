@@ -8,12 +8,7 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
-import {
-  COEFFICIENT_SCALE,
-  computeSharingAgreementCoefficientSums,
-  type CoefficientSummable,
-} from "../../pages/production/sharingAgreementCoefficientSums";
-import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
+import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 import { colors } from "../../theme/tokens";
 
 const PENDING = SharingAgreementPartitionCoefficientResponseApplicationState.PENDING;
@@ -29,17 +24,8 @@ const ONE_APPLIED: CoefficientSummable[] = [
   { coefficient: 0.4, applicationState: PENDING },
 ];
 
-const ROUNDING_SENSITIVE_FULL: CoefficientSummable[] = [
-  ...Array.from({ length: 8 }, () => ({ coefficient: 0.111111, applicationState: PENDING })),
-  { coefficient: 0.111112, applicationState: PENDING },
-];
-
-const GENUINELY_INCOMPLETE: CoefficientSummable[] = [
-  { coefficient: 0.5, applicationState: PENDING },
-  { coefficient: 0.4, applicationState: PENDING },
-];
-
 const KEBAB = "Más opciones del acuerdo";
+const EDIT_ITEM = "Editar datos del acuerdo";
 
 describe("SharingAgreementDetailHeader", () => {
   const mockAgreement = {
@@ -59,6 +45,10 @@ describe("SharingAgreementDetailHeader", () => {
     regulatoryCode: "ES0031300296192001MB",
   } as PlantResponse;
 
+  const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
+  const publishedAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.PUBLISHED };
+  const supersededAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.SUPERSEDED };
+
   function renderHeader(props: Partial<SharingAgreementDetailHeaderProps> = {}) {
     return render(
       <SharingAgreementDetailHeader
@@ -70,226 +60,77 @@ describe("SharingAgreementDetailHeader", () => {
     );
   }
 
-  it("renders agreement name, CAU, status chip and the metadata strip", () => {
-    renderHeader();
+  describe("identity", () => {
+    it("renders the agreement name, the plant's CAU, the status chip and the metadata strip", () => {
+      renderHeader();
 
-    expect(screen.getByText("Acuerdo Comunidad Sur")).toBeInTheDocument();
-    expect(screen.getByText("CAU: ES0031300296192001MB")).toBeInTheDocument();
-    expect(screen.getByText("Vigente")).toBeInTheDocument();
-    expect(screen.getByText("Creado el 23 de mayo de 2024")).toBeInTheDocument();
-    expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
-  });
-
-  it("no longer carries installed power — it moved to the coefficient panel, where kW mode actually uses it", () => {
-    renderHeader();
-
-    expect(screen.queryByText("42,50 kW")).not.toBeInTheDocument();
-    expect(screen.queryByText("Potencia instalada")).not.toBeInTheDocument();
-  });
-
-  it("renders the status chip on its own explicit surface tint, not an alpha overlay (the identity card is light now, so the onDark white pill no longer applies)", () => {
-    renderHeader();
-
-    const chip = screen.getByText("Vigente").closest(".MuiChip-root");
-    // An explicit `surface` token rather than a translucent overlay: alpha would
-    // make the effective contrast depend on whatever sits behind the card.
-    expect(chip).toHaveStyle({ backgroundColor: colors.brand.surface });
-    expect(chip).toHaveStyle({ color: colors.brand.main });
-  });
-
-  it("renders default texts and CAU fallback when data is missing", () => {
-    renderHeader({ agreement: {} as SharingAgreementResponse, plant: {} as PlantResponse });
-
-    expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
-    expect(screen.getByText("CAU no disponible")).toBeInTheDocument();
-  });
-
-  it("renders neither the rail nor the status chip when loading", () => {
-    renderHeader({ isLoading: true });
-
-    expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Ver todos los pasos" })).not.toBeInTheDocument();
-  });
-
-  it("renders neither the rail nor the status chip on error", () => {
-    renderHeader({ error: new Error("boom") });
-
-    expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Ver todos los pasos" })).not.toBeInTheDocument();
-  });
-
-  it("hides the actions kebab for a non-DRAFT (published) agreement", () => {
-    renderHeader({ onEdit: vi.fn(), onDeleteRequest: vi.fn() });
-
-    expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
-  });
-
-  it("keeps only Editar and Eliminar in the kebab — the lifecycle moves are labelled controls on the rail", async () => {
-    const onEdit = vi.fn();
-    const onDeleteRequest = vi.fn();
-    const user = userEvent.setup();
-    renderHeader({
-      agreement: { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT },
-      coefficients: ALL_PENDING,
-      nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
-      onEdit,
-      onDeleteRequest,
-      onPublishRequest: vi.fn(),
+      expect(screen.getByRole("heading", { level: 1, name: "Acuerdo Comunidad Sur" })).toBeInTheDocument();
+      expect(screen.getByText("CAU ES0031300296192001MB")).toBeInTheDocument();
+      expect(screen.getByText("Vigente")).toBeInTheDocument();
+      expect(screen.getByText("Creado el 23 de mayo de 2024")).toBeInTheDocument();
+      expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: KEBAB }));
-    await waitFor(() => expect(screen.getByText("Editar")).toBeInTheDocument());
+    it("no longer carries installed power — it moved to the coefficient panel, where kW mode actually uses it", () => {
+      renderHeader();
 
-    const menu = screen.getByRole("menu");
-    expect(menu).toHaveTextContent("Editar");
-    expect(menu).toHaveTextContent("Eliminar");
-    expect(menu).not.toHaveTextContent("Poner en vigor");
-    expect(menu).not.toHaveTextContent("Volver a borrador");
+      expect(screen.queryByText("42,50 kW")).not.toBeInTheDocument();
+      expect(screen.queryByText("Potencia instalada")).not.toBeInTheDocument();
+    });
 
-    await user.click(screen.getByText("Editar"));
-    expect(onEdit).toHaveBeenCalled();
+    it("renders the status chip on its own explicit surface tint, not an alpha overlay", () => {
+      renderHeader();
 
-    await user.click(screen.getByRole("button", { name: KEBAB }));
-    await waitFor(() => expect(screen.getByText("Eliminar")).toBeInTheDocument());
-    await user.click(screen.getByText("Eliminar"));
-    expect(onDeleteRequest).toHaveBeenCalled();
+      const chip = screen.getByText("Vigente").closest(".MuiChip-root");
+      // An explicit `surface` token rather than a translucent overlay: alpha would
+      // make the effective contrast depend on whatever sits behind it.
+      expect(chip).toHaveStyle({ backgroundColor: colors.brand.surface });
+      expect(chip).toHaveStyle({ color: colors.brand.main });
+    });
+
+    it("falls back to neutral text when the agreement and plant are empty", () => {
+      renderHeader({ agreement: {} as SharingAgreementResponse, plant: {} as PlantResponse });
+
+      expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
+      expect(screen.getByText(/CAU no disponible/)).toBeInTheDocument();
+    });
   });
 
-  it("hides the actions kebab while loading, even for a DRAFT agreement", () => {
-    renderHeader({
-      agreement: { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT },
-      isLoading: true,
-      onEdit: vi.fn(),
-      onDeleteRequest: vi.fn(),
+  describe("the next-step banner", () => {
+    it("is absent while loading, along with the status chip", () => {
+      renderHeader({ isLoading: true });
+
+      expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Ver todos los pasos" })).not.toBeInTheDocument();
     });
 
-    expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
-  });
+    it("is absent on error, along with the status chip", () => {
+      renderHeader({ error: new Error("boom") });
 
-  describe("Poner en vigor / Volver a borrador on the rail", () => {
-    const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
-    const publishedAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.PUBLISHED };
-    const supersededAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.SUPERSEDED };
-
-    it("renders neither lifecycle action while coefficients is undefined, on a DRAFT agreement", () => {
-      renderHeader({ agreement: draftAgreement, onEdit: vi.fn(), onPublishRequest: vi.fn() });
-
-      expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Vigente")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Ver todos los pasos" })).not.toBeInTheDocument();
     });
 
-    it("never shows revert transiently for a PUBLISHED agreement while coefficients is undefined", () => {
-      renderHeader({ agreement: publishedAgreement, onRevertRequest: vi.fn() });
-
-      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
-    });
-
-    it("gates Poner en vigor with a visible 'no coefficients' reason for a resolved empty set on DRAFT", () => {
-      renderHeader({ agreement: draftAgreement, coefficients: [], onPublishRequest: vi.fn() });
-
-      const publish = screen.getByRole("button", { name: "Poner en vigor" });
-      expect(publish).toHaveAttribute("aria-disabled", "true");
-      expect(screen.getByText("Este acuerdo todavía no tiene coeficientes.")).toBeInTheDocument();
-    });
-
-    it("gates Poner en vigor with the exact gap message for a genuinely incomplete sum", () => {
-      renderHeader({ agreement: draftAgreement, coefficients: GENUINELY_INCOMPLETE, onPublishRequest: vi.fn() });
-
-      expect(screen.getByRole("button", { name: "Poner en vigor" })).toHaveAttribute("aria-disabled", "true");
-      // Computed via the same helpers the component uses, not hand-typed — Intl inserts a
-      // non-breaking space before the first "%" that's easy to get wrong by hand.
-      const { fileSumUnits } = computeSharingAgreementCoefficientSums(GENUINELY_INCOMPLETE);
-      const expectedMessage = (formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits) as string)
-        // RTL's default text normalizer collapses the NBSP Intl inserts into a regular space.
-        .replace(/\u00A0/g, " ");
-      expect(screen.getByText(expectedMessage)).toBeInTheDocument();
-    });
-
-    it("enables Poner en vigor for a rounding-sensitive set that sums to exactly 1 in integer units but not as raw floats", () => {
-      renderHeader({ agreement: draftAgreement, coefficients: ROUNDING_SENSITIVE_FULL, onPublishRequest: vi.fn() });
-
-      expect(screen.getByRole("button", { name: "Poner en vigor" })).not.toHaveAttribute("aria-disabled");
-    });
-
-    it("never calls onPublishRequest when the gated control is clicked", async () => {
-      const onPublishRequest = vi.fn();
+    it("binds each intent the selector names to the handler the page supplied", async () => {
+      const onEditCoefficientsRequest = vi.fn();
+      const onImportRequest = vi.fn();
       const user = userEvent.setup();
-      renderHeader({ agreement: draftAgreement, coefficients: [], onPublishRequest });
-
-      await user.click(screen.getByRole("button", { name: "Poner en vigor" }));
-
-      expect(onPublishRequest).not.toHaveBeenCalled();
-    });
-
-    it("calls onPublishRequest when the enabled control is clicked", async () => {
-      const onPublishRequest = vi.fn();
-      const user = userEvent.setup();
-      renderHeader({ agreement: draftAgreement, coefficients: ALL_PENDING, onPublishRequest });
-
-      await user.click(screen.getByRole("button", { name: "Poner en vigor" }));
-
-      expect(onPublishRequest).toHaveBeenCalled();
-    });
-
-    it("keeps the gated Poner en vigor control in the tab order and exposes its reason via aria-describedby", () => {
-      renderHeader({ agreement: draftAgreement, coefficients: [], onPublishRequest: vi.fn() });
-
-      const publish = screen.getByRole("button", { name: "Poner en vigor" });
-      // `aria-disabled` rather than `disabled`: a disabled button takes its own
-      // explanation out of reach of the keyboard.
-      expect(publish).not.toBeDisabled();
-      expect(publish).toHaveAttribute("aria-disabled", "true");
-
-      const describedBy = publish.getAttribute("aria-describedby");
-      expect(describedBy).toBeTruthy();
-      expect(document.getElementById(describedBy as string)).toHaveTextContent(
-        "Este acuerdo todavía no tiene coeficientes.",
-      );
-    });
-
-    it("never renders Volver a borrador when any coefficient has been applied", () => {
-      renderHeader({ agreement: publishedAgreement, coefficients: ONE_APPLIED, onRevertRequest: vi.fn() });
-
-      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
-    });
-
-    it("renders Volver a borrador, ungated, for a PUBLISHED fully-pending agreement", async () => {
-      const onRevertRequest = vi.fn();
-      const user = userEvent.setup();
-      renderHeader({ agreement: publishedAgreement, coefficients: ALL_PENDING, onRevertRequest });
-
-      const revert = screen.getByRole("button", { name: "Volver a borrador" });
-      expect(revert).not.toHaveAttribute("aria-disabled");
-
-      await user.click(revert);
-      expect(onRevertRequest).toHaveBeenCalled();
-    });
-
-    it("never renders Volver a borrador for a DRAFT agreement, regardless of coefficient state", () => {
-      renderHeader({ agreement: draftAgreement, coefficients: ALL_PENDING, onRevertRequest: vi.fn() });
-
-      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
-    });
-
-    it("renders no lifecycle action and no kebab for a SUPERSEDED agreement", () => {
       renderHeader({
-        agreement: supersededAgreement,
-        coefficients: ALL_PENDING,
-        onRevertRequest: vi.fn(),
-        onPublishRequest: vi.fn(),
-        onEdit: vi.fn(),
+        agreement: draftAgreement,
+        coefficients: [],
+        nextStep: { kind: "AUTHOR_COEFFICIENTS", blockedReason: "NO_COEFFICIENTS" },
+        onEditCoefficientsRequest,
+        onImportRequest,
       });
 
-      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Editar a mano" }));
+      expect(onEditCoefficientsRequest).toHaveBeenCalledTimes(1);
+
+      await user.click(screen.getByRole("button", { name: "Importar TXT" }));
+      expect(onImportRequest).toHaveBeenCalledTimes(1);
     });
-  });
 
-  describe("Generar fichero on the rail", () => {
-    const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
-
-    it("offers Generar fichero during the generate-and-send span", async () => {
+    it("routes the stage 2-4 download to the generate dialog, since nothing is stored to download", async () => {
       const onGenerateRequest = vi.fn();
       const user = userEvent.setup();
       renderHeader({
@@ -299,35 +140,183 @@ describe("SharingAgreementDetailHeader", () => {
         onGenerateRequest,
       });
 
-      await user.click(screen.getByRole("button", { name: "Generar fichero" }));
-      expect(onGenerateRequest).toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Descargar fichero" }));
+      expect(onGenerateRequest).toHaveBeenCalledTimes(1);
     });
 
-    it("gates Generar fichero on a missing CAU while leaving Poner en vigor available — the two actions in the span gate independently", () => {
+    it("calls onPublishRequest from the promoted control once the draft is complete", async () => {
+      const onPublishRequest = vi.fn();
+      const user = userEvent.setup();
       renderHeader({
         agreement: draftAgreement,
         coefficients: ALL_PENDING,
-        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: false, blockedReason: "NO_REGULATORY_CODE" },
-        onGenerateRequest: vi.fn(),
-        onPublishRequest: vi.fn(),
+        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
+        onPublishRequest,
       });
 
-      expect(screen.getByRole("button", { name: "Generar fichero" })).toHaveAttribute("aria-disabled", "true");
-      expect(
-        screen.getByText("La planta no tiene CAU configurado. Sin él no se puede generar el fichero."),
-      ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Poner en vigor" })).not.toHaveAttribute("aria-disabled");
+      await user.click(screen.getByRole("button", { name: "Poner en vigor" }));
+      expect(onPublishRequest).toHaveBeenCalled();
     });
 
-    it("offers no Generar fichero outside the span", () => {
+    // AC1. The header no longer re-implements the publish rule; the selector
+    // decides, and a draft that would 409 simply has no publish control.
+    it("renders no Poner en vigor control for a draft that is still being authored", () => {
       renderHeader({
         agreement: draftAgreement,
         coefficients: [],
         nextStep: { kind: "AUTHOR_COEFFICIENTS", blockedReason: "NO_COEFFICIENTS" },
-        onGenerateRequest: vi.fn(),
+        onPublishRequest: vi.fn(),
       });
 
-      expect(screen.queryByRole("button", { name: "Generar fichero" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
+      expect(screen.getByText("Este acuerdo todavía no tiene coeficientes.")).toBeVisible();
     });
+  });
+
+  describe("Volver a borrador", () => {
+    it("is absent while coefficients are still in flight, so it never flashes on a published agreement", () => {
+      // `[].every(...)` is vacuously true, so a defaulted empty array would make
+      // an agreement with applied coefficients look revertible for a frame.
+      renderHeader({ agreement: publishedAgreement, onRevertRequest: vi.fn() });
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+    });
+
+    it("is absent once any coefficient has been applied", () => {
+      renderHeader({
+        agreement: publishedAgreement,
+        coefficients: ONE_APPLIED,
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 2 },
+        onRevertRequest: vi.fn(),
+      });
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+    });
+
+    it("is offered, ungated, for a published agreement nothing has been applied on", async () => {
+      const onRevertRequest = vi.fn();
+      const user = userEvent.setup();
+      renderHeader({
+        agreement: publishedAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+        onRevertRequest,
+      });
+
+      const revert = screen.getByRole("button", { name: "Volver a borrador" });
+      expect(revert).not.toHaveAttribute("aria-disabled");
+
+      await user.click(revert);
+      expect(onRevertRequest).toHaveBeenCalled();
+    });
+
+    it("is never offered for a draft", () => {
+      renderHeader({ agreement: draftAgreement, coefficients: ALL_PENDING, onRevertRequest: vi.fn() });
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+    });
+  });
+
+  // AC5.
+  describe("the kebab", () => {
+    it("offers editing and deleting for a draft", async () => {
+      const onEdit = vi.fn();
+      const onDeleteRequest = vi.fn();
+      const user = userEvent.setup();
+      renderHeader({
+        agreement: draftAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
+        onEdit,
+        onDeleteRequest,
+      });
+
+      await user.click(screen.getByRole("button", { name: KEBAB }));
+      await waitFor(() => expect(screen.getByText(EDIT_ITEM)).toBeInTheDocument());
+
+      const menu = screen.getByRole("menu");
+      expect(menu).toHaveTextContent(EDIT_ITEM);
+      expect(menu).toHaveTextContent("Eliminar");
+      // The lifecycle moves are labelled controls on the banner, never menu items.
+      expect(menu).not.toHaveTextContent("Poner en vigor");
+      expect(menu).not.toHaveTextContent("Volver a borrador");
+
+      await user.click(screen.getByText(EDIT_ITEM));
+      expect(onEdit).toHaveBeenCalled();
+
+      await user.click(screen.getByRole("button", { name: KEBAB }));
+      await waitFor(() => expect(screen.getByText("Eliminar")).toBeInTheDocument());
+      await user.click(screen.getByText("Eliminar"));
+      expect(onDeleteRequest).toHaveBeenCalled();
+    });
+
+    it("offers editing, but not deleting, for a published agreement", async () => {
+      // `PUT` accepts any status; `DELETE` still 409s outside DRAFT, because
+      // removing a published agreement destroys the basis of past billing.
+      const user = userEvent.setup();
+      renderHeader({
+        agreement: publishedAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+        onEdit: vi.fn(),
+        onDeleteRequest: vi.fn(),
+      });
+
+      await user.click(screen.getByRole("button", { name: KEBAB }));
+      await waitFor(() => expect(screen.getByRole("menu")).toBeInTheDocument());
+
+      expect(screen.getByRole("menu")).toHaveTextContent(EDIT_ITEM);
+      expect(screen.getByRole("menu")).not.toHaveTextContent("Eliminar");
+    });
+
+    it("offers editing, but not deleting, for a superseded agreement", async () => {
+      const user = userEvent.setup();
+      renderHeader({
+        agreement: supersededAgreement,
+        coefficients: ALL_PENDING,
+        onEdit: vi.fn(),
+        onDeleteRequest: vi.fn(),
+      });
+
+      await user.click(screen.getByRole("button", { name: KEBAB }));
+      await waitFor(() => expect(screen.getByRole("menu")).toBeInTheDocument());
+
+      expect(screen.getByRole("menu")).toHaveTextContent(EDIT_ITEM);
+      expect(screen.getByRole("menu")).not.toHaveTextContent("Eliminar");
+    });
+
+    it("names editing the agreement's own data, so it cannot be read as editing the split", async () => {
+      const user = userEvent.setup();
+      renderHeader({ agreement: draftAgreement, coefficients: ALL_PENDING, onEdit: vi.fn() });
+
+      await user.click(screen.getByRole("button", { name: KEBAB }));
+      await waitFor(() => expect(screen.getByRole("menu")).toBeInTheDocument());
+
+      expect(screen.getByRole("menu")).not.toHaveTextContent("Editar a mano");
+    });
+
+    it("is absent while loading, even for a draft", () => {
+      renderHeader({ agreement: draftAgreement, isLoading: true, onEdit: vi.fn() });
+
+      expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
+    });
+
+    it("is absent on error", () => {
+      renderHeader({ agreement: draftAgreement, error: new Error("boom"), onEdit: vi.fn() });
+
+      expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
+    });
+  });
+
+  it("offers no lifecycle action for a superseded agreement", () => {
+    renderHeader({
+      agreement: supersededAgreement,
+      coefficients: ALL_PENDING,
+      onRevertRequest: vi.fn(),
+      onPublishRequest: vi.fn(),
+    });
+
+    expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
   });
 });

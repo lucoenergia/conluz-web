@@ -1,6 +1,5 @@
 import { useState, type FC, type Ref } from "react";
-import { Box, IconButton, MenuItem, Paper, Typography, Divider } from "@mui/material";
-import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
+import { Box, IconButton, MenuItem, Typography, Divider } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -10,17 +9,14 @@ import {
 } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
-import { SharingAgreementLifecycleSpine, type LifecycleSpineAction } from "../SharingAgreementLifecycleSpine";
+import {
+  SharingAgreementNextStepBanner,
+  type LifecycleActionHandlers,
+} from "../SharingAgreementNextStepBanner";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
-import { colors, radii } from "../../theme/tokens";
-import {
-  COEFFICIENT_SCALE,
-  computeSharingAgreementCoefficientSums,
-  isFullSum,
-  type CoefficientSummable,
-} from "../../pages/production/sharingAgreementCoefficientSums";
-import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
+import { colors, fontSizes, radii } from "../../theme/tokens";
+import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 import { selectSharingAgreementLifecycleView } from "../../pages/production/sharingAgreementLifecycle";
 import type { SharingAgreementNextStep } from "../../pages/production/selectSharingAgreementNextStep";
 
@@ -33,8 +29,7 @@ export interface SharingAgreementDetailHeaderProps {
    * The raw, non-defaulted partition-coefficients query result: `undefined` while still in
    * flight, as opposed to a resolved `[]` — mirrors `selectSharingAgreementNextStep`'s own
    * distinction. Conflating the two would let a PUBLISHED agreement with applied coefficients
-   * briefly show "Volver a borrador" (since `[].every(...)` is vacuously true), and would render
-   * "sin coeficientes" for a DRAFT that actually has them, for a fraction of a second on every load.
+   * briefly show "Volver a borrador", since `[].every(...)` is vacuously true.
    */
   coefficients?: CoefficientSummable[];
   nextStep: SharingAgreementNextStep;
@@ -45,6 +40,9 @@ export interface SharingAgreementDetailHeaderProps {
   onPublishRequest?: () => void;
   onRevertRequest?: () => void;
   onGenerateRequest?: () => void;
+  onEditCoefficientsRequest?: () => void;
+  onImportRequest?: () => void;
+  onRecordDatesRequest?: () => void;
 }
 
 export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps> = ({
@@ -60,18 +58,14 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   onPublishRequest,
   onRevertRequest,
   onGenerateRequest,
+  onEditCoefficientsRequest,
+  onImportRequest,
+  onRecordDatesRequest,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const isDraft = agreement?.status === SharingAgreementResponseStatus.DRAFT;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
-
-  const publishDisabledReason = (() => {
-    if (coefficients === undefined) return undefined;
-    if (coefficients.length === 0) return "Este acuerdo todavía no tiene coeficientes.";
-    const { fileSumUnits } = computeSharingAgreementCoefficientSums(coefficients);
-    if (isFullSum(fileSumUnits)) return undefined;
-    return formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits) ?? undefined;
-  })();
+  const isResolved = !isLoading && !error;
 
   const isInert =
     coefficients !== undefined &&
@@ -80,33 +74,27 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
         coefficient.applicationState !== SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
     );
 
-  const showPublish = isDraft && coefficients !== undefined;
   const showRevert = isPublished && coefficients !== undefined && isInert;
-  // Editing metadata and deleting are the only actions left in the kebab; the
-  // lifecycle moves are labelled controls on the rail itself.
-  const showMenu = !isLoading && !error && isDraft;
+
+  // `PUT /sharing-agreements/{id}` no longer requires DRAFT — name, notes and
+  // installed power can be corrected in any status. Deleting still requires it:
+  // removing a published agreement would destroy the basis of past billing.
+  const showMenu = isResolved && !!agreement;
 
   const view = selectSharingAgreementLifecycleView(nextStep, agreement?.status);
 
-  const publishAction: LifecycleSpineAction | undefined =
-    showPublish && onPublishRequest
-      ? { label: "Poner en vigor", onClick: onPublishRequest, disabledReason: publishDisabledReason }
-      : undefined;
-
-  const revertAction: LifecycleSpineAction | undefined =
-    showRevert && onRevertRequest ? { label: "Volver a borrador", onClick: onRevertRequest } : undefined;
-
-  // Stage 2 only: outside the generate-and-send span there is nothing to generate.
-  const generateAction: LifecycleSpineAction | undefined =
-    nextStep.kind === "GENERATE_AND_SEND" && onGenerateRequest
-      ? {
-          label: "Generar fichero",
-          onClick: onGenerateRequest,
-          disabledReason: nextStep.canGenerate
-            ? undefined
-            : "La planta no tiene CAU configurado. Sin él no se puede generar el fichero.",
-        }
-      : undefined;
+  /**
+   * Which action belongs to the current step, and what it is called, is decided
+   * by the selector. This map only binds each named intent to its handler —
+   * there is no second copy of the publish rule down here any more.
+   */
+  const handlers: LifecycleActionHandlers = {
+    EDIT_COEFFICIENTS: onEditCoefficientsRequest,
+    IMPORT_FILE: onImportRequest,
+    PUBLISH: onPublishRequest,
+    DOWNLOAD_FILE: onGenerateRequest,
+    RECORD_DATES: onRecordDatesRequest,
+  };
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
@@ -126,46 +114,17 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
     onDeleteRequest?.();
   };
 
-
   const agreementName = agreement?.name || "Acuerdo de reparto";
-  const cauLine = plant?.regulatoryCode ? `CAU: ${plant.regulatoryCode}` : "CAU no disponible";
-  const isResolved = !isLoading && !error;
-
-  /**
-   * Identity and flow stop sharing one container. The agreement's own data lives
-   * in the first card; where it sits in its regulatory cycle, and what to do next,
-   * lives in the second. Mixing them into a single banner made neither readable.
-   */
-  const cardSx = {
-    bgcolor: colors.background.paper,
-    borderRadius: { xs: 0, sm: radii.large },
-    border: "1px solid",
-    borderColor: colors.divider,
-    p: { xs: 2, sm: 3 },
-  } as const;
 
   return (
-    <>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <Paper elevation={0} sx={cardSx}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 40,
-                height: 40,
-                flexShrink: 0,
-                borderRadius: radii.default,
-                bgcolor: colors.brand.surface,
-                color: colors.brand.main,
-              }}
-            >
-              <HandshakeOutlinedIcon sx={{ fontSize: 22 }} />
-            </Box>
-
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 1.5, sm: 2.5 } }}>
+      {/* Identity sits directly on the page rather than in a card: the banner
+          below is the page's subject, and stacking two panels above it pushed
+          the actual next step off a 390px first viewport. */}
+      <Box sx={{ px: { xs: 2, sm: 0 }, display: "flex", flexDirection: "column", gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.25 }}>
               <Typography
                 ref={headingRef}
                 variant="h5"
@@ -180,32 +139,51 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
               >
                 {agreementName}
               </Typography>
-              <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-                {cauLine}
-              </Typography>
+              {isResolved && <SharingAgreementStatusChip status={agreement?.status} tone="onLight" />}
             </Box>
+            <Typography variant="body2" sx={{ mt: 0.75, color: colors.text.subtle }}>
+              Planta ·{" "}
+              {plant?.regulatoryCode ? (
+                <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", color: colors.text.body }}>
+                  CAU {plant.regulatoryCode}
+                </Box>
+              ) : (
+                "CAU no disponible"
+              )}
+            </Typography>
+          </Box>
 
-            {isResolved && <SharingAgreementStatusChip status={agreement?.status} tone="onLight" />}
-
-            {showMenu && (
-              <Box sx={{ flexShrink: 0 }}>
-                <IconButton
-                  onClick={handleOpenMenu}
-                  aria-label="Más opciones del acuerdo"
-                  sx={{ color: colors.text.subtle, "&:hover": { backgroundColor: colors.background.surface } }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-                <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
-                  <Box sx={{ py: 1 }}>
-                    <MenuItem onClick={handleEditClick}>
-                      <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                        Editar
-                      </Typography>
-                    </MenuItem>
-                    <Divider sx={{ my: 1 }} />
+          {showMenu && (
+            <Box sx={{ flexShrink: 0 }}>
+              <IconButton
+                onClick={handleOpenMenu}
+                aria-label="Más opciones del acuerdo"
+                sx={{
+                  color: colors.text.secondary,
+                  border: "1px solid",
+                  borderColor: colors.divider,
+                  borderRadius: radii.default,
+                  bgcolor: colors.background.paper,
+                  "&:hover": { backgroundColor: colors.background.surface },
+                }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <MenuTemplate anchorElement={anchorElement} onClose={handleCloseMenu}>
+                <Box sx={{ py: 1 }}>
+                  {/* "Editar a mano" in the split section edits coefficients; this
+                      edits the agreement's own fields. Two different verbs on one
+                      screen need two different labels. */}
+                  <MenuItem onClick={handleEditClick}>
+                    <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                    <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                      Editar datos del acuerdo
+                    </Typography>
+                  </MenuItem>
+                  {isDraft && [
+                    <Divider key="divider" sx={{ my: 1 }} />,
                     <MenuItem
+                      key="delete"
                       onClick={handleDeleteClick}
                       sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
                     >
@@ -213,61 +191,57 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
                       <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
                         Eliminar
                       </Typography>
-                    </MenuItem>
-                  </Box>
-                </MenuTemplate>
-              </Box>
-            )}
-          </Box>
-
-          {isResolved && (
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                columnGap: 3,
-                rowGap: 0.5,
-                mt: 1.5,
-                pt: 1.5,
-                borderTop: "1px solid",
-                borderColor: colors.divider,
-              }}
-            >
-              <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                Creado el {formatCalendarDate(agreement?.createdAt)}
-              </Typography>
-              {agreement?.notes && (
-                <Typography
-                  variant="caption"
-                  title={agreement.notes}
-                  sx={{
-                    color: colors.text.subtle,
-                    // Visual clamp only — the full note stays in the DOM for
-                    // assistive technology and in the title attribute for a pointer.
-                    display: "-webkit-box",
-                    WebkitBoxOrient: "vertical",
-                    WebkitLineClamp: 2,
-                    overflow: "hidden",
-                  }}
-                >
-                  {agreement.notes}
-                </Typography>
-              )}
+                    </MenuItem>,
+                  ]}
+                </Box>
+              </MenuTemplate>
             </Box>
           )}
-        </Paper>
+        </Box>
 
-        {isResolved && (
-          <Paper elevation={0} sx={cardSx}>
-            <SharingAgreementLifecycleSpine
-              view={view}
-              generate={generateAction}
-              publish={publishAction}
-              revert={revertAction}
-            />
-          </Paper>
-        )}
       </Box>
-    </>
+
+      {isResolved && (
+        <SharingAgreementNextStepBanner
+          view={view}
+          handlers={handlers}
+          isClosed={view.isClosed}
+          revert={
+            showRevert && onRevertRequest
+              ? { label: "Volver a borrador", onClick: onRevertRequest }
+              : undefined
+          }
+        />
+      )}
+
+      {/* Reference data, not next-step data: below the banner it stops pushing
+          the actual instruction off a 390px first viewport. */}
+      {isResolved && (
+        <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 3, rowGap: 0.5, px: { xs: 2, sm: 0 } }}>
+          <Typography variant="caption" sx={{ color: colors.text.subtle }}>
+            Creado el {formatCalendarDate(agreement?.createdAt)}
+          </Typography>
+          {agreement?.notes && (
+            <Typography
+              variant="caption"
+              title={agreement.notes}
+              sx={{
+                color: colors.text.subtle,
+                // Visual clamp only — the full note stays in the DOM for
+                // assistive technology and in the title attribute for a pointer.
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 2,
+                overflow: "hidden",
+                fontSize: fontSizes.xs,
+              }}
+            >
+              {agreement.notes}
+            </Typography>
+          )}
+        </Box>
+      )}
+
+    </Box>
   );
 };

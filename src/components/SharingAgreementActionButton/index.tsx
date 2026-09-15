@@ -3,4 +3,5 @@ export type {
   SharingAgreementActionButtonProps,
   SharingAgreementActionDescriptor,
   SharingAgreementActionEmphasis,
+  SharingAgreementActionSurface,
 } from "./SharingAgreementActionButton";
