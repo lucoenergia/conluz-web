@@ -190,7 +190,6 @@ export const SharingAgreementDetailPage: FC = () => {
                 plantRegulatoryCode={plant?.regulatoryCode ?? undefined}
                 isGenerateDialogOpen={isGenerateDialogOpen}
                 onGenerateDialogOpenChange={setIsGenerateDialogOpen}
-                onImportRequest={() => setIsUploadDialogOpen(true)}
               />
             </Box>
           )}

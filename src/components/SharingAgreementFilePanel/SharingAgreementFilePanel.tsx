@@ -2,17 +2,21 @@ import { useState, type FC } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, Box, Button, Paper, Typography } from "@mui/material";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { sxStyles } from "../../theme/sx";
-import { colors } from "../../theme/tokens";
+import { colors, fontSizes, radii } from "../../theme/tokens";
 import { useErrorDispatch } from "../../context/error.context";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
+import { SectionHeading } from "../SectionHeading";
+import { SharingAgreementActionButton } from "../SharingAgreementActionButton";
 import {
+  COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
   isFullSum,
   type CoefficientSummable,
 } from "../../pages/production/sharingAgreementCoefficientSums";
+import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
 import { downloadSharingAgreementFile, triggerBrowserDownload } from "./downloadSharingAgreementFile";
@@ -25,44 +29,26 @@ export interface SharingAgreementFilePanelProps {
   coefficients: CoefficientSummable[];
   plantRegulatoryCode: string | undefined;
   /**
-   * Controlled by the page: the lifecycle rail offers "Generar fichero" for
-   * stage 2 as well, so the dialog cannot own its own open state down here.
+   * Controlled by the page: the next-step banner offers the same download for
+   * stages 2-4, so the dialog cannot own its own open state down here.
    */
   isGenerateDialogOpen: boolean;
   onGenerateDialogOpenChange: (isOpen: boolean) => void;
-  /**
-   * Importing is about to become a way of authoring coefficients rather than a
-   * file-panel concern, and more than one surface offers it. The dialog is
-   * mounted by the page; this panel only asks for it.
-   */
-  onImportRequest: () => void;
 }
 
-interface GenerateButtonProps {
-  size?: "small" | "medium";
-  label: string;
-  disabledReason: string | undefined;
-  onClick: () => void;
-}
+const SUB_HEADING_SX = {
+  fontSize: fontSizes["2xl"],
+  fontWeight: 600,
+  color: colors.text.primary,
+  mb: 1.25,
+} as const;
 
-const GenerateButton: FC<GenerateButtonProps> = ({ size = "medium", label, disabledReason, onClick }) => (
-  <Box>
-    <Button
-      size={size}
-      variant={size === "small" ? "outlined" : "contained"}
-      startIcon={<DescriptionOutlinedIcon />}
-      onClick={onClick}
-      disabled={!!disabledReason}
-    >
-      {label}
-    </Button>
-    {disabledReason && (
-      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-        {disabledReason}
-      </Typography>
-    )}
-  </Box>
-);
+const BODY_SX = {
+  fontSize: fontSizes.xl,
+  lineHeight: 1.5,
+  color: colors.text.body,
+  textWrap: "pretty",
+} as const;
 
 export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   plantId,
@@ -72,7 +58,6 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   plantRegulatoryCode,
   isGenerateDialogOpen,
   onGenerateDialogOpenChange,
-  onImportRequest,
 }) => {
   const errorDispatch = useErrorDispatch();
   const [showGeneratedNotice, setShowGeneratedNotice] = useState(false);
@@ -85,11 +70,14 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   const isDraft = agreement?.status === SharingAgreementResponseStatus.DRAFT;
 
   const { fileSumUnits } = computeSharingAgreementCoefficientSums(coefficients);
-  const sumIsFull = isFullSum(fileSumUnits);
+  // One wording for the shortfall across the whole surface. This panel used to
+  // say "exactamente 100 %" while the lifecycle said "Faltan X para llegar al
+  // 100,0000 %" — two forms of the same rule, one of them at a precision the
+  // coefficients do not actually use.
   const generateDisabledReason = !plantRegulatoryCode
     ? "Esta planta no tiene código regulatorio (CAU) asignado."
-    : !sumIsFull
-      ? "La suma de los coeficientes debe ser exactamente 100,0000 % para generar el fichero."
+    : !isFullSum(fileSumUnits)
+      ? (formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits) ?? undefined)
       : undefined;
 
   const downloadMutation = useMutation({
@@ -98,109 +86,101 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
     onError: () => errorDispatch("Ha habido un problema al descargar el fichero. Por favor, inténtalo más tarde"),
   });
 
-  const title = isDraft ? "Fichero para la distribuidora" : "Fichero enviado a la distribuidora";
-
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
-      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
-        {title}
-      </Typography>
+      <SectionHeading
+        title="Fichero para la distribuidora"
+        description="El TXT con los coeficientes que la distribuidora necesita para aplicar el reparto."
+      />
 
-      {showGeneratedNotice && (
-        <Alert severity="info" onClose={() => setShowGeneratedNotice(false)} sx={{ mb: 2 }}>
-          El fichero se ha generado a partir de los coeficientes actuales y se ha descargado.
-          {file && " Puede diferir del fichero guardado si los coeficientes han cambiado desde entonces."} Conluz no
-          lo envía automáticamente a la distribuidora — hazlo llegar por tu medio habitual (por ejemplo, email).
-        </Alert>
-      )}
-
-      {!file && isDraft && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          El TXT que envías a la distribuidora con el reparto. Genéralo aquí desde los coeficientes, o impórtalo si
-          ya lo tienes hecho por otro medio.
+      {/* Generating persists nothing: POST .../generate-file builds the TXT in
+          memory from the current coefficients and streams it back. Presenting it
+          next to the imported file made it look like the two fed one slot. */}
+      <Box sx={{ mb: 3 }}>
+        <Typography component="h3" sx={SUB_HEADING_SX}>
+          Generar y descargar
         </Typography>
-      )}
-
-      {!file && (
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
-          <DescriptionOutlinedIcon sx={{ color: colors.text.subtle, fontSize: 24 }} />
-          <Typography variant="body2" color="text.secondary">
-            {isDraft
-              ? "Todavía no hay ningún fichero guardado."
-              : "Este acuerdo no tiene fichero. El conjunto de coeficientes ya está cerrado, así que no se puede generar ni importar uno ahora."}
-          </Typography>
-        </Box>
-      )}
-
-      {file && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-          <DescriptionOutlinedIcon sx={{ color: colors.text.subtle, fontSize: 24 }} />
-          <Box>
-            <Typography variant="body2" fontWeight="600">
-              {file.filename}
-            </Typography>
-            {file.uploadedAt && (
-              <Typography variant="caption" color="text.secondary">
-                Subido el {formatCalendarDate(file.uploadedAt)}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-      )}
-
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flexWrap: "wrap" }}>
-        {!file && isDraft && (
-          <>
-            <GenerateButton
-              label="Generar fichero"
-              disabledReason={generateDisabledReason}
-              onClick={() => onGenerateDialogOpenChange(true)}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<UploadFileOutlinedIcon />}
-              onClick={onImportRequest}
-            >
-              Importar un fichero que ya tengas
-            </Button>
-          </>
-        )}
-
-        {file && (
-          <Button
-            variant="outlined"
-            startIcon={<DownloadOutlinedIcon />}
-            onClick={() => downloadMutation.mutate()}
-            disabled={downloadMutation.isPending}
-          >
-            {downloadMutation.isPending ? "Descargando…" : "Descargar fichero"}
-          </Button>
+        <Typography sx={{ ...BODY_SX, mb: 2 }}>
+          Se construye en este momento con los coeficientes actuales. Conluz no guarda el fichero: se descarga en tu
+          dispositivo y lo envías tú.
+        </Typography>
+        <SharingAgreementActionButton
+          emphasis="primary"
+          action={{
+            label: "Generar y descargar TXT",
+            onClick: () => onGenerateDialogOpenChange(true),
+            disabledReason: generateDisabledReason,
+          }}
+        />
+        {showGeneratedNotice && (
+          <Alert severity="info" onClose={() => setShowGeneratedNotice(false)} sx={{ mt: 2 }}>
+            El fichero se ha generado a partir de los coeficientes actuales y se ha descargado. Conluz no guarda
+            ninguna copia ni lo envía a la distribuidora — hazlo llegar por tu medio habitual (por ejemplo, email).
+          </Alert>
         )}
       </Box>
 
-      {file && isDraft && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-            ¿Necesitas cambiarlo?
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            <GenerateButton
-              size="small"
-              label="Generar fichero"
-              disabledReason={generateDisabledReason}
-              onClick={() => onGenerateDialogOpenChange(true)}
-            />
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<UploadFileOutlinedIcon />}
-              onClick={onImportRequest}
+      <Box sx={{ borderTop: "1px solid", borderColor: colors.divider, pt: 3 }}>
+        <Typography component="h3" sx={SUB_HEADING_SX}>
+          Fichero importado
+        </Typography>
+
+        {file ? (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                bgcolor: colors.background.surface,
+                border: "1px solid",
+                borderColor: colors.border.light,
+                borderRadius: radii.default,
+                p: 2,
+              }}
             >
-              Importar otro fichero
-            </Button>
-          </Box>
-        </Box>
-      )}
+              <DescriptionOutlinedIcon sx={{ color: colors.text.secondary, fontSize: 24, flexShrink: 0 }} />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body1" fontWeight="600" sx={{ wordBreak: "break-all" }}>
+                  {file.filename}
+                </Typography>
+                {file.uploadedAt && (
+                  <Typography variant="caption" color="text.secondary">
+                    Importado el {formatCalendarDate(file.uploadedAt)}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            {/* Persistent, not a dismissible alert: the mismatch it warns about
+                does not go away when the notice does. Editing the coefficients
+                never touches the stored file, and nothing compares the two. */}
+            {isDraft && (
+              <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+                <WarningAmberOutlinedIcon sx={{ color: colors.warning.main, fontSize: 20, flexShrink: 0 }} />
+                <Typography sx={BODY_SX}>
+                  Si editas los coeficientes, este fichero deja de coincidir con el reparto.
+                </Typography>
+              </Box>
+            )}
+
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<DownloadOutlinedIcon />}
+                onClick={() => downloadMutation.mutate()}
+                disabled={downloadMutation.isPending}
+              >
+                {downloadMutation.isPending ? "Descargando…" : "Descargar fichero importado"}
+              </Button>
+            </Box>
+          </>
+        ) : (
+          <Typography sx={{ ...BODY_SX, color: colors.text.secondary }}>
+            No has importado ningún fichero en este acuerdo.
+          </Typography>
+        )}
+      </Box>
 
       {plantRegulatoryCode && (
         <SharingAgreementGenerateDialog
