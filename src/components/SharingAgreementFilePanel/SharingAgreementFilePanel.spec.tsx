@@ -81,6 +81,7 @@ function renderPanel(overrides: {
   agreement?: SharingAgreementResponse;
   coefficients?: CoefficientSummable[];
   plantRegulatoryCode?: string | undefined;
+  onImportRequest?: () => void;
 } = {}) {
   const agreement = overrides.agreement ?? makeAgreement();
   const coefficients = overrides.coefficients ?? fullSumCoefficients;
@@ -100,6 +101,7 @@ function renderPanel(overrides: {
         plantRegulatoryCode={plantRegulatoryCode}
         isGenerateDialogOpen={isGenerateDialogOpen}
         onGenerateDialogOpenChange={setIsGenerateDialogOpen}
+        onImportRequest={overrides.onImportRequest ?? (() => {})}
       />
     );
   };
@@ -128,6 +130,15 @@ describe("SharingAgreementFilePanel", () => {
       expect(screen.getByRole("button", { name: "Generar fichero" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Importar un fichero que ya tengas" })).toBeInTheDocument();
       expect(mockDownload).not.toHaveBeenCalled();
+    });
+
+    it("asks the page to open the import dialog rather than owning it", async () => {
+      // The dialog is mounted by the page: more than one surface offers importing,
+      // so the panel can only request it.
+      const onImportRequest = vi.fn();
+      renderPanel({ onImportRequest });
+      await userEvent.click(screen.getByRole("button", { name: "Importar un fichero que ya tengas" }));
+      expect(onImportRequest).toHaveBeenCalledTimes(1);
     });
 
     it("shows the section title and description tailored to DRAFT", () => {

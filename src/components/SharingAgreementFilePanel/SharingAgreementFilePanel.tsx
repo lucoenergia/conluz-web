@@ -16,7 +16,6 @@ import {
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
 import { downloadSharingAgreementFile, triggerBrowserDownload } from "./downloadSharingAgreementFile";
-import { SharingAgreementUploadDialog } from "../SharingAgreementUploadDialog";
 import { SharingAgreementGenerateDialog } from "../SharingAgreementGenerateDialog";
 
 export interface SharingAgreementFilePanelProps {
@@ -31,6 +30,12 @@ export interface SharingAgreementFilePanelProps {
    */
   isGenerateDialogOpen: boolean;
   onGenerateDialogOpenChange: (isOpen: boolean) => void;
+  /**
+   * Importing is about to become a way of authoring coefficients rather than a
+   * file-panel concern, and more than one surface offers it. The dialog is
+   * mounted by the page; this panel only asks for it.
+   */
+  onImportRequest: () => void;
 }
 
 interface GenerateButtonProps {
@@ -67,9 +72,9 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   plantRegulatoryCode,
   isGenerateDialogOpen,
   onGenerateDialogOpenChange,
+  onImportRequest,
 }) => {
   const errorDispatch = useErrorDispatch();
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [showGeneratedNotice, setShowGeneratedNotice] = useState(false);
 
   // Defensive: the generated type claims `file` is never null, but the OpenAPI
@@ -154,7 +159,7 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
             <Button
               variant="outlined"
               startIcon={<UploadFileOutlinedIcon />}
-              onClick={() => setIsUploadDialogOpen(true)}
+              onClick={onImportRequest}
             >
               Importar un fichero que ya tengas
             </Button>
@@ -189,21 +194,13 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
               size="small"
               variant="outlined"
               startIcon={<UploadFileOutlinedIcon />}
-              onClick={() => setIsUploadDialogOpen(true)}
+              onClick={onImportRequest}
             >
               Importar otro fichero
             </Button>
           </Box>
         </Box>
       )}
-
-      <SharingAgreementUploadDialog
-        isOpen={isUploadDialogOpen}
-        plantId={plantId}
-        sharingAgreementId={sharingAgreementId}
-        regulatoryCode={plantRegulatoryCode}
-        onClose={() => setIsUploadDialogOpen(false)}
-      />
 
       {plantRegulatoryCode && (
         <SharingAgreementGenerateDialog

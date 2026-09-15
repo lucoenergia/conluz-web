@@ -10,6 +10,7 @@ import { ActionStatus } from "../../components/ActionStatus";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
+import { SharingAgreementUploadDialog } from "../../components/SharingAgreementUploadDialog";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { PublishSharingAgreementConfirmationModal } from "../../components/Modals/PublishSharingAgreementConfirmationModal";
@@ -51,6 +52,10 @@ export const SharingAgreementDetailPage: FC = () => {
   // Owned here rather than in the file panel: the lifecycle rail offers the same
   // action for stage 2, so both entry points need one source of truth.
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+  // Owned here rather than in the file panel, for the same reason the generate
+  // dialog is: importing a TXT is a way of authoring coefficients, and more than
+  // one surface on this page offers it.
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -177,11 +182,20 @@ export const SharingAgreementDetailPage: FC = () => {
                 plantRegulatoryCode={plant?.regulatoryCode ?? undefined}
                 isGenerateDialogOpen={isGenerateDialogOpen}
                 onGenerateDialogOpenChange={setIsGenerateDialogOpen}
+                onImportRequest={() => setIsUploadDialogOpen(true)}
               />
             </Box>
           )}
         </>
       )}
+
+      <SharingAgreementUploadDialog
+        isOpen={isUploadDialogOpen}
+        plantId={plantId}
+        sharingAgreementId={sharingAgreementId}
+        regulatoryCode={plant?.regulatoryCode ?? undefined}
+        onClose={() => setIsUploadDialogOpen(false)}
+      />
 
       {isEditDialogOpen && agreement && (
         <SharingAgreementFormDialog
