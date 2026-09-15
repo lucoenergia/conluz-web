@@ -78,6 +78,22 @@ function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, 
   return formatKilowatts(value * installedPowerKw);
 }
 
+/**
+ * `supply.name` is declared required by the contract but is nullable in the
+ * database, and empty for most production rows. Falling back to "-" left the
+ * CUPS — the only thing that actually identifies a supply point to the
+ * distributor — demoted to a caption under a dash.
+ *
+ * When there is no name the CUPS becomes the primary identifier, and it is not
+ * repeated underneath: one row, one identity.
+ */
+function getRowIdentity(supply: SharingAgreementPartitionCoefficientResponse["supply"]) {
+  const name = supply?.name?.trim();
+  const code = supply?.code?.trim();
+  if (name) return { primary: name, secondary: code || "-" };
+  return { primary: code || "-", secondary: null };
+}
+
 function CoefficientInput({
   coefficientInput,
   editedValue,
@@ -136,6 +152,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const identity = getRowIdentity(coefficient.supply);
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
 
@@ -153,14 +170,16 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
         </TableCell>
       )}
       <TableCell>
-        <Typography variant="body2" fontWeight="600">
-          {coefficient.supply?.name || "-"}
+        <Typography variant="body2" fontWeight="600" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {identity.primary}
         </Typography>
       </TableCell>
       <TableCell>
-        <Typography variant="body2" color="text.secondary">
-          {coefficient.supply?.code || "-"}
-        </Typography>
+        {identity.secondary !== null && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: "tabular-nums" }}>
+            {identity.secondary}
+          </Typography>
+        )}
       </TableCell>
       <TableCell align="right">
         {isEditing && inputUnit && onCoefficientChange ? (
@@ -254,6 +273,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const identity = getRowIdentity(coefficient.supply);
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
@@ -289,8 +309,8 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               )}
             </Box>
           )}
-          <Typography variant="body2" fontWeight="600">
-            {coefficient.supply?.name || "-"}
+          <Typography variant="body2" fontWeight="600" sx={{ fontVariantNumeric: "tabular-nums" }}>
+            {identity.primary}
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -332,9 +352,11 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
         </Box>
       </Box>
 
-      <Typography variant="caption" sx={{ color: colors.text.secondary }}>
-        {coefficient.supply?.code || "-"}
-      </Typography>
+      {identity.secondary !== null && (
+        <Typography variant="caption" sx={{ color: colors.text.secondary, fontVariantNumeric: "tabular-nums" }}>
+          {identity.secondary}
+        </Typography>
+      )}
 
       {isEditing && (
         <Typography variant="caption" sx={{ color: colors.text.secondary }}>

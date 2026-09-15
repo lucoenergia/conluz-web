@@ -736,3 +736,75 @@ describe("SharingAgreementCoefficientCard (batch-activation checkbox)", () => {
     expect(onToggleSelected).toHaveBeenCalledTimes(1);
   });
 });
+
+// AC13. `supply.name` is declared required by the contract but is nullable in
+// the database and empty for most production rows.
+describe("row identity when the supply has no name", () => {
+  const namelessCoefficient: SharingAgreementPartitionCoefficientResponse = {
+    ...pendingCoefficient,
+    supply: { id: "s9", name: "", code: "ES0031300000000009ZZ" },
+  };
+
+  it("promotes the CUPS to the primary identifier in the table, and does not repeat it", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow coefficient={namelessCoefficient} installedPowerKw={100} />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
+  });
+
+  it("promotes the CUPS to the primary identifier on the mobile card, and does not repeat it", () => {
+    render(<SharingAgreementCoefficientCard coefficient={namelessCoefficient} installedPowerKw={100} />);
+
+    expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
+  });
+
+  it("keeps the name primary and the CUPS secondary when a name exists", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByText("Vivienda A")).toBeInTheDocument();
+    expect(screen.getByText("ES0031300000000001AB")).toBeInTheDocument();
+  });
+
+  it("falls back to a dash only when neither a name nor a CUPS exists", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={{ ...pendingCoefficient, supply: { id: "s0", name: "", code: "" } }}
+            installedPowerKw={100}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getAllByText("-")).toHaveLength(1);
+  });
+
+  it("treats a whitespace-only name as no name at all", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={{ ...namelessCoefficient, supply: { id: "s9", name: "   ", code: "ES0031300000000009ZZ" } }}
+            installedPowerKw={100}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
+  });
+});
