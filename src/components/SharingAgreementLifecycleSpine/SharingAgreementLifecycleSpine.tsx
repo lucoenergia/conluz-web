@@ -199,10 +199,10 @@ export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpinePr
       sx={{
         bgcolor: colors.brand.panel,
         borderRadius: radii.default,
-        p: { xs: 1.5, sm: 2 },
+        p: { xs: 1.25, sm: 2 },
         display: "flex",
         flexDirection: "column",
-        gap: { xs: 1, sm: 1.5 },
+        gap: { xs: 0.75, sm: 1.5 },
       }}
     >
       <Box
@@ -218,7 +218,7 @@ export const SharingAgreementLifecycleSpine: FC<SharingAgreementLifecycleSpinePr
       </Box>
 
       {railCaption && (
-        <Typography sx={{ fontSize: fontSizes.lg, lineHeight: 1.4, color: colors.brand.onSoft }}>
+        <Typography sx={{ fontSize: { xs: fontSizes.md, sm: fontSizes.lg }, lineHeight: 1.4, color: colors.brand.onSoft }}>
           {railCaption}
         </Typography>
       )}

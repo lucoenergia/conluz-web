@@ -202,6 +202,10 @@ export const SharingAgreementDetailPage: FC = () => {
                 editRequestId={editCoefficientsRequestId}
                 onImportRequest={() => setIsUploadDialogOpen(true)}
                 registerDatesRequestId={registerDatesRequestId}
+                // The banner promotes "Editar a mano" / "Importar TXT" exactly
+                // while authoring is the current step; the section offers them
+                // the rest of the time, so only one pair is ever on screen.
+                showAuthoringActions={nextStep.kind !== "AUTHOR_COEFFICIENTS"}
               />
             </Box>
           )}

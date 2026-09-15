@@ -385,7 +385,7 @@ const FIXED_COEFFICIENTS_EMPTY: unknown[] = [];
 
 /**
  * A DRAFT set that genuinely doesn't sum to 100% (0.4 + 0.35 = 0.75), for the
- * "Poner en vigor" gated-kebab baseline — distinct from FIXED_COEFFICIENTS_ALL_PENDING,
+ * publish-not-offered baseline — distinct from FIXED_COEFFICIENTS_ALL_PENDING,
  * which sums to exactly 1.
  */
 const FIXED_COEFFICIENTS_INCOMPLETE = [
@@ -1039,7 +1039,9 @@ test.describe("Visual baselines", () => {
     // The file panel's title always renders on load regardless of file/coefficient
     // state, so it's a reliable "detail page finished loading" signal across every
     // fixture — unlike "Suma del fichero", which is absent when coefficients is empty.
-    await expect(page.getByText(/Fichero (para|enviado a) la distribuidora/)).toBeVisible();
+    // One wording in every status now: the panel no longer switches to
+    // "Fichero enviado a la distribuidora" once the agreement is published.
+    await expect(page.getByRole("heading", { name: "Fichero para la distribuidora" })).toBeVisible();
     await stabilizePage(page);
   }
 
@@ -1139,13 +1141,20 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, NO_FILE_DRAFT_AGREEMENT.name);
 
-    await expect(page.getByText("Todavía no hay ningún fichero guardado.")).toBeVisible();
-    // The disabled reason is visible text, never a tooltip — critical on the
-    // ~90% mobile user base, which has no hover.
-    await expect(page.getByRole("button", { name: "Generar fichero" })).toBeDisabled();
-    await expect(
-      page.getByText("La suma de los coeficientes debe ser exactamente 100 % para generar el fichero."),
-    ).toBeVisible();
+    await expect(page.getByText("No has importado ningún fichero en este acuerdo.")).toBeVisible();
+    // The blocking reason is visible text, never a tooltip — critical on the
+    // ~90% mobile user base, which has no hover. The control keeps `aria-disabled`
+    // rather than `disabled`, so the reason stays reachable by keyboard.
+    const generateButton = page.getByRole("button", { name: "Generar y descargar TXT" });
+    await expect(generateButton).toHaveAttribute("aria-disabled", "true");
+    // Focusable, not `disabled` — asserted by focusing it, because Playwright's
+    // toBeDisabled() honours aria-disabled and so cannot tell "gated but still
+    // reachable" from "removed from the tab order".
+    await generateButton.focus();
+    await expect(generateButton).toBeFocused();
+    // One wording for the shortfall across the surface — "exactamente 100 %" is gone.
+    await expect(page.getByText("Este acuerdo todavía no tiene coeficientes.")).toBeVisible();
+    await expect(page.getByText(/exactamente 100/)).toHaveCount(0);
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-no-file.png", { fullPage: true });
   });
@@ -1335,7 +1344,7 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.locator('button:has([data-testid="MoreVertIcon"])').click();
-    await page.getByRole("menuitem", { name: "Editar" }).click();
+    await page.getByRole("menuitem", { name: "Editar datos del acuerdo" }).click();
 
     await expect(page.getByLabel("Nombre", { exact: false })).toHaveValue(DRAFT_AGREEMENT.name);
     await stabilizePage(page);
@@ -1360,7 +1369,7 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-delete-confirmation.png", { fullPage: true });
   });
 
-  test("sharing agreement kebab (Poner en vigor gated, incomplete sum)", async ({ page }) => {
+  test("sharing agreement detail page (draft, incomplete sum — publish not offered)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
@@ -1375,27 +1384,49 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
-    // Publishing is a labelled control on the lifecycle rail now, not a kebab item.
-    // Gated, it stays in the tab order with `aria-disabled` rather than `disabled`,
-    // so its reason remains reachable by keyboard.
-    const publishButton = page.getByRole("button", { name: "Poner en vigor" });
-    await expect(publishButton).toHaveAttribute("aria-disabled", "true");
+    // Publishing a set that does not sum to exactly 1 is refused by the backend
+    // with a 409, so the control is not rendered at all — an action that is going
+    // to fail is never offered. What is missing is stated as visible text instead.
+    await expect(page.getByRole("button", { name: "Poner en vigor" })).toHaveCount(0);
+    // Exact: the imported-file block offers "Descargar fichero importado", which
+    // a substring match would pick up.
+    await expect(page.getByRole("button", { name: "Descargar fichero", exact: true })).toHaveCount(0);
+
+    await expect(
+      page.getByText("«Poner en vigor» y «Generar el fichero» aparecerán cuando los coeficientes sumen 100,0000 %."),
+    ).toBeVisible();
+    await expect(page.getByText(/Completa el reparto: Faltan .* para llegar al 100,0000/)).toBeVisible();
+
+    // Authoring is what this step actually offers, promoted on the banner. The
+    // split section yields its own pair while the banner is carrying them, so
+    // there is exactly one "Editar a mano" on screen.
+    await expect(page.getByRole("button", { name: "Editar a mano" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Importar TXT" })).toHaveCount(1);
+
+    // The gated-control pattern itself has not gone away — it moved to the file
+    // panel's generate action, which is blocked by the same incomplete sum.
+    const generateButton = page.getByRole("button", { name: "Generar y descargar TXT" });
+    await expect(generateButton).toHaveAttribute("aria-disabled", "true");
     // Focusable, not `disabled`. Asserted by actually focusing it: Playwright's
     // toBeEnabled() honours aria-disabled, so it cannot distinguish "gated but
     // still reachable" from "removed from the tab order" — which is the whole
     // point of gating this way.
-    await publishButton.focus();
-    await expect(publishButton).toBeFocused();
+    await generateButton.focus();
+    await expect(generateButton).toBeFocused();
 
     // The reason is visible text under the control the instant the page renders —
     // never a tooltip, and never requiring a hover or a menu to be opened first.
-    const reasonId = await publishButton.getAttribute("aria-describedby");
-    const reason = page.locator(`#${reasonId}`);
+    const reasonId = await generateButton.getAttribute("aria-describedby");
+    expect(reasonId, "a gated control must name the element describing it").toBeTruthy();
+    // Selected by attribute, not by `#id`: React's useId emits values like
+    // "«rh»", which are not valid CSS identifiers, and `CSS.escape` is not
+    // available in the Node-side test context.
+    const reason = page.locator(`[id="${reasonId}"]`);
     await expect(reason).toBeVisible();
     await expect(reason).toHaveText(/Faltan .* para llegar al 100,0000/);
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-kebab-publish-gated.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("sharing-agreement-draft-incomplete-sum.png", { fullPage: true });
   });
 
   test("sharing agreement publish confirmation", async ({ page }) => {
@@ -1456,7 +1487,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Importar otro fichero" }).click();
+    await page.getByRole("button", { name: "Importar TXT" }).click();
 
     await expect(page.getByText(`${FIXED_PLANT.regulatoryCode}_AAAA.txt`)).toBeVisible();
     await stabilizePage(page);
@@ -1473,7 +1504,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementFileUploadRejection(page, FIXED_PLANT_ID, DRAFT_AGREEMENT.id);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Importar otro fichero" }).click();
+    await page.getByRole("button", { name: "Importar TXT" }).click();
 
     await page.setInputFiles('input[type="file"]', {
       name: `${FIXED_PLANT.regulatoryCode}_2026.txt`,
@@ -1504,7 +1535,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementGenerateFile(page, FIXED_PLANT_ID, NO_FILE_DRAFT_AGREEMENT.id);
 
     await navigateToSharingAgreementDetail(page, NO_FILE_DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Generar fichero" }).click();
+    await page.getByRole("button", { name: "Generar y descargar TXT" }).click();
 
     await expect(page.getByRole("heading", { name: "Generar fichero" })).toBeVisible();
     await expect(page.getByLabel("Año")).toBeVisible();
@@ -1521,7 +1552,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
     await page.getByRole("button", { name: "Añadir suministro" }).click();
 
     await expect(page.getByText(FIXED_SUPPLY.name)).toBeVisible();
@@ -1543,7 +1574,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
 
     // FIXED_COEFFICIENTS_MIXED sums to exactly 100%; removing Vivienda A's
     // 30% coefficient brings the live sum to 70%, below the full-sum copy.
@@ -1571,7 +1602,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
 
     // Editor opens in kW mode by default.
     await page.getByPlaceholder("0,00").first().fill("");
@@ -1582,7 +1613,7 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-editor-empty-value-error.png", { fullPage: true });
   });
 
-  test("sharing agreement coefficient editor (toggled to percentage, values converted and kept)", async ({ page }, testInfo) => {
+  test("sharing agreement coefficient editor (toggled to kW, values converted and kept)", async ({ page }, testInfo) => {
     test.skip(
       testInfo.project.name !== "desktop",
       "Same duplicate-DOM-instance rationale as the other interactive editor specs above.",
@@ -1595,18 +1626,23 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
     await expect(page.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: "Coeficiente" }).click();
+    // The editor works in percent now, so the round trip under test is kW -> %
+    // -> kW. Vivienda A's 0.3 coefficient is 13,50 kW of the 45 kW installed.
+    await page.getByRole("button", { name: "%" }).click();
+    await expect(page.locator("tr", { hasText: "Vivienda A" }).getByRole("textbox")).toHaveValue("30,0000");
 
-    // Vivienda A's 0.3 coefficient (13,50 kW of the 45 kW installed) survives
-    // the toggle as "0,300000" — converted, not cleared, fixed at 6dp, and not
-    // rounding-drifted.
-    await expect(page.locator("tr", { hasText: "Vivienda A" }).getByRole("textbox")).toHaveValue("0,300000");
+    await page.getByRole("button", { name: "kW" }).click();
+    // Converted, not cleared, and not rounding-drifted: toggling only ever
+    // re-derives the text from the canonical value, never the other way round.
+    await expect(page.locator("tr", { hasText: "Vivienda A" }).getByRole("textbox")).toHaveValue("13,50");
+
+    await page.getByRole("button", { name: "%" }).click();
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-editor-toggled-to-percentage.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-toggled-to-kw.png", { fullPage: true });
   });
 
   test("sharing agreement coefficient editor (kW rounds to installed but coefficient sum isn't exact)", async ({ page }, testInfo) => {
@@ -1630,7 +1666,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, roundingCaveatAgreement, roundingCaveatCoefficients, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
 
     await expect(page.getByText("Suma del fichero: 99,9999 %")).toBeVisible();
     // Plain strings, not regex — same NBSP-normalization rationale as the

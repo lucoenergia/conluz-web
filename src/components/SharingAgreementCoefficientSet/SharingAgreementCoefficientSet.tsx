@@ -130,6 +130,12 @@ export interface SharingAgreementCoefficientSetProps {
    * here, where the selection lives.
    */
   registerDatesRequestId?: number;
+  /**
+   * False when the next-step banner is already promoting these same two actions
+   * — which it does exactly while authoring *is* the current step. Rendering
+   * both would put two identically-labelled buttons on one screen.
+   */
+  showAuthoringActions?: boolean;
 }
 
 // A deliberate 3-chip cut for this slice: applicationState only. The design
@@ -241,6 +247,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   editRequestId = 0,
   onImportRequest,
   registerDatesRequestId = 0,
+  showAuthoringActions = true,
 }) => {
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
@@ -693,7 +700,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
    * Both are DRAFT-only: `PUT .../partition-coefficients` and `POST .../file`
    * both 409 outside DRAFT.
    */
-  const authoringActions = isDraft ? (
+  const authoringActions = isDraft && showAuthoringActions ? (
     <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, mb: 2.5 }}>
       <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={handleStartEditing}>
         Editar a mano
@@ -724,7 +731,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         <EmptyState
           icon={HandshakeOutlinedIcon}
           title="Sin coeficientes de reparto"
-          subtitle="Este acuerdo todavía no tiene coeficientes. Añade los puntos de suministro a mano, o importa el fichero TXT que ya tengas."
+          subtitle="Añade los puntos de suministro y su coeficiente a mano, o importa el fichero TXT que ya tengas."
         />
         {supplyPicker}
       </Paper>

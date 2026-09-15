@@ -1445,6 +1445,22 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
     expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
   });
 
+  it("yields its authoring actions when the next-step banner is already promoting them", () => {
+    // Two identically-labelled buttons on one screen is the duplication this
+    // section exists to avoid; the banner wins while authoring is the step.
+    renderWithTheme({
+      coefficients,
+      agreementStatus: DRAFT,
+      onImportRequest: vi.fn(),
+      showAuthoringActions: false,
+    });
+
+    expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
+    // The section itself is unaffected.
+    expect(screen.getByRole("heading", { level: 2, name: "Reparto" })).toBeInTheDocument();
+  });
+
   it("starts editing when the page asks for it, without the user touching the section's own button", async () => {
     const { rerender } = renderWithTheme({ coefficients, agreementStatus: DRAFT, editRequestId: 0 });
 
