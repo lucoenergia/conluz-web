@@ -319,4 +319,73 @@ describe("SharingAgreementDetailHeader", () => {
     expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
   });
+
+  // AC7.
+  describe("the zero-distribution notice", () => {
+    const NOTICE = /Vigente, pero todavía no reparte producción/;
+
+    it("warns when a published agreement has no applied coefficient at all", () => {
+      renderHeader({
+        agreement: publishedAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+      });
+
+      expect(screen.getByText(NOTICE)).toBeVisible();
+    });
+
+    it("is informational, never styled as an error", () => {
+      // Nothing has gone wrong — there is a step left. A fault colour here would
+      // misreport the state in the other direction.
+      renderHeader({
+        agreement: publishedAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+      });
+
+      const alert = screen.getByText(NOTICE).closest(".MuiAlert-root");
+      expect(alert).toHaveClass("MuiAlert-standardInfo");
+      expect(alert).not.toHaveClass("MuiAlert-standardError");
+    });
+
+    it("disappears as soon as one coefficient has been applied", () => {
+      renderHeader({
+        agreement: publishedAgreement,
+        coefficients: ONE_APPLIED,
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 2 },
+      });
+
+      expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+    });
+
+    it("never appears on a draft, which is not in force to begin with", () => {
+      renderHeader({
+        agreement: draftAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
+      });
+
+      expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+    });
+
+    it("never appears on a superseded agreement", () => {
+      renderHeader({ agreement: supersededAgreement, coefficients: ALL_PENDING });
+
+      expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+    });
+
+    it("does not appear while the coefficients are still in flight", () => {
+      // `[].every(...)` is vacuously true, so a defaulted empty array would
+      // announce zero distribution for an agreement that may be fully applied.
+      renderHeader({ agreement: publishedAgreement });
+
+      expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+    });
+
+    it("does not appear for a published agreement with no coefficients at all", () => {
+      renderHeader({ agreement: publishedAgreement, coefficients: [] });
+
+      expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
+    });
+  });
 });

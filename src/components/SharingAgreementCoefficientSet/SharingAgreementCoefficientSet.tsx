@@ -124,6 +124,12 @@ export interface SharingAgreementCoefficientSetProps {
    * the distributor-file panel where it used to live.
    */
   onImportRequest?: () => void;
+  /**
+   * Bumped by the application panel, or by the next-step banner at stage 5, to
+   * start recording application dates. Selecting the pending rows has to happen
+   * here, where the selection lives.
+   */
+  registerDatesRequestId?: number;
 }
 
 // A deliberate 3-chip cut for this slice: applicationState only. The design
@@ -233,6 +239,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   agreementStatus,
   editRequestId = 0,
   onImportRequest,
+  registerDatesRequestId = 0,
 }) => {
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
@@ -263,6 +270,11 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [searchText, setSearchText] = useState("");
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
+  // Debounce applies to narrowing the list, not to widening it. Clearing the
+  // field — whether the user did it or "Registrar fechas" did — takes effect at
+  // once, so a selection made straight afterwards is never reported as partly
+  // hidden behind a filter that is already gone.
+  const effectiveSearchText = searchText.trim() === "" ? "" : debouncedSearchText;
 
   const [isEditing, setIsEditing] = useState(false);
   const [inputUnit, setInputUnit] = useState<CoefficientInputUnit>("kw");
@@ -409,6 +421,34 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // hidden alike. That asymmetry is the whole reason both controls exist.
   const handleClearSelection = () => setSelectedIds(new Set());
 
+  /**
+   * Preselect every coefficient still waiting for a date, and show the batch bar.
+   *
+   * The filter and the search are cleared *first*, deliberately. Selecting rows
+   * a live filter is hiding would put the bar's count out of step with what the
+   * user can see, and the batch dialogs would then report targets hidden by a
+   * filter the user never set — for an action they did not scope themselves.
+   */
+  const lastHandledRegisterDatesRequestId = useRef(registerDatesRequestId);
+  useEffect(() => {
+    if (registerDatesRequestId === lastHandledRegisterDatesRequestId.current) return;
+    lastHandledRegisterDatesRequestId.current = registerDatesRequestId;
+
+    setApplicationStateFilter("all");
+    setSearchText("");
+    setSelectedIds(
+      new Set(
+        coefficients
+          .filter(
+            (coefficient) =>
+              coefficient.applicationState ===
+              SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
+          )
+          .map((coefficient) => coefficient.coefficientId),
+      ),
+    );
+  }, [registerDatesRequestId, coefficients]);
+
   const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
     setActionsAnchorEl(event.currentTarget);
     setActionsMenuCoefficientId(coefficient.coefficientId);
@@ -515,8 +555,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const hasDraftAnomaly = isDraft && hasAnomalousRow;
 
   const filteredCoefficients = useMemo(
-    () => filterSharingAgreementCoefficients(coefficients, debouncedSearchText, applicationStateFilter),
-    [coefficients, debouncedSearchText, applicationStateFilter],
+    () => filterSharingAgreementCoefficients(coefficients, effectiveSearchText, applicationStateFilter),
+    [coefficients, effectiveSearchText, applicationStateFilter],
   );
 
   // The set select-all/the header checkbox/the visible-vs-hidden count all
@@ -574,7 +614,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   );
   const selectionActionSummary = useMemo(() => summarizeSelectionActions(selectedCoefficients), [selectedCoefficients]);
 
-  const filteredRows = useMemo(() => filterEditableRows(rows, debouncedSearchText), [rows, debouncedSearchText]);
+  const filteredRows = useMemo(() => filterEditableRows(rows, effectiveSearchText), [rows, effectiveSearchText]);
 
   // Unit-independent: always reads the canonical `value`, never re-derives it
   // from text — the sum (and canSave, and the save payload below) can't be

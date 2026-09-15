@@ -9,12 +9,14 @@ import { EmptyState } from "../../components/EmptyState";
 import { ActionStatus } from "../../components/ActionStatus";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
+import { SharingAgreementApplicationPanel } from "../../components/SharingAgreementApplicationPanel";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
 import { SharingAgreementUploadDialog } from "../../components/SharingAgreementUploadDialog";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { PublishSharingAgreementConfirmationModal } from "../../components/Modals/PublishSharingAgreementConfirmationModal";
 import { RevertSharingAgreementToDraftConfirmationModal } from "../../components/Modals/RevertSharingAgreementToDraftConfirmationModal";
+import { SharingAgreementResponseStatus } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
@@ -43,6 +45,12 @@ export const SharingAgreementDetailPage: FC = () => {
     isPublishing,
     isReverting,
   } = useSharingAgreementMutations(plantId);
+  const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
+  const isSuperseded = agreement?.status === SharingAgreementResponseStatus.SUPERSEDED;
+  // Scheduling only exists once the coefficient set is sealed. On a superseded
+  // agreement it is history, shown without an action to start.
+  const showApplicationPanel = (isPublished || isSuperseded) && coefficients.length > 0;
+
   const nextStep = selectSharingAgreementNextStep(agreement, coefficientsData, plant?.regulatoryCode ?? undefined);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -60,6 +68,10 @@ export const SharingAgreementDetailPage: FC = () => {
   // closed state of its own, and the editor's seeding logic has to stay inside
   // the coefficient set, which owns the rows.
   const [editCoefficientsRequestId, setEditCoefficientsRequestId] = useState(0);
+  // Same shape, same reason: the batch bar and the selection it drives live in
+  // the coefficient set, and both the application panel and the next-step
+  // banner's stage-5 action start it.
+  const [registerDatesRequestId, setRegisterDatesRequestId] = useState(0);
   const [announcement, setAnnouncement] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -163,8 +175,21 @@ export const SharingAgreementDetailPage: FC = () => {
               onGenerateRequest={() => setIsGenerateDialogOpen(true)}
               onEditCoefficientsRequest={() => setEditCoefficientsRequestId((id) => id + 1)}
               onImportRequest={() => setIsUploadDialogOpen(true)}
+              onRecordDatesRequest={() => setRegisterDatesRequestId((id) => id + 1)}
             />
           </Box>
+
+          {!isLoading && !error && showApplicationPanel && (
+            <Box sx={sxStyles.pageContainer}>
+              <SharingAgreementApplicationPanel
+                coefficients={coefficients}
+                isClosed={isSuperseded}
+                onRegisterDatesRequest={
+                  isSuperseded ? undefined : () => setRegisterDatesRequestId((id) => id + 1)
+                }
+              />
+            </Box>
+          )}
 
           {!isLoading && !error && (
             <Box sx={sxStyles.pageContainer}>
@@ -176,6 +201,7 @@ export const SharingAgreementDetailPage: FC = () => {
                 agreementStatus={agreement?.status}
                 editRequestId={editCoefficientsRequestId}
                 onImportRequest={() => setIsUploadDialogOpen(true)}
+                registerDatesRequestId={registerDatesRequestId}
               />
             </Box>
           )}

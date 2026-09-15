@@ -1,5 +1,6 @@
 import { useState, type FC, type Ref } from "react";
-import { Box, IconButton, MenuItem, Typography, Divider } from "@mui/material";
+import { Alert, Box, IconButton, MenuItem, Typography, Divider } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -75,6 +76,18 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
     );
 
   const showRevert = isPublished && coefficients !== undefined && isInert;
+
+  /**
+   * A published agreement whose coefficients all still lack an application date
+   * distributes nothing. Production resolves coefficients by valid_from/valid_to
+   * alone — the agreement's status plays no part — so "Vigente" on its own is
+   * genuinely misleading here.
+   *
+   * Informational, not an error: nothing has gone wrong, there is simply a step
+   * left. Styling it as a fault would misreport the state in the other direction.
+   */
+  const distributesNothing =
+    isPublished && coefficients !== undefined && coefficients.length > 0 && isInert;
 
   // `PUT /sharing-agreements/{id}` no longer requires DRAFT — name, notes and
   // installed power can be corrected in any status. Deleting still requires it:
@@ -200,6 +213,15 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
         </Box>
 
       </Box>
+
+      {isResolved && distributesNothing && (
+        <Alert severity="info" icon={<InfoOutlinedIcon />} sx={{ mx: { xs: 2, sm: 0 } }}>
+          <Box component="strong" sx={{ fontWeight: 600 }}>
+            Vigente, pero todavía no reparte producción:
+          </Box>{" "}
+          registra las fechas de aplicación.
+        </Alert>
+      )}
 
       {isResolved && (
         <SharingAgreementNextStepBanner

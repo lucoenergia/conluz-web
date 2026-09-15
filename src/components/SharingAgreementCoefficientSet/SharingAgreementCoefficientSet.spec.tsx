@@ -1470,3 +1470,94 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
     expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
   });
 });
+
+// AC8. Three PENDING and two APPLIED: a single-element collection would prove
+// nothing about "all pending rows".
+describe("SharingAgreementCoefficientSet (registering dates in bulk)", () => {
+  const mixed: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
+    { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
+    { coefficientId: "3", supply: { id: "s3", name: "Local C", code: "ES0031300000000003EF" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "4", supply: { id: "s4", name: "Nave D", code: "ES0031300000000004GH" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "5", supply: { id: "s5", name: "Taller E", code: "ES0031300000000005IJ" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  function renderWithRequestId(registerDatesRequestId: number) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              coefficients={mixed}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              registerDatesRequestId={registerDatesRequestId}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  it("preselects every pending row and opens the batch bar when the page asks", async () => {
+    const { rerender } = render(renderWithRequestId(0));
+
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+
+    rerender(renderWithRequestId(1));
+
+    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+
+    for (const name of ["Local C", "Nave D", "Taller E"]) {
+      expect(screen.getAllByRole("checkbox", { name: `Seleccionar ${name}` })[0]).toBeChecked();
+    }
+    for (const name of ["Vivienda A", "Vivienda B"]) {
+      expect(screen.getAllByRole("checkbox", { name: `Seleccionar ${name}` })[0]).not.toBeChecked();
+    }
+  });
+
+  it("clears an active filter first, so no selected row stays hidden behind it", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(renderWithRequestId(0));
+
+    // Hide the pending rows behind the "En vigor" chip.
+    await user.click(screen.getByRole("button", { name: "En vigor" }));
+    expect(screen.queryByText("Local C")).not.toBeInTheDocument();
+
+    rerender(renderWithRequestId(1));
+
+    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    // Every selected row is visible, and the bar's count matches what is on screen.
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+    for (const name of ["Local C", "Nave D", "Taller E"]) {
+      expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("checkbox", { name: `Seleccionar ${name}` })[0]).toBeChecked();
+    }
+  });
+
+  it("clears an active search first, for the same reason", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(renderWithRequestId(0));
+
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Taller");
+    await waitFor(() => expect(screen.queryByText("Local C")).not.toBeInTheDocument());
+
+    rerender(renderWithRequestId(1));
+
+    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    expect(screen.getByText("3 seleccionados")).toBeInTheDocument();
+    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Buscar por punto o CUPS")).toHaveValue("");
+  });
+
+  it("does not open the batch bar on mount just because a request id is present", () => {
+    render(renderWithRequestId(4));
+
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+  });
+});
