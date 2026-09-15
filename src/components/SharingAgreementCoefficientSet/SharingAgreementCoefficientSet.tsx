@@ -588,7 +588,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const alreadyAddedSupplyIds = useMemo(() => new Set(rows.map((row) => row.supplyId)), [rows]);
 
   const handleStartEditing = () => {
-    const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "coefficient";
+    const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "percentage";
     setInputUnit(startingUnit);
     setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, installedPowerKw));
     setIsEditing(true);
@@ -763,7 +763,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               color="primary"
               onChange={(_, value: CoefficientInputUnit | null) => value && handleUnitChange(value)}
             >
-              <ToggleButton value="coefficient">Coeficiente</ToggleButton>
+              <ToggleButton value="percentage">%</ToggleButton>
               <Tooltip title={kwModeAvailable ? "" : "Este acuerdo no tiene potencia instalada definida"}>
                 <span>
                   <ToggleButton value="kw" disabled={!kwModeAvailable}>
@@ -924,7 +924,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente"}
+                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente (%)"}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">

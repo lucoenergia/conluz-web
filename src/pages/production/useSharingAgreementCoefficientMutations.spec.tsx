@@ -183,12 +183,12 @@ describe("useSharingAgreementCoefficientMutations", () => {
         { coefficientId: "c2", supply: { id: "s2", name: "B", code: "CUPS2" }, coefficient: 0.333333, ...PENDING_FIELDS },
         { coefficientId: "c3", supply: { id: "s3", name: "C", code: "CUPS3" }, coefficient: 0.333334, ...PENDING_FIELDS },
       ],
-      "coefficient",
+      "percentage",
       installedPowerKw,
     );
 
     let rows = retextRowsForUnit(seeded, "kw", installedPowerKw);
-    rows = retextRowsForUnit(rows, "coefficient", installedPowerKw);
+    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
 
     await result.current.replaceCoefficients("agreement-1", rows);
 

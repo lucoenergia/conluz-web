@@ -192,24 +192,24 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(values).toContain("0,00"); // Nave Vacía's real zero, not blank, fixed at 2dp
   });
 
-  it("toggling to coefficient mode converts every row's displayed value, keeping it (not clearing it)", () => {
+  it("toggling to percentage mode converts every row's displayed value, keeping it (not clearing it)", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
-    fireEvent.click(screen.getByRole("button", { name: "Coeficiente" }));
+    fireEvent.click(screen.getByRole("button", { name: "%" }));
 
     const inputs = screen.getAllByRole("textbox") as HTMLInputElement[];
     const values = inputs.map((input) => input.value);
-    expect(values).toContain("0,400000"); // 40 kW / 100 kW installed, fixed at 6dp
-    expect(values).toContain("0,000000");
+    expect(values).toContain("40,0000"); // 40 kW / 100 kW installed, at 4 percentage decimals
+    expect(values).toContain("0,0000");
   });
 
-  it("falls back to coefficient mode, with kW disabled, when the agreement has no installedPowerKw", () => {
+  it("falls back to percentage mode, with kW disabled, when the agreement has no installedPowerKw", () => {
     renderWithTheme({ coefficients, installedPowerKw: undefined, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
-    expect(screen.getByRole("button", { name: "Coeficiente" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "%" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "kW" })).toBeDisabled();
   });
 

@@ -5,7 +5,12 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatDecimalForInput } from "../../utils/parseDecimalInput";
-import { isValidCoefficientValue, type CoefficientInputUnit } from "../../pages/production/sharingAgreementCoefficientEditing";
+import {
+  MAX_PERCENTAGE_DECIMALS,
+  isValidCoefficientValue,
+  parsePercentageInput,
+  type CoefficientInputUnit,
+} from "../../pages/production/sharingAgreementCoefficientEditing";
 import { formatCoefficientPercentage } from "../../pages/production/sharingAgreementCoefficientSums";
 import {
   getApplicationStateDetail,
@@ -48,13 +53,24 @@ function formatAssignedEnergy(coefficientValue: number | undefined, installedPow
   return formatKilowatts(coefficientValue * installedPowerKw);
 }
 
-function getCoefficientInputErrorMessage(unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
-  if (unit === "coefficient") return "Introduce un valor entre 0 y 1";
+function getCoefficientInputErrorMessage(
+  raw: string,
+  unit: CoefficientInputUnit,
+  installedPowerKw: number | undefined,
+): string {
+  if (unit === "percentage") {
+    // Six coefficient decimals are four in percent, and the surplus digits reach
+    // the distributor. Say so rather than rounding them away in silence.
+    const parsed = parsePercentageInput(raw);
+    return !parsed.ok && parsed.reason === "TOO_MANY_DECIMALS"
+      ? `Como máximo ${MAX_PERCENTAGE_DECIMALS} decimales`
+      : "Introduce un valor entre 0 y 100 %";
+  }
   if (installedPowerKw === undefined || installedPowerKw <= 0) return "Introduce un valor válido";
   return `Introduce un valor entre 0 y ${formatDecimalForInput(installedPowerKw)} kW`;
 }
 
-/** "Energía asignada" in coefficient mode (as always); the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
+/** "Potencia asignada" in percentage mode; the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
 function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
   if (value === undefined) return "-";
   if (unit === "kw") return formatCoefficientPercentage(value);
@@ -88,8 +104,8 @@ function CoefficientInput({
       value={coefficientInput}
       onChange={(event) => onCoefficientChange(event.target.value)}
       error={isInvalid || isEmpty}
-      helperText={isInvalid ? getCoefficientInputErrorMessage(unit, installedPowerKw) : isEmpty ? "Obligatorio" : undefined}
-      placeholder={unit === "coefficient" ? "0,000000" : "0,00"}
+      helperText={isInvalid ? getCoefficientInputErrorMessage(coefficientInput, unit, installedPowerKw) : isEmpty ? "Obligatorio" : undefined}
+      placeholder={unit === "percentage" ? "0,0000" : "0,00"}
       slotProps={{
         htmlInput: { inputMode: "decimal", style: { textAlign: align === "end" ? "right" : "left" } },
         input: {
@@ -119,7 +135,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
 
@@ -237,7 +253,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
