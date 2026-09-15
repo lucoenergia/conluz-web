@@ -9,7 +9,6 @@ import {
 } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
-import { colors } from "../../theme/tokens";
 
 const PENDING = SharingAgreementPartitionCoefficientResponseApplicationState.PENDING;
 const APPLIED = SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED;
@@ -61,49 +60,70 @@ describe("SharingAgreementDetailHeader", () => {
   }
 
   describe("identity", () => {
-    it("renders the agreement name, the plant's CAU, the status chip and the record's own data", () => {
+    it("renders the agreement name and its status chip", () => {
       renderHeader();
 
       expect(screen.getByRole("heading", { level: 1, name: "Acuerdo Comunidad Sur" })).toBeInTheDocument();
-      expect(screen.getByText("CAU ES0031300296192001MB")).toBeInTheDocument();
       expect(screen.getByText("Vigente")).toBeInTheDocument();
-      expect(screen.getByText(/Creado el 23 de mayo de 2024/)).toBeInTheDocument();
-      expect(screen.getByText("Revisión anual pendiente")).toBeInTheDocument();
     });
 
-    it("keeps the created date and the notes with the identity, not stranded between sections", () => {
-      // They describe the record, so they belong under its name — below the
-      // next-step banner they read as belonging to neither it nor "Reparto".
+    // The identifying values, each under the field name it belongs to. Run
+    // together on one line they gave no clue which value was which.
+    it("labels the three identifying values, rather than running them into one line", () => {
+      renderHeader({ coefficients: ALL_PENDING });
+
+      for (const [label, value] of [
+        ["CAU de la planta", "ES0031300296192001MB"],
+        ["Potencia instalada", "42,50 kW"],
+        ["Puntos de suministro", "2"],
+      ] as const) {
+        const tile = screen.getByText(label).closest("div") as HTMLElement;
+        expect(tile).toHaveTextContent(value);
+      }
+    });
+
+    it("shows a dash for the supply-point count while the coefficients are still in flight", () => {
+      // A defaulted 0 would state a fact about data that has not arrived.
       renderHeader();
 
-      const heading = screen.getByRole("heading", { level: 1, name: "Acuerdo Comunidad Sur" });
-      const identityBlock = heading.closest("div")?.parentElement as HTMLElement;
-      expect(identityBlock).toHaveTextContent(/Creado el 23 de mayo de 2024/);
-      expect(identityBlock).toHaveTextContent("Revisión anual pendiente");
+      const tile = screen.getByText("Puntos de suministro").closest("div") as HTMLElement;
+      expect(tile).toHaveTextContent("-");
+      expect(tile).not.toHaveTextContent("0");
     });
 
-    it("no longer carries installed power — it moved to the coefficient panel, where kW mode actually uses it", () => {
+    it("keeps the created date and the notes out of the way until asked for", async () => {
+      // Reference data, not identity. Visible by default they crowded the page's
+      // actual subject; stranded below the banner they belonged to nothing.
+      const user = userEvent.setup();
       renderHeader();
 
-      expect(screen.queryByText("42,50 kW")).not.toBeInTheDocument();
-      expect(screen.queryByText("Potencia instalada")).not.toBeInTheDocument();
+      const toggle = screen.getByRole("button", { name: "Ver más datos del acuerdo" });
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+      await user.click(toggle);
+
+      const expanded = screen.getByRole("button", { name: "Ocultar datos del acuerdo" });
+      expect(expanded).toHaveAttribute("aria-expanded", "true");
+      const panel = document.getElementById(expanded.getAttribute("aria-controls") as string) as HTMLElement;
+      expect(panel).toHaveTextContent("Creado el");
+      expect(panel).toHaveTextContent("23 de mayo de 2024");
+      expect(panel).toHaveTextContent("Notas internas");
+      expect(panel).toHaveTextContent("Revisión anual pendiente");
     });
 
-    it("renders the status chip on its own explicit surface tint, not an alpha overlay", () => {
-      renderHeader();
+    it("names the notes field even when the agreement has none, rather than showing a bare blank", () => {
+      renderHeader({ agreement: { ...mockAgreement, notes: null } as unknown as SharingAgreementResponse });
 
-      const chip = screen.getByText("Vigente").closest(".MuiChip-root");
-      // An explicit `surface` token rather than a translucent overlay: alpha would
-      // make the effective contrast depend on whatever sits behind it.
-      expect(chip).toHaveStyle({ backgroundColor: colors.brand.surface });
-      expect(chip).toHaveStyle({ color: colors.brand.main });
+      expect(screen.getByText("Notas internas")).toBeInTheDocument();
+      expect(screen.getByText("Sin notas")).toBeInTheDocument();
     });
 
-    it("falls back to neutral text when the agreement and plant are empty", () => {
+    it("says the CAU is unavailable rather than leaving its field empty", () => {
       renderHeader({ agreement: {} as SharingAgreementResponse, plant: {} as PlantResponse });
 
       expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
-      expect(screen.getByText(/CAU no disponible/)).toBeInTheDocument();
+      const tile = screen.getByText("CAU de la planta").closest("div") as HTMLElement;
+      expect(tile).toHaveTextContent("No disponible");
     });
   });
 

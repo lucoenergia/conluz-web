@@ -1,2 +1,2 @@
 export { DetailHeader, DetailTile } from "./DetailHeader";
-export type { DetailHeaderProps, DetailTileProps } from "./DetailHeader";
+export type { DetailHeaderProps, DetailTileProps, DetailTileTone } from "./DetailHeader";

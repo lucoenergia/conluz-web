@@ -749,7 +749,10 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}
 
-      {!isEditing && installedPowerKw !== undefined && (
+      {/* Installed power is an agreement field and now sits in the header's
+          identity tiles. While editing in kW it is working context, not
+          identity, so it stays here too — the sum caption below reads against it. */}
+      {isEditing && inputUnit === "kw" && installedPowerKw !== undefined && (
         <Typography variant="body2" sx={{ color: colors.text.subtle, mb: 2 }}>
           Potencia instalada de la planta: {formatKilowatts(installedPowerKw)}
         </Typography>

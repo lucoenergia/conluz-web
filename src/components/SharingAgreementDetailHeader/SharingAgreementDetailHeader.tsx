@@ -1,6 +1,7 @@
-import { useState, type FC, type Ref } from "react";
-import { Alert, Box, IconButton, MenuItem, Typography, Divider } from "@mui/material";
+import { useId, useState, type FC, type Ref } from "react";
+import { Alert, Box, Button, Collapse, IconButton, MenuItem, Typography, Divider } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -15,6 +16,8 @@ import {
   type LifecycleActionHandlers,
 } from "../SharingAgreementNextStepBanner";
 import { MenuTemplate } from "../Menu/MenuTemplate";
+import { DetailTile } from "../DetailHeader";
+import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
 import { colors, radii } from "../../theme/tokens";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
@@ -64,6 +67,8 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   onRecordDatesRequest,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+  const [areDetailsOpen, setAreDetailsOpen] = useState(false);
+  const detailsId = useId();
   const isDraft = agreement?.status === SharingAgreementResponseStatus.DRAFT;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
   const isResolved = !isLoading && !error;
@@ -154,35 +159,6 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
               </Typography>
               {isResolved && <SharingAgreementStatusChip status={agreement?.status} tone="onLight" />}
             </Box>
-            <Typography variant="body2" sx={{ mt: 0.75, color: colors.text.subtle }}>
-              Planta ·{" "}
-              {plant?.regulatoryCode ? (
-                <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", color: colors.text.body }}>
-                  CAU {plant.regulatoryCode}
-                </Box>
-              ) : (
-                "CAU no disponible"
-              )}
-              {isResolved && ` · Creado el ${formatCalendarDate(agreement?.createdAt)}`}
-            </Typography>
-            {isResolved && agreement?.notes && (
-              <Typography
-                variant="body2"
-                title={agreement.notes}
-                sx={{
-                  mt: 0.5,
-                  color: colors.text.subtle,
-                  // Visual clamp only — the full note stays in the DOM for
-                  // assistive technology and in the title attribute for a pointer.
-                  display: "-webkit-box",
-                  WebkitBoxOrient: "vertical",
-                  WebkitLineClamp: 2,
-                  overflow: "hidden",
-                }}
-              >
-                {agreement.notes}
-              </Typography>
-            )}
           </Box>
 
           {showMenu && (
@@ -231,6 +207,80 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
           )}
         </Box>
 
+        {/* Labelled fields rather than one run-on line: "Planta · CAU … · Creado
+            el …" followed by a bare note gave no clue which value belonged to
+            which field, and an unlabelled note read as a stray string. The three
+            identifying values stay out; the rest is one click away. */}
+        {isResolved && (
+          <>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+                gap: 1.5,
+                mt: 0.5,
+              }}
+            >
+              <DetailTile tone="onLight" label="CAU de la planta">
+                <Typography variant="body2" fontWeight={600} sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {plant?.regulatoryCode || "No disponible"}
+                </Typography>
+              </DetailTile>
+              <DetailTile tone="onLight" label="Potencia instalada">
+                <Typography variant="body2" fontWeight={600} sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {agreement?.installedPowerKw !== undefined ? formatKilowatts(agreement.installedPowerKw) : "-"}
+                </Typography>
+              </DetailTile>
+              <DetailTile tone="onLight" label="Puntos de suministro">
+                <Typography variant="body2" fontWeight={600} sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {coefficients === undefined ? "-" : coefficients.length}
+                </Typography>
+              </DetailTile>
+            </Box>
+
+            <Collapse in={areDetailsOpen}>
+              <Box
+                id={detailsId}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+                  gap: 1.5,
+                  mt: 1.5,
+                }}
+              >
+                <DetailTile tone="onLight" label="Creado el">
+                  <Typography variant="body2" fontWeight={600}>
+                    {formatCalendarDate(agreement?.createdAt)}
+                  </Typography>
+                </DetailTile>
+                <DetailTile tone="onLight" label="Notas internas" sx={{ gridColumn: { xs: "1", sm: "span 2" } }}>
+                  <Typography variant="body2" sx={{ color: agreement?.notes ? undefined : colors.text.subtle }}>
+                    {agreement?.notes || "Sin notas"}
+                  </Typography>
+                </DetailTile>
+              </Box>
+            </Collapse>
+
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => setAreDetailsOpen((open) => !open)}
+              aria-expanded={areDetailsOpen}
+              aria-controls={detailsId}
+              endIcon={
+                <ExpandMoreIcon
+                  sx={{
+                    transform: areDetailsOpen ? "rotate(180deg)" : "none",
+                    transition: "transform 200ms ease-out",
+                  }}
+                />
+              }
+              sx={{ alignSelf: "flex-start", color: colors.text.subtle, px: 0.5, mt: 0.5 }}
+            >
+              {areDetailsOpen ? "Ocultar datos del acuerdo" : "Ver más datos del acuerdo"}
+            </Button>
+          </>
+        )}
       </Box>
 
       {isResolved && distributesNothing && (

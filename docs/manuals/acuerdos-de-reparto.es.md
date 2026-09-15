@@ -66,7 +66,9 @@ flowchart TD
 
 La pantalla de detalle está ordenada según ese ciclo, de arriba abajo:
 
-1. **Nombre, estado y CAU**, con el menú **⋮** de opciones del acuerdo.
+1. **Nombre y estado**, con el menú **⋮** de opciones del acuerdo, y tres datos identificativos con su
+   etiqueta: **CAU de la planta**, **Potencia instalada** y **Puntos de suministro**. Bajo ellos,
+   **Ver más datos del acuerdo** despliega la fecha de creación y las notas internas.
 2. **Siguiente paso** — una banda azul con una frase que dice qué toca hacer ahora, el botón que lo hace y,
    si algo lo impide, el motivo escrito a la vista. Debajo, los cinco pasos en pequeño, con **Ver todos los
    pasos** para desplegar su descripción. El paso 3 aparece siempre marcado como *fuera de Conluz*: la
@@ -156,7 +158,6 @@ adapte a tu caso. (Mientras el reparto esté incompleto, esos mismos dos botones
 La sección **Reparto** muestra además:
 
 - La **suma de los coeficientes**, que debe llegar exactamente a 100,0000 %, y cuánto falta o sobra.
-- La **potencia instalada** de la planta.
 - Una columna **Potencia asignada** por punto: *la parte de la potencia instalada que corresponde a cada punto
   según su coeficiente. No es potencia garantizada: la energía que recibe depende de lo que produzca la planta
   en cada momento.*

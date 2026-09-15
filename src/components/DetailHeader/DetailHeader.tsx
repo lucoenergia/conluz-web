@@ -1,29 +1,46 @@
 import type { FC, ReactNode } from "react";
 import { Box, Paper, Typography, Avatar } from "@mui/material";
-import { alphas, radii } from "../../theme/tokens";
+import { alphas, colors, radii } from "../../theme/tokens";
 import type { SxProps, Theme } from "@mui/material";
 
 // ─── DetailTile ──────────────────────────────────────────────────────────────
 // Translucent overlay tile used inside both Plant and Supply detail headers.
 // Encodes patterns #15 (overlay fill/blur/radius) and #3 (caption opacity 0.8).
 
+/**
+ * Which ground the tile sits on. `onBrand` is the original: a translucent
+ * overlay on a brand-filled header. `onLight` is the same label-over-value
+ * structure on page ground, for a header that is not itself a brand slab —
+ * a translucent fill there would take its contrast from whatever sits behind.
+ */
+export type DetailTileTone = "onBrand" | "onLight";
+
 export interface DetailTileProps {
   label: string;
   children: ReactNode;
+  tone?: DetailTileTone;
   sx?: SxProps<Theme>;
 }
 
-export const DetailTile: FC<DetailTileProps> = ({ label, children, sx }) => (
+export const DetailTile: FC<DetailTileProps> = ({ label, children, tone = "onBrand", sx }) => (
   <Box
     sx={{
-      bgcolor: alphas.white.subtle,
-      backdropFilter: "blur(10px)",
       borderRadius: radii.default,
       p: 2,
+      ...(tone === "onBrand"
+        ? { bgcolor: alphas.white.subtle, backdropFilter: "blur(10px)" }
+        : { bgcolor: colors.background.surface, border: "1px solid", borderColor: colors.border.light }),
       ...sx,
     }}
   >
-    <Typography variant="caption" sx={{ opacity: 0.8, display: "block", mb: 0.5 }}>
+    <Typography
+      variant="caption"
+      sx={
+        tone === "onBrand"
+          ? { opacity: 0.8, display: "block", mb: 0.5 }
+          : { color: colors.text.subtle, display: "block", mb: 0.5 }
+      }
+    >
       {label}
     </Typography>
     {children}
