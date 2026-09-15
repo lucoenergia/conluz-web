@@ -87,8 +87,10 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
       </Typography>
       <Alert severity="info">
         <Box component="span" sx={{ display: "block" }}>
-          Poner en vigor no aplica nada por sí mismo. Que el 0 % esté aplicado justo después es el comienzo normal
-          del despliegue.
+          Hazlo cuando la distribuidora haya aceptado el reparto. Poner en vigor no aplica nada por sí mismo:
+          después tendrás que registrar la fecha de aplicación de cada punto. Hasta entonces el acuerdo no reparte
+          producción, y el autoconsumo y los excedentes solo se muestran con los datos de la distribuidora, que
+          llegan con varios días de retraso.
         </Box>
         <Box component="span" sx={{ display: "block", mt: 1 }}>
           Podrás volver a borrador mientras no se haya aplicado ningún coeficiente. En cuanto aplique

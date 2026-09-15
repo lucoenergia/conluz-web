@@ -28,10 +28,13 @@ describe("PublishSharingAgreementConfirmationModal", () => {
         "Al poner el acuerdo en vigor, el reparto queda sellado: no podrás editar los coeficientes mientras esté vigente.",
       ),
     ).toBeInTheDocument();
+    // AC3, and the phase-3 effect copy: the dialog has to say that publishing is
+    // not the thing that starts the split, and what the gap actually looks like.
+    expect(screen.getByText(/Poner en vigor no aplica nada por sí mismo/)).toBeInTheDocument();
+    expect(screen.getByText(/tendrás que registrar la fecha de aplicación de cada punto/)).toBeInTheDocument();
+    expect(screen.getByText(/el acuerdo no reparte producción/)).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Poner en vigor no aplica nada por sí mismo. Que el 0 % esté aplicado justo después es el comienzo normal del despliegue.",
-      ),
+      screen.getByText(/el autoconsumo y los excedentes solo se muestran con los datos de la distribuidora/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(

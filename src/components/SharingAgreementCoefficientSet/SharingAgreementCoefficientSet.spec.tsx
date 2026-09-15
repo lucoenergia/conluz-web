@@ -1395,8 +1395,15 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
     renderWithTheme({ coefficients, agreementStatus: DRAFT });
 
     expect(screen.getByRole("heading", { level: 2, name: "Reparto" })).toBeInTheDocument();
+    expect(screen.getByText(/Qué parte de la producción de la planta corresponde a cada punto de suministro/)).toBeVisible();
+  });
+
+  // Phase 3: what the coefficients actually affect, stated where they are edited.
+  it("states that the coefficients drive real-time self-consumption and surplus, not only the production split", () => {
+    renderWithTheme({ coefficients, agreementStatus: DRAFT });
+
     expect(
-      screen.getByText("Qué parte de la producción de la planta corresponde a cada punto de suministro."),
+      screen.getByText(/base del cálculo de autoconsumo y excedentes en tiempo real/),
     ).toBeVisible();
   });
 

@@ -71,6 +71,17 @@ describe("SharingAgreementApplicationPanel", () => {
     expect(screen.getByText(/no reciben producción de la planta/)).toBeVisible();
   });
 
+  it("says what happens to self-consumption and surplus in the meantime, without naming the pipeline", () => {
+    // The admin needs the consequence — the figures lag — not the name of the
+    // provider the fallback data comes from.
+    renderPanel();
+
+    expect(
+      screen.getByText(/su autoconsumo y sus excedentes solo se muestran con los datos de la distribuidora/i),
+    ).toBeVisible();
+    expect(screen.queryByText(/datadis/i)).not.toBeInTheDocument();
+  });
+
   it("reports progress against a fully applied set without claiming anything is pending", () => {
     renderPanel({ coefficients: [coefficient("1", APPLIED), coefficient("2", APPLIED)] });
 

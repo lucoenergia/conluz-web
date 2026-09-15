@@ -16,7 +16,8 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
  * and an admin who published and walked away has no way to know that.
  */
 const ZERO_DISTRIBUTION_CONSEQUENCE =
-  "Los puntos sin fecha de aplicación no reciben producción de la planta.";
+  "Los puntos sin fecha de aplicación no reciben producción de la planta. Su autoconsumo y sus excedentes solo se " +
+  "muestran con los datos de la distribuidora, que llegan con varios días de retraso.";
 
 export interface SharingAgreementApplicationPanelProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];

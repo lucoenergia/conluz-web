@@ -136,7 +136,8 @@ export interface SharingAgreementCoefficientSetProps {
 // mock-up shows a fourth "Cerrados" chip keyed on endState instead — left for
 // a later issue, not an oversight.
 const SPLIT_SECTION_DESCRIPTION =
-  "Qué parte de la producción de la planta corresponde a cada punto de suministro.";
+  "Qué parte de la producción de la planta corresponde a cada punto de suministro. " +
+  "Los coeficientes reparten la producción y son la base del cálculo de autoconsumo y excedentes en tiempo real.";
 
 const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilter[] = [
   "all",
