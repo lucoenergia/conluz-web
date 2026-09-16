@@ -1,8 +1,9 @@
 import type { FC } from "react";
-import { Box, Typography, Chip } from "@mui/material";
+import { Chip } from "@mui/material";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import type { SupplyResponse } from "../../api/models";
-import { DetailHeader, DetailTile } from "../DetailHeader";
+import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
 import { colors } from "../../theme/tokens";
 
 export interface SupplyDetailHeaderProps {
@@ -15,48 +16,44 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
   supplyPoint,
   isLoading = false,
   error = null,
-}) => (
-  <DetailHeader
-    icon={<ElectricMeterIcon sx={{ fontSize: 32 }} />}
-    title={
-      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, mb: 1 }}>
-        <Typography variant="h4" component="h1">
-          {supplyPoint?.name || "Punto de Suministro"}
-        </Typography>
-        {!isLoading && !error && (
-          <Chip
-            label={supplyPoint?.enabled ? "Activo" : "Inactivo"}
-            color={supplyPoint?.enabled ? "success" : "error"}
-            size="small"
-            sx={{
-              fontWeight: 600,
-              color: "white",
-              backgroundColor: supplyPoint?.enabled ? colors.success.main : colors.error.main,
-            }}
-          />
-        )}
-      </Box>
-    }
-    subtitle={supplyPoint?.address || "Dirección no disponible"}
-    isLoading={isLoading}
-    error={error}
-  >
-    <DetailTile label="CUPS">
-      <Typography variant="body1" fontWeight="bold">
-        {supplyPoint?.code || "-"}
-      </Typography>
-    </DetailTile>
+}) => {
+  const keyFacts: DetailKeyFacts = [
+    {
+      label: "CUPS",
+      value: supplyPoint?.code || "-",
+      ...(supplyPoint?.code ? { copyable: supplyPoint.code } : {}),
+    },
+  ];
 
-    <DetailTile label="Referencia catastral">
-      <Typography variant="body1" fontWeight="bold">
-        {supplyPoint?.addressRef || "-"}
-      </Typography>
-    </DetailTile>
+  const details: DetailFact[] = [
+    { label: "Referencia catastral", value: supplyPoint?.addressRef || "-" },
+    { label: "Propietario", value: supplyPoint?.user?.fullName || "-" },
+  ];
 
-    <DetailTile label="Propietario">
-      <Typography variant="body1" fontWeight="bold">
-        {supplyPoint?.user?.fullName || "-"}
-      </Typography>
-    </DetailTile>
-  </DetailHeader>
-);
+  return (
+    <DetailHeader
+      icon={<ElectricMeterIcon />}
+      // The CUPS identifies the supply when nobody has named it; a blank title
+      // would leave the page with no subject at all.
+      title={supplyPoint?.name || supplyPoint?.code || "Punto de Suministro"}
+      subtitle={supplyPoint?.address || "Dirección no disponible"}
+      subtitleIcon={<LocationOnIcon />}
+      status={
+        <Chip
+          label={supplyPoint?.enabled ? "Activo" : "Inactivo"}
+          color={supplyPoint?.enabled ? "success" : "error"}
+          size="small"
+          sx={{
+            fontWeight: 600,
+            color: "white",
+            backgroundColor: supplyPoint?.enabled ? colors.success.main : colors.error.main,
+          }}
+        />
+      }
+      keyFacts={keyFacts}
+      details={details}
+      isLoading={isLoading}
+      error={error}
+    />
+  );
+};
