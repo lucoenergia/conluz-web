@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -15,6 +15,19 @@ const mockUseMediaQuery = useMediaQuery as unknown as ReturnType<typeof vi.fn>;
 
 /** `useMediaQuery` is queried with `breakpoints.down("sm")`, so true means xs. */
 const setViewport = (compact: boolean) => mockUseMediaQuery.mockReturnValue(compact);
+
+/**
+ * jsdom lays nothing out, so every element reports a scrollWidth of 0 and
+ * nothing ever measures as clipped. These stubs stand in for the one fact the
+ * component asks layout for.
+ */
+const stubTruncation = (isTruncated: boolean) => {
+  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
+    configurable: true,
+    get: () => (isTruncated ? 240 : 100),
+  });
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get: () => 100 });
+};
 
 const THREE_FACTS: DetailKeyFacts = [
   { label: "POTENCIA", value: "63 kW" },
@@ -41,6 +54,12 @@ describe("DetailHeader", () => {
   beforeEach(() => {
     mockUseMediaQuery.mockClear();
     setViewport(false);
+  });
+
+  afterEach(() => {
+    // Back to jsdom's own zero-width world, so no test inherits a stub.
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollWidth");
+    Reflect.deleteProperty(HTMLElement.prototype, "clientWidth");
   });
 
   describe("optional slots", () => {
@@ -186,25 +205,15 @@ describe("DetailHeader", () => {
 
     /**
      * The plant keeps both of its key facts on xs, so only its five details are
-     * hidden. The CAU is repeated in the details because it truncates, but it is
+     * hidden. The CAU is repeated in the details when it truncates, but it is
      * still on screen — counting it would promise a sixth thing to reveal.
      */
-    it("shows +5 for the plant, not +6: a mirrored copyable value is not hidden", async () => {
-      const user = userEvent.setup();
-      renderHeader({
-        keyFacts: [THREE_FACTS[0], THREE_FACTS[1]],
-        details: FIVE_DETAILS,
-      });
+    it("shows +5 for the plant, not +6: a mirrored copyable value is not hidden", () => {
+      stubTruncation(true);
+      renderHeader({ keyFacts: [THREE_FACTS[0], THREE_FACTS[1]], details: FIVE_DETAILS });
 
       expect(screen.getByText("+5")).toBeInTheDocument();
       expect(screen.queryByText("+6")).not.toBeInTheDocument();
-
-      // ...and it really is repeated in full down there.
-      await user.click(screen.getByRole("button", { name: "Ver 5 datos más" }));
-      const panel = document.getElementById(
-        screen.getByRole("button", { name: "Ocultar detalles" }).getAttribute("aria-controls") as string,
-      ) as HTMLElement;
-      expect(panel).toHaveTextContent("ES0031300325733001FH0FA000");
     });
 
     it("uses the short label, so a long one cannot crowd out the value it names", () => {
@@ -223,6 +232,52 @@ describe("DetailHeader", () => {
 
       const toggle = screen.getByRole("button", { name: "Ver 5 datos más" });
       expect(toggle).toHaveTextContent("+5");
+    });
+  });
+
+  describe("repeating a truncated value in the details", () => {
+    const expand = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.click(screen.getByRole("button", { name: /^Ver \d+ dato/ }));
+      return document.getElementById(
+        screen.getByRole("button", { name: "Ocultar detalles" }).getAttribute("aria-controls") as string,
+      ) as HTMLElement;
+    };
+
+    it("repeats a copyable value in full once it has actually lost characters", async () => {
+      stubTruncation(true);
+      const user = userEvent.setup();
+      renderHeader({ keyFacts: [THREE_FACTS[1]], details: FIVE_DETAILS });
+
+      const panel = await expand(user);
+      expect(panel).toHaveTextContent("ES0031300325733001FH0FA000");
+    });
+
+    /**
+     * The supply header has one key fact, so its CUPS has the whole strip and is
+     * never clipped. Repeating it anyway printed the same CUPS twice, once in
+     * the strip and once right below it.
+     */
+    it("does not repeat a copyable value that fits", async () => {
+      stubTruncation(false);
+      const user = userEvent.setup();
+      renderHeader({ keyFacts: [THREE_FACTS[1]], details: FIVE_DETAILS });
+
+      const panel = await expand(user);
+      expect(panel).not.toHaveTextContent("ES0031300325733001FH0FA000");
+      // The details themselves are untouched.
+      expect(panel).toHaveTextContent("HUAWEI");
+    });
+
+    it("never repeats a value that has no copy button, however long it is", async () => {
+      stubTruncation(true);
+      const user = userEvent.setup();
+      renderHeader({
+        keyFacts: [{ label: "Descripción", value: "Instalación fotovoltaica comunitaria" }],
+        details: FIVE_DETAILS,
+      });
+
+      const panel = await expand(user);
+      expect(panel).not.toHaveTextContent("Instalación fotovoltaica comunitaria");
     });
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FC, type ReactNode, type Ref } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type FC, type ReactNode, type Ref } from "react";
 import { Box, Button, Collapse, IconButton, Paper, Typography, useMediaQuery, useTheme } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -93,6 +93,133 @@ export interface DetailHeaderProps {
   error?: unknown;
 }
 
+// ─── KeyFactCell ─────────────────────────────────────────────────────────────
+// One cell of the strip, and the only place that knows whether its value has
+// actually been clipped. It measures rather than infers: the rule is "repeat a
+// value the reader cannot fully see", and only layout knows that.
+
+const KeyFactCell: FC<{
+  fact: DetailKeyFact;
+  label: string;
+  flex: Record<string, string | number>;
+  isDivided: boolean;
+  isCopied: boolean;
+  onCopy: (fact: DetailKeyFact) => void;
+  onTruncationChange: (label: string, isTruncated: boolean) => void;
+}> = ({ fact, label, flex, isDivided, isCopied, onCopy, onTruncationChange }) => {
+  const valueRef = useRef<HTMLDivElement | null>(null);
+  const isCopyable = fact.copyable !== undefined;
+
+  useEffect(() => {
+    if (!isCopyable) return;
+    const node = valueRef.current;
+    if (!node) return;
+
+    const measure = () => onTruncationChange(fact.label, node.scrollWidth > node.clientWidth);
+    measure();
+
+    // Re-measure on resize so rotating a phone, or dragging a window narrow,
+    // adds or removes the repeat rather than leaving a stale answer behind.
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fact.label, fact.value, isCopyable, onTruncationChange]);
+
+  return (
+    <Box
+      sx={{
+        // Equal columns on a wide strip; on a phone the cells are sized
+        // by what they hold, so a short value is not truncated to make
+        // room for a long one to have space to spare.
+        flex,
+        minWidth: 0,
+        display: "flex",
+        flexDirection: { xs: "row", sm: "column" },
+        alignItems: { xs: "center", sm: "flex-start" },
+        gap: { xs: 0.5, sm: 0.25 },
+        px: { xs: 0.75, sm: 3 },
+        py: { xs: 0.75, sm: 1.5 },
+        ...(isDivided && { borderLeft: "1px solid", borderColor: colors.border.light }),
+      }}
+    >
+      <Typography
+        variant="caption"
+        sx={{
+          color: colors.text.subtle,
+          // Uppercase on a wide strip, sentence case on a phone. The
+          // caps cost about 15% of the label's width, which at 390px is
+          // the difference between "Potencia" and "POTEN…". A label
+          // that has to be truncated to stay upper case is not a label.
+          textTransform: { xs: "none", sm: "uppercase" },
+          fontWeight: 600,
+          whiteSpace: "nowrap",
+          // Exactly one of the label and the value gives way, and it is
+          // never the designated one's counterpart. Where the value is
+          // copyable it is already the thing built to truncate, so the
+          // label holds; where it is not, the label yields, because a
+          // figure squeezed out by the word naming it is worse than a
+          // shortened word.
+          flexShrink: isCopyable ? 0 : 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {label}
+      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          maxWidth: "100%",
+          flexShrink: isCopyable ? 1 : 0,
+          // A floor for the value AND its copy button together. The
+          // copyable cell is the one that gives way, and without this it
+          // gave way entirely: clipped to a character and a half it
+          // still cost strip width while telling the reader nothing.
+          minWidth: isCopyable ? { xs: 72, sm: 0 } : 0,
+        }}
+      >
+        <Typography
+          ref={valueRef}
+          variant="body2"
+          component="div"
+          sx={{
+            fontWeight: 700,
+            color: colors.text.primary,
+            fontVariantNumeric: "tabular-nums",
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {fact.value}
+        </Typography>
+        {isCopyable && (
+          <IconButton
+            size="small"
+            onClick={() => void onCopy(fact)}
+            aria-label={`Copiar ${fact.label}`}
+            sx={{
+              ...stripHitArea,
+              flexShrink: 0,
+              color: "primary.main",
+              bgcolor: colors.brand.surface,
+              borderRadius: radii.small,
+              "&:hover": { bgcolor: colors.brand.surface },
+            }}
+          >
+            {isCopied ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
+          </IconButton>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
 export const DetailHeader: FC<DetailHeaderProps> = ({
   icon,
   title,
@@ -110,10 +237,15 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
   const [areDetailsOpen, setAreDetailsOpen] = useState(false);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const [truncatedLabels, setTruncatedLabels] = useState<Record<string, boolean>>({});
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const detailsId = useId();
 
   useEffect(() => () => clearTimeout(feedbackTimer.current), []);
+
+  const handleTruncationChange = useCallback((label: string, isTruncated: boolean) => {
+    setTruncatedLabels((current) => (current[label] === isTruncated ? current : { ...current, [label]: isTruncated }));
+  }, []);
 
   const isResolved = !isLoading && !error;
   const hasSubtitle = subtitle !== undefined && subtitle !== null;
@@ -129,13 +261,18 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   const hasDisclosure = hiddenCount > 0;
 
   /**
-   * A copyable value is the one thing in the strip narrow enough to lose
-   * characters to an ellipsis on a phone, so the details repeat it in full.
-   * It stays visible in the strip, so it is NOT part of the hidden count —
+   * A copyable value that has actually lost characters to an ellipsis is
+   * repeated in full in the details. MEASURED, not assumed: treating every
+   * copyable value on a narrow viewport as truncated printed the CUPS twice on
+   * the supply header, where one key fact leaves the strip plenty of room and
+   * nothing was ever clipped.
+   *
+   * A mirrored value is still on screen, so it is NOT part of the hidden count —
    * "+5" must mean five things you cannot currently see.
    */
-  const mirroredFacts =
-    isCompact && hasDisclosure ? visibleFacts.filter((fact) => fact.copyable !== undefined) : [];
+  const mirroredFacts = hasDisclosure
+    ? visibleFacts.filter((fact) => fact.copyable !== undefined && truncatedLabels[fact.label])
+    : [];
 
   const detailItems: DetailFact[] = [
     ...displacedFacts.map((fact) => ({ label: fact.label, value: fact.value })),
@@ -272,100 +409,16 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
           }}
         >
           {visibleFacts.map((fact, index) => (
-            <Box
+            <KeyFactCell
               key={fact.label}
-              sx={{
-                // Equal columns on a wide strip; on a phone the cells are sized
-                // by what they hold, so a short value is not truncated to make
-                // room for a long one to have space to spare.
-                flex: { xs: compactFlex(fact), sm: 1 },
-                minWidth: 0,
-                display: "flex",
-                flexDirection: { xs: "row", sm: "column" },
-                alignItems: { xs: "center", sm: "flex-start" },
-                gap: { xs: 0.5, sm: 0.25 },
-                px: { xs: 0.75, sm: 3 },
-                py: { xs: 0.75, sm: 1.5 },
-                ...(index > 0 && { borderLeft: "1px solid", borderColor: colors.border.light }),
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  color: colors.text.subtle,
-                  // Uppercase on a wide strip, sentence case on a phone. The
-                  // caps cost about 15% of the label's width, which at 390px is
-                  // the difference between "Potencia" and "POTEN…". A label
-                  // that has to be truncated to stay upper case is not a label.
-                  textTransform: { xs: "none", sm: "uppercase" },
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                  // Exactly one of the label and the value gives way, and it is
-                  // never the designated one's counterpart. Where the value is
-                  // copyable it is already the thing built to truncate, so the
-                  // label holds; where it is not, the label yields, because a
-                  // figure squeezed out by the word naming it is worse than a
-                  // shortened word.
-                  flexShrink: fact.copyable !== undefined ? 0 : 1,
-                  minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {(isCompact && fact.shortLabel) || fact.label}
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  maxWidth: "100%",
-                  flexShrink: fact.copyable !== undefined ? 1 : 0,
-                  // A floor for the value AND its copy button together. The
-                  // copyable cell is the one that gives way, and without this it
-                  // gave way entirely: clipped to a character and a half it
-                  // still cost strip width while telling the reader nothing.
-                  minWidth: fact.copyable !== undefined ? { xs: 72, sm: 0 } : 0,
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  component="div"
-                  sx={{
-                    fontWeight: 700,
-                    color: colors.text.primary,
-                    fontVariantNumeric: "tabular-nums",
-                    minWidth: 0,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {fact.value}
-                </Typography>
-                {fact.copyable !== undefined && (
-                  <IconButton
-                    size="small"
-                    onClick={() => void handleCopy(fact)}
-                    aria-label={`Copiar ${fact.label}`}
-                    sx={{
-                      ...stripHitArea,
-                      flexShrink: 0,
-                      color: "primary.main",
-                      bgcolor: colors.brand.surface,
-                      borderRadius: radii.small,
-                      "&:hover": { bgcolor: colors.brand.surface },
-                    }}
-                  >
-                    {copiedLabel === fact.label ? (
-                      <CheckIcon sx={{ fontSize: 16 }} />
-                    ) : (
-                      <ContentCopyIcon sx={{ fontSize: 16 }} />
-                    )}
-                  </IconButton>
-                )}
-              </Box>
-            </Box>
+              fact={fact}
+              label={(isCompact && fact.shortLabel) || fact.label}
+              flex={{ xs: compactFlex(fact), sm: 1 }}
+              isDivided={index > 0}
+              isCopied={copiedLabel === fact.label}
+              onCopy={handleCopy}
+              onTruncationChange={handleTruncationChange}
+            />
           ))}
 
           {hasDisclosure && (
