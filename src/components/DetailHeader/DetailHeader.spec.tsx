@@ -50,6 +50,14 @@ describe("DetailHeader", () => {
       expect(screen.getByRole("heading", { level: 1, name: "21088 Luco de Jiloca" })).toBeInTheDocument();
     });
 
+    it("keeps the full label where there is room for it", () => {
+      renderHeader({
+        keyFacts: [{ label: "Potencia instalada", shortLabel: "Potencia", value: "120,50 kW" }],
+      });
+
+      expect(screen.getByText("Potencia instalada")).toBeInTheDocument();
+    });
+
     it("renders no strip when there is neither a key fact nor a detail", () => {
       const { container } = renderHeader();
 
@@ -197,6 +205,17 @@ describe("DetailHeader", () => {
         screen.getByRole("button", { name: "Ocultar detalles" }).getAttribute("aria-controls") as string,
       ) as HTMLElement;
       expect(panel).toHaveTextContent("ES0031300325733001FH0FA000");
+    });
+
+    it("uses the short label, so a long one cannot crowd out the value it names", () => {
+      renderHeader({
+        keyFacts: [{ label: "Potencia instalada", shortLabel: "Potencia", value: "120,50 kW" }],
+        details: FIVE_DETAILS,
+      });
+
+      expect(screen.getByText("Potencia")).toBeInTheDocument();
+      expect(screen.queryByText("Potencia instalada")).not.toBeInTheDocument();
+      expect(screen.getByText("120,50 kW")).toBeInTheDocument();
     });
 
     it("shows the bare count but keeps the sentence as the accessible name", () => {

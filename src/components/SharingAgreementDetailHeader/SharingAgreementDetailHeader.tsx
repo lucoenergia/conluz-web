@@ -138,9 +138,10 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   const keyFacts: DetailKeyFacts = [
     {
       label: "Potencia instalada",
+      shortLabel: "Potencia",
       value: agreement?.installedPowerKw !== undefined ? formatKilowatts(agreement.installedPowerKw) : "-",
     },
-    { label: "Creado el", value: formatCalendarDate(agreement?.createdAt, SHORT_CALENDAR_DATE) },
+    { label: "Creado el", shortLabel: "Creado", value: formatCalendarDate(agreement?.createdAt, SHORT_CALENDAR_DATE) },
   ];
 
   const details: DetailFact[] = [

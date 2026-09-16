@@ -38,6 +38,12 @@ const stripHitArea = {
 
 export interface DetailKeyFact {
   label: string;
+  /**
+   * Narrow-viewport form of `label`. On a phone the label and the value share
+   * one line, so a long label ("POTENCIA INSTALADA") crowds out the very thing
+   * it names. The full label still stands everywhere there is room for it.
+   */
+  shortLabel?: string;
   /** A string gets the strip's own value styling; a node renders as-is. */
   value: ReactNode;
   /**
@@ -147,12 +153,14 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
    * keeps its content width and the copyable cell takes what is left, down to
    * the floor its value sets below.
    *
-   * With no copyable value there is no such candidate, and equal columns are
-   * the fairest split.
+   * With no copyable value there is no such candidate, so the cells are sized
+   * by what they hold and give way in proportion. Equal thirds are worse than
+   * they look here: they hand the same width to a cell holding "45,00 kW" and
+   * one holding "1 sept 2024", so the longer value eats its own label.
    */
   const stripHasCopyable = visibleFacts.some((fact) => fact.copyable !== undefined);
   const compactFlex = (fact: DetailKeyFact) =>
-    stripHasCopyable ? (fact.copyable !== undefined ? "1 1 auto" : "0 0 auto") : 1;
+    stripHasCopyable ? (fact.copyable !== undefined ? "1 1 auto" : "0 0 auto") : "0 1 auto";
 
   const expandLabel = `Ver ${hiddenCount} dato${hiddenCount === 1 ? "" : "s"} más`;
   const collapseLabel = "Ocultar detalles";
@@ -276,7 +284,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                 flexDirection: { xs: "row", sm: "column" },
                 alignItems: { xs: "center", sm: "flex-start" },
                 gap: { xs: 0.5, sm: 0.25 },
-                px: { xs: 1, sm: 3 },
+                px: { xs: 0.75, sm: 3 },
                 py: { xs: 0.75, sm: 1.5 },
                 ...(index > 0 && { borderLeft: "1px solid", borderColor: colors.border.light }),
               }}
@@ -285,13 +293,21 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                 variant="caption"
                 sx={{
                   color: colors.text.subtle,
-                  textTransform: "uppercase",
+                  // Uppercase on a wide strip, sentence case on a phone. The
+                  // caps cost about 15% of the label's width, which at 390px is
+                  // the difference between "Potencia" and "POTEN…". A label
+                  // that has to be truncated to stay upper case is not a label.
+                  textTransform: { xs: "none", sm: "uppercase" },
                   fontWeight: 600,
                   whiteSpace: "nowrap",
-                  flexShrink: 0,
+                  // The label yields before the value does. It names the number;
+                  // squeezed out entirely, the number it names goes with it.
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                {fact.label}
+                {(isCompact && fact.shortLabel) || fact.label}
               </Typography>
               <Box
                 sx={{
@@ -299,6 +315,9 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                   alignItems: "center",
                   gap: 0.5,
                   maxWidth: "100%",
+                  // A value that is read rather than copied is never squeezed:
+                  // a truncated figure is a different figure.
+                  flexShrink: fact.copyable !== undefined ? 1 : 0,
                   // A floor for the value AND its copy button together. The
                   // copyable cell is the one that gives way, and without this it
                   // gave way entirely: clipped to a character and a half it
@@ -353,7 +372,9 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                 alignItems: "center",
                 justifyContent: "flex-end",
                 flexShrink: 0,
-                px: { xs: 1, sm: 2 },
+                // No padding on xs: the button carries its own, and doubling it
+                // cost the strip 16px it does not have on a 390px screen.
+                px: { xs: 0, sm: 2 },
                 ...(visibleFacts.length > 0 && { borderLeft: "1px solid", borderColor: colors.border.light }),
               }}
             >
@@ -367,12 +388,20 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                 endIcon={
                   <ExpandMoreIcon
                     sx={{
+                      fontSize: 18,
                       transform: areDetailsOpen ? "rotate(180deg)" : "none",
                       transition: "transform 200ms ease-out",
                     }}
                   />
                 }
-                sx={{ ...stripHitArea, color: "primary.main", fontWeight: 600, whiteSpace: "nowrap", px: 1 }}
+                sx={{
+                  ...stripHitArea,
+                  color: "primary.main",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                  px: { xs: 0.75, sm: 1 },
+                  "& .MuiButton-endIcon": { ml: 0.25 },
+                }}
               >
                 {visibleToggleLabel}
               </Button>
