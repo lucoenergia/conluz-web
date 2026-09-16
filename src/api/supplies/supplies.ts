@@ -35,6 +35,7 @@ import type {
   GetPartitionCoefficientAtTimestampParams,
   GetSupplyDailyConsumptionParams,
   GetSupplyDailyProductionParams,
+  GetSupplyEnergyMetricsParams,
   GetSupplyHourlyConsumptionParams,
   GetSupplyHourlyProductionParams,
   GetSupplyMonthlyConsumptionParams,
@@ -43,6 +44,7 @@ import type {
   PagedResultSupplyResponse,
   PartitionCoefficientResponse,
   ProductionByTime,
+  SupplyEnergyMetricsResponse,
   SupplyResponse,
   UpdateSupplyBody
 } from '.././models';
@@ -1142,6 +1144,148 @@ export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<type
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetActivePartitionCoefficientQueryOptions(supplyId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * This endpoint aggregates the consumption data stored for a specific supply into energy
+totals and two ratios, on a 0-1 scale:
+
+- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.
+- `selfConsumptionRatio`: self-consumed energy divided by the energy assigned to the supply.
+
+Both ratios are computed by summing every record first and dividing once, so hours of
+different magnitude weigh differently. A ratio whose denominator is zero is returned as
+`null`, never as `0`.
+
+**Authorization Rules:**
+- Community Admins can retrieve energy metrics for any supply they administer
+- Supply owners can only retrieve energy metrics for their own supplies
+
+**Period:**
+`startDate` and `endDate` are optional and must be supplied together; supplying exactly
+one of them is a bad request, as is a `startDate` after the `endDate`. When neither is
+supplied the period spans from the supply's earliest stored record to its latest, and a
+supply with no record at all returns a successful response with null period bounds, zero
+totals and null ratios.
+
+**Both bounds are inclusive.** A caller wanting a single calendar day must pass `00:00`
+to `23:00` of that day, not `00:00` to the following `00:00`, which would count the
+boundary hour in both days.
+
+The `coverage` object reports how many hourly records were found against how many hours
+the period spans, so a partially synchronised period can be told apart from a genuinely
+low ratio. Hours without a record are left out of the sums; they are never counted as
+zero.
+
+**Savings:**
+`savings.amountEur` is an **estimate** of what the self-consumed energy of the period
+was worth. It prices the **energy term before taxes** only: the power term, access
+tolls, charges and electricity tax are all excluded, and VAT is applied only where the
+resolved tariff carries a rate. `savings.tariffSource` says where the prices came from
+-- `ESTIMATE` for a computed approximation, `REAL_TARIFF` for the supply's contracted
+tariff -- and a single estimated stretch of the period makes the whole amount an
+estimate.
+
+The amount **does not distinguish missing data from genuine zeros**: an hour with no
+stored record contributes nothing, exactly as it contributes nothing to the energy
+totals, so a partially synchronised period yields a proportionally low figure rather
+than a flagged one. `coverage` is the field that tells the two apart. Consistently
+with that, an explicitly requested period containing no record at all is worth `0.00`,
+while `null` is reserved for the one case where no period could be resolved: a supply
+with no stored record and no requested period.
+
+ * @summary Retrieves aggregated energy metrics for a specific supply
+ */
+export const getSupplyEnergyMetrics = (
+    supplyId: string,
+    params?: GetSupplyEnergyMetricsParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyEnergyMetricsResponse>(
+      {url: `/api/v1/supplies/${supplyId}/energy-metrics`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getGetSupplyEnergyMetricsQueryKey = (supplyId: string,
+    params?: GetSupplyEnergyMetricsParams,) => {
+    return [`/api/v1/supplies/${supplyId}/energy-metrics`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetSupplyEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(supplyId: string,
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyEnergyMetricsQueryKey(supplyId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>> = ({ signal }) => getSupplyEnergyMetrics(supplyId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>>
+export type GetSupplyEnergyMetricsQueryError = ErrorType<unknown>
+
+
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params: undefined |  GetSupplyEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves aggregated energy metrics for a specific supply
+ */
+
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+ supplyId: string,
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyEnergyMetricsQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

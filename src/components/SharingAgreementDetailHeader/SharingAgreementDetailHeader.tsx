@@ -12,6 +12,7 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
+import { useGetUserById } from "../../api/users/users";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
 import {
   SharingAgreementNextStepBanner,
@@ -69,6 +70,12 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   onRecordDatesRequest,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+  // The audit trail stores an id; the header has to say a name. Same hook the
+  // other "who did this" surfaces use, and gated on the id being there at all
+  // so a system-authored edit costs no request.
+  const { data: updatedByUser } = useGetUserById(agreement?.updatedBy ?? "", {
+    query: { enabled: !!agreement?.updatedBy },
+  });
   const isDraft = agreement?.status === SharingAgreementResponseStatus.DRAFT;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
   const isResolved = !isLoading && !error;
@@ -144,8 +151,25 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
     { label: "Creado el", shortLabel: "Creado", value: formatCalendarDate(agreement?.createdAt, SHORT_CALENDAR_DATE) },
   ];
 
+  /**
+   * Name, notes and installed power can be corrected after publication, so the
+   * header has to say when that last happened and by whom. Reference data, not
+   * identity — it belongs in the disclosure next to the CAU, and it is mounted
+   * only when there has actually been an edit: an "Última edición: -" row would
+   * report an absence as a fact.
+   */
   const details: DetailFact[] = [
     { label: "CAU de la planta", value: plant?.regulatoryCode || "No disponible" },
+    ...(agreement?.updatedAt
+      ? [
+          {
+            label: "Última edición",
+            value: `${formatCalendarDate(agreement.updatedAt, SHORT_CALENDAR_DATE)}${
+              agreement.updatedBy ? ` · ${updatedByUser?.fullName ?? "…"}` : ""
+            }`,
+          },
+        ]
+      : []),
     {
       label: "Notas internas",
       value: (

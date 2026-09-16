@@ -26,7 +26,9 @@ import type {
 
 import type {
   CreateMembershipBody,
+  MembershipPaybackResponse,
   MembershipResponse,
+  SetMembershipInvestmentBody,
   UpdateMembershipRoleBody
 } from '.././models';
 
@@ -37,6 +39,153 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
+ * Sets the amount, in euros, that this member initially contributed to the
+community, replacing any amount previously recorded. Only the current value is
+kept: there is no history of changes.
+
+The amount must be greater than zero with at most two decimals. Requires
+COMMUNITY_ADMIN of this community; platform admins who do not administer this
+community are not granted access, and are answered 404 rather than 403 so the
+membership's existence is not disclosed.
+
+Answers 204 with no body. Read the stored amount back through the membership's
+payback endpoint.
+
+ * @summary Records a membership's initial investment.
+ */
+export const setMembershipInvestment = (
+    communityId: string,
+    userId: string,
+    setMembershipInvestmentBody: SetMembershipInvestmentBody,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/investment`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: setMembershipInvestmentBody
+    },
+      );
+    }
+  
+
+
+export const getSetMembershipInvestmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext> => {
+
+const mutationKey = ['setMembershipInvestment'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setMembershipInvestment>>, {communityId: string;userId: string;data: SetMembershipInvestmentBody}> = (props) => {
+          const {communityId,userId,data} = props ?? {};
+
+          return  setMembershipInvestment(communityId,userId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof setMembershipInvestment>>>
+    export type SetMembershipInvestmentMutationBody = SetMembershipInvestmentBody
+    export type SetMembershipInvestmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Records a membership's initial investment.
+ */
+export const useSetMembershipInvestment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setMembershipInvestment>>,
+        TError,
+        {communityId: string;userId: string;data: SetMembershipInvestmentBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSetMembershipInvestmentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Clears the amount recorded for this member, returning the membership to having
+no investment. Payback then reports no investment rather than an investment of
+zero, which are different statements.
+
+Idempotent: clearing a membership that has no investment succeeds, because the
+end state is the one the caller asked for. Requires COMMUNITY_ADMIN of this
+community, with the same 404-not-403 mapping as the write.
+
+ * @summary Removes a membership's initial investment.
+ */
+export const clearMembershipInvestment = (
+    communityId: string,
+    userId: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/investment`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getClearMembershipInvestmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['clearMembershipInvestment'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearMembershipInvestment>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  clearMembershipInvestment(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof clearMembershipInvestment>>>
+    
+    export type ClearMembershipInvestmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Removes a membership's initial investment.
+ */
+export const useClearMembershipInvestment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clearMembershipInvestment>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getClearMembershipInvestmentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * Returns the list of memberships for the specified community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
  * @summary Lists all memberships of a community.
  */
@@ -321,4 +470,129 @@ export const useUpdateMembershipRole = <TError = ErrorType<unknown>,
 
       return useMutation(mutationOptions , queryClient);
     }
+    /**
+ * How much of the member's recorded investment their share of the community's
+energy has recovered, and roughly how long the rest would take.
+
+`savedEur` is the estimated value of the self-consumed energy of **all** the
+member's supplies in this community, from `startDate` until now, priced per
+tariff segment with taxes included. It is computed on each request and never
+stored, so it reflects both new consumption and any later correction. Supplies
+in the member's other communities are not counted.
+
+`startDate` is the civil date the community first activated a partition
+coefficient, and is therefore **community-wide rather than per member**. A
+member who joined later has their savings divided by the community's elapsed
+days rather than their own, so their apparent daily rate is lower than their
+real one and `estimatedRemainingMonths` is correspondingly pessimistic. This is
+a known limitation.
+
+Null and zero mean different things throughout. A null `investmentEur` means
+none has been recorded, not a contribution of zero; a null `savedEur` means the
+community has never shared energy, whereas zero means it has and this member
+consumed nothing from it. `estimatedRemainingMonths` is null whenever no rate
+can be established, and 0 once the investment is recovered.
+
+`progressRatio` is not capped and exceeds 1 for a member who has recovered more
+than they contributed. `tariffSource` is never null and is `ESTIMATE` whenever
+any part of the amount came from an estimated tariff, or when no tariff was
+consulted at all.
+
+Readable by the member themself and by community admins of this community.
+Platform admins are **not** granted access on that basis alone and are answered
+404, as is every other caller who may not read it, so the membership's existence
+is not disclosed.
+
+ * @summary Retrieves a membership's payback progress.
+ */
+export const getMembershipPayback = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MembershipPaybackResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/payback`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetMembershipPaybackQueryKey = (communityId: string,
+    userId: string,) => {
+    return [`/api/v1/communities/${communityId}/memberships/${userId}/payback`] as const;
+    }
+
     
+export const getGetMembershipPaybackQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipPaybackQueryKey(communityId,userId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipPayback>>> = ({ signal }) => getMembershipPayback(communityId,userId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMembershipPaybackQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipPayback>>>
+export type GetMembershipPaybackQueryError = ErrorType<unknown>
+
+
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipPayback>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipPayback>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipPayback>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipPayback>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves a membership's payback progress.
+ */
+
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMembershipPaybackQueryOptions(communityId,userId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+

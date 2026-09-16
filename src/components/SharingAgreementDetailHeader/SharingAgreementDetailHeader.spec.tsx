@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -10,6 +10,12 @@ import {
 } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
+
+const mockGetUserById = vi.fn();
+
+vi.mock("../../api/users/users", () => ({
+  useGetUserById: (id: string) => mockGetUserById(id),
+}));
 
 const PENDING = SharingAgreementPartitionCoefficientResponseApplicationState.PENDING;
 const APPLIED = SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED;
@@ -28,6 +34,10 @@ const KEBAB = "Más opciones del acuerdo";
 const EDIT_ITEM = "Editar datos del acuerdo";
 
 describe("SharingAgreementDetailHeader", () => {
+  beforeEach(() => {
+    mockGetUserById.mockReturnValue({ data: undefined, isLoading: false, error: null });
+  });
+
   const mockAgreement = {
     id: "agreement-1",
     plantId: "plant-1",
@@ -150,6 +160,37 @@ describe("SharingAgreementDetailHeader", () => {
       expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
       const panel = await openDetails(user);
       expect(panel).toHaveTextContent("No disponible");
+    });
+
+    // An agreement's name, notes and installed power can be corrected after
+    // publication, so the record has to say when that happened and by whom.
+    it("reports the last edit, with the editor's name rather than their id", async () => {
+      const user = userEvent.setup();
+      mockGetUserById.mockReturnValue({ data: { fullName: "Ana García" }, isLoading: false, error: null });
+      renderHeader({
+        agreement: {
+          ...mockAgreement,
+          updatedAt: "2024-06-01T09:00:00Z",
+          updatedBy: "user-2",
+        } as unknown as SharingAgreementResponse,
+      });
+
+      const panel = await openDetails(user);
+
+      expect(panel).toHaveTextContent("Última edición");
+      expect(panel).toHaveTextContent("1 jun 2024 · Ana García");
+      expect(panel).not.toHaveTextContent("user-2");
+    });
+
+    // Never edited is not the same as edited by nobody: an empty field would
+    // report an absence as a fact, and it would cost a disclosure slot saying it.
+    it("names no last edit at all when the agreement has never been edited", async () => {
+      const user = userEvent.setup();
+      renderHeader();
+
+      const panel = await openDetails(user);
+
+      expect(panel).not.toHaveTextContent("Última edición");
     });
   });
 

@@ -134,6 +134,92 @@ describe("SharingAgreementDetailPage", () => {
     expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
   });
 
+  // SUPERSEDED is a computed invariant rather than a stored transition, so it
+  // gets its own case: nothing guarantees it takes the same branch as PUBLISHED.
+  test("keeps editing available on a SUPERSEDED agreement too", async () => {
+    mockData({
+      agreement: {
+        id: "agreement-1",
+        name: "Reparto 2025",
+        status: SharingAgreementResponseStatus.SUPERSEDED,
+        installedPowerKw: 12.5,
+      } as SharingAgreementResponse,
+    });
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    expect(await screen.findByText("Editar datos del acuerdo")).toBeInTheDocument();
+    expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
+  });
+
+  // The endpoint replaces all three fields, so the two the admin did not touch
+  // have to travel with the one they did — on a published agreement as much as
+  // on a draft, where omitting them would silently blank the record.
+  test("submits all three fields on a PUBLISHED agreement even when only the name changed", async () => {
+    mockData({
+      agreement: {
+        id: "agreement-1",
+        name: "Reparto 2025",
+        status: SharingAgreementResponseStatus.PUBLISHED,
+        installedPowerKw: 12.5,
+        notes: "Nota original",
+        createdAt: "2026-01-15T10:00:00Z",
+        file: null,
+      } as unknown as SharingAgreementResponse,
+    });
+    mockUpdateAgreement.mockResolvedValue(true);
+    const user = userEvent.setup();
+    setup("plant-1", "agreement-1");
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
+
+    const nameInput = await screen.findByLabelText("Nombre", { exact: false });
+    await user.clear(nameInput);
+    await user.type(nameInput, "Reparto 2025 corregido");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(mockUpdateAgreement).toHaveBeenCalledWith(
+        "agreement-1",
+        expect.objectContaining({
+          name: "Reparto 2025 corregido",
+          notes: "Nota original",
+          installedPowerKw: 12.5,
+        }),
+      ),
+    );
+  });
+
+  test("a successful edit refreshes the header without a full reload", async () => {
+    mockData();
+    mockUpdateAgreement.mockImplementation(async () => {
+      mockData({
+        agreement: {
+          id: "agreement-1",
+          name: "Reparto 2025 corregido",
+          status: SharingAgreementResponseStatus.DRAFT,
+          installedPowerKw: 12.5,
+          notes: "Nota original",
+          createdAt: "2026-01-15T10:00:00Z",
+          file: null,
+        } as unknown as SharingAgreementResponse,
+      });
+      return true;
+    });
+    const user = userEvent.setup();
+    setup("plant-1", "agreement-1");
+
+    expect(screen.getByRole("heading", { name: "Reparto 2025" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(await screen.findByRole("heading", { name: "Reparto 2025 corregido" })).toBeInTheDocument();
+  });
+
   test("editing seeds the dialog with the agreement's current values and calls updateAgreement with the route's id", async () => {
     mockData();
     mockUpdateAgreement.mockResolvedValue(true);
