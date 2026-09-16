@@ -18,6 +18,19 @@ export interface BreadCrumbProps {
   className?: string;
 }
 
+/**
+ * Steps now carry entity names rather than identifiers, so on a phone one long
+ * name could push the trail wider than the viewport. Truncation is xs-only: a
+ * desktop trail has room for the whole name, and clipping it there would hide
+ * information for no reason.
+ */
+const truncateOnMobile = {
+  maxWidth: { xs: 140, sm: "none" },
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+} as const;
+
 export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
   const getIcon = (index: number, step: BreadCrumbStep) => {
     if (step.icon) return step.icon;
@@ -57,9 +70,11 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
                     {getIcon(index, step)}
                     <Typography
                       variant="body2"
+                      title={step.label}
                       sx={{
                         fontWeight: 600,
                         color: "white",
+                        ...truncateOnMobile,
                       }}
                     >
                       {step.label}
@@ -97,7 +112,7 @@ export const BreadCrumb: React.FC<BreadCrumbProps> = ({ steps, className }) => {
               }}
             >
               {getIcon(index, step)}
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography variant="body2" title={step.label} sx={{ fontWeight: 500, ...truncateOnMobile }}>
                 {step.label}
               </Typography>
             </Link>

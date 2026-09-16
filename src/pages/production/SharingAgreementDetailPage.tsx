@@ -147,7 +147,7 @@ export const SharingAgreementDetailPage: FC = () => {
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Producción", href: "/production" },
-            { label: "Planta", href: `/production/${plantId}` },
+            { label: plant?.name || "Planta", href: `/production/${plantId}` },
             { label: "Acuerdos de Reparto", href: `/production/${plantId}/sharing-agreements` },
             { label: agreement?.name || "Detalle", href: "#" },
           ]}

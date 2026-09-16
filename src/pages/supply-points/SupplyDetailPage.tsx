@@ -512,7 +512,7 @@ export const SupplyDetailPage: FC = () => {
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Puntos de Suministro", href: "/supply-points" },
-            { label: supplyPoint?.code ? supplyPoint?.code : supplyPointId, href: "#" },
+            { label: supplyPoint?.name || supplyPoint?.code || supplyPointId, href: "#" },
           ]}
         />
       </Box>
