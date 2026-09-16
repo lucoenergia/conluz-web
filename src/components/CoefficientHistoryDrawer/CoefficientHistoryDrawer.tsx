@@ -80,7 +80,12 @@ export const CoefficientHistoryDrawer: FC<CoefficientHistoryDrawerProps> = ({
         },
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+      {/* The test id scopes assertions to the panel: several agreement names
+          legitimately appear both here and in the page behind it. */}
+      <Box
+        data-testid="coefficient-history-drawer"
+        sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}
+      >
         <Box
           sx={{
             display: "flex",
