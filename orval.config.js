@@ -14,5 +14,11 @@ export const conluz = {
   },
   input: {
     target: "./api-docs.json",
+    // Without this, Orval drops the `type: [..., "null"]` sibling next to a
+    // $ref and types a nullable nested object as the bare referenced type —
+    // see orval-nullable-ref-transformer.js for the full explanation.
+    override: {
+      transformer: "./orval-nullable-ref-transformer.js",
+    },
   },
 };

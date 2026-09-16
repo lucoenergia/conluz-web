@@ -5,12 +5,12 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { UserResponse } from './userResponse';
+import type { SupplyResponseUser } from './supplyResponseUser';
 import type { SupplyResponseName } from './supplyResponseName';
 import type { SupplyResponseAddressRef } from './supplyResponseAddressRef';
-import type { SupplyContractResponse } from './supplyContractResponse';
-import type { SupplyDistributorResponse } from './supplyDistributorResponse';
-import type { SupplyShellyResponse } from './supplyShellyResponse';
+import type { SupplyResponseContract } from './supplyResponseContract';
+import type { SupplyResponseDistributor } from './supplyResponseDistributor';
+import type { SupplyResponseShelly } from './supplyResponseShelly';
 
 export interface SupplyResponse {
   /** Internal unique identifier of the supply */
@@ -18,7 +18,7 @@ export interface SupplyResponse {
   /** Code that identifies the supply */
   code: string;
   /** Owner of the supply */
-  user: UserResponse;
+  user: SupplyResponseUser;
   /** Name of the supply */
   name: SupplyResponseName;
   /** Address of the supply */
@@ -28,9 +28,9 @@ export interface SupplyResponse {
   /** Whether the supply is enabled or disabled */
   enabled: boolean;
   /** Contract information of the supply */
-  contract: SupplyContractResponse;
+  contract: SupplyResponseContract;
   /** Distributor information of the supply */
-  distributor: SupplyDistributorResponse;
+  distributor: SupplyResponseDistributor;
   /** Shelly device information of the supply */
-  shelly: SupplyShellyResponse;
+  shelly: SupplyResponseShelly;
 }

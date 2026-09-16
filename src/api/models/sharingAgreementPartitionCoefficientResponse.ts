@@ -11,7 +11,7 @@ import type { SharingAgreementPartitionCoefficientResponseValidTo } from './shar
 import type { SharingAgreementPartitionCoefficientResponseApplicationState } from './sharingAgreementPartitionCoefficientResponseApplicationState';
 import type { SharingAgreementPartitionCoefficientResponseEndState } from './sharingAgreementPartitionCoefficientResponseEndState';
 import type { SharingAgreementPartitionCoefficientResponseEndDate } from './sharingAgreementPartitionCoefficientResponseEndDate';
-import type { CurrentCoefficientResponse } from './currentCoefficientResponse';
+import type { SharingAgreementPartitionCoefficientResponseCurrentCoefficient } from './sharingAgreementPartitionCoefficientResponseCurrentCoefficient';
 
 export interface SharingAgreementPartitionCoefficientResponse {
   /** Internal unique identifier of this coefficient */
@@ -31,5 +31,5 @@ export interface SharingAgreementPartitionCoefficientResponse {
   /** The effective end of this coefficient's coverage. Present only when endState is DERIVED or CLOSED. */
   endDate: SharingAgreementPartitionCoefficientResponseEndDate;
   /** The coefficient this supply is currently on in this agreement's plant -- what the value in this row would replace. Null when the supply has no active coefficient in this plant. */
-  currentCoefficient: CurrentCoefficientResponse;
+  currentCoefficient: SharingAgreementPartitionCoefficientResponseCurrentCoefficient;
 }
