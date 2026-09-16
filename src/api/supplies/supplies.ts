@@ -884,17 +884,21 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
 
 
 /**
- * Returns all coefficient periods of the supply, across every plant it participates in,
-ordered by validFrom ascending. Pending periods (validFrom = null) are included.
+ * Returns the coefficient periods of the supply, across every plant it participates in,
+ordered by validFrom ascending.
 
 Each period carries the plant it belongs to, so a supply participating in more than
 one plant yields several interleaved timelines that a caller can group by plant.
 Pass plantId to restrict the result to a single plant's timeline; a plant the
 supply has no coefficient in yields an empty list rather than an error.
 
-**Required: Community Admin of the supply's community.**
+Pending periods (validFrom = null) are authored inside a draft agreement and have
+never been applied by the distributor. They are returned only to Community Admins
+of the supply's community; every other caller receives the applied periods alone.
 
- * @summary Returns the full partition coefficient history for a supply.
+**Required: Community Admin of the supply's community, or the supply owner.**
+
+ * @summary Returns the partition coefficient history for a supply.
  */
 export const getPartitionCoefficientHistory = (
     supplyId: string,
@@ -968,7 +972,7 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Returns the full partition coefficient history for a supply.
+ * @summary Returns the partition coefficient history for a supply.
  */
 
 export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(

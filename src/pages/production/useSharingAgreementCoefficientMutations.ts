@@ -126,7 +126,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
    * mutation as fully settled; skipping the await was the whole bug this
    * flag exists to fix (see isActivatingAfterInvalidate above).
    */
-  const invalidatePlantSharingAgreements = () => {
+  const invalidateCoefficientScopedQueries = () => {
     return queryClient.invalidateQueries({
       predicate: (query) => {
         const key = query.queryKey[0];
@@ -156,7 +156,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
           appliedOn: appliedOn.format("YYYY-MM-DD"),
         },
       });
-      await invalidatePlantSharingAgreements();
+      await invalidateCoefficientScopedQueries();
       // A no-op batch (200, empty `coefficients` array in the response) is
       // still success: it's not an error, and the state the caller asked for
       // is the state that now holds. Not distinguished from a real batch —
@@ -188,7 +188,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     setIsDeactivatingAfterInvalidate(true);
     try {
       await deactivateMutation.mutateAsync({ plantId, sharingAgreementId, data: { coefficientIds } });
-      await invalidatePlantSharingAgreements();
+      await invalidateCoefficientScopedQueries();
       successDispatch("Activación revertida.");
       return { success: true };
     } catch (error) {
@@ -216,7 +216,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
           closedOn: closedOn.format("YYYY-MM-DD"),
         },
       });
-      await invalidatePlantSharingAgreements();
+      await invalidateCoefficientScopedQueries();
       successDispatch("Cierre registrado.");
       return { success: true };
     } catch (error) {
@@ -233,7 +233,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     setIsReopeningAfterInvalidate(true);
     try {
       await reopenMutation.mutateAsync({ plantId, sharingAgreementId, data: { coefficientIds } });
-      await invalidatePlantSharingAgreements();
+      await invalidateCoefficientScopedQueries();
       successDispatch("Coeficiente reabierto.");
       return { success: true };
     } catch (error) {
