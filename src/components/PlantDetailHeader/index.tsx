@@ -1,2 +1,2 @@
-// eslint-disable-next-line react-refresh/only-export-components
-export * from "./PlantDetailHeader";
+export { PlantDetailHeader } from "./PlantDetailHeader";
+export type { PlantDetailHeaderProps } from "./PlantDetailHeader";
