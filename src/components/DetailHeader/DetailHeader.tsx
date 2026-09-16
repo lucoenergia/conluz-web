@@ -300,8 +300,13 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                   textTransform: { xs: "none", sm: "uppercase" },
                   fontWeight: 600,
                   whiteSpace: "nowrap",
-                  // The label yields before the value does. It names the number;
-                  // squeezed out entirely, the number it names goes with it.
+                  // Exactly one of the label and the value gives way, and it is
+                  // never the designated one's counterpart. Where the value is
+                  // copyable it is already the thing built to truncate, so the
+                  // label holds; where it is not, the label yields, because a
+                  // figure squeezed out by the word naming it is worse than a
+                  // shortened word.
+                  flexShrink: fact.copyable !== undefined ? 0 : 1,
                   minWidth: 0,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -315,8 +320,6 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                   alignItems: "center",
                   gap: 0.5,
                   maxWidth: "100%",
-                  // A value that is read rather than copied is never squeezed:
-                  // a truncated figure is a different figure.
                   flexShrink: fact.copyable !== undefined ? 1 : 0,
                   // A floor for the value AND its copy button together. The
                   // copyable cell is the one that gives way, and without this it
