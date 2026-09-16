@@ -90,9 +90,14 @@ export const SharingAgreementNextStepBanner: FC<SharingAgreementNextStepBannerPr
       {hasActions && (
         <Box
           sx={{
+            // One row on every viewport. Stacked and stretched on a phone,
+            // two actions of the same weight read as a sequence to work
+            // through rather than a choice between alternatives — and each
+            // full-width button cost a whole line of the first screen. They
+            // still wrap when a pair genuinely does not fit.
             display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "stretch", sm: "flex-start" },
+            flexDirection: "row",
+            alignItems: "center",
             gap: 1.5,
             flexWrap: "wrap",
           }}
