@@ -455,6 +455,19 @@ describe("DetailHeader", () => {
       }
     });
 
+    /**
+     * Inherited from the header this variant replaced, whose empty-stats test
+     * guarded the same thing: a page whose counters have not been worked out
+     * yet still has a header.
+     */
+    it("renders the identity row alone when there are no counters", () => {
+      const { container } = renderListHeader({ subtitle: "Administra los usuarios de la plataforma" });
+
+      expect(screen.getByRole("heading", { level: 1, name: "Gestión de Usuarios" })).toBeInTheDocument();
+      // Nothing between the identity row and the live region.
+      expect(container.querySelectorAll(".MuiPaper-root > div")).toHaveLength(2);
+    });
+
     it("carries its own test id, so a measurement cannot pick up a detail header", () => {
       renderListHeader({ keyFacts: THREE_COUNTERS });
 
