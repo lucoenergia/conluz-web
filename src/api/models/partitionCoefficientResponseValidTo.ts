@@ -7,6 +7,6 @@
  */
 
 /**
- * End of the period (exclusive). Null means this is the currently active coefficient.
+ * End of the period (exclusive). Null means the period is still open; combined with a non-null validFrom that makes this the currently active coefficient for its plant.
  */
 export type PartitionCoefficientResponseValidTo = string | null;

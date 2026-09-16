@@ -6,13 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type GetPartitionCoefficientAtTimestampParams = {
-/**
- * ISO-8601 timestamp
- */
-timestamp: string;
-/**
- * Optional plant filter. When omitted, every plant the supply participates in is included.
- */
-plantId?: string;
-};
+export interface PlantReferenceResponse {
+  /** Internal unique identifier of the plant */
+  id: string;
+  /** Display name of the plant */
+  name: string;
+}

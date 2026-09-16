@@ -31,8 +31,10 @@ import type {
   CreateSupplyBody,
   CreationInBulkResponse,
   DatadisConsumption,
+  GetActivePartitionCoefficientParams,
   GetAllSuppliesParams,
   GetPartitionCoefficientAtTimestampParams,
+  GetPartitionCoefficientHistoryParams,
   GetSupplyDailyConsumptionParams,
   GetSupplyDailyProductionParams,
   GetSupplyEnergyMetricsParams,
@@ -44,6 +46,7 @@ import type {
   PagedResultSupplyResponse,
   PartitionCoefficientResponse,
   ProductionByTime,
+  SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
   SupplyResponse,
   UpdateSupplyBody
@@ -881,37 +884,50 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
 
 
 /**
- * Returns all coefficient periods ordered by validFrom ascending. **Required: Community Admin**
+ * Returns all coefficient periods of the supply, across every plant it participates in,
+ordered by validFrom ascending. Pending periods (validFrom = null) are included.
+
+Each period carries the plant it belongs to, so a supply participating in more than
+one plant yields several interleaved timelines that a caller can group by plant.
+Pass plantId to restrict the result to a single plant's timeline; a plant the
+supply has no coefficient in yields an empty list rather than an error.
+
+**Required: Community Admin of the supply's community.**
+
  * @summary Returns the full partition coefficient history for a supply.
  */
 export const getPartitionCoefficientHistory = (
     supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<PartitionCoefficientResponse[]>(
-      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'GET', signal
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'GET',
+        params, signal
     },
       );
     }
   
 
-export const getGetPartitionCoefficientHistoryQueryKey = (supplyId: string,) => {
-    return [`/api/v1/supplies/${supplyId}/partition-coefficients`] as const;
+export const getGetPartitionCoefficientHistoryQueryKey = (supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams,) => {
+    return [`/api/v1/supplies/${supplyId}/partition-coefficients`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientHistoryQueryKey(supplyId);
+  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientHistoryQueryKey(supplyId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>> = ({ signal }) => getPartitionCoefficientHistory(supplyId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>> = ({ signal }) => getPartitionCoefficientHistory(supplyId,params, signal);
 
       
 
@@ -925,7 +941,8 @@ export type GetPartitionCoefficientHistoryQueryError = ErrorType<unknown>
 
 
 export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
+ supplyId: string,
+    params: undefined |  GetPartitionCoefficientHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
           TError,
@@ -935,7 +952,8 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
+ supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
           TError,
@@ -945,7 +963,8 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+ supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -953,11 +972,12 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
  */
 
 export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
+ supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetPartitionCoefficientHistoryQueryOptions(supplyId,options)
+  const queryOptions = getGetPartitionCoefficientHistoryQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -969,10 +989,19 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
 
 
 /**
- * Uses boundary convention: validFrom inclusive, validTo exclusive.
-**Required: Community Admin**
+ * Returns one entry per plant whose coefficient for the supply covers the given
+instant. Boundary convention: validFrom inclusive, validTo exclusive, so at an
+instant shared by two consecutive periods the later one applies.
 
- * @summary Returns the coefficient that was active at the given point in time.
+A supply may hold a coefficient in several plants at once, so this is a list, and
+it is empty when no period covers the instant -- a normal result, not an error.
+Pass plantId to restrict the result to a single plant.
+Pending coefficients are excluded: one the distributor never applied covered no
+instant.
+
+**Required: Community Admin of the supply's community.**
+
+ * @summary Returns the coefficients that were active at the given point in time, one per plant.
  */
 export const getPartitionCoefficientAtTimestamp = (
     supplyId: string,
@@ -981,7 +1010,7 @@ export const getPartitionCoefficientAtTimestamp = (
 ) => {
       
       
-      return customInstance<CoefficientAtTimestampResponse>(
+      return customInstance<CoefficientAtTimestampResponse[]>(
       {url: `/api/v1/supplies/${supplyId}/partition-coefficients/at`, method: 'GET',
         params, signal
     },
@@ -1046,7 +1075,7 @@ export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Returns the coefficient that was active at the given point in time.
+ * @summary Returns the coefficients that were active at the given point in time, one per plant.
  */
 
 export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
@@ -1067,37 +1096,50 @@ export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType
 
 
 /**
- * Returns the coefficient with validTo = null. **Required: Community Admin**
- * @summary Returns the currently active partition coefficient for a supply.
+ * Returns one active coefficient per plant the supply participates in. Active means
+validFrom is set and validTo is not: a pending coefficient (never applied by the
+distributor) also has a null validTo and is deliberately excluded.
+
+A supply may be active in several plants at once, so this is a list. It is empty
+when the supply has no active coefficient anywhere, which is a normal result
+rather than an error. Pass plantId to restrict the result to a single plant.
+
+**Required: Community Admin of the supply's community.**
+
+ * @summary Returns the active partition coefficients of a supply, one per plant.
  */
 export const getActivePartitionCoefficient = (
     supplyId: string,
+    params?: GetActivePartitionCoefficientParams,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<PartitionCoefficientResponse>(
-      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/active`, method: 'GET', signal
+      return customInstance<PartitionCoefficientResponse[]>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/active`, method: 'GET',
+        params, signal
     },
       );
     }
   
 
-export const getGetActivePartitionCoefficientQueryKey = (supplyId: string,) => {
-    return [`/api/v1/supplies/${supplyId}/partition-coefficients/active`] as const;
+export const getGetActivePartitionCoefficientQueryKey = (supplyId: string,
+    params?: GetActivePartitionCoefficientParams,) => {
+    return [`/api/v1/supplies/${supplyId}/partition-coefficients/active`, ...(params ? [params]: [])] as const;
     }
 
     
-export const getGetActivePartitionCoefficientQueryOptions = <TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+export const getGetActivePartitionCoefficientQueryOptions = <TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetActivePartitionCoefficientQueryKey(supplyId);
+  const queryKey =  queryOptions?.queryKey ?? getGetActivePartitionCoefficientQueryKey(supplyId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivePartitionCoefficient>>> = ({ signal }) => getActivePartitionCoefficient(supplyId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivePartitionCoefficient>>> = ({ signal }) => getActivePartitionCoefficient(supplyId,params, signal);
 
       
 
@@ -1111,7 +1153,8 @@ export type GetActivePartitionCoefficientQueryError = ErrorType<unknown>
 
 
 export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
- supplyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
+ supplyId: string,
+    params: undefined |  GetActivePartitionCoefficientParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
           TError,
@@ -1121,7 +1164,8 @@ export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<type
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
+ supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
           TError,
@@ -1131,19 +1175,21 @@ export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<type
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+ supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Returns the currently active partition coefficient for a supply.
+ * @summary Returns the active partition coefficients of a supply, one per plant.
  */
 
 export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
- supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+ supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetActivePartitionCoefficientQueryOptions(supplyId,options)
+  const queryOptions = getGetActivePartitionCoefficientQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1311,6 +1357,17 @@ The consumption data includes:
 
 Data is aggregated by year within the specified date range.
 
+**Time zone:** each year covers the local calendar year of the time zone the
+application is configured with, not the UTC one, so its total includes the first
+and last local hours of the year and nothing from its neighbours.
+
+**Range bounds:** `startDate` and `endDate` are both inclusive, and they select
+pre-aggregated points by the instant each one is stamped at, which is local
+midnight on the first day of its year. Pass them with the zone's offset to
+select the years intended: local `2023-01-01T00:00:00+01:00` is
+`2022-12-31T23:00:00Z`, so a bound expressed in UTC can select one year too few
+or too many.
+
  * @summary Retrieves yearly consumption data for a specific supply
  */
 export const getSupplyYearlyConsumption = (
@@ -1420,6 +1477,36 @@ The consumption data includes:
 
 Data is aggregated by month within the specified date range.
 
+**Time zone:** each month covers the local calendar month of the time zone the
+application is configured with, not the UTC one, so its total includes the first
+and last local hours of the month and nothing from its neighbours.
+
+**Range bounds:** `startDate` and `endDate` are both inclusive, and they select
+pre-aggregated points by the instant each one is stamped at, which is local
+midnight on the first day of its month. Pass them with the zone's offset to
+select the months intended: local `2023-01-01T00:00:00+01:00` is
+`2022-12-31T23:00:00Z`, so a bound expressed in UTC can select one month too few
+or too many.
+
+**Whole months only.** A month is included if and only if its day-1 timestamp
+falls inside the inclusive bounds, and once included it always carries the whole
+month's energy and the whole month's savings -- bounds falling mid-month never
+trim it. A request ending on the 15th therefore still returns that month in
+full.
+
+**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed
+energy was worth. It prices the **energy term before taxes** only: the power
+term, access tolls, charges and electricity tax are all excluded, and VAT is
+applied only where the resolved tariff carries a rate. `tariffSource` says where
+the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
+for the supply's contracted tariff -- and a single estimated stretch of the
+bucket makes the whole amount an estimate. A bucket with no self-consumption,
+and a bucket with no stored record at all, reports `0.00`.
+
+Datadis publishes a month's self-consumption around the 10th of the following
+month, so the current month has no self-consumption data yet and its savings
+come back as zero.
+
  * @summary Retrieves monthly consumption data for a specific supply
  */
 export const getSupplyMonthlyConsumption = (
@@ -1429,7 +1516,7 @@ export const getSupplyMonthlyConsumption = (
 ) => {
       
       
-      return customInstance<DatadisConsumption[]>(
+      return customInstance<SupplyConsumptionBucketResponse[]>(
       {url: `/api/v1/supplies/${supplyId}/consumption/monthly`, method: 'GET',
         params, signal
     },
@@ -1638,6 +1725,34 @@ The consumption data includes:
 
 Data is aggregated by day within the specified date range.
 
+**Time zone:** days follow the local calendar of the time zone the application is
+configured with, not UTC. A day therefore lasts 23 hours on the spring daylight
+saving transition and 25 hours on the autumn one.
+
+**Range bounds:** `startDate` and `endDate` are both inclusive and are taken as
+given, without being rounded to a day boundary. Bounds that fall in the middle of
+a local day produce a partial first and last bucket, so a caller wanting whole
+local days must pass them at local midnight and at 23:59:59 local time, offset
+included -- for example `2023-04-01T00:00:00+02:00` to
+`2023-04-30T23:59:59+02:00` for April 2023 in Europe/Madrid. A day with no stored
+record is returned with zero energy rather than omitted.
+
+Each day is priced over its own local day, clipped to the requested bounds, so a
+partial edge bucket's savings cover exactly the hours its energy fields cover.
+
+**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed
+energy was worth. It prices the **energy term before taxes** only: the power
+term, access tolls, charges and electricity tax are all excluded, and VAT is
+applied only where the resolved tariff carries a rate. `tariffSource` says where
+the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
+for the supply's contracted tariff -- and a single estimated stretch of the
+bucket makes the whole amount an estimate. A bucket with no self-consumption,
+and a bucket with no stored record at all, reports `0.00`.
+
+Datadis publishes a month's self-consumption around the 10th of the following
+month, so the current month has no self-consumption data yet and its savings
+come back as zero.
+
  * @summary Retrieves daily consumption data for a specific supply
  */
 export const getSupplyDailyConsumption = (
@@ -1647,7 +1762,7 @@ export const getSupplyDailyConsumption = (
 ) => {
       
       
-      return customInstance<DatadisConsumption[]>(
+      return customInstance<SupplyConsumptionBucketResponse[]>(
       {url: `/api/v1/supplies/${supplyId}/consumption/daily`, method: 'GET',
         params, signal
     },
