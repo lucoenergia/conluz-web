@@ -7,11 +7,16 @@ import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatDecimalForInput } from "../../utils/parseDecimalInput";
 import {
   MAX_PERCENTAGE_DECIMALS,
+  isUnsavedCoefficientRow,
   isValidCoefficientValue,
   parsePercentageInput,
   type CoefficientInputUnit,
 } from "../../pages/production/sharingAgreementCoefficientEditing";
-import { formatCoefficientPercentage } from "../../pages/production/sharingAgreementCoefficientSums";
+import {
+  computeCoefficientDelta,
+  formatCoefficientDelta,
+  formatCoefficientPercentage,
+} from "../../pages/production/sharingAgreementCoefficientSums";
 import {
   getApplicationStateDetail,
   getApplicationStateHeadline,
@@ -35,6 +40,13 @@ export interface SharingAgreementCoefficientRowProps {
   onRemove?: () => void;
   /** Whether the applicationState/endState cells render. Defaults to true; the container hides them for a clean DRAFT. */
   showStateColumns?: boolean;
+  /**
+   * Whether the "coefficient currently in force" column/line renders at all
+   * (the desktop table needs a matching header cell). DRAFT-only: on a
+   * published or superseded agreement the row's own value *is* the one in
+   * force, so comparing it against itself says nothing.
+   */
+  showCurrentCoefficient?: boolean;
   /** Whether the batch-activation checkbox column/slot renders at all (the desktop table needs a matching header cell). */
   showSelectionColumn?: boolean;
   selected?: boolean;
@@ -68,6 +80,38 @@ function getCoefficientInputErrorMessage(
   }
   if (installedPowerKw === undefined || installedPowerKw <= 0) return "Introduce un valor válido";
   return `Introduce un valor entre 0 y ${formatDecimalForInput(installedPowerKw)} kW`;
+}
+
+/**
+ * What the current-coefficient column has to say about a row. Three cases,
+ * not two — `null` from the server and `null` because nobody has asked yet
+ * are different claims:
+ *
+ * - `unknown`: a row this session's picker synthesized. There is no server
+ *   answer for it, so the column stays empty; rendering "—" would assert
+ *   "nothing in force", which may well be false.
+ * - `none`: a server row whose supply genuinely has no coefficient in force
+ *   in this plant. "—" is the answer.
+ * - `present`: the value, plus the difference the draft would make — `null`
+ *   difference while the field is empty or unparseable mid-edit.
+ */
+type CurrentCoefficientView =
+  | { kind: "unknown" }
+  | { kind: "none" }
+  | { kind: "present"; coefficient: number; delta: number | null };
+
+function getCurrentCoefficientView(
+  coefficient: SharingAgreementPartitionCoefficientResponse,
+  draftValue: number | undefined,
+): CurrentCoefficientView {
+  if (isUnsavedCoefficientRow(coefficient)) return { kind: "unknown" };
+  const current = coefficient.currentCoefficient;
+  if (!current) return { kind: "none" };
+  return {
+    kind: "present",
+    coefficient: current.coefficient,
+    delta: computeCoefficientDelta(draftValue, current.coefficient),
+  };
 }
 
 /** "Potencia asignada" in percentage mode; the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
@@ -146,6 +190,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   onCoefficientChange,
   onRemove,
   showStateColumns = true,
+  showCurrentCoefficient = false,
   showSelectionColumn = false,
   selected,
   onToggleSelected,
@@ -158,6 +203,9 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   const identity = getRowIdentity(coefficient.supply);
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
+  // While editing, the draft side of the comparison is what's in the field,
+  // so the difference retracks as the admin types.
+  const currentView = getCurrentCoefficientView(coefficient, isEditing ? editedValue : coefficient.coefficient);
 
   return (
     <TableRow>
@@ -184,6 +232,25 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           </Typography>
         )}
       </TableCell>
+      {showCurrentCoefficient && (
+        <TableCell align="right">
+          {currentView.kind === "none" && (
+            <Typography variant="body2" sx={{ color: colors.text.muted }}>
+              —
+            </Typography>
+          )}
+          {currentView.kind === "present" && (
+            <>
+              <Typography variant="body2">{formatCoefficientPercentage(currentView.coefficient)}</Typography>
+              {currentView.delta !== null && (
+                <Typography variant="caption" sx={{ color: colors.text.secondary, display: "block" }}>
+                  {formatCoefficientDelta(currentView.delta)}
+                </Typography>
+              )}
+            </>
+          )}
+        </TableCell>
+      )}
       <TableCell align="right">
         {isEditing && inputUnit && onCoefficientChange ? (
           <CoefficientInput
@@ -267,6 +334,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   onCoefficientChange,
   onRemove,
   showStateColumns = true,
+  showCurrentCoefficient = false,
   showSelectionColumn = false,
   selected,
   onToggleSelected,
@@ -280,6 +348,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
+  const currentView = getCurrentCoefficientView(coefficient, isEditing ? editedValue : coefficient.coefficient);
 
   return (
     <Box
@@ -371,6 +440,18 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
       {identity.secondary !== null && (
         <Typography variant="caption" sx={{ color: colors.text.secondary, fontVariantNumeric: "tabular-nums" }}>
           {identity.secondary}
+        </Typography>
+      )}
+
+      {/* The card has no column headers, so the line names itself. Not mounted
+          at all for an unsaved row — a blank line would just add height. */}
+      {showCurrentCoefficient && currentView.kind !== "unknown" && (
+        <Typography variant="caption" sx={{ color: colors.text.secondary }}>
+          {currentView.kind === "none"
+            ? "Actual —"
+            : `Actual ${formatCoefficientPercentage(currentView.coefficient)}${
+                currentView.delta !== null ? ` · ${formatCoefficientDelta(currentView.delta)}` : ""
+              }`}
         </Typography>
       )}
 

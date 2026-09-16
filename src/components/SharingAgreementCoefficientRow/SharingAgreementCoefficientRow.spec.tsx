@@ -8,7 +8,13 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { SharingAgreementReferenceResponseStatus } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+import {
+  buildEditableRowFromSupply,
+  updateRowInput,
+  type EditableCoefficientRow,
+} from "../../pages/production/sharingAgreementCoefficientEditing";
 import { colors } from "../../theme/tokens";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -808,5 +814,197 @@ describe("row identity when the supply has no name", () => {
     );
 
     expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
+  });
+});
+
+describe("current coefficient (DRAFT-only column)", () => {
+  // An explicit sign followed by a digit: a lone "-" is formatOtherUnit's
+  // "no value" marker, not a difference of minus-nothing.
+  const SIGNED_DELTA = /^[+-]\d[\d.,]*\s*%$/;
+
+  const AGREEMENT = {
+    id: "a1",
+    name: "Acuerdo 2024",
+    status: SharingAgreementReferenceResponseStatus.PUBLISHED,
+  };
+
+  /** A DRAFT row proposing `draft` for a supply currently on `current`. */
+  function row(draft: number, current: number | null): SharingAgreementPartitionCoefficientResponse {
+    return {
+      ...pendingCoefficient,
+      coefficient: draft,
+      currentCoefficient:
+        current === null ? null : { coefficient: current, validFrom: "2024-01-01T00:00:00Z", sharingAgreement: AGREEMENT },
+    };
+  }
+
+  /** A row the picker synthesized this session — no server answer exists for it. */
+  function unsavedRow(): SharingAgreementPartitionCoefficientResponse {
+    return buildEditableRowFromSupply({ id: "s9", name: "Nave Nueva", code: "CUPS9" } as SupplyResponse).coefficient;
+  }
+
+  // A clean DRAFT hides the state columns, and their end-state readout is also
+  // an em dash — rendering them here would make "—" ambiguous.
+  function renderRow(props: Partial<React.ComponentProps<typeof SharingAgreementCoefficientTableRow>>) {
+    return render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={row(0.4, 0.35)}
+            installedPowerKw={100}
+            showStateColumns={false}
+            showCurrentCoefficient
+            {...props}
+          />
+        </TableBody>
+      </Table>,
+    );
+  }
+
+  function renderCard(props: Partial<React.ComponentProps<typeof SharingAgreementCoefficientCard>>) {
+    return render(
+      <SharingAgreementCoefficientCard
+        coefficient={row(0.4, 0.35)}
+        installedPowerKw={100}
+        showStateColumns={false}
+        showCurrentCoefficient
+        {...props}
+      />,
+    );
+  }
+
+  describe("table row", () => {
+    it("shows the coefficient in force and the signed difference the draft would make", () => {
+      renderRow({});
+      expect(screen.getByText("35,0000 %")).toBeInTheDocument();
+      expect(screen.getByText("+5,0000 %")).toBeInTheDocument();
+    });
+
+    it("signs a reduction negatively", () => {
+      renderRow({ coefficient: row(0.25, 0.3) });
+      expect(screen.getByText("-5,0000 %")).toBeInTheDocument();
+    });
+
+    it("shows an unsigned zero when the draft keeps the same coefficient", () => {
+      renderRow({ coefficient: row(0.3, 0.3) });
+      expect(screen.getByText("0,0000 %")).toBeInTheDocument();
+    });
+
+    it("renders an em dash, and no difference, for a server row with nothing in force", () => {
+      renderRow({ coefficient: row(0.4, null) });
+      expect(screen.getByText("—")).toBeInTheDocument();
+      expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+    });
+
+    it("renders nothing at all for a row the picker just added — no server answer is not an answer of 'none'", () => {
+      renderRow({ coefficient: unsavedRow() });
+      expect(screen.queryByText("—")).not.toBeInTheDocument();
+      expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+    });
+
+    it("is absent entirely when the container doesn't ask for it (PUBLISHED, SUPERSEDED)", () => {
+      renderRow({ showCurrentCoefficient: false });
+      expect(screen.queryByText("35,0000 %")).not.toBeInTheDocument();
+      expect(screen.queryByText("+5,0000 %")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("mobile card", () => {
+    it("names itself, since a card has no column header", () => {
+      renderCard({});
+      expect(screen.getByText("Actual 35,0000 % · +5,0000 %")).toBeInTheDocument();
+    });
+
+    it("says 'Actual —' for a server row with nothing in force", () => {
+      renderCard({ coefficient: row(0.4, null) });
+      expect(screen.getByText("Actual —")).toBeInTheDocument();
+    });
+
+    it("omits the line entirely for a freshly picked supply, rather than growing a blank one", () => {
+      renderCard({ coefficient: unsavedRow() });
+      expect(screen.queryByText(/^Actual/)).not.toBeInTheDocument();
+    });
+
+    it("is absent entirely when the container doesn't ask for it", () => {
+      renderCard({ showCurrentCoefficient: false });
+      expect(screen.queryByText(/^Actual/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("while editing", () => {
+    it("compares against what is in the field, not the saved value", () => {
+      renderRow({ isEditing: true, inputUnit: "percentage", coefficientInput: "50", editedValue: 0.5, onCoefficientChange: vi.fn() });
+      // 0.50 against a current 0.35, not the row's own saved 0.40.
+      expect(screen.getByText("+15,0000 %")).toBeInTheDocument();
+    });
+
+    it("drops the difference while the field is empty — 'no comparison' is not 'no change'", () => {
+      renderRow({ isEditing: true, inputUnit: "percentage", coefficientInput: "", editedValue: undefined, onCoefficientChange: vi.fn() });
+      expect(screen.getByText("35,0000 %")).toBeInTheDocument();
+      expect(screen.queryByText("0,0000 %")).not.toBeInTheDocument();
+      expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+    });
+
+    /**
+     * The difference must not depend on which unit the admin is typing in.
+     * These drive the real `updateRowInput` rather than hand-computing a
+     * value, so they exercise the kW->fraction conversion the editor actually
+     * performs instead of restating it.
+     */
+    describe("unit invariance", () => {
+      const INSTALLED_KW = 200;
+      const seed: EditableCoefficientRow = {
+        supplyId: "s1",
+        coefficient: row(0.4, 0.35),
+        value: undefined,
+        inputText: "",
+      };
+
+      function deltaTextFor(inputText: string, unit: "percentage" | "kw"): string | null {
+        const [updated] = updateRowInput([seed], "s1", inputText, unit, INSTALLED_KW);
+        const { unmount } = renderRow({
+          coefficient: updated.coefficient,
+          isEditing: true,
+          inputUnit: unit,
+          installedPowerKw: INSTALLED_KW,
+          coefficientInput: updated.inputText,
+          editedValue: updated.value,
+          onCoefficientChange: vi.fn(),
+        });
+        const match = screen.queryByText(SIGNED_DELTA);
+        const text = match ? match.textContent : null;
+        unmount();
+        return text;
+      }
+
+      it("reports the same difference for 50 % and for the 100 kW that equals it", () => {
+        const asPercentage = deltaTextFor("50", "percentage");
+        // 100 kW of 200 kW installed is 0.5 — the same coefficient as "50 %".
+        expect(deltaTextFor("100", "kw")).toBe(asPercentage);
+        // ...and it is the real figure, not two matching nulls. \s rather than
+        // a literal space: textContent keeps the formatter's U+00A0, which
+        // getByText's normalizer would otherwise have hidden.
+        expect(asPercentage).toMatch(/^\+15,0000\s%$/);
+      });
+
+      it("drops the difference when the kW field is emptied or unparseable", () => {
+        expect(deltaTextFor("", "kw")).toBeNull();
+        expect(deltaTextFor("abc", "kw")).toBeNull();
+      });
+
+      it("drops the difference when installed power can't convert the kW figure", () => {
+        const [updated] = updateRowInput([seed], "s1", "100", "kw", 0);
+        renderRow({
+          coefficient: updated.coefficient,
+          isEditing: true,
+          inputUnit: "kw",
+          installedPowerKw: 0,
+          coefficientInput: updated.inputText,
+          editedValue: updated.value,
+          onCoefficientChange: vi.fn(),
+        });
+        expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+      });
+    });
   });
 });

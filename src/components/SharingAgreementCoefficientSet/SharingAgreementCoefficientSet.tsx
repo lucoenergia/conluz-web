@@ -556,6 +556,23 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     [coefficients],
   );
   const showStateColumns = !isDraft || hasAnomalousRow;
+  // What each supply's coefficient would replace. DRAFT-only: on a published
+  // or superseded agreement the row's own value IS the one in force, so the
+  // comparison would be against itself.
+  //
+  // Mounted only when at least one row actually has one, mirroring
+  // hasAnyRowActions — a first-ever agreement has none by definition, and a
+  // column of dashes costs width on a 390px viewport to say nothing.
+  //
+  // Gated on `coefficients`, NOT filteredCoefficients, which is the one place
+  // this deliberately parts company with hasAnyRowActions: that column tracks
+  // the filter because a hidden row can't be acted on, whereas a display-only
+  // column that appeared and vanished as the admin typed in the search box
+  // would just be noise.
+  const showCurrentCoefficient = useMemo(
+    () => isDraft && coefficients.some((c) => c.currentCoefficient != null),
+    [isDraft, coefficients],
+  );
   // Extra columns appearing is the CONSEQUENCE of the anomaly; on its own it
   // renders a broken draft as an ordinary one. This is the message.
   const hasDraftAnomaly = isDraft && hasAnomalousRow;
@@ -978,6 +995,13 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                       CUPS
                     </Typography>
                   </TableCell>
+                  {showCurrentCoefficient && (
+                    <TableCell align="right">
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                        Coeficiente actual
+                      </Typography>
+                    </TableCell>
+                  )}
                   <TableCell align="right">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
                       {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente (%)"}
@@ -1020,6 +1044,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         onCoefficientChange={(value) => handleCoefficientChange(row.supplyId, value)}
                         onRemove={() => handleRemoveRow(row.supplyId)}
                         showStateColumns={showStateColumns}
+                        showCurrentCoefficient={showCurrentCoefficient}
                       />
                     ))
                   : filteredCoefficients.map((coefficient) => (
@@ -1028,6 +1053,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         coefficient={coefficient}
                         installedPowerKw={installedPowerKw}
                         showStateColumns={showStateColumns}
+                        showCurrentCoefficient={showCurrentCoefficient}
                         showSelectionColumn={showSelectionColumn}
                         selected={selectedIds.has(coefficient.coefficientId)}
                         onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
@@ -1055,6 +1081,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     onCoefficientChange={(value) => handleCoefficientChange(row.supplyId, value)}
                     onRemove={() => handleRemoveRow(row.supplyId)}
                     showStateColumns={showStateColumns}
+                    showCurrentCoefficient={showCurrentCoefficient}
                   />
                 ))
               : filteredCoefficients.map((coefficient) => (
@@ -1063,6 +1090,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     coefficient={coefficient}
                     installedPowerKw={installedPowerKw}
                     showStateColumns={showStateColumns}
+                    showCurrentCoefficient={showCurrentCoefficient}
                     showSelectionColumn={showSelectionColumn}
                     selected={selectedIds.has(coefficient.coefficientId)}
                     onToggleSelected={() => toggleSelected(coefficient.coefficientId)}

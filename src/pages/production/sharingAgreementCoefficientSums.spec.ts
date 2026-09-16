@@ -3,6 +3,8 @@ import { SharingAgreementPartitionCoefficientResponseApplicationState } from "..
 import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
+  computeCoefficientDelta,
+  formatCoefficientDelta,
   formatCoefficientPercentage,
   isFullSum,
   toIntegerUnits,
@@ -81,6 +83,57 @@ describe("sharingAgreementCoefficientSums", () => {
 
     it("formats a tiny gap (1 unit) without collapsing to 0", () => {
       expect(formatCoefficientPercentage(1 / COEFFICIENT_SCALE)).toBe("0,0001 %");
+    });
+  });
+
+  describe("computeCoefficientDelta", () => {
+    it("is positive when the draft raises the coefficient", () => {
+      expect(computeCoefficientDelta(0.4, 0.35)).toBe(0.05);
+    });
+
+    it("is negative when the draft lowers it", () => {
+      expect(computeCoefficientDelta(0.25, 0.3)).toBe(-0.05);
+    });
+
+    it("is exactly 0 for an unchanged coefficient", () => {
+      expect(computeCoefficientDelta(0.3, 0.3)).toBe(0);
+    });
+
+    it("composes from integer units, so the subtraction can't drift", () => {
+      // 0.4 - 0.35 is 0.050000000000000044 as raw doubles; toBe is exact
+      // equality, so this fails outright if the helper ever subtracts floats.
+      expect(computeCoefficientDelta(0.4, 0.35)).not.toBe(0.4 - 0.35);
+      expect(computeCoefficientDelta(0.4, 0.35)).toBe(50_000 / COEFFICIENT_SCALE);
+    });
+
+    it("resolves a 1-unit difference rather than collapsing it to 0", () => {
+      expect(computeCoefficientDelta(0.300001, 0.3)).toBe(1 / COEFFICIENT_SCALE);
+    });
+
+    it("is null — never 0 — when there is no coefficient in force", () => {
+      expect(computeCoefficientDelta(0.4, undefined)).toBeNull();
+    });
+
+    it("is null while the draft value is unusable mid-edit", () => {
+      // An empty or unparseable field resolves to undefined/NaN upstream. "No
+      // comparison yet" must not render as "no change".
+      expect(computeCoefficientDelta(undefined, 0.35)).toBeNull();
+      expect(computeCoefficientDelta(NaN, 0.35)).toBeNull();
+    });
+  });
+
+  describe("formatCoefficientDelta", () => {
+    it("signs an increase and a decrease, at the same fixed 4 decimals as every other percentage", () => {
+      expect(formatCoefficientDelta(0.05)).toBe("+5,0000 %");
+      expect(formatCoefficientDelta(-0.025)).toBe("-2,5000 %");
+    });
+
+    it("leaves an unchanged coefficient unsigned — no change is not an increase", () => {
+      expect(formatCoefficientDelta(0)).toBe("0,0000 %");
+    });
+
+    it("keeps a 1-unit difference visible", () => {
+      expect(formatCoefficientDelta(1 / COEFFICIENT_SCALE)).toBe("+0,0001 %");
     });
   });
 });

@@ -10,6 +10,7 @@ import { SharingAgreementCoefficientSet, type SharingAgreementCoefficientSetProp
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
+  SharingAgreementReferenceResponseStatus,
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
@@ -1647,5 +1648,54 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
 
     expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (current coefficient column)", () => {
+  const IN_FORCE = {
+    coefficient: 0.35,
+    validFrom: "2024-01-01T00:00:00Z",
+    sharingAgreement: {
+      id: "a0",
+      name: "Acuerdo anterior",
+      status: SharingAgreementReferenceResponseStatus.SUPERSEDED,
+    },
+  };
+
+  /** A clean DRAFT set where the first two supplies are already on a coefficient. */
+  const withCurrent: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED, currentCoefficient: IN_FORCE },
+    { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.35, applicationState: PENDING, ...OPEN_UNCLOSED, currentCoefficient: IN_FORCE },
+    { coefficientId: "3", supply: { id: "s3", name: "Local C", code: "ES0031300000000003EF" }, coefficient: 0.25, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  const withoutCurrent = withCurrent.map((c) => ({ ...c, currentCoefficient: null }));
+
+  it("mounts the column on a DRAFT where at least one supply is already on a coefficient", () => {
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    expect(screen.getByText("Coeficiente actual")).toBeInTheDocument();
+  });
+
+  it("is absent on PUBLISHED even when every row carries one — the row's own value IS the one in force", () => {
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
+    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+  });
+
+  it("is absent on SUPERSEDED for the same reason", () => {
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.SUPERSEDED });
+    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+  });
+
+  it("is absent on a DRAFT where no supply is on one yet — a first agreement, where the column would be all dashes", () => {
+    renderWithTheme({ coefficients: withoutCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+  });
+
+  it("stays mounted while a search filters out every row that has one", () => {
+    // Deliberately unlike the actions column, which does track the filter: a
+    // display-only column appearing and vanishing as the admin types is noise.
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    fireEvent.change(screen.getByPlaceholderText(/Buscar/i), { target: { value: "Local C" } });
+    expect(screen.getByText("Coeficiente actual")).toBeInTheDocument();
   });
 });

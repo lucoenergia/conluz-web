@@ -63,3 +63,41 @@ export function isFullSum(sumUnits: number): boolean {
 export function formatCoefficientPercentage(value: number): string {
   return formatPercentage(value);
 }
+
+/**
+ * Signed difference between the coefficient a draft proposes and the one
+ * currently in force, on the same 0-1 scale as its inputs.
+ *
+ * Composed from the integer 1e-6 units for the same reason the sums are:
+ * `0.4 - 0.35` is 0.050000000000000044 as raw doubles, and a difference that
+ * formats correctly by luck rather than by construction is the kind that
+ * starts lying once the inputs change.
+ *
+ * Returns `null` — never `0` — when there is nothing to compare: no
+ * coefficient in force, or a draft value that is `undefined`/non-finite
+ * because the admin is mid-edit on an empty or unparseable field. "No
+ * comparison" and "no change" are different statements and must not collapse
+ * into the same rendering.
+ *
+ * Both arguments are canonical 0-1 fractions regardless of the unit the
+ * editor is currently displaying: `parseCoefficientInput` converts kW to the
+ * fraction before it is ever stored on the row, so kW mode needs no
+ * conversion here and must not add one.
+ */
+export function computeCoefficientDelta(
+  draftValue: number | undefined,
+  currentValue: number | undefined,
+): number | null {
+  if (draftValue === undefined || !Number.isFinite(draftValue)) return null;
+  if (currentValue === undefined || !Number.isFinite(currentValue)) return null;
+  return (toIntegerUnits(draftValue) - toIntegerUnits(currentValue)) / COEFFICIENT_SCALE;
+}
+
+/**
+ * A difference as a signed percentage, at the same fixed 4 decimals as every
+ * other percentage on this page. `exceptZero` so an unchanged coefficient
+ * reads "0,0000 %" rather than "+0,0000 %" — no change is not an increase.
+ */
+export function formatCoefficientDelta(delta: number): string {
+  return formatPercentage(delta, { signDisplay: "exceptZero" });
+}
