@@ -44,7 +44,7 @@
  *   changes. The modal itself is unit-tested in ImportPartnersModal.spec.tsx.
  */
 
-import { test, expect, type Page, type Route } from "@playwright/test";
+import { test, expect, type Page, type Route, type TestInfo } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Fixed fixtures — these values NEVER change between runs
@@ -323,6 +323,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2024-01-01T00:00:00Z",
     endState: "OPEN",
+    currentCoefficient: { coefficient: 0.25, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-2",
@@ -330,6 +331,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     coefficient: 0.25,
     applicationState: "PENDING",
     endState: "OPEN",
+    currentCoefficient: null,
   },
   {
     coefficientId: "coef-3",
@@ -338,6 +340,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2024-02-01T00:00:00Z",
     endState: "OPEN_ORPHAN",
+    currentCoefficient: { coefficient: 0.2, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-4",
@@ -346,6 +349,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2023-01-01T00:00:00Z",
     endState: "PENDING_SUCCESSION",
+    currentCoefficient: { coefficient: 0.15, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-5",
@@ -355,6 +359,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2022-01-01T00:00:00Z",
     endState: "DERIVED",
     endDate: "2023-12-31T00:00:00Z",
+    currentCoefficient: { coefficient: 0.1, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-6",
@@ -364,6 +369,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2024-03-01T00:00:00Z",
     endState: "CLOSED",
     endDate: "2024-05-01T00:00:00Z",
+    currentCoefficient: { coefficient: 0, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
 ];
 
@@ -379,6 +385,8 @@ const FIXED_COEFFICIENTS_ALL_PENDING = [
     coefficient: 0.4,
     applicationState: "PENDING",
     endState: "OPEN",
+    // Raised by this draft: 0.35 -> 0.40.
+    currentCoefficient: { coefficient: 0.35, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-2",
@@ -386,6 +394,8 @@ const FIXED_COEFFICIENTS_ALL_PENDING = [
     coefficient: 0.35,
     applicationState: "PENDING",
     endState: "OPEN",
+    // Lowered by this draft: 0.40 -> 0.35, so one baseline shows both signs.
+    currentCoefficient: { coefficient: 0.4, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-3",
@@ -393,6 +403,8 @@ const FIXED_COEFFICIENTS_ALL_PENDING = [
     coefficient: 0.25,
     applicationState: "PENDING",
     endState: "OPEN",
+    // Genuinely on nothing yet — the "—" branch of AC8, in the same baseline.
+    currentCoefficient: null,
   },
 ];
 
@@ -1095,7 +1107,19 @@ test.describe("Visual baselines", () => {
     updatedBy: FIXED_COMMUNITY_ADMIN_USER.id,
   };
 
-  test("sharing agreement detail page (draft, with coefficients)", async ({ page }) => {
+  /**
+   * The current-coefficient readout has two shapes: a column header on the
+   * desktop table, and a self-naming line on the mobile card, which has no
+   * headers. Both DOM trees are always mounted and swapped by a CSS
+   * breakpoint, so asserting the desktop header on mobile finds it hidden
+   * rather than absent.
+   */
+  async function expectCurrentCoefficientShown(page: Page, testInfo: TestInfo) {
+    const label = testInfo.project.name === "desktop" ? page.getByText("Coeficiente actual") : page.getByText(/^Actual /);
+    await expect(label.first()).toBeVisible();
+  }
+
+  test("sharing agreement detail page (draft, with coefficients)", async ({ page }, testInfo) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
@@ -1108,10 +1132,35 @@ test.describe("Visual baselines", () => {
     // and filter chips are hidden entirely — this is what a real user sees.
     await expect(page.getByText("Estado de aplicación")).toHaveCount(0);
 
+    // Both branches of the current-coefficient readout in one shot: two
+    // supplies are already on a coefficient (one raised, one lowered by this
+    // draft) and Local C is on none.
+    await expectCurrentCoefficientShown(page, testInfo);
+
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
   });
 
-  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }) => {
+  test("sharing agreement detail page (draft, no coefficient in force yet)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    // FIXED_COEFFICIENTS_INCOMPLETE deliberately carries no currentCoefficient:
+    // a community's first agreement has nothing in force to compare against.
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_INCOMPLETE, 200);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+
+    // The column is not mounted at all — a column of dashes would cost width
+    // on a 390px viewport to say nothing.
+    await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-no-current-coefficient.png", {
+      fullPage: true,
+    });
+  });
+
+  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }, testInfo) => {
     // FIXED_COEFFICIENTS_MIXED represents a state the backend guarantees a
     // real DRAFT can never reach (APPLIED requires publishing first; revert-
     // to-draft is refused once anything is applied). This test exists solely
@@ -1132,6 +1181,12 @@ test.describe("Visual baselines", () => {
     // shared by both layouts and only render when showStateColumns is true,
     // so "Sin aplicar" being visible proves the same thing on either viewport.
     await expect(page.getByRole("button", { name: "Sin aplicar" })).toBeVisible();
+
+    // Asserted rather than left to the pixels: on a tall desktop fullPage shot
+    // a whole extra column diffs below maxDiffPixelRatio (0.02), so this
+    // baseline passed unchanged even though the column was there. The text
+    // assertion is what actually holds the column present on both viewports.
+    await expectCurrentCoefficientShown(page, testInfo);
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png", { fullPage: true });
   });
@@ -1175,6 +1230,11 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: /^Ver \d+ datos? más$/ }).click();
     await expect(page.getByText("Última edición")).toBeVisible();
     await stabilizePage(page);
+
+    // FIXED_COEFFICIENTS_MIXED carries currentCoefficient on every row, as the
+    // backend sends it whatever the status. The column is still absent: on a
+    // published agreement the row's own value IS the one in force.
+    await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", { fullPage: true });
   });
@@ -1708,6 +1768,38 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-toggled-to-kw.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient editor (current coefficient while editing in kW)", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "Same duplicate-DOM-instance rationale as the other interactive editor specs above.",
+    );
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar a mano" }).click();
+    // The editor opens in kW; the sibling "toggled to kW" spec ends in percent,
+    // so this is the only baseline that shows the column with a kW input beside
+    // it. The difference is a percentage either way — it is computed from the
+    // canonical 0-1 coefficient, which the kW text is only a view of.
+    await expect(page.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
+
+    const vivendaA = page.locator("tr", { hasText: "Vivienda A" });
+    await expect(vivendaA.getByRole("textbox")).toHaveValue("13,50");
+    // 13,50 kW of 45 kW installed is 0.3, against a current 0.25.
+    await expect(vivendaA).toContainText("+5,0000");
+
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-kw-current-coefficient.png", {
+      fullPage: true,
+    });
   });
 
   test("sharing agreement coefficient editor (kW rounds to installed but coefficient sum isn't exact)", async ({ page }, testInfo) => {
