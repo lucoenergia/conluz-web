@@ -28,6 +28,7 @@ function coefficient(
     validTo: null,
     endState: OPEN,
     endDate: null,
+    currentCoefficient: null,
   };
 }
 

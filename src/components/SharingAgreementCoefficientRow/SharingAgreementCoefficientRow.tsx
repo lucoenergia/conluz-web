@@ -79,8 +79,9 @@ function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, 
 }
 
 /**
- * `supply.name` is declared required by the contract but is nullable in the
- * database, and empty for most production rows. Falling back to "-" left the
+ * `supply.name` is nullable — the contract now says so too, since
+ * SupplyReferenceResponse types it `string | null` — and it is empty for most
+ * production rows. Falling back to "-" left the
  * CUPS — the only thing that actually identifies a supply point to the
  * distributor — demoted to a caption under a dash.
  *

@@ -109,11 +109,16 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
    * cached agreement-by-id, every cached coefficient set) via a predicate on
    * the URL prefix, not a specific query key. Necessary because `activate`
    * cascades onto a predecessor coefficient that may belong to a *different*
-   * agreement, and `PartitionCoefficientResponse` carries no
-   * `sharingAgreementId` to map it back — there is no way to invalidate only
-   * the "right" agreement, so the whole plant subtree is invalidated instead.
-   * Agreements per plant are few and only mounted queries actually refetch,
-   * so this is cheap.
+   * agreement, so the set of agreements a single call touches isn't known
+   * from the request. Agreements per plant are few and only mounted queries
+   * actually refetch, so invalidating the whole plant subtree is cheap.
+   *
+   * `PartitionCoefficientResponse` now carries `sharingAgreement { id, name,
+   * status }`, and the activation mutations return a `CoefficientActivationResponse`
+   * whose `coefficients` would name exactly which agreements were touched —
+   * so this could be narrowed to those ids. Left as-is deliberately: the
+   * mutations currently discard that return value, and rewiring them is a
+   * behaviour change, not a comment fix.
    *
    * Returns the promise `invalidateQueries` returns — which resolves only
    * once every matching *active* query has actually refetched, not merely

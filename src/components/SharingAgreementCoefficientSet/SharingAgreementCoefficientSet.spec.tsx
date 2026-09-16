@@ -18,7 +18,7 @@ const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplica
 const { OPEN, OPEN_ORPHAN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 // Real coefficients never omit these; unused by any assertion in this file, so
 // every fixture below spreads this in and only overrides what it's testing.
-const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
+const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null, currentCoefficient: null };
 
 const mockMutateAsync = vi.fn();
 const mockActivateMutateAsync = vi.fn();
@@ -971,6 +971,7 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
       validTo: null,
       endState: OPEN_ORPHAN,
       endDate: null,
+      currentCoefficient: null,
     },
     {
       coefficientId: "c2",
@@ -981,6 +982,7 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
       validTo: "2024-06-01T00:00:00Z",
       endState: CLOSED,
       endDate: "2024-06-01T00:00:00Z",
+      currentCoefficient: null,
     },
     {
       coefficientId: "c3",
@@ -1124,9 +1126,9 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
   it("a batch correction excludes a row already corrected individually via ⋯ — APPLIED rows are selectable now", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
     const threeApplied: SharingAgreementPartitionCoefficientResponse[] = [
-      { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-01-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
-      { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-02-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
-      { coefficientId: "a3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: APPLIED, validFrom: "2025-03-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+      { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-01-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null, currentCoefficient: null },
+      { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-02-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null, currentCoefficient: null },
+      { coefficientId: "a3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: APPLIED, validFrom: "2025-03-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null, currentCoefficient: null },
     ];
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threeApplied });

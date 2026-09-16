@@ -11,7 +11,7 @@ import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 
-const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
+const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null, currentCoefficient: null };
 
 function agreement(status: SharingAgreementResponseStatus): SharingAgreementResponse {
   return {
@@ -58,6 +58,7 @@ const PUBLISHED_WITH_PENDING_COEFFICIENTS: SharingAgreementPartitionCoefficientR
     validTo: null,
     endState: OPEN,
     endDate: null,
+    currentCoefficient: null,
   },
   {
     coefficientId: "2",
@@ -68,6 +69,7 @@ const PUBLISHED_WITH_PENDING_COEFFICIENTS: SharingAgreementPartitionCoefficientR
     validTo: "2024-01-01T00:00:00Z",
     endState: CLOSED,
     endDate: "2024-01-01T00:00:00Z",
+    currentCoefficient: null,
   },
   { coefficientId: "3", supply: { id: "s3", name: "Local C", code: "ES0031300000000003EF" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
 ];
@@ -82,6 +84,7 @@ const PUBLISHED_ALL_APPLIED_COEFFICIENTS: SharingAgreementPartitionCoefficientRe
     validTo: null,
     endState: OPEN,
     endDate: null,
+    currentCoefficient: null,
   },
   {
     coefficientId: "2",
@@ -92,6 +95,7 @@ const PUBLISHED_ALL_APPLIED_COEFFICIENTS: SharingAgreementPartitionCoefficientRe
     validTo: null,
     endState: OPEN,
     endDate: null,
+    currentCoefficient: null,
   },
 ];
 

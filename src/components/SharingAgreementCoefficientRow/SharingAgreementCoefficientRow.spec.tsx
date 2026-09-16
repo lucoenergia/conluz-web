@@ -23,6 +23,7 @@ const pendingCoefficient: SharingAgreementPartitionCoefficientResponse = {
   applicationState: PENDING,
   endState: OPEN,
   endDate: null,
+  currentCoefficient: null,
 };
 
 const derivedCoefficient: SharingAgreementPartitionCoefficientResponse = {
@@ -34,6 +35,7 @@ const derivedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   applicationState: APPLIED,
   endState: DERIVED,
   endDate: "2025-01-01T00:00:00Z",
+  currentCoefficient: null,
 };
 
 describe("SharingAgreementCoefficientTableRow", () => {
