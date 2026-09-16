@@ -1,50 +1,11 @@
 import { useEffect, useId, useRef, useState, type FC, type ReactNode, type Ref } from "react";
-import { Box, Button, Collapse, IconButton, Paper, Typography, Avatar, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Collapse, IconButton, Paper, Typography, useMediaQuery, useTheme } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
-import { alphas, colors, radii } from "../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { ActionStatus } from "../ActionStatus";
-import type { SxProps, Theme } from "@mui/material";
-
-// ─── DetailTile ──────────────────────────────────────────────────────────────
-// LEGACY. Only the un-migrated consumers below still use it; it is removed once
-// all three entity headers render through the strip.
-
-export type DetailTileTone = "onBrand" | "onLight";
-
-export interface DetailTileProps {
-  label: string;
-  children: ReactNode;
-  tone?: DetailTileTone;
-  sx?: SxProps<Theme>;
-}
-
-export const DetailTile: FC<DetailTileProps> = ({ label, children, tone = "onBrand", sx }) => (
-  <Box
-    sx={{
-      borderRadius: radii.default,
-      p: 2,
-      ...(tone === "onBrand"
-        ? { bgcolor: alphas.white.subtle, backdropFilter: "blur(10px)" }
-        : { bgcolor: colors.background.surface, border: "1px solid", borderColor: colors.border.light }),
-      ...sx,
-    }}
-  >
-    <Typography
-      variant="caption"
-      sx={
-        tone === "onBrand"
-          ? { opacity: 0.8, display: "block", mb: 0.5 }
-          : { color: colors.text.subtle, display: "block", mb: 0.5 }
-      }
-    >
-      {label}
-    </Typography>
-    {children}
-  </Box>
-);
 
 // ─── DetailHeader ────────────────────────────────────────────────────────────
 // Shared header for entity detail pages, in two clearly separated levels: an
@@ -104,11 +65,6 @@ export interface DetailHeaderProps {
   menu?: ReactNode;
   isLoading?: boolean;
   error?: unknown;
-  /**
-   * LEGACY grid of `DetailTile`s, for consumers not yet migrated to `keyFacts`
-   * and `details`. Passing it renders the previous header verbatim.
-   */
-  children?: ReactNode;
 }
 
 export const DetailHeader: FC<DetailHeaderProps> = ({
@@ -123,7 +79,6 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   menu,
   isLoading = false,
   error = null,
-  children,
 }) => {
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
@@ -179,14 +134,6 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
     clearTimeout(feedbackTimer.current);
     feedbackTimer.current = setTimeout(() => setCopiedLabel(null), COPY_FEEDBACK_MS);
   };
-
-  if (children != null) {
-    return (
-      <LegacyDetailHeader icon={icon} title={title} subtitle={subtitle} isLoading={isLoading} error={error}>
-        {children}
-      </LegacyDetailHeader>
-    );
-  }
 
   return (
     <Paper
@@ -410,51 +357,3 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
     </Paper>
   );
 };
-
-// ─── LegacyDetailHeader ──────────────────────────────────────────────────────
-// The previous brand-slab header, kept verbatim while `PlantDetailHeader` and
-// `SupplyDetailHeader` still pass `children`. Removed with `DetailTile`.
-
-const LegacyDetailHeader: FC<{
-  icon: ReactNode;
-  title: ReactNode;
-  subtitle?: ReactNode;
-  isLoading?: boolean;
-  error?: unknown;
-  children?: ReactNode;
-}> = ({ icon, title, subtitle, isLoading = false, error = null, children }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      p: { xs: 2, sm: 3 },
-      borderRadius: { xs: 0, sm: radii.large },
-      background: (theme) => theme.palette.primary.main,
-      color: "white",
-      mx: { xs: 0, sm: 0 },
-      width: "100%",
-      boxSizing: "border-box",
-    }}
-  >
-    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3 }}>
-      <Avatar sx={{ bgcolor: alphas.white.soft, width: 56, height: 56 }}>{icon}</Avatar>
-      <Box sx={{ flex: 1 }}>
-        {title}
-        <Typography variant="body1" sx={{ opacity: 0.9 }}>
-          {subtitle}
-        </Typography>
-      </Box>
-    </Box>
-
-    {!isLoading && !error && (
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
-          gap: 2,
-        }}
-      >
-        {children}
-      </Box>
-    )}
-  </Paper>
-);
