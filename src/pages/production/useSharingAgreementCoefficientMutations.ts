@@ -41,6 +41,22 @@ export interface SharingAgreementCoefficientMutations {
   isReopening: boolean;
 }
 
+/**
+ * Every cached read of a supply's coefficient timeline, for any supply.
+ *
+ * Matches on the URL element alone because the two callers key differently:
+ * the history drawer passes `{ plantId }` and the supply detail section passes
+ * nothing, and Orval appends the params object to the key only when it is
+ * present. The URL is identical in both shapes, so matching it covers both —
+ * a predicate that keyed off the params object would silently refresh one
+ * surface and leave the other stale.
+ *
+ * Deliberately not narrowed to a single supplyId: one lifecycle call can move
+ * coefficients belonging to several supplies at once (activation cascades onto
+ * a predecessor), so the affected set is not knowable from the request.
+ */
+const SUPPLY_COEFFICIENT_QUERY_URL = /^\/api\/v1\/supplies\/[^/]+\/partition-coefficients/;
+
 export function useSharingAgreementCoefficientMutations(plantId: string): SharingAgreementCoefficientMutations {
   const queryClient = useQueryClient();
   const errorDispatch = useErrorDispatch();
@@ -65,6 +81,21 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
   const [isDeactivatingAfterInvalidate, setIsDeactivatingAfterInvalidate] = useState(false);
   const [isClosingAfterInvalidate, setIsClosingAfterInvalidate] = useState(false);
   const [isReopeningAfterInvalidate, setIsReopeningAfterInvalidate] = useState(false);
+
+  /**
+   * The supply-level timelines alone. `replaceCoefficients` keeps its exact,
+   * narrow agreement key — rewriting a draft touches one agreement and there
+   * is no cascade to chase — but the supply histories are keyed by supplyId,
+   * so they still have to be reached separately.
+   */
+  const invalidateSupplyCoefficientHistories = () => {
+    return queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === "string" && SUPPLY_COEFFICIENT_QUERY_URL.test(key);
+      },
+    });
+  };
 
   const replaceCoefficients = async (
     sharingAgreementId: string,
@@ -95,6 +126,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
       queryClient.invalidateQueries({
         queryKey: getGetSharingAgreementPartitionCoefficientsQueryKey(plantId, sharingAgreementId),
       });
+      invalidateSupplyCoefficientHistories();
       return { success: true };
     } catch (error) {
       errorDispatch(
@@ -106,12 +138,18 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
 
   /**
    * Invalidates every sharing-agreement query for this plant (list, every
-   * cached agreement-by-id, every cached coefficient set) via a predicate on
-   * the URL prefix, not a specific query key. Necessary because `activate`
-   * cascades onto a predecessor coefficient that may belong to a *different*
-   * agreement, so the set of agreements a single call touches isn't known
-   * from the request. Agreements per plant are few and only mounted queries
-   * actually refetch, so invalidating the whole plant subtree is cheap.
+   * cached agreement-by-id, every cached coefficient set) **and every cached
+   * supply coefficient timeline**, via a predicate on the URL prefix rather
+   * than a specific query key. Necessary because `activate` cascades onto a
+   * predecessor coefficient that may belong to a *different* agreement, so the
+   * set of agreements a single call touches isn't known from the request.
+   * Agreements per plant are few and only mounted queries actually refetch, so
+   * invalidating the whole plant subtree is cheap.
+   *
+   * The supply timelines live under a different root (`/api/v1/supplies/...`)
+   * and are keyed by supplyId, so the plant prefix can never reach them — the
+   * history drawer and the supply detail section would both have gone stale
+   * after every activation, close and reopen.
    *
    * `PartitionCoefficientResponse` now carries `sharingAgreement { id, name,
    * status }`, and the activation mutations return a `CoefficientActivationResponse`
@@ -130,7 +168,11 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     return queryClient.invalidateQueries({
       predicate: (query) => {
         const key = query.queryKey[0];
-        return typeof key === "string" && key.startsWith(`/api/v1/plants/${plantId}/sharing-agreements`);
+        if (typeof key !== "string") return false;
+        return (
+          key.startsWith(`/api/v1/plants/${plantId}/sharing-agreements`) ||
+          SUPPLY_COEFFICIENT_QUERY_URL.test(key)
+        );
       },
     });
   };
