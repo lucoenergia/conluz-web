@@ -6,7 +6,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import type { PlantResponse } from "../../api/models";
 import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
-import { formatCalendarDate } from "../../utils/formatCalendarDate";
+import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 import { colors } from "../../theme/tokens";
 
 export interface PlantDetailHeaderProps {
@@ -14,9 +14,6 @@ export interface PlantDetailHeaderProps {
   isLoading?: boolean;
   error?: unknown;
 }
-
-/** Short form: these dates sit in a strip cell and in a four-column grid. */
-const SHORT_DATE: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
 
 export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading = false, error = null }) => {
   const supply = plant?.supply;
@@ -34,7 +31,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading
   const details: DetailFact[] = [
     { label: "Código de proveedor", value: plant?.providerCode || "-" },
     { label: "Proveedor de inversor", value: plant?.inverterProvider || "-" },
-    { label: "Fecha de conexión", value: formatCalendarDate(plant?.connectionDate ?? undefined, SHORT_DATE) },
+    { label: "Fecha de conexión", value: formatCalendarDate(plant?.connectionDate ?? undefined, SHORT_CALENDAR_DATE) },
   ];
 
   if (supply) {

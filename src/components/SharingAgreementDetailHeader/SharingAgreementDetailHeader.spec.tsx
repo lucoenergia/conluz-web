@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
+import { MemoryRouter } from "react-router";
 import { SharingAgreementDetailHeader, type SharingAgreementDetailHeaderProps } from "./SharingAgreementDetailHeader";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -50,16 +51,25 @@ describe("SharingAgreementDetailHeader", () => {
 
   function renderHeader(props: Partial<SharingAgreementDetailHeaderProps> = {}) {
     return render(
-      <SharingAgreementDetailHeader
-        agreement={mockAgreement}
-        plant={mockPlant}
-        nextStep={{ kind: "NONE" }}
-        {...props}
-      />,
+      <MemoryRouter>
+        <SharingAgreementDetailHeader
+          agreement={mockAgreement}
+          plant={mockPlant}
+          nextStep={{ kind: "NONE" }}
+          {...props}
+        />
+      </MemoryRouter>,
     );
   }
 
   describe("identity", () => {
+    const openDetails = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.click(screen.getByRole("button", { name: /^Ver \d+ dato/ }));
+      return document.getElementById(
+        screen.getByRole("button", { name: "Ocultar detalles" }).getAttribute("aria-controls") as string,
+      ) as HTMLElement;
+    };
+
     it("renders the agreement name and its status chip", () => {
       renderHeader();
 
@@ -67,63 +77,79 @@ describe("SharingAgreementDetailHeader", () => {
       expect(screen.getByText("Vigente")).toBeInTheDocument();
     });
 
-    // The identifying values, each under the field name it belongs to. Run
-    // together on one line they gave no clue which value was which.
-    it("labels the three identifying values, rather than running them into one line", () => {
+    // The two values that describe the agreement itself, each under the field
+    // name it belongs to. Run together on one line they gave no clue which was
+    // which; at equal weight with everything else they said nothing at all.
+    it("promotes the installed power and the creation date into the strip", () => {
       renderHeader({ coefficients: ALL_PENDING });
 
       for (const [label, value] of [
-        ["CAU de la planta", "ES0031300296192001MB"],
         ["Potencia instalada", "42,50 kW"],
-        ["Puntos de suministro", "2"],
+        ["Creado el", "23 may 2024"],
       ] as const) {
-        const tile = screen.getByText(label).closest("div") as HTMLElement;
-        expect(tile).toHaveTextContent(value);
+        expect(screen.getByText(label).parentElement).toHaveTextContent(value);
       }
     });
 
-    it("shows a dash for the supply-point count while the coefficients are still in flight", () => {
-      // A defaulted 0 would state a fact about data that has not arrived.
-      renderHeader();
-
-      const tile = screen.getByText("Puntos de suministro").closest("div") as HTMLElement;
-      expect(tile).toHaveTextContent("-");
-      expect(tile).not.toHaveTextContent("0");
-    });
-
-    it("keeps the created date and the notes out of the way until asked for", async () => {
-      // Reference data, not identity. Visible by default they crowded the page's
-      // actual subject; stranded below the banner they belonged to nothing.
+    it("keeps the plant CAU and the notes out of the way until asked for", async () => {
+      // Reference data, not identity. Visible by default they crowded the
+      // page's actual subject.
       const user = userEvent.setup();
       renderHeader();
 
-      const toggle = screen.getByRole("button", { name: "Ver más datos del acuerdo" });
+      const toggle = screen.getByRole("button", { name: "Ver 2 datos más" });
       expect(toggle).toHaveAttribute("aria-expanded", "false");
+      expect(screen.queryByText("Revisión anual pendiente")).not.toBeInTheDocument();
 
-      await user.click(toggle);
+      const panel = await openDetails(user);
 
-      const expanded = screen.getByRole("button", { name: "Ocultar datos del acuerdo" });
-      expect(expanded).toHaveAttribute("aria-expanded", "true");
-      const panel = document.getElementById(expanded.getAttribute("aria-controls") as string) as HTMLElement;
-      expect(panel).toHaveTextContent("Creado el");
-      expect(panel).toHaveTextContent("23 de mayo de 2024");
+      expect(screen.getByRole("button", { name: "Ocultar detalles" })).toHaveAttribute("aria-expanded", "true");
+      expect(panel).toHaveTextContent("CAU de la planta");
+      expect(panel).toHaveTextContent("ES0031300296192001MB");
       expect(panel).toHaveTextContent("Notas internas");
       expect(panel).toHaveTextContent("Revisión anual pendiente");
     });
 
-    it("names the notes field even when the agreement has none, rather than showing a bare blank", () => {
-      renderHeader({ agreement: { ...mockAgreement, notes: null } as unknown as SharingAgreementResponse });
+    // AC10. The count came from the coefficients query, so it reported the
+    // number of ROWS rather than of supply points, and it went stale the moment
+    // the split was edited. The split section states it, in context.
+    it("states the number of supply points nowhere, collapsed or expanded", async () => {
+      const user = userEvent.setup();
+      renderHeader({ coefficients: ALL_PENDING });
 
-      expect(screen.getByText("Notas internas")).toBeInTheDocument();
-      expect(screen.getByText("Sin notas")).toBeInTheDocument();
+      expect(screen.queryByText("Puntos de suministro")).not.toBeInTheDocument();
+
+      await openDetails(user);
+
+      expect(screen.queryByText("Puntos de suministro")).not.toBeInTheDocument();
     });
 
-    it("says the CAU is unavailable rather than leaving its field empty", () => {
+    it("links the plant under the title, so the agreement says what it belongs to", () => {
+      renderHeader({ plant: { ...mockPlant, name: "21088 Luco de Jiloca" } as PlantResponse });
+
+      expect(screen.getByRole("link", { name: "21088 Luco de Jiloca" })).toHaveAttribute(
+        "href",
+        "/production/plant-1",
+      );
+    });
+
+    it("names the notes field even when the agreement has none, rather than showing a bare blank", async () => {
+      const user = userEvent.setup();
+      renderHeader({ agreement: { ...mockAgreement, notes: null } as unknown as SharingAgreementResponse });
+
+      const panel = await openDetails(user);
+
+      expect(panel).toHaveTextContent("Notas internas");
+      expect(panel).toHaveTextContent("Sin notas");
+    });
+
+    it("says the CAU is unavailable rather than leaving its field empty", async () => {
+      const user = userEvent.setup();
       renderHeader({ agreement: {} as SharingAgreementResponse, plant: {} as PlantResponse });
 
       expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
-      const tile = screen.getByText("CAU de la planta").closest("div") as HTMLElement;
-      expect(tile).toHaveTextContent("No disponible");
+      const panel = await openDetails(user);
+      expect(panel).toHaveTextContent("No disponible");
     });
   });
 
