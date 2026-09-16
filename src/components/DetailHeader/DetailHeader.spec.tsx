@@ -240,6 +240,9 @@ describe("DetailHeader", () => {
       await waitFor(() => {
         expect(screen.getByRole("status")).toHaveTextContent("CAU copiado al portapapeles");
       });
+      // Visible confirmation too, not only the announcement: the icon swaps to
+      // a tick. A tooltip would not do — it never appears for a touch user.
+      expect(screen.getByRole("button", { name: "Copiar CAU" }).querySelector('[data-testid="CheckIcon"]')).toBeInTheDocument();
     });
 
     it("announces nothing and claims no success when the clipboard rejects", async () => {
@@ -253,6 +256,10 @@ describe("DetailHeader", () => {
       await waitFor(() => expect(writeText).toHaveBeenCalled());
       expect(screen.getByRole("status")).toHaveTextContent("");
       expect(screen.getByRole("status")).not.toHaveTextContent("copiado");
+      // ...and no tick either: the visible signal must not outrun the fact.
+      const button = screen.getByRole("button", { name: "Copiar CAU" });
+      expect(button.querySelector('[data-testid="CheckIcon"]')).not.toBeInTheDocument();
+      expect(button.querySelector('[data-testid="ContentCopyIcon"]')).toBeInTheDocument();
     });
 
     it("survives a browser with no clipboard at all, without claiming success", async () => {
