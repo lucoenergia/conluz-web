@@ -22,6 +22,7 @@ import type {
   PagedResultSupplyResponse,
   PartitionCoefficientResponse,
   ProductionByTime,
+  SupplyEnergyMetricsResponse,
   SupplyResponse
 } from '.././models';
 
@@ -59,6 +60,8 @@ export const getGetPartitionCoefficientHistoryResponseMock = (): PartitionCoeffi
 export const getGetPartitionCoefficientAtTimestampResponseMock = (overrideResponse: Partial< CoefficientAtTimestampResponse > = {}): CoefficientAtTimestampResponse => ({supplyId: faker.string.uuid(), timestamp: `${faker.date.past().toISOString().split('.')[0]}Z`, coefficient: faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), ...overrideResponse})
 
 export const getGetActivePartitionCoefficientResponseMock = (overrideResponse: Partial< PartitionCoefficientResponse > = {}): PartitionCoefficientResponse => ({id: faker.string.uuid(), supplyId: faker.string.uuid(), plantId: faker.string.uuid(), coefficient: faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), validFrom: `${faker.date.past().toISOString().split('.')[0]}Z`, validTo: `${faker.date.past().toISOString().split('.')[0]}Z`, createdAt: `${faker.date.past().toISOString().split('.')[0]}Z`, ...overrideResponse})
+
+export const getGetSupplyEnergyMetricsResponseMock = (overrideResponse: Partial< SupplyEnergyMetricsResponse > = {}): SupplyEnergyMetricsResponse => ({supply: {id: faker.string.uuid(), code: faker.string.alpha({length: {min: 10, max: 20}}), name: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,])}, period: {startDate: `${faker.date.past().toISOString().split('.')[0]}Z`, endDate: `${faker.date.past().toISOString().split('.')[0]}Z`}, coverage: {hoursWithData: faker.number.int({min: undefined, max: undefined, multipleOf: undefined}), expectedHours: faker.number.int({min: undefined, max: undefined, multipleOf: undefined})}, energy: {totalConsumptionKWh: faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), gridImportKWh: faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), selfConsumptionKWh: faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), surplusKWh: faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), assignedProductionKWh: faker.number.float({min: undefined, max: undefined, fractionDigits: 2})}, savings: {amountEur: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}),null,]), tariffSource: faker.helpers.arrayElement(['REAL_TARIFF','ESTIMATE'] as const)}, selfSufficiencyRatio: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}),null,]), selfConsumptionRatio: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}),null,]), ...overrideResponse})
 
 export const getGetSupplyYearlyConsumptionResponseMock = (): DatadisConsumption[] => (Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({cups: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), date: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), time: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), consumptionKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), obtainMethod: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), surplusEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), generationEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), selfConsumptionEnergyKWh: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}), undefined]), empty: faker.helpers.arrayElement([faker.datatype.boolean(), undefined])})))
 
@@ -227,6 +230,18 @@ export const getGetActivePartitionCoefficientMockHandler = (overrideResponse?: P
   })
 }
 
+export const getGetSupplyEnergyMetricsMockHandler = (overrideResponse?: SupplyEnergyMetricsResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SupplyEnergyMetricsResponse> | SupplyEnergyMetricsResponse)) => {
+  return http.get('*/api/v1/supplies/:supplyId/energy-metrics', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSupplyEnergyMetricsResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
+
 export const getGetSupplyYearlyConsumptionMockHandler = (overrideResponse?: DatadisConsumption[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DatadisConsumption[]> | DatadisConsumption[])) => {
   return http.get('*/api/v1/supplies/:supplyId/consumption/yearly', async (info) => {await delay(1000);
   
@@ -300,6 +315,7 @@ export const getSuppliesMock = () => [
   getGetPartitionCoefficientHistoryMockHandler(),
   getGetPartitionCoefficientAtTimestampMockHandler(),
   getGetActivePartitionCoefficientMockHandler(),
+  getGetSupplyEnergyMetricsMockHandler(),
   getGetSupplyYearlyConsumptionMockHandler(),
   getGetSupplyMonthlyConsumptionMockHandler(),
   getGetSupplyHourlyConsumptionMockHandler(),

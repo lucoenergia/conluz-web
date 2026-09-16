@@ -16,6 +16,7 @@ import {
 } from 'msw';
 
 import type {
+  MembershipPaybackResponse,
   MembershipResponse
 } from '.././models';
 
@@ -32,6 +33,28 @@ export const getUpdateMembershipRoleResponseMock = (overrideResponse: Partial< M
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
       }, isPlatformAdmin: faker.datatype.boolean()}, communityId: faker.string.uuid(), role: faker.helpers.arrayElement(['COMMUNITY_MEMBER','COMMUNITY_ADMIN'] as const), enabled: faker.datatype.boolean(), ...overrideResponse})
 
+export const getGetMembershipPaybackResponseMock = (overrideResponse: Partial< MembershipPaybackResponse > = {}): MembershipPaybackResponse => ({investmentEur: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}),null,]), savedEur: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}),null,]), remainingEur: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}),null,]), progressRatio: faker.helpers.arrayElement([faker.number.float({min: undefined, max: undefined, fractionDigits: 2}),null,]), startDate: faker.date.past().toISOString().split('T')[0], estimatedRemainingMonths: faker.helpers.arrayElement([faker.number.int({min: undefined, max: undefined, multipleOf: undefined}),null,]), tariffSource: faker.helpers.arrayElement(['REAL_TARIFF','ESTIMATE'] as const), ...overrideResponse})
+
+
+export const getSetMembershipInvestmentMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<void> | void)) => {
+  return http.put('*/api/v1/communities/:communityId/memberships/:userId/investment', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 204,
+        
+      })
+  })
+}
+
+export const getClearMembershipInvestmentMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void)) => {
+  return http.delete('*/api/v1/communities/:communityId/memberships/:userId/investment', async (info) => {await delay(1000);
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+    return new HttpResponse(null,
+      { status: 204,
+        
+      })
+  })
+}
 
 export const getGetMembershipsMockHandler = (overrideResponse?: MembershipResponse[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<MembershipResponse[]> | MembershipResponse[])) => {
   return http.get('*/api/v1/communities/:communityId/memberships', async (info) => {await delay(1000);
@@ -78,9 +101,24 @@ export const getUpdateMembershipRoleMockHandler = (overrideResponse?: Membership
       })
   })
 }
+
+export const getGetMembershipPaybackMockHandler = (overrideResponse?: MembershipPaybackResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<MembershipPaybackResponse> | MembershipPaybackResponse)) => {
+  return http.get('*/api/v1/communities/:communityId/memberships/:userId/payback', async (info) => {await delay(1000);
+  
+    return new HttpResponse(JSON.stringify(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetMembershipPaybackResponseMock()),
+      { status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+  })
+}
 export const getMembershipsMock = () => [
+  getSetMembershipInvestmentMockHandler(),
+  getClearMembershipInvestmentMockHandler(),
   getGetMembershipsMockHandler(),
   getCreateMembershipMockHandler(),
   getDeleteMembershipMockHandler(),
-  getUpdateMembershipRoleMockHandler()
+  getUpdateMembershipRoleMockHandler(),
+  getGetMembershipPaybackMockHandler()
 ]
