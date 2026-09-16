@@ -1783,5 +1783,142 @@ test.describe("Visual baselines", () => {
     expect(agreementHeader?.height).toBeLessThanOrEqual(150);
   });
 
+  // -------------------------------------------------------------------------
+  // List headers
+  // -------------------------------------------------------------------------
+
+  /**
+   * Every list page the suite can actually reach with its existing fixtures.
+   *
+   * Three of the eight are absent, for two different reasons:
+   *
+   *   - Partners and partner supply points, because App.tsx routes neither.
+   *     There is no `path="partners"`, and nothing in the app links to one.
+   *     They were migrated all the same (the issue lists them), but no browser
+   *     test can open a page the router does not serve.
+   *
+   *   - /members, for the reason the file header already gives for its guard:
+   *     it redirects on a cold goto before community selection resolves. It
+   *     also has no memberships fixture — the broad communities mock would
+   *     answer that call with a list of communities. Its header is the same
+   *     three-counter shape as /users, which IS measured below, and the page
+   *     itself stays covered by MembersPage.spec.tsx.
+   */
+  const LIST_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
+    {
+      name: "/production",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+        await page.goto("/production");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "/supply-points",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+        await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+        await page.goto("/supply-points");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "/users",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await page.goto("/users");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "/communities",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await page.goto("/communities");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "sharing agreements list",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+        await navigateToSharingAgreements(page);
+      },
+    },
+  ];
+
+  /**
+   * AC1 and AC2, measured rather than eyeballed.
+   *
+   * Two separate promises, and a counter strip can keep one while breaking the
+   * other. "One row" alone is satisfied by three cells that each clip their
+   * label to "Inac…", which is the layout doing the reader no favours; so the
+   * labels are checked for actual clipping too, by asking each one whether it
+   * overflows its own box.
+   *
+   * Heights are recorded for every page, not just the one AC2 bounds, so the
+   * next person changing this header can see what it costs everywhere.
+   */
+  for (const listPage of LIST_PAGES) {
+    test(`AC1: the ${listPage.name} header keeps its counters on one unclipped row at 390px`, async ({
+      page,
+    }, testInfo) => {
+      test.skip(testInfo.project.name !== "mobile", "AC1 is specified against a 390px viewport.");
+
+      await listPage.open(page);
+
+      const header = page.getByTestId("list-header");
+      await expect(header).toBeVisible();
+
+      const box = await header.boundingBox();
+      testInfo.annotations.push({
+        type: "list header height",
+        description: `${listPage.name}: ${box?.height}px`,
+      });
+      console.log(`List header height — ${listPage.name}: ${box?.height}px`);
+
+      // The strip's captions are exactly the counter labels: the title is an
+      // h1 and the subtitle is body2, so nothing else in the header is one.
+      const labels = header.locator(".MuiTypography-caption");
+      const labelCount = await labels.count();
+      expect(labelCount).toBeGreaterThanOrEqual(2);
+
+      const tops = await labels.evaluateAll((nodes) =>
+        nodes.map((node) => Math.round(node.getBoundingClientRect().top)),
+      );
+      expect(new Set(tops).size, `counters on ${listPage.name} span ${new Set(tops).size} rows`).toBe(1);
+
+      const clipped = await labels.evaluateAll((nodes) =>
+        nodes.filter((node) => node.scrollWidth > node.clientWidth).map((node) => node.textContent),
+      );
+      expect(clipped, `clipped counter labels on ${listPage.name}`).toEqual([]);
+    });
+  }
+
+  /**
+   * AC2. The plants list is the page the budget is stated against: two
+   * counters, the shortest header of the eight, and the one whose old version
+   * spent three rows on a single column of stats.
+   */
+  test("AC2: the /production list header is at most 140px at 390px", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The 140px budget is specified against a 390px viewport.");
+
+    await LIST_PAGES[0].open(page);
+
+    const box = await page.getByTestId("list-header").boundingBox();
+    testInfo.annotations.push({ type: "production list header height", description: `${box?.height}px` });
+    console.log(`AC2 /production list header height: ${box?.height}px`);
+    expect(box?.height).toBeLessThanOrEqual(140);
+  });
+
   // Note: "import partners modal" is intentionally omitted. See file header.
 });
