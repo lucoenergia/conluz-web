@@ -128,7 +128,9 @@ function CoefficientInput({
           endAdornment: unit === "kw" ? <InputAdornment position="end">kW</InputAdornment> : undefined,
         },
       }}
-      sx={{ width: 160 }}
+      // 160px is a comfortable width for a table cell and a greedy one on a
+      // 390px card, where it was taken out of the supply's name.
+      sx={{ width: { xs: 108, sm: 160 } }}
     />
   );
 }
@@ -288,8 +290,15 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
         borderBottom: `1px solid ${colors.divider}`,
       }}
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: { xs: 1, sm: 2 },
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: 1, minWidth: 0 }}>
           {showSelectionColumn && (
             <Box
               sx={{
@@ -309,11 +318,17 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               )}
             </Box>
           )}
-          <Typography variant="body2" fontWeight="600" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {/* Wraps rather than truncates: a CUPS identifies the supply, and an
+              elided one identifies nothing. */}
+          <Typography
+            variant="body2"
+            fontWeight="600"
+            sx={{ fontVariantNumeric: "tabular-nums", minWidth: 0, wordBreak: "break-word" }}
+          >
             {identity.primary}
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
           {isEditing && inputUnit && onCoefficientChange ? (
             <CoefficientInput
               coefficientInput={coefficientInput ?? ""}
