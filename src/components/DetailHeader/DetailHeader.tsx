@@ -72,7 +72,29 @@ export interface DetailFact {
   wide?: boolean;
 }
 
-export interface DetailHeaderProps {
+/**
+ * A list page's counter: a label and a figure.
+ *
+ * Deliberately not a `DetailKeyFact`. A counter is never an identifier, so it
+ * has nothing to copy and no short form to fall back to — and saying that in
+ * the type is better than trusting eight call sites to remember it.
+ */
+export interface ListKeyFact {
+  label: string;
+  value: ReactNode;
+  /** Forbidden rather than absent, so passing one is reported, not ignored. */
+  copyable?: never;
+}
+
+/** Up to three, capped by the type for the same reason `DetailKeyFacts` is. */
+export type ListKeyFacts =
+  | readonly [ListKeyFact]
+  | readonly [ListKeyFact, ListKeyFact]
+  | readonly [ListKeyFact, ListKeyFact, ListKeyFact];
+
+export interface DetailVariantProps {
+  /** The default. Named only so the union has something to discriminate on. */
+  variant?: "detail";
   icon: ReactNode;
   title: ReactNode;
   /**
@@ -92,6 +114,38 @@ export interface DetailHeaderProps {
   isLoading?: boolean;
   error?: unknown;
 }
+
+/**
+ * The same header naming a LIST rather than an entity.
+ *
+ * A list page has no entity to disclose, no lifecycle to badge and no row to
+ * act on, so the strip holds counters and nothing else — no toggle cell, and
+ * all three cells stay in one row even at 390px, because a counter is short
+ * enough to share a phone's width and the whole point is to stop the header
+ * from pushing the list off the first viewport.
+ *
+ * The forbidden props are typed `never` rather than left out. On a bare union
+ * TypeScript's excess-property check admits any key present in ANY member, so
+ * omission alone would let `details` through silently; `never` fails at the
+ * property itself, where the message is readable.
+ */
+export interface ListVariantProps {
+  variant: "list";
+  icon: ReactNode;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  keyFacts?: ListKeyFacts;
+  details?: never;
+  status?: never;
+  menu?: never;
+  titleRef?: never;
+  subtitleIcon?: never;
+  /** No list page gates its header: counters render as soon as they compute. */
+  isLoading?: never;
+  error?: never;
+}
+
+export type DetailHeaderProps = DetailVariantProps | ListVariantProps;
 
 // ─── KeyFactCell ─────────────────────────────────────────────────────────────
 // One cell of the strip, and the only place that knows whether its value has
@@ -221,6 +275,7 @@ const KeyFactCell: FC<{
 };
 
 export const DetailHeader: FC<DetailHeaderProps> = ({
+  variant = "detail",
   icon,
   title,
   titleRef,
@@ -233,6 +288,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   isLoading = false,
   error = null,
 }) => {
+  const isList = variant === "list";
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
   const [areDetailsOpen, setAreDetailsOpen] = useState(false);
@@ -254,11 +310,13 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   const facts: readonly DetailKeyFact[] = keyFacts ?? [];
   // On xs the strip holds two cells at most; anything beyond moves into the
   // details, where it is genuinely hidden and therefore genuinely counted.
-  const visibleFacts = isCompact ? facts.slice(0, 2) : facts;
-  const displacedFacts = isCompact ? facts.slice(2) : [];
+  // The list strip displaces nothing: its counters are short enough that three
+  // of them share a 390px row, and there is no disclosure to displace them into.
+  const visibleFacts = isCompact && !isList ? facts.slice(0, 2) : facts;
+  const displacedFacts = isCompact && !isList ? facts.slice(2) : [];
 
   const hiddenCount = displacedFacts.length + (details?.length ?? 0);
-  const hasDisclosure = hiddenCount > 0;
+  const hasDisclosure = !isList && hiddenCount > 0;
 
   /**
    * A copyable value that has actually lost characters to an ellipsis is
@@ -324,7 +382,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
       elevation={0}
       // The anchor the visual suite measures the collapsed header against: the
       // 120px budget on a 390px viewport is the whole point of the redesign.
-      data-testid="detail-header"
+      data-testid={isList ? "list-header" : "detail-header"}
       sx={{
         // The shared panel surface, minus its padding: the strip and the details
         // are full-bleed inside the card, so each section pads itself.
@@ -386,7 +444,15 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                 <Typography
                   variant="body2"
                   component="div"
-                  sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  // An entity's subtitle is an attribute and clips to one line;
+                  // a list page's is a sentence describing the page, and
+                  // ellipsising it mid-word would drop meaning the reader has
+                  // no other way to recover.
+                  sx={
+                    isList
+                      ? { minWidth: 0 }
+                      : { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+                  }
                 >
                   {subtitle}
                 </Typography>
@@ -413,7 +479,11 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
               key={fact.label}
               fact={fact}
               label={(isCompact && fact.shortLabel) || fact.label}
-              flex={{ xs: compactFlex(fact), sm: 1 }}
+              // Counters get equal columns everywhere. Sizing them by content,
+              // as the detail strip does on a phone, is a rule about making
+              // room for one long identifier — there is no such cell here, and
+              // uneven thirds under a row of numbers just read as misalignment.
+              flex={isList ? { xs: "1 1 0", sm: 1 } : { xs: compactFlex(fact), sm: 1 }}
               isDivided={index > 0}
               isCopied={copiedLabel === fact.label}
               onCopy={handleCopy}

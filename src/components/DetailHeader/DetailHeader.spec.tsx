@@ -4,7 +4,15 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { useMediaQuery } from "@mui/material";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
-import { DetailHeader, type DetailHeaderProps, type DetailKeyFacts, type DetailFact } from "./DetailHeader";
+import {
+  DetailHeader,
+  type DetailHeaderProps,
+  type DetailKeyFacts,
+  type DetailFact,
+  type ListKeyFacts,
+  type ListVariantProps,
+} from "./DetailHeader";
+import { colors } from "../../theme/tokens";
 
 vi.mock("@mui/material", async () => {
   const actual = await vi.importActual("@mui/material");
@@ -361,6 +369,119 @@ describe("DetailHeader", () => {
       renderHeader();
 
       expect(screen.getByRole("heading", { level: 1 })).not.toHaveAttribute("tabindex");
+    });
+  });
+
+  // ─── the list variant ──────────────────────────────────────────────────────
+  // A list page's header, which differs from an entity's in what it REFUSES:
+  // no disclosure, no badge, no menu, and no cell giving way on a phone.
+
+  describe("the list variant", () => {
+    const THREE_COUNTERS: ListKeyFacts = [
+      { label: "Total", value: 24 },
+      { label: "Activos", value: 20 },
+      { label: "Inactivos", value: 4 },
+    ];
+
+    function renderListHeader(props: Partial<ListVariantProps> = {}) {
+      return render(
+        <DetailHeader variant="list" icon={<SolarPowerIcon />} title="Gestión de Usuarios" {...props} />,
+      );
+    }
+
+    // AC1. The whole reason the variant exists: three counters cost three rows
+    // under the old header, which is what pushed the list off a phone's first
+    // viewport.
+    it("keeps all three counters in the strip on a phone, displacing none of them", () => {
+      setViewport(true);
+      renderListHeader({ keyFacts: THREE_COUNTERS });
+
+      for (const { label, value } of THREE_COUNTERS) {
+        expect(screen.getByText(label)).toBeInTheDocument();
+        expect(screen.getByText(String(value))).toBeInTheDocument();
+      }
+    });
+
+    it("keeps all three counters in the strip on a wide viewport too", () => {
+      setViewport(false);
+      renderListHeader({ keyFacts: THREE_COUNTERS });
+
+      expect(screen.getByText("Inactivos")).toBeInTheDocument();
+      expect(screen.getByText("4")).toBeInTheDocument();
+    });
+
+    /**
+     * The toggle is the detail strip's last cell, so its absence is what buys
+     * the third counter its room. Asserted as "no control at all" rather than
+     * "no toggle": a list header has no copy button either, and a counter that
+     * grew one would be a counter pretending to be an identifier.
+     */
+    it("renders no toggle, and no other control, at either width", () => {
+      for (const compact of [true, false]) {
+        setViewport(compact);
+        const { unmount } = renderListHeader({ keyFacts: THREE_COUNTERS });
+
+        expect(screen.queryByRole("button")).not.toBeInTheDocument();
+        unmount();
+      }
+    });
+
+    it("shows the subtitle whole, since a list page's is a sentence", () => {
+      setViewport(true);
+      renderListHeader({ subtitle: "Administra los usuarios de la plataforma" });
+
+      expect(screen.getByText("Administra los usuarios de la plataforma")).toBeInTheDocument();
+    });
+
+    // AC6. A list page's title is the page's only h1.
+    it("renders the title as an h1", () => {
+      renderListHeader({ keyFacts: THREE_COUNTERS });
+
+      expect(screen.getByRole("heading", { level: 1, name: "Gestión de Usuarios" })).toBeInTheDocument();
+      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    });
+
+    /**
+     * AC4. "Inactivos" was red and "Borradores" amber, for states that are not
+     * failures. The colour is gone rather than muted: every counter now reads in
+     * the same neutral text colour, so alert colour still means something when
+     * it does appear elsewhere.
+     */
+    it("gives every counter the same neutral colour", () => {
+      renderListHeader({ keyFacts: THREE_COUNTERS });
+
+      for (const { value } of THREE_COUNTERS) {
+        expect(screen.getByText(String(value))).toHaveStyle({ color: colors.text.primary });
+      }
+    });
+
+    it("carries its own test id, so a measurement cannot pick up a detail header", () => {
+      renderListHeader({ keyFacts: THREE_COUNTERS });
+
+      expect(screen.getByTestId("list-header")).toBeInTheDocument();
+      expect(screen.queryByTestId("detail-header")).not.toBeInTheDocument();
+    });
+
+    /**
+     * AC5. The compiler is the assertion here: every line below must be an
+     * error, and `@ts-expect-error` fails the build if one of them stops being
+     * one. The runtime expectation only keeps the fixture from being dead code.
+     */
+    it("refuses the detail-only props at compile time", () => {
+      const rejected: ListVariantProps[] = [
+        // @ts-expect-error — a list header has nothing to disclose.
+        { variant: "list", icon: null, title: "x", details: [{ label: "Alta", value: "hoy" }] },
+        // @ts-expect-error — a list names a page, so there is no lifecycle to badge.
+        { variant: "list", icon: null, title: "x", status: "Vigente" },
+        // @ts-expect-error — a list header has no single row to act on.
+        { variant: "list", icon: null, title: "x", menu: "⋯" },
+        // @ts-expect-error — no action moves focus to a list page's heading.
+        { variant: "list", icon: null, title: "x", titleRef: { current: null } },
+        // @ts-expect-error — a counter is not an identifier, so it has nothing to copy.
+        { variant: "list", icon: null, title: "x", keyFacts: [{ label: "Total", value: 3, copyable: "3" }] },
+      ];
+
+      expect(rejected).toHaveLength(5);
     });
   });
 });
