@@ -8,7 +8,7 @@ import type { PlantResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import { PlantCard } from "../../components/PlantCard/PlantCard";
-import { PageHeaderWithStats } from "../../components/PageHeader";
+import { DetailHeader } from "../../components/DetailHeader";
 import { CardGrid } from "../../components/CardGrid";
 import { LoadingCardGrid } from "../../components/CardGrid";
 import { EmptyState } from "../../components/EmptyState";
@@ -97,13 +97,14 @@ export const PlantsPage: FC = () => {
 
       {/* Header Section */}
       <Box sx={sxStyles.pageContainer}>
-        <PageHeaderWithStats
-          icon={SolarPowerIcon}
+        <DetailHeader
+          variant="list"
+          icon={<SolarPowerIcon />}
           title="Producción"
           subtitle="Gestiona las plantas de producción de la comunidad energética"
-          stats={[
-            { value: stats.total, label: "Total plantas" },
-            { value: `${stats.totalPower} kW`, label: "Potencia total", color: colors.success.onBrand },
+          keyFacts={[
+            { label: "Total plantas", value: stats.total },
+            { label: "Potencia total", value: `${stats.totalPower} kW` },
           ]}
         />
       </Box>
