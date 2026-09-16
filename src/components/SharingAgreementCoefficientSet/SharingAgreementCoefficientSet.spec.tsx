@@ -125,9 +125,9 @@ describe("SharingAgreementCoefficientSet", () => {
     expect(screen.getAllByText("Nave Vacía").length).toBeGreaterThan(0);
   });
 
-  it("renders the assigned energy column, derived from coefficient x installedPowerKw", () => {
+  it("renders the assigned-power column, derived from coefficient x installedPowerKw", () => {
     renderWithTheme({ coefficients });
-    expect(screen.getByText("Energía asignada")).toBeInTheDocument();
+    expect(screen.getByText("Potencia asignada")).toBeInTheDocument();
     // Vivienda A: 40% of 100 kW
     expect(screen.getAllByText("40,00 kW").length).toBeGreaterThan(0);
   });
@@ -167,14 +167,14 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
   it("shows the edit action only for a DRAFT agreement", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
-    expect(screen.queryByRole("button", { name: "Editar coeficientes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
   });
 
   it("hides the coefficient sum cards while editing, in favor of the live readout", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
     expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
     expect(screen.getByText(/Suma del fichero:/)).toBeInTheDocument();
@@ -183,7 +183,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
   it("entering edit mode opens in kW mode by default, seeding inputs in kW including a real zero", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     expect(screen.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
     const inputs = screen.getAllByRole("textbox") as HTMLInputElement[];
@@ -192,32 +192,32 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(values).toContain("0,00"); // Nave Vacía's real zero, not blank, fixed at 2dp
   });
 
-  it("toggling to coefficient mode converts every row's displayed value, keeping it (not clearing it)", () => {
+  it("toggling to percentage mode converts every row's displayed value, keeping it (not clearing it)", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
-    fireEvent.click(screen.getByRole("button", { name: "Coeficiente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+    fireEvent.click(screen.getByRole("button", { name: "%" }));
 
     const inputs = screen.getAllByRole("textbox") as HTMLInputElement[];
     const values = inputs.map((input) => input.value);
-    expect(values).toContain("0,400000"); // 40 kW / 100 kW installed, fixed at 6dp
-    expect(values).toContain("0,000000");
+    expect(values).toContain("40,0000"); // 40 kW / 100 kW installed, at 4 percentage decimals
+    expect(values).toContain("0,0000");
   });
 
-  it("falls back to coefficient mode, with kW disabled, when the agreement has no installedPowerKw", () => {
+  it("falls back to percentage mode, with kW disabled, when the agreement has no installedPowerKw", () => {
     renderWithTheme({ coefficients, installedPowerKw: undefined, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
-    expect(screen.getByRole("button", { name: "Coeficiente" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "%" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "kW" })).toBeDisabled();
   });
 
   it("reaches edit mode from the empty state via its action button, for a DRAFT with zero coefficients", () => {
     renderWithTheme({ coefficients: [], agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    expect(screen.getByRole("button", { name: /Editar coeficientes/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Editar coeficientes/ }));
+    expect(screen.getByRole("button", { name: /Editar a mano/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Editar a mano/ }));
 
     expect(screen.getByRole("button", { name: "Añadir suministro" })).toBeInTheDocument();
   });
@@ -226,7 +226,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     const user = userEvent.setup();
     renderWithTheme({ coefficients: [], agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    fireEvent.click(screen.getByRole("button", { name: /Editar coeficientes/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Editar a mano/ }));
     await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
 
     await screen.findByText("Trastero Nuevo");
@@ -255,7 +255,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
     expect(screen.getByRole("button", { name: "Guardar" })).toBeDisabled();
 
     // Table and card rows are both present in the DOM (CSS-only breakpoint
@@ -275,7 +275,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
@@ -296,7 +296,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Coeficientes guardados."));
@@ -316,7 +316,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalledWith("Coeficientes guardados."));
@@ -325,7 +325,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
   it("the percentage sum line is always shown, even in kW mode, and is never demoted", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     // 0.4 + 0.6 + 0 = 100%.
     expect(screen.getByText("Suma del fichero: 100,0000 %")).toBeInTheDocument();
@@ -343,7 +343,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     ];
     renderWithTheme({ coefficients: rows, installedPowerKw: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     expect(screen.getByText("Suma del fichero: 99,9999 %")).toBeInTheDocument();
     expect(screen.getByText(/con redondeo a céntimos/)).toBeInTheDocument();
@@ -400,7 +400,7 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
   it("renders no row action menu and no checkbox while editing, even for a DRAFT with actionable rows", () => {
     renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    fireEvent.click(screen.getByRole("button", { name: "Editar coeficientes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
@@ -917,11 +917,13 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     const user = userEvent.setup();
     const { rerender } = renderWithTheme({ coefficients: mixed, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
 
-    // Only c3 is APPLIED, at 0.4 -> 40%. Scoped via the "Suma aplicada"
-    // caption's sibling rather than a bare text match: c3's own row also
-    // displays "40,0000 %" for its individual coefficient, so an unscoped
-    // query would be ambiguous between the sum card and that row.
-    expect(screen.getByText("Suma aplicada").previousElementSibling).toHaveTextContent("40,0000 %");
+    // Only c3 is APPLIED, at 0.4 -> 40%. Read off the gauge's own accessible
+    // value rather than by text match: c3's row also displays "40,0000 %" for
+    // its individual coefficient, so an unscoped query would be ambiguous.
+    expect(screen.getByRole("progressbar", { name: "Suma aplicada" })).toHaveAttribute(
+      "aria-valuetext",
+      expect.stringContaining("40,0000"),
+    );
 
     await selectPendingRow(user, "Vivienda A");
     await openBatchAction(user, "Registrar fecha");
@@ -948,7 +950,10 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     );
 
     // c1 (0.3) + c3 (0.4) now APPLIED = 70%, still below 100% — neutral info styling.
-    expect(screen.getByText("70,0000 %")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Suma aplicada" })).toHaveAttribute(
+      "aria-valuetext",
+      expect.stringContaining("70,0000"),
+    );
     expect(screen.getByText(/normal en transición/)).toBeInTheDocument();
   });
 });
@@ -1312,5 +1317,333 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
       const actionCell = cells[cells.length - 1];
       expect(actionCell.className).toContain("MuiTableCell-paddingCheckbox");
     }
+  });
+});
+
+describe("SharingAgreementCoefficientSet (anomalous draft)", () => {
+  const ANOMALY_COPY = /contiene coeficientes marcados como aplicados o cerrados/;
+
+  // A DRAFT is guaranteed all-PENDING/all-OPEN by the backend: APPLIED requires
+  // publishing first, and revert-to-draft is refused once anything is applied.
+  // Rendering this combination as an ordinary draft is what guarantees nobody
+  // reports the integrity breach it represents.
+  const anomalousDraft: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.6, applicationState: APPLIED, ...OPEN_UNCLOSED },
+    { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  const healthyDraft: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "h1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.6, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "h2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  it("says so, rather than silently growing two columns and leaving the reader to notice", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    const warning = screen.getByText(ANOMALY_COPY);
+    expect(warning).toBeInTheDocument();
+    expect(warning.closest(".MuiAlert-root")).toHaveClass("MuiAlert-colorWarning");
+  });
+
+  it("names what to do about it — review before publishing or deleting", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.getByText(/antes de poner el acuerdo en vigor o eliminarlo/)).toBeInTheDocument();
+  });
+
+  it("stays silent for a healthy draft", () => {
+    renderWithTheme({ coefficients: healthyDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    expect(screen.queryByText(ANOMALY_COPY)).not.toBeInTheDocument();
+  });
+
+  it("stays silent for a PUBLISHED agreement, where applied coefficients are the normal shape", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
+
+    expect(screen.queryByText(ANOMALY_COPY)).not.toBeInTheDocument();
+  });
+
+  it("stays silent for a SUPERSEDED agreement", () => {
+    renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.SUPERSEDED });
+
+    expect(screen.queryByText(ANOMALY_COPY)).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (installed power)", () => {
+  it("carries the installed power while editing in kW, where it is the working reference", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    // Identity, in read mode, belongs to the header's tiles — printing it here
+    // too would be the same number in two places on one screen.
+    expect(screen.queryByText(/Potencia instalada de la planta/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+
+    expect(screen.getByText("Potencia instalada de la planta: 100,00 kW")).toBeInTheDocument();
+  });
+
+  it("omits it when the agreement has none", () => {
+    renderWithTheme({
+      coefficients,
+      installedPowerKw: undefined,
+      agreementStatus: SharingAgreementResponseStatus.PUBLISHED,
+    });
+
+    expect(screen.queryByText(/^Potencia instalada:/)).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (the split section)", () => {
+  const DRAFT = SharingAgreementResponseStatus.DRAFT;
+
+  it("names the section and says what it is for", () => {
+    renderWithTheme({ coefficients, agreementStatus: DRAFT });
+
+    expect(screen.getByRole("heading", { level: 2, name: "Reparto" })).toBeInTheDocument();
+    expect(screen.getByText(/Qué parte de la producción de la planta corresponde a cada punto de suministro/)).toBeVisible();
+  });
+
+  // Phase 3: what the coefficients actually affect, stated where they are edited.
+  it("states that the coefficients drive real-time self-consumption and surplus, not only the production split", () => {
+    renderWithTheme({ coefficients, agreementStatus: DRAFT });
+
+    expect(
+      screen.getByText(/base del cálculo de autoconsumo y excedentes en tiempo real/),
+    ).toBeVisible();
+  });
+
+  // AC14 — the figure most likely to be misread as an entitlement.
+  it("explains the assigned-power column above the list, visible without hover", () => {
+    renderWithTheme({ coefficients, agreementStatus: DRAFT });
+
+    expect(screen.getByText(/parte de la potencia instalada que corresponde a cada punto/)).toBeVisible();
+    expect(screen.getByText(/No es potencia garantizada/)).toBeVisible();
+  });
+
+  // AC9 — importing authors coefficients, so it belongs next to manual editing.
+  it("offers manual editing and TXT import side by side on a draft", async () => {
+    const onImportRequest = vi.fn();
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients, agreementStatus: DRAFT, onImportRequest });
+
+    expect(screen.getByRole("button", { name: "Editar a mano" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Importar TXT" }));
+    expect(onImportRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers both authoring actions on an empty draft too, rather than only manual editing", () => {
+    const onImportRequest = vi.fn();
+    renderWithTheme({ coefficients: [], agreementStatus: DRAFT, onImportRequest });
+
+    expect(screen.getByRole("heading", { level: 2, name: "Reparto" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Editar a mano" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Importar TXT" })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["published", SharingAgreementResponseStatus.PUBLISHED],
+    ["superseded", SharingAgreementResponseStatus.SUPERSEDED],
+  ])("offers neither authoring action on a %s agreement — both endpoints 409 there", (_label, agreementStatus) => {
+    renderWithTheme({ coefficients, agreementStatus, onImportRequest: vi.fn() });
+
+    expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
+  });
+
+  it("yields its authoring actions when the next-step banner is already promoting them", () => {
+    // Two identically-labelled buttons on one screen is the duplication this
+    // section exists to avoid; the banner wins while authoring is the step.
+    renderWithTheme({
+      coefficients,
+      agreementStatus: DRAFT,
+      onImportRequest: vi.fn(),
+      showAuthoringActions: false,
+    });
+
+    expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
+    // The section itself is unaffected.
+    expect(screen.getByRole("heading", { level: 2, name: "Reparto" })).toBeInTheDocument();
+  });
+
+  it("starts editing when the page asks for it, without the user touching the section's own button", async () => {
+    const { rerender } = renderWithTheme({ coefficients, agreementStatus: DRAFT, editRequestId: 0 });
+
+    expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
+
+    rerender(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { retry: false } } })}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              coefficients={coefficients}
+              agreementStatus={DRAFT}
+              editRequestId={1}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole("button", { name: "Guardar" })).toBeInTheDocument();
+  });
+
+  it("brings the section into view when the editor is opened from elsewhere on the page", async () => {
+    // The banner that asked for it sits at the top; opening a table the user
+    // cannot see is the same as not opening it.
+    const scrollIntoView = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      const { rerender } = renderWithTheme({ coefficients, agreementStatus: DRAFT, editRequestId: 0 });
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      rerender(
+        <QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { retry: false } } })}>
+          <ErrorProvider>
+            <ThemeProvider theme={theme}>
+              <SharingAgreementCoefficientSet
+                plantId="plant-1"
+                sharingAgreementId="agreement-1"
+                installedPowerKw={100}
+                coefficients={coefficients}
+                agreementStatus={DRAFT}
+                editRequestId={1}
+              />
+            </ThemeProvider>
+          </ErrorProvider>
+        </QueryClientProvider>,
+      );
+
+      expect(await screen.findByRole("button", { name: "Guardar" })).toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" }));
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it("does not open the editor on mount just because a request id is present", () => {
+    // A page that remounts with a non-zero nonce must not land in the editor.
+    renderWithTheme({ coefficients, agreementStatus: DRAFT, editRequestId: 7 });
+
+    expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
+  });
+});
+
+// AC8. Three PENDING and two APPLIED: a single-element collection would prove
+// nothing about which rows are surfaced.
+describe("SharingAgreementCoefficientSet (registering dates)", () => {
+  const mixed: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
+    { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
+    { coefficientId: "3", supply: { id: "s3", name: "Local C", code: "ES0031300000000003EF" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "4", supply: { id: "s4", name: "Nave D", code: "ES0031300000000004GH" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+    { coefficientId: "5", supply: { id: "s5", name: "Taller E", code: "ES0031300000000005IJ" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  function renderWithRequestId(registerDatesRequestId: number) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ErrorProvider>
+          <ThemeProvider theme={theme}>
+            <SharingAgreementCoefficientSet
+              plantId="plant-1"
+              sharingAgreementId="agreement-1"
+              installedPowerKw={100}
+              coefficients={mixed}
+              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
+              registerDatesRequestId={registerDatesRequestId}
+            />
+          </ThemeProvider>
+        </ErrorProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  it("narrows the table to the rows still waiting for a date", async () => {
+    const { rerender } = render(renderWithRequestId(0));
+
+    expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
+
+    rerender(renderWithRequestId(1));
+
+    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
+    expect(screen.queryByText("Vivienda B")).not.toBeInTheDocument();
+    for (const name of ["Local C", "Nave D", "Taller E"]) {
+      expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    }
+    expect(screen.getByRole("button", { name: "Sin aplicar" })).toHaveClass(/MuiChip-colorWarning/);
+  });
+
+  it("selects nothing — which rows share a date is the admin's judgement, not a default", async () => {
+    // The distributor rarely applies every point on the same day. Arriving with
+    // every row ticked invites a bulk action nobody decided on.
+    const { rerender } = render(renderWithRequestId(0));
+    rerender(renderWithRequestId(1));
+
+    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
+
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+    for (const checkbox of screen.queryAllByRole("checkbox")) {
+      expect(checkbox).not.toBeChecked();
+    }
+  });
+
+  it("still lets the admin select the rows it surfaced, and only then offers the batch bar", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(renderWithRequestId(0));
+    rerender(renderWithRequestId(1));
+
+    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
+
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar Local C" })[0]);
+    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar Nave D" })[0]);
+
+    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
+    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
+  });
+
+  it("clears a leftover search, so nothing the filter surfaced stays hidden behind it", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(renderWithRequestId(0));
+
+    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Taller");
+    await waitFor(() => expect(screen.queryByText("Local C")).not.toBeInTheDocument());
+
+    rerender(renderWithRequestId(1));
+
+    await waitFor(() => expect(screen.getAllByText("Local C").length).toBeGreaterThan(0));
+    expect(screen.getByPlaceholderText("Buscar por punto o CUPS")).toHaveValue("");
+  });
+
+  it("brings the table into view, since the panel that asked is above it", async () => {
+    const scrollIntoView = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      const { rerender } = render(renderWithRequestId(0));
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      rerender(renderWithRequestId(1));
+
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" })));
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it("does nothing on mount just because a request id is present", () => {
+    render(renderWithRequestId(4));
+
+    expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
   });
 });

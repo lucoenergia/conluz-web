@@ -35,7 +35,7 @@ import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { PageHeaderWithStats } from "../../components/PageHeader";
+import { DetailHeader } from "../../components/DetailHeader";
 import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
 import { ManageAdminsDialog } from "./ManageAdminsDialog";
@@ -123,14 +123,15 @@ export const CommunitiesPage: FC = () => {
         ]}
       />
 
-      <PageHeaderWithStats
-        icon={BusinessIcon}
+      <DetailHeader
+        variant="list"
+        icon={<BusinessIcon />}
         title="Gestión de Comunidades"
         subtitle="Administra las comunidades energéticas de la plataforma"
-        stats={[
-          { value: communities.length, label: "Total" },
-          { value: totalActive, label: "Activas", color: colors.success.onBrand },
-          { value: totalInactive, label: "Inactivas", color: colors.error.onBrand },
+        keyFacts={[
+          { label: "Total", value: communities.length },
+          { label: "Activas", value: totalActive },
+          { label: "Inactivas", value: totalInactive },
         ]}
       />
 

@@ -6,7 +6,59 @@ import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } fro
 import { formatFixedDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
 import { COEFFICIENT_SCALE, toIntegerUnits } from "./sharingAgreementCoefficientSums";
 
-export type CoefficientInputUnit = "coefficient" | "kw";
+export type CoefficientInputUnit = "percentage" | "kw";
+
+/** Percentage points per whole 1e-6 coefficient unit: 1 % === 10 000 millionths. */
+const UNITS_PER_PERCENTAGE_POINT = COEFFICIENT_SCALE / 100;
+
+/** The distributor file carries six coefficient decimals, which is four in percent. */
+export const MAX_PERCENTAGE_DECIMALS = 4;
+
+export type PercentageParseFailure = "EMPTY" | "INVALID" | "TOO_MANY_DECIMALS";
+
+export type PercentageParseResult = { ok: true; units: number } | { ok: false; reason: PercentageParseFailure };
+
+/**
+ * Percentage text -> an exact integer count of 1e-6 units, without ever
+ * producing an intermediate float.
+ *
+ * Going through `Number("30,0001") / 100` would hand the value to IEEE-754
+ * twice — once for the parse and once for the divide — and the figure being
+ * typed here reaches the distributor. Splitting on the decimal comma and
+ * composing the units with integer arithmetic makes the round trip exact by
+ * construction rather than by rounding afterwards and hoping.
+ *
+ * Grouping dots are stripped only when a comma is present, mirroring
+ * `parseDecimalInput`: without a comma, a dot is the decimal separator, since
+ * the iOS decimal keypad emits either depending on the device locale.
+ */
+export function parsePercentageInput(raw: string): PercentageParseResult {
+  const trimmed = raw.trim();
+  if (!trimmed) return { ok: false, reason: "EMPTY" };
+
+  const normalized = trimmed.includes(",") ? trimmed.replace(/\./g, "").replace(",", ".") : trimmed;
+  if (!/^[+-]?\d*(?:\.\d*)?$/.test(normalized) || !/\d/.test(normalized)) {
+    return { ok: false, reason: "INVALID" };
+  }
+
+  const isNegative = normalized.startsWith("-");
+  const unsigned = normalized.replace(/^[+-]/, "");
+  const [wholePart = "", fractionPart = ""] = unsigned.split(".");
+  if (fractionPart.length > MAX_PERCENTAGE_DECIMALS) return { ok: false, reason: "TOO_MANY_DECIMALS" };
+
+  // Right-pad so "30,5" and "30,5000" compose to the same integer.
+  const paddedFraction = fractionPart.padEnd(MAX_PERCENTAGE_DECIMALS, "0");
+  const wholeUnits = Number(wholePart || "0") * UNITS_PER_PERCENTAGE_POINT;
+  const fractionUnits = Number(paddedFraction) * (UNITS_PER_PERCENTAGE_POINT / 10 ** MAX_PERCENTAGE_DECIMALS);
+  const units = wholeUnits + fractionUnits;
+
+  return { ok: true, units: isNegative ? -units : units };
+}
+
+/** The inverse of `parsePercentageInput`, also composed from the integer units. */
+function formatUnitsAsPercentage(value: number): string {
+  return formatFixedDecimalForInput(toIntegerUnits(value) / UNITS_PER_PERCENTAGE_POINT, MAX_PERCENTAGE_DECIMALS);
+}
 
 /**
  * A row in the manual coefficient editor. `coefficient` carries display-only
@@ -52,8 +104,11 @@ export function parseCoefficientInput(
   unit: CoefficientInputUnit,
   installedPowerKw: number | undefined,
 ): number {
+  if (unit === "percentage") {
+    const result = parsePercentageInput(raw);
+    return result.ok ? result.units / COEFFICIENT_SCALE : NaN;
+  }
   const parsed = parseDecimalInput(raw);
-  if (unit === "coefficient") return toMillionths(parsed);
   if (installedPowerKw === undefined || installedPowerKw <= 0) return NaN;
   return toMillionths(parsed / installedPowerKw);
 }
@@ -80,7 +135,7 @@ export function formatCoefficientForInput(
   installedPowerKw: number | undefined,
 ): string {
   if (value === undefined || !Number.isFinite(value)) return "";
-  if (unit === "coefficient") return formatFixedDecimalForInput(value, 6);
+  if (unit === "percentage") return formatUnitsAsPercentage(value);
   if (installedPowerKw === undefined || installedPowerKw <= 0) return "";
   const kw = Math.round(value * installedPowerKw * 100) / 100;
   return formatFixedDecimalForInput(kw, 2);

@@ -9,7 +9,7 @@ import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import { SupplyCard } from "../../components/SupplyCard/SupplyCard";
-import { PageHeaderWithStats } from "../../components/PageHeader";
+import { DetailHeader } from "../../components/DetailHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
 import { CardGrid } from "../../components/CardGrid";
 import { LoadingCardGrid } from "../../components/CardGrid";
@@ -133,14 +133,15 @@ export const PartnerSupplyPointsPage: FC = () => {
 
       {/* Header Section */}
       <Box sx={{ position: "relative" }}>
-        <PageHeaderWithStats
-          icon={ElectricMeterIcon}
+        <DetailHeader
+          variant="list"
+          icon={<ElectricMeterIcon />}
           title="Puntos de Suministro"
           subtitle={isLoadingPartner ? "Cargando..." : `Socio: ${partner?.fullName || "Desconocido"}`}
-          stats={[
-            { value: stats.total, label: "Total" },
-            { value: stats.active, label: "Activos", color: colors.success.onBrand },
-            { value: stats.inactive, label: "Inactivos", color: colors.error.onBrand },
+          keyFacts={[
+            { label: "Total", value: stats.total },
+            { label: "Activos", value: stats.active },
+            { label: "Inactivos", value: stats.inactive },
           ]}
         />
       </Box>

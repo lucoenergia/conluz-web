@@ -104,17 +104,20 @@ describe("SharingAgreementDetailPage", () => {
     vi.clearAllMocks();
   });
 
-  test("shows the actions kebab for a DRAFT agreement", async () => {
+  test("offers editing and deleting in the kebab for a DRAFT agreement", async () => {
     mockData();
     const user = userEvent.setup();
     setup();
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    expect(await screen.findByText("Editar")).toBeInTheDocument();
+    expect(await screen.findByText("Editar datos del acuerdo")).toBeInTheDocument();
     expect(screen.getByText("Eliminar")).toBeInTheDocument();
   });
 
-  test("hides the actions kebab for a non-DRAFT agreement", () => {
+  test("keeps editing available on a non-DRAFT agreement, but not deleting", async () => {
+    // `PUT /sharing-agreements/{id}` accepts any status; `DELETE` still 409s
+    // outside DRAFT, since removing a published agreement would destroy the
+    // historical basis of past billing.
     mockData({
       agreement: {
         id: "agreement-1",
@@ -123,9 +126,12 @@ describe("SharingAgreementDetailPage", () => {
         installedPowerKw: 12.5,
       } as SharingAgreementResponse,
     });
+    const user = userEvent.setup();
     setup();
 
-    expect(screen.queryByText("Editar")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    expect(await screen.findByText("Editar datos del acuerdo")).toBeInTheDocument();
+    expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
   });
 
   test("editing seeds the dialog with the agreement's current values and calls updateAgreement with the route's id", async () => {
@@ -135,7 +141,7 @@ describe("SharingAgreementDetailPage", () => {
     setup("plant-1", "agreement-1");
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
 
     expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Reparto 2025");
     expect(screen.getByLabelText("Notas internas", { exact: false })).toHaveValue("Nota original");
@@ -157,7 +163,7 @@ describe("SharingAgreementDetailPage", () => {
     setup("plant-1", "agreement-1");
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
 
     const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
     await user.clear(capacityInput);
@@ -174,7 +180,7 @@ describe("SharingAgreementDetailPage", () => {
     setup("plant-1", "agreement-1");
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
 
     const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
     await user.clear(capacityInput);

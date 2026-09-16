@@ -33,7 +33,7 @@ import {
 } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar";
-import { PageHeaderWithStats } from "../../components/PageHeader";
+import { DetailHeader } from "../../components/DetailHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
 import type { FC } from "react";
 
@@ -289,14 +289,15 @@ export const PartnersPage: FC = () => {
       />
 
       {/* Header Section */}
-      <PageHeaderWithStats
-        icon={PeopleIcon}
+      <DetailHeader
+        variant="list"
+        icon={<PeopleIcon />}
         title="Gestión de Socios"
         subtitle="Administra los miembros de tu comunidad energética"
-        stats={[
-          { value: stats.total, label: "Total" },
-          { value: stats.active, label: "Activos", color: colors.success.onBrand },
-          { value: stats.inactive, label: "Inactivos", color: colors.error.onBrand },
+        keyFacts={[
+          { label: "Total", value: stats.total },
+          { label: "Activos", value: stats.active },
+          { label: "Inactivos", value: stats.inactive },
         ]}
       />
 

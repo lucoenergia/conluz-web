@@ -18,7 +18,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
@@ -26,11 +25,13 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { colors, radii, shadows, interactiveTransition, motion} from "../../theme/tokens";
+import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
+import { SectionHeading } from "../SectionHeading";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { SearchBar } from "../SearchBar/SearchBar";
-import { SharingAgreementCoefficientSumCards } from "../SharingAgreementCoefficientSumCards";
+import { SharingAgreementCoefficientSumGauges } from "../SharingAgreementCoefficientSumGauges";
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
@@ -83,26 +84,11 @@ import {
   useSharingAgreementCoefficientMutations,
   type CoefficientActivationResult,
 } from "../../pages/production/useSharingAgreementCoefficientMutations";
+import {
+  BATCH_BAR_HEIGHT_DESKTOP,
+  BATCH_BAR_HEIGHT_MOBILE,
+} from "../../pages/production/sharingAgreementBatchBar";
 
-// Authoritative rather than measured: these constants *set* the fixed bar's
-// height (and the matching spacer's height) at each breakpoint, rather than
-// describing whatever the content happens to render at.
-//
-// Re-derived for the Acciones-menu bar (no more inline DatePicker, helper
-// text, or reason caption — that content moved into the per-action dialogs).
-// Measured via a real Chromium render (temporarily freeing the sx height to
-// read the content's natural height), worst case: the two-part hidden-count
-// text ("N seleccionados · M ocultos por el filtro"), which did not wrap to
-// a second line at either viewport.
-// Mobile (390px, mobile project): 124.3px natural content height (count
-// text + "Limpiar selección" stacked above the "Acciones" button) —
-// rounded up with headroom for a device's safe-area-inset-bottom, which
-// this measurement doesn't simulate.
-const BATCH_BAR_HEIGHT_MOBILE = 144;
-// Desktop (1440px): 53.5px natural content height (count text, "Limpiar
-// selección" and "Acciones" all on one row) — rounded up with headroom on
-// the same basis as the mobile constant.
-const BATCH_BAR_HEIGHT_DESKTOP = 72;
 
 export interface SharingAgreementCoefficientSetProps {
   plantId: string;
@@ -110,11 +96,47 @@ export interface SharingAgreementCoefficientSetProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];
   installedPowerKw: number | undefined;
   agreementStatus: StatusValue | undefined;
+  /**
+   * Bumped by the page when another surface — the next-step banner — asks to
+   * start editing. A nonce rather than a controlled boolean: the rows are seeded
+   * here, from the coefficients this component already holds, so the request has
+   * to arrive as an event rather than as state to mirror.
+   */
+  editRequestId?: number;
+  /**
+   * Opens the TXT import dialog, which the page owns. Importing replaces the
+   * whole coefficient set, so it belongs beside manual editing rather than in
+   * the distributor-file panel where it used to live.
+   */
+  onImportRequest?: () => void;
+  /**
+   * Bumped by the application panel, or by the next-step banner at stage 5, to
+   * start recording application dates. Selecting the pending rows has to happen
+   * here, where the selection lives.
+   */
+  registerDatesRequestId?: number;
+  /**
+   * False when the next-step banner is already promoting these same two actions
+   * — which it does exactly while authoring *is* the current step. Rendering
+   * both would put two identically-labelled buttons on one screen.
+   */
+  showAuthoringActions?: boolean;
+  /**
+   * Reports whether the fixed batch bar is currently up. The spacer that keeps
+   * content clear of it has to live on the page, not in this panel: the bar is
+   * `position: fixed` over the whole viewport, so reserving room here left every
+   * section below — the distributor-file panel — still covered by it.
+   */
+  onBatchBarMountedChange?: (isMounted: boolean) => void;
 }
 
 // A deliberate 3-chip cut for this slice: applicationState only. The design
 // mock-up shows a fourth "Cerrados" chip keyed on endState instead — left for
 // a later issue, not an oversight.
+const SPLIT_SECTION_DESCRIPTION =
+  "Qué parte de la producción de la planta corresponde a cada punto de suministro. " +
+  "Los coeficientes reparten la producción y son la base del cálculo de autoconsumo y excedentes en tiempo real.";
+
 const APPLICATION_STATE_FILTERS: SharingAgreementCoefficientApplicationStateFilter[] = [
   "all",
   SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
@@ -214,8 +236,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   coefficients,
   installedPowerKw,
   agreementStatus,
+  editRequestId = 0,
+  onImportRequest,
+  registerDatesRequestId = 0,
+  showAuthoringActions = true,
+  onBatchBarMountedChange,
 }) => {
-  const theme = useTheme();
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
   const {
@@ -245,6 +271,11 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [searchText, setSearchText] = useState("");
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
+  // Debounce applies to narrowing the list, not to widening it. Clearing the
+  // field — whether the user did it or "Registrar fechas" did — takes effect at
+  // once, so a selection made straight afterwards is never reported as partly
+  // hidden behind a filter that is already gone.
+  const effectiveSearchText = searchText.trim() === "" ? "" : debouncedSearchText;
 
   const [isEditing, setIsEditing] = useState(false);
   const [inputUnit, setInputUnit] = useState<CoefficientInputUnit>("kw");
@@ -254,6 +285,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchActionError, setBatchActionError] = useState<BatchActionErrorState | null>(null);
   const errorPanelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // The row `⋯` menu and the bar's `Acciones` menu each own their own
   // anchor — distinct popovers, so one's positioning can never leak into
@@ -329,6 +361,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const isDraft = agreementStatus === SharingAgreementResponseStatus.DRAFT;
   const kwModeAvailable = installedPowerKw !== undefined && installedPowerKw > 0;
+  // Superseded is a closed CYCLE, not a read-only record: reopening a closed
+  // coefficient revives the agreement, and this selection plus the row actions
+  // menu are the only routes to it. "Closed" is therefore expressed by the
+  // lifecycle rail and by the applied sum reading as a closing figure — never
+  // by removing controls that still do something.
+  //
   // Selection UI only ever applies to a published/superseded agreement — a
   // DRAFT is guaranteed all-PENDING/all-OPEN, but the activate/deactivate/
   // close/reopen endpoints reject DRAFT with 409, so offering checkboxes
@@ -339,6 +377,10 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // condition, computed once, so the bar and spacer can never disagree about
   // whether they're mounted.
   const isBatchBarMounted = selectedIds.size > 0;
+
+  useEffect(() => {
+    onBatchBarMountedChange?.(isBatchBarMounted);
+  }, [isBatchBarMounted, onBatchBarMountedChange]);
 
   const toggleSelected = (coefficientId: string) => {
     setSelectedIds((prev) => {
@@ -384,6 +426,34 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // Unlike the header checkbox, clears the *real* selection — visible and
   // hidden alike. That asymmetry is the whole reason both controls exist.
   const handleClearSelection = () => setSelectedIds(new Set());
+
+  /**
+   * Show the coefficients still waiting for a date, and bring them into view.
+   *
+   * It deliberately does NOT select anything. Choosing which points share an
+   * application date is the admin's judgement — the distributor rarely applies
+   * them all on the same day — and a screen that arrives with 29 rows already
+   * ticked invites a bulk action nobody actually decided on. Narrow the list,
+   * then let them pick.
+   *
+   * The search is cleared alongside the filter so a leftover query cannot hide
+   * part of what the filter just surfaced.
+   */
+  const lastHandledRegisterDatesRequestId = useRef(registerDatesRequestId);
+  useEffect(() => {
+    if (registerDatesRequestId === lastHandledRegisterDatesRequestId.current) return;
+    lastHandledRegisterDatesRequestId.current = registerDatesRequestId;
+
+    setApplicationStateFilter(SharingAgreementPartitionCoefficientResponseApplicationState.PENDING);
+    setSearchText("");
+    setSelectedIds(new Set());
+    // The request came from a panel above the table, which on a long agreement
+    // is well off screen.
+    panelRef.current?.scrollIntoView({
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [registerDatesRequestId]);
 
   const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
     setActionsAnchorEl(event.currentTarget);
@@ -486,10 +556,13 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     [coefficients],
   );
   const showStateColumns = !isDraft || hasAnomalousRow;
+  // Extra columns appearing is the CONSEQUENCE of the anomaly; on its own it
+  // renders a broken draft as an ordinary one. This is the message.
+  const hasDraftAnomaly = isDraft && hasAnomalousRow;
 
   const filteredCoefficients = useMemo(
-    () => filterSharingAgreementCoefficients(coefficients, debouncedSearchText, applicationStateFilter),
-    [coefficients, debouncedSearchText, applicationStateFilter],
+    () => filterSharingAgreementCoefficients(coefficients, effectiveSearchText, applicationStateFilter),
+    [coefficients, effectiveSearchText, applicationStateFilter],
   );
 
   // The set select-all/the header checkbox/the visible-vs-hidden count all
@@ -547,7 +620,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   );
   const selectionActionSummary = useMemo(() => summarizeSelectionActions(selectedCoefficients), [selectedCoefficients]);
 
-  const filteredRows = useMemo(() => filterEditableRows(rows, debouncedSearchText), [rows, debouncedSearchText]);
+  const filteredRows = useMemo(() => filterEditableRows(rows, effectiveSearchText), [rows, effectiveSearchText]);
 
   // Unit-independent: always reads the canonical `value`, never re-derives it
   // from text — the sum (and canSave, and the save payload below) can't be
@@ -561,11 +634,31 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const alreadyAddedSupplyIds = useMemo(() => new Set(rows.map((row) => row.supplyId)), [rows]);
 
   const handleStartEditing = () => {
-    const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "coefficient";
+    const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "percentage";
     setInputUnit(startingUnit);
     setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, installedPowerKw));
     setIsEditing(true);
   };
+
+  // The page asks for the editor by bumping `editRequestId`. Seeding stays here
+  // because the rows are built from the coefficients this component holds; the
+  // mount value is ignored so a fresh page never opens straight into the editor.
+  const lastHandledEditRequestId = useRef(editRequestId);
+  useEffect(() => {
+    if (editRequestId === lastHandledEditRequestId.current) return;
+    lastHandledEditRequestId.current = editRequestId;
+    handleStartEditing();
+    // The request came from the banner at the top of the page, so the editor the
+    // user just asked for is off screen. Bring the section to them rather than
+    // opening a table they cannot see.
+    panelRef.current?.scrollIntoView({
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+    // `handleStartEditing` is re-created every render; depending on it would
+    // re-run this on every render instead of on every request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editRequestId]);
 
   const handleCancelEditing = () => {
     setIsEditing(false);
@@ -600,35 +693,94 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     }
   };
 
+  const sectionHeading = (
+    <SectionHeading title="Reparto" description={SPLIT_SECTION_DESCRIPTION} />
+  );
+
+  /**
+   * The two ways of authoring a split, side by side and equally weighted.
+   * Importing a TXT replaces the whole coefficient set, which makes it an
+   * authoring action, not a file-panel action — it used to sit next to
+   * "Generar fichero", where it read as a way of managing the stored file.
+   * Both are DRAFT-only: `PUT .../partition-coefficients` and `POST .../file`
+   * both 409 outside DRAFT.
+   */
+  const authoringActions = isDraft && showAuthoringActions ? (
+    <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, mb: 2.5 }}>
+      <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={handleStartEditing}>
+        Editar a mano
+      </Button>
+      {onImportRequest && (
+        <Button variant="outlined" startIcon={<UploadFileOutlinedIcon />} onClick={onImportRequest}>
+          Importar TXT
+        </Button>
+      )}
+    </Box>
+  ) : null;
+
+  const supplyPicker = isDraft ? (
+    <AddSupplyDialog
+      isOpen={isPickerOpen}
+      communityId={activeCommunityId}
+      alreadyAddedSupplyIds={alreadyAddedSupplyIds}
+      onCancel={() => setIsPickerOpen(false)}
+      onConfirm={handleConfirmAddSupplies}
+    />
+  ) : null;
+
   if (coefficients.length === 0 && !isEditing) {
     return (
-      <>
+      <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel}>
+        {sectionHeading}
+        {authoringActions}
         <EmptyState
           icon={HandshakeOutlinedIcon}
           title="Sin coeficientes de reparto"
-          subtitle="Este acuerdo todavía no tiene coeficientes. Podrás adjuntar un fichero o editarlos manualmente."
-          actionButton={
-            isDraft
-              ? { label: "Editar coeficientes", onClick: handleStartEditing, startIcon: <EditOutlinedIcon /> }
-              : undefined
-          }
+          subtitle="Añade los puntos de suministro y su coeficiente a mano, o importa el fichero TXT que ya tengas."
         />
-        {isDraft && (
-          <AddSupplyDialog
-            isOpen={isPickerOpen}
-            communityId={activeCommunityId}
-            alreadyAddedSupplyIds={alreadyAddedSupplyIds}
-            onCancel={() => setIsPickerOpen(false)}
-            onConfirm={handleConfirmAddSupplies}
-          />
-        )}
-      </>
+        {supplyPicker}
+      </Paper>
     );
   }
 
   return (
-    <Paper elevation={0} sx={sxStyles.softPanel}>
-      {!isEditing && <SharingAgreementCoefficientSumCards coefficients={coefficients} agreementStatus={agreementStatus} />}
+    <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel}>
+      {sectionHeading}
+
+      {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}
+
+      {/* Installed power is an agreement field and now sits in the header's
+          identity tiles. While editing in kW it is working context, not
+          identity, so it stays here too — the sum caption below reads against it. */}
+      {isEditing && inputUnit === "kw" && installedPowerKw !== undefined && (
+        <Typography variant="body2" sx={{ color: colors.text.subtle, mb: 2 }}>
+          Potencia instalada de la planta: {formatKilowatts(installedPowerKw)}
+        </Typography>
+      )}
+
+      {hasDraftAnomaly && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Este borrador contiene coeficientes marcados como aplicados o cerrados, algo que no debería ser posible en un
+          borrador. Revisa los datos con la distribuidora antes de poner el acuerdo en vigor o eliminarlo.
+        </Alert>
+      )}
+
+      {!isEditing && authoringActions}
+
+      {/* Stated above the list and visible without hover: "Potencia asignada" is
+          the single most misread figure on this page. It is a share of installed
+          power, not an entitlement to energy. */}
+      {!isEditing && (
+        <Typography
+          sx={{ fontSize: fontSizes.lg, lineHeight: 1.5, color: colors.text.body, mb: 2.5, textWrap: "pretty" }}
+        >
+          <Box component="strong" sx={{ fontWeight: 600 }}>
+            Potencia asignada:
+          </Box>{" "}
+          parte de la potencia instalada que corresponde a cada punto según su coeficiente. No es potencia garantizada:
+          la energía que recibe depende de lo que produzca la planta en cada momento.
+        </Typography>
+      )}
 
       {/* Row 1, editing mode: unit toggle (fixed shape) + search — search still
           filters `rows` while editing, so it must stay available here too. */}
@@ -667,7 +819,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               color="primary"
               onChange={(_, value: CoefficientInputUnit | null) => value && handleUnitChange(value)}
             >
-              <ToggleButton value="coefficient">Coeficiente</ToggleButton>
+              <ToggleButton value="percentage">%</ToggleButton>
               <Tooltip title={kwModeAvailable ? "" : "Este acuerdo no tiene potencia instalada definida"}>
                 <span>
                   <ToggleButton value="kw" disabled={!kwModeAvailable}>
@@ -698,27 +850,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             mb: 2,
           }}
         >
-          {isDraft && (
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <Button
-                variant="contained"
-                startIcon={<EditOutlinedIcon />}
-                onClick={handleStartEditing}
-                sx={{
-                  background: theme.palette.primary.main,
-                  boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
-                  "&:hover": {
-                    transform: `translateY(${motion.lift})`,
-                    boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
-                  },
-                  transition: interactiveTransition("0.3s", "ease"),
-                }}
-              >
-                Editar coeficientes
-              </Button>
-            </Box>
-          )}
-
           {showStateColumns && (
             <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
               <FilterListIcon sx={{ color: colors.text.secondary, display: { xs: "none", sm: "block" } }} />
@@ -849,12 +980,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente"}
+                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente (%)"}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {isEditing && inputUnit === "kw" ? "% equivalente" : "Energía asignada"}
+                      {isEditing && inputUnit === "kw" ? "% equivalente" : "Potencia asignada"}
                     </Typography>
                   </TableCell>
                   {showStateColumns && (
@@ -1029,15 +1160,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           onSelectAction={handleSelectBatchAction}
         />
       </Menu>
-
-      <Box
-        sx={{
-          height: {
-            xs: isBatchBarMounted ? BATCH_BAR_HEIGHT_MOBILE : 0,
-            sm: isBatchBarMounted ? BATCH_BAR_HEIGHT_DESKTOP : 0,
-          },
-        }}
-      />
 
       {isDraft && (
         <AddSupplyDialog

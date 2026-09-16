@@ -27,3 +27,14 @@ export function formatCalendarDate(isoDateTime: string | undefined, options?: In
     ...options,
   });
 }
+
+/**
+ * Short form — "20 abr 2024". For the detail headers, where dates sit in a
+ * key-fact strip cell and in a four-column grid and the long form ("20 de abril
+ * de 2024") wraps or truncates.
+ */
+export const SHORT_CALENDAR_DATE: Intl.DateTimeFormatOptions = {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+};
