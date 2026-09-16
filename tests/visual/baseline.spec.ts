@@ -228,6 +228,21 @@ const FIXED_PLANT = {
   connectionDate: "2023-05-10",
 };
 
+/**
+ * The plant fixture plus a linked supply. Kept separate from FIXED_PLANT so the
+ * sharing-agreement baselines, which share that fixture, stay byte-identical.
+ * The detail header needs it: without a linked supply it would have four
+ * details rather than five, and the "+5" toggle is part of what AC1 specifies.
+ */
+const FIXED_PLANT_WITH_SUPPLY = {
+  ...FIXED_PLANT,
+  supply: {
+    id: FIXED_SUPPLY_ID,
+    code: "ES0031300806333002ET0F",
+    name: "Casa de Luco",
+  },
+};
+
 const PAGED_PLANTS = {
   items: [FIXED_PLANT],
   size: 10000,
@@ -385,7 +400,7 @@ const FIXED_COEFFICIENTS_EMPTY: unknown[] = [];
 
 /**
  * A DRAFT set that genuinely doesn't sum to 100% (0.4 + 0.35 = 0.75), for the
- * "Poner en vigor" gated-kebab baseline — distinct from FIXED_COEFFICIENTS_ALL_PENDING,
+ * publish-not-offered baseline — distinct from FIXED_COEFFICIENTS_ALL_PENDING,
  * which sums to exactly 1.
  */
 const FIXED_COEFFICIENTS_INCOMPLETE = [
@@ -574,6 +589,23 @@ async function mockSharingAgreementsPlantRoutes(page: Page, agreements: unknown[
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(agreements),
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: the plant detail page's own plant. Registered AFTER mockAllApiRoutes()
+// so it wins over that file's broad, deliberately-empty /plants mock.
+// ---------------------------------------------------------------------------
+
+async function mockPlantDetailRoutes(page: Page) {
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}`) && !url.href.includes("sharing-agreements"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FIXED_PLANT_WITH_SUPPLY),
       }),
   );
 }
@@ -1039,7 +1071,9 @@ test.describe("Visual baselines", () => {
     // The file panel's title always renders on load regardless of file/coefficient
     // state, so it's a reliable "detail page finished loading" signal across every
     // fixture — unlike "Suma del fichero", which is absent when coefficients is empty.
-    await expect(page.getByText(/Fichero (para|enviado a) la distribuidora/)).toBeVisible();
+    // One wording in every status now: the panel no longer switches to
+    // "Fichero enviado a la distribuidora" once the agreement is published.
+    await expect(page.getByRole("heading", { name: "Fichero para la distribuidora" })).toBeVisible();
     await stabilizePage(page);
   }
 
@@ -1130,11 +1164,17 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT_EDITED.name);
 
     // A PUBLISHED agreement is editable now (the update endpoint no longer 409s
-    // outside DRAFT) — prove Editar is reachable, then close the menu so the
+    // outside DRAFT) — prove the item is reachable, then close the menu so the
     // screenshot below stays in the same closed-menu state as its siblings.
     await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
-    await expect(page.getByText("Editar")).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Editar datos del acuerdo" })).toBeVisible();
     await page.keyboard.press("Escape");
+
+    // The last-edit record lives in the header's disclosure, so it has to be
+    // opened for the screenshot to cover it at all.
+    await page.getByRole("button", { name: /^Ver \d+ datos? más$/ }).click();
+    await expect(page.getByText("Última edición")).toBeVisible();
+    await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", { fullPage: true });
   });
@@ -1166,13 +1206,20 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, NO_FILE_DRAFT_AGREEMENT.name);
 
-    await expect(page.getByText("Todavía no hay ningún fichero guardado.")).toBeVisible();
-    // The disabled reason is visible text, never a tooltip — critical on the
-    // ~90% mobile user base, which has no hover.
-    await expect(page.getByRole("button", { name: "Generar fichero" })).toBeDisabled();
-    await expect(
-      page.getByText("La suma de los coeficientes debe ser exactamente 100 % para generar el fichero."),
-    ).toBeVisible();
+    await expect(page.getByText("No has importado ningún fichero en este acuerdo.")).toBeVisible();
+    // The blocking reason is visible text, never a tooltip — critical on the
+    // ~90% mobile user base, which has no hover. The control keeps `aria-disabled`
+    // rather than `disabled`, so the reason stays reachable by keyboard.
+    const generateButton = page.getByRole("button", { name: "Generar y descargar TXT" });
+    await expect(generateButton).toHaveAttribute("aria-disabled", "true");
+    // Focusable, not `disabled` — asserted by focusing it, because Playwright's
+    // toBeDisabled() honours aria-disabled and so cannot tell "gated but still
+    // reachable" from "removed from the tab order".
+    await generateButton.focus();
+    await expect(generateButton).toBeFocused();
+    // One wording for the shortfall across the surface — "exactamente 100 %" is gone.
+    await expect(page.getByText("Este acuerdo todavía no tiene coeficientes.")).toBeVisible();
+    await expect(page.getByText(/exactamente 100/)).toHaveCount(0);
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-no-file.png", { fullPage: true });
   });
@@ -1362,7 +1409,7 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.locator('button:has([data-testid="MoreVertIcon"])').click();
-    await page.getByRole("menuitem", { name: "Editar" }).click();
+    await page.getByRole("menuitem", { name: "Editar datos del acuerdo" }).click();
 
     await expect(page.getByLabel("Nombre", { exact: false })).toHaveValue(DRAFT_AGREEMENT.name);
     await stabilizePage(page);
@@ -1387,7 +1434,7 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-delete-confirmation.png", { fullPage: true });
   });
 
-  test("sharing agreement kebab (Poner en vigor gated, incomplete sum)", async ({ page }) => {
+  test("sharing agreement detail page (draft, incomplete sum — publish not offered)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
@@ -1401,19 +1448,50 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
 
-    const publishItem = page.getByText("Poner en vigor").locator('xpath=ancestor::*[@role="menuitem"]');
-    await expect(publishItem).toHaveAttribute("aria-disabled", "true");
-    // The disabled reason is visible text nested under the item's label, never a tooltip — it
-    // must be visible the instant the menu opens, with no hover required. Scoped to this specific
-    // caption's id: the same gap sentence also legitimately appears in the sum card and next-step
-    // panel elsewhere on this same page (the "three places" the gap message is expected to appear).
-    await expect(page.locator("#publish-disabled-reason")).toBeVisible();
-    await expect(page.locator("#publish-disabled-reason")).toHaveText(/Faltan .* para llegar al 100,0000/);
+    // Publishing a set that does not sum to exactly 1 is refused by the backend
+    // with a 409, so the control is not rendered at all — an action that is going
+    // to fail is never offered. What is missing is stated as visible text instead.
+    await expect(page.getByRole("button", { name: "Poner en vigor" })).toHaveCount(0);
+    // Exact: the imported-file block offers "Descargar fichero importado", which
+    // a substring match would pick up.
+    await expect(page.getByRole("button", { name: "Descargar fichero", exact: true })).toHaveCount(0);
+
+    await expect(
+      page.getByText("«Poner en vigor» y «Generar el fichero» aparecerán cuando los coeficientes sumen 100,0000 %."),
+    ).toBeVisible();
+    await expect(page.getByText(/Completa el reparto: Faltan .* para llegar al 100,0000/)).toBeVisible();
+
+    // Authoring is what this step actually offers, promoted on the banner. The
+    // split section yields its own pair while the banner is carrying them, so
+    // there is exactly one "Editar a mano" on screen.
+    await expect(page.getByRole("button", { name: "Editar a mano" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Importar TXT" })).toHaveCount(1);
+
+    // The gated-control pattern itself has not gone away — it moved to the file
+    // panel's generate action, which is blocked by the same incomplete sum.
+    const generateButton = page.getByRole("button", { name: "Generar y descargar TXT" });
+    await expect(generateButton).toHaveAttribute("aria-disabled", "true");
+    // Focusable, not `disabled`. Asserted by actually focusing it: Playwright's
+    // toBeEnabled() honours aria-disabled, so it cannot distinguish "gated but
+    // still reachable" from "removed from the tab order" — which is the whole
+    // point of gating this way.
+    await generateButton.focus();
+    await expect(generateButton).toBeFocused();
+
+    // The reason is visible text under the control the instant the page renders —
+    // never a tooltip, and never requiring a hover or a menu to be opened first.
+    const reasonId = await generateButton.getAttribute("aria-describedby");
+    expect(reasonId, "a gated control must name the element describing it").toBeTruthy();
+    // Selected by attribute, not by `#id`: React's useId emits values like
+    // "«rh»", which are not valid CSS identifiers, and `CSS.escape` is not
+    // available in the Node-side test context.
+    const reason = page.locator(`[id="${reasonId}"]`);
+    await expect(reason).toBeVisible();
+    await expect(reason).toHaveText(/Faltan .* para llegar al 100,0000/);
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-kebab-publish-gated.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("sharing-agreement-draft-incomplete-sum.png", { fullPage: true });
   });
 
   test("sharing agreement publish confirmation", async ({ page }) => {
@@ -1430,8 +1508,7 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
-    await page.getByRole("menuitem", { name: "Poner en vigor" }).click();
+    await page.getByRole("button", { name: "Poner en vigor" }).click();
 
     await expect(page.getByRole("heading", { name: "Poner en vigor" })).toBeVisible();
     await expect(page.getByText(/Poner en vigor no aplica nada por sí mismo/)).toBeVisible();
@@ -1454,13 +1531,9 @@ test.describe("Visual baselines", () => {
     );
 
     await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-    // Scoped by label, not the generic MoreVertIcon locator other tests in
-    // this file use — FIXED_COEFFICIENTS_ALL_PENDING rows now carry their
-    // own "Más acciones para X" kebabs too (apply is a row action), so the
-    // unscoped locator is ambiguous here in a way it isn't for the other
-    // tests' DRAFT agreements, which never show row-level kebabs at all.
-    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
-    await page.getByRole("menuitem", { name: "Volver a borrador" }).click();
+    // Reverting is a labelled control on the lifecycle rail now. The published
+    // agreement's kebab is gone entirely: editing and deleting are draft-only.
+    await page.getByRole("button", { name: "Volver a borrador" }).click();
 
     await expect(page.getByRole("heading", { name: "Volver a borrador" })).toBeVisible();
     await expect(
@@ -1479,7 +1552,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Importar otro fichero" }).click();
+    await page.getByRole("button", { name: "Importar TXT" }).click();
 
     await expect(page.getByText(`${FIXED_PLANT.regulatoryCode}_AAAA.txt`)).toBeVisible();
     await stabilizePage(page);
@@ -1496,7 +1569,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementFileUploadRejection(page, FIXED_PLANT_ID, DRAFT_AGREEMENT.id);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Importar otro fichero" }).click();
+    await page.getByRole("button", { name: "Importar TXT" }).click();
 
     await page.setInputFiles('input[type="file"]', {
       name: `${FIXED_PLANT.regulatoryCode}_2026.txt`,
@@ -1527,7 +1600,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementGenerateFile(page, FIXED_PLANT_ID, NO_FILE_DRAFT_AGREEMENT.id);
 
     await navigateToSharingAgreementDetail(page, NO_FILE_DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Generar fichero" }).click();
+    await page.getByRole("button", { name: "Generar y descargar TXT" }).click();
 
     await expect(page.getByRole("heading", { name: "Generar fichero" })).toBeVisible();
     await expect(page.getByLabel("Año")).toBeVisible();
@@ -1544,7 +1617,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
     await page.getByRole("button", { name: "Añadir suministro" }).click();
 
     await expect(page.getByText(FIXED_SUPPLY.name)).toBeVisible();
@@ -1566,7 +1639,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
 
     // FIXED_COEFFICIENTS_MIXED sums to exactly 100%; removing Vivienda A's
     // 30% coefficient brings the live sum to 70%, below the full-sum copy.
@@ -1594,7 +1667,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
 
     // Editor opens in kW mode by default.
     await page.getByPlaceholder("0,00").first().fill("");
@@ -1605,7 +1678,7 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-editor-empty-value-error.png", { fullPage: true });
   });
 
-  test("sharing agreement coefficient editor (toggled to percentage, values converted and kept)", async ({ page }, testInfo) => {
+  test("sharing agreement coefficient editor (toggled to kW, values converted and kept)", async ({ page }, testInfo) => {
     test.skip(
       testInfo.project.name !== "desktop",
       "Same duplicate-DOM-instance rationale as the other interactive editor specs above.",
@@ -1618,18 +1691,23 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
     await expect(page.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: "Coeficiente" }).click();
+    // The editor works in percent now, so the round trip under test is kW -> %
+    // -> kW. Vivienda A's 0.3 coefficient is 13,50 kW of the 45 kW installed.
+    await page.getByRole("button", { name: "%" }).click();
+    await expect(page.locator("tr", { hasText: "Vivienda A" }).getByRole("textbox")).toHaveValue("30,0000");
 
-    // Vivienda A's 0.3 coefficient (13,50 kW of the 45 kW installed) survives
-    // the toggle as "0,300000" — converted, not cleared, fixed at 6dp, and not
-    // rounding-drifted.
-    await expect(page.locator("tr", { hasText: "Vivienda A" }).getByRole("textbox")).toHaveValue("0,300000");
+    await page.getByRole("button", { name: "kW" }).click();
+    // Converted, not cleared, and not rounding-drifted: toggling only ever
+    // re-derives the text from the canonical value, never the other way round.
+    await expect(page.locator("tr", { hasText: "Vivienda A" }).getByRole("textbox")).toHaveValue("13,50");
+
+    await page.getByRole("button", { name: "%" }).click();
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-editor-toggled-to-percentage.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-toggled-to-kw.png", { fullPage: true });
   });
 
   test("sharing agreement coefficient editor (kW rounds to installed but coefficient sum isn't exact)", async ({ page }, testInfo) => {
@@ -1653,7 +1731,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, roundingCaveatAgreement, roundingCaveatCoefficients, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Editar coeficientes" }).click();
+    await page.getByRole("button", { name: "Editar a mano" }).click();
 
     await expect(page.getByText("Suma del fichero: 99,9999 %")).toBeVisible();
     // Plain strings, not regex — same NBSP-normalization rationale as the
@@ -1664,6 +1742,215 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-kw-rounding-caveat.png", { fullPage: true });
+  });
+
+  // -------------------------------------------------------------------------
+  // Plant detail header
+  // -------------------------------------------------------------------------
+
+  async function openPlantDetail(page: Page) {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockPlantDetailRoutes(page);
+
+    await page.goto(`/production/${FIXED_PLANT_ID}`);
+    await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();
+    await stabilizePage(page);
+  }
+
+  test("plant detail page", async ({ page }) => {
+    await openPlantDetail(page);
+
+    await expect(page).toHaveScreenshot("plant-detail.png", { fullPage: true });
+  });
+
+  test("plant detail page (details expanded)", async ({ page }) => {
+    await openPlantDetail(page);
+
+    await page.getByRole("button", { name: /^Ver \d+ datos? más$/ }).click();
+    await expect(page.getByText("HUAWEI")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("plant-detail-expanded.png", { fullPage: true });
+  });
+
+  /**
+   * AC1. The redesign exists because the old header pushed the page's content
+   * off a phone's first viewport, so the budget is the acceptance criterion
+   * itself rather than a stylistic preference — measured, not eyeballed.
+   */
+  test("AC1: the collapsed headers fit a 390px viewport", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The 120px budget is specified against a 390px viewport.");
+
+    await openPlantDetail(page);
+
+    const plantHeader = await page.getByTestId("detail-header").boundingBox();
+    testInfo.annotations.push({ type: "plant header height", description: `${plantHeader?.height}px` });
+    console.log(`AC1 plant header height: ${plantHeader?.height}px`);
+    expect(plantHeader?.height).toBeLessThanOrEqual(120);
+  });
+
+  /**
+   * The agreement header is measured too, but against a regression guard rather
+   * than AC1's figure. AC1 states its 120px budget for a PLANT, and this header
+   * carries two things a plant's does not: a status badge and a link to the
+   * plant it belongs to. At 390px the fixture's name ("Reparto vecinos bloque
+   * A") also takes two lines on its own. The bound below exists to catch the
+   * header growing further, and is deliberately not dressed up as the AC.
+   */
+  test("the collapsed agreement header stays within its measured budget at 390px", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is measured against a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    const agreementHeader = await page.getByTestId("detail-header").boundingBox();
+    testInfo.annotations.push({ type: "agreement header height", description: `${agreementHeader?.height}px` });
+    console.log(`Agreement header height: ${agreementHeader?.height}px`);
+    expect(agreementHeader?.height).toBeLessThanOrEqual(150);
+  });
+
+  // -------------------------------------------------------------------------
+  // List headers
+  // -------------------------------------------------------------------------
+
+  /**
+   * Every list page the suite can actually reach with its existing fixtures.
+   *
+   * Three of the eight are absent, for two different reasons:
+   *
+   *   - Partners and partner supply points, because App.tsx routes neither.
+   *     There is no `path="partners"`, and nothing in the app links to one.
+   *     They were migrated all the same (the issue lists them), but no browser
+   *     test can open a page the router does not serve.
+   *
+   *   - /members, for the reason the file header already gives for its guard:
+   *     it redirects on a cold goto before community selection resolves. It
+   *     also has no memberships fixture — the broad communities mock would
+   *     answer that call with a list of communities. Its header is the same
+   *     three-counter shape as /users, which IS measured below, and the page
+   *     itself stays covered by MembersPage.spec.tsx.
+   */
+  const LIST_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
+    {
+      name: "/production",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+        await page.goto("/production");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "/supply-points",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+        await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+        await page.goto("/supply-points");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "/users",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await page.goto("/users");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "/communities",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await page.goto("/communities");
+        await stabilizePage(page);
+      },
+    },
+    {
+      name: "sharing agreements list",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+        await navigateToSharingAgreements(page);
+      },
+    },
+  ];
+
+  /**
+   * AC1 and AC2, measured rather than eyeballed.
+   *
+   * Two separate promises, and a counter strip can keep one while breaking the
+   * other. "One row" alone is satisfied by three cells that each clip their
+   * label to "Inac…", which is the layout doing the reader no favours; so the
+   * labels are checked for actual clipping too, by asking each one whether it
+   * overflows its own box.
+   *
+   * Heights are recorded for every page, not just the one AC2 bounds, so the
+   * next person changing this header can see what it costs everywhere.
+   */
+  for (const listPage of LIST_PAGES) {
+    test(`AC1: the ${listPage.name} header keeps its counters on one unclipped row at 390px`, async ({
+      page,
+    }, testInfo) => {
+      test.skip(testInfo.project.name !== "mobile", "AC1 is specified against a 390px viewport.");
+
+      await listPage.open(page);
+
+      const header = page.getByTestId("list-header");
+      await expect(header).toBeVisible();
+
+      const box = await header.boundingBox();
+      testInfo.annotations.push({
+        type: "list header height",
+        description: `${listPage.name}: ${box?.height}px`,
+      });
+      console.log(`List header height — ${listPage.name}: ${box?.height}px`);
+
+      // The strip's captions are exactly the counter labels: the title is an
+      // h1 and the subtitle is body2, so nothing else in the header is one.
+      const labels = header.locator(".MuiTypography-caption");
+      const labelCount = await labels.count();
+      expect(labelCount).toBeGreaterThanOrEqual(2);
+
+      const tops = await labels.evaluateAll((nodes) =>
+        nodes.map((node) => Math.round(node.getBoundingClientRect().top)),
+      );
+      expect(new Set(tops).size, `counters on ${listPage.name} span ${new Set(tops).size} rows`).toBe(1);
+
+      const clipped = await labels.evaluateAll((nodes) =>
+        nodes.filter((node) => node.scrollWidth > node.clientWidth).map((node) => node.textContent),
+      );
+      expect(clipped, `clipped counter labels on ${listPage.name}`).toEqual([]);
+    });
+  }
+
+  /**
+   * AC2. The plants list is the page the budget is stated against: two
+   * counters, the shortest header of the eight, and the one whose old version
+   * spent three rows on a single column of stats.
+   */
+  test("AC2: the /production list header is at most 140px at 390px", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The 140px budget is specified against a 390px viewport.");
+
+    await LIST_PAGES[0].open(page);
+
+    const box = await page.getByTestId("list-header").boundingBox();
+    testInfo.annotations.push({ type: "production list header height", description: `${box?.height}px` });
+    console.log(`AC2 /production list header height: ${box?.height}px`);
+    expect(box?.height).toBeLessThanOrEqual(140);
   });
 
   // Note: "import partners modal" is intentionally omitted. See file header.

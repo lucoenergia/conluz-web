@@ -172,7 +172,9 @@ describe("selectSharingAgreementNextStep", () => {
         PUBLISHED_WITH_PENDING_COEFFICIENTS,
         "ES1234567890123456AB1F",
       ),
-    ).toEqual({ kind: "RECORD_APPLICATION_DATES", pendingCount: 1 });
+      // `totalCount` is the whole set, not just the pending slice — the surfaces
+      // that report "X de N" read both from this one result.
+    ).toEqual({ kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 3 });
   });
 
   it("returns ALL_DONE for a PUBLISHED agreement whose coefficients are all APPLIED", () => {
@@ -182,6 +184,6 @@ describe("selectSharingAgreementNextStep", () => {
         PUBLISHED_ALL_APPLIED_COEFFICIENTS,
         "ES1234567890123456AB1F",
       ),
-    ).toEqual({ kind: "ALL_DONE" });
+    ).toEqual({ kind: "ALL_DONE", totalCount: 2 });
   });
 });

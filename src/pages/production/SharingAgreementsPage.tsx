@@ -9,7 +9,7 @@ import { sxStyles } from "../../theme/sx";
 import { colors, interactiveTransition, motion} from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
-import { PageHeaderWithStats } from "../../components/PageHeader";
+import { DetailHeader } from "../../components/DetailHeader";
 import { LoadingCardGrid } from "../../components/CardGrid";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
 import { SharingAgreementTimeline } from "../../components/SharingAgreementTimeline";
@@ -113,14 +113,15 @@ export const SharingAgreementsPage: FC = () => {
       ) : (
         <>
           <Box sx={sxStyles.pageContainer}>
-            <PageHeaderWithStats
-              icon={HandshakeOutlinedIcon}
+            <DetailHeader
+              variant="list"
+              icon={<HandshakeOutlinedIcon />}
               title={plant?.name || "Planta de Producción"}
               subtitle={plant?.regulatoryCode ? `CAU: ${plant.regulatoryCode}` : "CAU no disponible"}
-              stats={[
-                { value: counts.vigentes, label: "Vigente" },
-                { value: counts.drafts, label: "Borradores", color: colors.warning.onBrand },
-                { value: counts.historicos, label: "Históricos" },
+              keyFacts={[
+                { label: "Vigente", value: counts.vigentes },
+                { label: "Borradores", value: counts.drafts },
+                { label: "Históricos", value: counts.historicos },
               ]}
             />
           </Box>

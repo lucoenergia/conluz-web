@@ -133,7 +133,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
   });
 });
 
-describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () => {
+describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () => {
   it("renders an editable input instead of the static percentage, seeded from coefficientInput/editedValue", () => {
     render(
       <Table>
@@ -142,7 +142,7 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="coefficient"
+            inputUnit="percentage"
             coefficientInput="0,25"
             editedValue={0.25}
             onCoefficientChange={vi.fn()}
@@ -167,7 +167,7 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="coefficient"
+            inputUnit="percentage"
             coefficientInput=""
             editedValue={undefined}
             onCoefficientChange={onCoefficientChange}
@@ -192,7 +192,7 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="coefficient"
+            inputUnit="percentage"
             coefficientInput=""
             editedValue={undefined}
             onCoefficientChange={vi.fn()}
@@ -214,7 +214,7 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="coefficient"
+            inputUnit="percentage"
             coefficientInput="0"
             editedValue={0}
             onCoefficientChange={vi.fn()}
@@ -229,7 +229,7 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
     expect(screen.getByRole("textbox")).toHaveAttribute("aria-invalid", "false");
   });
 
-  it("shows an out-of-range but non-empty value as invalid, distinct from empty", () => {
+  it("shows an out-of-range but non-empty percentage as invalid, distinct from empty", () => {
     render(
       <Table>
         <TableBody>
@@ -237,8 +237,8 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="coefficient"
-            coefficientInput="1,5"
+            inputUnit="percentage"
+            coefficientInput="150"
             editedValue={1.5}
             onCoefficientChange={vi.fn()}
             onRemove={vi.fn()}
@@ -247,8 +247,33 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
       </Table>,
     );
 
-    expect(screen.getByText("Introduce un valor entre 0 y 1")).toBeInTheDocument();
+    expect(screen.getByText("Introduce un valor entre 0 y 100 %")).toBeInTheDocument();
     expect(screen.queryByText("Obligatorio")).not.toBeInTheDocument();
+  });
+
+  // D2: a fifth percentage decimal is a figure the distributor file cannot carry.
+  // It is named and it blocks the save, rather than being rounded away in silence.
+  it("names the decimal limit when more than four decimals are typed", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={pendingCoefficient}
+            installedPowerKw={100}
+            isEditing
+            inputUnit="percentage"
+            coefficientInput="30,00005"
+            editedValue={undefined}
+            onCoefficientChange={vi.fn()}
+            onRemove={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByText("Como máximo 4 decimales")).toBeInTheDocument();
+    expect(screen.queryByText("Obligatorio")).not.toBeInTheDocument();
+    expect(screen.queryByText("Introduce un valor entre 0 y 100 %")).not.toBeInTheDocument();
   });
 
   it("the other-unit column shows kW while editing in percentage mode", () => {
@@ -259,8 +284,8 @@ describe("SharingAgreementCoefficientTableRow (editing, coefficient unit)", () =
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="coefficient"
-            coefficientInput="0,4"
+            inputUnit="percentage"
+            coefficientInput="40,0000"
             editedValue={0.4}
             onCoefficientChange={vi.fn()}
             onRemove={vi.fn()}
@@ -325,7 +350,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
     expect(screen.getByText("kW")).toBeInTheDocument();
   });
 
-  it("renders no adornment in percentage mode — the field is a raw 0-1 coefficient, not a percentage", () => {
+  it("renders no adornment in percentage mode — the column header already carries the unit", () => {
     render(
       <Table>
         <TableBody>
@@ -333,8 +358,8 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
             coefficient={pendingCoefficient}
             installedPowerKw={100}
             isEditing
-            inputUnit="coefficient"
-            coefficientInput="0,030992"
+            inputUnit="percentage"
+            coefficientInput="3,0992"
             editedValue={0.030992}
             onCoefficientChange={vi.fn()}
             onRemove={vi.fn()}
@@ -343,7 +368,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
       </Table>,
     );
 
-    expect(screen.getByRole("textbox")).toHaveValue("0,030992");
+    expect(screen.getByRole("textbox")).toHaveValue("3,0992");
     expect(screen.queryByText("%")).not.toBeInTheDocument();
   });
 
@@ -408,7 +433,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
     );
 
     const cells = screen.getAllByRole("cell");
-    // "Energía asignada"/other-unit cell is the 4th column.
+    // "Potencia asignada"/other-unit cell is the 4th column.
     expect(cells[3]).toHaveTextContent("-");
     expect(cells[3]).not.toHaveTextContent("NaN");
   });
@@ -709,5 +734,77 @@ describe("SharingAgreementCoefficientCard (batch-activation checkbox)", () => {
     expect(checkbox).not.toBeChecked();
     await user.click(checkbox);
     expect(onToggleSelected).toHaveBeenCalledTimes(1);
+  });
+});
+
+// AC13. `supply.name` is declared required by the contract but is nullable in
+// the database and empty for most production rows.
+describe("row identity when the supply has no name", () => {
+  const namelessCoefficient: SharingAgreementPartitionCoefficientResponse = {
+    ...pendingCoefficient,
+    supply: { id: "s9", name: "", code: "ES0031300000000009ZZ" },
+  };
+
+  it("promotes the CUPS to the primary identifier in the table, and does not repeat it", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow coefficient={namelessCoefficient} installedPowerKw={100} />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
+  });
+
+  it("promotes the CUPS to the primary identifier on the mobile card, and does not repeat it", () => {
+    render(<SharingAgreementCoefficientCard coefficient={namelessCoefficient} installedPowerKw={100} />);
+
+    expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
+  });
+
+  it("keeps the name primary and the CUPS secondary when a name exists", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByText("Vivienda A")).toBeInTheDocument();
+    expect(screen.getByText("ES0031300000000001AB")).toBeInTheDocument();
+  });
+
+  it("falls back to a dash only when neither a name nor a CUPS exists", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={{ ...pendingCoefficient, supply: { id: "s0", name: "", code: "" } }}
+            installedPowerKw={100}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getAllByText("-")).toHaveLength(1);
+  });
+
+  it("treats a whitespace-only name as no name at all", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={{ ...namelessCoefficient, supply: { id: "s9", name: "   ", code: "ES0031300000000009ZZ" } }}
+            installedPowerKw={100}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
   });
 });

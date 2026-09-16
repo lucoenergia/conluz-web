@@ -45,7 +45,7 @@ import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { PageHeaderWithStats } from "../../components/PageHeader";
+import { DetailHeader } from "../../components/DetailHeader";
 import { useActiveCommunity } from "../../context/community.context";
 import {
   useGetMemberships,
@@ -211,14 +211,15 @@ export const MembersPage: FC = () => {
         ]}
       />
 
-      <PageHeaderWithStats
-        icon={PeopleIcon}
+      <DetailHeader
+        variant="list"
+        icon={<PeopleIcon />}
         title="Gestión de Miembros"
         subtitle="Administra los miembros de la comunidad activa"
-        stats={[
-          { value: memberships.length, label: "Total" },
-          { value: activeCount, label: "Activos", color: colors.success.onBrand },
-          { value: adminCount, label: "Admins", color: theme.palette.primary.main },
+        keyFacts={[
+          { label: "Total", value: memberships.length },
+          { label: "Activos", value: activeCount },
+          { label: "Admins", value: adminCount },
         ]}
       />
 

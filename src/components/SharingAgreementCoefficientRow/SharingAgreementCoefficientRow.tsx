@@ -5,7 +5,12 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatDecimalForInput } from "../../utils/parseDecimalInput";
-import { isValidCoefficientValue, type CoefficientInputUnit } from "../../pages/production/sharingAgreementCoefficientEditing";
+import {
+  MAX_PERCENTAGE_DECIMALS,
+  isValidCoefficientValue,
+  parsePercentageInput,
+  type CoefficientInputUnit,
+} from "../../pages/production/sharingAgreementCoefficientEditing";
 import { formatCoefficientPercentage } from "../../pages/production/sharingAgreementCoefficientSums";
 import {
   getApplicationStateDetail,
@@ -48,18 +53,45 @@ function formatAssignedEnergy(coefficientValue: number | undefined, installedPow
   return formatKilowatts(coefficientValue * installedPowerKw);
 }
 
-function getCoefficientInputErrorMessage(unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
-  if (unit === "coefficient") return "Introduce un valor entre 0 y 1";
+function getCoefficientInputErrorMessage(
+  raw: string,
+  unit: CoefficientInputUnit,
+  installedPowerKw: number | undefined,
+): string {
+  if (unit === "percentage") {
+    // Six coefficient decimals are four in percent, and the surplus digits reach
+    // the distributor. Say so rather than rounding them away in silence.
+    const parsed = parsePercentageInput(raw);
+    return !parsed.ok && parsed.reason === "TOO_MANY_DECIMALS"
+      ? `Como máximo ${MAX_PERCENTAGE_DECIMALS} decimales`
+      : "Introduce un valor entre 0 y 100 %";
+  }
   if (installedPowerKw === undefined || installedPowerKw <= 0) return "Introduce un valor válido";
   return `Introduce un valor entre 0 y ${formatDecimalForInput(installedPowerKw)} kW`;
 }
 
-/** "Energía asignada" in coefficient mode (as always); the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
+/** "Potencia asignada" in percentage mode; the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
 function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
   if (value === undefined) return "-";
   if (unit === "kw") return formatCoefficientPercentage(value);
   if (installedPowerKw === undefined) return "-";
   return formatKilowatts(value * installedPowerKw);
+}
+
+/**
+ * `supply.name` is declared required by the contract but is nullable in the
+ * database, and empty for most production rows. Falling back to "-" left the
+ * CUPS — the only thing that actually identifies a supply point to the
+ * distributor — demoted to a caption under a dash.
+ *
+ * When there is no name the CUPS becomes the primary identifier, and it is not
+ * repeated underneath: one row, one identity.
+ */
+function getRowIdentity(supply: SharingAgreementPartitionCoefficientResponse["supply"]) {
+  const name = supply?.name?.trim();
+  const code = supply?.code?.trim();
+  if (name) return { primary: name, secondary: code || "-" };
+  return { primary: code || "-", secondary: null };
 }
 
 function CoefficientInput({
@@ -88,15 +120,17 @@ function CoefficientInput({
       value={coefficientInput}
       onChange={(event) => onCoefficientChange(event.target.value)}
       error={isInvalid || isEmpty}
-      helperText={isInvalid ? getCoefficientInputErrorMessage(unit, installedPowerKw) : isEmpty ? "Obligatorio" : undefined}
-      placeholder={unit === "coefficient" ? "0,000000" : "0,00"}
+      helperText={isInvalid ? getCoefficientInputErrorMessage(coefficientInput, unit, installedPowerKw) : isEmpty ? "Obligatorio" : undefined}
+      placeholder={unit === "percentage" ? "0,0000" : "0,00"}
       slotProps={{
         htmlInput: { inputMode: "decimal", style: { textAlign: align === "end" ? "right" : "left" } },
         input: {
           endAdornment: unit === "kw" ? <InputAdornment position="end">kW</InputAdornment> : undefined,
         },
       }}
-      sx={{ width: 160 }}
+      // 160px is a comfortable width for a table cell and a greedy one on a
+      // 390px card, where it was taken out of the supply's name.
+      sx={{ width: { xs: 108, sm: 160 } }}
     />
   );
 }
@@ -119,7 +153,8 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const identity = getRowIdentity(coefficient.supply);
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
 
@@ -137,14 +172,16 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
         </TableCell>
       )}
       <TableCell>
-        <Typography variant="body2" fontWeight="600">
-          {coefficient.supply?.name || "-"}
+        <Typography variant="body2" fontWeight="600" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {identity.primary}
         </Typography>
       </TableCell>
       <TableCell>
-        <Typography variant="body2" color="text.secondary">
-          {coefficient.supply?.code || "-"}
-        </Typography>
+        {identity.secondary !== null && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: "tabular-nums" }}>
+            {identity.secondary}
+          </Typography>
+        )}
       </TableCell>
       <TableCell align="right">
         {isEditing && inputUnit && onCoefficientChange ? (
@@ -212,6 +249,13 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   );
 };
 
+/**
+ * Footprint of a `size="small"` Checkbox (20px icon + 9px padding either side).
+ * Held as a minimum rather than a fixed width so the empty slot tracks the real
+ * control if MUI's metrics ever change.
+ */
+const SELECTION_SLOT_WIDTH = 38;
+
 export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowProps> = ({
   coefficient,
   installedPowerKw,
@@ -230,7 +274,8 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "coefficient", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const identity = getRowIdentity(coefficient.supply);
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
@@ -245,21 +290,45 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
         borderBottom: `1px solid ${colors.divider}`,
       }}
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          {showCheckbox && (
-            <Checkbox
-              checked={!!selected}
-              onChange={onToggleSelected}
-              size="small"
-              inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
-            />
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: { xs: 1, sm: 2 },
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: 1, minWidth: 0 }}>
+          {showSelectionColumn && (
+            <Box
+              sx={{
+                minWidth: SELECTION_SLOT_WIDTH,
+                display: "flex",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {showCheckbox && (
+                <Checkbox
+                  checked={!!selected}
+                  onChange={onToggleSelected}
+                  size="small"
+                  inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+                />
+              )}
+            </Box>
           )}
-          <Typography variant="body2" fontWeight="600">
-            {coefficient.supply?.name || "-"}
+          {/* Wraps rather than truncates: a CUPS identifies the supply, and an
+              elided one identifies nothing. */}
+          <Typography
+            variant="body2"
+            fontWeight="600"
+            sx={{ fontVariantNumeric: "tabular-nums", minWidth: 0, wordBreak: "break-word" }}
+          >
+            {identity.primary}
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
           {isEditing && inputUnit && onCoefficientChange ? (
             <CoefficientInput
               coefficientInput={coefficientInput ?? ""}
@@ -298,9 +367,11 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
         </Box>
       </Box>
 
-      <Typography variant="caption" sx={{ color: colors.text.secondary }}>
-        {coefficient.supply?.code || "-"}
-      </Typography>
+      {identity.secondary !== null && (
+        <Typography variant="caption" sx={{ color: colors.text.secondary, fontVariantNumeric: "tabular-nums" }}>
+          {identity.secondary}
+        </Typography>
+      )}
 
       {isEditing && (
         <Typography variant="caption" sx={{ color: colors.text.secondary }}>

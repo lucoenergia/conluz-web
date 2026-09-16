@@ -104,17 +104,20 @@ describe("SharingAgreementDetailPage", () => {
     vi.clearAllMocks();
   });
 
-  test("shows the actions kebab for a DRAFT agreement", async () => {
+  test("offers editing and deleting in the kebab for a DRAFT agreement", async () => {
     mockData();
     const user = userEvent.setup();
     setup();
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    expect(await screen.findByText("Editar")).toBeInTheDocument();
+    expect(await screen.findByText("Editar datos del acuerdo")).toBeInTheDocument();
     expect(screen.getByText("Eliminar")).toBeInTheDocument();
   });
 
-  test("shows Editar for a non-DRAFT (PUBLISHED) agreement", async () => {
+  test("keeps editing available on a non-DRAFT agreement, but not deleting", async () => {
+    // `PUT /sharing-agreements/{id}` accepts any status; `DELETE` still 409s
+    // outside DRAFT, since removing a published agreement would destroy the
+    // historical basis of past billing.
     mockData({
       agreement: {
         id: "agreement-1",
@@ -127,10 +130,13 @@ describe("SharingAgreementDetailPage", () => {
     setup();
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    expect(await screen.findByText("Editar")).toBeInTheDocument();
+    expect(await screen.findByText("Editar datos del acuerdo")).toBeInTheDocument();
+    expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
   });
 
-  test("shows Editar for a SUPERSEDED agreement", async () => {
+  // SUPERSEDED is a computed invariant rather than a stored transition, so it
+  // gets its own case: nothing guarantees it takes the same branch as PUBLISHED.
+  test("keeps editing available on a SUPERSEDED agreement too", async () => {
     mockData({
       agreement: {
         id: "agreement-1",
@@ -143,10 +149,14 @@ describe("SharingAgreementDetailPage", () => {
     setup();
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    expect(await screen.findByText("Editar")).toBeInTheDocument();
+    expect(await screen.findByText("Editar datos del acuerdo")).toBeInTheDocument();
+    expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
   });
 
-  test("submits all three fields on a PUBLISHED agreement even when only the name changed (full-replacement semantics)", async () => {
+  // The endpoint replaces all three fields, so the two the admin did not touch
+  // have to travel with the one they did — on a published agreement as much as
+  // on a draft, where omitting them would silently blank the record.
+  test("submits all three fields on a PUBLISHED agreement even when only the name changed", async () => {
     mockData({
       agreement: {
         id: "agreement-1",
@@ -163,7 +173,7 @@ describe("SharingAgreementDetailPage", () => {
     setup("plant-1", "agreement-1");
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
 
     const nameInput = await screen.findByLabelText("Nombre", { exact: false });
     await user.clear(nameInput);
@@ -204,7 +214,7 @@ describe("SharingAgreementDetailPage", () => {
     expect(screen.getByRole("heading", { name: "Reparto 2025" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(await screen.findByRole("heading", { name: "Reparto 2025 corregido" })).toBeInTheDocument();
@@ -217,7 +227,7 @@ describe("SharingAgreementDetailPage", () => {
     setup("plant-1", "agreement-1");
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
 
     expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Reparto 2025");
     expect(screen.getByLabelText("Notas internas", { exact: false })).toHaveValue("Nota original");
@@ -239,7 +249,7 @@ describe("SharingAgreementDetailPage", () => {
     setup("plant-1", "agreement-1");
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
 
     const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
     await user.clear(capacityInput);
@@ -256,7 +266,7 @@ describe("SharingAgreementDetailPage", () => {
     setup("plant-1", "agreement-1");
 
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
-    await user.click(await screen.findByText("Editar"));
+    await user.click(await screen.findByText("Editar datos del acuerdo"));
 
     const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
     await user.clear(capacityInput);

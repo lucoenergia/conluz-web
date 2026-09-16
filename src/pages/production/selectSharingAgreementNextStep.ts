@@ -10,8 +10,8 @@ export type SharingAgreementNextStep =
   | { kind: "AUTHOR_COEFFICIENTS"; blockedReason: "SUM_MISMATCH"; deltaMillionths: number }
   | { kind: "GENERATE_AND_SEND"; canGenerate: true }
   | { kind: "GENERATE_AND_SEND"; canGenerate: false; blockedReason: "NO_REGULATORY_CODE" }
-  | { kind: "RECORD_APPLICATION_DATES"; pendingCount: number }
-  | { kind: "ALL_DONE" }
+  | { kind: "RECORD_APPLICATION_DATES"; pendingCount: number; totalCount: number }
+  | { kind: "ALL_DONE"; totalCount: number }
   | { kind: "NONE" };
 
 /**
@@ -54,5 +54,12 @@ export function selectSharingAgreementNextStep(
     (coefficient) => coefficient.applicationState === SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
   ).length;
 
-  return pendingCount > 0 ? { kind: "RECORD_APPLICATION_DATES", pendingCount } : { kind: "ALL_DONE" };
+  // `totalCount` rides along so the surfaces that report progress ("3 de 12
+  // puntos con fecha") read it from the same pass that decided the step,
+  // rather than re-deriving a second count that could disagree.
+  const totalCount = coefficients.length;
+
+  return pendingCount > 0
+    ? { kind: "RECORD_APPLICATION_DATES", pendingCount, totalCount }
+    : { kind: "ALL_DONE", totalCount };
 }

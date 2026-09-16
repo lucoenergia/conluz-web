@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { SupplyDetailHeader } from "./SupplyDetailHeader";
 import type { SupplyResponse } from "../../api/models";
@@ -47,17 +48,35 @@ describe("SupplyDetailHeader", () => {
     expect(screen.getByText("Activo")).toBeInTheDocument();
   });
 
-  it("renders supply details grid with CUPS, address ref, and owner", () => {
+  it("promotes the CUPS into the strip and offers to copy it", () => {
     render(<SupplyDetailHeader supplyPoint={mockSupplyPoint} />);
 
     expect(screen.getByText("CUPS")).toBeInTheDocument();
     expect(screen.getByText("ES0031300296192001MB0F")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copiar CUPS" })).toBeInTheDocument();
+  });
+
+  it("keeps the cadastral reference and the owner behind the details toggle", async () => {
+    const user = userEvent.setup();
+    render(<SupplyDetailHeader supplyPoint={mockSupplyPoint} />);
+
+    expect(screen.queryByText("Referencia catastral")).not.toBeInTheDocument();
+    expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Ver 2 datos más" }));
 
     expect(screen.getByText("Referencia catastral")).toBeInTheDocument();
     expect(screen.getByText("REF123456")).toBeInTheDocument();
-
     expect(screen.getByText("Propietario")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
+  });
+
+  it("falls back to the CUPS as the title when the supply has no name", () => {
+    render(<SupplyDetailHeader supplyPoint={{ ...mockSupplyPoint, name: null }} />);
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "ES0031300296192001MB0F" }),
+    ).toBeInTheDocument();
   });
 
   it("shows Inactivo chip when supply point is disabled", () => {
@@ -74,26 +93,34 @@ describe("SupplyDetailHeader", () => {
     expect(screen.getByText("Dirección no disponible")).toBeInTheDocument();
   });
 
-  it("renders placeholders for missing supply details", () => {
+  it("names each missing field rather than counting anonymous dashes", async () => {
+    const user = userEvent.setup();
     render(<SupplyDetailHeader />);
 
-    // Should render 3 dashes for missing data
-    const dashes = screen.getAllByText("-");
-    expect(dashes.length).toBeGreaterThanOrEqual(3);
+    // The CUPS has no value, so it has no copy button either.
+    expect(screen.getByText("CUPS").parentElement).toHaveTextContent("-");
+    expect(screen.queryByRole("button", { name: "Copiar CUPS" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Ver 2 datos más" }));
+
+    expect(screen.getByText("Referencia catastral").parentElement).toHaveTextContent("-");
+    expect(screen.getByText("Propietario").parentElement).toHaveTextContent("-");
   });
 
-  it("does not render details grid when loading", () => {
+  it("renders neither the strip nor the details toggle when loading", () => {
     render(<SupplyDetailHeader supplyPoint={mockSupplyPoint} isLoading={true} />);
 
     expect(screen.queryByText("CUPS")).not.toBeInTheDocument();
     expect(screen.queryByText("Referencia catastral")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Ver \d+ dato/ })).not.toBeInTheDocument();
   });
 
-  it("does not render details grid when error", () => {
+  it("renders neither the strip nor the details toggle on error", () => {
     render(<SupplyDetailHeader supplyPoint={mockSupplyPoint} error={new Error("Test error")} />);
 
     expect(screen.queryByText("CUPS")).not.toBeInTheDocument();
     expect(screen.queryByText("Referencia catastral")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Ver \d+ dato/ })).not.toBeInTheDocument();
   });
 
   it("does not render status chip when loading", () => {

@@ -1,2 +1,11 @@
-export { DetailHeader, DetailTile } from "./DetailHeader";
-export type { DetailHeaderProps, DetailTileProps } from "./DetailHeader";
+export { DetailHeader } from "./DetailHeader";
+export type {
+  DetailHeaderProps,
+  DetailVariantProps,
+  ListVariantProps,
+  DetailKeyFact,
+  DetailKeyFacts,
+  DetailFact,
+  ListKeyFact,
+  ListKeyFacts,
+} from "./DetailHeader";

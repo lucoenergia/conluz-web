@@ -1,10 +1,16 @@
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "../../theme";
+import {
+  COEFFICIENT_SCALE,
+  computeSharingAgreementCoefficientSums,
+} from "../../pages/production/sharingAgreementCoefficientSums";
+import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
 import { SharingAgreementFilePanel } from "./SharingAgreementFilePanel";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -87,16 +93,26 @@ function renderPanel(overrides: {
   // must stay undefined for the "no CAU" tests, not silently fall back.
   const plantRegulatoryCode = "plantRegulatoryCode" in overrides ? overrides.plantRegulatoryCode : "CAU0001";
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+
+  const Harness = () => {
+    const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+    return (
+      <SharingAgreementFilePanel
+        plantId="plant-1"
+        sharingAgreementId="agreement-1"
+        agreement={agreement}
+        coefficients={coefficients}
+        plantRegulatoryCode={plantRegulatoryCode}
+        isGenerateDialogOpen={isGenerateDialogOpen}
+        onGenerateDialogOpenChange={setIsGenerateDialogOpen}
+      />
+    );
+  };
+
   return render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <SharingAgreementFilePanel
-          plantId="plant-1"
-          sharingAgreementId="agreement-1"
-          agreement={agreement}
-          coefficients={coefficients}
-          plantRegulatoryCode={plantRegulatoryCode}
-        />
+        <Harness />
       </ThemeProvider>
     </QueryClientProvider>,
   );
@@ -110,83 +126,138 @@ describe("SharingAgreementFilePanel", () => {
     mockGenerateMutateAsync.mockClear();
   });
 
-  describe("state A — no file, DRAFT", () => {
-    it("shows the empty-state copy and both Generar/Importar actions, never probing the download endpoint", () => {
+  const GENERATE = "Generar y descargar TXT";
+
+  it("names the section and says what the file is for, in every status", () => {
+    renderPanel();
+    expect(screen.getByRole("heading", { level: 2, name: "Fichero para la distribuidora" })).toBeInTheDocument();
+    expect(
+      screen.getByText("El TXT con los coeficientes que la distribuidora necesita para aplicar el reparto."),
+    ).toBeVisible();
+  });
+
+  it("keeps one title across statuses, so the load signal and the section identity don't change under the user", () => {
+    const published = makeAgreement({ status: SharingAgreementResponseStatus.PUBLISHED });
+    renderPanel({ agreement: published });
+    expect(screen.getByRole("heading", { level: 2, name: "Fichero para la distribuidora" })).toBeInTheDocument();
+    expect(screen.queryByText("Fichero enviado a la distribuidora")).not.toBeInTheDocument();
+  });
+
+  // AC10.
+  describe('"Generar y descargar"', () => {
+    it("states that nothing is stored, before the user generates anything", () => {
       renderPanel();
-      expect(screen.getByText("Todavía no hay ningún fichero guardado.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Generar fichero" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Importar un fichero que ya tengas" })).toBeInTheDocument();
+      expect(
+        screen.getByText(/Conluz no guarda el fichero: se descarga en tu dispositivo y lo envías tú\./),
+      ).toBeVisible();
       expect(mockDownload).not.toHaveBeenCalled();
     });
 
-    it("shows the section title and description tailored to DRAFT", () => {
-      renderPanel();
-      expect(screen.getByText("Fichero para la distribuidora")).toBeInTheDocument();
-      expect(screen.getByText(/Genéralo aquí desde los coeficientes, o impórtalo/)).toBeInTheDocument();
+    it("is offered in every status — generate-file is allowed for DRAFT, PUBLISHED and SUPERSEDED", () => {
+      for (const status of [
+        SharingAgreementResponseStatus.DRAFT,
+        SharingAgreementResponseStatus.PUBLISHED,
+        SharingAgreementResponseStatus.SUPERSEDED,
+      ]) {
+        const { unmount } = renderPanel({ agreement: makeAgreement({ status }) });
+        expect(screen.getByRole("button", { name: GENERATE })).toBeInTheDocument();
+        unmount();
+      }
     });
 
-    it("disables Generar with a visible (non-tooltip) reason when the coefficient sum isn't 100%", () => {
+    // AC4 — the panel used to use a real `disabled`, which takes the reason out
+    // of reach of the keyboard. It now gates the way every other control does.
+    it("stays focusable when gated, with its reason as visible text bound via aria-describedby", async () => {
       renderPanel({ coefficients: partialSumCoefficients });
-      const button = screen.getByRole("button", { name: "Generar fichero" });
-      expect(button).toBeDisabled();
-      expect(
-        screen.getByText("La suma de los coeficientes debe ser exactamente 100 % para generar el fichero."),
-      ).toBeInTheDocument();
+
+      const button = screen.getByRole("button", { name: GENERATE });
+      expect(button).not.toBeDisabled();
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      expect(button).not.toHaveAttribute("title");
+
+      const describedBy = button.getAttribute("aria-describedby") as string;
+      expect(document.getElementById(describedBy)).toBeVisible();
+
+      await userEvent.click(button);
+      expect(screen.queryByRole("heading", { name: "Generar fichero" })).not.toBeInTheDocument();
     });
 
-    it("disables Generar with a visible reason when the plant has no regulatory code", () => {
+    it("states the shortfall in the same words the rest of the surface uses", () => {
+      // One wording for one rule: "exactamente 100 %" is gone.
+      renderPanel({ coefficients: partialSumCoefficients });
+
+      const { fileSumUnits } = computeSharingAgreementCoefficientSums(partialSumCoefficients);
+      const expected = (formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits) as string).replace(/\u00A0/g, " ");
+      expect(screen.getByText(expected)).toBeVisible();
+      expect(screen.queryByText(/exactamente 100/)).not.toBeInTheDocument();
+    });
+
+    it("gates on a missing regulatory code with its own visible reason", () => {
       renderPanel({ plantRegulatoryCode: undefined });
-      expect(screen.getByRole("button", { name: "Generar fichero" })).toBeDisabled();
-      expect(screen.getByText("Esta planta no tiene código regulatorio (CAU) asignado.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: GENERATE })).toHaveAttribute("aria-disabled", "true");
+      expect(screen.getByText("Esta planta no tiene código regulatorio (CAU) asignado.")).toBeVisible();
     });
 
-    it("opens the generate dialog when Generar is enabled", async () => {
+    it("opens the generate dialog when nothing blocks it", async () => {
       const user = userEvent.setup();
       renderPanel();
-      await user.click(screen.getByRole("button", { name: "Generar fichero" }));
+      await user.click(screen.getByRole("button", { name: GENERATE }));
       expect(await screen.findByRole("heading", { name: "Generar fichero" })).toBeInTheDocument();
     });
   });
 
-  describe("state B — file present", () => {
+  // AC9 — importing authors coefficients, so it lives in the split section now.
+  it("offers no import action at all", () => {
+    renderPanel();
+    expect(screen.queryByRole("button", { name: /Importar/ })).not.toBeInTheDocument();
+    expect(screen.queryByText("¿Necesitas cambiarlo?")).not.toBeInTheDocument();
+  });
+
+  describe('"Fichero importado"', () => {
     const withFile = makeAgreement({
       file: { id: "file-1", filename: "CAU0001_2026.txt", uploadedAt: "2026-01-15T10:00:00Z" },
     });
 
-    it("shows the filename, upload date, and Descargar as the primary action", () => {
+    it("shows an explicit empty state rather than nothing, when no file was imported", () => {
+      renderPanel();
+      expect(screen.getByText("Fichero importado")).toBeInTheDocument();
+      expect(screen.getByText("No has importado ningún fichero en este acuerdo.")).toBeVisible();
+      expect(screen.queryByRole("button", { name: /Descargar/ })).not.toBeInTheDocument();
+    });
+
+    it("shows the filename and the date it was imported", () => {
       renderPanel({ agreement: withFile });
       expect(screen.getByText("CAU0001_2026.txt")).toBeInTheDocument();
-      expect(screen.getByText(/Subido el/)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Descargar fichero" })).toBeInTheDocument();
+      expect(screen.getByText(/Importado el/)).toBeInTheDocument();
     });
 
-    it("renders the filename without a date when uploadedAt is missing, never an empty slot or fabricated date", () => {
-      const noDateFile = makeAgreement({ file: { id: "file-1", filename: "old.txt", uploadedAt: undefined as unknown as string } });
+    it("renders the filename without a date when uploadedAt is missing, never a fabricated one", () => {
+      const noDateFile = makeAgreement({
+        file: { id: "file-1", filename: "old.txt", uploadedAt: undefined as unknown as string },
+      });
       renderPanel({ agreement: noDateFile });
       expect(screen.getByText("old.txt")).toBeInTheDocument();
-      expect(screen.queryByText(/Subido el/)).not.toBeInTheDocument();
-      expect(screen.queryByText("-")).not.toBeInTheDocument();
+      expect(screen.queryByText(/Importado el/)).not.toBeInTheDocument();
     });
 
-    it("shows subordinate Generar/Importar actions only for a DRAFT agreement", () => {
+    // AC11 — persistent, not a dismissible alert: the mismatch it warns about
+    // does not go away when the notice does.
+    it("warns on a DRAFT that editing the coefficients makes the imported file stale", () => {
       renderPanel({ agreement: withFile });
-      expect(screen.getByText("¿Necesitas cambiarlo?")).toBeInTheDocument();
-      expect(screen.getAllByRole("button", { name: "Generar fichero" })).toHaveLength(1);
-      expect(screen.getByRole("button", { name: "Importar otro fichero" })).toBeInTheDocument();
+
+      const note = screen.getByText("Si editas los coeficientes, este fichero deja de coincidir con el reparto.");
+      expect(note).toBeVisible();
+      expect(note.closest(".MuiAlert-root")).toBeNull();
+      expect(screen.queryByRole("button", { name: /Cerrar|Close/ })).not.toBeInTheDocument();
     });
 
-    it("does not show subordinate actions for a non-DRAFT agreement", () => {
+    it("does not warn once the coefficients are sealed", () => {
       const published = makeAgreement({ file: withFile.file, status: SharingAgreementResponseStatus.PUBLISHED });
       renderPanel({ agreement: published });
-      expect(screen.queryByText("¿Necesitas cambiarlo?")).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Generar fichero" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Importar otro fichero" })).not.toBeInTheDocument();
-    });
 
-    it("shows the sealed title once published", () => {
-      const published = makeAgreement({ file: withFile.file, status: SharingAgreementResponseStatus.PUBLISHED });
-      renderPanel({ agreement: published });
-      expect(screen.getByText("Fichero enviado a la distribuidora")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Si editas los coeficientes, este fichero deja de coincidir con el reparto."),
+      ).not.toBeInTheDocument();
     });
 
     it("calls the download function only on click, not before", async () => {
@@ -195,7 +266,7 @@ describe("SharingAgreementFilePanel", () => {
       renderPanel({ agreement: withFile });
 
       expect(mockDownload).not.toHaveBeenCalled();
-      await user.click(screen.getByRole("button", { name: "Descargar fichero" }));
+      await user.click(screen.getByRole("button", { name: "Descargar fichero importado" }));
 
       await waitFor(() => expect(mockDownload).toHaveBeenCalledWith("plant-1", "agreement-1"));
     });
@@ -205,22 +276,24 @@ describe("SharingAgreementFilePanel", () => {
       const user = userEvent.setup();
       renderPanel({ agreement: withFile });
 
-      await user.click(screen.getByRole("button", { name: "Descargar fichero" }));
+      await user.click(screen.getByRole("button", { name: "Descargar fichero importado" }));
 
       await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
-      expect(screen.getByRole("button", { name: "Descargar fichero" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Descargar fichero importado" })).toBeInTheDocument();
     });
-  });
 
-  describe("state C — no file, non-DRAFT (sealed)", () => {
-    it("renders an explained-and-closed empty state with no action button", () => {
-      const sealed = makeAgreement({ status: SharingAgreementResponseStatus.PUBLISHED, file: null });
-      renderPanel({ agreement: sealed });
+    it("keeps the imported block unchanged after a generation — generating stores nothing", async () => {
+      const user = userEvent.setup();
+      renderPanel({ agreement: withFile });
 
-      expect(screen.getByText(/Este acuerdo no tiene fichero/)).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Generar fichero" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /Importar/ })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Descargar fichero" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: GENERATE }));
+      expect(await screen.findByRole("heading", { name: "Generar fichero" })).toBeInTheDocument();
+
+      // Scoped to the panel: the generate dialog builds a filename of its own
+      // from the same regulatory code, so an unscoped query matches both.
+      const importedBlock = screen.getByText("Fichero importado").parentElement as HTMLElement;
+      expect(within(importedBlock).getByText("CAU0001_2026.txt")).toBeInTheDocument();
+      expect(within(importedBlock).getByText(/Importado el/)).toBeInTheDocument();
     });
   });
 });

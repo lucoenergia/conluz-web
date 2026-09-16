@@ -30,7 +30,7 @@ import {
 } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar";
-import { PageHeaderWithStats } from "../../components/PageHeader";
+import { DetailHeader } from "../../components/DetailHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
 import { RecordList } from "../../components/RecordList";
 import { ResultStatus } from "../../components/ResultStatus";
@@ -378,14 +378,15 @@ export const UsersPage: FC = () => {
         ]}
       />
 
-      <PageHeaderWithStats
-        icon={PeopleIcon}
+      <DetailHeader
+        variant="list"
+        icon={<PeopleIcon />}
         title="Gestión de Usuarios"
         subtitle="Administra los usuarios de la plataforma"
-        stats={[
-          { value: stats.total, label: "Total" },
-          { value: stats.active, label: "Activos", color: colors.success.onBrand },
-          { value: stats.inactive, label: "Inactivos", color: colors.error.onBrand },
+        keyFacts={[
+          { label: "Total", value: stats.total },
+          { label: "Activos", value: stats.active },
+          { label: "Inactivos", value: stats.inactive },
         ]}
       />
 
