@@ -54,6 +54,12 @@ export interface SharingAgreementCoefficientRowProps {
   onToggleSelected?: () => void;
   /** Whether the lifecycle-actions ⋯ column/slot renders at all — the container only mounts it when at least one visible row has an action. */
   showActionsColumn?: boolean;
+  /**
+   * Whether the menu carries "Ver histórico". Unlike the lifecycle actions it
+   * is available on every saved row in every status, so it is what puts a ⋯
+   * button on a DRAFT row, which previously had none.
+   */
+  showHistoryAction?: boolean;
   /** Opens the row-actions menu for this coefficient. The button itself only renders when `getAvailableCoefficientActions` returns something — never a disabled button. */
   onOpenActionsMenu?: (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => void;
   /** True while any coefficient lifecycle mutation (any row's, or the batch bar's) is pending — freezes every row's menu button so a second action can't fire against data the in-flight one hasn't refreshed yet. */
@@ -195,6 +201,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   selected,
   onToggleSelected,
   showActionsColumn = false,
+  showHistoryAction = false,
   onOpenActionsMenu,
   actionsDisabled = false,
 }) => {
@@ -203,6 +210,10 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   const identity = getRowIdentity(coefficient.supply);
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
+  // "Ver histórico" alone is reason enough to offer the menu — on a DRAFT the
+  // lifecycle actions are withheld by the container, so without this the
+  // button would never appear there.
+  const hasMenu = showHistoryAction || availableActions.length > 0;
   // While editing, the draft side of the comparison is what's in the field,
   // so the difference retracks as the admin types.
   const currentView = getCurrentCoefficientView(coefficient, isEditing ? editedValue : coefficient.coefficient);
@@ -301,7 +312,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
       )}
       {showActionsColumn && (
         <TableCell padding="checkbox">
-          {availableActions.length > 0 && onOpenActionsMenu && (
+          {hasMenu && onOpenActionsMenu && (
             <IconButton
               size="small"
               disabled={actionsDisabled}
@@ -339,6 +350,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   selected,
   onToggleSelected,
   showActionsColumn = false,
+  showHistoryAction = false,
   onOpenActionsMenu,
   actionsDisabled = false,
 }) => {
@@ -347,6 +359,10 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   const identity = getRowIdentity(coefficient.supply);
   const applicationStateDetail = getApplicationStateDetail(coefficient);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
+  // "Ver histórico" alone is reason enough to offer the menu — on a DRAFT the
+  // lifecycle actions are withheld by the container, so without this the
+  // button would never appear there.
+  const hasMenu = showHistoryAction || availableActions.length > 0;
   const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
   const currentView = getCurrentCoefficientView(coefficient, isEditing ? editedValue : coefficient.coefficient);
 
@@ -424,7 +440,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               <DeleteOutlineIcon fontSize="small" />
             </IconButton>
           )}
-          {!isEditing && showActionsColumn && availableActions.length > 0 && onOpenActionsMenu && (
+          {!isEditing && showActionsColumn && hasMenu && onOpenActionsMenu && (
             <IconButton
               size="small"
               disabled={actionsDisabled}

@@ -5,7 +5,11 @@ import {
   Button,
   Checkbox,
   Chip,
+  Divider,
+  ListItemIcon,
+  ListItemText,
   Menu,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -25,6 +29,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import HistoryIcon from "@mui/icons-material/History";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { EmptyState } from "../EmptyState";
@@ -35,6 +40,7 @@ import { SharingAgreementCoefficientSumGauges } from "../SharingAgreementCoeffic
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
+import { CoefficientHistoryDrawer } from "../CoefficientHistoryDrawer";
 import { CoefficientActionsMenuItems } from "../CoefficientActionsMenu";
 import { ApplyCoefficientDateConfirmationModal } from "../Modals/ApplyCoefficientDateConfirmationModal";
 import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoefficientDateConfirmationModal";
@@ -293,6 +299,9 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [actionsAnchorEl, setActionsAnchorEl] = useState<HTMLElement | null>(null);
   const [actionsMenuCoefficientId, setActionsMenuCoefficientId] = useState<string | null>(null);
   const [batchActionsAnchorEl, setBatchActionsAnchorEl] = useState<HTMLElement | null>(null);
+  // Like every other menu/dialog target here, an id rather than a coefficient
+  // object, so the drawer always renders against the live row.
+  const [historyCoefficientId, setHistoryCoefficientId] = useState<string | null>(null);
 
   // Holds only ids, not coefficient objects: every mutation invalidates the
   // whole plant subtree, which can replace row objects while a dialog is
@@ -335,6 +344,18 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       setActionsMenuCoefficientId(null);
     }
   }, [actionsMenuCoefficientId, actionsMenuCoefficient]);
+
+  // Same rule for the history drawer: a replace can rewrite the whole draft
+  // and a deactivate can drop the row, and a drawer left open over a row that
+  // no longer exists would keep showing a timeline for a supply the agreement
+  // no longer covers.
+  const historyCoefficient = historyCoefficientId
+    ? coefficients.find((c) => c.coefficientId === historyCoefficientId)
+    : undefined;
+
+  useEffect(() => {
+    if (historyCoefficientId && !historyCoefficient) setHistoryCoefficientId(null);
+  }, [historyCoefficientId, historyCoefficient]);
 
   // A dialog (row- or batch-sourced) closes silently — no error — the
   // moment any one of its targets no longer supports the action it was
@@ -462,6 +483,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const handleCloseActionsMenu = () => setActionsAnchorEl(null);
 
+  const handleOpenHistory = () => {
+    if (!actionsMenuCoefficientId) return;
+    setActionsAnchorEl(null);
+    setHistoryCoefficientId(actionsMenuCoefficientId);
+  };
+
   const handleSelectRowAction = (action: CoefficientAction) => {
     if (!actionsMenuCoefficientId) return;
     setActionsAnchorEl(null);
@@ -560,15 +587,13 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // or superseded agreement the row's own value IS the one in force, so the
   // comparison would be against itself.
   //
-  // Mounted only when at least one row actually has one, mirroring
-  // hasAnyRowActions — a first-ever agreement has none by definition, and a
-  // column of dashes costs width on a 390px viewport to say nothing.
+  // Mounted only when at least one row actually has one — a first-ever
+  // agreement has none by definition, and a column of dashes costs width on a
+  // 390px viewport to say nothing.
   //
-  // Gated on `coefficients`, NOT filteredCoefficients, which is the one place
-  // this deliberately parts company with hasAnyRowActions: that column tracks
-  // the filter because a hidden row can't be acted on, whereas a display-only
-  // column that appeared and vanished as the admin typed in the search box
-  // would just be noise.
+  // Gated on `coefficients`, NOT filteredCoefficients: a display-only column
+  // that appeared and vanished as the admin typed in the search box would
+  // just be noise.
   const showCurrentCoefficient = useMemo(
     () => isDraft && coefficients.some((c) => c.currentCoefficient != null),
     [isDraft, coefficients],
@@ -609,16 +634,14 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"} · ${hiddenSelectedCount} oculto${hiddenSelectedCount === 1 ? "" : "s"} por el filtro`
       : `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"}`;
 
-  // Mounts only when a currently *visible* row actually has an action —
-  // mirrors isBatchBarMounted's "mount only when there's something to act
-  // on" rule. Gated on filteredCoefficients, not the full coefficients prop,
-  // so the column also disappears when a filter leaves only non-actionable
-  // rows visible (and reappears once the filter clears).
-  const hasAnyRowActions = useMemo(
-    () => filteredCoefficients.some((c) => getAvailableCoefficientActions(c.applicationState, c.endState).length > 0),
-    [filteredCoefficients],
-  );
-  const showActionsColumn = !isEditing && !isDraft && hasAnyRowActions;
+  // Every saved row now has at least one menu entry — "Ver histórico" is
+  // offered in every status, including DRAFT, which previously had no ⋯ at
+  // all. So the column no longer tracks whether a *lifecycle* action happens
+  // to be available; it mounts whenever the set is not being edited. The
+  // lifecycle items themselves are still gated per row, and withheld from a
+  // DRAFT entirely (see the menu below).
+  const showActionsColumn = !isEditing;
+  const showRowHistoryAction = !isEditing;
 
   // How many of the currently open dialog's targets are hidden by the
   // filter behind it — always 0 for the row path (a hidden row can't open
@@ -1058,6 +1081,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         selected={selectedIds.has(coefficient.coefficientId)}
                         onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
                         showActionsColumn={showActionsColumn}
+                        showHistoryAction={showRowHistoryAction}
                         onOpenActionsMenu={handleOpenActionsMenu}
                         actionsDisabled={isAnyCoefficientActionPending}
                       />
@@ -1095,6 +1119,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     selected={selectedIds.has(coefficient.coefficientId)}
                     onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
                     showActionsColumn={showActionsColumn}
+                    showHistoryAction={showRowHistoryAction}
                     onOpenActionsMenu={handleOpenActionsMenu}
                     actionsDisabled={isAnyCoefficientActionPending}
                   />
@@ -1207,13 +1232,30 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         transformOrigin={{ horizontal: "right", vertical: "top" }}
       >
         <CoefficientActionsMenuItems
-          items={(actionsMenuCoefficient
+          items={(actionsMenuCoefficient && !isDraft
             ? getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState)
             : []
           ).map((action) => ({ action }))}
           onSelectAction={handleSelectRowAction}
         />
+        {/* Read-only, and available in every status, so it sits below the
+            actions that change state rather than among them. */}
+        {!isDraft && actionsMenuCoefficient && <Divider />}
+        <MenuItem onClick={handleOpenHistory}>
+          <ListItemIcon>
+            <HistoryIcon fontSize="small" sx={{ color: colors.text.subtle }} />
+          </ListItemIcon>
+          <ListItemText>Ver histórico</ListItemText>
+        </MenuItem>
       </Menu>
+
+      <CoefficientHistoryDrawer
+        isOpen={!!historyCoefficient}
+        onClose={() => setHistoryCoefficientId(null)}
+        supply={historyCoefficient?.supply}
+        plantId={plantId}
+        currentSharingAgreementId={sharingAgreementId}
+      />
 
       <ApplyCoefficientDateConfirmationModal
         isOpen={activeDialog?.action === "apply"}

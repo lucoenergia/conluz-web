@@ -49,6 +49,10 @@ vi.mock("../../api/supplies/supplies", () => ({
     number: 0,
     totalPages: 1,
   }),
+  // The row menu's history drawer reads this. Resolved-and-empty by default so
+  // it never interferes with the assertions in this file; the drawer's own
+  // behaviour is covered in CoefficientHistoryDrawer.spec.tsx.
+  useGetPartitionCoefficientHistory: () => ({ data: [], isLoading: false, error: null }),
 }));
 
 vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
@@ -391,10 +395,20 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
   // below — the contract still rejects activate/deactivate/close/reopen on a
   // DRAFT agreement with 409, so offering either control here would be a
   // dead end.
-  it("renders no row action menu and no checkbox for a DRAFT agreement, even though apply would otherwise be available on every PENDING row", () => {
+  it("offers a DRAFT row the history only — never apply, which the contract rejects on a DRAFT with 409", () => {
     renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    // The menu exists on a DRAFT now, because "Ver histórico" is offered in
+    // every status. What must never appear is a lifecycle action.
+    fireEvent.click(screen.getAllByRole("button", { name: /Más acciones/ })[0]);
+
+    expect(screen.getByRole("menuitem", { name: "Ver histórico" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Registrar fecha" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Corregir fecha" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Desactivar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Reabrir" })).not.toBeInTheDocument();
+    // Batch selection stays out: it only ever drives lifecycle actions.
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
