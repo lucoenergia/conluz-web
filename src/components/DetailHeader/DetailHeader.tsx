@@ -1,18 +1,17 @@
-import type { FC, ReactNode } from "react";
-import { Box, Paper, Typography, Avatar } from "@mui/material";
+import { useEffect, useId, useRef, useState, type FC, type ReactNode, type Ref } from "react";
+import { Box, Button, Collapse, IconButton, Paper, Typography, Avatar, useMediaQuery, useTheme } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CheckIcon from "@mui/icons-material/Check";
 import { alphas, colors, radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
+import { ActionStatus } from "../ActionStatus";
 import type { SxProps, Theme } from "@mui/material";
 
 // ─── DetailTile ──────────────────────────────────────────────────────────────
-// Translucent overlay tile used inside both Plant and Supply detail headers.
-// Encodes patterns #15 (overlay fill/blur/radius) and #3 (caption opacity 0.8).
+// LEGACY. Only the un-migrated consumers below still use it; it is removed once
+// all three entity headers render through the strip.
 
-/**
- * Which ground the tile sits on. `onBrand` is the original: a translucent
- * overlay on a brand-filled header. `onLight` is the same label-over-value
- * structure on page ground, for a header that is not itself a brand slab —
- * a translucent fill there would take its contrast from whatever sits behind.
- */
 export type DetailTileTone = "onBrand" | "onLight";
 
 export interface DetailTileProps {
@@ -47,34 +46,383 @@ export const DetailTile: FC<DetailTileProps> = ({ label, children, tone = "onBra
   </Box>
 );
 
-// ─── DetailHeader ─────────────────────────────────────────────────────────────
-// Shared header shell for entity detail pages (Plant, Supply).
-//
-// Props that differ between the two headers are parameterised:
-//   icon         — Avatar icon (SolarPowerIcon vs ElectricMeterIcon)
-//   title        — Title-row ReactNode: Plant passes a plain <Typography h4 gutterBottom>;
-//                  Supply passes a flex Box (with status Chip) — structural difference
-//                  preserved so both render identically to before extraction.
-//   subtitle     — Address string; DetailHeader applies opacity:0.9 (pattern #9).
-//   children     — Grid tiles, shown only when !isLoading && !error.
+// ─── DetailHeader ────────────────────────────────────────────────────────────
+// Shared header for entity detail pages, in two clearly separated levels: an
+// identity row saying who the entity is, and below it a strip of key-fact cells
+// whose last cell is the details toggle itself — so disclosing the rest never
+// adds a row. Collapsed, it fits inside a 390px first viewport.
+
+/** How long the copy button shows its confirmation before reverting. */
+const COPY_FEEDBACK_MS = 2000;
+
+export interface DetailKeyFact {
+  label: string;
+  /** A string gets the strip's own value styling; a node renders as-is. */
+  value: ReactNode;
+  /**
+   * Raw text to write to the clipboard. Its PRESENCE is what turns the copy
+   * button on, so a field with no value simply omits it and renders its
+   * placeholder with no control attached.
+   */
+  copyable?: string;
+}
+
+/**
+ * At most three key facts, enforced by the type rather than trimmed at runtime:
+ * a fourth fact is a call-site mistake, and silently dropping it would hide the
+ * mistake instead of reporting it.
+ */
+export type DetailKeyFacts =
+  | readonly []
+  | readonly [DetailKeyFact]
+  | readonly [DetailKeyFact, DetailKeyFact]
+  | readonly [DetailKeyFact, DetailKeyFact, DetailKeyFact];
+
+export interface DetailFact {
+  label: string;
+  value: ReactNode;
+  /** Lets one field claim the whole row — notes, a description. */
+  wide?: boolean;
+}
 
 export interface DetailHeaderProps {
   icon: ReactNode;
   title: ReactNode;
-  subtitle: string;
+  /**
+   * Focus target for a page that moves focus to the heading after an action
+   * whose own control unmounts on success.
+   */
+  titleRef?: Ref<HTMLHeadingElement>;
+  /** A node, so a consumer can make it a link. */
+  subtitle?: ReactNode;
+  /** Small leading mark for the subtitle — a location pin, a plant. */
+  subtitleIcon?: ReactNode;
+  status?: ReactNode;
+  keyFacts?: DetailKeyFacts;
+  details?: readonly DetailFact[];
+  /** The "⋯" trigger and its menu. Visibility stays the consumer's business. */
+  menu?: ReactNode;
   isLoading?: boolean;
   error?: unknown;
+  /**
+   * LEGACY grid of `DetailTile`s, for consumers not yet migrated to `keyFacts`
+   * and `details`. Passing it renders the previous header verbatim.
+   */
   children?: ReactNode;
 }
 
 export const DetailHeader: FC<DetailHeaderProps> = ({
   icon,
   title,
+  titleRef,
   subtitle,
+  subtitleIcon,
+  status,
+  keyFacts,
+  details,
+  menu,
   isLoading = false,
   error = null,
   children,
-}) => (
+}) => {
+  const theme = useTheme();
+  const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
+  const [areDetailsOpen, setAreDetailsOpen] = useState(false);
+  const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const detailsId = useId();
+
+  useEffect(() => () => clearTimeout(feedbackTimer.current), []);
+
+  const isResolved = !isLoading && !error;
+
+  const facts: readonly DetailKeyFact[] = keyFacts ?? [];
+  // On xs the strip holds two cells at most; anything beyond moves into the
+  // details, where it is genuinely hidden and therefore genuinely counted.
+  const visibleFacts = isCompact ? facts.slice(0, 2) : facts;
+  const displacedFacts = isCompact ? facts.slice(2) : [];
+
+  const hiddenCount = displacedFacts.length + (details?.length ?? 0);
+  const hasDisclosure = hiddenCount > 0;
+
+  /**
+   * A copyable value is the one thing in the strip narrow enough to lose
+   * characters to an ellipsis on a phone, so the details repeat it in full.
+   * It stays visible in the strip, so it is NOT part of the hidden count —
+   * "+5" must mean five things you cannot currently see.
+   */
+  const mirroredFacts =
+    isCompact && hasDisclosure ? visibleFacts.filter((fact) => fact.copyable !== undefined) : [];
+
+  const detailItems: DetailFact[] = [
+    ...displacedFacts.map((fact) => ({ label: fact.label, value: fact.value })),
+    ...(details ?? []),
+    ...mirroredFacts.map((fact) => ({ label: fact.label, value: fact.copyable as string, wide: true })),
+  ];
+
+  const expandLabel = `Ver ${hiddenCount} dato${hiddenCount === 1 ? "" : "s"} más`;
+  const collapseLabel = "Ocultar detalles";
+  // The phone shows the bare count, but the accessible name stays the sentence:
+  // "+5" read aloud says nothing about what it opens.
+  const accessibleToggleLabel = areDetailsOpen ? collapseLabel : expandLabel;
+  const visibleToggleLabel = isCompact ? `+${hiddenCount}` : accessibleToggleLabel;
+
+  const handleCopy = async (fact: DetailKeyFact) => {
+    try {
+      await navigator.clipboard.writeText(fact.copyable as string);
+    } catch {
+      // An insecure context or a denied permission. Nothing reached the
+      // clipboard, so neither the icon nor the live region may claim it did.
+      return;
+    }
+    setCopiedLabel(fact.label);
+    clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = setTimeout(() => setCopiedLabel(null), COPY_FEEDBACK_MS);
+  };
+
+  if (children != null) {
+    return (
+      <LegacyDetailHeader icon={icon} title={title} subtitle={subtitle} isLoading={isLoading} error={error}>
+        {children}
+      </LegacyDetailHeader>
+    );
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        // The shared panel surface, minus its padding: the strip and the details
+        // are full-bleed inside the card, so each section pads itself.
+        ...sxStyles.softPanel,
+        p: 0,
+        overflow: "hidden",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: "flex", flexShrink: 0, color: "primary.main", mt: 0.25 }}>{icon}</Box>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.25 }}>
+            <Typography
+              ref={titleRef}
+              variant="h5"
+              component="h1"
+              tabIndex={titleRef ? -1 : undefined}
+              sx={{
+                fontWeight: 700,
+                color: colors.text.primary,
+                minWidth: 0,
+                // Focused programmatically after an action, so the ring is
+                // explicit rather than inherited.
+                "&:focus-visible": {
+                  outline: "2px solid",
+                  outlineColor: colors.brand.main,
+                  outlineOffset: "4px",
+                },
+              }}
+            >
+              {title}
+            </Typography>
+            {isResolved && status}
+          </Box>
+
+          {subtitle !== undefined && subtitle !== null && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                mt: 0.5,
+                minWidth: 0,
+                color: colors.text.subtle,
+                "& .MuiSvgIcon-root": { fontSize: 18, flexShrink: 0 },
+              }}
+            >
+              {subtitleIcon}
+              <Typography
+                variant="body2"
+                component="div"
+                sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                {subtitle}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        {isResolved && menu && <Box sx={{ flexShrink: 0 }}>{menu}</Box>}
+      </Box>
+
+      {isResolved && (visibleFacts.length > 0 || hasDisclosure) && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "stretch",
+            borderTop: "1px solid",
+            borderColor: colors.divider,
+            bgcolor: colors.background.surface,
+          }}
+        >
+          {visibleFacts.map((fact, index) => (
+            <Box
+              key={fact.label}
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                display: "flex",
+                flexDirection: { xs: "row", sm: "column" },
+                alignItems: { xs: "center", sm: "flex-start" },
+                gap: { xs: 0.75, sm: 0.25 },
+                px: { xs: 1.5, sm: 3 },
+                py: { xs: 1, sm: 1.5 },
+                ...(index > 0 && { borderLeft: "1px solid", borderColor: colors.border.light }),
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: colors.text.subtle,
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                {fact.label}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0, maxWidth: "100%" }}>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{
+                    fontWeight: 700,
+                    color: colors.text.primary,
+                    fontVariantNumeric: "tabular-nums",
+                    minWidth: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {fact.value}
+                </Typography>
+                {fact.copyable !== undefined && (
+                  <IconButton
+                    size="small"
+                    onClick={() => void handleCopy(fact)}
+                    aria-label={`Copiar ${fact.label}`}
+                    sx={{
+                      ...sxStyles.touchTarget,
+                      flexShrink: 0,
+                      color: "primary.main",
+                      bgcolor: colors.brand.surface,
+                      borderRadius: radii.small,
+                      "&:hover": { bgcolor: colors.brand.surface },
+                    }}
+                  >
+                    {copiedLabel === fact.label ? (
+                      <CheckIcon sx={{ fontSize: 16 }} />
+                    ) : (
+                      <ContentCopyIcon sx={{ fontSize: 16 }} />
+                    )}
+                  </IconButton>
+                )}
+              </Box>
+            </Box>
+          ))}
+
+          {hasDisclosure && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                flexShrink: 0,
+                px: { xs: 1, sm: 2 },
+                ...(visibleFacts.length > 0 && { borderLeft: "1px solid", borderColor: colors.border.light }),
+              }}
+            >
+              <Button
+                variant="text"
+                onClick={() => setAreDetailsOpen((open) => !open)}
+                aria-expanded={areDetailsOpen}
+                aria-controls={detailsId}
+                aria-label={accessibleToggleLabel}
+                endIcon={
+                  <ExpandMoreIcon
+                    sx={{
+                      transform: areDetailsOpen ? "rotate(180deg)" : "none",
+                      transition: "transform 200ms ease-out",
+                    }}
+                  />
+                }
+                sx={{ ...sxStyles.touchTarget, color: "primary.main", fontWeight: 600, whiteSpace: "nowrap", px: 1 }}
+              >
+                {visibleToggleLabel}
+              </Button>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {isResolved && hasDisclosure && (
+        <Collapse in={areDetailsOpen} unmountOnExit>
+          <Box
+            id={detailsId}
+            sx={{
+              borderTop: "1px solid",
+              borderColor: colors.border.light,
+              bgcolor: colors.background.surface,
+              px: { xs: 2, sm: 3 },
+              py: { xs: 2, sm: 2.5 },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+              gap: { xs: 2, sm: 2.5 },
+            }}
+          >
+            {detailItems.map((item, index) => (
+              <Box
+                key={`${item.label}-${index}`}
+                sx={{ minWidth: 0, ...(item.wide && { gridColumn: "1 / -1" }) }}
+              >
+                <Typography variant="caption" sx={{ color: colors.text.subtle, display: "block", mb: 0.25 }}>
+                  {item.label}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{ fontWeight: 600, color: colors.text.primary, wordBreak: "break-word" }}
+                >
+                  {item.value}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Collapse>
+      )}
+
+      {/* Mounted once and left mounted, so a copy announces reliably rather than
+          racing its own live region into the document. */}
+      <ActionStatus message={copiedLabel ? `${copiedLabel} copiado al portapapeles` : ""} />
+    </Paper>
+  );
+};
+
+// ─── LegacyDetailHeader ──────────────────────────────────────────────────────
+// The previous brand-slab header, kept verbatim while `PlantDetailHeader` and
+// `SupplyDetailHeader` still pass `children`. Removed with `DetailTile`.
+
+const LegacyDetailHeader: FC<{
+  icon: ReactNode;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  isLoading?: boolean;
+  error?: unknown;
+  children?: ReactNode;
+}> = ({ icon, title, subtitle, isLoading = false, error = null, children }) => (
   <Paper
     elevation={0}
     sx={{
@@ -88,15 +436,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
     }}
   >
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 3 }}>
-      <Avatar
-        sx={{
-          bgcolor: alphas.white.soft,
-          width: 56,
-          height: 56,
-        }}
-      >
-        {icon}
-      </Avatar>
+      <Avatar sx={{ bgcolor: alphas.white.soft, width: 56, height: 56 }}>{icon}</Avatar>
       <Box sx={{ flex: 1 }}>
         {title}
         <Typography variant="body1" sx={{ opacity: 0.9 }}>
