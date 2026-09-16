@@ -137,6 +137,23 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
     ...mirroredFacts.map((fact) => ({ label: fact.label, value: fact.copyable as string, wide: true })),
   ];
 
+  /**
+   * Which cell gives way when the strip cannot fit a phone.
+   *
+   * The copyable one, always — it is repeated in full in the details precisely
+   * because it truncates, and a clipped identifier still reads as an
+   * identifier. A clipped NUMBER does not: "120,5 kW" cut to "1." is not a
+   * smaller amount of truth, it is a different figure. So a non-copyable cell
+   * keeps its content width and the copyable cell takes what is left, down to
+   * the floor its value sets below.
+   *
+   * With no copyable value there is no such candidate, and equal columns are
+   * the fairest split.
+   */
+  const stripHasCopyable = visibleFacts.some((fact) => fact.copyable !== undefined);
+  const compactFlex = (fact: DetailKeyFact) =>
+    stripHasCopyable ? (fact.copyable !== undefined ? "1 1 auto" : "0 0 auto") : 1;
+
   const expandLabel = `Ver ${hiddenCount} dato${hiddenCount === 1 ? "" : "s"} más`;
   const collapseLabel = "Ocultar detalles";
   // The phone shows the bare count, but the accessible name stays the sentence:
@@ -250,13 +267,16 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
             <Box
               key={fact.label}
               sx={{
-                flex: 1,
+                // Equal columns on a wide strip; on a phone the cells are sized
+                // by what they hold, so a short value is not truncated to make
+                // room for a long one to have space to spare.
+                flex: { xs: compactFlex(fact), sm: 1 },
                 minWidth: 0,
                 display: "flex",
                 flexDirection: { xs: "row", sm: "column" },
                 alignItems: { xs: "center", sm: "flex-start" },
-                gap: { xs: 0.75, sm: 0.25 },
-                px: { xs: 1.5, sm: 3 },
+                gap: { xs: 0.5, sm: 0.25 },
+                px: { xs: 1, sm: 3 },
                 py: { xs: 0.75, sm: 1.5 },
                 ...(index > 0 && { borderLeft: "1px solid", borderColor: colors.border.light }),
               }}
@@ -273,7 +293,19 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
               >
                 {fact.label}
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0, maxWidth: "100%" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  maxWidth: "100%",
+                  // A floor for the value AND its copy button together. The
+                  // copyable cell is the one that gives way, and without this it
+                  // gave way entirely: clipped to a character and a half it
+                  // still cost strip width while telling the reader nothing.
+                  minWidth: fact.copyable !== undefined ? { xs: 72, sm: 0 } : 0,
+                }}
+              >
                 <Typography
                   variant="body2"
                   component="div"
