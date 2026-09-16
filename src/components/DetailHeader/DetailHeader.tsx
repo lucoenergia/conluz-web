@@ -16,6 +16,26 @@ import { ActionStatus } from "../ActionStatus";
 /** How long the copy button shows its confirmation before reverting. */
 const COPY_FEEDBACK_MS = 2000;
 
+/**
+ * A 44px touch target that costs no vertical space.
+ *
+ * The theme grows every small control to 44px DRAWN under a coarse pointer,
+ * which is right almost everywhere and wrong here: these two controls sit in a
+ * strip whose whole purpose is to keep the collapsed header inside a phone's
+ * first viewport, and they were setting its row height. `coarseHitArea` makes
+ * the same trade the breadcrumb links make — the drawn size stays deliberate,
+ * an absolutely-positioned overlay carries the finger target — so the theme's
+ * minimums are cleared inside the very media query that would apply them.
+ */
+const stripHitArea = {
+  ...sxStyles.coarseHitArea,
+  "@media (pointer: coarse)": {
+    ...sxStyles.coarseHitArea["@media (pointer: coarse)"],
+    minWidth: 0,
+    minHeight: 0,
+  },
+} as const;
+
 export interface DetailKeyFact {
   label: string;
   /** A string gets the strip's own value styling; a node renders as-is. */
@@ -90,6 +110,8 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   useEffect(() => () => clearTimeout(feedbackTimer.current), []);
 
   const isResolved = !isLoading && !error;
+  const hasSubtitle = subtitle !== undefined && subtitle !== null;
+  const hasSubtitleRow = hasSubtitle || (isResolved && isCompact && Boolean(status));
 
   const facts: readonly DetailKeyFact[] = keyFacts ?? [];
   // On xs the strip holds two cells at most; anything beyond moves into the
@@ -138,6 +160,9 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   return (
     <Paper
       elevation={0}
+      // The anchor the visual suite measures the collapsed header against: the
+      // 120px budget on a 390px viewport is the whole point of the redesign.
+      data-testid="detail-header"
       sx={{
         // The shared panel surface, minus its padding: the strip and the details
         // are full-bleed inside the card, so each section pads itself.
@@ -148,7 +173,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
         boxSizing: "border-box",
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, p: { xs: 2, sm: 3 } }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, px: { xs: 2, sm: 3 }, py: { xs: 1.25, sm: 3 } }}>
         <Box sx={{ display: "flex", flexShrink: 0, color: "primary.main", mt: 0.25 }}>{icon}</Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -159,7 +184,9 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
               component="h1"
               tabIndex={titleRef ? -1 : undefined}
               sx={{
+                typography: { xs: "h6", sm: "h5" },
                 fontWeight: 700,
+                lineHeight: 1.25,
                 color: colors.text.primary,
                 minWidth: 0,
                 // Focused programmatically after an action, so the ring is
@@ -173,29 +200,35 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
             >
               {title}
             </Typography>
-            {isResolved && status}
+            {/* On a phone the badge joins the subtitle line instead: left in the
+                title row it takes a whole line of its own the moment the name
+                wraps, which is most names at 390px. */}
+            {isResolved && !isCompact && status}
           </Box>
 
-          {subtitle !== undefined && subtitle !== null && (
+          {(hasSubtitleRow) && (
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
                 gap: 0.5,
-                mt: 0.5,
+                mt: 0.25,
                 minWidth: 0,
                 color: colors.text.subtle,
                 "& .MuiSvgIcon-root": { fontSize: 18, flexShrink: 0 },
               }}
             >
+              {isResolved && isCompact && status}
               {subtitleIcon}
-              <Typography
-                variant="body2"
-                component="div"
-                sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-              >
-                {subtitle}
-              </Typography>
+              {subtitle !== undefined && subtitle !== null && (
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                >
+                  {subtitle}
+                </Typography>
+              )}
             </Box>
           )}
         </Box>
@@ -224,7 +257,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                 alignItems: { xs: "center", sm: "flex-start" },
                 gap: { xs: 0.75, sm: 0.25 },
                 px: { xs: 1.5, sm: 3 },
-                py: { xs: 1, sm: 1.5 },
+                py: { xs: 0.75, sm: 1.5 },
                 ...(index > 0 && { borderLeft: "1px solid", borderColor: colors.border.light }),
               }}
             >
@@ -262,7 +295,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                     onClick={() => void handleCopy(fact)}
                     aria-label={`Copiar ${fact.label}`}
                     sx={{
-                      ...sxStyles.touchTarget,
+                      ...stripHitArea,
                       flexShrink: 0,
                       color: "primary.main",
                       bgcolor: colors.brand.surface,
@@ -294,6 +327,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
             >
               <Button
                 variant="text"
+                size="small"
                 onClick={() => setAreDetailsOpen((open) => !open)}
                 aria-expanded={areDetailsOpen}
                 aria-controls={detailsId}
@@ -306,7 +340,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
                     }}
                   />
                 }
-                sx={{ ...sxStyles.touchTarget, color: "primary.main", fontWeight: 600, whiteSpace: "nowrap", px: 1 }}
+                sx={{ ...stripHitArea, color: "primary.main", fontWeight: 600, whiteSpace: "nowrap", px: 1 }}
               >
                 {visibleToggleLabel}
               </Button>

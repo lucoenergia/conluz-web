@@ -228,6 +228,21 @@ const FIXED_PLANT = {
   connectionDate: "2023-05-10",
 };
 
+/**
+ * The plant fixture plus a linked supply. Kept separate from FIXED_PLANT so the
+ * sharing-agreement baselines, which share that fixture, stay byte-identical.
+ * The detail header needs it: without a linked supply it would have four
+ * details rather than five, and the "+5" toggle is part of what AC1 specifies.
+ */
+const FIXED_PLANT_WITH_SUPPLY = {
+  ...FIXED_PLANT,
+  supply: {
+    id: FIXED_SUPPLY_ID,
+    code: "ES0031300806333002ET0F",
+    name: "Casa de Luco",
+  },
+};
+
 const PAGED_PLANTS = {
   items: [FIXED_PLANT],
   size: 10000,
@@ -574,6 +589,23 @@ async function mockSharingAgreementsPlantRoutes(page: Page, agreements: unknown[
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(agreements),
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: the plant detail page's own plant. Registered AFTER mockAllApiRoutes()
+// so it wins over that file's broad, deliberately-empty /plants mock.
+// ---------------------------------------------------------------------------
+
+async function mockPlantDetailRoutes(page: Page) {
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}`) && !url.href.includes("sharing-agreements"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FIXED_PLANT_WITH_SUPPLY),
       }),
   );
 }
@@ -1677,6 +1709,78 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-kw-rounding-caveat.png", { fullPage: true });
+  });
+
+  // -------------------------------------------------------------------------
+  // Plant detail header
+  // -------------------------------------------------------------------------
+
+  async function openPlantDetail(page: Page) {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockPlantDetailRoutes(page);
+
+    await page.goto(`/production/${FIXED_PLANT_ID}`);
+    await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();
+    await stabilizePage(page);
+  }
+
+  test("plant detail page", async ({ page }) => {
+    await openPlantDetail(page);
+
+    await expect(page).toHaveScreenshot("plant-detail.png", { fullPage: true });
+  });
+
+  test("plant detail page (details expanded)", async ({ page }) => {
+    await openPlantDetail(page);
+
+    await page.getByRole("button", { name: /^Ver \d+ datos? más$/ }).click();
+    await expect(page.getByText("HUAWEI")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("plant-detail-expanded.png", { fullPage: true });
+  });
+
+  /**
+   * AC1. The redesign exists because the old header pushed the page's content
+   * off a phone's first viewport, so the budget is the acceptance criterion
+   * itself rather than a stylistic preference — measured, not eyeballed.
+   */
+  test("AC1: the collapsed headers fit a 390px viewport", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The 120px budget is specified against a 390px viewport.");
+
+    await openPlantDetail(page);
+
+    const plantHeader = await page.getByTestId("detail-header").boundingBox();
+    testInfo.annotations.push({ type: "plant header height", description: `${plantHeader?.height}px` });
+    console.log(`AC1 plant header height: ${plantHeader?.height}px`);
+    expect(plantHeader?.height).toBeLessThanOrEqual(120);
+  });
+
+  /**
+   * The agreement header is measured too, but against a regression guard rather
+   * than AC1's figure. AC1 states its 120px budget for a PLANT, and this header
+   * carries two things a plant's does not: a status badge and a link to the
+   * plant it belongs to. At 390px the fixture's name ("Reparto vecinos bloque
+   * A") also takes two lines on its own. The bound below exists to catch the
+   * header growing further, and is deliberately not dressed up as the AC.
+   */
+  test("the collapsed agreement header stays within its measured budget at 390px", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is measured against a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    const agreementHeader = await page.getByTestId("detail-header").boundingBox();
+    testInfo.annotations.push({ type: "agreement header height", description: `${agreementHeader?.height}px` });
+    console.log(`Agreement header height: ${agreementHeader?.height}px`);
+    expect(agreementHeader?.height).toBeLessThanOrEqual(150);
   });
 
   // Note: "import partners modal" is intentionally omitted. See file header.
