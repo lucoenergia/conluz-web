@@ -1684,7 +1684,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
     await page.getByRole("menuitem", { name: "Editar datos del acuerdo" }).click();
 
     await expect(page.getByLabel("Nombre", { exact: false })).toHaveValue(DRAFT_AGREEMENT.name);
@@ -1701,7 +1701,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
     await page.getByRole("menuitem", { name: "Eliminar" }).click();
 
     await expect(page.getByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeVisible();
