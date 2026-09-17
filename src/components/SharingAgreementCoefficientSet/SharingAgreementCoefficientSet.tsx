@@ -5,7 +5,9 @@ import {
   Button,
   Checkbox,
   Chip,
+  ClickAwayListener,
   Divider,
+  IconButton,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -29,6 +31,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
@@ -235,6 +238,46 @@ function formatSumCaption(
   const gapPercent = formatCoefficientPercentage(Math.abs(gapUnits) / COEFFICIENT_SCALE);
   return `${kwSummary} (con redondeo a céntimos) — ${gapLabel} ${gapPercent} por ajustar en modo porcentaje.`;
 }
+
+/**
+ * "Potencia asignada" is the single most misread figure on this page — it is a
+ * share of installed power, not an entitlement to energy. The explanation used
+ * to sit as a paragraph above the list, which pushed the table down and added
+ * a third block of prose to an already dense screen. It now travels with the
+ * column itself: an info affordance the reader opens where the number is.
+ *
+ * Opens on hover/focus like any tooltip, and on tap on touch devices, where
+ * hover does not exist — the same pattern GraphCard uses.
+ */
+const ASSIGNED_POWER_EXPLANATION =
+  "Potencia asignada: parte de la potencia instalada que corresponde a cada punto según su coeficiente. No es potencia garantizada: la energía que recibe depende de lo que produzca la planta en cada momento.";
+
+const AssignedPowerInfoButton: FC = () => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <ClickAwayListener onClickAway={() => setOpen(false)}>
+      <Tooltip
+        title={ASSIGNED_POWER_EXPLANATION}
+        open={open}
+        onOpen={() => setOpen(true)}
+        onClose={() => setOpen(false)}
+        enterTouchDelay={0}
+        leaveTouchDelay={8000}
+        slotProps={{ tooltip: { sx: { maxWidth: 320, fontSize: fontSizes.sm, lineHeight: 1.5 } } }}
+      >
+        <IconButton
+          size="small"
+          aria-label="Qué es la potencia asignada"
+          onClick={() => setOpen((isOpen) => !isOpen)}
+          sx={{ color: colors.text.secondary, p: 0.25, ml: 0.25 }}
+        >
+          <InfoOutlinedIcon sx={{ fontSize: fontSizes.lg }} />
+        </IconButton>
+      </Tooltip>
+    </ClickAwayListener>
+  );
+};
 
 export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetProps> = ({
   plantId,
@@ -807,21 +850,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       {!isEditing && authoringActions}
 
-      {/* Stated above the list and visible without hover: "Potencia asignada" is
-          the single most misread figure on this page. It is a share of installed
-          power, not an entitlement to energy. */}
-      {!isEditing && (
-        <Typography
-          sx={{ fontSize: fontSizes.lg, lineHeight: 1.5, color: colors.text.body, mb: 2.5, textWrap: "pretty" }}
-        >
-          <Box component="strong" sx={{ fontWeight: 600 }}>
-            Potencia asignada:
-          </Box>{" "}
-          parte de la potencia instalada que corresponde a cada punto según su coeficiente. No es potencia garantizada:
-          la energía que recibe depende de lo que produzca la planta en cada momento.
-        </Typography>
-      )}
-
       {/* Row 1, editing mode: unit toggle (fixed shape) + search — search still
           filters `rows` while editing, so it must stay available here too. */}
       {isEditing && (
@@ -1031,9 +1059,21 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {isEditing && inputUnit === "kw" ? "% equivalente" : "Potencia asignada"}
-                    </Typography>
+                    {/* Two shapes on purpose: only the "Potencia asignada" header
+                        carries the info affordance, and the kW-editing header
+                        keeps the bare Typography so its metrics stay untouched. */}
+                    {isEditing && inputUnit === "kw" ? (
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                        % equivalente
+                      </Typography>
+                    ) : (
+                      <Box sx={{ display: "inline-flex", alignItems: "center" }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                          Potencia asignada
+                        </Typography>
+                        <AssignedPowerInfoButton />
+                      </Box>
+                    )}
                   </TableCell>
                   {showStateColumns && (
                     <TableCell>
@@ -1091,6 +1131,18 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
           </TableContainer>
 
           {/* Mobile stacked cards */}
+          {/* The card list has no column headers to hang the info affordance on,
+              so it gets one labelled line of its own — still adjacent to the
+              kW figures it explains, unlike the paragraph it replaces. */}
+          {!(isEditing && inputUnit === "kw") && (
+            <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", mb: 0.5 }}>
+              <Typography variant="caption" sx={{ color: colors.text.secondary }}>
+                Potencia asignada
+              </Typography>
+              <AssignedPowerInfoButton />
+            </Box>
+          )}
+
           <Box sx={{ display: { xs: "flex", sm: "none" }, flexDirection: "column" }}>
             {isEditing
               ? filteredRows.map((row) => (

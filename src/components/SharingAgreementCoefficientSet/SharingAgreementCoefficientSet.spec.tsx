@@ -132,7 +132,9 @@ describe("SharingAgreementCoefficientSet", () => {
 
   it("renders the assigned-power column, derived from coefficient x installedPowerKw", () => {
     renderWithTheme({ coefficients });
-    expect(screen.getByText("Potencia asignada")).toBeInTheDocument();
+    // Twice: the desktop column header and the mobile card list's own label,
+    // one of which is hidden by a media query jsdom does not apply.
+    expect(screen.getAllByText("Potencia asignada").length).toBeGreaterThan(0);
     // Vivienda A: 40% of 100 kW
     expect(screen.getAllByText("40,00 kW").length).toBeGreaterThan(0);
   });
@@ -1430,12 +1432,20 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
     ).toBeVisible();
   });
 
-  // AC14 — the figure most likely to be misread as an entitlement.
-  it("explains the assigned-power column above the list, visible without hover", () => {
+  // AC14 — the figure most likely to be misread as an entitlement. The
+  // explanation used to be a paragraph above the list; it now sits on the
+  // column itself so the dense read-only screen carries less standing prose.
+  it("explains the assigned-power column from an info affordance on the column", async () => {
+    const user = userEvent.setup();
     renderWithTheme({ coefficients, agreementStatus: DRAFT });
 
-    expect(screen.getByText(/parte de la potencia instalada que corresponde a cada punto/)).toBeVisible();
-    expect(screen.getByText(/No es potencia garantizada/)).toBeVisible();
+    expect(screen.queryByText(/parte de la potencia instalada que corresponde a cada punto/)).not.toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: "Qué es la potencia asignada" })[0]);
+
+    const explanation = await screen.findByRole("tooltip");
+    expect(explanation).toHaveTextContent(/parte de la potencia instalada que corresponde a cada punto/);
+    expect(explanation).toHaveTextContent(/No es potencia garantizada/);
   });
 
   // AC9 — importing authors coefficients, so it belongs next to manual editing.
