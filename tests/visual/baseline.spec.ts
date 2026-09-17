@@ -666,6 +666,7 @@ const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
   {
     id: "hist-1",
     supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
     plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
     sharingAgreement: { id: FIXED_SHARING_AGREEMENTS[2].id, name: "Reparto original 2022", status: "SUPERSEDED" },
     coefficient: 0.1,
@@ -676,6 +677,7 @@ const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
   {
     id: "hist-2",
     supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
     plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
     sharingAgreement: { id: FIXED_SHARING_AGREEMENTS[0].id, name: "Reparto vecinos bloque A", status: "PUBLISHED" },
     coefficient: 0.25,
@@ -686,6 +688,7 @@ const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
   {
     id: "hist-3",
     supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
     plant: { id: SECOND_PLANT_ID, name: "Planta Solar Sur" },
     sharingAgreement: { id: "sa-sur", name: "Reparto Sur 2024", status: "PUBLISHED" },
     coefficient: 0.4,
@@ -696,6 +699,7 @@ const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
   {
     id: "hist-pending",
     supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
     plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
     sharingAgreement: { id: FIXED_SHARING_AGREEMENTS[1].id, name: "Reparto ampliación bloque B", status: "DRAFT" },
     coefficient: 0.3,
@@ -919,6 +923,63 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("supply-detail.png", { fullPage: true });
+  });
+
+  // The coefficient history section is reachable by the owner as well as by an
+  // admin: /supply-points/:id carries no community guard and the endpoint
+  // authorises the supply owner. These three cover both roles and the empty
+  // state, on a supply that genuinely takes part in two plants.
+
+  test("supply detail coefficient history (admin, two plants)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-admin.png", { fullPage: true });
+
+    // No plantId filter here, so both plants group; the draft's pending period
+    // is withheld even though an admin receives it.
+    await expect(page.getByRole("heading", { name: "Planta Solar Norte" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Planta Solar Sur" })).toBeVisible();
+    await expect(page.getByText("Reparto ampliación bloque B")).toHaveCount(0);
+    // An admin of this community can follow a link to the agreement.
+    await expect(page.getByRole("link", { name: "Reparto vecinos bloque A" })).toBeVisible();
+  });
+
+  test("supply detail coefficient history (owner, no agreement links)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-owner.png", { fullPage: true });
+
+    // Same periods, but the agreement route is CommunityAdminRoute-guarded, so
+    // an owner is shown names rather than links that would redirect them.
+    await expect(page.getByText("Reparto vecinos bloque A")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Reparto vecinos bloque A" })).toHaveCount(0);
+  });
+
+  test("supply detail coefficient history (empty)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await mockSupplyPartitionCoefficientRoutes(page, []);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expect(page.getByText("Sin periodos aplicados")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-empty.png", { fullPage: true });
   });
 
   test("import supplies modal open", async ({ page }) => {
