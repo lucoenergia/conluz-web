@@ -2,6 +2,8 @@ import { useGetSharingAgreementById, useGetSharingAgreementPartitionCoefficients
 import { useGetPlantById } from "../../api/plants/plants";
 import type { PlantResponse, SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import { isNotFoundError } from "./useSharingAgreementsData";
+import { useActiveCommunity } from "../../context/community.context";
+import { isPlantOutsideActiveCommunity } from "./plantCommunityScope";
 
 export interface SharingAgreementDetailData {
   agreement?: SharingAgreementResponse;
@@ -15,6 +17,8 @@ export interface SharingAgreementDetailData {
 }
 
 export function useSharingAgreementDetailData(plantId: string, sharingAgreementId: string): SharingAgreementDetailData {
+  const activeCommunityId = useActiveCommunity();
+
   const {
     data: agreement,
     isLoading: isLoadingAgreement,
@@ -33,7 +37,13 @@ export function useSharingAgreementDetailData(plantId: string, sharingAgreementI
     error: plantError,
   } = useGetPlantById(plantId);
 
-  const notFound = isNotFoundError(agreementError) || isNotFoundError(coefficientsError) || isNotFoundError(plantError);
+  // See useSharingAgreementsData: a plant outside the selected community is
+  // authorised but must not be rendered under the wrong community's name.
+  const notFound =
+    isNotFoundError(agreementError) ||
+    isNotFoundError(coefficientsError) ||
+    isNotFoundError(plantError) ||
+    isPlantOutsideActiveCommunity(plant, activeCommunityId);
 
   return {
     agreement,

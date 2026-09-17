@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useState, type FC } from "react";
 import { Header } from "../components/Header/Header";
-import { Outlet, useNavigate } from "react-router";
+import { Navigate, Outlet, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
 import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
@@ -20,6 +20,7 @@ import { useActiveCommunity } from "../context/community.context";
 import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
 import { CommunityRole } from "../api/models";
 import { resolveLandingRoute } from "../utils/routes";
+import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";
 
 export const AuthenticatedLayout: FC = () => {
   const { width } = useWindowDimensions();
@@ -31,6 +32,7 @@ export const AuthenticatedLayout: FC = () => {
   const activeCommunityRole = useActiveCommunityRole();
   const isPlatformAdmin = useIsPlatformAdmin();
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
+  const communitySwitchRedirect = useCommunitySwitchRedirect();
 
   const hasActiveCommunity = activeCommunity !== null;
 
@@ -114,7 +116,28 @@ export const AuthenticatedLayout: FC = () => {
                 </Box>
               ) : (
                 <Suspense fallback={<RouteFallback />}>
-                  <Outlet />
+                  {communitySwitchRedirect ? (
+                    <Navigate to={communitySwitchRedirect} replace />
+                  ) : (
+                    /*
+                     * Keyed on the active community so that switching remounts the
+                     * routed page from scratch. React Query invalidation cannot reach
+                     * data a page has already copied into useState -- the integrations
+                     * form latched a community's credentials and would have saved them
+                     * to the next one -- and a structural reset covers every screen
+                     * that does this, including ones not written yet.
+                     *
+                     * Only the routed page remounts: the header (and with it the
+                     * community selector), the side menu and the error/success
+                     * providers all live outside this Outlet.
+                     *
+                     * The "none" -> id step on first load remounts each page once. That
+                     * costs nothing in practice: community-scoped queries are all gated
+                     * on `enabled: !!activeCommunityId` so the first mount fires none of
+                     * them, and entity-scoped ones dedupe by key.
+                     */
+                    <Outlet key={activeCommunity ?? "none"} />
+                  )}
                 </Suspense>
               )}
               <SuccessDisplay />

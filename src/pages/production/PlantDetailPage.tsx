@@ -9,12 +9,14 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { StatsCard } from "../../components/StatsCard";
 import { GraphFilter } from "../../components/Graph/GraphFilter";
 import { PlantDetailHeader } from "../../components/PlantDetailHeader";
-import { useGetPlantById } from "../../api/plants/plants";
+import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { useErrorDispatch } from "../../context/error.context";
 import { useActiveCommunity } from "../../context/community.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
+import { EmptyState } from "../../components/EmptyState";
 
 export const PlantDetailPage: FC = () => {
   const { plantId = "" } = useParams();
@@ -99,7 +101,8 @@ export const PlantDetailPage: FC = () => {
     };
   }, [startDate, endDate]);
 
-  const { data: plant, isLoading: plantLoading, error: plantError } = useGetPlantById(plantId);
+  const { plant, isLoading: plantLoading, isNotFound: isPlantNotFound, error: plantError } =
+    usePlantInActiveCommunity(plantId);
 
     // Fetch hourly production data when DAY filter is selected
   const {
@@ -307,6 +310,21 @@ export const PlantDetailPage: FC = () => {
       productionTrend,
     };
   }, [productionData, prevProductionData]);
+
+  // The production charts are community-scoped and re-key on their own; only the
+  // plant identity is pinned to the URL. Rendering both would put one
+  // community's plant above another community's whole-community totals.
+  if (isPlantNotFound) {
+    return (
+      <Box sx={sxStyles.pageContainer}>
+        <EmptyState
+          icon={SearchOffIcon}
+          title="Planta no encontrada"
+          subtitle="Esta planta no existe o no tienes acceso a su comunidad."
+        />
+      </Box>
+    );
+  }
 
   return (
     <Box

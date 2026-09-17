@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { useGetPlantById } from "../../api/plants/plants";
+import { useActiveCommunity } from "../../context/community.context";
+import { isPlantOutsideActiveCommunity } from "./plantCommunityScope";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 
@@ -47,6 +49,8 @@ export interface SharingAgreementsData {
 }
 
 export function useSharingAgreementsData(plantId: string): SharingAgreementsData {
+  const activeCommunityId = useActiveCommunity();
+
   const {
     data: agreements = [],
     isLoading: isLoadingAgreements,
@@ -61,7 +65,13 @@ export function useSharingAgreementsData(plantId: string): SharingAgreementsData
 
   const counts = useMemo(() => computeSharingAgreementCounts(agreements), [agreements]);
 
-  const notFound = isNotFoundError(agreementsError) || isNotFoundError(plantError);
+  // A plant from another of the user's communities is not a 404 -- the backend
+  // authorises it on membership alone -- but it must not be presented under the
+  // selected community's name, so it renders the same dedicated state.
+  const notFound =
+    isNotFoundError(agreementsError) ||
+    isNotFoundError(plantError) ||
+    isPlantOutsideActiveCommunity(plant, activeCommunityId);
 
   return {
     agreements,

@@ -6,6 +6,8 @@ import { CoefficientHistory } from "../CoefficientHistory";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityRole } from "../../hooks/useActiveCommunityRole";
 import { CommunityRole } from "../../api/models";
+// eslint no-restricted-imports allowlist (see eslint.config.js): the response is
+// scoped in this component by selectPeriodsInCommunity.
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import { selectPeriodsInCommunity } from "../../pages/production/coefficientHistory";
 

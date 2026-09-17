@@ -8,6 +8,9 @@ import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
 import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
 import { useGetSuppliesByUserId } from "../api/users/users";
+// eslint no-restricted-imports allowlist (see eslint.config.js): the supply id
+// driving these comes from a community-scoped list, and the keyed Outlet
+// remounts this page when the community changes.
 import {
   useGetAllSupplies,
   useGetSupplyDailyProduction,
@@ -119,11 +122,15 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
   );
 
   useEffect(() => {
-    // Preselect the first supply point once options are loaded
+    // Preselect the first supply point once options are loaded.
+    //
+    // `value` and `onChange` belong in the dependency list: without them this
+    // ran against a stale `value` and, having already preselected once, never
+    // corrected itself when the options were replaced by a different set.
     if (options.length && value === null) {
       onChange(options[0].value);
     }
-  }, [options]);
+  }, [options, value, onChange]);
 
   return (
     <Autocomplete

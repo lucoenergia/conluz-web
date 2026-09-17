@@ -7,6 +7,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ErrorIcon from "@mui/icons-material/Error";
 import { AppModal } from "./AppModal";
+import { useActiveCommunity } from "../../context/community.context";
 import { useCreateUsersWithFile } from "../../api/users/users";
 import type { CreateUsersInBulkResponse } from "../../api/models";
 import { radii, shadows, alphas, colors, fontSizes, interactiveTransition} from "../../theme/tokens";
@@ -24,6 +25,11 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
   onClose,
   onImportComplete,
 }) => {
+  // Bulk import is community-scoped on the server, but the endpoint takes the
+  // target as a query param rather than in the path. Omitting it leaves the
+  // destination to a backend fallback instead of to the community the user
+  // is actually looking at.
+  const activeCommunityId = useActiveCommunity();
   const [step, setStep] = useState<Step>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<CreateUsersInBulkResponse | null>(null);
@@ -58,13 +64,13 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
   };
 
   const handleImport = () => {
-    if (!file) return;
+    if (!file || !activeCommunityId) return;
 
     setStep("uploading");
     setUploadError(null);
 
     mutation.mutate(
-      { data: { file } },
+      { data: { file }, params: { communityId: activeCommunityId } },
       {
         onSuccess: (data) => {
           setResult(data);
@@ -251,7 +257,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = ({
             </Button>
             <Button
               variant="contained"
-              disabled={!file}
+              disabled={!file || !activeCommunityId}
               onClick={handleImport}
               sx={{
                 minWidth: "120px",
