@@ -10,7 +10,7 @@ import type { SharingAgreementResponseStatus } from './sharingAgreementResponseS
 import type { SharingAgreementResponseCreatedBy } from './sharingAgreementResponseCreatedBy';
 import type { SharingAgreementResponseUpdatedAt } from './sharingAgreementResponseUpdatedAt';
 import type { SharingAgreementResponseUpdatedBy } from './sharingAgreementResponseUpdatedBy';
-import type { SharingAgreementFileResponse } from './sharingAgreementFileResponse';
+import type { SharingAgreementResponseFile } from './sharingAgreementResponseFile';
 
 export interface SharingAgreementResponse {
   /** Internal unique identifier of the sharing agreement */
@@ -34,5 +34,5 @@ export interface SharingAgreementResponse {
   /** Identifier of the user who last edited the agreement. Null means it has never been edited since creation */
   updatedBy: SharingAgreementResponseUpdatedBy;
   /** Metadata of the latest evidence file uploaded for this agreement. Null means no file has been uploaded, never that it wasn't loaded */
-  file: SharingAgreementFileResponse;
+  file: SharingAgreementResponseFile;
 }

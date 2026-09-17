@@ -22,6 +22,7 @@ const coefficient = (id: string, name: string, validFrom: string): SharingAgreem
   validFrom,
   validTo: null,
   endDate: null,
+  currentCoefficient: null,
 });
 
 function setup(coefficients: SharingAgreementPartitionCoefficientResponse[]) {

@@ -5,6 +5,10 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { SupplyReferenceResponse } from './supplyReferenceResponse';
+import type { CommunityReferenceResponse } from './communityReferenceResponse';
+import type { PlantReferenceResponse } from './plantReferenceResponse';
+import type { SharingAgreementReferenceResponse } from './sharingAgreementReferenceResponse';
 import type { PartitionCoefficientResponseValidFrom } from './partitionCoefficientResponseValidFrom';
 import type { PartitionCoefficientResponseValidTo } from './partitionCoefficientResponseValidTo';
 
@@ -12,14 +16,18 @@ export interface PartitionCoefficientResponse {
   /** Internal unique identifier */
   id: string;
   /** Supply this coefficient belongs to */
-  supplyId: string;
+  supply: SupplyReferenceResponse;
+  /** Community the supply belongs to */
+  community: CommunityReferenceResponse;
   /** Plant this coefficient belongs to. Disambiguates a supply's timeline when it participates in more than one plant. */
-  plantId: string;
+  plant: PlantReferenceResponse;
+  /** Sharing agreement that authored this coefficient. */
+  sharingAgreement: SharingAgreementReferenceResponse;
   /** Partition coefficient value */
   coefficient: number;
   /** Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated. */
   validFrom: PartitionCoefficientResponseValidFrom;
-  /** End of the period (exclusive). Null means this is the currently active coefficient. */
+  /** End of the period (exclusive). Null means the period is still open; combined with a non-null validFrom that makes this the currently active coefficient for its plant. */
   validTo: PartitionCoefficientResponseValidTo;
   /** Timestamp when this record was created */
   createdAt: string;

@@ -44,7 +44,7 @@
  *   changes. The modal itself is unit-tested in ImportPartnersModal.spec.tsx.
  */
 
-import { test, expect, type Page, type Route } from "@playwright/test";
+import { test, expect, type Page, type Route, type TestInfo } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Fixed fixtures — these values NEVER change between runs
@@ -215,6 +215,9 @@ const EMPTY_PRODUCTION: unknown[] = [];
 
 /** Stable plant UUID used by the sharing-agreements baselines. */
 const FIXED_PLANT_ID = "dddddddd-eeee-ffff-0000-111111111111";
+// A second plant the same supply also participates in. Only the coefficient
+// history needs it, so it has no PlantResponse fixture of its own.
+const SECOND_PLANT_ID = "dddddddd-eeee-ffff-0000-222222222222";
 
 const FIXED_PLANT = {
   id: FIXED_PLANT_ID,
@@ -323,6 +326,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2024-01-01T00:00:00Z",
     endState: "OPEN",
+    currentCoefficient: { coefficient: 0.25, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-2",
@@ -330,6 +334,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     coefficient: 0.25,
     applicationState: "PENDING",
     endState: "OPEN",
+    currentCoefficient: null,
   },
   {
     coefficientId: "coef-3",
@@ -338,6 +343,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2024-02-01T00:00:00Z",
     endState: "OPEN_ORPHAN",
+    currentCoefficient: { coefficient: 0.2, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-4",
@@ -346,6 +352,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2023-01-01T00:00:00Z",
     endState: "PENDING_SUCCESSION",
+    currentCoefficient: { coefficient: 0.15, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-5",
@@ -355,6 +362,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2022-01-01T00:00:00Z",
     endState: "DERIVED",
     endDate: "2023-12-31T00:00:00Z",
+    currentCoefficient: { coefficient: 0.1, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-6",
@@ -364,6 +372,7 @@ const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2024-03-01T00:00:00Z",
     endState: "CLOSED",
     endDate: "2024-05-01T00:00:00Z",
+    currentCoefficient: { coefficient: 0, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
 ];
 
@@ -379,6 +388,8 @@ const FIXED_COEFFICIENTS_ALL_PENDING = [
     coefficient: 0.4,
     applicationState: "PENDING",
     endState: "OPEN",
+    // Raised by this draft: 0.35 -> 0.40.
+    currentCoefficient: { coefficient: 0.35, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-2",
@@ -386,6 +397,8 @@ const FIXED_COEFFICIENTS_ALL_PENDING = [
     coefficient: 0.35,
     applicationState: "PENDING",
     endState: "OPEN",
+    // Lowered by this draft: 0.40 -> 0.35, so one baseline shows both signs.
+    currentCoefficient: { coefficient: 0.4, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
   },
   {
     coefficientId: "coef-3",
@@ -393,6 +406,8 @@ const FIXED_COEFFICIENTS_ALL_PENDING = [
     coefficient: 0.25,
     applicationState: "PENDING",
     endState: "OPEN",
+    // Genuinely on nothing yet — the "—" branch of AC8, in the same baseline.
+    currentCoefficient: null,
   },
 ];
 
@@ -434,6 +449,18 @@ async function mockAllApiRoutes(page: Page, currentUser: object) {
   // accidentally catching the communities handler.
   const suppliesHandler = async (route: Route) => {
     const url = route.request().url();
+    // /supplies/{id}/partition-coefficients (and its /active and /at siblings)
+    // sit under the supply URL space, so without this guard they fall through
+    // to the branches below and are answered with the supply object or the
+    // paged supply list. Either shape crashes the consumer, which expects an
+    // array -- and the failure surfaces as a blank section rather than as a
+    // mock problem. Any supply id, not just FIXED_SUPPLY_ID: the coefficient
+    // rows of an agreement carry their own ids. A test that needs real periods
+    // registers mockSupplyPartitionCoefficientRoutes, which wins by being
+    // registered later.
+    if (url.includes("/partition-coefficients")) {
+      return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    }
     if (url.includes(`/supplies/${FIXED_SUPPLY_ID}`)) {
       if (url.includes("/production/") || url.includes("/consumption/")) {
         return route.fulfill({
@@ -622,6 +649,87 @@ async function mockPlantDetailRoutes(page: Page) {
 // — the file panel's displayed state (filename/date vs. empty-state copy)
 // comes from `agreement.file` itself, read directly off the `agreement`
 // fixture passed in above, never from probing this route.
+/**
+ * A supply genuinely participating in two plants, which is the whole point of
+ * the multi-plant contract -- a single-plant fixture validates no grouping at
+ * all. Carries a pending period (validFrom: null) too, so the client-side
+ * filter that hides it from an admin is exercised rather than assumed.
+ *
+ * Deliberately NOT ordered newest-first here: the endpoint returns validFrom
+ * ascending, and the component is what reverses it.
+ */
+// The supply the agreement coefficient fixtures use for "Vivienda A". Distinct
+// from FIXED_SUPPLY_ID, which identifies the standalone supply-detail fixture.
+const HISTORY_SUPPLY_ID = "supply-1";
+
+const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
+  {
+    id: "hist-1",
+    supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+    plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
+    sharingAgreement: { id: FIXED_SHARING_AGREEMENTS[2].id, name: "Reparto original 2022", status: "SUPERSEDED" },
+    coefficient: 0.1,
+    validFrom: "2022-03-01T00:00:00Z",
+    validTo: "2023-01-01T00:00:00Z",
+    createdAt: "2022-02-01T08:00:00Z",
+  },
+  {
+    id: "hist-2",
+    supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+    plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
+    sharingAgreement: { id: FIXED_SHARING_AGREEMENTS[0].id, name: "Reparto vecinos bloque A", status: "PUBLISHED" },
+    coefficient: 0.25,
+    validFrom: "2023-01-01T00:00:00Z",
+    validTo: null,
+    createdAt: "2024-06-15T10:00:00Z",
+  },
+  {
+    id: "hist-3",
+    supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+    plant: { id: SECOND_PLANT_ID, name: "Planta Solar Sur" },
+    sharingAgreement: { id: "sa-sur", name: "Reparto Sur 2024", status: "PUBLISHED" },
+    coefficient: 0.4,
+    validFrom: "2024-04-01T00:00:00Z",
+    validTo: null,
+    createdAt: "2024-03-01T10:00:00Z",
+  },
+  {
+    id: "hist-pending",
+    supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+    plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
+    sharingAgreement: { id: FIXED_SHARING_AGREEMENTS[1].id, name: "Reparto ampliación bloque B", status: "DRAFT" },
+    coefficient: 0.3,
+    validFrom: null,
+    validTo: null,
+    createdAt: "2024-09-01T09:30:00Z",
+  },
+];
+
+/**
+ * Serves the supply coefficient history, honouring the optional plantId filter
+ * exactly as the backend does -- the drawer passes it and must come back with a
+ * single plant's timeline, the supply detail page omits it and gets both.
+ *
+ * Registered AFTER mockAllApiRoutes() so it wins: Playwright matches routes in
+ * reverse registration order.
+ */
+async function mockSupplyPartitionCoefficientRoutes(page: Page, periods: unknown[]) {
+  await page.route(
+    (url) => /\/api\/v1\/supplies\/[^/]+\/partition-coefficients/.test(url.href),
+    (route: Route) => {
+      const plantId = new URL(route.request().url()).searchParams.get("plantId");
+      const body = plantId
+        ? (periods as { plant: { id: string } }[]).filter((period) => period.plant.id === plantId)
+        : periods;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+    },
+  );
+}
+
 async function mockSharingAgreementDetailRoutes(
   page: Page,
   agreementId: string,
@@ -815,6 +923,63 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("supply-detail.png", { fullPage: true });
+  });
+
+  // The coefficient history section is reachable by the owner as well as by an
+  // admin: /supply-points/:id carries no community guard and the endpoint
+  // authorises the supply owner. These three cover both roles and the empty
+  // state, on a supply that genuinely takes part in two plants.
+
+  test("supply detail coefficient history (admin, two plants)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-admin.png", { fullPage: true });
+
+    // No plantId filter here, so both plants group; the draft's pending period
+    // is withheld even though an admin receives it.
+    await expect(page.getByRole("heading", { name: "Planta Solar Norte" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Planta Solar Sur" })).toBeVisible();
+    await expect(page.getByText("Reparto ampliación bloque B")).toHaveCount(0);
+    // An admin of this community can follow a link to the agreement.
+    await expect(page.getByRole("link", { name: "Reparto vecinos bloque A" })).toBeVisible();
+  });
+
+  test("supply detail coefficient history (owner, no agreement links)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-owner.png", { fullPage: true });
+
+    // Same periods, but the agreement route is CommunityAdminRoute-guarded, so
+    // an owner is shown names rather than links that would redirect them.
+    await expect(page.getByText("Reparto vecinos bloque A")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Reparto vecinos bloque A" })).toHaveCount(0);
+  });
+
+  test("supply detail coefficient history (empty)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await mockSupplyPartitionCoefficientRoutes(page, []);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expect(page.getByText("Sin periodos aplicados")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-empty.png", { fullPage: true });
   });
 
   test("import supplies modal open", async ({ page }) => {
@@ -1095,7 +1260,19 @@ test.describe("Visual baselines", () => {
     updatedBy: FIXED_COMMUNITY_ADMIN_USER.id,
   };
 
-  test("sharing agreement detail page (draft, with coefficients)", async ({ page }) => {
+  /**
+   * The current-coefficient readout has two shapes: a column header on the
+   * desktop table, and a self-naming line on the mobile card, which has no
+   * headers. Both DOM trees are always mounted and swapped by a CSS
+   * breakpoint, so asserting the desktop header on mobile finds it hidden
+   * rather than absent.
+   */
+  async function expectCurrentCoefficientShown(page: Page, testInfo: TestInfo) {
+    const label = testInfo.project.name === "desktop" ? page.getByText("Coeficiente actual") : page.getByText(/^Actual /);
+    await expect(label.first()).toBeVisible();
+  }
+
+  test("sharing agreement detail page (draft, with coefficients)", async ({ page }, testInfo) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
@@ -1108,10 +1285,35 @@ test.describe("Visual baselines", () => {
     // and filter chips are hidden entirely — this is what a real user sees.
     await expect(page.getByText("Estado de aplicación")).toHaveCount(0);
 
+    // Both branches of the current-coefficient readout in one shot: two
+    // supplies are already on a coefficient (one raised, one lowered by this
+    // draft) and Local C is on none.
+    await expectCurrentCoefficientShown(page, testInfo);
+
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
   });
 
-  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }) => {
+  test("sharing agreement detail page (draft, no coefficient in force yet)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    // FIXED_COEFFICIENTS_INCOMPLETE deliberately carries no currentCoefficient:
+    // a community's first agreement has nothing in force to compare against.
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_INCOMPLETE, 200);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+
+    // The column is not mounted at all — a column of dashes would cost width
+    // on a 390px viewport to say nothing.
+    await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-no-current-coefficient.png", {
+      fullPage: true,
+    });
+  });
+
+  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }, testInfo) => {
     // FIXED_COEFFICIENTS_MIXED represents a state the backend guarantees a
     // real DRAFT can never reach (APPLIED requires publishing first; revert-
     // to-draft is refused once anything is applied). This test exists solely
@@ -1132,6 +1334,12 @@ test.describe("Visual baselines", () => {
     // shared by both layouts and only render when showStateColumns is true,
     // so "Sin aplicar" being visible proves the same thing on either viewport.
     await expect(page.getByRole("button", { name: "Sin aplicar" })).toBeVisible();
+
+    // Asserted rather than left to the pixels: on a tall desktop fullPage shot
+    // a whole extra column diffs below maxDiffPixelRatio (0.02), so this
+    // baseline passed unchanged even though the column was there. The text
+    // assertion is what actually holds the column present on both viewports.
+    await expectCurrentCoefficientShown(page, testInfo);
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png", { fullPage: true });
   });
@@ -1175,6 +1383,11 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: /^Ver \d+ datos? más$/ }).click();
     await expect(page.getByText("Última edición")).toBeVisible();
     await stabilizePage(page);
+
+    // FIXED_COEFFICIENTS_MIXED carries currentCoefficient on every row, as the
+    // backend sends it whatever the status. The column is still absent: on a
+    // published agreement the row's own value IS the one in force.
+    await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
 
     await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", { fullPage: true });
   });
@@ -1321,6 +1534,69 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-row-actions-menu.png", { fullPage: true });
   });
 
+  test("coefficient history drawer (draft)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_ALL_PENDING, 200);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+
+    // A DRAFT row had no kebab at all before this; now it carries exactly one
+    // entry, and no lifecycle action.
+    await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
+    await expect(page.getByRole("menuitem", { name: "Ver histórico" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Registrar fecha" })).toHaveCount(0);
+    await page.getByRole("menuitem", { name: "Ver histórico" }).click();
+
+    // Assertions are scoped to the panel: several agreement names legitimately
+    // appear both inside it and in the page behind it.
+    const drawer = page.getByTestId("coefficient-history-drawer");
+    await expect(drawer.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
+    // Scoped to the agreement's plant, so the supply's other plant is absent,
+    // and the draft's own pending period never appears on a timeline.
+    await expect(drawer.getByRole("heading", { name: "Planta Solar Norte" })).toBeVisible();
+    await expect(drawer.getByRole("heading", { name: "Planta Solar Sur" })).toHaveCount(0);
+    await expect(drawer.getByText("Reparto ampliación bloque B")).toHaveCount(0);
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("coefficient-history-drawer-draft.png", { fullPage: true });
+    // The screenshot tolerance can absorb a whole panel, so the periods are
+    // asserted as text as well as pixels, on both viewports.
+    await expect(drawer.getByText("25,0000 %")).toBeVisible();
+    await expect(drawer.getByText("Desde 1 ene 2023")).toBeVisible();
+    await expect(drawer.getByText("1 mar 2022 → 1 ene 2023")).toBeVisible();
+  });
+
+  test("coefficient history drawer (superseded)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, SUPERSEDED_AGREEMENT.id, SUPERSEDED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+
+    await navigateToSharingAgreementDetail(page, SUPERSEDED_AGREEMENT.name);
+
+    await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
+    await page.getByRole("menuitem", { name: "Ver histórico" }).click();
+
+    const drawer = page.getByTestId("coefficient-history-drawer");
+    await expect(drawer.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("coefficient-history-drawer-superseded.png", { fullPage: true });
+    // The oldest period belongs to the agreement being viewed, so it is marked
+    // and deliberately not linked back to the page the admin is already on.
+    await expect(drawer.getByText("Este acuerdo")).toBeVisible();
+    await expect(drawer.getByRole("link", { name: "Reparto original 2022" })).toHaveCount(0);
+    // The later period, on another agreement, keeps its link.
+    await expect(drawer.getByRole("link", { name: "Reparto vecinos bloque A" })).toBeVisible();
+    await expect(drawer.getByText("En vigor")).toBeVisible();
+  });
+
   test("sharing agreement coefficient recalculation dialog (Corregir fecha)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -1408,7 +1684,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
     await page.getByRole("menuitem", { name: "Editar datos del acuerdo" }).click();
 
     await expect(page.getByLabel("Nombre", { exact: false })).toHaveValue(DRAFT_AGREEMENT.name);
@@ -1425,7 +1701,7 @@ test.describe("Visual baselines", () => {
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.locator('button:has([data-testid="MoreVertIcon"])').click();
+    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
     await page.getByRole("menuitem", { name: "Eliminar" }).click();
 
     await expect(page.getByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeVisible();
@@ -1708,6 +1984,38 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-toggled-to-kw.png", { fullPage: true });
+  });
+
+  test("sharing agreement coefficient editor (current coefficient while editing in kW)", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "Same duplicate-DOM-instance rationale as the other interactive editor specs above.",
+    );
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar a mano" }).click();
+    // The editor opens in kW; the sibling "toggled to kW" spec ends in percent,
+    // so this is the only baseline that shows the column with a kW input beside
+    // it. The difference is a percentage either way — it is computed from the
+    // canonical 0-1 coefficient, which the kW text is only a view of.
+    await expect(page.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
+
+    const vivendaA = page.locator("tr", { hasText: "Vivienda A" });
+    await expect(vivendaA.getByRole("textbox")).toHaveValue("13,50");
+    // 13,50 kW of 45 kW installed is 0.3, against a current 0.25.
+    await expect(vivendaA).toContainText("+5,0000");
+
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-kw-current-coefficient.png", {
+      fullPage: true,
+    });
   });
 
   test("sharing agreement coefficient editor (kW rounds to installed but coefficient sum isn't exact)", async ({ page }, testInfo) => {

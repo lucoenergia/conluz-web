@@ -19,6 +19,7 @@ const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
     applicationState: APPLIED,
     endState: OPEN,
     endDate: null,
+    currentCoefficient: null,
   },
   {
     coefficientId: "2",
@@ -29,6 +30,7 @@ const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
     applicationState: PENDING,
     endState: OPEN,
     endDate: null,
+    currentCoefficient: null,
   },
   {
     coefficientId: "3",
@@ -39,6 +41,7 @@ const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
     applicationState: APPLIED,
     endState: OPEN,
     endDate: null,
+    currentCoefficient: null,
   },
 ];
 

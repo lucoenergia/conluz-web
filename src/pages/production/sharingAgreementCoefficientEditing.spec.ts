@@ -25,6 +25,7 @@ const PENDING_FIELDS = {
   applicationState: SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
   endState: SharingAgreementPartitionCoefficientResponseEndState.OPEN,
   endDate: null,
+  currentCoefficient: null,
 } as const;
 
 describe("buildEditableRowsFromCoefficients", () => {

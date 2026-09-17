@@ -57,6 +57,7 @@ const closedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   validTo: "2024-06-01T00:00:00Z",
   endState: CLOSED,
   endDate: "2024-06-01T00:00:00Z",
+  currentCoefficient: null,
 };
 
 // Fixture deliberately stays minimal — cast rather than fully populated to

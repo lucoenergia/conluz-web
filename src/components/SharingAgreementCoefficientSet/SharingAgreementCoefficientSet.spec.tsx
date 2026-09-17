@@ -10,6 +10,7 @@ import { SharingAgreementCoefficientSet, type SharingAgreementCoefficientSetProp
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
+  SharingAgreementReferenceResponseStatus,
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
@@ -18,7 +19,7 @@ const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplica
 const { OPEN, OPEN_ORPHAN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 // Real coefficients never omit these; unused by any assertion in this file, so
 // every fixture below spreads this in and only overrides what it's testing.
-const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null };
+const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null, currentCoefficient: null };
 
 const mockMutateAsync = vi.fn();
 const mockActivateMutateAsync = vi.fn();
@@ -48,6 +49,10 @@ vi.mock("../../api/supplies/supplies", () => ({
     number: 0,
     totalPages: 1,
   }),
+  // The row menu's history drawer reads this. Resolved-and-empty by default so
+  // it never interferes with the assertions in this file; the drawer's own
+  // behaviour is covered in CoefficientHistoryDrawer.spec.tsx.
+  useGetPartitionCoefficientHistory: () => ({ data: [], isLoading: false, error: null }),
 }));
 
 vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
@@ -390,10 +395,20 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
   // below — the contract still rejects activate/deactivate/close/reopen on a
   // DRAFT agreement with 409, so offering either control here would be a
   // dead end.
-  it("renders no row action menu and no checkbox for a DRAFT agreement, even though apply would otherwise be available on every PENDING row", () => {
+  it("offers a DRAFT row the history only — never apply, which the contract rejects on a DRAFT with 409", () => {
     renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
-    expect(screen.queryByRole("button", { name: /Más acciones/ })).not.toBeInTheDocument();
+    // The menu exists on a DRAFT now, because "Ver histórico" is offered in
+    // every status. What must never appear is a lifecycle action.
+    fireEvent.click(screen.getAllByRole("button", { name: /Más acciones/ })[0]);
+
+    expect(screen.getByRole("menuitem", { name: "Ver histórico" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Registrar fecha" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Corregir fecha" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Desactivar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Reabrir" })).not.toBeInTheDocument();
+    // Batch selection stays out: it only ever drives lifecycle actions.
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
@@ -971,6 +986,7 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
       validTo: null,
       endState: OPEN_ORPHAN,
       endDate: null,
+      currentCoefficient: null,
     },
     {
       coefficientId: "c2",
@@ -981,6 +997,7 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
       validTo: "2024-06-01T00:00:00Z",
       endState: CLOSED,
       endDate: "2024-06-01T00:00:00Z",
+      currentCoefficient: null,
     },
     {
       coefficientId: "c3",
@@ -1124,9 +1141,9 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
   it("a batch correction excludes a row already corrected individually via ⋯ — APPLIED rows are selectable now", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
     const threeApplied: SharingAgreementPartitionCoefficientResponse[] = [
-      { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-01-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
-      { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-02-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
-      { coefficientId: "a3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: APPLIED, validFrom: "2025-03-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null },
+      { coefficientId: "a1", supply: { id: "s1", name: "Vivienda A", code: "X1" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-01-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null, currentCoefficient: null },
+      { coefficientId: "a2", supply: { id: "s2", name: "Vivienda B", code: "X2" }, coefficient: 0.3, applicationState: APPLIED, validFrom: "2025-02-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null, currentCoefficient: null },
+      { coefficientId: "a3", supply: { id: "s3", name: "Vivienda C", code: "X3" }, coefficient: 0.4, applicationState: APPLIED, validFrom: "2025-03-01T00:00:00Z", validTo: null, endState: OPEN, endDate: null, currentCoefficient: null },
     ];
     const user = userEvent.setup();
     renderWithTheme({ coefficients: threeApplied });
@@ -1645,5 +1662,54 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
 
     expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientSet (current coefficient column)", () => {
+  const IN_FORCE = {
+    coefficient: 0.35,
+    validFrom: "2024-01-01T00:00:00Z",
+    sharingAgreement: {
+      id: "a0",
+      name: "Acuerdo anterior",
+      status: SharingAgreementReferenceResponseStatus.SUPERSEDED,
+    },
+  };
+
+  /** A clean DRAFT set where the first two supplies are already on a coefficient. */
+  const withCurrent: SharingAgreementPartitionCoefficientResponse[] = [
+    { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED, currentCoefficient: IN_FORCE },
+    { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.35, applicationState: PENDING, ...OPEN_UNCLOSED, currentCoefficient: IN_FORCE },
+    { coefficientId: "3", supply: { id: "s3", name: "Local C", code: "ES0031300000000003EF" }, coefficient: 0.25, applicationState: PENDING, ...OPEN_UNCLOSED },
+  ];
+
+  const withoutCurrent = withCurrent.map((c) => ({ ...c, currentCoefficient: null }));
+
+  it("mounts the column on a DRAFT where at least one supply is already on a coefficient", () => {
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    expect(screen.getByText("Coeficiente actual")).toBeInTheDocument();
+  });
+
+  it("is absent on PUBLISHED even when every row carries one — the row's own value IS the one in force", () => {
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
+    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+  });
+
+  it("is absent on SUPERSEDED for the same reason", () => {
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.SUPERSEDED });
+    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+  });
+
+  it("is absent on a DRAFT where no supply is on one yet — a first agreement, where the column would be all dashes", () => {
+    renderWithTheme({ coefficients: withoutCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+  });
+
+  it("stays mounted while a search filters out every row that has one", () => {
+    // Deliberately unlike the actions column, which does track the filter: a
+    // display-only column appearing and vanishing as the admin types is noise.
+    renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    fireEvent.change(screen.getByPlaceholderText(/Buscar/i), { target: { value: "Local C" } });
+    expect(screen.getByText("Coeficiente actual")).toBeInTheDocument();
   });
 });

@@ -27,6 +27,7 @@ import type {
 import type {
   CommunityResponse,
   CreateCommunityBody,
+  RestError,
   UpdateCommunityBody
 } from '.././models';
 
@@ -132,6 +133,11 @@ export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommuni
  * Updates the details of an existing community.
 Requires PLATFORM_ADMIN role.
 
+`code` and `legalId` are unique across communities. Moving either onto a value
+another community already uses responds 409 with the
+`COMMUNITY_ALREADY_EXISTS` code, whose `field` param names which of the two
+collided. Leaving this community's own values unchanged is not a conflict.
+
  * @summary Updates an existing community.
  */
 export const updateCommunity = (
@@ -150,7 +156,7 @@ export const updateCommunity = (
   
 
 
-export const getUpdateCommunityMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateCommunityMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCommunity>>, TError,{communityId: string;data: UpdateCommunityBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateCommunity>>, TError,{communityId: string;data: UpdateCommunityBody}, TContext> => {
 
@@ -177,12 +183,12 @@ const {mutation: mutationOptions} = options ?
 
     export type UpdateCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof updateCommunity>>>
     export type UpdateCommunityMutationBody = UpdateCommunityBody
-    export type UpdateCommunityMutationError = ErrorType<unknown>
+    export type UpdateCommunityMutationError = ErrorType<RestError>
 
     /**
  * @summary Updates an existing community.
  */
-export const useUpdateCommunity = <TError = ErrorType<unknown>,
+export const useUpdateCommunity = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCommunity>>, TError,{communityId: string;data: UpdateCommunityBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateCommunity>>,
@@ -290,6 +296,10 @@ export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCom
 Requires PLATFORM_ADMIN role.
 When multi-community mode is disabled, this endpoint returns 404.
 
+`code` and `legalId` are unique across communities. Reusing either responds 409
+with the `COMMUNITY_ALREADY_EXISTS` code, whose `field` param names which of the
+two collided.
+
  * @summary Creates a new energy community.
  */
 export const createCommunity = (
@@ -308,7 +318,7 @@ export const createCommunity = (
   
 
 
-export const getCreateCommunityMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateCommunityMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext> => {
 
@@ -335,12 +345,12 @@ const {mutation: mutationOptions} = options ?
 
     export type CreateCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof createCommunity>>>
     export type CreateCommunityMutationBody = CreateCommunityBody
-    export type CreateCommunityMutationError = ErrorType<unknown>
+    export type CreateCommunityMutationError = ErrorType<RestError>
 
     /**
  * @summary Creates a new energy community.
  */
-export const useCreateCommunity = <TError = ErrorType<unknown>,
+export const useCreateCommunity = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createCommunity>>,

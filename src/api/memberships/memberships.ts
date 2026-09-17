@@ -28,6 +28,7 @@ import type {
   CreateMembershipBody,
   MembershipPaybackResponse,
   MembershipResponse,
+  RestError,
   SetMembershipInvestmentBody,
   UpdateMembershipRoleBody
 } from '.././models';
@@ -277,6 +278,10 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
  * Adds a user as a member of the specified community with the given role.
 Requires COMMUNITY_ADMIN role in the community or PLATFORM_ADMIN.
 
+A user can hold at most one membership per community, so adding one who is
+already a member responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code. Use
+the role PATCH to change an existing member's role.
+
  * @summary Creates a new membership in a community.
  */
 export const createMembership = (
@@ -296,7 +301,7 @@ export const createMembership = (
   
 
 
-export const getCreateMembershipMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateMembershipMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext> => {
 
@@ -323,12 +328,12 @@ const {mutation: mutationOptions} = options ?
 
     export type CreateMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof createMembership>>>
     export type CreateMembershipMutationBody = CreateMembershipBody
-    export type CreateMembershipMutationError = ErrorType<unknown>
+    export type CreateMembershipMutationError = ErrorType<RestError>
 
     /**
  * @summary Creates a new membership in a community.
  */
-export const useCreateMembership = <TError = ErrorType<unknown>,
+export const useCreateMembership = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createMembership>>,

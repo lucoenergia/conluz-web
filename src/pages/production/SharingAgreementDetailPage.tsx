@@ -70,8 +70,7 @@ export const SharingAgreementDetailPage: FC = () => {
   // the coefficient set, which owns the rows.
   const [editCoefficientsRequestId, setEditCoefficientsRequestId] = useState(0);
   // Same shape, same reason: the batch bar and the selection it drives live in
-  // the coefficient set, and both the application panel and the next-step
-  // banner's stage-5 action start it.
+  // the coefficient set, and the next-step banner's stage-5 action starts it.
   const [registerDatesRequestId, setRegisterDatesRequestId] = useState(0);
   // The batch bar is fixed over the viewport, so the room it needs has to be
   // reserved here, after the last section — reserved inside the coefficient
@@ -186,13 +185,7 @@ export const SharingAgreementDetailPage: FC = () => {
 
           {!isLoading && !error && showApplicationPanel && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementApplicationPanel
-                coefficients={coefficients}
-                isClosed={isSuperseded}
-                onRegisterDatesRequest={
-                  isSuperseded ? undefined : () => setRegisterDatesRequestId((id) => id + 1)
-                }
-              />
+              <SharingAgreementApplicationPanel coefficients={coefficients} isClosed={isSuperseded} />
             </Box>
           )}
 

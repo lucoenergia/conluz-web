@@ -47,6 +47,7 @@ const initialCoefficient: SharingAgreementPartitionCoefficientResponse = {
   validFrom: "2026-01-01",
   validTo: null,
   endDate: null,
+  currentCoefficient: null,
 };
 
 const correctedCoefficient: SharingAgreementPartitionCoefficientResponse = {

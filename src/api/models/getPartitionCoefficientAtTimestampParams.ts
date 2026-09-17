@@ -11,4 +11,8 @@ export type GetPartitionCoefficientAtTimestampParams = {
  * ISO-8601 timestamp
  */
 timestamp: string;
+/**
+ * Optional plant filter. When omitted, every plant the supply participates in is included.
+ */
+plantId?: string;
 };

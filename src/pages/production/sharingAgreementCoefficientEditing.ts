@@ -169,6 +169,24 @@ export function buildEditableRowsFromCoefficients(
     });
 }
 
+/**
+ * True for a row this session's supply picker synthesized, as opposed to one
+ * that came back from the server.
+ *
+ * `buildEditableRowFromSupply` leaves `coefficientId` empty because nothing is
+ * persisted yet; a server row always carries a real one — it's `required` in
+ * the contract and doubles as the React key, the selection-set key and the
+ * actions-menu key throughout SharingAgreementCoefficientSet, so an empty one
+ * would already have broken those.
+ *
+ * The distinction matters wherever absent server data would otherwise be
+ * rendered as a statement about the server's answer: for these rows there is
+ * no answer yet, which is not the same as an answer of "none".
+ */
+export function isUnsavedCoefficientRow(coefficient: SharingAgreementPartitionCoefficientResponse): boolean {
+  return !coefficient.coefficientId;
+}
+
 export function buildEditableRowFromSupply(supply: SupplyResponse): EditableCoefficientRow {
   return {
     supplyId: supply.id!,
@@ -182,6 +200,10 @@ export function buildEditableRowFromSupply(supply: SupplyResponse): EditableCoef
       applicationState: SharingAgreementPartitionCoefficientResponseApplicationState.PENDING,
       endState: SharingAgreementPartitionCoefficientResponseEndState.OPEN,
       endDate: null,
+      // Unknown rather than absent: the server hasn't been asked about this
+      // supply yet. `isUnsavedCoefficientRow` is what keeps readers from
+      // reporting it as "no coefficient in force".
+      currentCoefficient: null,
     },
     // Empty, never zero — an unset value must block save, not silently count as 0.
     // Unit-independent: an empty row starts empty regardless of which unit is active.
