@@ -65,7 +65,7 @@ describe("SharingAgreementApplicationPanel", () => {
     expect(screen.getByText("2 de 5 puntos con fecha de aplicación")).toBeVisible();
   });
 
-  it("states the zero-distribution consequence as visible text", () => {
+  it("states the zero-distribution consequence as visible text while points are outstanding", () => {
     renderPanel();
 
     expect(screen.getByText(/no reciben producción de la planta/)).toBeVisible();
@@ -87,6 +87,28 @@ describe("SharingAgreementApplicationPanel", () => {
 
     expect(screen.getByText("2 de 2 puntos con fecha de aplicación")).toBeVisible();
     expect(screen.queryByRole("button", { name: /Registrar fechas/ })).not.toBeInTheDocument();
+  });
+
+  it("drops the zero-distribution warning once every point has a date", () => {
+    // A historical agreement has had its dates recorded for a long time. The
+    // warning describes points without one, so on that agreement it describes
+    // nothing and reads as a contradiction under "2 de 2".
+    renderPanel({ coefficients: [coefficient("1", APPLIED), coefficient("2", APPLIED)] });
+
+    expect(screen.queryByText(/no reciben producción de la planta/)).not.toBeInTheDocument();
+  });
+
+  it("drops the zero-distribution warning on a closed agreement whose points all have dates", () => {
+    renderPanel({ coefficients: [coefficient("1", APPLIED), coefficient("2", APPLIED)], isClosed: true });
+
+    expect(screen.queryByText(/no reciben producción de la planta/)).not.toBeInTheDocument();
+    expect(screen.getByText("Todos los puntos tienen fecha de fin.")).toBeVisible();
+  });
+
+  it("shows no warning when the agreement has no coefficients at all", () => {
+    renderPanel({ coefficients: [] });
+
+    expect(screen.queryByText(/no reciben producción de la planta/)).not.toBeInTheDocument();
   });
 
   it("reports the outstanding points without repeating the next step's action", () => {

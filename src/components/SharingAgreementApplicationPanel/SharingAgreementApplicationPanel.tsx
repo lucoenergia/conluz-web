@@ -13,6 +13,11 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
  * coefficients purely by `valid_from`/`valid_to`; the agreement's status plays
  * no part. A published agreement with no applied coefficient distributes zero,
  * and an admin who published and walked away has no way to know that.
+ *
+ * It is a warning about outstanding points, so it is shown only while some
+ * point is still missing its date. Once every point has one — and on a
+ * historical agreement, where the dates were recorded long ago — there is
+ * nothing to warn about.
  */
 const ZERO_DISTRIBUTION_CONSEQUENCE =
   "Los puntos de suministro sin fecha de aplicación no reciben producción de la planta. Su autoconsumo y sus excedentes solo se " +
@@ -45,6 +50,7 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
       coefficient.applicationState === SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
   ).length;
   const progress = total === 0 ? 0 : (applied / total) * 100;
+  const hasPendingPoints = applied < total;
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
@@ -78,22 +84,24 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
         />
       </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1.5,
-          bgcolor: colors.background.surface,
-          border: "1px solid",
-          borderColor: colors.border.light,
-          borderRadius: radii.default,
-          p: 2,
-        }}
-      >
-        <ErrorOutlineOutlinedIcon sx={{ color: colors.text.secondary, fontSize: 22, flexShrink: 0 }} />
-        <Typography sx={{ fontSize: fontSizes.xl, lineHeight: 1.5, color: colors.text.body, textWrap: "pretty" }}>
-          {ZERO_DISTRIBUTION_CONSEQUENCE}
-        </Typography>
-      </Box>
+      {hasPendingPoints && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1.5,
+            bgcolor: colors.background.surface,
+            border: "1px solid",
+            borderColor: colors.border.light,
+            borderRadius: radii.default,
+            p: 2,
+          }}
+        >
+          <ErrorOutlineOutlinedIcon sx={{ color: colors.text.secondary, fontSize: 22, flexShrink: 0 }} />
+          <Typography sx={{ fontSize: fontSizes.xl, lineHeight: 1.5, color: colors.text.body, textWrap: "pretty" }}>
+            {ZERO_DISTRIBUTION_CONSEQUENCE}
+          </Typography>
+        </Box>
+      )}
 
       {isClosed && (
         <Typography sx={{ mt: 2.5, fontSize: fontSizes.lg, lineHeight: 1.5, color: colors.text.subtle }}>
