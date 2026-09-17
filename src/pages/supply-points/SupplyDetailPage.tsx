@@ -12,7 +12,11 @@ import { StatsCard } from "../../components/StatsCard";
 import { GraphFilter } from "../../components/Graph/GraphFilter";
 import { SupplyDetailHeader } from "../../components/SupplyDetailHeader";
 import { SupplyCoefficientHistorySection } from "../../components/SupplyCoefficientHistorySection";
-import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption, useGetSupplyYearlyConsumption, useGetSupplyMonthlyProduction } from "../../api/supplies/supplies";
+import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
+// eslint no-restricted-imports allowlist (see eslint.config.js): the supply id
+// comes from the route, and until SupplyResponse carries a community there is
+// nothing to guard it against -- see useSupplyInActiveCommunity.
+import { useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption, useGetSupplyYearlyConsumption, useGetSupplyMonthlyProduction } from "../../api/supplies/supplies";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { useErrorDispatch } from "../../context/error.context";
 import PowerIcon from "@mui/icons-material/Power";
@@ -103,7 +107,8 @@ export const SupplyDetailPage: FC = () => {
     };
   }, [startDate, endDate]);
 
-  const { data: supplyPoint, isLoading: supplyPointLoading, error: supplyPointError } = useGetSupply(supplyPointId);
+  const { supply: supplyPoint, isLoading: supplyPointLoading, error: supplyPointError } =
+    useSupplyInActiveCommunity(supplyPointId);
 
   // Fetch hourly production data when DAY filter is selected
   const {

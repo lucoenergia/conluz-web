@@ -6,7 +6,8 @@ import { useNavigate, useParams } from "react-router";
 import type { UpdateSupplyBody } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SupplyForm, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
-import { useGetSupply, useUpdateSupply } from "../../api/supplies/supplies";
+import { useUpdateSupply } from "../../api/supplies/supplies";
+import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { useErrorDispatch } from "../../context/error.context";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
@@ -16,7 +17,7 @@ export const EditSupplyPage: FC = () => {
   const navigate = useNavigate();
   const updateSupply = useUpdateSupply();
 
-  const { data: supplyPoint, isLoading, error, refetch } = useGetSupply(supplyPointId);
+  const { supply: supplyPoint, isLoading, error, refetch } = useSupplyInActiveCommunity(supplyPointId);
 
   const handleSubmit = async ({ name, cups, address, addressRef }: SupplyFormValues) => {
     try {
