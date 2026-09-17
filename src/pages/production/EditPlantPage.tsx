@@ -6,9 +6,12 @@ import { useNavigate, useParams } from "react-router";
 import type { UpdatePlantBody } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
-import { useGetPlantById, useUpdatePlant } from "../../api/plants/plants";
+import { useUpdatePlant } from "../../api/plants/plants";
+import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { useErrorDispatch } from "../../context/error.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
+import { EmptyState } from "../../components/EmptyState";
 
 export const EditPlantPage: FC = () => {
   const { plantId = "" } = useParams();
@@ -16,7 +19,7 @@ export const EditPlantPage: FC = () => {
   const navigate = useNavigate();
   const updatePlant = useUpdatePlant();
 
-  const { data: plant, isLoading, error, refetch } = useGetPlantById(plantId);
+  const { plant, isLoading, isNotFound, error, refetch } = usePlantInActiveCommunity(plantId);
 
   const handleSubmit = async (values: PlantFormValues) => {
     try {
@@ -43,6 +46,20 @@ export const EditPlantPage: FC = () => {
       errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
     }
   };
+
+  // Editing a plant from another community would write to it under the selected
+  // community's name, so the form is not offered at all.
+  if (isNotFound) {
+    return (
+      <Box sx={sxStyles.pageContainer}>
+        <EmptyState
+          icon={SearchOffIcon}
+          title="Planta no encontrada"
+          subtitle="Esta planta no existe o no tienes acceso a su comunidad."
+        />
+      </Box>
+    );
+  }
 
   return (
     <Box
