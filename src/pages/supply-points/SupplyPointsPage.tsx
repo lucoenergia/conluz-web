@@ -217,6 +217,10 @@ export const SupplyPointsPage: FC = () => {
               variant="outlined"
               startIcon={<CloudUploadIcon />}
               onClick={handleOpenImportModal}
+              // Import writes into a community. With none selected there is no
+              // target, and the endpoint would fall back to one of its own choosing.
+              disabled={!activeCommunityId}
+              title={activeCommunityId ? undefined : "Selecciona una comunidad para importar"}
               sx={{
                 px: 3,
                 py: 1.5,

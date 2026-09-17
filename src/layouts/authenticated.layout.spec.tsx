@@ -1,0 +1,146 @@
+import "@testing-library/jest-dom";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { useEffect, type FC, type ReactNode } from "react";
+import { MemoryRouter, Route, Routes, useParams } from "react-router";
+import { ThemeProvider } from "@mui/material/styles";
+import { theme } from "../theme";
+import { ActiveCommunityContext } from "../context/community.context";
+import { AuthenticatedLayout } from "./authenticated.layout";
+import { CommunityRole } from "../api/models";
+import type { UserResponse } from "../api/models";
+
+const LOGGED_USER = {
+  id: "user-1",
+  fullName: "Ada",
+  isPlatformAdmin: false,
+  memberships: {
+    "community-a": CommunityRole.COMMUNITY_ADMIN,
+    "community-b": CommunityRole.COMMUNITY_ADMIN,
+  },
+} as unknown as UserResponse;
+
+vi.mock("../context/auth.context", () => ({
+  useAuth: () => "a-token",
+}));
+
+vi.mock("../context/logged-user.context", () => ({
+  useLoggedUser: () => LOGGED_USER,
+  useLoggedUserDispatch: () => vi.fn(),
+}));
+
+vi.mock("../hooks/useLogout", () => ({
+  useLogout: () => vi.fn(),
+}));
+
+// The layout only calls this to bootstrap the user it already has.
+vi.mock("../api/users/users", () => ({
+  useGetCurrentUser: () => ({ data: undefined }),
+}));
+
+vi.mock("../components/Header/Header", () => ({
+  Header: () => <div data-testid="header">header</div>,
+}));
+
+vi.mock("../components/Menu/SideMenu", () => ({
+  SideMenu: () => <div data-testid="side-menu">side menu</div>,
+}));
+
+/**
+ * Two separate records, because they answer two different questions.
+ *
+ * `renders` is pushed during render: it proves the foreign page was never even
+ * rendered, which is what distinguishes a render-time redirect from an
+ * effect-based one (the latter renders the page once, firing its queries,
+ * before navigating away).
+ *
+ * `mounts` is pushed from a mount effect: it proves the Outlet key actually
+ * remounts the component. A render-phase counter cannot tell a remount from a
+ * plain re-render, and a context change re-renders everything regardless.
+ */
+const renders: string[] = [];
+const mounts: string[] = [];
+
+const PlantPage: FC = () => {
+  const { plantId } = useParams();
+  renders.push(`plant:${plantId}`);
+  useEffect(() => {
+    mounts.push(`plant:${plantId}`);
+  }, [plantId]);
+  return <div data-testid="plant-page">{plantId}</div>;
+};
+
+const PlantsListPage: FC = () => {
+  renders.push("plants-list");
+  useEffect(() => {
+    mounts.push("plants-list");
+  }, []);
+  return <div data-testid="plants-list">plants list</div>;
+};
+
+function renderLayoutAt(initialEntry: string, communityId: string | null) {
+  const tree = (community: string | null): ReactNode => (
+    <ThemeProvider theme={theme}>
+      <ActiveCommunityContext.Provider value={community}>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route element={<AuthenticatedLayout />}>
+              <Route path="production">
+                <Route index element={<PlantsListPage />} />
+                <Route path=":plantId/sharing-agreements" element={<PlantPage />} />
+              </Route>
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </ActiveCommunityContext.Provider>
+    </ThemeProvider>
+  );
+
+  const { rerender } = render(tree(communityId));
+  return { rerenderWith: (next: string | null) => rerender(tree(next)) };
+}
+
+describe("AuthenticatedLayout community switching", () => {
+  beforeEach(() => {
+    renders.length = 0;
+    mounts.length = 0;
+  });
+
+  it("never mounts the foreign entity page after a switch", () => {
+    const { rerenderWith } = renderLayoutAt("/production/plant-a/sharing-agreements", "community-a");
+    expect(screen.getByTestId("plant-page")).toHaveTextContent("plant-a");
+
+    renders.length = 0;
+    rerenderWith("community-b");
+
+    expect(screen.getByTestId("plants-list")).toBeInTheDocument();
+    expect(screen.queryByTestId("plant-page")).not.toBeInTheDocument();
+    // The decisive assertion: had the redirect lived in an effect, the page
+    // would have mounted once under the new community and fired its queries.
+    expect(renders).not.toContain("plant:plant-a");
+  });
+
+  it("remounts the routed page when the community changes, so seeded state is cleared", () => {
+    const { rerenderWith } = renderLayoutAt("/production", "community-a");
+    expect(mounts).toEqual(["plants-list"]);
+
+    rerenderWith("community-b");
+
+    expect(mounts).toEqual(["plants-list", "plants-list"]);
+  });
+
+  it("keeps a deep link on first load, when the provider resolves the community from null", () => {
+    const { rerenderWith } = renderLayoutAt("/production/plant-a/sharing-agreements", null);
+    rerenderWith("community-a");
+
+    expect(screen.getByTestId("plant-page")).toHaveTextContent("plant-a");
+  });
+
+  it("leaves the header and side menu mounted across a switch", () => {
+    const { rerenderWith } = renderLayoutAt("/production", "community-a");
+    rerenderWith("community-b");
+
+    expect(screen.getByTestId("header")).toBeInTheDocument();
+    expect(screen.getByTestId("side-menu")).toBeInTheDocument();
+  });
+});

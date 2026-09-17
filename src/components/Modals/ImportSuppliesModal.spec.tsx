@@ -10,6 +10,7 @@ vi.mock("../../api/supplies/supplies", () => ({
 }));
 
 import { ImportSuppliesModal } from "./ImportSuppliesModal";
+import { ActiveCommunityContext } from "../../context/community.context";
 
 describe("ImportSuppliesModal", () => {
   const mockOnClose = vi.fn();
@@ -19,14 +20,16 @@ describe("ImportSuppliesModal", () => {
     vi.clearAllMocks();
   });
 
-  const setup = (props = {}) => {
+  const setup = (props = {}, activeCommunityId: string | null = "community-a") => {
     render(
-      <ImportSuppliesModal
-        isOpen={true}
-        onClose={mockOnClose}
-        onImportComplete={mockOnImportComplete}
-        {...props}
-      />,
+      <ActiveCommunityContext.Provider value={activeCommunityId}>
+        <ImportSuppliesModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onImportComplete={mockOnImportComplete}
+          {...props}
+        />
+      </ActiveCommunityContext.Provider>,
     );
   };
 
@@ -273,6 +276,37 @@ describe("ImportSuppliesModal", () => {
 
       await user.click(screen.getByRole("button", { name: /Cerrar/i }));
       expect(mockOnClose).toHaveBeenCalled();
+    });
+  });
+
+  // Bulk import is a write path: /api/v1/supplies/import takes communityId as an
+  // optional query param, and omitting it leaves the target community to a
+  // backend fallback rather than to what the user has selected.
+  describe("Community scoping", () => {
+    const selectAFile = async () => {
+      const file = new File(["code,name"], "supplies.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await userEvent.upload(input, file);
+    };
+
+    it("sends the active community as the import target", async () => {
+      setup({}, "community-b");
+      await selectAFile();
+
+      await userEvent.click(screen.getByRole("button", { name: "Importar" }));
+
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ params: { communityId: "community-b" } }),
+        expect.anything(),
+      );
+    });
+
+    it("refuses to import when no community is selected", async () => {
+      setup({}, null);
+      await selectAFile();
+
+      expect(screen.getByRole("button", { name: "Importar" })).toBeDisabled();
+      expect(mockMutate).not.toHaveBeenCalled();
     });
   });
 });
