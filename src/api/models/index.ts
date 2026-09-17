@@ -12,6 +12,7 @@ export * from './bulkErrorString';
 export * from './closeCoefficientsBody';
 export * from './coefficientActivationResponse';
 export * from './coefficientAtTimestampResponse';
+export * from './communityReferenceResponse';
 export * from './communityResponse';
 export * from './communityResponseAddress';
 export * from './communityResponseLegalId';

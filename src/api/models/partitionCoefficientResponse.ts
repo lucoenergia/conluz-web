@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { SupplyReferenceResponse } from './supplyReferenceResponse';
+import type { CommunityReferenceResponse } from './communityReferenceResponse';
 import type { PlantReferenceResponse } from './plantReferenceResponse';
 import type { SharingAgreementReferenceResponse } from './sharingAgreementReferenceResponse';
 import type { PartitionCoefficientResponseValidFrom } from './partitionCoefficientResponseValidFrom';
@@ -16,6 +17,8 @@ export interface PartitionCoefficientResponse {
   id: string;
   /** Supply this coefficient belongs to */
   supply: SupplyReferenceResponse;
+  /** Community the supply belongs to */
+  community: CommunityReferenceResponse;
   /** Plant this coefficient belongs to. Disambiguates a supply's timeline when it participates in more than one plant. */
   plant: PlantReferenceResponse;
   /** Sharing agreement that authored this coefficient. */

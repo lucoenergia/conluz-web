@@ -6,11 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { SupplyReferenceResponse } from './supplyReferenceResponse';
+import type { CommunityReferenceResponse } from './communityReferenceResponse';
 import type { PlantReferenceResponse } from './plantReferenceResponse';
 
 export interface CoefficientAtTimestampResponse {
   /** Supply the coefficient belongs to */
   supply: SupplyReferenceResponse;
+  /** Community the supply belongs to */
+  community: CommunityReferenceResponse;
   /** Plant the coefficient applies in. A supply participating in several plants has one coefficient per plant at any instant. */
   plant: PlantReferenceResponse;
   /** Queried timestamp */
