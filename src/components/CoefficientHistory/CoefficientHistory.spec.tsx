@@ -7,6 +7,7 @@ import { theme } from "../../theme";
 import { CoefficientHistory, type CoefficientHistoryProps } from "./CoefficientHistory";
 import type { PartitionCoefficientResponse } from "../../api/models";
 
+const ACTIVE_COMMUNITY = { id: "community-1", name: "Sol Común" };
 const PLANT_NORTE = { id: "plant-norte", name: "Planta Solar Norte" };
 const PLANT_SUR = { id: "plant-sur", name: "Planta Solar Sur" };
 
@@ -14,6 +15,7 @@ function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoef
   return {
     id: "p1",
     supply: { id: "s1", code: "ES0031300000000001AB", name: "Vivienda A" },
+    community: ACTIVE_COMMUNITY,
     plant: PLANT_NORTE,
     sharingAgreement: { id: "sa-2024", name: "Reparto 2024", status: "PUBLISHED" },
     coefficient: 0.15,

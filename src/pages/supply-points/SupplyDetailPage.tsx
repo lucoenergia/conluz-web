@@ -11,6 +11,7 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { StatsCard } from "../../components/StatsCard";
 import { GraphFilter } from "../../components/Graph/GraphFilter";
 import { SupplyDetailHeader } from "../../components/SupplyDetailHeader";
+import { SupplyCoefficientHistorySection } from "../../components/SupplyCoefficientHistorySection";
 import { useGetSupply, useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption, useGetSupplyYearlyConsumption, useGetSupplyMonthlyProduction } from "../../api/supplies/supplies";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { useErrorDispatch } from "../../context/error.context";
@@ -525,6 +526,11 @@ export const SupplyDetailPage: FC = () => {
           error={supplyPointError}
         />
       </Box>
+
+      {/* Coefficient history. Sits above the filter on purpose: it is contract
+          information about the supply, not telemetry, so placing it below
+          would imply the selected date range applies to it. */}
+      <SupplyCoefficientHistorySection supplyId={supplyPointId} />
 
       {/* Filter Section */}
       <Box sx={sxStyles.pageContainer}>

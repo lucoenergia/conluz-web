@@ -27,6 +27,32 @@ export function selectAppliedPeriods(
 }
 
 /**
+ * Narrows a supply's timeline to the community currently selected in the app.
+ *
+ * The history endpoint is scoped by supply, not by community, and the supply
+ * detail route carries no community guard -- `GET /supplies/{id}` authorises
+ * the supply's own community admin *or* its owner, neither of which depends on
+ * which community is active in the UI. So a supply belonging to another
+ * community opens perfectly well from a bookmark, a pasted URL, or a reload
+ * after switching community.
+ *
+ * Without this filter that screen would show another community's agreements and
+ * coefficients. Hiding the links out of it would not be enough: the records
+ * themselves must not be displayed.
+ *
+ * Returns `undefined` when no community is selected, which is "not resolved
+ * yet", never "nothing matches" -- collapsing the two would render an empty
+ * timeline as if the supply had no history.
+ */
+export function selectPeriodsInCommunity(
+  periods: readonly PartitionCoefficientResponse[] | undefined,
+  communityId: string | null | undefined,
+): PartitionCoefficientResponse[] | undefined {
+  if (!periods || !communityId) return undefined;
+  return periods.filter((period) => period.community?.id === communityId);
+}
+
+/**
  * A period is active when it has started and has no end. Both halves matter:
  * a pending period also has `validTo === null`, so testing the end alone
  * would mark something that has never been in force as current.

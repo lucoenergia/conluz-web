@@ -4,9 +4,11 @@ import {
   groupCoefficientHistoryByPlant,
   isActivePeriod,
   selectAppliedPeriods,
+  selectPeriodsInCommunity,
 } from "./coefficientHistory";
 import type { PartitionCoefficientResponse } from "../../api/models";
 
+const ACTIVE_COMMUNITY = { id: "community-1", name: "Sol Común" };
 const PLANT_NORTE = { id: "plant-norte", name: "Planta Solar Norte" };
 const PLANT_SUR = { id: "plant-sur", name: "Planta Solar Sur" };
 
@@ -14,6 +16,7 @@ function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoef
   return {
     id: "p1",
     supply: { id: "s1", code: "ES0031300000000001AB", name: "Vivienda A" },
+    community: ACTIVE_COMMUNITY,
     plant: PLANT_NORTE,
     sharingAgreement: { id: "sa1", name: "Reparto 2024", status: "PUBLISHED" },
     coefficient: 0.15,
@@ -112,5 +115,33 @@ describe("formatCoefficientPeriodRange", () => {
     expect(formatCoefficientPeriodRange(period({ validFrom: "2025-05-31T22:00:00Z", validTo: null }))).toBe(
       "Desde 1 jun 2025",
     );
+  });
+});
+
+describe("selectPeriodsInCommunity", () => {
+  const OTHER_COMMUNITY = { id: "community-2", name: "Vecinos del Sur" };
+
+  it("keeps only the periods of the selected community", () => {
+    const mine = period({ id: "mine" });
+    const theirs = period({ id: "theirs", community: OTHER_COMMUNITY });
+
+    expect(selectPeriodsInCommunity([mine, theirs], ACTIVE_COMMUNITY.id)?.map((p) => p.id)).toEqual(["mine"]);
+  });
+
+  it("returns an empty list for a supply belonging entirely to another community", () => {
+    // Reachable: /supply-points/:id has no community guard, and the endpoint
+    // authorises the supply's owner regardless of which community is active.
+    expect(selectPeriodsInCommunity([period({ community: OTHER_COMMUNITY })], ACTIVE_COMMUNITY.id)).toEqual([]);
+  });
+
+  it("reports 'not resolved yet' rather than 'nothing matches' when no community is selected", () => {
+    // undefined, never [] -- an empty array would render as "this supply has no
+    // history", which is a different and wrong claim.
+    expect(selectPeriodsInCommunity([period({})], null)).toBeUndefined();
+    expect(selectPeriodsInCommunity([period({})], undefined)).toBeUndefined();
+  });
+
+  it("stays undefined while the periods themselves are still loading", () => {
+    expect(selectPeriodsInCommunity(undefined, ACTIVE_COMMUNITY.id)).toBeUndefined();
   });
 });

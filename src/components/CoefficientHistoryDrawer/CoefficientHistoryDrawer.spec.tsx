@@ -78,6 +78,7 @@ function historyPeriod(overrides: Partial<PartitionCoefficientResponse> = {}): P
   return {
     id: "h1",
     supply: { id: "supply-1", code: "ES0031300000000001AB", name: "Vivienda A" },
+    community: { id: "community-1", name: "Sol Común" },
     plant: { id: PLANT_ID, name: "Planta Solar Norte" },
     sharingAgreement: { id: "sa-2023", name: "Reparto 2023", status: "SUPERSEDED" },
     coefficient: 0.1,
