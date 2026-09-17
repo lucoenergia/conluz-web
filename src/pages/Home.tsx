@@ -8,6 +8,9 @@ import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
 import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
 import { useGetSuppliesByUserId } from "../api/users/users";
+// eslint no-restricted-imports allowlist (see eslint.config.js): the supply id
+// driving these comes from a community-scoped list, and the keyed Outlet
+// remounts this page when the community changes.
 import {
   useGetAllSupplies,
   useGetSupplyDailyProduction,

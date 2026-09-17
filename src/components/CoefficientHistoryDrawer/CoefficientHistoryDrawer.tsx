@@ -6,6 +6,8 @@ import { sxStyles } from "../../theme/sx";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { CoefficientHistory } from "../CoefficientHistory";
+// eslint no-restricted-imports allowlist (see eslint.config.js): opened only from
+// an agreement already scoped to the active community.
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import type { SupplyReferenceResponse } from "../../api/models";
 

@@ -68,6 +68,74 @@ const stylingRules = {
   ],
 };
 
+// ─── Community-scope guard rail ───────────────────────────────────────────────
+// A family of generated hooks is keyed by an entity id -- a plant or a supply --
+// with the community left implicit. The backend authorises them on membership,
+// so they answer for ANY of the user's communities regardless of which one is
+// selected, and because the id usually comes from the URL their React Query key
+// cannot change when the selection does. Calling one directly from a page is how
+// a screen ends up rendering one community's data under another's name.
+//
+// Each must therefore be reached through a wrapper that applies the guard. Only
+// reads are restricted: mutations take an explicit id from a screen the keyed
+// Outlet already resets.
+const COMMUNITY_IMPLICIT_HOOKS = [
+  {
+    group: ["**/api/plants/plants"],
+    importNames: ["useGetPlantById"],
+    message:
+      "Use usePlantInActiveCommunity (src/pages/production/usePlantInActiveCommunity.ts) instead: useGetPlantById is keyed by a plant id from the URL and answers for any community the user belongs to.",
+  },
+  {
+    group: ["**/api/sharing-agreements/sharing-agreements"],
+    importNames: [
+      "useGetSharingAgreements",
+      "useGetSharingAgreementById",
+      "useGetSharingAgreementPartitionCoefficients",
+      "useGetSharingAgreementFile",
+    ],
+    message:
+      "Read sharing agreements through useSharingAgreementsData / useSharingAgreementDetailData: those apply the active-community guard, these hooks are keyed by a plant id alone.",
+  },
+  {
+    group: ["**/api/supplies/supplies"],
+    importNames: [
+      "useGetSupply",
+      "useGetSupplyEnergyMetrics",
+      "useGetSupplyHourlyConsumption",
+      "useGetSupplyDailyConsumption",
+      "useGetSupplyMonthlyConsumption",
+      "useGetSupplyYearlyConsumption",
+      "useGetSupplyHourlyProduction",
+      "useGetSupplyDailyProduction",
+      "useGetSupplyMonthlyProduction",
+      "useGetPartitionCoefficientHistory",
+      "useGetActivePartitionCoefficient",
+      "useGetPartitionCoefficientAtTimestamp",
+      "useGetSuppliesByUserId",
+    ],
+    message:
+      "Use useSupplyInActiveCommunity (src/pages/supply-points/useSupplyInActiveCommunity.ts) instead: these hooks are keyed by a supply id alone and answer for any community the user belongs to.",
+  },
+];
+
+// Modules allowed to import them: the wrappers that apply the guard, plus the
+// call sites that scope their own data and say so in a comment.
+const COMMUNITY_SCOPE_WRAPPERS = [
+  "src/pages/production/usePlantInActiveCommunity.ts",
+  "src/pages/production/useSharingAgreementsData.ts",
+  "src/pages/production/useSharingAgreementDetailData.ts",
+  "src/pages/supply-points/useSupplyInActiveCommunity.ts",
+  // Filters its own response through selectPeriodsInCommunity -- the original
+  // and still correct way to scope an entity-keyed response.
+  "src/components/SupplyCoefficientHistorySection/SupplyCoefficientHistorySection.tsx",
+  "src/components/CoefficientHistoryDrawer/CoefficientHistoryDrawer.tsx",
+  // Drives these from a community-scoped supply list, and is remounted by the
+  // keyed Outlet when the community changes.
+  "src/pages/Home.tsx",
+  "src/pages/supply-points/SupplyDetailPage.tsx",
+];
+
 export default tseslint.config([
   globalIgnores(["dist"]),
   {
@@ -94,5 +162,19 @@ export default tseslint.config([
       "src/**/*.spec.{ts,tsx}", // test fixtures use literal colours intentionally
     ],
     rules: stylingRules,
+  },
+  {
+    // Community-scope guard rail. Specs are exempt: they mock these modules by
+    // path, which is how the wrappers themselves get tested.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/api/**", "src/**/*.spec.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: COMMUNITY_IMPLICIT_HOOKS }],
+    },
+  },
+  {
+    // The wrappers, and the call sites that scope their own data.
+    files: COMMUNITY_SCOPE_WRAPPERS,
+    rules: { "no-restricted-imports": "off" },
   },
 ]);
