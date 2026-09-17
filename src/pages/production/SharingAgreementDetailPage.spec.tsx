@@ -81,6 +81,20 @@ function baseData(): SharingAgreementDetailData {
   };
 }
 
+function coefficient(id: string, applicationState: "PENDING" | "APPLIED"): SharingAgreementPartitionCoefficientResponse {
+  return {
+    coefficientId: id,
+    supply: { id: `s${id}`, name: `Punto ${id}`, code: `ES00313000000000${id}AB` },
+    coefficient: 0.2,
+    applicationState,
+    validFrom: applicationState === "APPLIED" ? "2026-01-01" : null,
+    validTo: null,
+    endState: "OPEN",
+    endDate: null,
+    currentCoefficient: null,
+  } as unknown as SharingAgreementPartitionCoefficientResponse;
+}
+
 function setup(plantId = "plant-1", sharingAgreementId = "agreement-1") {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   render(
@@ -151,6 +165,31 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     expect(await screen.findByText("Editar datos del acuerdo")).toBeInTheDocument();
     expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
+  });
+
+  // The next-step banner owns "Registrar fechas" while stage 5 is current, and
+  // the application panel is on screen in exactly that state — the two surfaces
+  // used to render the same action one above the other.
+  test("offers 'Registrar fechas' once on a PUBLISHED agreement with outstanding points", () => {
+    const coefficients = [
+      coefficient("1", "APPLIED"),
+      coefficient("2", "PENDING"),
+      coefficient("3", "PENDING"),
+    ];
+    mockData({
+      agreement: {
+        id: "agreement-1",
+        name: "Reparto 2025",
+        status: SharingAgreementResponseStatus.PUBLISHED,
+        installedPowerKw: 12.5,
+      } as SharingAgreementResponse,
+      coefficients,
+      coefficientsData: coefficients,
+    });
+    setup();
+
+    expect(screen.getByText("1 de 3 puntos con fecha de aplicación")).toBeVisible();
+    expect(screen.getAllByRole("button", { name: "Registrar fechas (2 pendientes)" })).toHaveLength(1);
   });
 
   // The endpoint replaces all three fields, so the two the admin did not touch

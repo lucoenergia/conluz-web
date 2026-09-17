@@ -1,6 +1,5 @@
 import type { FC } from "react";
-import { Box, Button, LinearProgress, Paper, Typography } from "@mui/material";
-import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
+import { Box, LinearProgress, Paper, Typography } from "@mui/material";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutline";
 import { sxStyles } from "../../theme/sx";
 import { colors, fontSizes, radii } from "../../theme/tokens";
@@ -16,25 +15,28 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
  * and an admin who published and walked away has no way to know that.
  */
 const ZERO_DISTRIBUTION_CONSEQUENCE =
-  "Los puntos sin fecha de aplicación no reciben producción de la planta. Su autoconsumo y sus excedentes solo se " +
+  "Los puntos de suministro sin fecha de aplicación no reciben producción de la planta. Su autoconsumo y sus excedentes solo se " +
   "muestran con los datos de la distribuidora, que llegan con varios días de retraso.";
 
 export interface SharingAgreementApplicationPanelProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];
-  /** Absent on a superseded agreement, where there is nothing left to schedule. */
-  onRegisterDatesRequest?: () => void;
   /**
    * A superseded agreement states why its schedule is finished. It is not
    * "read only": correcting a date and reopening a closed coefficient are still
    * reachable from the coefficient rows, and reopening one revives the
-   * agreement — the panel just has nothing left to start.
+   * agreement — there is simply nothing left to schedule.
    */
   isClosed?: boolean;
 }
 
+/**
+ * Reporting only: "Registrar fechas" belongs to the next-step banner, which
+ * offers it for exactly as long as recording dates is the current step — the
+ * same state in which this panel would have shown its own copy. Repeating it
+ * here put the identical action twice on one screen.
+ */
 export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPanelProps> = ({
   coefficients,
-  onRegisterDatesRequest,
   isClosed = false,
 }) => {
   const total = coefficients.length;
@@ -42,14 +44,13 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
     (coefficient) =>
       coefficient.applicationState === SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
   ).length;
-  const pending = total - applied;
   const progress = total === 0 ? 0 : (applied / total) * 100;
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
       <SectionHeading
         title="Aplicación del reparto"
-        description="Desde qué día empieza a contar el coeficiente de cada punto de suministro."
+        description="Desde qué día empieza a contar el coeficiente de reparto de cada punto de suministro."
       />
 
       <Box sx={{ mb: 2.5 }}>
@@ -86,7 +87,6 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
           borderColor: colors.border.light,
           borderRadius: radii.default,
           p: 2,
-          mb: onRegisterDatesRequest && pending > 0 ? 2.5 : 0,
         }}
       >
         <ErrorOutlineOutlinedIcon sx={{ color: colors.text.secondary, fontSize: 22, flexShrink: 0 }} />
@@ -99,12 +99,6 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
         <Typography sx={{ mt: 2.5, fontSize: fontSizes.lg, lineHeight: 1.5, color: colors.text.subtle }}>
           Todos los puntos tienen fecha de fin.
         </Typography>
-      )}
-
-      {onRegisterDatesRequest && pending > 0 && (
-        <Button variant="outlined" startIcon={<EventAvailableOutlinedIcon />} onClick={onRegisterDatesRequest}>
-          Registrar fechas ({pending} {pluralize(pending, "pendiente", "pendientes")})
-        </Button>
       )}
     </Paper>
   );

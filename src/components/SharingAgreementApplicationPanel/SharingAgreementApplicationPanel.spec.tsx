@@ -1,6 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "../../theme";
@@ -56,7 +55,7 @@ describe("SharingAgreementApplicationPanel", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: "Aplicación del reparto" })).toBeInTheDocument();
     expect(
-      screen.getByText("Desde qué día empieza a contar el coeficiente de cada punto de suministro."),
+      screen.getByText("Desde qué día empieza a contar el coeficiente de reparto de cada punto de suministro."),
     ).toBeVisible();
   });
 
@@ -90,21 +89,20 @@ describe("SharingAgreementApplicationPanel", () => {
     expect(screen.queryByRole("button", { name: /Registrar fechas/ })).not.toBeInTheDocument();
   });
 
-  it("offers recording the outstanding dates, counted", async () => {
-    const onRegisterDatesRequest = vi.fn();
-    renderPanel({ onRegisterDatesRequest });
+  it("reports the outstanding points without repeating the next step's action", () => {
+    // "Registrar fechas" is the next-step banner's stage-5 action, offered for
+    // exactly as long as points are outstanding. The panel reports progress; a
+    // button here would put the same action twice on one screen.
+    renderPanel();
 
-    await userEvent.click(screen.getByRole("button", { name: "Registrar fechas (3 pendientes)" }));
-    expect(onRegisterDatesRequest).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("2 de 5 puntos con fecha de aplicación")).toBeVisible();
+    expect(screen.queryByRole("button", { name: /Registrar fechas/ })).not.toBeInTheDocument();
   });
 
-  it("keeps the count grammatical at one outstanding point", () => {
-    renderPanel({
-      coefficients: [coefficient("1", APPLIED), coefficient("2", APPLIED), coefficient("3", PENDING)],
-      onRegisterDatesRequest: vi.fn(),
-    });
+  it("offers no action of its own at all", () => {
+    renderPanel();
 
-    expect(screen.getByRole("button", { name: "Registrar fechas (1 pendiente)" })).toBeInTheDocument();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
   describe("on a superseded agreement", () => {
