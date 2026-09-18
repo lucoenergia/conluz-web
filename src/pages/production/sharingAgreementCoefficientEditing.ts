@@ -223,12 +223,57 @@ export function buildEditableRowFromSupply(supply: SupplyResponse): EditableCoef
 }
 
 /**
+ * True when `inputText` names the coefficient the row already holds — i.e.
+ * re-deriving a value from it would render, in the active unit, as the very
+ * string already on screen.
+ *
+ * This is what makes a no-op edit a no-op. Without it, kW mode silently
+ * rewrites the canonical value on any change event that merely restates what
+ * the field was already showing: "1,94 kW" is 159 different coefficients on a
+ * 63 kW plant, and re-deriving picks the interval's midpoint, not the one
+ * actually stored. A set summing to exactly 100 % drifts off it with the user
+ * having changed nothing.
+ *
+ * Deliberately compares FORMATTED STRINGS, never numbers, and reads only the
+ * row's CURRENT canonical value — no memory of earlier values, nothing keyed
+ * on edit history. It can therefore only ever decline to move a value that is
+ * already the one the displayed string names; it never restores a value that
+ * was genuinely changed and then retyped. That case needs the explicit
+ * per-row revert, because inferring it here would make the result depend on
+ * how the user got to the text rather than on the text.
+ *
+ * Both sides must be finite: otherwise the degenerate "" === "" case (an
+ * empty row, or kW mode with no installed power) would match everything and
+ * freeze the field.
+ */
+function rendersAsCurrentValue(
+  row: EditableCoefficientRow,
+  candidate: number,
+  unit: CoefficientInputUnit,
+  installedPowerKw: number | undefined,
+): boolean {
+  if (!Number.isFinite(candidate)) return false;
+  if (row.value === undefined || !Number.isFinite(row.value)) return false;
+  return (
+    formatCoefficientForInput(candidate, unit, installedPowerKw) ===
+    formatCoefficientForInput(row.value, unit, installedPowerKw)
+  );
+}
+
+/**
  * A single row's onChange. Stores the typed text VERBATIM — never
  * reformatted — and separately derives `value` via parseCoefficientInput.
  * Never `parsed ?? 0`: empty/unparseable text yields `value: undefined`
  * (blocks save), while "0" yields a real `value: 0` (a legitimate row —
  * e.g. a supply leaving distribution — that reaches the save payload as
  * `coefficient: 0`).
+ *
+ * The canonical value is left untouched when the text merely restates it
+ * (see rendersAsCurrentValue). The text is still stored verbatim either way,
+ * so the field always shows what was typed — only `value` is protected.
+ * This extends the editor's existing structural guarantee that focus and blur
+ * alone cannot rewrite a coefficient, to cover a change event that carries
+ * nothing new.
  */
 export function updateRowInput(
   rows: EditableCoefficientRow[],
@@ -240,6 +285,7 @@ export function updateRowInput(
   return rows.map((row) => {
     if (row.supplyId !== supplyId) return row;
     const parsed = parseCoefficientInput(inputText, unit, installedPowerKw);
+    if (rendersAsCurrentValue(row, parsed, unit, installedPowerKw)) return { ...row, inputText };
     return { ...row, inputText, value: Number.isFinite(parsed) ? parsed : undefined };
   });
 }

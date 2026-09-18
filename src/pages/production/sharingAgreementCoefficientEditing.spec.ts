@@ -8,9 +8,16 @@ import {
   parseCoefficientInput,
   retextRowsForUnit,
   updateRowInput,
+  type CoefficientInputUnit,
   type EditableCoefficientRow,
 } from "./sharingAgreementCoefficientEditing";
-import { computeSharingAgreementCoefficientSums, COEFFICIENT_SCALE } from "./sharingAgreementCoefficientSums";
+import { computeSharingAgreementCoefficientSums, COEFFICIENT_SCALE, toIntegerUnits } from "./sharingAgreementCoefficientSums";
+import {
+  FIXTURE_COEFFICIENTS,
+  FIXTURE_INSTALLED_POWER_KW,
+  REPRODUCTION_ROW_SUPPLY_ID,
+  REPRODUCTION_ROW_UNITS,
+} from "./__fixtures__/coefficientSet63kw";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
@@ -329,5 +336,145 @@ describe("retextRowsForUnit — toggle invariance", () => {
     const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: undefined, inputText: "" }];
     expect(retextRowsForUnit(rows, "kw", 60)[0].inputText).toBe("");
     expect(retextRowsForUnit(rows, "percentage", 60)[0].inputText).toBe("");
+  });
+});
+
+describe("the 63 kW / 29-supply fixture", () => {
+  // Guards the fixture itself. Every test below reasons about a set that is
+  // exactly 100%, so a fixture that silently stopped being one would turn
+  // real regressions into passes.
+  it("sums to exactly 1 000 000 millionths and carries the reproduction row", () => {
+    expect(computeSharingAgreementCoefficientSums(FIXTURE_COEFFICIENTS).fileSumUnits).toBe(COEFFICIENT_SCALE);
+    expect(FIXTURE_COEFFICIENTS).toHaveLength(29);
+
+    const row = FIXTURE_COEFFICIENTS.find((c) => c.supply?.id === REPRODUCTION_ROW_SUPPLY_ID);
+    expect(toIntegerUnits(row?.coefficient)).toBe(REPRODUCTION_ROW_UNITS);
+  });
+
+  // The premise of the whole bug: the kW string a row displays names an
+  // interval of coefficients, not a coefficient.
+  it("displays the reproduction row as 1,94 kW, which re-derives to a DIFFERENT coefficient", () => {
+    const original = REPRODUCTION_ROW_UNITS / COEFFICIENT_SCALE;
+    expect(formatCoefficientForInput(original, "kw", FIXTURE_INSTALLED_POWER_KW)).toBe("1,94");
+
+    const reDerived = parseCoefficientInput("1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+    expect(toIntegerUnits(reDerived)).toBe(30794);
+    expect(toIntegerUnits(reDerived)).not.toBe(REPRODUCTION_ROW_UNITS);
+  });
+
+  // The asymmetry that decides what each mode's tests can prove: four percent
+  // decimals are exactly one millionth, so "%" round-trips and kW does not.
+  it("displays it as 3,0770 % , which re-derives to the SAME coefficient", () => {
+    const original = REPRODUCTION_ROW_UNITS / COEFFICIENT_SCALE;
+    expect(formatCoefficientForInput(original, "percentage", FIXTURE_INSTALLED_POWER_KW)).toBe("3,0770");
+
+    const reDerived = parseCoefficientInput("3,0770", "percentage", FIXTURE_INSTALLED_POWER_KW);
+    expect(toIntegerUnits(reDerived)).toBe(REPRODUCTION_ROW_UNITS);
+  });
+});
+
+describe("updateRowInput — no-op guard", () => {
+  const buildRows = (unit: CoefficientInputUnit) =>
+    buildEditableRowsFromCoefficients(FIXTURE_COEFFICIENTS, unit, FIXTURE_INSTALLED_POWER_KW);
+
+  const unitsOf = (rows: EditableCoefficientRow[], supplyId: string) =>
+    toIntegerUnits(rows.find((row) => row.supplyId === supplyId)!.value);
+
+  // AC7, kW. This is where the guard earns its keep: without it, restating the
+  // displayed string rewrites 30770 as 30794 and the set leaves 100%.
+  it("retyping the displayed kW string leaves the canonical coefficient byte-identical", () => {
+    const rows = buildRows("kw");
+    expect(rows.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe("1,94");
+
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+
+    expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
+    expect(computeSharingAgreementCoefficientSums(next.map((row) => ({ coefficient: row.value }))).fileSumUnits).toBe(
+      COEFFICIENT_SCALE,
+    );
+  });
+
+  // AC7, percentage. Here the guard is NOT load-bearing — "%" is lossless, so
+  // re-deriving would land on 30770 anyway. The test is a regression guard on
+  // that losslessness: it fails the moment the "%" path gains a rounding step,
+  // a float, or a different decimal count.
+  it("retyping the displayed percentage string leaves the canonical coefficient byte-identical", () => {
+    const rows = buildRows("percentage");
+    expect(rows.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe("3,0770");
+
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,0770", "percentage", FIXTURE_INSTALLED_POWER_KW);
+
+    expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
+  });
+
+  // Same coefficient, differently spelled. The comparison is between rendered
+  // strings, so normalization comes free and a raw text equality check would
+  // not do.
+  it("accepts a differently-spelled restatement of the same value as a no-op", () => {
+    const rows = buildRows("kw");
+
+    for (const spelling of ["1.94", "01,94", " 1,94 "]) {
+      const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, spelling, "kw", FIXTURE_INSTALLED_POWER_KW);
+      expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
+      expect(next.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe(spelling);
+    }
+  });
+
+  it("stores the typed text verbatim even when the value is left untouched", () => {
+    const rows = buildRows("percentage");
+
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,077", "percentage", FIXTURE_INSTALLED_POWER_KW);
+
+    expect(next.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe("3,077");
+    expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
+  });
+
+  // The guard must never swallow a real edit — it only declines to move a
+  // value the text already names.
+  it("a genuinely different value still lands", () => {
+    const rows = buildRows("kw");
+
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_INSTALLED_POWER_KW);
+
+    expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(30159);
+  });
+
+  // The degenerate "" === "" case. A row with no value yet must accept its
+  // first keystroke, not be frozen by a guard comparing two empty renderings.
+  it("never fires on a row whose canonical value is undefined", () => {
+    const empty = buildEditableRowFromSupply({ id: "supply-new", name: "Nuevo", code: "ES999" } as SupplyResponse);
+    expect(empty.value).toBeUndefined();
+
+    const next = updateRowInput([empty], "supply-new", "1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+
+    expect(toIntegerUnits(next[0].value)).toBe(30794);
+  });
+
+  // Same degenerate case from the other side: no installed power means kW
+  // renders as "" for every value, which must not make every edit a no-op.
+  it("never fires in kW mode when installedPowerKw is missing", () => {
+    const rows = buildRows("kw");
+
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", undefined);
+
+    expect(next.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.value).toBeUndefined();
+  });
+
+  it("clearing the field still empties the value, blocking save", () => {
+    const rows = buildRows("kw");
+
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "", "kw", FIXTURE_INSTALLED_POWER_KW);
+
+    expect(next.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.value).toBeUndefined();
+  });
+
+  it("leaves every other row untouched", () => {
+    const rows = buildRows("kw");
+
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+
+    expect(next.filter((row) => row.supplyId !== REPRODUCTION_ROW_SUPPLY_ID)).toEqual(
+      rows.filter((row) => row.supplyId !== REPRODUCTION_ROW_SUPPLY_ID),
+    );
   });
 });
