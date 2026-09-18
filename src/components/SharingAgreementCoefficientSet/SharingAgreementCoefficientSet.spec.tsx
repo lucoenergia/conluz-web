@@ -1759,7 +1759,21 @@ describe("SharingAgreementCoefficientSet (current coefficient column)", () => {
   });
 });
 
-describe("SharingAgreementCoefficientSet (per-row revert)", () => {
+/**
+ * These are integration tests over the deliberately large 29-supply fixture
+ * AC12 calls for, and the component renders a table row AND a card for every
+ * one of them (a CSS-only breakpoint, so jsdom mounts both). One mount costs
+ * ~400ms locally and several tests need two full editor sessions, which puts
+ * them around 1.4s here — comfortably inside the 5s default on a fast machine
+ * and over it on a loaded one.
+ *
+ * Raised for the whole block rather than the one test that tipped over first,
+ * since they all share the same fixed cost. The cost is mount time, not a
+ * hang: repeated runs land within ~50ms of each other, and profiling put the
+ * element lookups at effectively zero. 20s leaves a real regression or a
+ * genuine hang still failing, just later.
+ */
+describe("SharingAgreementCoefficientSet (per-row revert)", { timeout: 20_000 }, () => {
   beforeEach(() => {
     mockMutateAsync.mockReset();
     mockSuccessDispatch.mockClear();
