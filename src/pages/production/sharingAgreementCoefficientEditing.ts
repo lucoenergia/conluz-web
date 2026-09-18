@@ -118,14 +118,24 @@ export function parseCoefficientInput(
  * still-precise `value`, never a previously-formatted string, so
  * rounding-for-display never compounds across repeated toggles.
  *
- * Both units are FIXED precision, always padded, never variable-length: the
- * raw 0-1 coefficient at 6dp (matches the backend's own coefficient
- * precision, COEFFICIENT_SCALE = 1e-6 — the read-only percentage display
- * honors this via formatPercentage at its own, distinct 4dp percentage scale;
- * the editable coefficient input must stay fixed at 6dp in every case, not
- * just when the natural float representation happens to be short); kW at 2dp
- * (matches formatKilowatts's convention everywhere else kW is shown). A bare
- * String()-style formatter must never be used here: a kW->coefficient
+ * Both units are FIXED precision, always padded, never variable-length:
+ * percentage at MAX_PERCENTAGE_DECIMALS (4) — the field shows the value AS A
+ * PERCENTAGE, not as the raw 0-1 fraction — and kW at 2dp, matching
+ * formatKilowatts's convention everywhere else kW is shown.
+ *
+ * The two units are NOT equally faithful, and the difference is the whole
+ * reason the editor needs an explicit per-row revert:
+ *
+ * - Percentage is LOSSLESS. UNITS_PER_PERCENTAGE_POINT / 10^4 is exactly one
+ *   1e-6 unit, so four percent decimals address the canonical scale one to
+ *   one, and parsePercentageInput rejects a fifth. Over the representable
+ *   range this function and parsePercentageInput are mutual inverses.
+ * - kW is LOSSY, badly. Two decimals of kW on a 63 kW plant give ~6 300
+ *   displayable states against 1 000 000 storable coefficients, so roughly
+ *   159 distinct coefficients all render as "1,94". A displayed kW string
+ *   identifies an INTERVAL of coefficients, never a coefficient.
+ *
+ * A bare String()-style formatter must never be used here: a kW->coefficient
  * division can produce an arbitrary number of natural decimal digits, and
  * without fixed rounding+padding that leaks straight into the field.
  */
