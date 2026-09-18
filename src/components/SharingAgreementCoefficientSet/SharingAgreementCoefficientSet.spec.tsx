@@ -177,14 +177,31 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
   });
 
+  // Both surfaces now carry the same words, so neither assertion may rely on
+  // the label alone: the gauge renders it bare (its figure lives in a sibling
+  // element), the editor renders it with a colon and the figure inline. That
+  // shape is what tells them apart.
   it("hides the coefficient sum cards while editing, in favor of the live readout", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
     expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
+    expect(screen.queryByText(/Suma de los coeficientes: /)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
-    expect(screen.getByText(/Suma del fichero:/)).toBeInTheDocument();
+    expect(screen.getByText(/Suma de los coeficientes: /)).toBeInTheDocument();
+  });
+
+  // AC10 — the editor label was missed when the read view was corrected during
+  // the message-severity consolidation. A set can be authored by hand, with no
+  // file involved, so "del fichero" was simply untrue there.
+  it("the editor's sum label names the coefficients, never the file", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+    expect(screen.queryByText(/Suma del fichero/)).not.toBeInTheDocument();
   });
 
   it("entering edit mode opens in kW mode by default, seeding inputs in kW including a real zero", () => {
@@ -335,7 +352,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     // 0.4 + 0.6 + 0 = 100%.
-    expect(screen.getByText("Suma del fichero: 100,0000 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
     expect(screen.getByText(/Suma completa \(100%\)/)).toBeInTheDocument();
     expect(screen.getByText(/100,00 kW de 100,00 kW instalados/)).toBeInTheDocument();
   });
@@ -352,7 +369,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
-    expect(screen.getByText("Suma del fichero: 99,9999 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma de los coeficientes: 99,9999 %")).toBeInTheDocument();
     expect(screen.getByText(/con redondeo a céntimos/)).toBeInTheDocument();
     expect(screen.getByText(/faltan 0,0001 % por ajustar en modo porcentaje/)).toBeInTheDocument();
     // No standalone "cuadra" claim in the copy.

@@ -963,7 +963,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       {isEditing && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Suma del fichero: {formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE)}
+            Suma de los coeficientes: {formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {formatSumCaption(sums, inputUnit, installedPowerKw)}

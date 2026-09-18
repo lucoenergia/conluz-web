@@ -1235,7 +1235,7 @@ test.describe("Visual baselines", () => {
 
     // The file panel's title always renders on load regardless of file/coefficient
     // state, so it's a reliable "detail page finished loading" signal across every
-    // fixture — unlike "Suma del fichero", which is absent when coefficients is empty.
+    // fixture — unlike the coefficient sum, which is absent when coefficients is empty.
     // One wording in every status now: the panel no longer switches to
     // "Fichero enviado a la distribuidora" once the agreement is published.
     await expect(page.getByRole("heading", { name: "Fichero para la distribuidora" })).toBeVisible();
@@ -1924,7 +1924,7 @@ test.describe("Visual baselines", () => {
     // Plain string, not regex: the percent formatter's U+00A0 before "%" is
     // normalized against a regular space by getByText's string matcher, but
     // not by its regex matcher.
-    await expect(page.getByText("Suma del fichero: 70,0000 %")).toBeVisible();
+    await expect(page.getByText("Suma de los coeficientes: 70,0000 %")).toBeVisible();
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-mid-edit.png", { fullPage: true });
@@ -2041,7 +2041,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar a mano" }).click();
 
-    await expect(page.getByText("Suma del fichero: 99,9999 %")).toBeVisible();
+    await expect(page.getByText("Suma de los coeficientes: 99,9999 %")).toBeVisible();
     // Plain strings, not regex — same NBSP-normalization rationale as the
     // percentage assertion above: getByText's string matcher normalizes the
     // formatter's U+00A0 against a regular space; its regex matcher does not.
