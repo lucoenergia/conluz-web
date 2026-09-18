@@ -1,6 +1,7 @@
 import type { FC, MouseEvent } from "react";
-import { Box, Checkbox, IconButton, InputAdornment, TableCell, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Checkbox, IconButton, InputAdornment, TableCell, TableRow, TextField, Tooltip, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
@@ -38,6 +39,14 @@ export interface SharingAgreementCoefficientRowProps {
   editedValue?: number;
   onCoefficientChange?: (value: string) => void;
   onRemove?: () => void;
+  /**
+   * Restores this row's coefficient to what it was when the editing session
+   * opened. Passed ONLY for a row that currently differs from that value — the
+   * container decides via `isRowRevertable`, so the control's presence is
+   * itself the statement that the row was changed. Never passed for a row
+   * added during the session: there is no initial value to go back to.
+   */
+  onRevert?: () => void;
   /** Whether the applicationState/endState cells render. Defaults to true; the container hides them for a clean DRAFT. */
   showStateColumns?: boolean;
   /**
@@ -145,6 +154,27 @@ function getRowIdentity(supply: SharingAgreementPartitionCoefficientResponse["su
   return { primary: code || "-", secondary: null };
 }
 
+/**
+ * The per-row way back from a lossy edit.
+ *
+ * Icon-only: the editing row already carries a "Quitar" icon button, and on a
+ * 390px card list a labelled button would cost a line per row across a set
+ * that routinely runs to 29 supplies. UndoOutlinedIcon is the glyph this app
+ * already uses for reverting (the revert-to-draft confirmation). The tooltip
+ * is for pointers only — the accessible name carries the meaning on its own,
+ * and names the supply so it stays unambiguous among 29 identical-looking
+ * buttons.
+ */
+function RevertCoefficientButton({ onRevert, supplyLabel }: { onRevert: () => void; supplyLabel: string }) {
+  return (
+    <Tooltip title="Restaurar valor inicial">
+      <IconButton size="small" onClick={onRevert} aria-label={`Restaurar valor inicial de ${supplyLabel}`}>
+        <UndoOutlinedIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+}
+
 function CoefficientInput({
   coefficientInput,
   editedValue,
@@ -195,6 +225,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   editedValue,
   onCoefficientChange,
   onRemove,
+  onRevert,
   showStateColumns = true,
   showCurrentCoefficient = false,
   showSelectionColumn = false,
@@ -303,11 +334,19 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
       )}
       {isEditing && (
         <TableCell align="right">
-          {onRemove && (
-            <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>
-              <DeleteOutlineIcon fontSize="small" />
-            </IconButton>
-          )}
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
+            {onRevert && (
+              <RevertCoefficientButton
+                onRevert={onRevert}
+                supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
+              />
+            )}
+            {onRemove && (
+              <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
         </TableCell>
       )}
       {showActionsColumn && (
@@ -344,6 +383,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   editedValue,
   onCoefficientChange,
   onRemove,
+  onRevert,
   showStateColumns = true,
   showCurrentCoefficient = false,
   showSelectionColumn = false,
@@ -434,6 +474,12 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
                 {formatAssignedEnergy(coefficient.coefficient, installedPowerKw)}
               </Typography>
             </Box>
+          )}
+          {isEditing && onRevert && (
+            <RevertCoefficientButton
+              onRevert={onRevert}
+              supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
+            />
           )}
           {isEditing && onRemove && (
             <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>

@@ -180,6 +180,106 @@ export function buildEditableRowsFromCoefficients(
 }
 
 /**
+ * What each supply's coefficient was when the editing session opened, in
+ * integer 1e-6 units, keyed by supply id.
+ *
+ * Integers, not 0-1 fractions, because every question asked of this map is a
+ * question about exact equality. Rounding happens once, here, on the way in;
+ * `isRowRevertable` then compares integer to integer, and only
+ * `revertRowToSnapshot` ever converts back, once, at the moment it assigns a
+ * row's value.
+ *
+ * `undefined` is a real entry, distinct from an absent key: the supply was in
+ * the loaded set but carried no coefficient. Collapsing it onto 0 would make
+ * an empty field indistinguishable from a supply that genuinely receives
+ * nothing.
+ */
+export type CoefficientSnapshot = ReadonlyMap<string, number | undefined>;
+
+/**
+ * Takes the snapshot from the SERVER-LOADED set, never from the working copy.
+ *
+ * That distinction is the whole point: a baseline derived from `rows` would
+ * move as the admin edits, and "revert" would restore whatever the value
+ * happened to be at some arbitrary later moment. Keyed by supply id — the same
+ * identity the rows, the React keys and the PUT's join all use — so a supply
+ * removed and re-added during the session is still measured against what it
+ * started as.
+ *
+ * Shares `toIntegerUnits` with `buildEditableRowsFromCoefficients`'s own
+ * rounding (`toMillionths` is that function divided by COEFFICIENT_SCALE), so
+ * the snapshot and the rows built from the same response can never disagree
+ * about a value by a rounding step.
+ */
+export function buildCoefficientSnapshot(
+  coefficients: SharingAgreementPartitionCoefficientResponse[],
+): CoefficientSnapshot {
+  return new Map(
+    coefficients
+      .filter((coefficient) => !!coefficient.supply?.id)
+      .map((coefficient): [string, number | undefined] => [
+        coefficient.supply!.id!,
+        coefficient.coefficient !== undefined ? toIntegerUnits(coefficient.coefficient) : undefined,
+      ]),
+  );
+}
+
+/**
+ * Whether this row currently differs from what it was when the session opened
+ * — and therefore whether the revert control has anything to do.
+ *
+ * A COMPARISON OF CANONICAL VALUES, deliberately not a "touched" flag: a row
+ * edited and then typed back to its exact original value is not modified, and
+ * must not offer to restore what it already holds. In percentage mode that is
+ * reachable by hand, since the "%" round trip is exact.
+ *
+ * A supply absent from the snapshot was added during this session. There is no
+ * initial value to restore, so it never offers one — `Cancelar` is what undoes
+ * an addition.
+ *
+ * `undefined` is compared identity-wise on both sides. `toIntegerUnits`
+ * defaults a missing value to 0, so comparing through it would report an empty
+ * field as equal to a genuine zero coefficient.
+ */
+export function isRowRevertable(row: EditableCoefficientRow, snapshot: CoefficientSnapshot): boolean {
+  if (!snapshot.has(row.supplyId)) return false;
+  const originalUnits = snapshot.get(row.supplyId);
+  if (row.value === undefined || originalUnits === undefined) {
+    return (row.value === undefined) !== (originalUnits === undefined);
+  }
+  return toIntegerUnits(row.value) !== originalUnits;
+}
+
+/**
+ * Restores one row to its session-start coefficient, exactly.
+ *
+ * Assigns the canonical value straight from the snapshot integer and
+ * regenerates the text from it — it must NOT route through
+ * `parseCoefficientInput`. Re-deriving from the displayed string is precisely
+ * what loses the value in kW mode, so a revert that "typed" the original text
+ * back into the field would restore the interval, not the coefficient.
+ *
+ * Unit-independent by construction: only the regenerated text depends on
+ * `unit`, never the value.
+ */
+export function revertRowToSnapshot(
+  rows: EditableCoefficientRow[],
+  supplyId: string,
+  snapshot: CoefficientSnapshot,
+  unit: CoefficientInputUnit,
+  installedPowerKw: number | undefined,
+): EditableCoefficientRow[] {
+  if (!snapshot.has(supplyId)) return rows;
+  const originalUnits = snapshot.get(supplyId);
+  const value = originalUnits === undefined ? undefined : originalUnits / COEFFICIENT_SCALE;
+  return rows.map((row) =>
+    row.supplyId === supplyId
+      ? { ...row, value, inputText: formatCoefficientForInput(value, unit, installedPowerKw) }
+      : row,
+  );
+}
+
+/**
  * True for a row this session's supply picker synthesized, as opposed to one
  * that came back from the server.
  *
