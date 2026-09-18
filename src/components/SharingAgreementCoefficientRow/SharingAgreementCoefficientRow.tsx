@@ -155,6 +155,22 @@ function getRowIdentity(supply: SharingAgreementPartitionCoefficientResponse["su
 }
 
 /**
+ * Footprint of a `size="small"` IconButton (20px icon + 5px padding either
+ * side). The revert slot is reserved at this width on every editing row,
+ * whether or not the control is showing.
+ *
+ * Without the reservation the actions column widens the moment any row is
+ * modified, which takes the width back out of the state columns: their text
+ * wraps onto more lines and the WHOLE table grows taller — 117px on a six-row
+ * set, proportionally worse on the 29-row ones this editor routinely handles.
+ * Editing one field must not make the rest of the table jump.
+ *
+ * Same reasoning, and the same minimum-rather-than-fixed treatment, as
+ * SELECTION_SLOT_WIDTH below.
+ */
+const REVERT_SLOT_WIDTH = 30;
+
+/**
  * The per-row way back from a lossy edit.
  *
  * Icon-only: the editing row already carries a "Quitar" icon button, and on a
@@ -165,13 +181,17 @@ function getRowIdentity(supply: SharingAgreementPartitionCoefficientResponse["su
  * and names the supply so it stays unambiguous among 29 identical-looking
  * buttons.
  */
-function RevertCoefficientButton({ onRevert, supplyLabel }: { onRevert: () => void; supplyLabel: string }) {
+function RevertCoefficientSlot({ onRevert, supplyLabel }: { onRevert?: () => void; supplyLabel: string }) {
   return (
-    <Tooltip title="Restaurar valor inicial">
-      <IconButton size="small" onClick={onRevert} aria-label={`Restaurar valor inicial de ${supplyLabel}`}>
-        <UndoOutlinedIcon fontSize="small" />
-      </IconButton>
-    </Tooltip>
+    <Box sx={{ minWidth: REVERT_SLOT_WIDTH, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+      {onRevert && (
+        <Tooltip title="Restaurar valor inicial">
+          <IconButton size="small" onClick={onRevert} aria-label={`Restaurar valor inicial de ${supplyLabel}`}>
+            <UndoOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Box>
   );
 }
 
@@ -335,12 +355,10 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
       {isEditing && (
         <TableCell align="right">
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
-            {onRevert && (
-              <RevertCoefficientButton
-                onRevert={onRevert}
-                supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
-              />
-            )}
+            <RevertCoefficientSlot
+              onRevert={onRevert}
+              supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
+            />
             {onRemove && (
               <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>
                 <DeleteOutlineIcon fontSize="small" />
@@ -475,8 +493,8 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               </Typography>
             </Box>
           )}
-          {isEditing && onRevert && (
-            <RevertCoefficientButton
+          {isEditing && (
+            <RevertCoefficientSlot
               onRevert={onRevert}
               supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
             />
