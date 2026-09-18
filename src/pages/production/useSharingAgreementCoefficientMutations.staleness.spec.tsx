@@ -14,6 +14,7 @@ import type { AxiosRequestConfig } from "axios";
 import dayjs from "dayjs";
 import { customInstance } from "../../api/custom-instance";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
+import type { EditableCoefficientRow } from "./sharingAgreementCoefficientEditing";
 import { useGetSharingAgreementPartitionCoefficients } from "../../api/sharing-agreements/sharing-agreements";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -53,6 +54,11 @@ const initialCoefficient: SharingAgreementPartitionCoefficientResponse = {
 const correctedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   ...initialCoefficient,
   validFrom: "2026-02-01",
+};
+
+const replacedCoefficient: SharingAgreementPartitionCoefficientResponse = {
+  ...initialCoefficient,
+  coefficient: 0.6,
 };
 
 function useHarness(plantId: string, sharingAgreementId: string) {
@@ -120,5 +126,55 @@ describe("coefficient mutations stay pending until the post-success refetch reso
 
     await waitFor(() => expect(result.current.mutations.isActivating).toBe(false));
     expect(result.current.query.data).toEqual([correctedCoefficient]);
+  });
+
+  // Replace races the editor reopening rather than another mutation: the
+  // editor closes on save and seeds both its rows and its session-start
+  // snapshot from the coefficients prop, so re-entering it before the refetch
+  // lands would baseline the next session on superseded data. Nothing gates
+  // "Editar a mano" except this flag reaching the save button.
+  it("keeps isReplacing true through the invalidation-triggered refetch, not just the PUT", async () => {
+    let resolveRefetch!: (value: SharingAgreementPartitionCoefficientResponse[]) => void;
+    let getCallCount = 0;
+
+    mockCustomInstance.mockImplementation((config: AxiosRequestConfig) => {
+      if (config.method === "GET") {
+        getCallCount += 1;
+        if (getCallCount === 1) return Promise.resolve([initialCoefficient]);
+        return new Promise((resolve) => {
+          resolveRefetch = resolve;
+        });
+      }
+      // PUT .../partition-coefficients resolves immediately.
+      return Promise.resolve({ coefficients: [] });
+    });
+
+    const Wrapper = makeWrapper();
+    const { result } = renderHook(() => useHarness("plant-1", "agreement-1"), { wrapper: Wrapper });
+
+    await waitFor(() => expect(result.current.query.data).toEqual([initialCoefficient]));
+    expect(result.current.mutations.isReplacing).toBe(false);
+
+    const rows: EditableCoefficientRow[] = [
+      { supplyId: "s1", coefficient: initialCoefficient, value: 0.6, inputText: "60,0000" },
+    ];
+
+    let replacePromise!: Promise<unknown>;
+    act(() => {
+      replacePromise = result.current.mutations.replaceCoefficients("agreement-1", rows);
+    });
+
+    await waitFor(() => expect(getCallCount).toBe(2));
+    expect(result.current.mutations.isReplacing).toBe(true);
+
+    act(() => resolveRefetch([replacedCoefficient]));
+    await act(async () => {
+      await replacePromise;
+    });
+
+    await waitFor(() => expect(result.current.mutations.isReplacing).toBe(false));
+    // Only once this is true may the editor reopen: it is what the next
+    // session's snapshot would be built from.
+    expect(result.current.query.data).toEqual([replacedCoefficient]);
   });
 });
