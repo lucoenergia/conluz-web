@@ -1008,3 +1008,73 @@ describe("current coefficient (DRAFT-only column)", () => {
     });
   });
 });
+
+describe("revert control", () => {
+  const editingProps = {
+    coefficient: pendingCoefficient,
+    installedPowerKw: 100,
+    isEditing: true,
+    inputUnit: "kw" as const,
+    coefficientInput: "25,00",
+    editedValue: 0.25,
+    onCoefficientChange: vi.fn(),
+    onRemove: vi.fn(),
+  };
+
+  const renderTableRow = (props: Record<string, unknown>) =>
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow {...editingProps} {...props} />
+        </TableBody>
+      </Table>,
+    );
+
+  // The control's absence is how the row says "unchanged". The container
+  // decides that (isRowRevertable) and simply withholds the callback, so the
+  // row must render nothing rather than a disabled button.
+  it.each([
+    ["table row", (props: Record<string, unknown>) => renderTableRow(props)],
+    ["card", (props: Record<string, unknown>) => render(<SharingAgreementCoefficientCard {...editingProps} {...props} />)],
+  ])("renders no revert control on a %s without onRevert", (_label, renderFn) => {
+    renderFn({});
+
+    expect(screen.queryByRole("button", { name: /Restaurar valor inicial/ })).not.toBeInTheDocument();
+    // The remove action is unaffected — the two live side by side.
+    expect(screen.getByRole("button", { name: /^Quitar/ })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["table row", (props: Record<string, unknown>) => renderTableRow(props)],
+    ["card", (props: Record<string, unknown>) => render(<SharingAgreementCoefficientCard {...editingProps} {...props} />)],
+  ])("renders the revert control on a %s and calls back on click", async (_label, renderFn) => {
+    const onRevert = vi.fn();
+    const user = userEvent.setup();
+    renderFn({ onRevert });
+
+    // Named after the supply so it stays unambiguous across a 29-row set, and
+    // meaningful without the tooltip — 90 % of use is touch, where hover
+    // does not exist.
+    const button = screen.getByRole("button", { name: "Restaurar valor inicial de Vivienda A" });
+    await user.click(button);
+
+    expect(onRevert).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to the CUPS in the accessible label when the supply has no name", () => {
+    renderTableRow({
+      coefficient: { ...pendingCoefficient, supply: { ...pendingCoefficient.supply, name: null } },
+      onRevert: vi.fn(),
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Restaurar valor inicial de ES0031300000000001AB" }),
+    ).toBeInTheDocument();
+  });
+
+  it("is never rendered outside editing mode, even if a callback is passed", () => {
+    renderTableRow({ isEditing: false, onRevert: vi.fn() });
+
+    expect(screen.queryByRole("button", { name: /Restaurar valor inicial/ })).not.toBeInTheDocument();
+  });
+});

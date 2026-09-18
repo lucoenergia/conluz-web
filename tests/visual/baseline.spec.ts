@@ -1138,10 +1138,25 @@ test.describe("Visual baselines", () => {
 
   async function navigateToSharingAgreements(page: Page) {
     await page.goto("/production");
+
+    // Waited for BEFORE stabilizing, not after. `stabilizePage` settles on
+    // `networkidle`, which is not a "the app has rendered" signal: every page is
+    // React.lazy, and while the dev server transforms a route's module subtree
+    // there is no request in flight, so networkidle fires with #root still empty
+    // behind the Suspense fallback. Stabilizing then would inject the
+    // animation-killing stylesheet into a document that has not painted the
+    // content yet, and the click below would hunt for an element that does not
+    // exist — reported as a bare 30s timeout rather than "no plant card".
+    // (The warm-up project removes the cold-transform cost; this makes the
+    // helper honest about what it is waiting for either way.)
+    const plantCard = page.locator(".MuiCard-root").filter({ hasText: FIXED_PLANT.name });
+    await expect(plantCard).toBeVisible();
+
     await stabilizePage(page);
 
-    const plantCard = page.locator(".MuiCard-root").filter({ hasText: FIXED_PLANT.name });
-    await plantCard.getByRole("button").click();
+    // Named, not a bare getByRole("button"): the card grows controls over time,
+    // and an unnamed role query would start matching whichever one came first.
+    await plantCard.getByRole("button", { name: `Más acciones para ${FIXED_PLANT.name}` }).click();
     await page.getByRole("menuitem", { name: /Acuerdos de Reparto/i }).click();
 
     await expect(page.getByText(/CAU:/)).toBeVisible();
@@ -1235,7 +1250,7 @@ test.describe("Visual baselines", () => {
 
     // The file panel's title always renders on load regardless of file/coefficient
     // state, so it's a reliable "detail page finished loading" signal across every
-    // fixture — unlike "Suma del fichero", which is absent when coefficients is empty.
+    // fixture — unlike the coefficient sum, which is absent when coefficients is empty.
     // One wording in every status now: the panel no longer switches to
     // "Fichero enviado a la distribuidora" once the agreement is published.
     await expect(page.getByRole("heading", { name: "Fichero para la distribuidora" })).toBeVisible();
@@ -1924,7 +1939,7 @@ test.describe("Visual baselines", () => {
     // Plain string, not regex: the percent formatter's U+00A0 before "%" is
     // normalized against a regular space by getByText's string matcher, but
     // not by its regex matcher.
-    await expect(page.getByText("Suma del fichero: 70,0000 %")).toBeVisible();
+    await expect(page.getByText("Suma de los coeficientes: 70,0000 %")).toBeVisible();
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-mid-edit.png", { fullPage: true });
@@ -2041,7 +2056,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar a mano" }).click();
 
-    await expect(page.getByText("Suma del fichero: 99,9999 %")).toBeVisible();
+    await expect(page.getByText("Suma de los coeficientes: 99,9999 %")).toBeVisible();
     // Plain strings, not regex — same NBSP-normalization rationale as the
     // percentage assertion above: getByText's string matcher normalizes the
     // formatter's U+00A0 against a regular space; its regex matcher does not.
@@ -2050,6 +2065,52 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("sharing-agreement-editor-kw-rounding-caveat.png", { fullPage: true });
+  });
+
+  // Runs on BOTH viewports, unlike the interactive editor specs above. Those
+  // skip mobile because the card list adds no coverage for what they capture;
+  // here it does — SharingAgreementCoefficientCard renders the revert control
+  // with its own markup, which the desktop table shot cannot show.
+  //
+  // The table and the card list are two renderings of the same row state (a
+  // CSS-only breakpoint, so both are always in the DOM), which is what lets one
+  // spec serve both viewports. The locator filters to the VISIBLE instance
+  // rather than taking .first(): fill() requires an actionable element, so on
+  // mobile it has to drive the card's input, not the display:none table's.
+  test("sharing agreement coefficient editor (modified row offering its revert control)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar a mano" }).click();
+
+    // Nothing is offered until a row actually differs from its start value.
+    await expect(page.getByRole("button", { name: /Restaurar valor inicial/ })).toHaveCount(0);
+
+    // Vivienda A: 0.3 of the 45 kW installed. First visible input = the first
+    // row of whichever renderer this viewport shows.
+    const viviendaAInput = page.locator('input[placeholder="0,00"]:visible').first();
+    await expect(viviendaAInput).toHaveValue("13,50");
+    await viviendaAInput.fill("13,00");
+
+    // Asserted explicitly, not left to the screenshot: a ~30x30 px icon button
+    // is well inside the 0.02 maxDiffPixelRatio on a full-page capture, so the
+    // image alone would not prove the control rendered.
+    //
+    // Exactly one, on each viewport. Both renderers are always in the DOM, but
+    // the hidden one is display:none and so outside the accessibility tree that
+    // getByRole queries — which makes this assert the right renderer for the
+    // viewport: the table's button on desktop, the card's on mobile.
+    await expect(page.getByRole("button", { name: "Restaurar valor inicial de Vivienda A" })).toHaveCount(1);
+    // ...and on the edited row only.
+    await expect(page.getByRole("button", { name: /Restaurar valor inicial/ })).toHaveCount(1);
+    await expect(page.getByText("Suma de los coeficientes: 98,8889 %")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("sharing-agreement-editor-row-modified-revert.png", { fullPage: true });
   });
 
   // -------------------------------------------------------------------------

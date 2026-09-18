@@ -20,8 +20,17 @@ export default defineConfig({
     },
   },
   projects: [
+    // Transforms every React.lazy page module before the two viewport projects
+    // start, so neither of them pays a cold Vite transform mid-navigation.
+    // See tests/visual/warmup.setup.ts.
+    {
+      name: "warmup",
+      testMatch: /warmup\.setup\.ts/,
+    },
     {
       name: "mobile",
+      testIgnore: /warmup\.setup\.ts/,
+      dependencies: ["warmup"],
       use: {
         // iPhone 13 dimensions and touch using Chromium (not WebKit) for environment-agnostic rendering.
         // WebKit's text rendering is tightly coupled to the host OS font stack, causing 2–13 px height
@@ -38,6 +47,8 @@ export default defineConfig({
     },
     {
       name: "desktop",
+      testIgnore: /warmup\.setup\.ts/,
+      dependencies: ["warmup"],
       use: {
         viewport: { width: 1440, height: 900 },
         reducedMotion: "reduce",
@@ -47,7 +58,10 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3001",
-    // In CI always start a fresh server; locally reuse if already running
+    // In CI always start a fresh server; locally reuse if already running.
+    // This only waits for the port to answer — it says nothing about Vite
+    // having transformed the app's module graph, which is what the "warmup"
+    // project above exists to guarantee.
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },

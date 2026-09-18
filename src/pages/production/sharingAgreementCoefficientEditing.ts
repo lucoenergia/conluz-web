@@ -118,14 +118,24 @@ export function parseCoefficientInput(
  * still-precise `value`, never a previously-formatted string, so
  * rounding-for-display never compounds across repeated toggles.
  *
- * Both units are FIXED precision, always padded, never variable-length: the
- * raw 0-1 coefficient at 6dp (matches the backend's own coefficient
- * precision, COEFFICIENT_SCALE = 1e-6 — the read-only percentage display
- * honors this via formatPercentage at its own, distinct 4dp percentage scale;
- * the editable coefficient input must stay fixed at 6dp in every case, not
- * just when the natural float representation happens to be short); kW at 2dp
- * (matches formatKilowatts's convention everywhere else kW is shown). A bare
- * String()-style formatter must never be used here: a kW->coefficient
+ * Both units are FIXED precision, always padded, never variable-length:
+ * percentage at MAX_PERCENTAGE_DECIMALS (4) — the field shows the value AS A
+ * PERCENTAGE, not as the raw 0-1 fraction — and kW at 2dp, matching
+ * formatKilowatts's convention everywhere else kW is shown.
+ *
+ * The two units are NOT equally faithful, and the difference is the whole
+ * reason the editor needs an explicit per-row revert:
+ *
+ * - Percentage is LOSSLESS. UNITS_PER_PERCENTAGE_POINT / 10^4 is exactly one
+ *   1e-6 unit, so four percent decimals address the canonical scale one to
+ *   one, and parsePercentageInput rejects a fifth. Over the representable
+ *   range this function and parsePercentageInput are mutual inverses.
+ * - kW is LOSSY, badly. Two decimals of kW on a 63 kW plant give ~6 300
+ *   displayable states against 1 000 000 storable coefficients, so roughly
+ *   159 distinct coefficients all render as "1,94". A displayed kW string
+ *   identifies an INTERVAL of coefficients, never a coefficient.
+ *
+ * A bare String()-style formatter must never be used here: a kW->coefficient
  * division can produce an arbitrary number of natural decimal digits, and
  * without fixed rounding+padding that leaks straight into the field.
  */
@@ -167,6 +177,106 @@ export function buildEditableRowsFromCoefficients(
         inputText: formatCoefficientForInput(value, unit, installedPowerKw),
       };
     });
+}
+
+/**
+ * What each supply's coefficient was when the editing session opened, in
+ * integer 1e-6 units, keyed by supply id.
+ *
+ * Integers, not 0-1 fractions, because every question asked of this map is a
+ * question about exact equality. Rounding happens once, here, on the way in;
+ * `isRowRevertable` then compares integer to integer, and only
+ * `revertRowToSnapshot` ever converts back, once, at the moment it assigns a
+ * row's value.
+ *
+ * `undefined` is a real entry, distinct from an absent key: the supply was in
+ * the loaded set but carried no coefficient. Collapsing it onto 0 would make
+ * an empty field indistinguishable from a supply that genuinely receives
+ * nothing.
+ */
+export type CoefficientSnapshot = ReadonlyMap<string, number | undefined>;
+
+/**
+ * Takes the snapshot from the SERVER-LOADED set, never from the working copy.
+ *
+ * That distinction is the whole point: a baseline derived from `rows` would
+ * move as the admin edits, and "revert" would restore whatever the value
+ * happened to be at some arbitrary later moment. Keyed by supply id — the same
+ * identity the rows, the React keys and the PUT's join all use — so a supply
+ * removed and re-added during the session is still measured against what it
+ * started as.
+ *
+ * Shares `toIntegerUnits` with `buildEditableRowsFromCoefficients`'s own
+ * rounding (`toMillionths` is that function divided by COEFFICIENT_SCALE), so
+ * the snapshot and the rows built from the same response can never disagree
+ * about a value by a rounding step.
+ */
+export function buildCoefficientSnapshot(
+  coefficients: SharingAgreementPartitionCoefficientResponse[],
+): CoefficientSnapshot {
+  return new Map(
+    coefficients
+      .filter((coefficient) => !!coefficient.supply?.id)
+      .map((coefficient): [string, number | undefined] => [
+        coefficient.supply!.id!,
+        coefficient.coefficient !== undefined ? toIntegerUnits(coefficient.coefficient) : undefined,
+      ]),
+  );
+}
+
+/**
+ * Whether this row currently differs from what it was when the session opened
+ * — and therefore whether the revert control has anything to do.
+ *
+ * A COMPARISON OF CANONICAL VALUES, deliberately not a "touched" flag: a row
+ * edited and then typed back to its exact original value is not modified, and
+ * must not offer to restore what it already holds. In percentage mode that is
+ * reachable by hand, since the "%" round trip is exact.
+ *
+ * A supply absent from the snapshot was added during this session. There is no
+ * initial value to restore, so it never offers one — `Cancelar` is what undoes
+ * an addition.
+ *
+ * `undefined` is compared identity-wise on both sides. `toIntegerUnits`
+ * defaults a missing value to 0, so comparing through it would report an empty
+ * field as equal to a genuine zero coefficient.
+ */
+export function isRowRevertable(row: EditableCoefficientRow, snapshot: CoefficientSnapshot): boolean {
+  if (!snapshot.has(row.supplyId)) return false;
+  const originalUnits = snapshot.get(row.supplyId);
+  if (row.value === undefined || originalUnits === undefined) {
+    return (row.value === undefined) !== (originalUnits === undefined);
+  }
+  return toIntegerUnits(row.value) !== originalUnits;
+}
+
+/**
+ * Restores one row to its session-start coefficient, exactly.
+ *
+ * Assigns the canonical value straight from the snapshot integer and
+ * regenerates the text from it — it must NOT route through
+ * `parseCoefficientInput`. Re-deriving from the displayed string is precisely
+ * what loses the value in kW mode, so a revert that "typed" the original text
+ * back into the field would restore the interval, not the coefficient.
+ *
+ * Unit-independent by construction: only the regenerated text depends on
+ * `unit`, never the value.
+ */
+export function revertRowToSnapshot(
+  rows: EditableCoefficientRow[],
+  supplyId: string,
+  snapshot: CoefficientSnapshot,
+  unit: CoefficientInputUnit,
+  installedPowerKw: number | undefined,
+): EditableCoefficientRow[] {
+  if (!snapshot.has(supplyId)) return rows;
+  const originalUnits = snapshot.get(supplyId);
+  const value = originalUnits === undefined ? undefined : originalUnits / COEFFICIENT_SCALE;
+  return rows.map((row) =>
+    row.supplyId === supplyId
+      ? { ...row, value, inputText: formatCoefficientForInput(value, unit, installedPowerKw) }
+      : row,
+  );
 }
 
 /**
@@ -213,12 +323,57 @@ export function buildEditableRowFromSupply(supply: SupplyResponse): EditableCoef
 }
 
 /**
+ * True when `inputText` names the coefficient the row already holds — i.e.
+ * re-deriving a value from it would render, in the active unit, as the very
+ * string already on screen.
+ *
+ * This is what makes a no-op edit a no-op. Without it, kW mode silently
+ * rewrites the canonical value on any change event that merely restates what
+ * the field was already showing: "1,94 kW" is 159 different coefficients on a
+ * 63 kW plant, and re-deriving picks the interval's midpoint, not the one
+ * actually stored. A set summing to exactly 100 % drifts off it with the user
+ * having changed nothing.
+ *
+ * Deliberately compares FORMATTED STRINGS, never numbers, and reads only the
+ * row's CURRENT canonical value — no memory of earlier values, nothing keyed
+ * on edit history. It can therefore only ever decline to move a value that is
+ * already the one the displayed string names; it never restores a value that
+ * was genuinely changed and then retyped. That case needs the explicit
+ * per-row revert, because inferring it here would make the result depend on
+ * how the user got to the text rather than on the text.
+ *
+ * Both sides must be finite: otherwise the degenerate "" === "" case (an
+ * empty row, or kW mode with no installed power) would match everything and
+ * freeze the field.
+ */
+function rendersAsCurrentValue(
+  row: EditableCoefficientRow,
+  candidate: number,
+  unit: CoefficientInputUnit,
+  installedPowerKw: number | undefined,
+): boolean {
+  if (!Number.isFinite(candidate)) return false;
+  if (row.value === undefined || !Number.isFinite(row.value)) return false;
+  return (
+    formatCoefficientForInput(candidate, unit, installedPowerKw) ===
+    formatCoefficientForInput(row.value, unit, installedPowerKw)
+  );
+}
+
+/**
  * A single row's onChange. Stores the typed text VERBATIM — never
  * reformatted — and separately derives `value` via parseCoefficientInput.
  * Never `parsed ?? 0`: empty/unparseable text yields `value: undefined`
  * (blocks save), while "0" yields a real `value: 0` (a legitimate row —
  * e.g. a supply leaving distribution — that reaches the save payload as
  * `coefficient: 0`).
+ *
+ * The canonical value is left untouched when the text merely restates it
+ * (see rendersAsCurrentValue). The text is still stored verbatim either way,
+ * so the field always shows what was typed — only `value` is protected.
+ * This extends the editor's existing structural guarantee that focus and blur
+ * alone cannot rewrite a coefficient, to cover a change event that carries
+ * nothing new.
  */
 export function updateRowInput(
   rows: EditableCoefficientRow[],
@@ -230,6 +385,7 @@ export function updateRowInput(
   return rows.map((row) => {
     if (row.supplyId !== supplyId) return row;
     const parsed = parseCoefficientInput(inputText, unit, installedPowerKw);
+    if (rendersAsCurrentValue(row, parsed, unit, installedPowerKw)) return { ...row, inputText };
     return { ...row, inputText, value: Number.isFinite(parsed) ? parsed : undefined };
   });
 }

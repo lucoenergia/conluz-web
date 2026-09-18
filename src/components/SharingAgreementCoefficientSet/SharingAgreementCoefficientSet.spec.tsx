@@ -14,6 +14,13 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { getAllSupplies } from "../../api/supplies/supplies";
+import {
+  FIXTURE_COEFFICIENTS,
+  FIXTURE_INSTALLED_POWER_KW,
+  REPRODUCTION_ROW_NAME,
+  REPRODUCTION_ROW_SUPPLY_ID,
+} from "../../pages/production/__fixtures__/coefficientSet63kw";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, OPEN_ORPHAN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -88,9 +95,11 @@ async function openBatchAction(user: ReturnType<typeof userEvent.setup>, actionL
   await user.click(screen.getByRole("menuitem", { name: new RegExp(actionLabel) }));
 }
 
-function renderWithTheme(props: Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">) {
+type SetProps = Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">;
+
+function setTree(props: SetProps) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
+  return (
     <QueryClientProvider client={queryClient}>
       <ErrorProvider>
         <ThemeProvider theme={theme}>
@@ -103,8 +112,17 @@ function renderWithTheme(props: Partial<SharingAgreementCoefficientSetProps> & P
           />
         </ThemeProvider>
       </ErrorProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+}
+
+function renderWithTheme(props: SetProps) {
+  return render(setTree(props));
+}
+
+/** Re-renders in place with new props — the component tree keeps its identity, so component state survives, exactly as it does when a refetch lands behind an open panel. */
+function rerenderWithTheme(rerender: ReturnType<typeof render>["rerender"], props: SetProps) {
+  rerender(setTree(props));
 }
 
 const coefficients: SharingAgreementPartitionCoefficientResponse[] = [
@@ -177,14 +195,31 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
   });
 
+  // Both surfaces now carry the same words, so neither assertion may rely on
+  // the label alone: the gauge renders it bare (its figure lives in a sibling
+  // element), the editor renders it with a colon and the figure inline. That
+  // shape is what tells them apart.
   it("hides the coefficient sum cards while editing, in favor of the live readout", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
     expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
+    expect(screen.queryByText(/Suma de los coeficientes: /)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
-    expect(screen.getByText(/Suma del fichero:/)).toBeInTheDocument();
+    expect(screen.getByText(/Suma de los coeficientes: /)).toBeInTheDocument();
+  });
+
+  // AC10 — the editor label was missed when the read view was corrected during
+  // the message-severity consolidation. A set can be authored by hand, with no
+  // file involved, so "del fichero" was simply untrue there.
+  it("the editor's sum label names the coefficients, never the file", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+    expect(screen.queryByText(/Suma del fichero/)).not.toBeInTheDocument();
   });
 
   it("entering edit mode opens in kW mode by default, seeding inputs in kW including a real zero", () => {
@@ -335,7 +370,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
     // 0.4 + 0.6 + 0 = 100%.
-    expect(screen.getByText("Suma del fichero: 100,0000 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
     expect(screen.getByText(/Suma completa \(100%\)/)).toBeInTheDocument();
     expect(screen.getByText(/100,00 kW de 100,00 kW instalados/)).toBeInTheDocument();
   });
@@ -352,7 +387,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
-    expect(screen.getByText("Suma del fichero: 99,9999 %")).toBeInTheDocument();
+    expect(screen.getByText("Suma de los coeficientes: 99,9999 %")).toBeInTheDocument();
     expect(screen.getByText(/con redondeo a céntimos/)).toBeInTheDocument();
     expect(screen.getByText(/faltan 0,0001 % por ajustar en modo porcentaje/)).toBeInTheDocument();
     // No standalone "cuadra" claim in the copy.
@@ -1721,5 +1756,271 @@ describe("SharingAgreementCoefficientSet (current coefficient column)", () => {
     renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
     fireEvent.change(screen.getByPlaceholderText(/Buscar/i), { target: { value: "Local C" } });
     expect(screen.getByText("Coeficiente actual")).toBeInTheDocument();
+  });
+});
+
+/**
+ * These are integration tests over the deliberately large 29-supply fixture
+ * AC12 calls for, and the component renders a table row AND a card for every
+ * one of them (a CSS-only breakpoint, so jsdom mounts both). One mount costs
+ * ~400ms locally and several tests need two full editor sessions, which puts
+ * them around 1.4s here — comfortably inside the 5s default on a fast machine
+ * and over it on a loaded one.
+ *
+ * Raised for the whole block rather than the one test that tipped over first,
+ * since they all share the same fixed cost. The cost is mount time, not a
+ * hang: repeated runs land within ~50ms of each other, and profiling put the
+ * element lookups at effectively zero. 20s leaves a real regression or a
+ * genuine hang still failing, just later.
+ */
+describe("SharingAgreementCoefficientSet (per-row revert)", { timeout: 20_000 }, () => {
+  beforeEach(() => {
+    mockMutateAsync.mockReset();
+    mockSuccessDispatch.mockClear();
+    vi.mocked(getAllSupplies).mockResolvedValue({
+      items: [{ id: REPRODUCTION_ROW_SUPPLY_ID, name: REPRODUCTION_ROW_NAME, code: "ES0031300000000015XY" }],
+      number: 0,
+      totalPages: 1,
+    } as unknown as Awaited<ReturnType<typeof getAllSupplies>>);
+  });
+
+  function renderEditor() {
+    const view = renderWithTheme({
+      coefficients: FIXTURE_COEFFICIENTS,
+      installedPowerKw: FIXTURE_INSTALLED_POWER_KW,
+      agreementStatus: SharingAgreementResponseStatus.DRAFT,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+    return view;
+  }
+
+  /**
+   * Scopes queries to one supply's desktop table row. The mobile card renders
+   * in parallel in jsdom (CSS-only breakpoint) and shares the same row state,
+   * so driving the table instance is enough — but only the table rows carry
+   * role="row", which is what makes the scoping unambiguous.
+   */
+  const rowOf = (supplyName: string) =>
+    screen.getAllByRole("row").find((row) => within(row).queryByText(supplyName))!;
+  const inputOf = (supplyName: string) => within(rowOf(supplyName)).getByRole("textbox") as HTMLInputElement;
+  const revertButtonsIn = (supplyName: string) =>
+    within(rowOf(supplyName)).queryAllByRole("button", { name: /Restaurar valor inicial/ });
+  /** Every instance on screen — two per modified row, since table and card both render. */
+  const allRevertButtons = () => screen.queryAllByRole("button", { name: /Restaurar valor inicial/ });
+
+  // AC2
+  it("offers no revert control until a row actually differs from its session-start value", () => {
+    renderEditor();
+    expect(allRevertButtons()).toHaveLength(0);
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "1,90" } });
+
+    expect(revertButtonsIn(REPRODUCTION_ROW_NAME)).toHaveLength(1);
+    // Only that row: the control is per-row state, not a session-wide flag.
+    expect(allRevertButtons()).toHaveLength(2);
+    expect(revertButtonsIn("Vivienda 1ºA")).toHaveLength(0);
+  });
+
+  // AC1, end to end through the UI. The displayed text reads "1,94" both
+  // before and after the detour, so the sum is what proves the coefficient
+  // itself came back.
+  it("restores the exact coefficient, and the exact sum, when the control is used", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("1,94");
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "1,90" } });
+    expect(screen.getByText("Suma de los coeficientes: 99,9389 %")).toBeInTheDocument();
+
+    await user.click(revertButtonsIn(REPRODUCTION_ROW_NAME)[0]);
+
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("1,94");
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+    expect(allRevertButtons()).toHaveLength(0);
+  });
+
+  // The regression the issue opens with: retyping the value you saw does NOT
+  // bring the set back, which is why an explicit control is needed at all.
+  it("a hand-retyped kW value leaves the set off 100 %, and the control is still offered", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    await user.clear(inputOf(REPRODUCTION_ROW_NAME));
+    await user.type(inputOf(REPRODUCTION_ROW_NAME), "1,94");
+
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("1,94");
+    expect(screen.getByText("Suma de los coeficientes: 100,0024 %")).toBeInTheDocument();
+    expect(revertButtonsIn(REPRODUCTION_ROW_NAME)).toHaveLength(1);
+
+    await user.click(revertButtonsIn(REPRODUCTION_ROW_NAME)[0]);
+
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+  });
+
+  // AC7, through the UI: one change event restating what the field shows.
+  it.each([
+    ["kW", "kw", "1,94"],
+    ["percentage", "%", "3,0770"],
+  ])("restating the displayed %s value in a single edit changes nothing", async (_label, toggle, displayed) => {
+    const user = userEvent.setup();
+    renderEditor();
+    if (toggle === "%") await user.click(screen.getByRole("button", { name: "%" }));
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue(displayed);
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: displayed } });
+
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+    expect(allRevertButtons()).toHaveLength(0);
+  });
+
+  // AC3 — visibility is a comparison of values, never a "touched" flag.
+  it("withdraws the control when a row is retyped by hand to its exact original value", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    await user.click(screen.getByRole("button", { name: "%" }));
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "3,0000" } });
+    expect(revertButtonsIn(REPRODUCTION_ROW_NAME)).toHaveLength(1);
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "3,0770" } });
+
+    expect(revertButtonsIn(REPRODUCTION_ROW_NAME)).toHaveLength(0);
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+  });
+
+  // AC4 — nothing to go back to.
+  it("never offers the control on a supply added during the session", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({
+      coefficients: [],
+      installedPowerKw: FIXTURE_INSTALLED_POWER_KW,
+      agreementStatus: SharingAgreementResponseStatus.DRAFT,
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Editar a mano/ }));
+
+    await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
+    await screen.findByText(REPRODUCTION_ROW_NAME);
+    await user.click(screen.getByText(REPRODUCTION_ROW_NAME));
+    await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
+    await waitFor(() => expect(screen.getAllByText(REPRODUCTION_ROW_NAME).length).toBeGreaterThan(0));
+
+    expect(allRevertButtons()).toHaveLength(0);
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "2,00" } });
+
+    expect(allRevertButtons()).toHaveLength(0);
+  });
+
+  // AC5 — a removed-and-re-added supply is still in the snapshot, so it is
+  // measured like any other row. It returns with no value at all, which
+  // already differs from what it started as.
+  it("offers the control on a re-added supply before anything is typed, and restores its original value", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    await user.click(within(rowOf(REPRODUCTION_ROW_NAME)).getByRole("button", { name: /^Quitar/ }));
+    await waitFor(() => expect(screen.queryByText(REPRODUCTION_ROW_NAME)).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
+    await screen.findByText(REPRODUCTION_ROW_NAME);
+    await user.click(screen.getByText(REPRODUCTION_ROW_NAME));
+    await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
+    await waitFor(() => expect(screen.getAllByText(REPRODUCTION_ROW_NAME).length).toBeGreaterThan(0));
+
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("");
+    expect(revertButtonsIn(REPRODUCTION_ROW_NAME)).toHaveLength(1);
+
+    await user.click(revertButtonsIn(REPRODUCTION_ROW_NAME)[0]);
+
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("1,94");
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+  });
+
+  // AC8 — the text regenerates in whichever unit is active.
+  it("regenerates the field in the active unit when reverting in percentage mode", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    await user.click(screen.getByRole("button", { name: "%" }));
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "1,0000" } });
+    await user.click(revertButtonsIn(REPRODUCTION_ROW_NAME)[0]);
+
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("3,0770");
+  });
+
+  // AC6 — several rows modified, all reverted, the set exactly as loaded.
+  it("returns the sum to exactly the loaded sum once every modified row is reverted", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    const targets = ["Vivienda 1ºB", REPRODUCTION_ROW_NAME, "Local Comercial 1", "Sala de la comunidad"];
+
+    for (const name of targets) {
+      fireEvent.change(inputOf(name), { target: { value: "2,50" } });
+    }
+    expect(screen.queryByText("Suma de los coeficientes: 100,0000 %")).not.toBeInTheDocument();
+    expect(allRevertButtons()).toHaveLength(targets.length * 2);
+
+    for (const name of targets) {
+      await user.click(revertButtonsIn(name)[0]);
+    }
+
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+    expect(allRevertButtons()).toHaveLength(0);
+  });
+
+  // AC9 — the editor closes on save, so the next session necessarily rebuilds
+  // the snapshot from whatever the server now reports.
+  it("rebuilds the snapshot from the saved set when the editor is reopened after a save", async () => {
+    mockMutateAsync.mockResolvedValue({ coefficients: [] });
+    const user = userEvent.setup();
+    const { rerender } = renderEditor();
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "1,90" } });
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument());
+
+    // What the server now returns for that supply: the value just saved.
+    const saved = FIXTURE_COEFFICIENTS.map((c) =>
+      c.supply?.id === REPRODUCTION_ROW_SUPPLY_ID ? { ...c, coefficient: 0.030159 } : c,
+    );
+    rerenderWithTheme(rerender, {
+      coefficients: saved,
+      installedPowerKw: FIXTURE_INSTALLED_POWER_KW,
+      agreementStatus: SharingAgreementResponseStatus.DRAFT,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+
+    // The saved value is the new baseline: unmodified, so no control.
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("1,90");
+    expect(allRevertButtons()).toHaveLength(0);
+
+    // And reverting now goes back to the saved value, not the pre-save one.
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "2,50" } });
+    await user.click(revertButtonsIn(REPRODUCTION_ROW_NAME)[0]);
+
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("1,90");
+  });
+
+  it("drops the snapshot on cancel, so a later session cannot revert to an earlier one's values", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "1,90" } });
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+
+    expect(inputOf(REPRODUCTION_ROW_NAME)).toHaveValue("1,94");
+    expect(allRevertButtons()).toHaveLength(0);
+  });
+
+  it("names the supply in the control's accessible label, so 29 of them stay distinguishable", () => {
+    renderEditor();
+
+    fireEvent.change(inputOf(REPRODUCTION_ROW_NAME), { target: { value: "1,90" } });
+
+    expect(
+      screen.getAllByRole("button", { name: `Restaurar valor inicial de ${REPRODUCTION_ROW_NAME}` }),
+    ).toHaveLength(2);
   });
 });

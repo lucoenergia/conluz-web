@@ -77,6 +77,13 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
   // intend. These flags span the whole call, success or failure, through the
   // awaited invalidation, and are OR-combined with the raw mutation flag
   // (never replacing it) so anything driving that flag directly keeps working.
+  //
+  // `replace` needs the same treatment for a different reason: it does not
+  // race another mutation, it races the editor reopening. The editor closes on
+  // save and seeds its rows AND its session-start snapshot from the
+  // coefficients prop, so re-entering it before the refetch lands would
+  // baseline the next session on data the save had already superseded.
+  const [isReplacingAfterInvalidate, setIsReplacingAfterInvalidate] = useState(false);
   const [isActivatingAfterInvalidate, setIsActivatingAfterInvalidate] = useState(false);
   const [isDeactivatingAfterInvalidate, setIsDeactivatingAfterInvalidate] = useState(false);
   const [isClosingAfterInvalidate, setIsClosingAfterInvalidate] = useState(false);
@@ -101,6 +108,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     sharingAgreementId: string,
     rows: EditableCoefficientRow[],
   ): Promise<ReplaceCoefficientsResult> => {
+    setIsReplacingAfterInvalidate(true);
     try {
       // Exactly one PUT per save — the endpoint replaces the whole set, so
       // this is called once with every row, never per keystroke or per row.
@@ -123,16 +131,27 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
           })),
         },
       });
-      queryClient.invalidateQueries({
-        queryKey: getGetSharingAgreementPartitionCoefficientsQueryKey(plantId, sharingAgreementId),
-      });
-      invalidateSupplyCoefficientHistories();
+      // Awaited, like the four lifecycle calls below — invalidateQueries
+      // resolves only once every matching *active* query has refetched, not
+      // merely once they are marked stale. Without the await, success was
+      // reported while the coefficient set on screen was still the pre-save
+      // one: the editor closed, and re-opening it inside that window seeded
+      // both the editable rows and the session-start snapshot from data the
+      // save had already superseded.
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getGetSharingAgreementPartitionCoefficientsQueryKey(plantId, sharingAgreementId),
+        }),
+        invalidateSupplyCoefficientHistories(),
+      ]);
       return { success: true };
     } catch (error) {
       errorDispatch(
         getFirstApiErrorMessage(error, "Ha habido un problema al guardar los coeficientes. Por favor, inténtalo más tarde"),
       );
       return { success: false };
+    } finally {
+      setIsReplacingAfterInvalidate(false);
     }
   };
 
@@ -291,7 +310,7 @@ export function useSharingAgreementCoefficientMutations(plantId: string): Sharin
     deactivateCoefficients,
     closeCoefficients,
     reopenCoefficients,
-    isReplacing: replaceMutation.isPending,
+    isReplacing: replaceMutation.isPending || isReplacingAfterInvalidate,
     isActivating: activateMutation.isPending || isActivatingAfterInvalidate,
     isDeactivating: deactivateMutation.isPending || isDeactivatingAfterInvalidate,
     isClosing: closeMutation.isPending || isClosingAfterInvalidate,

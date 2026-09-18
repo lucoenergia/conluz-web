@@ -74,12 +74,16 @@ import {
 } from "../../pages/production/sharingAgreementCoefficientState";
 import { normalizeForSearch } from "../../pages/production/sharingAgreementFilters";
 import {
+  buildCoefficientSnapshot,
   buildEditableRowFromSupply,
   buildEditableRowsFromCoefficients,
+  isRowRevertable,
   isValidCoefficientValue,
   retextRowsForUnit,
+  revertRowToSnapshot,
   updateRowInput,
   type CoefficientInputUnit,
+  type CoefficientSnapshot,
   type EditableCoefficientRow,
 } from "../../pages/production/sharingAgreementCoefficientEditing";
 import {
@@ -329,6 +333,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [isEditing, setIsEditing] = useState(false);
   const [inputUnit, setInputUnit] = useState<CoefficientInputUnit>("kw");
   const [rows, setRows] = useState<EditableCoefficientRow[]>([]);
+  /**
+   * What every supply's coefficient was when this editing session opened.
+   *
+   * Taken once, in handleStartEditing, from the server-loaded `coefficients`
+   * — never from `rows`, and deliberately NOT refreshed when the prop changes
+   * mid-session: a background refetch landing behind an open editor must not
+   * move the baseline the admin is editing against.
+   *
+   * Cleared whenever the session ends, so a later one can never revert to a
+   * previous session's values. A successful save closes the editor, so the
+   * next session necessarily re-reads the saved set.
+   */
+  const [snapshot, setSnapshot] = useState<CoefficientSnapshot>(() => new Map());
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -720,6 +737,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "percentage";
     setInputUnit(startingUnit);
     setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, installedPowerKw));
+    setSnapshot(buildCoefficientSnapshot(coefficients));
     setIsEditing(true);
   };
 
@@ -746,6 +764,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const handleCancelEditing = () => {
     setIsEditing(false);
     setRows([]);
+    setSnapshot(new Map());
   };
 
   const handleUnitChange = (newUnit: CoefficientInputUnit) => {
@@ -762,6 +781,15 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     setRows((prev) => prev.filter((row) => row.supplyId !== supplyId));
   };
 
+  /**
+   * Assigns the session-start coefficient back to the row directly. It must
+   * not go through the text-parsing path: re-deriving a value from the
+   * displayed kW string is exactly what loses it.
+   */
+  const handleRevertRow = (supplyId: string) => {
+    setRows((prev) => revertRowToSnapshot(prev, supplyId, snapshot, inputUnit, installedPowerKw));
+  };
+
   const handleConfirmAddSupplies: AddSupplyDialogProps["onConfirm"] = (supplies) => {
     setRows((prev) => [...prev, ...supplies.map(buildEditableRowFromSupply)]);
     setIsPickerOpen(false);
@@ -772,6 +800,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     if (outcome.success) {
       setIsEditing(false);
       setRows([]);
+      setSnapshot(new Map());
       successDispatch("Coeficientes guardados.");
     }
   };
@@ -963,7 +992,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       {isEditing && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Suma del fichero: {formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE)}
+            Suma de los coeficientes: {formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {formatSumCaption(sums, inputUnit, installedPowerKw)}
@@ -1106,6 +1135,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         editedValue={row.value}
                         onCoefficientChange={(value) => handleCoefficientChange(row.supplyId, value)}
                         onRemove={() => handleRemoveRow(row.supplyId)}
+                        onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                         showStateColumns={showStateColumns}
                         showCurrentCoefficient={showCurrentCoefficient}
                       />
@@ -1156,6 +1186,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     editedValue={row.value}
                     onCoefficientChange={(value) => handleCoefficientChange(row.supplyId, value)}
                     onRemove={() => handleRemoveRow(row.supplyId)}
+                    onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                     showStateColumns={showStateColumns}
                     showCurrentCoefficient={showCurrentCoefficient}
                   />

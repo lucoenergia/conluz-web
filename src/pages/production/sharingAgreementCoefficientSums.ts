@@ -56,9 +56,9 @@ export function isFullSum(sumUnits: number): boolean {
  * (COEFFICIENT_SCALE) shifted 2 places by the *100 percent conversion, so
  * 4dp on the percentage losslessly matches 6dp on the underlying fraction.
  * Do not raise this back to 6dp: the extra 2 digits are always trailing
- * zeros. The raw coefficient value itself (e.g. the editor's "%"-mode input,
- * via formatCoefficientForInput / formatFixedDecimalForInput) is a different
- * quantity and correctly stays at 6dp — don't conflate the two.
+ * zeros. The editor's "%"-mode input (formatCoefficientForInput) renders the
+ * same quantity at the same 4dp scale, by the same reasoning — it is not, as
+ * this comment once claimed, a raw 0-1 coefficient at 6dp.
  */
 export function formatCoefficientPercentage(value: number): string {
   return formatPercentage(value);
