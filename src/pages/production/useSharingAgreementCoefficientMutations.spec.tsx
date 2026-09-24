@@ -7,6 +7,7 @@ process.env.TZ = "Europe/Madrid";
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { waitFor } from "@testing-library/react";
+import type { QueryKey } from "@tanstack/react-query";
 import { createTestQueryClient, renderHookWithProviders } from "../../test/renderWithProviders";
 import { mutation } from "../../test/queryState";
 import dayjs from "dayjs";
@@ -22,8 +23,7 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
-import { buildSupply } from "../../test/fixtures";
+import { buildCoefficient, buildSupply } from "../../test/fixtures";
 import {
   useActivatePartitionCoefficients,
   useClosePartitionCoefficients,
@@ -72,7 +72,7 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 
 const row = (supplyId: string, value: number | undefined): EditableCoefficientRow => ({
   supplyId,
-  coefficient: {} as SharingAgreementPartitionCoefficientResponse,
+  coefficient: buildCoefficient(),
   value,
   inputText: value === undefined ? "" : String(value),
 });
@@ -307,7 +307,11 @@ describe("activateCoefficients", () => {
     const predicate = filters && "predicate" in filters ? filters.predicate : undefined;
     expect(predicate).toBeTypeOf("function");
 
-    const matches = (key: string) => predicate!({ queryKey: [key] } as never);
+    // A real Query from the client's cache, so the predicate sees exactly what invalidateQueries passes it.
+    const matches = (key: string) => {
+      const queryKey: QueryKey = [key];
+      return predicate!(queryClient.getQueryCache().build(queryClient, { queryKey }));
+    };
     // Matches: the list, this agreement's by-id, this agreement's coefficient
     // set, and (critically) a *different* agreement of the *same* plant —
     // this is the whole reason for a predicate instead of specific keys: a

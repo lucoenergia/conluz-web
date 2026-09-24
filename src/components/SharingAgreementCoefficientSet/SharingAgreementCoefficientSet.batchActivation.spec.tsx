@@ -295,7 +295,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
     const alertNode = await screen.findByRole("alert");
 
-    const scrollMock = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
+    const scrollMock = vi.mocked(Element.prototype.scrollIntoView);
     expect(scrollMock).toHaveBeenCalledTimes(1);
     // The scrolled node is the panel wrapper (or the panel itself) — an
     // ancestor of the alert, not some unrelated element like document.body.

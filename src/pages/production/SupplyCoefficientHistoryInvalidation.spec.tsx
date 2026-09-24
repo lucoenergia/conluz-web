@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests } from "../../test/requestRouter";
+import { buildCoefficient } from "../../test/fixtures";
 import dayjs from "dayjs";
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
@@ -53,8 +54,8 @@ function Harness({ action }: { action: "reopen" | "activate" | "deactivate" | "c
     if (action === "deactivate") return mutations.deactivateCoefficients(AGREEMENT_ID, ["c1"]);
     if (action === "close") return mutations.closeCoefficients(AGREEMENT_ID, ["c1"], dayjs("2025-06-01"));
     return mutations.replaceCoefficients(AGREEMENT_ID, [
-      { supplyId: SUPPLY_ID, value: 1, coefficient: {}, inputText: "100" },
-    ] as never);
+      { supplyId: SUPPLY_ID, value: 1, coefficient: buildCoefficient(), inputText: "100" },
+    ]);
   };
 
   return (
