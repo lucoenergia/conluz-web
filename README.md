@@ -235,7 +235,7 @@ In order to be hotswaped at the container startup. Further reading of the method
   - Query error handling with automatic 401 response handling
 - **Styling Strategy**: MUI-only — the theme in `src/theme/` is the single source of truth for all design tokens (colours, radii, shadows, typography). See `docs/styling-conventions.md` for authoring rules.
 - **Code Splitting**: Manual chunks configuration in Vite for optimized bundle sizes
-- **Testing Strategy**: Component testing with Vitest and React Testing Library, MSW for API mocking
+- **Testing Strategy**: Component testing with Vitest and React Testing Library, with API hooks mocked via `vi.mock` of the generated `src/api/<tag>/<tag>` modules
 - **Type Safety**: Full TypeScript coverage with auto-generated types from OpenAPI spec
 
 ## 🧪 Testing

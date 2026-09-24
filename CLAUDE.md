@@ -16,7 +16,6 @@ npm run generate-client       # Regenerate API client from api-docs.json
 npm run test:visual           # Run visual tests
 npm run test:visual:mobile    # Run visual tests for mobile screens
 npm run test:visual:desktop   # Run visual tests for desktop screens
-npm run test:visual:update    # Update screenshots that act as the baseline for asserting visual tests
 ```
 
 ## Architecture Overview
@@ -52,7 +51,7 @@ Deeper patterns (gating recipes, hook shapes, common pitfalls) live in the **`co
 The API layer is **completely auto-generated** from OpenAPI specification using Orval:
 - **Input**: `api-docs.json` (OpenAPI spec from backend)
 - **Output**: `src/api/` directory organized by OpenAPI tags
-- **Generated artifacts**: TypeScript models, React Query hooks, MSW mocks
+- **Generated artifacts**: TypeScript models and React Query hooks (Orval runs with `mock: false`)
 - **Never manually edit** files in `src/api/` - they will be overwritten
 
 To update API definitions (human maintainer workflow):
@@ -75,8 +74,14 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
 - **Framework**: Vitest with jsdom environment
 - **Convention**: Test files use `.spec.tsx` extension (not `.test.tsx`)
 - **Location**: Tests are colocated with components
-- **API Mocking**: MSW (Mock Service Worker) auto-generated for all endpoints
+- **API mocking (current convention)**: each spec mocks what it needs with `vi.mock` — the generated `src/api/<tag>/<tag>` modules (returning the hooks' shapes) and `src/context/*` providers/hooks. Reference: `src/pages/users/CreateUser.spec.tsx`. `vi.mock` is per test file, so a helper module shared between specs must not contain mocks. This will be revisited once a shared test harness exists.
+- **No real network**: a spec must never reach the backend; an unmocked query hook shows up as `ECONNREFUSED` in the run output.
 - **Pattern**: Use React Testing Library with `@testing-library/jest-dom` matchers
+
+**Fast iteration (agents):**
+- While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` takes file paths (source or spec) and runs the specs that import them. When it resolves to nothing it prints "No test files found" and still exits 0, so in that case run the spec directly by path: `npx vitest run <path/to/File.spec.tsx>`.
+- Run the full gates `npm run lint && npm test` once, at the end.
+- Run `npm run test:visual` only at the end and only if the UI changed. If it fails, report which baselines differ; never regenerate them.
 
 **Visual regression tests (Playwright):**
 - **Framework**: Playwright (`@playwright/test`), configured in `playwright.config.ts`.
@@ -86,7 +91,7 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
   - `npm run test:visual` — run all visual tests (both viewports)
   - `npm run test:visual:mobile` — mobile viewport only (`--project=mobile`)
   - `npm run test:visual:desktop` — desktop viewport only (`--project=desktop`)
-  - `npm run test:visual:update` — regenerate baseline screenshots (`--update-snapshots`); run this whenever an intentional UI change alters a captured screen, then commit the updated PNGs.
+- **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or otherwise rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails, report which screens differ and stop; regenerating baselines is a manual maintainer step documented in `CONTRIBUTE.md`.
 - **Server**: Playwright starts (or reuses locally) the dev server on `http://localhost:3001` via the `webServer` config — no need to launch it yourself. In CI it always starts fresh.
 - **No live backend**: Auth is faked by injecting a JWT into `localStorage` before load, and every `/api/v1/**` request is intercepted with fixed, hard-coded JSON fixtures. Data must be deterministic (no faker, no time-varying fields) so screenshots are byte-stable. Animations are disabled and `document.fonts.ready` is awaited before capture.
 - **Tolerance**: `toHaveScreenshot` allows `maxDiffPixelRatio: 0.02` to absorb sub-pixel font rendering while still catching real color/layout changes.
@@ -111,7 +116,7 @@ components/ComponentName/
 2. **Styling**: Material-UI components
 3. **Mobile-responsive**: MIN_DESKTOP_WIDTH = 768px breakpoint
 4. **Error boundaries**: Global error handling with automatic 401 processing
-5. **Code splitting**: Manual chunk configuration in `vite.config.ts` for optimization
+5. **Code splitting**: Rollup's automatic chunking — `vite.config.ts` deliberately sets no `manualChunks` (its comment records the measurements behind that)
 
 ### Critical Files to Understand
 - `src/main.tsx`: Application bootstrap with provider hierarchy
@@ -127,7 +132,7 @@ When working with API endpoints:
 1. Never modify files in `src/api/` directly
 2. Use the auto-generated React Query hooks (e.g., `useGetSupplies`, `useCreateSupply`)
 3. Handle loading/error states using React Query's built-in states
-4. Mutations automatically invalidate related queries
+4. Invalidation is explicit: after a mutation, call `queryClient.invalidateQueries` (or `removeQueries` after a delete) with the generated `get…QueryKey()` getters — see `src/pages/production/useSharingAgreementMutations.ts`
 
 ### Table Row Actions Pattern
 
@@ -212,7 +217,7 @@ Fonts (self-hosted Inter — do not move back to a CDN): `references/fonts.md`
 Verification gates (both must pass before committing styling changes):
 ```bash
 npm run lint   # 0 no-restricted-syntax errors
-npm test       # pass (3 pre-existing form-spec timeouts are expected)
+npm test       # pass
 ```
 
 ## Skills & documentation maintenance
