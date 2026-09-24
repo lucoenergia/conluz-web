@@ -1,25 +1,26 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
+import { useCreateUser } from "../../api/users/users";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
-
-vi.mock("../../api/users/users", () => ({
-  useCreateUser: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
+vi.mock(import("react-router"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../api/users/users"), () => ({
+  useCreateUser: vi.fn(),
+}));
+
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
@@ -43,20 +44,16 @@ vi.mock("../../components/PartnerForm/PartnerForm", () => ({
   ),
 }));
 
-import { MemoryRouter } from "react-router";
 import { CreateUserPage } from "./CreateUser";
 
 describe("CreateUserPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useCreateUser).mockReturnValue(mutation.idle({ mutateAsync: mockMutateAsync }));
   });
 
   const setup = () => {
-    render(
-      <MemoryRouter>
-        <CreateUserPage />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<CreateUserPage />);
   };
 
   it("renders page header with user-scoped title", () => {

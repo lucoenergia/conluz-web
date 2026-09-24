@@ -1,6 +1,9 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
+import { useLogin } from "../../api/authentication/authentication";
 
 // Crear los mocks
 const mockNavigate = vi.fn();
@@ -8,25 +11,22 @@ const mockAuthDispatch = vi.fn();
 const mockLogin = vi.fn();
 
 // Mocks
-vi.mock("../../api/authentication/authentication", () => ({
-  useLogin: () => ({ mutateAsync: mockLogin }),
+vi.mock(import("../../api/authentication/authentication"), () => ({
+  useLogin: vi.fn(),
 }));
 
-vi.mock("../../context/auth.context", () => ({
+vi.mock(import("../../context/auth.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useAuthDispatch: () => mockAuthDispatch,
 }));
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
+vi.mock(import("react-router"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
+}));
 
 // Imports después de los mocks
 import { Login } from "./Login";
-import { MemoryRouter } from "react-router";
 
 describe("Login component", () => {
   beforeEach(() => {
@@ -36,14 +36,11 @@ describe("Login component", () => {
     mockAuthDispatch.mockClear();
     mockNavigate.mockClear();
     mockLogin.mockClear();
+    vi.mocked(useLogin).mockReturnValue(mutation.idle({ mutateAsync: mockLogin }));
   });
 
   const setup = () => {
-    render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<Login />);
   };
 
   it("submits the form with valid credentials and navigates to home", async () => {

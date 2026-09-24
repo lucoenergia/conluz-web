@@ -1,13 +1,18 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithProviders } from "../test/renderWithProviders";
+import { mutation, query } from "../test/queryState";
+import { buildUser } from "../test/fixtures";
+import { useGetCurrentUser, useUpdateUser, type getCurrentUser } from "../api/users/users";
+import type { useActiveCommunityRole } from "../hooks/useActiveCommunityRole";
 
 const mockErrorDispatch = vi.fn();
 const mockUpdateMutate = vi.fn();
 let mockIsPlatformAdmin = false;
-let mockActiveCommunityRole: string | null = null;
+let mockActiveCommunityRole: ReturnType<typeof useActiveCommunityRole> = null;
 
-const mockCurrentUser = {
+const mockCurrentUser = buildUser({
   id: "u1",
   number: 7,
   fullName: "Ana García",
@@ -15,23 +20,23 @@ const mockCurrentUser = {
   email: "ana@example.com",
   address: "Calle Mayor 1",
   phoneNumber: "600000001",
-};
+});
 
-vi.mock("../api/users/users", () => ({
-  useGetCurrentUser: () => ({ data: mockCurrentUser, isLoading: false, error: null, refetch: vi.fn() }),
-  useUpdateUser: () => ({ mutateAsync: mockUpdateMutate, isPending: false }),
+vi.mock(import("../api/users/users"), () => ({
+  useGetCurrentUser: vi.fn(),
+  useUpdateUser: vi.fn(),
 }));
 
-vi.mock("../context/error.context", () => ({
+vi.mock(import("../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../hooks/useActiveCommunityRole", () => ({
+vi.mock(import("../hooks/useActiveCommunityRole"), () => ({
   useIsPlatformAdmin: () => mockIsPlatformAdmin,
   useActiveCommunityRole: () => mockActiveCommunityRole,
 }));
 
-import { MemoryRouter } from "react-router";
 import { ProfilePage } from "./Profile";
 
 describe("ProfilePage role label", () => {
@@ -39,14 +44,12 @@ describe("ProfilePage role label", () => {
     vi.clearAllMocks();
     mockIsPlatformAdmin = false;
     mockActiveCommunityRole = null;
+    vi.mocked(useGetCurrentUser).mockReturnValue(query.success<typeof getCurrentUser>(mockCurrentUser));
+    vi.mocked(useUpdateUser).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutate }));
   });
 
   const setup = () =>
-    render(
-      <MemoryRouter>
-        <ProfilePage />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<ProfilePage />);
 
   it("shows platform-admin label when the user is a platform admin", () => {
     mockIsPlatformAdmin = true;
