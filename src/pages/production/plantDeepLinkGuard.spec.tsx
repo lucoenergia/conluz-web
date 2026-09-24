@@ -14,23 +14,24 @@ import {
   type getSharingAgreements,
 } from "../../api/sharing-agreements/sharing-agreements";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
+import type { SharingAgreementResponse } from "../../api/models";
+import { buildPlant, buildSharingAgreement } from "../../test/fixtures";
 
-const PLANT: PlantResponse = {
+const PLANT = buildPlant({
   id: "plant-a",
   providerCode: "PC-1",
   name: "Planta Norte",
   address: "Calle Uno",
   totalPower: 10,
   community: { id: "community-a" },
-} as PlantResponse;
+});
 
 const AGREEMENTS: SharingAgreementResponse[] = [
-  {
+  buildSharingAgreement({
     id: "agreement-1",
     name: "Acuerdo vigente",
     status: SharingAgreementResponseStatus.PUBLISHED,
-  } as SharingAgreementResponse,
+  }),
 ];
 
 vi.mock(import("../../api/plants/plants"), () => ({

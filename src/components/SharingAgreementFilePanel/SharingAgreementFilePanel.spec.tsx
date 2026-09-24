@@ -19,7 +19,8 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import type { SharingAgreementFileResponse, SharingAgreementResponse } from "../../api/models";
+import type { SharingAgreementResponse } from "../../api/models";
+import { buildSharingAgreement } from "../../test/fixtures";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 
 const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -48,15 +49,8 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 const fullSumCoefficients: CoefficientSummable[] = [{ coefficient: 1, applicationState: PENDING }];
 const partialSumCoefficients: CoefficientSummable[] = [{ coefficient: 0.5, applicationState: PENDING }];
 
-// `file` is nullable at runtime (see SharingAgreementFilePanel.tsx's own
-// defensive note) even though Orval typed it as always-present — accept null
-// here too, and cast the fixture as a whole rather than fighting the type.
-type AgreementOverrides = Partial<Omit<SharingAgreementResponse, "file">> & {
-  file?: SharingAgreementFileResponse | null;
-};
-
-function makeAgreement(overrides: AgreementOverrides = {}): SharingAgreementResponse {
-  return {
+function makeAgreement(overrides: Partial<SharingAgreementResponse> = {}): SharingAgreementResponse {
+  return buildSharingAgreement({
     id: "agreement-1",
     plantId: "plant-1",
     name: "Reparto",
@@ -67,7 +61,7 @@ function makeAgreement(overrides: AgreementOverrides = {}): SharingAgreementResp
     createdBy: "user-1",
     file: null,
     ...overrides,
-  } as SharingAgreementResponse;
+  });
 }
 
 function renderPanel(overrides: {

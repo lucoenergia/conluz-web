@@ -13,7 +13,8 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { buildSharingAgreement } from "../../test/fixtures";
 
 const { APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -56,10 +57,7 @@ const closedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   currentCoefficient: null,
 };
 
-// Fixture deliberately stays minimal — cast rather than fully populated to
-// every now-required field, matching the pattern used elsewhere in this
-// codebase for partial test fixtures (e.g. SharingAgreementDetailPage.spec.tsx).
-const baseAgreement = {
+const baseAgreement = buildSharingAgreement({
   id: AGREEMENT_ID,
   plantId: PLANT_ID,
   name: "Acuerdo test",
@@ -68,7 +66,7 @@ const baseAgreement = {
   installedPowerKw: 100,
   notes: null,
   file: null,
-} as unknown as SharingAgreementResponse;
+});
 
 function Harness() {
   const { data: agreement } = useGetSharingAgreementById(PLANT_ID, AGREEMENT_ID);

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
-import { buildUser } from "../../test/fixtures";
+import { buildPlant, buildSharingAgreement, buildUser } from "../../test/fixtures";
 import { useGetUserById, type getUserById } from "../../api/users/users";
 import { SharingAgreementDetailHeader, type SharingAgreementDetailHeaderProps } from "./SharingAgreementDetailHeader";
 import {
@@ -43,7 +43,7 @@ describe("SharingAgreementDetailHeader", () => {
     mockGetUserById.mockReturnValue(query.disabled());
   });
 
-  const mockAgreement = {
+  const mockAgreement = buildSharingAgreement({
     id: "agreement-1",
     plantId: "plant-1",
     name: "Acuerdo Comunidad Sur",
@@ -53,12 +53,12 @@ describe("SharingAgreementDetailHeader", () => {
     createdBy: "user-1",
     notes: "Revisión anual pendiente",
     file: null,
-  } as unknown as SharingAgreementResponse;
+  });
 
-  const mockPlant = {
+  const mockPlant = buildPlant({
     id: "plant-1",
     regulatoryCode: "ES0031300296192001MB",
-  } as PlantResponse;
+  });
 
   const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
   const publishedAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.PUBLISHED };
@@ -138,7 +138,7 @@ describe("SharingAgreementDetailHeader", () => {
     });
 
     it("links the plant under the title, so the agreement says what it belongs to", () => {
-      renderHeader({ plant: { ...mockPlant, name: "21088 Luco de Jiloca" } as PlantResponse });
+      renderHeader({ plant: { ...mockPlant, name: "21088 Luco de Jiloca" } });
 
       expect(screen.getByRole("link", { name: "21088 Luco de Jiloca" })).toHaveAttribute(
         "href",
@@ -148,7 +148,7 @@ describe("SharingAgreementDetailHeader", () => {
 
     it("names the notes field even when the agreement has none, rather than showing a bare blank", async () => {
       const user = userEvent.setup();
-      renderHeader({ agreement: { ...mockAgreement, notes: null } as unknown as SharingAgreementResponse });
+      renderHeader({ agreement: { ...mockAgreement, notes: null } });
 
       const panel = await openDetails(user);
 
@@ -175,7 +175,7 @@ describe("SharingAgreementDetailHeader", () => {
           ...mockAgreement,
           updatedAt: "2024-06-01T09:00:00Z",
           updatedBy: "user-2",
-        } as unknown as SharingAgreementResponse,
+        },
       });
 
       const panel = await openDetails(user);

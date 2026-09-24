@@ -8,9 +8,9 @@ import { query } from "../test/queryState";
 import { useGetCurrentUser } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
 import { CommunityRole } from "../api/models";
-import type { UserResponse } from "../api/models";
+import { buildUser } from "../test/fixtures";
 
-const LOGGED_USER = {
+const LOGGED_USER = buildUser({
   id: "user-1",
   fullName: "Ada",
   isPlatformAdmin: false,
@@ -18,7 +18,7 @@ const LOGGED_USER = {
     "community-a": CommunityRole.COMMUNITY_ADMIN,
     "community-b": CommunityRole.COMMUNITY_ADMIN,
   },
-} as unknown as UserResponse;
+});
 
 vi.mock(import("../context/auth.context"), async (importOriginal) => ({
   ...(await importOriginal()),
