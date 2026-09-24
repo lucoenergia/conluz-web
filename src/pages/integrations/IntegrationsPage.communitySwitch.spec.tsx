@@ -1,13 +1,20 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { type FC, type ReactNode } from "react";
-import { MemoryRouter } from "react-router";
-import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ActiveCommunityContext } from "../../context/community.context";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation, query } from "../../test/queryState";
+import { useActiveCommunity } from "../../context/community.context";
+import { useGetAllPlants, type getAllPlants } from "../../api/plants/plants";
+import {
+  useConfigureDatadis,
+  useConfigureShelly,
+  useGetDatadisConfig,
+  useGetShellyConfig,
+  type getDatadisConfig,
+  type getShellyConfig,
+} from "../../api/consumption/consumption";
+import { useConfigureHuawei, useGetHuaweiConfig } from "../../api/production/production";
 
 const CONFIG_BY_COMMUNITY: Record<string, { username: string; baseUrl: string }> = {
   "community-a": { username: "datadis-a", baseUrl: "https://a.example" },
@@ -16,26 +23,23 @@ const CONFIG_BY_COMMUNITY: Record<string, { username: string; baseUrl: string }>
 
 const mockConfigureDatadis = vi.fn().mockResolvedValue({});
 
-vi.mock("../../api/plants/plants", () => ({
-  useGetAllPlants: () => ({ data: { items: [] }, isLoading: false }),
+vi.mock(import("../../api/plants/plants"), () => ({
+  useGetAllPlants: vi.fn(),
 }));
 
-vi.mock("../../api/consumption/consumption", () => ({
-  useGetShellyConfig: () => ({ data: { enabled: false }, isLoading: false }),
-  useGetDatadisConfig: (communityId: string) => ({
-    data: { enabled: true, ...CONFIG_BY_COMMUNITY[communityId] },
-    isLoading: false,
-  }),
-  useConfigureDatadis: () => ({ mutateAsync: mockConfigureDatadis }),
-  useConfigureShelly: () => ({ mutateAsync: vi.fn().mockResolvedValue({}) }),
-  getGetDatadisConfigQueryKey: (communityId: string) => [`/datadis/${communityId}`],
-  getGetShellyConfigQueryKey: (communityId: string) => [`/shelly/${communityId}`],
+vi.mock(import("../../api/consumption/consumption"), () => ({
+  useGetShellyConfig: vi.fn(),
+  useGetDatadisConfig: vi.fn(),
+  useConfigureDatadis: vi.fn(),
+  useConfigureShelly: vi.fn(),
+  getGetDatadisConfigQueryKey: (communityId: string) => [`/api/v1/communities/${communityId}/config/datadis`] as const,
+  getGetShellyConfigQueryKey: (communityId: string) => [`/api/v1/communities/${communityId}/config/shelly`] as const,
 }));
 
-vi.mock("../../api/production/production", () => ({
-  useGetHuaweiConfig: () => ({ data: undefined, isLoading: false }),
-  useConfigureHuawei: () => ({ mutateAsync: vi.fn().mockResolvedValue({}) }),
-  getGetHuaweiConfigQueryKey: (plantId: string) => [`/huawei/${plantId}`],
+vi.mock(import("../../api/production/production"), () => ({
+  useGetHuaweiConfig: vi.fn(),
+  useConfigureHuawei: vi.fn(),
+  getGetHuaweiConfigQueryKey: (plantId: string) => [`/api/v1/plants/${plantId}/production/huawei/config`] as const,
 }));
 
 import { IntegrationsPage } from "./IntegrationsPage";
@@ -46,25 +50,14 @@ import { IntegrationsPage } from "./IntegrationsPage";
  * own latch (`configLoaded`), which a remount is only able to clear because the
  * latch lives in component state and not in a module-level or ref cache.
  */
-const KeyedPage: FC<{ communityId: string }> = ({ communityId }) => (
-  <ActiveCommunityContext.Provider value={communityId}>
-    <IntegrationsPage key={communityId} />
-  </ActiveCommunityContext.Provider>
-);
+function KeyedPage() {
+  const communityId = useActiveCommunity();
+  return <IntegrationsPage key={communityId} />;
+}
 
 function renderPage(communityId: string) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const tree = (id: string): ReactNode => (
-    <QueryClientProvider client={client}>
-      <ThemeProvider theme={theme}>
-        <MemoryRouter>
-          <KeyedPage communityId={id} />
-        </MemoryRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
-  const { rerender } = render(tree(communityId));
-  return { switchTo: (id: string) => rerender(tree(id)) };
+  const { switchActiveCommunity } = renderWithProviders(<KeyedPage />, { activeCommunityId: communityId });
+  return { switchTo: (id: string) => switchActiveCommunity(id) };
 }
 
 function datadisCard(): HTMLElement {
@@ -74,6 +67,18 @@ function datadisCard(): HTMLElement {
 describe("IntegrationsPage across a community switch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useGetAllPlants).mockReturnValue(query.success<typeof getAllPlants>({ items: [] }));
+    vi.mocked(useGetShellyConfig).mockReturnValue(query.success<typeof getShellyConfig>({ enabled: false }));
+    vi.mocked(useGetDatadisConfig).mockImplementation((communityId) =>
+      // passwordSet is required by the schema; false renders the same as the
+      // field's previous absence (no "password saved" hint).
+      query.success<typeof getDatadisConfig>({ enabled: true, passwordSet: false, ...CONFIG_BY_COMMUNITY[communityId] }),
+    );
+    // No plants, so the page disables the Huawei config query (enabled: !!firstPlantId).
+    vi.mocked(useGetHuaweiConfig).mockReturnValue(query.disabled());
+    vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureDatadis }));
+    vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync: vi.fn().mockResolvedValue({}) }));
+    vi.mocked(useConfigureHuawei).mockReturnValue(mutation.idle({ mutateAsync: vi.fn().mockResolvedValue({}) }));
   });
 
   it("shows the newly selected community's Datadis credentials", async () => {
