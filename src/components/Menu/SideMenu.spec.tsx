@@ -4,6 +4,7 @@ import { SideMenu } from "./SideMenu";
 import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 import { CONTACT_ITEM, MENU_SECTIONS } from "../../utils/constants";
+import { APP_VERSION } from "../../utils/appVersion";
 
 function setup(menuOpened: boolean) {
   render(
@@ -37,4 +38,9 @@ test("SideMenu hides content when closed", () => {
     });
   });
   expect(screen.getByText(CONTACT_ITEM.label)).not.toBeVisible();
+});
+
+test("SideMenu shows the app version", () => {
+  setup(true);
+  expect(screen.getByText(`v${APP_VERSION}`)).toBeVisible();
 });

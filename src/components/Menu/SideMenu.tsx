@@ -4,6 +4,7 @@ import { colors, fontSizes, radii } from "../../theme/tokens";
 import type { FC } from "react";
 import { Link, useLocation } from "react-router";
 import useWindowDimensions from "../../utils/useWindowDimensions";
+import { APP_VERSION } from "../../utils/appVersion";
 import type { MenuItem, MenuSection } from "../../utils/constants";
 import { MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../../utils/constants";
 
@@ -129,6 +130,11 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, section
           <List sx={{ px: 2, py: 1 }}>
             {renderItem(contactItem)}
           </List>
+          <Typography
+            sx={{ px: 3, pb: 1.5, fontSize: fontSizes.xs, color: colors.text.muted }}
+          >
+            v{APP_VERSION}
+          </Typography>
         </Box>
       </Box>
     </Drawer>

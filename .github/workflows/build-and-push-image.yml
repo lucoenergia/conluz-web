@@ -1,0 +1,114 @@
+# Builds and publishes the Conluz web Docker image to GitHub Container Registry (GHCR).
+#
+# How it fits in:
+#   1. A push to `main` triggers `version-update.yml`, which bumps the patch
+#      version and pushes a tag like `1.0.12` using the default GITHUB_TOKEN.
+#   2. Tags pushed with GITHUB_TOKEN do NOT trigger downstream workflows, so
+#      version-update.yml starts this one explicitly with
+#      `gh workflow run build-and-push-image.yml --ref <tag>`. A tag pushed by
+#      hand (e.g. to bump minor/major) triggers it through `push: tags`.
+#   3. This workflow checks out the tagged commit, runs the checks, bakes the
+#      version into the bundle and publishes the image to GHCR.
+#
+# Resulting tags published per release (for tag `1.0.12`):
+#   ghcr.io/lucoenergia/conluz-web:1.0.12
+#   ghcr.io/lucoenergia/conluz-web:1.0
+#   ghcr.io/lucoenergia/conluz-web:1
+#   ghcr.io/lucoenergia/conluz-web:latest
+#
+# Reference: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+
+name: Build and push Docker image
+
+on:
+  push:
+    # Trigger only on version tags (e.g. `1.0.12`) created by version-update.yml.
+    # Tags use no `v` prefix, matching the conluz backend.
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  # Also triggered explicitly by version-update.yml via `gh workflow run`, because
+  # tags pushed with GITHUB_TOKEN do not fire push events for downstream workflows.
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  # github.repository is `<owner>/<repo>` (e.g. `lucoenergia/conluz-web`),
+  # which is the canonical image name for GHCR.
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Same checks as test-n-build.yml, so a failing build is never published.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - run: npm ci
+      # Fails if `npm ci` rewrote the lockfile, which the npm pin (package.json
+      # engines + .npmrc engine-strict) exists to prevent.
+      - run: git diff --exit-code package-lock.json
+      - run: npm run lint
+      - run: npx tsc -b
+      - run: npm test
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    # `packages: write` is what allows the built-in GITHUB_TOKEN to push to GHCR.
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Checks out the repo at the tag's commit (github.ref is refs/tags/X.Y.Z
+      # both for tag pushes and for `gh workflow run --ref X.Y.Z`).
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Buildx is a prerequisite for the GitHub Actions cache backend
+      # (`type=gha`) configured below.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Authenticates against ghcr.io using the workflow's ephemeral
+      # GITHUB_TOKEN — no PAT or repository secret required for publishing.
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generates the list of image tags + OCI labels from the git ref.
+      # For tag `1.0.12`, the four `tags:` lines below produce:
+      #   1.0.12, 1.0, 1, latest
+      # The labels include org.opencontainers.image.version / .revision /
+      # .source, linking every image back to its tag and commit.
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
+      # APP_VERSION is baked into the bundle (see docker/Dockerfile) so the
+      # running app reports the same version as its image tag.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

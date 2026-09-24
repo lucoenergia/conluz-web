@@ -1,15 +1,17 @@
+# Runs lint, type-check and unit tests on every push and PR.
+#
+# Images are NOT published from here: a push to `main` goes through
+# version-update.yml -> build-and-push-image.yml, which publishes a versioned
+# image (X.Y.Z, X.Y, X, latest). On PRs the image is built without pushing, as
+# a Dockerfile sanity check.
+
 name: Run unit tests and build image
 
 on:
   push:
     branches: ["main", "develop"]
-    tags: ["v*"]
   pull_request:
     branches: ["main"]
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test:
@@ -28,12 +30,13 @@ jobs:
       - run: npm run lint
       - run: npx tsc -b
       - run: npm test
-  build-and-push:
+
+  build:
     needs: test
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -42,34 +45,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
           platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: false
           cache-from: type=gha
-          cache-to: type=gha,mode=max

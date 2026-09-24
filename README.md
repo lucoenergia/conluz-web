@@ -175,7 +175,17 @@ build:
 
 ### Using GitHub Container Registry Image
 
-A new Docker image (`ghcr.io/lucoenergia/conluz-web:latest`) is automatically built and published to GitHub Container Registry whenever code is pushed to the `main` branch.
+Every push to `main` creates a new version automatically:
+
+1. `.github/workflows/version-update.yml` bumps the patch number of the latest `X.Y.Z` git tag (e.g. `1.0.11` → `1.0.12`) and pushes the new tag. Nothing is committed to `main`; the git tag is the single source of truth for the version (`package.json`'s `version` is not used).
+2. `.github/workflows/build-and-push-image.yml` builds that tag and publishes it to GitHub Container Registry as:
+   - `ghcr.io/lucoenergia/conluz-web:1.0.12` (exact version, recommended for deployments)
+   - `ghcr.io/lucoenergia/conluz-web:1.0` and `:1` (moving major/minor tags)
+   - `ghcr.io/lucoenergia/conluz-web:latest`
+
+The version is also baked into the app (shown at the bottom of the side menu) and into the image's `org.opencontainers.image.version` / `org.opencontainers.image.revision` labels, so a running container can always be traced back to its tag and commit. Local builds show `dev`.
+
+To bump the minor or major version, push a tag manually on `main` (e.g. `git tag 1.1.0 && git push origin 1.1.0`); this publishes `1.1.0`, and the next merge continues from it (`1.1.1`).
 
 To use the pre-built image:
 
