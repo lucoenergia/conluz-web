@@ -3,6 +3,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { routeRequests } from "../../test/requestRouter";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
@@ -102,25 +103,31 @@ describe("Reopen coefficient — real cache invalidation drives a real refetch (
     agreementGetCount = 0;
     reopenCallCount = 0;
     mockCustomInstance.mockReset();
-    mockCustomInstance.mockImplementation((config: { url: string; method: string }) => {
-      if (config.method === "GET" && config.url === AGREEMENT_URL) {
-        agreementGetCount += 1;
-        // SUPERSEDED on the first GET (before reopen), PUBLISHED on every GET after —
-        // the second value is only ever reachable through a real refetch.
-        return Promise.resolve({
-          ...baseAgreement,
-          status: agreementGetCount === 1 ? SharingAgreementResponseStatus.SUPERSEDED : SharingAgreementResponseStatus.PUBLISHED,
-        });
-      }
-      if (config.method === "GET" && config.url === COEFFICIENTS_URL) {
-        return Promise.resolve([closedCoefficient]);
-      }
-      if (config.method === "POST" && config.url === REOPEN_URL) {
-        reopenCallCount += 1;
-        return Promise.resolve({ coefficients: [{ coefficientId: closedCoefficient.coefficientId }] });
-      }
-      return Promise.reject(new Error(`Unhandled request in test: ${config.method} ${config.url}`));
-    });
+    const router = routeRequests([
+      {
+        method: "GET",
+        url: AGREEMENT_URL,
+        respond: () => {
+          agreementGetCount += 1;
+          // SUPERSEDED on the first GET (before reopen), PUBLISHED on every GET after —
+          // the second value is only ever reachable through a real refetch.
+          return {
+            ...baseAgreement,
+            status: agreementGetCount === 1 ? SharingAgreementResponseStatus.SUPERSEDED : SharingAgreementResponseStatus.PUBLISHED,
+          };
+        },
+      },
+      { method: "GET", url: COEFFICIENTS_URL, respond: () => [closedCoefficient] },
+      {
+        method: "POST",
+        url: REOPEN_URL,
+        respond: () => {
+          reopenCallCount += 1;
+          return { coefficients: [{ coefficientId: closedCoefficient.coefficientId }] };
+        },
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
   });
 
   it("flips the status chip from Histórico to Vigente after reopen resolves, with no manual refresh", async () => {
