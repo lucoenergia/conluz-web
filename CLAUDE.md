@@ -10,7 +10,8 @@ npm run dev                   # Start development server on port 3001
 npm run build                 # TypeScript compile + Vite production build
 npm run preview               # Preview production build locally
 npm run lint                  # Run ESLint
-npm test                      # Run all tests once
+npm test                      # Vitest: watch mode in an interactive terminal, a single run in CI or non-interactive shells
+npx vitest run                # Run all tests once in any terminal (same as npm test -- --run)
 npm test -- --watch           # Run tests in watch mode
 npm run generate-client       # Regenerate API client from api-docs.json
 npm run test:visual           # Run visual tests
@@ -214,10 +215,12 @@ Full guide: `references/styling-conventions.md`
 Full token catalogue: `references/theme-tokens.md`
 Fonts (self-hosted Inter — do not move back to a CDN): `references/fonts.md`
 
-Verification gates (both must pass before committing styling changes):
+Verification for styling changes follows the Fast iteration loop (see Testing Strategy):
+while iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`; run the
+full gates once, at the end:
 ```bash
-npm run lint   # 0 no-restricted-syntax errors
-npm test       # pass
+npm run lint     # 0 no-restricted-syntax errors
+npx vitest run   # all tests pass
 ```
 
 ## Skills & documentation maintenance
