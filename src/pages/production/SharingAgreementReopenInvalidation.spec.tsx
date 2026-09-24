@@ -1,11 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ErrorProvider } from "../../context/error.context";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
@@ -35,18 +32,16 @@ const REOPEN_URL = `${COEFFICIENTS_URL}/reopen`;
 // refetch is what flips the rendered status chip — or the test fails.
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
-vi.mock("../../api/custom-instance", () => ({
-  customInstance: (config: { url: string; method: string; data?: unknown }) => mockCustomInstance(config),
+// Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
+vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: (config) => mockCustomInstance(config),
 }));
 
-vi.mock("../../context/success.context", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useSuccessDispatch: () => vi.fn(),
 }));
-
-vi.mock("../../context/community.context", async () => {
-  const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
-  return { ...actual, useActiveCommunity: () => "community-1" };
-});
 
 const closedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   coefficientId: "c1",
@@ -96,16 +91,7 @@ function Harness() {
 }
 
 function renderHarness() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ErrorProvider>
-        <ThemeProvider theme={theme}>
-          <Harness />
-        </ThemeProvider>
-      </ErrorProvider>
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(<Harness />, { activeCommunityId: "community-1" });
 }
 
 describe("Reopen coefficient — real cache invalidation drives a real refetch (no manual refresh)", () => {

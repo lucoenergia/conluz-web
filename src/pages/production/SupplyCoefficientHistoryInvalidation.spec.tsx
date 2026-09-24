@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import dayjs from "dayjs";
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
@@ -19,13 +19,20 @@ const COEFFICIENTS_BASE = `/api/v1/plants/${PLANT_ID}/sharing-agreements/${AGREE
 // nothing about the predicate, which is exactly what is under test here.
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
-vi.mock("../../api/custom-instance", () => ({
-  customInstance: (config: { url: string; method: string; params?: unknown; data?: unknown }) =>
-    mockCustomInstance(config),
+// Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
+vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: (config) => mockCustomInstance(config),
 }));
 
-vi.mock("../../context/success.context", () => ({ useSuccessDispatch: () => vi.fn() }));
-vi.mock("../../context/error.context", () => ({ useErrorDispatch: () => vi.fn() }));
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useSuccessDispatch: () => vi.fn(),
+}));
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useErrorDispatch: () => vi.fn(),
+}));
 
 /**
  * Mounts the history under BOTH key shapes at once: the drawer passes
@@ -57,12 +64,7 @@ function Harness({ action }: { action: "reopen" | "activate" | "deactivate" | "c
 }
 
 function renderHarness(action: "reopen" | "activate" | "deactivate" | "close" | "replace") {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <Harness action={action} />
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(<Harness action={action} />);
 }
 
 describe("supply coefficient history — invalidation after coefficient mutations", () => {

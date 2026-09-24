@@ -7,9 +7,8 @@
 // at the raw HTTP layer (customInstance), keeps the real hooks — and
 // therefore the real isPending timing — in play.
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { waitFor, act } from "@testing-library/react";
+import { renderHookWithProviders } from "../../test/renderWithProviders";
 import type { AxiosRequestConfig } from "axios";
 import dayjs from "dayjs";
 import { customInstance } from "../../api/custom-instance";
@@ -22,15 +21,19 @@ import {
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
-vi.mock("../../api/custom-instance", () => ({
+// Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
+vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
   customInstance: vi.fn(),
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => vi.fn(),
 }));
 
-vi.mock("../../context/success.context", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useSuccessDispatch: () => vi.fn(),
 }));
 
@@ -67,14 +70,6 @@ function useHarness(plantId: string, sharingAgreementId: string) {
   return { query, mutations };
 }
 
-function makeWrapper() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  }
-  return Wrapper;
-}
-
 describe("coefficient mutations stay pending until the post-success refetch resolves", () => {
   beforeEach(() => {
     mockCustomInstance.mockReset();
@@ -101,8 +96,7 @@ describe("coefficient mutations stay pending until the post-success refetch reso
       return Promise.resolve({ coefficients: [{ coefficientId: "c1" }] });
     });
 
-    const Wrapper = makeWrapper();
-    const { result } = renderHook(() => useHarness("plant-1", "agreement-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
     await waitFor(() => expect(result.current.query.data).toEqual([initialCoefficient]));
     expect(result.current.mutations.isActivating).toBe(false);
@@ -149,8 +143,7 @@ describe("coefficient mutations stay pending until the post-success refetch reso
       return Promise.resolve({ coefficients: [] });
     });
 
-    const Wrapper = makeWrapper();
-    const { result } = renderHook(() => useHarness("plant-1", "agreement-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
     await waitFor(() => expect(result.current.query.data).toEqual([initialCoefficient]));
     expect(result.current.mutations.isReplacing).toBe(false);

@@ -3,8 +3,10 @@
  * that test cache behaviour do not hand-write a `switch` over URL strings.
  *
  *   const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
- *   vi.mock("../../api/custom-instance", () => ({
- *     customInstance: (config: RequestConfig) => mockCustomInstance(config),
+ *   // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from it.
+ *   vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+ *     ...(await importOriginal()),
+ *     customInstance: (config) => mockCustomInstance(config),
  *   }));
  *   const router = routeRequests([
  *     { method: "GET", url: HISTORY_URL, respond: () => [] },
