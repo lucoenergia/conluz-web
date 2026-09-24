@@ -106,8 +106,8 @@ conluz-web/
 
 ### Prerequisites
 
-- Node.js (v18 or higher recommended)
-- npm (comes with Node.js)
+- Node.js 22 (see `.nvmrc`)
+- npm 10 (`>=10.9.0 <11`), enforced by `engine-strict` — see [Prerequisites in CONTRIBUTE.md](CONTRIBUTE.md#prerequisites)
 
 ### Installation
 
