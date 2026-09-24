@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { MemoryRouter } from "react-router";
-import { theme } from "../../theme";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import { useGetPartitionCoefficientHistory, type getPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import { SupplyCoefficientHistorySection } from "./SupplyCoefficientHistorySection";
 import { CommunityRole } from "../../api/models";
 import type { PartitionCoefficientResponse } from "../../api/models";
@@ -15,23 +15,17 @@ const PLANT_NORTE = { id: "plant-norte", name: "Planta Solar Norte" };
 const PLANT_SUR = { id: "plant-sur", name: "Planta Solar Sur" };
 
 const historyCalls: { supplyId: string; params: unknown }[] = [];
-let historyState: { data: PartitionCoefficientResponse[] | undefined; isLoading: boolean; error: unknown } = {
-  data: [],
-  isLoading: false,
-  error: null,
-};
+const historySuccess = (data: PartitionCoefficientResponse[]) =>
+  query.success<typeof getPartitionCoefficientHistory>(data);
+let historyState: ReturnType<typeof useGetPartitionCoefficientHistory> = historySuccess([]);
 let activeCommunityId: string | null = ACTIVE_COMMUNITY.id;
 let activeRole: CommunityRole | null = CommunityRole.COMMUNITY_MEMBER;
 
-vi.mock("../../api/supplies/supplies", () => ({
-  useGetPartitionCoefficientHistory: (supplyId: string, params: unknown) => {
-    historyCalls.push({ supplyId, params });
-    return historyState;
-  },
+vi.mock(import("../../api/supplies/supplies"), () => ({
+  useGetPartitionCoefficientHistory: vi.fn(),
 }));
 
-vi.mock("../../context/community.context", () => ({ useActiveCommunity: () => activeCommunityId }));
-vi.mock("../../hooks/useActiveCommunityRole", () => ({ useActiveCommunityRole: () => activeRole }));
+vi.mock(import("../../hooks/useActiveCommunityRole"), () => ({ useActiveCommunityRole: () => activeRole }));
 
 function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoefficientResponse {
   return {
@@ -61,21 +55,19 @@ const TWO_PLANTS: PartitionCoefficientResponse[] = [
 ];
 
 function renderSection() {
-  return render(
-    <MemoryRouter>
-      <ThemeProvider theme={theme}>
-        <SupplyCoefficientHistorySection supplyId={SUPPLY_ID} />
-      </ThemeProvider>
-    </MemoryRouter>,
-  );
+  return renderWithProviders(<SupplyCoefficientHistorySection supplyId={SUPPLY_ID} />, { activeCommunityId });
 }
 
 describe("SupplyCoefficientHistorySection", () => {
   beforeEach(() => {
     historyCalls.length = 0;
-    historyState = { data: TWO_PLANTS, isLoading: false, error: null };
+    historyState = historySuccess(TWO_PLANTS);
     activeCommunityId = ACTIVE_COMMUNITY.id;
     activeRole = CommunityRole.COMMUNITY_MEMBER;
+    vi.mocked(useGetPartitionCoefficientHistory).mockImplementation((supplyId, params) => {
+      historyCalls.push({ supplyId, params });
+      return historyState;
+    });
   });
 
   it("asks for every plant, passing no plantId filter", () => {
@@ -117,11 +109,10 @@ describe("SupplyCoefficientHistorySection", () => {
   });
 
   it("hides another community's periods rather than only their links", () => {
-    historyState = {
-      data: [period({ id: "mine" }), period({ id: "theirs", community: OTHER_COMMUNITY, plant: PLANT_SUR })],
-      isLoading: false,
-      error: null,
-    };
+    historyState = historySuccess([
+      period({ id: "mine" }),
+      period({ id: "theirs", community: OTHER_COMMUNITY, plant: PLANT_SUR }),
+    ]);
     renderSection();
 
     expect(screen.getByRole("heading", { name: "Planta Solar Norte" })).toBeInTheDocument();
@@ -129,14 +120,14 @@ describe("SupplyCoefficientHistorySection", () => {
   });
 
   it("shows the empty state for a supply whose whole history belongs to another community", () => {
-    historyState = { data: [period({ community: OTHER_COMMUNITY })], isLoading: false, error: null };
+    historyState = historySuccess([period({ community: OTHER_COMMUNITY })]);
     renderSection();
 
     expect(screen.getByText("Sin periodos aplicados")).toBeInTheDocument();
   });
 
   it("shows the empty state, with its own wording, when the supply has no periods", () => {
-    historyState = { data: [], isLoading: false, error: null };
+    historyState = historySuccess([]);
     renderSection();
 
     expect(screen.getByText("Sin periodos aplicados")).toBeInTheDocument();
@@ -154,14 +145,14 @@ describe("SupplyCoefficientHistorySection", () => {
   });
 
   it("keeps loading while the query is still in flight", () => {
-    historyState = { data: undefined, isLoading: true, error: null };
+    historyState = query.loading();
     renderSection();
 
     expect(screen.getByLabelText("Cargando el histórico de coeficientes")).toBeInTheDocument();
   });
 
   it("surfaces a failure instead of an empty state", () => {
-    historyState = { data: undefined, isLoading: false, error: new Error("boom") };
+    historyState = query.error(new Error("boom"));
     renderSection();
 
     expect(screen.getByRole("alert")).toHaveTextContent("No se ha podido cargar el histórico de coeficientes");
@@ -176,14 +167,10 @@ describe("SupplyCoefficientHistorySection", () => {
 
   it("excludes pending periods, which an admin of the supply's community does receive", () => {
     activeRole = CommunityRole.COMMUNITY_ADMIN;
-    historyState = {
-      data: [
-        ...TWO_PLANTS,
-        period({ id: "pending", validFrom: null, sharingAgreement: { id: "sa-draft", name: "Borrador 2026", status: "DRAFT" } }),
-      ],
-      isLoading: false,
-      error: null,
-    };
+    historyState = historySuccess([
+      ...TWO_PLANTS,
+      period({ id: "pending", validFrom: null, sharingAgreement: { id: "sa-draft", name: "Borrador 2026", status: "DRAFT" } }),
+    ]);
     renderSection();
 
     expect(screen.queryByText("Borrador 2026")).not.toBeInTheDocument();

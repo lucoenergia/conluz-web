@@ -1,16 +1,18 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
+import { useCreateSuppliesWithFile } from "../../api/supplies/supplies";
 
 const mockMutate = vi.fn();
 
-vi.mock("../../api/supplies/supplies", () => ({
-  useCreateSuppliesWithFile: () => ({ mutate: mockMutate }),
+vi.mock(import("../../api/supplies/supplies"), () => ({
+  useCreateSuppliesWithFile: vi.fn(),
 }));
 
 import { ImportSuppliesModal } from "./ImportSuppliesModal";
-import { ActiveCommunityContext } from "../../context/community.context";
 
 describe("ImportSuppliesModal", () => {
   const mockOnClose = vi.fn();
@@ -18,18 +20,18 @@ describe("ImportSuppliesModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useCreateSuppliesWithFile).mockReturnValue(mutation.idle({ mutate: mockMutate }));
   });
 
   const setup = (props = {}, activeCommunityId: string | null = "community-a") => {
-    render(
-      <ActiveCommunityContext.Provider value={activeCommunityId}>
-        <ImportSuppliesModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onImportComplete={mockOnImportComplete}
-          {...props}
-        />
-      </ActiveCommunityContext.Provider>,
+    renderWithProviders(
+      <ImportSuppliesModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+        {...props}
+      />,
+      { activeCommunityId },
     );
   };
 
