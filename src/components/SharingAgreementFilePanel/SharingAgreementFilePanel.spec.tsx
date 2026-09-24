@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "../../theme";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
+import {
+  useGenerateSharingAgreementDistributorFile,
+  useUploadSharingAgreementFile,
+} from "../../api/sharing-agreements/sharing-agreements";
 import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
@@ -26,36 +29,21 @@ const mockDownload = vi.fn();
 const mockUploadMutateAsync = vi.fn();
 const mockGenerateMutateAsync = vi.fn();
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("./downloadSharingAgreementFile", async () => {
-  const actual = await vi.importActual<typeof import("./downloadSharingAgreementFile")>("./downloadSharingAgreementFile");
-  return {
-    ...actual,
-    downloadSharingAgreementFile: (...args: unknown[]) => mockDownload(...args),
-  };
-});
+vi.mock(import("./downloadSharingAgreementFile"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  downloadSharingAgreementFile: (...args: unknown[]) => mockDownload(...args),
+}));
 
-vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
-  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
-    "../../api/sharing-agreements/sharing-agreements",
-  );
-  return {
-    ...actual,
-    useUploadSharingAgreementFile: () => ({
-      mutateAsync: mockUploadMutateAsync,
-      isPending: false,
-      reset: vi.fn(),
-    }),
-    useGenerateSharingAgreementDistributorFile: () => ({
-      mutateAsync: mockGenerateMutateAsync,
-      isPending: false,
-      reset: vi.fn(),
-    }),
-  };
-});
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useUploadSharingAgreementFile: vi.fn(),
+  useGenerateSharingAgreementDistributorFile: vi.fn(),
+}));
 
 const fullSumCoefficients: CoefficientSummable[] = [{ coefficient: 1, applicationState: PENDING }];
 const partialSumCoefficients: CoefficientSummable[] = [{ coefficient: 0.5, applicationState: PENDING }];
@@ -92,7 +80,10 @@ function renderPanel(overrides: {
   // Not a destructuring default: an explicit `plantRegulatoryCode: undefined`
   // must stay undefined for the "no CAU" tests, not silently fall back.
   const plantRegulatoryCode = "plantRegulatoryCode" in overrides ? overrides.plantRegulatoryCode : "CAU0001";
-  const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+  vi.mocked(useUploadSharingAgreementFile).mockReturnValue(mutation.idle({ mutateAsync: mockUploadMutateAsync }));
+  vi.mocked(useGenerateSharingAgreementDistributorFile).mockReturnValue(
+    mutation.idle({ mutateAsync: mockGenerateMutateAsync }),
+  );
 
   const Harness = () => {
     const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
@@ -109,13 +100,7 @@ function renderPanel(overrides: {
     );
   };
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <Harness />
-      </ThemeProvider>
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(<Harness />);
 }
 
 describe("SharingAgreementFilePanel", () => {

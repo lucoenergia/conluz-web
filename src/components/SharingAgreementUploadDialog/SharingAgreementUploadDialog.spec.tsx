@@ -1,48 +1,36 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "../../theme";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
+import { useUploadSharingAgreementFile } from "../../api/sharing-agreements/sharing-agreements";
 import { SharingAgreementUploadDialog } from "./SharingAgreementUploadDialog";
 
 const mockErrorDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
-  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
-    "../../api/sharing-agreements/sharing-agreements",
-  );
-  return {
-    ...actual,
-    useUploadSharingAgreementFile: () => ({
-      mutateAsync: mockMutateAsync,
-      isPending: false,
-      reset: vi.fn(),
-    }),
-  };
-});
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useUploadSharingAgreementFile: vi.fn(),
+}));
 
 function renderDialog(regulatoryCode: string | undefined, onUploadSuccess?: () => void) {
-  const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <SharingAgreementUploadDialog
-          isOpen
-          plantId="plant-1"
-          sharingAgreementId="agreement-1"
-          regulatoryCode={regulatoryCode}
-          onClose={vi.fn()}
-          onUploadSuccess={onUploadSuccess}
-        />
-      </ThemeProvider>
-    </QueryClientProvider>,
+  vi.mocked(useUploadSharingAgreementFile).mockReturnValue(mutation.idle({ mutateAsync: mockMutateAsync }));
+  return renderWithProviders(
+    <SharingAgreementUploadDialog
+      isOpen
+      plantId="plant-1"
+      sharingAgreementId="agreement-1"
+      regulatoryCode={regulatoryCode}
+      onClose={vi.fn()}
+      onUploadSuccess={onUploadSuccess}
+    />,
   );
 }
 
