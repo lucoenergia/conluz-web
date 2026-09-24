@@ -11,6 +11,7 @@ Thank you for your interest in contributing to **ConLuz**! This document provide
 - [Branch Naming Convention](#branch-naming-convention)
 - [Commit Message Format](#commit-message-format)
 - [Pull Requests](#pull-requests)
+- [Maintainer Notes](#maintainer-notes)
 - [Code of Conduct](#code-of-conduct)
 - [Contact](#contact)
 
@@ -86,6 +87,26 @@ All commits must follow this format:
 - The code must be self explanatory adding comments when further explanation is required.
 - The code must be in English.
 - The code must be tested through automated tests to validate it works as expected.
+
+---
+
+## Maintainer Notes
+
+These steps are for human maintainers only. Automated agents must never perform them.
+
+### Updating visual regression baselines
+
+When an intentional UI change alters a captured screen, regenerate the Playwright baselines manually:
+
+```bash
+npx playwright test --update-snapshots
+```
+
+Review every changed PNG under `tests/visual/__screenshots__/` before committing. An unreviewed baseline turns a regression into the new expected result.
+
+### Regenerating the API client
+
+Never set `clean: true` in `orval.config.js`. It empties `src/api/` before generating, which would delete the hand-written `src/api/custom-instance.ts`.
 
 ---
 
