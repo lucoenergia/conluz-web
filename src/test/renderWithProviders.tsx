@@ -1,5 +1,5 @@
-import type { ReactElement, ReactNode } from "react";
-import { render, renderHook, type RenderOptions, type RenderResult, type RenderHookResult } from "@testing-library/react";
+import { useEffect, useState, type ReactElement, type ReactNode } from "react";
+import { act, render, renderHook, type RenderOptions, type RenderResult, type RenderHookResult } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StyledEngineProvider } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
@@ -32,9 +32,56 @@ export type ProviderOptions = {
   queryClient?: QueryClient;
   /** Seeds the auth token, as `getFromStorage("token")` does in `main.tsx`. None by default. */
   token?: string;
-  /** Seeds the active community read by `useActiveCommunity()`. None by default. */
-  activeCommunityId?: string;
+  /**
+   * Seeds the active community read by `useActiveCommunity()`. `null` states
+   * "no community selected" explicitly; omitted leaves it to the real
+   * `CommunityProvider`. A seeded community can then be switched with
+   * `switchActiveCommunity`.
+   */
+  activeCommunityId?: string | null;
 };
+
+type CommunityControl = { set: ((communityId: string | null) => void) | null };
+
+type HarnessExtras = {
+  queryClient: QueryClient;
+  /** Switches the seeded active community, as `CommunitySelector` does. Requires `activeCommunityId`. */
+  switchActiveCommunity: (communityId: string | null) => void;
+};
+
+// `CommunityProvider` only reads a persisted selection once a logged user
+// exists, and `LoggedUserProvider` takes no initial user, so a seeded
+// community is provided directly on the context the hook reads -- held in
+// state so a spec can switch it mid-test.
+// eslint-disable-next-line react-refresh/only-export-components -- test-only module, never hot-reloaded
+function SeededActiveCommunity({
+  initial,
+  control,
+  children,
+}: {
+  initial: string | null;
+  control: CommunityControl;
+  children: ReactNode;
+}) {
+  const [activeCommunityId, setActiveCommunityId] = useState(initial);
+  useEffect(() => {
+    control.set = setActiveCommunityId;
+    return () => {
+      control.set = null;
+    };
+  }, [control]);
+  return <ActiveCommunityContext.Provider value={activeCommunityId}>{children}</ActiveCommunityContext.Provider>;
+}
+
+function switcher(control: CommunityControl) {
+  return (communityId: string | null) => {
+    const set = control.set;
+    if (!set) {
+      throw new Error("switchActiveCommunity needs the render to seed activeCommunityId");
+    }
+    act(() => set(communityId));
+  };
+}
 
 /**
  * Browser storage is shared by every test in a file (jsdom keeps it for the
@@ -66,18 +113,17 @@ afterEach(resetBrowserStorage);
  * development, which would change how often mocked hooks and callbacks are
  * called and make call-count assertions depend on it.
  */
-function createWrapper(options: ProviderOptions, queryClient: QueryClient) {
+function createWrapper(options: ProviderOptions, queryClient: QueryClient, control: CommunityControl) {
   const { route = "/", token, activeCommunityId } = options;
 
   return function Providers({ children }: { children: ReactNode }) {
-    // `CommunityProvider` only reads a persisted selection once a logged user
-    // exists, and `LoggedUserProvider` takes no initial user, so a seeded
-    // community is provided directly on the context the hook reads.
     const community =
       activeCommunityId === undefined ? (
         children
       ) : (
-        <ActiveCommunityContext.Provider value={activeCommunityId}>{children}</ActiveCommunityContext.Provider>
+        <SeededActiveCommunity initial={activeCommunityId} control={control}>
+          {children}
+        </SeededActiveCommunity>
       );
 
     return (
@@ -113,20 +159,26 @@ function createWrapper(options: ProviderOptions, queryClient: QueryClient) {
 export function renderWithProviders(
   ui: ReactElement,
   options: ProviderOptions & Omit<RenderOptions, "wrapper"> = {},
-): RenderResult & { queryClient: QueryClient } {
+): RenderResult & HarnessExtras {
   const { route, queryClient = createTestQueryClient(), token, activeCommunityId, ...renderOptions } = options;
   resetBrowserStorage();
-  const wrapper = createWrapper({ route, token, activeCommunityId }, queryClient);
-  return { ...render(ui, { wrapper, ...renderOptions }), queryClient };
+  const control: CommunityControl = { set: null };
+  const wrapper = createWrapper({ route, token, activeCommunityId }, queryClient, control);
+  return { ...render(ui, { wrapper, ...renderOptions }), queryClient, switchActiveCommunity: switcher(control) };
 }
 
 /** `renderHook` counterpart of `renderWithProviders`: same providers, same storage reset. */
 export function renderHookWithProviders<Result, Props>(
   hook: (props: Props) => Result,
   options: ProviderOptions & { initialProps?: Props } = {},
-): RenderHookResult<Result, Props> & { queryClient: QueryClient } {
+): RenderHookResult<Result, Props> & HarnessExtras {
   const { route, queryClient = createTestQueryClient(), token, activeCommunityId, initialProps } = options;
   resetBrowserStorage();
-  const wrapper = createWrapper({ route, token, activeCommunityId }, queryClient);
-  return { ...renderHook(hook, { wrapper, initialProps }), queryClient };
+  const control: CommunityControl = { set: null };
+  const wrapper = createWrapper({ route, token, activeCommunityId }, queryClient, control);
+  return {
+    ...renderHook(hook, { wrapper, initialProps }),
+    queryClient,
+    switchActiveCommunity: switcher(control),
+  };
 }

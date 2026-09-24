@@ -49,3 +49,16 @@ describe("renderWithProviders storage isolation", () => {
     expect(window.sessionStorage.length).toBe(0);
   });
 });
+
+describe("renderWithProviders active community seed", () => {
+  it("switches a seeded community, including to an explicit null", () => {
+    const { switchActiveCommunity } = renderWithProviders(<ContextProbe />, { activeCommunityId: "c1" });
+    expect(screen.getByTestId("community")).toHaveTextContent("c1");
+
+    switchActiveCommunity("c2");
+    expect(screen.getByTestId("community")).toHaveTextContent("c2");
+
+    switchActiveCommunity(null);
+    expect(screen.getByTestId("community")).toHaveTextContent("none");
+  });
+});
