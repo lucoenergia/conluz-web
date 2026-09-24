@@ -3,6 +3,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { routeRequests } from "../../test/requestRouter";
 import dayjs from "dayjs";
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
@@ -75,19 +76,26 @@ describe("supply coefficient history — invalidation after coefficient mutation
     historyWithPlantCount = 0;
     historyWithoutPlantCount = 0;
     mockCustomInstance.mockReset();
-    mockCustomInstance.mockImplementation(
-      (config: { url: string; method: string; params?: { plantId?: string } }) => {
-        if (config.method === "GET" && config.url === HISTORY_URL) {
-          if (config.params?.plantId) historyWithPlantCount += 1;
+    const mutationResponse = () => ({ coefficients: [{ coefficientId: "c1" }] });
+    const router = routeRequests([
+      {
+        method: "GET",
+        url: HISTORY_URL,
+        respond: (config) => {
+          if ((config.params as { plantId?: string } | undefined)?.plantId) historyWithPlantCount += 1;
           else historyWithoutPlantCount += 1;
-          return Promise.resolve([]);
-        }
-        if (config.url.startsWith(COEFFICIENTS_BASE)) {
-          return Promise.resolve({ coefficients: [{ coefficientId: "c1" }] });
-        }
-        return Promise.reject(new Error(`Unhandled request in test: ${config.method} ${config.url}`));
+          return [];
+        },
       },
-    );
+      // replace is a PUT on the collection; the other four are POSTs to a sub-resource.
+      { method: "PUT", url: COEFFICIENTS_BASE, respond: mutationResponse },
+      {
+        method: "POST",
+        url: new RegExp(`^${COEFFICIENTS_BASE}/(reopen|activate|deactivate|close)$`),
+        respond: mutationResponse,
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
   });
 
   it.each(["reopen", "activate", "deactivate", "close", "replace"] as const)(

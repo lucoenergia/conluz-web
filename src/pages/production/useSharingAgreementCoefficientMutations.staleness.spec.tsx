@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { waitFor, act } from "@testing-library/react";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
-import type { AxiosRequestConfig } from "axios";
+import { routeRequests } from "../../test/requestRouter";
 import dayjs from "dayjs";
 import { customInstance } from "../../api/custom-instance";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
@@ -38,6 +38,8 @@ vi.mock(import("../../context/success.context"), async (importOriginal) => ({
 }));
 
 const mockCustomInstance = vi.mocked(customInstance);
+
+const COEFFICIENTS_URL = "/api/v1/plants/plant-1/sharing-agreements/agreement-1/partition-coefficients";
 
 const { APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -79,22 +81,31 @@ describe("coefficient mutations stay pending until the post-success refetch reso
     let resolveRefetch!: (value: SharingAgreementPartitionCoefficientResponse[]) => void;
     let getCallCount = 0;
 
-    mockCustomInstance.mockImplementation((config: AxiosRequestConfig) => {
-      if (config.method === "GET") {
-        getCallCount += 1;
-        if (getCallCount === 1) return Promise.resolve([initialCoefficient]);
-        // The second GET is the invalidation-triggered refetch — held open
-        // deliberately, so the test controls exactly when "fresh data"
-        // arrives instead of racing a promise microtask.
-        return new Promise((resolve) => {
-          resolveRefetch = resolve;
-        });
-      }
+    const router = routeRequests([
+      {
+        method: "GET",
+        url: COEFFICIENTS_URL,
+        respond: () => {
+          getCallCount += 1;
+          if (getCallCount === 1) return [initialCoefficient];
+          // The second GET is the invalidation-triggered refetch — held open
+          // deliberately, so the test controls exactly when "fresh data"
+          // arrives instead of racing a promise microtask.
+          return new Promise((resolve) => {
+            resolveRefetch = resolve;
+          });
+        },
+      },
       // POST .../activate resolves immediately — the whole point is that the
       // HTTP call finishing is NOT the same moment the mutation should stop
       // reporting itself as pending.
-      return Promise.resolve({ coefficients: [{ coefficientId: "c1" }] });
-    });
+      {
+        method: "POST",
+        url: `${COEFFICIENTS_URL}/activate`,
+        respond: () => ({ coefficients: [{ coefficientId: "c1" }] }),
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
 
     const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
@@ -131,17 +142,22 @@ describe("coefficient mutations stay pending until the post-success refetch reso
     let resolveRefetch!: (value: SharingAgreementPartitionCoefficientResponse[]) => void;
     let getCallCount = 0;
 
-    mockCustomInstance.mockImplementation((config: AxiosRequestConfig) => {
-      if (config.method === "GET") {
-        getCallCount += 1;
-        if (getCallCount === 1) return Promise.resolve([initialCoefficient]);
-        return new Promise((resolve) => {
-          resolveRefetch = resolve;
-        });
-      }
+    const router = routeRequests([
+      {
+        method: "GET",
+        url: COEFFICIENTS_URL,
+        respond: () => {
+          getCallCount += 1;
+          if (getCallCount === 1) return [initialCoefficient];
+          return new Promise((resolve) => {
+            resolveRefetch = resolve;
+          });
+        },
+      },
       // PUT .../partition-coefficients resolves immediately.
-      return Promise.resolve({ coefficients: [] });
-    });
+      { method: "PUT", url: COEFFICIENTS_URL, respond: () => ({ coefficients: [] }) },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
 
     const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
