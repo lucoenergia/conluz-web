@@ -1,11 +1,11 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { useEffect, type FC, type ReactNode } from "react";
-import { MemoryRouter, Route, Routes, useParams } from "react-router";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "../theme";
-import { ActiveCommunityContext } from "../context/community.context";
+import { screen } from "@testing-library/react";
+import { useEffect, type FC } from "react";
+import { Route, Routes, useParams } from "react-router";
+import { renderWithProviders } from "../test/renderWithProviders";
+import { query } from "../test/queryState";
+import { useGetCurrentUser } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
 import { CommunityRole } from "../api/models";
 import type { UserResponse } from "../api/models";
@@ -20,22 +20,25 @@ const LOGGED_USER = {
   },
 } as unknown as UserResponse;
 
-vi.mock("../context/auth.context", () => ({
+vi.mock(import("../context/auth.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useAuth: () => "a-token",
 }));
 
-vi.mock("../context/logged-user.context", () => ({
+vi.mock(import("../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useLoggedUser: () => LOGGED_USER,
   useLoggedUserDispatch: () => vi.fn(),
 }));
 
-vi.mock("../hooks/useLogout", () => ({
+vi.mock(import("../hooks/useLogout"), () => ({
   useLogout: () => vi.fn(),
 }));
 
-// The layout only calls this to bootstrap the user it already has.
-vi.mock("../api/users/users", () => ({
-  useGetCurrentUser: () => ({ data: undefined }),
+// The layout only calls this to bootstrap the user it already has, so with a
+// logged user present the query is disabled (enabled: loggedUser === null).
+vi.mock(import("../api/users/users"), () => ({
+  useGetCurrentUser: vi.fn(),
 }));
 
 vi.mock("../components/Header/Header", () => ({
@@ -79,31 +82,25 @@ const PlantsListPage: FC = () => {
 };
 
 function renderLayoutAt(initialEntry: string, communityId: string | null) {
-  const tree = (community: string | null): ReactNode => (
-    <ThemeProvider theme={theme}>
-      <ActiveCommunityContext.Provider value={community}>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <Routes>
-            <Route element={<AuthenticatedLayout />}>
-              <Route path="production">
-                <Route index element={<PlantsListPage />} />
-                <Route path=":plantId/sharing-agreements" element={<PlantPage />} />
-              </Route>
-            </Route>
-          </Routes>
-        </MemoryRouter>
-      </ActiveCommunityContext.Provider>
-    </ThemeProvider>
+  const { switchActiveCommunity } = renderWithProviders(
+    <Routes>
+      <Route element={<AuthenticatedLayout />}>
+        <Route path="production">
+          <Route index element={<PlantsListPage />} />
+          <Route path=":plantId/sharing-agreements" element={<PlantPage />} />
+        </Route>
+      </Route>
+    </Routes>,
+    { route: initialEntry, activeCommunityId: communityId },
   );
-
-  const { rerender } = render(tree(communityId));
-  return { rerenderWith: (next: string | null) => rerender(tree(next)) };
+  return { rerenderWith: (next: string | null) => switchActiveCommunity(next) };
 }
 
 describe("AuthenticatedLayout community switching", () => {
   beforeEach(() => {
     renders.length = 0;
     mounts.length = 0;
+    vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
   });
 
   it("never mounts the foreign entity page after a switch", () => {
