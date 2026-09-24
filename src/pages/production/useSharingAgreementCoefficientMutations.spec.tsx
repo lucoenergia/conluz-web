@@ -6,9 +6,9 @@
 process.env.TZ = "Europe/Madrid";
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { waitFor } from "@testing-library/react";
+import { createTestQueryClient, renderHookWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
 import dayjs from "dayjs";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
 import {
@@ -23,6 +23,13 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+import {
+  useActivatePartitionCoefficients,
+  useClosePartitionCoefficients,
+  useDeactivatePartitionCoefficients,
+  useReopenPartitionCoefficients,
+  useReplacePartitionCoefficients,
+} from "../../api/sharing-agreements/sharing-agreements";
 
 // A clean pending/never-applied default for the response fields these tests don't care about.
 const PENDING_FIELDS = {
@@ -42,45 +49,40 @@ const mockDeactivateMutateAsync = vi.fn();
 const mockCloseMutateAsync = vi.fn();
 const mockReopenMutateAsync = vi.fn();
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../../context/success.context", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useSuccessDispatch: () => mockSuccessDispatch,
 }));
 
-vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
-  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
-    "../../api/sharing-agreements/sharing-agreements",
-  );
-  return {
-    ...actual,
-    useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
-    useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: false }),
-    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: false }),
-    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: false }),
-    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: false }),
-  };
-});
-
-function makeWrapper() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  }
-  return { queryClient, Wrapper };
-}
-
-function wrapper({ children }: { children: ReactNode }) {
-  return <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>{children}</QueryClientProvider>;
-}
+// The real module is kept for its query-key getters; only the mutation hooks are replaced.
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useReplacePartitionCoefficients: vi.fn(),
+  useActivatePartitionCoefficients: vi.fn(),
+  useDeactivatePartitionCoefficients: vi.fn(),
+  useClosePartitionCoefficients: vi.fn(),
+  useReopenPartitionCoefficients: vi.fn(),
+}));
 
 const row = (supplyId: string, value: number | undefined): EditableCoefficientRow => ({
   supplyId,
   coefficient: {} as SharingAgreementPartitionCoefficientResponse,
   value,
   inputText: value === undefined ? "" : String(value),
+});
+
+// File-level, so it applies to every describe below.
+beforeEach(() => {
+  vi.mocked(useReplacePartitionCoefficients).mockReturnValue(mutation.idle({ mutateAsync: mockMutateAsync }));
+  vi.mocked(useActivatePartitionCoefficients).mockReturnValue(mutation.idle({ mutateAsync: mockActivateMutateAsync }));
+  vi.mocked(useDeactivatePartitionCoefficients).mockReturnValue(mutation.idle({ mutateAsync: mockDeactivateMutateAsync }));
+  vi.mocked(useClosePartitionCoefficients).mockReturnValue(mutation.idle({ mutateAsync: mockCloseMutateAsync }));
+  vi.mocked(useReopenPartitionCoefficients).mockReturnValue(mutation.idle({ mutateAsync: mockReopenMutateAsync }));
 });
 
 describe("useSharingAgreementCoefficientMutations", () => {
@@ -93,7 +95,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("issues exactly one PUT for the whole row set, keyed by supplyId", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5), row("s2", 0.5)]);
 
@@ -107,7 +109,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("sends a row whose value is 0 as a real 0 in the request body — never filtered, never coerced from empty", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     await result.current.replaceCoefficients("agreement-1", [row("s1", 0), row("s2", 1)]);
 
@@ -124,7 +126,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
     // from typing "30" kW on a 60 kWp plant is exactly 0.5, same as typing
     // "50" as a percentage) — the hook never re-parses text or knows about units.
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     await result.current.replaceCoefficients("agreement-1", [row("s1", 0), row("s2", 0.5)]);
 
@@ -137,7 +139,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("does not surface the backend's coefficientSumWarning string on the result, even when present", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: "La suma se aleja del 100%" });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5), row("s2", 0.4)]);
 
@@ -146,7 +148,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("reproduction case: rows entered in kW mode against a 48,40 kW plant reach the request body as exact 6-decimal values", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const installedPowerKw = 48.4;
     // Only id/name are exercised by buildEditableRowFromSupply; the rest of SupplyResponse is irrelevant here.
@@ -175,7 +177,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("round-trip: exact 6-decimal coefficients summing to 1,000,000 units survive display, unit toggling, and save unchanged", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const installedPowerKw = 45;
     const seeded = buildEditableRowsFromCoefficients(
@@ -203,7 +205,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("dispatches a toast and returns success:false on error, without throwing", async () => {
     mockMutateAsync.mockRejectedValue(new Error("network error"));
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5)]);
 
@@ -221,7 +223,7 @@ describe("activateCoefficients", () => {
 
   it("serialises appliedOn with .format('YYYY-MM-DD'), never a UTC-converting method — proven by asserting on the request body actually sent", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     // Local midnight on a fixed date. If the conversion ever used
     // .toISOString() (which converts to UTC first), Europe/Madrid's +1/+2
@@ -241,7 +243,7 @@ describe("activateCoefficients", () => {
 
   it("treats an empty coefficients response (no-op batch) as success and dispatches the transient confirmation", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.activateCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
 
@@ -269,7 +271,7 @@ describe("activateCoefficients", () => {
         },
       },
     });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.activateCoefficients("agreement-1", ["c1", "c2"], dayjs("2026-01-10"));
 
@@ -284,7 +286,7 @@ describe("activateCoefficients", () => {
 
   it("on a non-RestError rejection (network error), returns an empty errorMessages array rather than throwing", async () => {
     mockActivateMutateAsync.mockRejectedValue(new Error("network error"));
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.activateCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
 
@@ -293,9 +295,9 @@ describe("activateCoefficients", () => {
 
   it("invalidates every sharing-agreement query for the plant via a URL-prefix predicate, not a specific query key", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { queryClient, Wrapper } = makeWrapper();
+    const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
 
     await result.current.activateCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
 
@@ -328,7 +330,7 @@ describe("deactivateCoefficients", () => {
 
   it("sends coefficientIds only, invalidates the plant subtree, and dispatches the transient confirmation", async () => {
     mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
 
@@ -343,7 +345,7 @@ describe("deactivateCoefficients", () => {
 
   it("treats an empty coefficients response (no-op) as success", async () => {
     mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
 
@@ -356,7 +358,7 @@ describe("deactivateCoefficients", () => {
         data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT", params: {} }] },
       },
     });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
 
@@ -368,9 +370,9 @@ describe("deactivateCoefficients", () => {
 
   it("invalidates every sharing-agreement query for the plant on success", async () => {
     mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { queryClient, Wrapper } = makeWrapper();
+    const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
 
     await result.current.deactivateCoefficients("agreement-1", ["c1"]);
 
@@ -387,7 +389,7 @@ describe("closeCoefficients", () => {
 
   it("serialises closedOn with .format('YYYY-MM-DD'), never a UTC-converting method — proven by asserting on the request body actually sent", async () => {
     mockCloseMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     // Local midnight on a fixed date — same hazard as activateCoefficients'
     // appliedOn test: .toISOString() would shift this to the previous day
@@ -405,7 +407,7 @@ describe("closeCoefficients", () => {
 
   it("treats an empty coefficients response (no-op) as success and dispatches the transient confirmation", async () => {
     mockCloseMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
 
@@ -419,7 +421,7 @@ describe("closeCoefficients", () => {
         data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE", params: { cups: "ES1111111111111111AA" } }] },
       },
     });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
 
@@ -431,9 +433,9 @@ describe("closeCoefficients", () => {
 
   it("invalidates every sharing-agreement query for the plant on success", async () => {
     mockCloseMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { queryClient, Wrapper } = makeWrapper();
+    const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
 
     await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
 
@@ -450,7 +452,7 @@ describe("reopenCoefficients", () => {
 
   it("sends coefficientIds only, invalidates the plant subtree, and dispatches the transient confirmation", async () => {
     mockReopenMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
 
@@ -465,7 +467,7 @@ describe("reopenCoefficients", () => {
 
   it("treats an empty coefficients response (no-op) as success", async () => {
     mockReopenMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
 
@@ -480,7 +482,7 @@ describe("reopenCoefficients", () => {
         },
       },
     });
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
 
@@ -492,9 +494,9 @@ describe("reopenCoefficients", () => {
 
   it("invalidates every sharing-agreement query for the plant on success", async () => {
     mockReopenMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { queryClient, Wrapper } = makeWrapper();
+    const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHook(() => useSharingAgreementCoefficientMutations("plant-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
 
     await result.current.reopenCoefficients("agreement-1", ["c1"]);
 
