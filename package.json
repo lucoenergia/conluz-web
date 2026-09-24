@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "engines": {
+    "npm": ">=10.9.0 <11"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,8 +15,7 @@
     "test": "vitest",
     "test:visual": "playwright test",
     "test:visual:mobile": "playwright test --project=mobile",
-    "test:visual:desktop": "playwright test --project=desktop",
-    "test:visual:update": "playwright test --update-snapshots"
+    "test:visual:desktop": "playwright test --project=desktop"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -46,7 +48,6 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
     "jsdom": "^26.1.0",
-    "msw": "^2.10.3",
     "orval": "^7.10.0",
     "react-router-dom": "^7.6.3",
     "typescript": "~5.8.3",

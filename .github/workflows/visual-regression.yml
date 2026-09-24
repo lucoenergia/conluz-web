@@ -16,7 +16,12 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      # Fails if `npm ci` rewrote the lockfile, which the npm pin (package.json
+      # engines + .npmrc engine-strict) exists to prevent.
+      - name: Check the lockfile is unchanged
+        run: git diff --exit-code package-lock.json
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

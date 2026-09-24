@@ -79,7 +79,7 @@ function collectGeneratedUrls(): Set<string> {
   for (const tag of readdirSync(GENERATED_CLIENT_DIR, { withFileTypes: true })) {
     if (!tag.isDirectory()) continue;
     for (const file of readdirSync(join(GENERATED_CLIENT_DIR, tag.name))) {
-      if (!file.endsWith(".ts") || file.endsWith(".msw.ts")) continue;
+      if (!file.endsWith(".ts")) continue;
       const source = readFileSync(join(GENERATED_CLIENT_DIR, tag.name, file), "utf8");
       for (const [, template] of source.matchAll(/url:\s*`([^`]+)`/g)) {
         urls.add(template.replace(/\$\{([A-Za-z0-9_]+)\}/g, "{$1}"));

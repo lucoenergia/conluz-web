@@ -21,8 +21,12 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
-      - run: npm install
+      - run: npm ci
+      # Fails if `npm ci` rewrote the lockfile, which the npm pin (package.json
+      # engines + .npmrc engine-strict) exists to prevent.
+      - run: git diff --exit-code package-lock.json
       - run: npm run lint
+      - run: npx tsc -b
       - run: npm test
   build-and-push:
     needs: test

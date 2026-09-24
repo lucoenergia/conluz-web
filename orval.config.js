@@ -4,7 +4,7 @@ export const conluz = {
     target: "src/api",
     schemas: "./src/api/models",
     client: "react-query",
-    mock: true,
+    mock: false,
     override: {
       mutator: {
         path: "./src/api/custom-instance.ts",
