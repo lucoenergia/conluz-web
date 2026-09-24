@@ -10,6 +10,7 @@ import { ActiveCommunityContext, CommunityProvider } from "../context/community.
 import { ErrorProvider } from "../context/error.context";
 import { SuccessProvider } from "../context/success.context";
 import { theme } from "../theme";
+import { afterEach } from "vitest";
 
 /**
  * A QueryClient for tests: retries off for queries and mutations, so a failing
@@ -47,6 +48,14 @@ function resetBrowserStorage(): void {
   window.localStorage.clear();
   window.sessionStorage.clear();
 }
+
+// The other end: rendering can persist storage (a single-membership user makes
+// `CommunityProvider` persist `activeCommunity:<userId>`), and a later test in
+// the same file may not render at all. Registered at module scope, so it is
+// collected into every spec file that imports the harness and into no other:
+// specs that write storage on purpose, such as `community.context.spec.tsx`,
+// are unaffected. Deliberately not a global setup file for the same reason.
+afterEach(resetBrowserStorage);
 
 /**
  * Mirrors the provider nesting in `src/main.tsx`, plus the Error and Success
