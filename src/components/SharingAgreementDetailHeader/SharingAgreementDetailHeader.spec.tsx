@@ -11,7 +11,6 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 
 vi.mock(import("../../api/users/users"), () => ({
@@ -158,7 +157,10 @@ describe("SharingAgreementDetailHeader", () => {
 
     it("says the CAU is unavailable rather than leaving its field empty", async () => {
       const user = userEvent.setup();
-      renderHeader({ agreement: {} as SharingAgreementResponse, plant: {} as PlantResponse });
+      // Reachable triggers for both fallbacks: the agreement has not loaded yet
+      // (the header's agreement prop is optional), and the plant has no CAU
+      // (regulatoryCode is nullable).
+      renderHeader({ agreement: undefined, plant: buildPlant({ regulatoryCode: null }) });
 
       expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
       const panel = await openDetails(user);
