@@ -1,7 +1,19 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation, query } from "../../test/queryState";
+import { buildCommunity, buildUser } from "../../test/fixtures";
+import {
+  useDisableUser,
+  useEnableUser,
+  useGetAllUsers,
+  useGrantPlatformAdmin,
+  useRevokePlatformAdmin,
+  type getAllUsers,
+} from "../../api/users/users";
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
@@ -14,7 +26,7 @@ const mockRevokeMutate = vi.fn();
 const LOGGED_USER_ID = "u3";
 
 const MOCK_USERS = [
-  {
+  buildUser({
     id: "u1",
     fullName: "Ana García",
     personalId: "11111111A",
@@ -23,8 +35,8 @@ const MOCK_USERS = [
     enabled: true,
     isPlatformAdmin: true, // another platform admin (not the logged-in user) → revoke enabled
     memberships: { "c1": "COMMUNITY_ADMIN", "c2": "COMMUNITY_MEMBER", "c3": "COMMUNITY_MEMBER" },
-  },
-  {
+  }),
+  buildUser({
     id: "u2",
     fullName: "Bruno Leal",
     personalId: "22222222B",
@@ -33,8 +45,8 @@ const MOCK_USERS = [
     enabled: false,
     isPlatformAdmin: false, // not an admin → grant shown
     memberships: {},
-  },
-  {
+  }),
+  buildUser({
     id: LOGGED_USER_ID,
     fullName: "Zoe Admin",
     personalId: "33333333C",
@@ -43,41 +55,43 @@ const MOCK_USERS = [
     enabled: true,
     isPlatformAdmin: true, // the logged-in user → revoke disabled
     memberships: {},
-  },
+  }),
 ];
 
 const MOCK_COMMUNITIES = [
-  { id: "c1", name: "Sol Común", code: "SOL", enabled: true },
-  { id: "c2", name: "Verde Activa", code: "VRD", enabled: true },
-  { id: "c3", name: "Energía Norte", code: "NOR", enabled: true },
+  buildCommunity({ id: "c1", name: "Sol Común", code: "SOL", enabled: true }),
+  buildCommunity({ id: "c2", name: "Verde Activa", code: "VRD", enabled: true }),
+  buildCommunity({ id: "c3", name: "Energía Norte", code: "NOR", enabled: true }),
 ];
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  return { ...actual, useNavigate: () => mockNavigate };
-});
-
-vi.mock("../../api/users/users", () => ({
-  useGetAllUsers: () => ({ data: { items: MOCK_USERS }, isLoading: false, error: null, refetch: vi.fn() }),
-  useDisableUser: () => ({ mutateAsync: mockDisableMutate }),
-  useEnableUser: () => ({ mutateAsync: mockEnableMutate }),
-  useGrantPlatformAdmin: () => ({ mutateAsync: mockGrantMutate, isPending: false }),
-  useRevokePlatformAdmin: () => ({ mutateAsync: mockRevokeMutate, isPending: false }),
+vi.mock(import("react-router"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../api/communities/communities", () => ({
-  useGetAllCommunities: () => ({ data: MOCK_COMMUNITIES }),
+vi.mock(import("../../api/users/users"), () => ({
+  useGetAllUsers: vi.fn(),
+  useDisableUser: vi.fn(),
+  useEnableUser: vi.fn(),
+  useGrantPlatformAdmin: vi.fn(),
+  useRevokePlatformAdmin: vi.fn(),
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../api/communities/communities"), () => ({
+  useGetAllCommunities: vi.fn(),
+}));
+
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../../context/logged-user.context", () => ({
-  useLoggedUser: () => ({ id: LOGGED_USER_ID }),
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () => buildUser({ id: LOGGED_USER_ID }),
 }));
 
-vi.mock("../../hooks/useActiveCommunityRole", () => ({
+vi.mock(import("../../hooks/useActiveCommunityRole"), () => ({
   useIsPlatformAdmin: () => true,
 }));
 
@@ -152,20 +166,21 @@ vi.mock("../../components/Modals/PlatformAdminSuccessModal", () => ({
     isOpen ? <span>Platform admin {wasGranted ? "granted" : "revoked"} for {userName}</span> : null,
 }));
 
-import { MemoryRouter } from "react-router";
 import { UsersPage } from "./UsersPage";
 
 describe("UsersPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>({ items: MOCK_USERS }));
+    vi.mocked(useGetAllCommunities).mockReturnValue(query.success<typeof getAllCommunities>(MOCK_COMMUNITIES));
+    vi.mocked(useDisableUser).mockReturnValue(mutation.idle({ mutateAsync: mockDisableMutate }));
+    vi.mocked(useEnableUser).mockReturnValue(mutation.idle({ mutateAsync: mockEnableMutate }));
+    vi.mocked(useGrantPlatformAdmin).mockReturnValue(mutation.idle({ mutateAsync: mockGrantMutate }));
+    vi.mocked(useRevokePlatformAdmin).mockReturnValue(mutation.idle({ mutateAsync: mockRevokeMutate }));
   });
 
   const setup = () => {
-    render(
-      <MemoryRouter>
-        <UsersPage />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<UsersPage />);
   };
 
   describe("narrow viewport", () => {
