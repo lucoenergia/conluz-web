@@ -9,6 +9,7 @@ import {
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getAllSupplies } from "../../api/supplies/supplies";
+import { buildSupply } from "../../test/fixtures";
 import {
   FIXTURE_COEFFICIENTS,
   FIXTURE_INSTALLED_POWER_KW,
@@ -202,10 +203,10 @@ describe("SharingAgreementCoefficientSet (per-row revert)", { timeout: 20_000 },
     mockMutateAsync.mockReset();
     mockSuccessDispatch.mockClear();
     vi.mocked(getAllSupplies).mockResolvedValue({
-      items: [{ id: REPRODUCTION_ROW_SUPPLY_ID, name: REPRODUCTION_ROW_NAME, code: "ES0031300000000015XY" }],
+      items: [buildSupply({ id: REPRODUCTION_ROW_SUPPLY_ID, name: REPRODUCTION_ROW_NAME, code: "ES0031300000000015XY" })],
       number: 0,
       totalPages: 1,
-    } as unknown as Awaited<ReturnType<typeof getAllSupplies>>);
+    });
   });
 
   function renderEditor() {

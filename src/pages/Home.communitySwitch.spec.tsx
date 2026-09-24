@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
-import { buildUser } from "../test/fixtures";
+import { buildSupply, buildUser } from "../test/fixtures";
 import { useActiveCommunity } from "../context/community.context";
 import { CommunityRole } from "../api/models";
 import type { SupplyResponse } from "../api/models";
@@ -16,8 +16,8 @@ import {
 } from "../api/supplies/supplies";
 
 const SUPPLIES_BY_COMMUNITY: Record<string, SupplyResponse[]> = {
-  "community-a": [{ id: "supply-a", name: "Supply A", address: "Street A" } as SupplyResponse],
-  "community-b": [{ id: "supply-b", name: "Supply B", address: "Street B" } as SupplyResponse],
+  "community-a": [buildSupply({ id: "supply-a", name: "Supply A", address: "Street A" })],
+  "community-b": [buildSupply({ id: "supply-b", name: "Supply B", address: "Street B" })],
 };
 
 /** Every supply id the consumption/production panels actually requested. */

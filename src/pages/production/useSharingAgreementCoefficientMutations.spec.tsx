@@ -22,7 +22,8 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { buildSupply } from "../../test/fixtures";
 import {
   useActivatePartitionCoefficients,
   useClosePartitionCoefficients,
@@ -151,13 +152,13 @@ describe("useSharingAgreementCoefficientMutations", () => {
     const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
 
     const installedPowerKw = 48.4;
-    // Only id/name are exercised by buildEditableRowFromSupply; the rest of SupplyResponse is irrelevant here.
+    // Only id/name are exercised by buildEditableRowFromSupply; the rest of each supply is builder defaults.
     const supplies = [
-      { id: "s1", name: "A" },
-      { id: "s2", name: "B" },
-      { id: "s3", name: "C" },
-      { id: "s4", name: "D" },
-    ] as SupplyResponse[];
+      buildSupply({ id: "s1", name: "A" }),
+      buildSupply({ id: "s2", name: "B" }),
+      buildSupply({ id: "s3", name: "C" }),
+      buildSupply({ id: "s4", name: "D" }),
+    ];
     const kwText = ["1,5", "3,2", "1,0", "2,0"];
     const rows = supplies.map((supply, i) => {
       const empty = buildEditableRowFromSupply(supply);

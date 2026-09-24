@@ -3,11 +3,12 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { type FC } from "react";
 import type { SupplyResponse } from "../../api/models";
+import { buildSupply } from "../../test/fixtures";
 import { renderWithProviders } from "../../test/renderWithProviders";
 
 const SUPPLIES_BY_COMMUNITY: Record<string, SupplyResponse[]> = {
-  "community-a": [{ id: "supply-a", code: "CODE-A", name: "Supply A" } as SupplyResponse],
-  "community-b": [{ id: "supply-b", code: "CODE-B", name: "Supply B" } as SupplyResponse],
+  "community-a": [buildSupply({ id: "supply-a", code: "CODE-A", name: "Supply A" })],
+  "community-b": [buildSupply({ id: "supply-b", code: "CODE-B", name: "Supply B" })],
 };
 
 let resolveNextFetch: (() => void) | null = null;

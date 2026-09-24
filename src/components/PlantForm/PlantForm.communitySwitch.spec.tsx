@@ -5,11 +5,12 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
 import { useActiveCommunity } from "../../context/community.context";
 import type { SupplyResponse } from "../../api/models";
+import { buildSupply } from "../../test/fixtures";
 import { useGetAllSupplies, type getAllSupplies } from "../../api/supplies/supplies";
 
 const SUPPLIES_BY_COMMUNITY: Record<string, SupplyResponse[]> = {
-  "community-a": [{ id: "supply-a", code: "CODE-A", name: "Supply A" } as SupplyResponse],
-  "community-b": [{ id: "supply-b", code: "CODE-B", name: "Supply B" } as SupplyResponse],
+  "community-a": [buildSupply({ id: "supply-a", code: "CODE-A", name: "Supply A" })],
+  "community-b": [buildSupply({ id: "supply-b", code: "CODE-B", name: "Supply B" })],
 };
 
 vi.mock(import("../../api/supplies/supplies"), () => ({
