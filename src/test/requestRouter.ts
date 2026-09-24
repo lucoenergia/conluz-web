@@ -17,9 +17,14 @@
  * route fails the test instead of resolving to `undefined`.
  */
 
+/**
+ * The parts of an `AxiosRequestConfig` the router reads. `url` and `method`
+ * are optional there, so a spec can hand `handle` straight to a mock typed as
+ * the real `customInstance`. Generated fetchers always set both.
+ */
 export type RequestConfig = {
-  url: string;
-  method: string;
+  url?: string;
+  method?: string;
   params?: unknown;
   data?: unknown;
 };
@@ -38,9 +43,13 @@ export type RequestRouter = {
   requests: RequestConfig[];
 };
 
+// Axios defaults a missing method to GET.
+const methodOf = (config: RequestConfig) => (config.method ?? "GET").toUpperCase();
+const urlOf = (config: RequestConfig) => config.url ?? "";
+
 function matches(route: Route, config: RequestConfig): boolean {
-  if (route.method !== config.method.toUpperCase()) return false;
-  return typeof route.url === "string" ? route.url === config.url : route.url.test(config.url);
+  if (route.method !== methodOf(config)) return false;
+  return typeof route.url === "string" ? route.url === urlOf(config) : route.url.test(urlOf(config));
 }
 
 export function routeRequests(routes: Route[]): RequestRouter {
@@ -50,7 +59,7 @@ export function routeRequests(routes: Route[]): RequestRouter {
     requests.push(config);
     const route = routes.find((candidate) => matches(candidate, config));
     if (!route) {
-      return Promise.reject(new Error(`Unhandled request in test: ${config.method} ${config.url}`));
+      return Promise.reject(new Error(`Unhandled request in test: ${methodOf(config)} ${urlOf(config)}`));
     }
     try {
       return Promise.resolve(route.respond(config));
