@@ -90,7 +90,7 @@ The pre-agreed criterion required all three of its conditions. The fidelity cond
 
 - The backend publishes its OpenAPI spec in CI so tests can be run spec-against-backend. That closes the drift neither tier can see, and changes the fidelity argument this ADR rests on.
 - A production regression escapes because cache or invalidation behaviour was mocked away in tier 1. That is the gap this decision knowingly accepts.
-- Tier 2 grows beyond roughly 10 specs, or the shared `customInstance` router becomes a maintenance burden of its own. At that point the cost gap against MSW narrows enough to re-measure.
+- Tier 2 grows beyond 10 specs, or `routeRequests` acquires per-spec forks or special cases — that is, any spec needing routing behaviour the shared helper does not provide. Either is the point at which the cost gap against MSW narrows enough to re-measure.
 - Orval changes how it emits mock handlers, specifically the route ordering that currently lets `/users/:userId` shadow `/users/current`.
 - Any spec needs to assert on a request body or URL outside a cache-behaviour test. That would mean tier 2's trigger is too narrow.
 
