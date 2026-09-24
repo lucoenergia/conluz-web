@@ -15,6 +15,15 @@ vi.mock("react-router", async () => {
   };
 });
 
+// The form loads the user list for its owner picker; answer with a settled,
+// empty page so no test reaches the network.
+vi.mock("../../api/users/users", () => ({
+  useGetAllUsers: () => ({
+    data: { items: [], size: 0, totalElements: 0, totalPages: 0, number: 0 },
+    isLoading: false,
+  }),
+}));
+
 // Imports después de los mocks
 import { MemoryRouter } from "react-router";
 import { SupplyForm } from "./SupplyForm";
