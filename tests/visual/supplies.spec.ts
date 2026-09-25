@@ -32,8 +32,9 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar masked (see mainRegion).
-    // The kWh figure is Math.random() in SupplyPointsPage (placeholder data), so it is masked;
-    // its tile keeps the same size for 1- and 2-digit values, so the mask hides all of it.
+    // Interim mask: the kWh figure is Math.random() in SupplyPointsPage, production non-determinism no
+    // fixture can pin. Remove it with the change request "Supply cards show members an invented consumption
+    // figure". The tile keeps its size for 1- and 2-digit values, so the mask hides all of the variation.
     await expect(page).toHaveScreenshot("supplies-list.png", await mainRegion(page, [page.getByText(/^\d+ kWh$/)]));
   });
 
