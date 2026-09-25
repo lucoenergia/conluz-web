@@ -84,6 +84,14 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
 - **No real network**: a spec must never reach the backend; an unmocked query hook shows up as `ECONNREFUSED` in the run output.
 - **Pattern**: Use React Testing Library with `@testing-library/jest-dom` matchers
 
+**Selector hierarchy (all specs, Vitest and Playwright):** pick the first level that works, in strict order. The reasoning, and the conditions for revisiting it, are in `docs/decisions/adrs/0002-select-by-role-then-text-and-reserve-test-ids-for-unnamed-regions.md`.
+1. **Accessible role, with its name when it has one**, e.g. `page.getByRole("heading", { name: "Histórico de coeficientes" })` in `tests/visual/supplies.spec.ts`. Landmarks count as roles, so a page's content region is `getByRole("main")`. A role selector also checks what assistive technology perceives, for free.
+2. **Visible text, when no role fits**, e.g. `page.getByText("Sin periodos aplicados")` in `tests/visual/supplies.spec.ts`.
+3. **`data-testid`, only on a region container with neither a role nor an accessible name** (a card section, panel or bar whose only job is grouping), e.g. `page.getByTestId("coefficient-history-drawer")` in `tests/visual/sharing-agreement-dialogs.spec.ts`. A test id checks nothing a user perceives. It marks the region as lacking semantics, not as convenient.
+- **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If an interactive element can only be found by test id, it is missing an accessible name or role. That is a production defect: report it, don't route around it. `csv-file-input` and `drop-zone` in the import modals predate this rule and are grandfathered, not examples.
+- A test id that stands in for a missing role is marked **interim** by a comment at the attribute, naming the issue that removes it (`modal-panel` in `BasicModal`, pending a real `role="dialog"`).
+- A structural locator (MUI class, DOM nesting) is a last resort, and it needs a one-line justification in the spec.
+
 **Fast iteration (agents):**
 - While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` takes file paths (source or spec) and runs the specs that import them. When it resolves to nothing it prints "No test files found" and still exits 0, so in that case run the spec directly by path: `npx vitest run <path/to/File.spec.tsx>`.
 - Run the full gates `npm run lint && npm test` once, at the end.
