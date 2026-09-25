@@ -10,6 +10,7 @@ import {
   FIXED_MEMBER_USER,
   FIXED_SUPPLY_COEFFICIENT_HISTORY,
   FIXED_SUPPLY_ID,
+  hideAppBar,
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
@@ -65,7 +66,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-admin.png");
+    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-admin.png", await hideAppBar(page));
 
     // No plantId filter here, so both plants group; the draft's pending period
     // is withheld even though an admin receives it.
@@ -86,7 +87,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-owner.png");
+    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-owner.png", await hideAppBar(page));
 
     // Same periods, but the agreement route is CommunityAdminRoute-guarded, so
     // an owner is shown names rather than links that would redirect them.
@@ -104,7 +105,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Sin periodos aplicados")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-empty.png");
+    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-empty.png", await hideAppBar(page));
   });
 
   test("import supplies modal open", async ({ page }) => {
@@ -124,7 +125,7 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=Importar Puntos de Suministro desde CSV");
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("import-supplies-modal.png");
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("import-supplies-modal.png", await hideAppBar(page));
   });
 
   test("disable confirmation modal open", async ({ page }) => {
@@ -147,7 +148,7 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=Deshabilitar punto de suministro");
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-confirmation-modal.png");
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-confirmation-modal.png", await hideAppBar(page));
   });
 
   test("disable success modal open", async ({ page }) => {
@@ -173,7 +174,7 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=ha sido deshabilitado");
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-success-modal.png");
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-success-modal.png", await hideAppBar(page));
   });
 
   // Note: "import partners modal" is intentionally omitted. See tests/visual/fixtures/index.ts.

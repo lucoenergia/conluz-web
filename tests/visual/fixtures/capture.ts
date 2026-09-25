@@ -1,13 +1,53 @@
-import type { Locator, Page, PageAssertionsToHaveScreenshotOptions } from "@playwright/test";
+import { fileURLToPath } from "node:url";
+import { expect, type Locator, type Page, type PageAssertionsToHaveScreenshotOptions } from "@playwright/test";
+
+/**
+ * The app bar is hidden, not masked, in every capture whose subject is not the
+ * chrome. Only the chrome canaries (chrome-canary.spec.ts) show it.
+ *
+ * Masking it (PR 2) left two leaks, measured by making the bar taller: 45
+ * baselines still moved.
+ * - A mask covers the bar's own box, so a taller bar grows the mask over the
+ *   content under it.
+ * - An element screenshot scrolls its target to the top of the viewport, where
+ *   the fixed bar is painted over it, and plain region captures did not mask it.
+ *
+ * `visibility: hidden` (hide-app-bar.css, passed as the screenshot
+ * `stylePath`) removes the bar from the pixels while keeping its layout box. The app bar is position: fixed,
+ * and main reserves its space with its own <Toolbar /> spacer, so nothing
+ * underneath moves, and the bar's size or content no longer reaches any capture.
+ *
+ * `stylePath` applies CSS, not a locator, so the selector is `header`: the
+ * element that carries the banner landmark. The helper asserts that the page has
+ * exactly one banner and exactly one <header>, so a second <header> added
+ * later fails here instead of being hidden silently.
+ */
+const HIDE_APP_BAR = fileURLToPath(new URL("./hide-app-bar.css", import.meta.url));
+
+async function hiddenAppBarStyle(page: Page): Promise<string> {
+  // includeHidden: an open modal, menu or drawer sets aria-hidden on the rest
+  // of the page, which removes the banner from the default role query.
+  await expect(page.getByRole("banner", { includeHidden: true })).toHaveCount(1);
+  await expect(page.locator("header")).toHaveCount(1);
+  return HIDE_APP_BAR;
+}
+
+/**
+ * Screenshot options for a region (component) capture: the app bar is hidden.
+ *   await expect(page.getByRole("menu")).toHaveScreenshot("x.png", await hideAppBar(page));
+ */
+export async function hideAppBar(page: Page): Promise<PageAssertionsToHaveScreenshotOptions> {
+  return { stylePath: await hiddenAppBarStyle(page) };
+}
 
 /**
  * Screenshot options that capture the page's main region, for baselines whose
  * subject is a page layout.
  *
  * - The region is found by role (getByRole("main")), not by class or test id.
- * - The fixed app bar overlaps the top of main (its <Toolbar /> spacer), so it
- *   is masked: header changes belong to the chrome canary, not to every page
- *   baseline.
+ * - The app bar, which overlaps the top of main (its <Toolbar /> spacer), is
+ *   hidden (see above): header changes belong to the chrome canary, not to
+ *   every page baseline.
  * - It is a clipped full-page capture, not an element screenshot. An element
  *   screenshot scrolls the element into view first, and on mobile that scroll
  *   collapses the detail header, so main's height changed between the two
@@ -22,11 +62,11 @@ import type { Locator, Page, PageAssertionsToHaveScreenshotOptions } from "@play
  */
 export async function mainRegion(
   page: Page,
-  extraMasks: Locator[] = [],
+  masks: Locator[] = [],
 ): Promise<PageAssertionsToHaveScreenshotOptions> {
   const clip = await page.getByRole("main").evaluate((main) => {
     const rect = main.getBoundingClientRect();
     return { x: rect.x + window.scrollX, y: rect.y + window.scrollY, width: rect.width, height: rect.height };
   });
-  return { fullPage: true, clip, mask: [page.getByRole("banner"), ...extraMasks] };
+  return { fullPage: true, clip, stylePath: await hiddenAppBarStyle(page), ...(masks.length > 0 ? { mask: masks } : {}) };
 }

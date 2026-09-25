@@ -6,6 +6,7 @@
 
 import { test, expect } from "@playwright/test";
 import {
+  hideAppBar,
   mainRegion,
   openPlantDetail,
   stabilizePage,
@@ -30,6 +31,6 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("HUAWEI")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("detail-header")).toHaveScreenshot("plant-detail-expanded.png");
+    await expect(page.getByTestId("detail-header")).toHaveScreenshot("plant-detail-expanded.png", await hideAppBar(page));
   });
 });

@@ -12,6 +12,7 @@ import {
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
   FIXED_SUPPLY,
+  hideAppBar,
   injectAuthToken,
   mockAllApiRoutes,
   mockSharingAgreementDetailRoutes,
@@ -36,7 +37,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText(FIXED_SUPPLY.name)).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-editor-add-supply-picker.png");
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-editor-add-supply-picker.png", await hideAppBar(page));
   });
 
   test("sharing agreement coefficient editor (mid-edit, sum below 100%)", async ({ page }, testInfo) => {
@@ -64,7 +65,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Suma de los coeficientes: 70,0000 %")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-mid-edit.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-mid-edit.png", await hideAppBar(page));
   });
 
   test("sharing agreement coefficient editor (row empty-value error)", async ({ page }, testInfo) => {
@@ -88,7 +89,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Obligatorio").first()).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-empty-value-error.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-empty-value-error.png", await hideAppBar(page));
   });
 
   test("sharing agreement coefficient editor (toggled to kW, values converted and kept)", async ({ page }, testInfo) => {
@@ -120,7 +121,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "%" }).click();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-toggled-to-kw.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-toggled-to-kw.png", await hideAppBar(page));
   });
 
   test("sharing agreement coefficient editor (current coefficient while editing in kW)", async ({ page }, testInfo) => {
@@ -150,7 +151,7 @@ test.describe("Visual baselines", () => {
 
     await stabilizePage(page);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-kw-current-coefficient.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-kw-current-coefficient.png", await hideAppBar(page));
   });
 
   test("sharing agreement coefficient editor (kW rounds to installed but coefficient sum isn't exact)", async ({ page }, testInfo) => {
@@ -184,7 +185,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("faltan 0,0001 % por ajustar en modo porcentaje.", { exact: false })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-kw-rounding-caveat.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-kw-rounding-caveat.png", await hideAppBar(page));
   });
 
   // Runs on BOTH viewports, unlike the interactive editor specs above. Those
@@ -230,6 +231,6 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Suma de los coeficientes: 98,8889 %")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-row-modified-revert.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-editor-row-modified-revert.png", await hideAppBar(page));
   });
 });

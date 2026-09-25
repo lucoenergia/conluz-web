@@ -13,6 +13,7 @@ import {
   FIXED_COEFFICIENTS_MIXED,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
+  hideAppBar,
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
@@ -89,7 +90,7 @@ test.describe("Visual baselines", () => {
     // on a 390px viewport to say nothing.
     await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-no-current-coefficient.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-no-current-coefficient.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }, testInfo) => {
@@ -120,7 +121,7 @@ test.describe("Visual baselines", () => {
     // assertion is what actually holds the column present on both viewports.
     await expectCurrentCoefficientShown(page, testInfo);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (draft, empty coefficient set)", async ({ page }) => {
@@ -132,7 +133,7 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-empty.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-empty.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (published, mixed pending/applied)", async ({ page }) => {
@@ -215,7 +216,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Este acuerdo todavía no tiene coeficientes.")).toBeVisible();
     await expect(page.getByText(/exactamente 100/)).toHaveCount(0);
 
-    await expect(page.getByTestId("sharing-agreement-file-panel")).toHaveScreenshot("sharing-agreement-detail-draft-no-file.png");
+    await expect(page.getByTestId("sharing-agreement-file-panel")).toHaveScreenshot("sharing-agreement-detail-draft-no-file.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (mobile coefficient cards)", async ({ page }, testInfo) => {
@@ -234,7 +235,7 @@ test.describe("Visual baselines", () => {
     // card instance. Assert it's the one actually visible, not just relying on viewport.
     await expect(page.getByText("Vivienda A").last()).toBeVisible();
 
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-mobile.png");
+    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-mobile.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (batch activation bar, selection active)", async ({ page }) => {
@@ -254,7 +255,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("button", { name: "Acciones", exact: true })).toBeEnabled();
 
     await stabilizePage(page);
-    await expect(page.getByTestId("sharing-agreement-batch-bar")).toHaveScreenshot("sharing-agreement-batch-bar-selection.png");
+    await expect(page.getByTestId("sharing-agreement-batch-bar")).toHaveScreenshot("sharing-agreement-batch-bar-selection.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (batch bar Acciones menu, single action fully available)", async ({ page }) => {
@@ -271,7 +272,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("menuitem", { name: "Registrar fecha" })).toBeVisible();
 
     await stabilizePage(page);
-    await expect(page.getByRole("menu")).toHaveScreenshot("sharing-agreement-batch-bar-acciones-menu.png");
+    await expect(page.getByRole("menu")).toHaveScreenshot("sharing-agreement-batch-bar-acciones-menu.png", await hideAppBar(page));
   });
 
   test("sharing agreement coefficient row actions menu (⋯ open)", async ({ page }) => {
@@ -290,7 +291,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("menuitem", { name: "Desactivar" })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByRole("menu")).toHaveScreenshot("sharing-agreement-row-actions-menu.png");
+    await expect(page.getByRole("menu")).toHaveScreenshot("sharing-agreement-row-actions-menu.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (mobile batch bar doesn't cover the last card)", async ({ page }, testInfo) => {
@@ -332,7 +333,7 @@ test.describe("Visual baselines", () => {
     // of the fixed bar — i.e. not underneath it.
     expect(cardBox!.y + cardBox!.height).toBeLessThanOrEqual(barBox!.y);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-mobile-last-card.png");
+    await expect(page).toHaveScreenshot("sharing-agreement-batch-bar-mobile-last-card.png", await hideAppBar(page));
   });
 
   test("sharing agreement detail page (draft, incomplete sum — publish not offered)", async ({ page }) => {

@@ -1,0 +1,9 @@
+/*
+ * Applied while taking every capture whose subject is not the chrome
+ * (see hideAppBar() / mainRegion() in capture.ts). `header` is the element
+ * that carries the banner landmark; capture.ts asserts there is exactly one.
+ * visibility (not display) keeps the fixed bar's layout box, so nothing moves.
+ */
+header {
+  visibility: hidden !important;
+}
