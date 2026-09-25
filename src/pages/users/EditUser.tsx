@@ -7,7 +7,7 @@ import type { UpdateUserBody } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { useGetUserById, useUpdateUser } from "../../api/users/users";
 import { useErrorDispatch } from "../../context/error.context";
-import { PartnerForm, type PartnerFormValues } from "../../components/PartnerForm/PartnerForm";
+import { UserForm, type UserFormValues } from "../../components/UserForm/UserForm";
 import PersonIcon from "@mui/icons-material/Person";
 
 export const EditUserPage: FC = () => {
@@ -18,7 +18,7 @@ export const EditUserPage: FC = () => {
 
   const { data: userData, isLoading, error } = useGetUserById(userId);
 
-  const handleSubmit = async ({ fullName, personalId, email, address, phoneNumber }: PartnerFormValues) => {
+  const handleSubmit = async ({ fullName, personalId, email, address, phoneNumber }: UserFormValues) => {
     try {
       const updatedUser = {
         number: userData?.number,
@@ -112,7 +112,7 @@ export const EditUserPage: FC = () => {
 
       <Box sx={sxStyles.pageContainerFull}>
         <Paper elevation={0} sx={sxStyles.softPanel}>
-          <PartnerForm
+          <UserForm
             mode="edit"
             initialValues={{
               fullName: userData.fullName || "",

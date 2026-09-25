@@ -2,11 +2,11 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { PartnerForm } from "./PartnerForm";
+import { UserForm } from "./UserForm";
 
 const mockHandleSubmit = vi.fn();
 
-describe("PartnerForm", () => {
+describe("UserForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -27,7 +27,7 @@ describe("PartnerForm", () => {
 
   describe("create mode", () => {
     it("renders all fields including create-only fields", () => {
-      const { container } = render(<PartnerForm {...defaultCreateProps} />);
+      const { container } = render(<UserForm {...defaultCreateProps} />);
 
       expect(screen.getByRole("textbox", { name: /nombre completo/i })).toBeInTheDocument();
       expect(screen.getByRole("textbox", { name: /dni\/nif/i })).toBeInTheDocument();
@@ -39,14 +39,14 @@ describe("PartnerForm", () => {
     });
 
     it("renders submit button with the provided label", () => {
-      render(<PartnerForm {...defaultCreateProps} />);
+      render(<UserForm {...defaultCreateProps} />);
 
       expect(screen.getByRole("button", { name: "Crear socio" })).toBeInTheDocument();
     });
 
     it("submits correct data when all fields are filled", async () => {
       const user = userEvent.setup();
-      const { container } = render(<PartnerForm {...defaultCreateProps} />);
+      const { container } = render(<UserForm {...defaultCreateProps} />);
       const [passwordInput, confirmInput] = container.querySelectorAll('input[type="password"]');
 
       await user.type(screen.getByRole("textbox", { name: /nombre completo/i }), "Juan García");
@@ -74,7 +74,7 @@ describe("PartnerForm", () => {
     }, 15000);
 
     it("does not render a role selector", () => {
-      render(<PartnerForm {...defaultCreateProps} />);
+      render(<UserForm {...defaultCreateProps} />);
 
       expect(screen.queryByRole("combobox", { name: /rol/i })).not.toBeInTheDocument();
       expect(screen.queryByText("Administrador")).not.toBeInTheDocument();
@@ -82,7 +82,7 @@ describe("PartnerForm", () => {
 
     it("does not submit and marks confirm field invalid when passwords do not match", async () => {
       const user = userEvent.setup();
-      const { container } = render(<PartnerForm {...defaultCreateProps} />);
+      const { container } = render(<UserForm {...defaultCreateProps} />);
       const [passwordInput, confirmInput] = container.querySelectorAll('input[type="password"]');
 
       await user.type(passwordInput, "password1");
@@ -95,7 +95,7 @@ describe("PartnerForm", () => {
 
     it("clears error state when user edits the confirm field after mismatch", async () => {
       const user = userEvent.setup();
-      const { container } = render(<PartnerForm {...defaultCreateProps} />);
+      const { container } = render(<UserForm {...defaultCreateProps} />);
       const [passwordInput, confirmInput] = container.querySelectorAll('input[type="password"]');
 
       await user.type(passwordInput, "password1");
@@ -109,7 +109,7 @@ describe("PartnerForm", () => {
 
     it("clears error state when user edits the password field after mismatch", async () => {
       const user = userEvent.setup();
-      const { container } = render(<PartnerForm {...defaultCreateProps} />);
+      const { container } = render(<UserForm {...defaultCreateProps} />);
       const [passwordInput, confirmInput] = container.querySelectorAll('input[type="password"]');
 
       await user.type(passwordInput, "password1");
@@ -122,7 +122,7 @@ describe("PartnerForm", () => {
     });
 
     it("shows spinner and disables button when isPending is true", () => {
-      render(<PartnerForm {...defaultCreateProps} isPending={true} />);
+      render(<UserForm {...defaultCreateProps} isPending={true} />);
 
       expect(screen.queryByText("Crear socio")).not.toBeInTheDocument();
       expect(screen.getByRole("progressbar")).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe("PartnerForm", () => {
 
   describe("edit mode", () => {
     it("renders only shared fields and not create-only fields", () => {
-      const { container } = render(<PartnerForm {...defaultEditProps} />);
+      const { container } = render(<UserForm {...defaultEditProps} />);
 
       expect(screen.getByRole("textbox", { name: /nombre completo/i })).toBeInTheDocument();
       expect(screen.getByRole("textbox", { name: /dni\/nif/i })).toBeInTheDocument();
@@ -145,14 +145,14 @@ describe("PartnerForm", () => {
     });
 
     it("renders submit button with the provided label", () => {
-      render(<PartnerForm {...defaultEditProps} />);
+      render(<UserForm {...defaultEditProps} />);
 
       expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
     });
 
     it("populates fields with provided initial values", () => {
       render(
-        <PartnerForm
+        <UserForm
           {...defaultEditProps}
           initialValues={{
             fullName: "María López",
@@ -174,7 +174,7 @@ describe("PartnerForm", () => {
     it("submits correct data without create-only fields", async () => {
       const user = userEvent.setup();
       render(
-        <PartnerForm
+        <UserForm
           {...defaultEditProps}
           initialValues={{
             fullName: "María López",
@@ -201,7 +201,7 @@ describe("PartnerForm", () => {
     });
 
     it("shows spinner and disables button when isPending is true", () => {
-      render(<PartnerForm {...defaultEditProps} isPending={true} />);
+      render(<UserForm {...defaultEditProps} isPending={true} />);
 
       expect(screen.queryByText("Guardar cambios")).not.toBeInTheDocument();
       expect(screen.getByRole("progressbar")).toBeInTheDocument();

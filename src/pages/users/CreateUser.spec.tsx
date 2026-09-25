@@ -24,8 +24,8 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../../components/PartnerForm/PartnerForm", () => ({
-  PartnerForm: ({ handleSubmit, submitLabel }: { handleSubmit: (v: Record<string, unknown>) => void; submitLabel: string }) => (
+vi.mock("../../components/UserForm/UserForm", () => ({
+  UserForm: ({ handleSubmit, submitLabel }: { handleSubmit: (v: Record<string, unknown>) => void; submitLabel: string }) => (
     <button
       onClick={() =>
         handleSubmit({
@@ -72,7 +72,7 @@ describe("CreateUserPage", () => {
     expect(screen.queryByText("Socios")).not.toBeInTheDocument();
   });
 
-  it("renders PartnerForm submit button with correct label", () => {
+  it("renders UserForm submit button with correct label", () => {
     setup();
 
     expect(screen.getByRole("button", { name: "Crear usuario" })).toBeInTheDocument();
