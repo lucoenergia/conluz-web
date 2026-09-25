@@ -9,6 +9,7 @@ import {
   DASHBOARD_COMMUNITIES,
   FIXED_PLATFORM_ADMIN_USER,
   injectAuthToken,
+  mainRegion,
   mockAllApiRoutes,
   stabilizePage,
 } from "./fixtures";
@@ -37,7 +38,8 @@ test.describe("Visual baselines", () => {
     await page.goto("/platform");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("platform-dashboard-populated.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("platform-dashboard-populated.png", await mainRegion(page));
   });
 
   // Platform dashboard — empty (0 communities → first-community empty state).
@@ -57,7 +59,8 @@ test.describe("Visual baselines", () => {
     await page.goto("/platform");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("platform-dashboard-empty.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("platform-dashboard-empty.png", await mainRegion(page));
   });
 
   test("users page", async ({ page }) => {
@@ -69,6 +72,7 @@ test.describe("Visual baselines", () => {
     await page.goto("/users");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("users-page.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("users-page.png", await mainRegion(page));
   });
 });

@@ -11,6 +11,7 @@ import {
   FIXED_SUPPLY_COEFFICIENT_HISTORY,
   FIXED_SUPPLY_ID,
   injectAuthToken,
+  mainRegion,
   mockAllApiRoutes,
   mockSupplyPartitionCoefficientRoutes,
   seedActiveCommunity,
@@ -30,7 +31,10 @@ test.describe("Visual baselines", () => {
     await page.goto("/supply-points");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("supplies-list.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    // The kWh figure is Math.random() in SupplyPointsPage (placeholder data), so it is masked;
+    // its tile keeps the same size for 1- and 2-digit values, so the mask hides all of it.
+    await expect(page).toHaveScreenshot("supplies-list.png", await mainRegion(page, [page.getByText(/^\d+ kWh$/)]));
   });
 
   test("supply detail page", async ({ page }) => {
@@ -41,7 +45,8 @@ test.describe("Visual baselines", () => {
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("supply-detail.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("supply-detail.png", await mainRegion(page));
   });
 
   // The coefficient history section is reachable by the owner as well as by an

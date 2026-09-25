@@ -9,6 +9,7 @@ import {
   FIXED_MEMBER_USER,
   FIXED_NO_COMMUNITY_USER,
   injectAuthToken,
+  mainRegion,
   mockAllApiRoutes,
   seedActiveCommunity,
   stabilizePage,
@@ -20,6 +21,7 @@ test.describe("Visual baselines", () => {
     await page.goto("/login");
     await stabilizePage(page);
 
+    // Full page on purpose: /login has no main landmark and no app bar, so the page is the content.
     await expect(page).toHaveScreenshot("login-page.png", { fullPage: true });
   });
 
@@ -35,7 +37,8 @@ test.describe("Visual baselines", () => {
     await page.goto("/");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("home-page.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("home-page.png", await mainRegion(page));
   });
 
   // No-community fixture test: asserts that a user with no memberships and
@@ -51,6 +54,7 @@ test.describe("Visual baselines", () => {
     await page.goto("/no-community");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("no-community-page.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("no-community-page.png", await mainRegion(page));
   });
 });

@@ -14,6 +14,7 @@ import {
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
   injectAuthToken,
+  mainRegion,
   mockAllApiRoutes,
   mockSharingAgreementDetailRoutes,
   mockSharingAgreementsPlantRoutes,
@@ -69,7 +70,8 @@ test.describe("Visual baselines", () => {
     // draft) and Local C is on none.
     await expectCurrentCoefficientShown(page, testInfo);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", await mainRegion(page));
   });
 
   test("sharing agreement detail page (draft, no coefficient in force yet)", async ({ page }) => {
@@ -168,7 +170,8 @@ test.describe("Visual baselines", () => {
     // published agreement the row's own value IS the one in force.
     await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", await mainRegion(page));
   });
 
   test("sharing agreement detail page (superseded)", async ({ page }) => {
@@ -180,7 +183,8 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, SUPERSEDED_AGREEMENT.name);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-detail-superseded.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("sharing-agreement-detail-superseded.png", await mainRegion(page));
   });
 
   test("sharing agreement detail page (draft, no file)", async ({ page }) => {
@@ -390,6 +394,7 @@ test.describe("Visual baselines", () => {
     await expect(reason).toHaveText(/Faltan .* para llegar al 100,0000/);
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreement-draft-incomplete-sum.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("sharing-agreement-draft-incomplete-sum.png", await mainRegion(page));
   });
 });

@@ -46,6 +46,7 @@
  *   changes. The modal itself is unit-tested in ImportPartnersModal.spec.tsx.
  */
 
+export * from "./capture";
 export * from "./data";
 export * from "./navigation";
 export * from "./routes";

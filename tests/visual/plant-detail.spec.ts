@@ -6,6 +6,7 @@
 
 import { test, expect } from "@playwright/test";
 import {
+  mainRegion,
   openPlantDetail,
   stabilizePage,
 } from "./fixtures";
@@ -18,7 +19,8 @@ test.describe("Visual baselines", () => {
   test("plant detail page", async ({ page }) => {
     await openPlantDetail(page);
 
-    await expect(page).toHaveScreenshot("plant-detail.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("plant-detail.png", await mainRegion(page));
   });
 
   test("plant detail page (details expanded)", async ({ page }) => {

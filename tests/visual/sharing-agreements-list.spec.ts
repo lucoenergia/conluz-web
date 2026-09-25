@@ -9,6 +9,7 @@ import {
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
   injectAuthToken,
+  mainRegion,
   mockAllApiRoutes,
   mockSharingAgreementsPlantRoutes,
   navigateToSharingAgreements,
@@ -32,7 +33,8 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreements(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreements-list.png", { fullPage: true });
+    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    await expect(page).toHaveScreenshot("sharing-agreements-list.png", await mainRegion(page));
   });
 
   test("sharing agreements list page (empty)", async ({ page }) => {
