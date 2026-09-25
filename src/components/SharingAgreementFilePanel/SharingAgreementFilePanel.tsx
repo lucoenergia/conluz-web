@@ -87,7 +87,7 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   });
 
   return (
-    <Paper elevation={0} sx={sxStyles.softPanel}>
+    <Paper elevation={0} sx={sxStyles.softPanel} data-testid="sharing-agreement-file-panel">
       <SectionHeading
         title="Fichero para la distribuidora"
         description="El TXT con los coeficientes que la distribuidora necesita para aplicar el reparto."

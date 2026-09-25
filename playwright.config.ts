@@ -6,19 +6,36 @@ export default defineConfig({
   // {projectName} separates mobile and desktop baselines; {arg} is the screenshot name passed to toHaveScreenshot()
   snapshotPathTemplate: "{snapshotDir}/{projectName}/{arg}{ext}",
   fullyParallel: false,
+  // With fullyParallel off, Playwright parallelises across spec files, one
+  // worker per file × project. The suite is split into several area specs, so
+  // the default (half the cores) would run many of them at once against the
+  // single Vite dev server. Two workers keeps the concurrency the suite had as
+  // one file run by two projects, and matches the default on a 4-core CI runner.
+  workers: 2,
   retries: 0,
+  // Never write a baseline implicitly. Playwright's default ("missing") writes a
+  // PNG for any screenshot name that has none, even on a plain run. So adding a
+  // test silently created its baseline, and the rule that agents never update
+  // baselines depended on discipline alone. With "none", an explicit CLI flag
+  // (e.g. `npm run test:visual -- --update-snapshots=changed`, the maintainer's
+  // regeneration path) is the only way a baseline is ever written. That is what
+  // makes the rule enforceable.
+  updateSnapshots: "none",
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: "http://localhost:3001",
-    reducedMotion: "reduce",
+    // No reducedMotion here. `use` has no such option (Playwright only honours
+    // it under contextOptions), so the value set here and in both projects was
+    // ignored: prefers-reduced-motion never matched in these runs. Animations
+    // and transitions are suppressed by the stylesheet stabilizePage() injects
+    // (tests/visual/fixtures/session.ts), which is what keeps captures stable.
     trace: "on-first-retry",
   },
-  expect: {
-    toHaveScreenshot: {
-      // Small ratio absorbs sub-pixel font rendering differences while still catching real color changes
-      maxDiffPixelRatio: 0.02,
-    },
-  },
+  // No global screenshot threshold. A single ratio was wrong at both ends: 2%
+  // let a relabelled menu item pass on a small capture and a whole table
+  // column pass on a tall page. Each capture takes an absolute maxDiffPixels
+  // sized to what it covers, from tests/visual/fixtures/capture.ts (or, for the
+  // chrome canaries, from chrome-canary.spec.ts).
   projects: [
     // Transforms every React.lazy page module before the two viewport projects
     // start, so neither of them pays a cold Vite transform mid-navigation.
@@ -42,7 +59,6 @@ export default defineConfig({
         deviceScaleFactor: 3,
         isMobile: true,
         hasTouch: true,
-        reducedMotion: "reduce",
       },
     },
     {
@@ -51,7 +67,6 @@ export default defineConfig({
       dependencies: ["warmup"],
       use: {
         viewport: { width: 1440, height: 900 },
-        reducedMotion: "reduce",
       },
     },
   ],

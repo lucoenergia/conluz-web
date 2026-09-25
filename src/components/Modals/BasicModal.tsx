@@ -39,7 +39,12 @@ export const BasicModal: React.FC<BasicModalProps> = ({ isOpen, onClose, childre
         },
       }}
     >
-      <Box sx={modalContainerStyle}>
+      {/* Interim: the visual suite captures this panel by test id only because
+          it has no role="dialog" and no accessible name to select it by. That
+          gap is reported separately as an accessibility issue, "BasicModal
+          renders no dialog role". Once it is fixed, the specs select
+          getByRole("dialog", { name }) and this test id goes. */}
+      <Box sx={modalContainerStyle} data-testid="modal-panel">
         {children}
       </Box>
     </Modal>
