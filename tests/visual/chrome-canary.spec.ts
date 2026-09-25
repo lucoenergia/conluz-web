@@ -23,6 +23,24 @@ import {
   stabilizePage,
 } from "./fixtures";
 
+/**
+ * Differing pixels a canary tolerates. Absolute, not a ratio: a chrome
+ * regression has an absolute size, and a ratio of a full-page capture hid it.
+ * Under the old global 2%, a side-menu label edit changed each menu canary by
+ * 175 px and passed.
+ *
+ * Signals measured at tolerance 0 after the app bar was hidden everywhere else:
+ * - side-menu label "Operativo" → "Operaciones": 175 px (desktop, mobile menu open);
+ * - header wordmark "ConLuz" → "ConLuz Energía": 316 px (desktop only; the
+ *   wordmark is hidden on mobile);
+ * - app bar padding py 1 → 2: 2,594 / 3,625 / 4,105 px (all three).
+ * Noise between two identical clean runs: 0 px.
+ *
+ * 100 sits 43% below the smallest signal and leaves 100 px for rendering
+ * differences between environments, which is unmeasured locally (CI decides).
+ */
+const CANARY_MAX_DIFF_PIXELS = 100;
+
 async function openProductionAsCommunityAdmin(page: Page) {
   await injectAuthToken(page);
   await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -44,7 +62,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("navigation", { name: "Navegación principal" })).toBeVisible();
 
     // Full page on purpose: the subject is the chrome around the content, the one area no other baseline covers.
-    await expect(page).toHaveScreenshot("chrome-canary-desktop.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("chrome-canary-desktop.png", { fullPage: true, maxDiffPixels: CANARY_MAX_DIFF_PIXELS });
   });
 
   test("chrome canary: app bar, side menu closed", async ({ page }, testInfo) => {
@@ -55,7 +73,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("navigation", { name: "Navegación principal" })).toBeHidden();
 
     // Full page on purpose: the subject is the app bar over the page, the one area no other baseline covers.
-    await expect(page).toHaveScreenshot("chrome-canary-mobile-menu-closed.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("chrome-canary-mobile-menu-closed.png", { fullPage: true, maxDiffPixels: CANARY_MAX_DIFF_PIXELS });
   });
 
   test("chrome canary: side menu open", async ({ page }, testInfo) => {
@@ -68,6 +86,6 @@ test.describe("Visual baselines", () => {
 
     // Viewport, not full page: the open drawer and the app bar are fixed overlays, and a
     // full-page stitch would not show them as a phone does.
-    await expect(page).toHaveScreenshot("chrome-canary-mobile-menu-open.png");
+    await expect(page).toHaveScreenshot("chrome-canary-mobile-menu-open.png", { maxDiffPixels: CANARY_MAX_DIFF_PIXELS });
   });
 });
