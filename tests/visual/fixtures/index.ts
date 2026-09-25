@@ -17,7 +17,9 @@
  *   - Animations/transitions are killed by an injected <style> tag after load.
  *   - document.fonts.ready is awaited before capture to prevent mid-render font flashes.
  *   - All API responses include no time-varying fields (no "createdAt", etc.).
- *   - reducedMotion: "reduce" is set at the project level in playwright.config.ts.
+ *   - prefers-reduced-motion is NOT emulated: playwright.config.ts sets no
+ *     reducedMotion (it was once set where Playwright ignores it). The injected
+ *     stylesheet above is the only animation suppression.
  *
  * Role fixture mapping:
  *   FIXED_MEMBER_USER          → home, supply-points, supply-detail, supply modals

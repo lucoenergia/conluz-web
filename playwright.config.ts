@@ -16,7 +16,11 @@ export default defineConfig({
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: "http://localhost:3001",
-    reducedMotion: "reduce",
+    // No reducedMotion here. `use` has no such option (Playwright only honours
+    // it under contextOptions), so the value set here and in both projects was
+    // ignored: prefers-reduced-motion never matched in these runs. Animations
+    // and transitions are suppressed by the stylesheet stabilizePage() injects
+    // (tests/visual/fixtures/session.ts), which is what keeps captures stable.
     trace: "on-first-retry",
   },
   expect: {
@@ -48,7 +52,6 @@ export default defineConfig({
         deviceScaleFactor: 3,
         isMobile: true,
         hasTouch: true,
-        reducedMotion: "reduce",
       },
     },
     {
@@ -57,7 +60,6 @@ export default defineConfig({
       dependencies: ["warmup"],
       use: {
         viewport: { width: 1440, height: 900 },
-        reducedMotion: "reduce",
       },
     },
   ],
