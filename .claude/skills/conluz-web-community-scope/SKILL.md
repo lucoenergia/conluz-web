@@ -124,10 +124,13 @@ already resets.
 - **`CommunityProvider` sits outside `QueryClientProvider` and `BrowserRouter`** in
   `main.tsx`, so it can neither navigate nor touch the cache. Anything reacting to a switch
   must live inside the router.
-- **Pre-epic artifacts:** older DTOs and hand-written test fixtures (the objects specs return
-  from `vi.mock`, the Playwright fixtures in `tests/visual/baseline.spec.ts`) may predate the
-  multi-community model and omit `isPlatformAdmin`/`memberships`.
-  If gating or a visual test misbehaves, suspect a stale fixture before suspecting the code.
+- **Pre-epic artifacts:** older DTOs and hand-written test fixtures may predate the
+  multi-community model and omit `isPlatformAdmin`/`memberships`. Fixtures built with
+  `src/test/fixtures.ts` (`buildUser` and friends) always carry both, at least privilege by
+  default. The ones that can still be stale are partial objects cast to a response type
+  (`as UserResponse`, `as unknown as …`) in specs outside the test-harness migration, and the
+  Playwright fixtures in `tests/visual/baseline.spec.ts`. If gating or a visual test misbehaves,
+  suspect a stale fixture before suspecting the code.
 - **No role selector:** user create/edit forms have no global role field, and rows show
   no role label; community role is assigned through membership, not a user field.
 
