@@ -446,3 +446,21 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     createdAt: "2024-09-01T09:30:00Z",
   },
 ];
+
+export const DRAFT_AGREEMENT = FIXED_SHARING_AGREEMENTS[1];
+export const PUBLISHED_AGREEMENT = FIXED_SHARING_AGREEMENTS[0];
+export const SUPERSEDED_AGREEMENT = FIXED_SHARING_AGREEMENTS[2];
+
+/**
+ * PUBLISHED_AGREEMENT is shared by ~20 baselines below (batch bar, dialogs,
+ * editor states, ...) that have nothing to do with editing. Only the
+ * dedicated "published" detail-page baseline should exercise the
+ * last-edited tile, so it gets its own derived fixture instead of adding
+ * updatedAt/updatedBy to the shared one, which would needlessly reshoot
+ * every other PUBLISHED_AGREEMENT screenshot.
+ */
+export const PUBLISHED_AGREEMENT_EDITED = {
+  ...PUBLISHED_AGREEMENT,
+  updatedAt: "2026-08-01T09:00:00Z",
+  updatedBy: FIXED_COMMUNITY_ADMIN_USER.id,
+};

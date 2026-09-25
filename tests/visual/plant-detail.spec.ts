@@ -1,0 +1,33 @@
+/**
+ * Visual baselines — The plant detail page and its header.
+ *
+ * Fixtures, route mocks and navigation helpers live in ./fixtures.
+ */
+
+import { test, expect } from "@playwright/test";
+import {
+  openPlantDetail,
+  stabilizePage,
+} from "./fixtures";
+
+test.describe("Visual baselines", () => {
+  // -------------------------------------------------------------------------
+  // Plant detail header
+  // -------------------------------------------------------------------------
+
+  test("plant detail page", async ({ page }) => {
+    await openPlantDetail(page);
+
+    await expect(page).toHaveScreenshot("plant-detail.png", { fullPage: true });
+  });
+
+  test("plant detail page (details expanded)", async ({ page }) => {
+    await openPlantDetail(page);
+
+    await page.getByRole("button", { name: /^Ver \d+ datos? más$/ }).click();
+    await expect(page.getByText("HUAWEI")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("plant-detail-expanded.png", { fullPage: true });
+  });
+});
