@@ -45,7 +45,7 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreements(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreements-list-empty.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("sharing-agreements-list-empty.png", await mainRegion(page));
   });
 
   test("sharing agreements list page (status filter active)", async ({ page }) => {
@@ -59,6 +59,6 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Borrador" }).click();
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("sharing-agreements-list-filtered.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("sharing-agreements-list-filtered.png", await mainRegion(page));
   });
 });

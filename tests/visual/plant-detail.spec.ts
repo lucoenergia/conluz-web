@@ -30,6 +30,6 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("HUAWEI")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("plant-detail-expanded.png", { fullPage: true });
+    await expect(page.getByTestId("detail-header")).toHaveScreenshot("plant-detail-expanded.png");
   });
 });

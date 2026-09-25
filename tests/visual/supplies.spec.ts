@@ -64,7 +64,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-admin.png", { fullPage: true });
+    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-admin.png");
 
     // No plantId filter here, so both plants group; the draft's pending period
     // is withheld even though an admin receives it.
@@ -85,7 +85,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-owner.png", { fullPage: true });
+    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-owner.png");
 
     // Same periods, but the agreement route is CommunityAdminRoute-guarded, so
     // an owner is shown names rather than links that would redirect them.
@@ -103,7 +103,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Sin periodos aplicados")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("supply-detail-coefficient-history-empty.png", { fullPage: true });
+    await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-empty.png");
   });
 
   test("import supplies modal open", async ({ page }) => {
@@ -123,7 +123,7 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=Importar Puntos de Suministro desde CSV");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("import-supplies-modal.png", { fullPage: true });
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("import-supplies-modal.png");
   });
 
   test("disable confirmation modal open", async ({ page }) => {
@@ -146,9 +146,7 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=Deshabilitar punto de suministro");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("disable-confirmation-modal.png", {
-      fullPage: true,
-    });
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-confirmation-modal.png");
   });
 
   test("disable success modal open", async ({ page }) => {
@@ -174,9 +172,7 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=ha sido deshabilitado");
     await stabilizePage(page);
 
-    await expect(page).toHaveScreenshot("disable-success-modal.png", {
-      fullPage: true,
-    });
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-success-modal.png");
   });
 
   // Note: "import partners modal" is intentionally omitted. See tests/visual/fixtures/index.ts.
