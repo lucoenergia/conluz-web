@@ -5,18 +5,10 @@ import {
   Box,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
-  CircularProgress,
   Alert,
   Button,
   IconButton,
-  Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
@@ -31,6 +23,7 @@ import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import { radii, shadows, colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
+import { ListTable, ListTableHeaderText, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
@@ -186,151 +179,102 @@ export const CommunitiesPage: FC = () => {
             />
 
             {!isNarrow && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: colors.background.surface }}>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Nombre
+            <ListTable
+              rows={communities}
+              getRowKey={(community) => community.id}
+              isLoading={isLoading}
+              emptyMessage="No hay comunidades registradas"
+              rowActionsLabel={(community) => `Más acciones para ${community.name || "la comunidad"}`}
+              onRowActionsClick={handleMenuOpen}
+              columns={[
+                {
+                  key: "name",
+                  header: "Nombre",
+                  render: (community) => (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {community.name}
                       </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Código
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        NIF/CIF
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Dirección
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Administradores
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
-                        <PeopleIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                          Miembros
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
-                        <ElectricBoltIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                          Suministros
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Estado
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Acciones
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                        <CircularProgress />
-                      </TableCell>
-                    </TableRow>
-                  ) : communities.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                        <Typography variant="body1" color="text.secondary">
-                          No hay comunidades registradas
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    communities.map((community) => (
-                      <TableRow
-                        key={community.id}
-                        sx={{
-                          "&:hover": { backgroundColor: colors.background.surface },
-                          transition: "background-color 0.2s",
-                        }}
-                      >
-                        <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                            <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {community.name}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ color: "secondary.main", fontFamily: "monospace" }}>
-                            {community.code}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                            {community.legalId || "—"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                            {community.address || "—"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <AdminNamesCell adminNames={community.adminNames} />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                            {community.memberCount ?? "—"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                            {community.supplyPointCount ?? "—"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={community.enabled ? "Activa" : "Inactiva"}
-                            color={community.enabled ? "success" : "error"}
-                            size="small"
-                            sx={{ fontWeight: 600 }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            aria-label={`Más acciones para ${community.name || "la comunidad"}`}
-                            onClick={(e) => handleMenuOpen(e, community)}
-                            sx={{
-                              color: colors.text.subtle,
-                              // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token
-                              "&:hover": { backgroundColor: "#f3f4f6" },
-                            }}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                    </Box>
+                  ),
+                },
+                {
+                  key: "code",
+                  header: "Código",
+                  render: (community) => (
+                    <Typography variant="body2" sx={{ color: "secondary.main", fontFamily: "monospace" }}>
+                      {community.code}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "legalId",
+                  header: "NIF/CIF",
+                  render: (community) => (
+                    <Typography variant="body2" sx={{ color: "secondary.main" }}>
+                      {community.legalId || "—"}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "address",
+                  header: "Dirección",
+                  render: (community) => (
+                    <Typography variant="body2" sx={{ color: "secondary.main" }}>
+                      {community.address || "—"}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "admins",
+                  header: "Administradores",
+                  render: (community) => <AdminNamesCell adminNames={community.adminNames} />,
+                },
+                {
+                  key: "memberCount",
+                  header: (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
+                      <PeopleIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
+                      <ListTableHeaderText>Miembros</ListTableHeaderText>
+                    </Box>
+                  ),
+                  align: "center",
+                  render: (community) => (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                      {community.memberCount ?? "—"}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "supplyPointCount",
+                  header: (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
+                      <ElectricBoltIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
+                      <ListTableHeaderText>Suministros</ListTableHeaderText>
+                    </Box>
+                  ),
+                  align: "center",
+                  render: (community) => (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                      {community.supplyPointCount ?? "—"}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Estado",
+                  render: (community) => (
+                    <Chip
+                      label={community.enabled ? "Activa" : "Inactiva"}
+                      color={community.enabled ? "success" : "error"}
+                      size="small"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  ),
+                },
+              ]}
+            />
             )}
 
             {isNarrow && (
@@ -377,34 +321,7 @@ export const CommunitiesPage: FC = () => {
         </Paper>
       </Box>
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          elevation: 0,
-          sx: {
-            overflow: "visible",
-            filter: shadows.menuFilter,
-            mt: 1.5,
-            minWidth: 200,
-            "&:before": {
-              content: '""',
-              display: "block",
-              position: "absolute",
-              top: 0,
-              right: 14,
-              width: 10,
-              height: 10,
-              bgcolor: "background.paper",
-              transform: "translateY(-50%) rotate(45deg)",
-              zIndex: 0,
-            },
-          },
-        }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-      >
+      <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
         <MenuItem onClick={handleEditClick}>
           <ListItemIcon>
             <EditIcon fontSize="small" sx={{ color: "primary.main" }} />
@@ -417,7 +334,7 @@ export const CommunitiesPage: FC = () => {
           </ListItemIcon>
           <ListItemText>Gestionar administradores</ListItemText>
         </MenuItem>
-      </Menu>
+      </RowActionsMenu>
 
       <ManageAdminsDialog
         community={selectedCommunity}
