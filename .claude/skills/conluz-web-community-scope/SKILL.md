@@ -129,7 +129,7 @@ already resets.
   `src/test/fixtures.ts` (`buildUser` and friends) always carry both, at least privilege by
   default. The ones that can still be stale are partial objects cast to a response type
   (`as UserResponse`, `as unknown as …`) in specs outside the test-harness migration, and the
-  Playwright fixtures in `tests/visual/baseline.spec.ts`. If gating or a visual test misbehaves,
+  Playwright fixtures in `tests/visual/fixtures/`. If gating or a visual test misbehaves,
   suspect a stale fixture before suspecting the code.
 - **No role selector:** user create/edit forms have no global role field, and rows show
   no role label; community role is assigned through membership, not a user field.

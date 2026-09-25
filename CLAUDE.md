@@ -91,7 +91,9 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
 
 **Visual regression tests (Playwright):**
 - **Framework**: Playwright (`@playwright/test`), configured in `playwright.config.ts`.
-- **Location**: Specs live in `tests/visual/` (e.g. `tests/visual/baseline.spec.ts`); baseline screenshots live in `tests/visual/__screenshots__/{mobile,desktop}/`.
+- **Location**: Specs live in `tests/visual/`, one per feature area (`login-and-home`, `supplies`, `platform-and-users`, `sharing-agreements-list`, `sharing-agreement-detail`, `sharing-agreement-dialogs`, `coefficient-editor`, `plant-detail`, each `.spec.ts`). Auth setup, route mocks, JSON fixtures and navigation helpers are shared from `tests/visual/fixtures/` (import from `./fixtures`). Height and row budgets that capture no screenshot live in `tests/visual/layout-budgets.spec.ts`; prefer that measured-assertion pattern whenever a property can be measured. Baseline screenshots live in `tests/visual/__screenshots__/{mobile,desktop}/`.
+- **Screenshot names are globally unique across all visual spec files.** `snapshotPathTemplate` is `{projectName}/{arg}`, where `{arg}` is the name passed to `toHaveScreenshot()`, and it does not include the spec file. Two specs that pass the same name would silently share, and overwrite, one baseline. Check with `grep -rhoP 'toHaveScreenshot\("\K[^"]+' tests/visual | sort | uniq -d` (must print nothing).
+- **Workers**: `playwright.config.ts` pins `workers: 2`. With `fullyParallel: false`, Playwright runs one worker per spec file × project, so the default would put many specs against the single Vite dev server at once.
 - **Projects**: Two viewports — `mobile` (iPhone 13: 390×844, DPR 3) and `desktop` (1440×900). Both run in **Chromium** on purpose: WebKit's text rendering couples to the host OS fonts and drifts between local and CI, while Chromium bundles its own renderer and produces identical screenshots across environments.
 - **Commands**:
   - `npm run test:visual` — run all visual tests (both viewports)
