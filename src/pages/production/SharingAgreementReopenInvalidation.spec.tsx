@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ErrorProvider } from "../../context/error.context";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { routeRequests } from "../../test/requestRouter";
 import { SharingAgreementDetailHeader } from "../../components/SharingAgreementDetailHeader";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { SharingAgreementCoefficientSet } from "../../components/SharingAgreementCoefficientSet";
@@ -15,7 +13,8 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { buildSharingAgreement } from "../../test/fixtures";
 
 const { APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -35,18 +34,16 @@ const REOPEN_URL = `${COEFFICIENTS_URL}/reopen`;
 // refetch is what flips the rendered status chip — or the test fails.
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
-vi.mock("../../api/custom-instance", () => ({
-  customInstance: (config: { url: string; method: string; data?: unknown }) => mockCustomInstance(config),
+// Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
+vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: (config) => mockCustomInstance(config),
 }));
 
-vi.mock("../../context/success.context", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useSuccessDispatch: () => vi.fn(),
 }));
-
-vi.mock("../../context/community.context", async () => {
-  const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
-  return { ...actual, useActiveCommunity: () => "community-1" };
-});
 
 const closedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   coefficientId: "c1",
@@ -60,10 +57,7 @@ const closedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   currentCoefficient: null,
 };
 
-// Fixture deliberately stays minimal — cast rather than fully populated to
-// every now-required field, matching the pattern used elsewhere in this
-// codebase for partial test fixtures (e.g. SharingAgreementDetailPage.spec.tsx).
-const baseAgreement = {
+const baseAgreement = buildSharingAgreement({
   id: AGREEMENT_ID,
   plantId: PLANT_ID,
   name: "Acuerdo test",
@@ -72,7 +66,7 @@ const baseAgreement = {
   installedPowerKw: 100,
   notes: null,
   file: null,
-} as unknown as SharingAgreementResponse;
+});
 
 function Harness() {
   const { data: agreement } = useGetSharingAgreementById(PLANT_ID, AGREEMENT_ID);
@@ -96,16 +90,7 @@ function Harness() {
 }
 
 function renderHarness() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ErrorProvider>
-        <ThemeProvider theme={theme}>
-          <Harness />
-        </ThemeProvider>
-      </ErrorProvider>
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(<Harness />, { activeCommunityId: "community-1" });
 }
 
 describe("Reopen coefficient — real cache invalidation drives a real refetch (no manual refresh)", () => {
@@ -116,25 +101,31 @@ describe("Reopen coefficient — real cache invalidation drives a real refetch (
     agreementGetCount = 0;
     reopenCallCount = 0;
     mockCustomInstance.mockReset();
-    mockCustomInstance.mockImplementation((config: { url: string; method: string }) => {
-      if (config.method === "GET" && config.url === AGREEMENT_URL) {
-        agreementGetCount += 1;
-        // SUPERSEDED on the first GET (before reopen), PUBLISHED on every GET after —
-        // the second value is only ever reachable through a real refetch.
-        return Promise.resolve({
-          ...baseAgreement,
-          status: agreementGetCount === 1 ? SharingAgreementResponseStatus.SUPERSEDED : SharingAgreementResponseStatus.PUBLISHED,
-        });
-      }
-      if (config.method === "GET" && config.url === COEFFICIENTS_URL) {
-        return Promise.resolve([closedCoefficient]);
-      }
-      if (config.method === "POST" && config.url === REOPEN_URL) {
-        reopenCallCount += 1;
-        return Promise.resolve({ coefficients: [{ coefficientId: closedCoefficient.coefficientId }] });
-      }
-      return Promise.reject(new Error(`Unhandled request in test: ${config.method} ${config.url}`));
-    });
+    const router = routeRequests([
+      {
+        method: "GET",
+        url: AGREEMENT_URL,
+        respond: () => {
+          agreementGetCount += 1;
+          // SUPERSEDED on the first GET (before reopen), PUBLISHED on every GET after —
+          // the second value is only ever reachable through a real refetch.
+          return {
+            ...baseAgreement,
+            status: agreementGetCount === 1 ? SharingAgreementResponseStatus.SUPERSEDED : SharingAgreementResponseStatus.PUBLISHED,
+          };
+        },
+      },
+      { method: "GET", url: COEFFICIENTS_URL, respond: () => [closedCoefficient] },
+      {
+        method: "POST",
+        url: REOPEN_URL,
+        respond: () => {
+          reopenCallCount += 1;
+          return { coefficients: [{ coefficientId: closedCoefficient.coefficientId }] };
+        },
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
   });
 
   it("flips the status chip from Histórico to Vigente after reopen resolves, with no manual refresh", async () => {

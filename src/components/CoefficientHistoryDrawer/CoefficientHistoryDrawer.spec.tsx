@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { MemoryRouter } from "react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ErrorProvider } from "../../context/error.context";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import {
+  getAllSupplies,
+  useGetPartitionCoefficientHistory,
+  type getPartitionCoefficientHistory,
+} from "../../api/supplies/supplies";
 import { SharingAgreementCoefficientSet } from "../SharingAgreementCoefficientSet";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -24,26 +26,29 @@ const AGREEMENT_ID = "sa-2024";
 const historyCalls: { supplyId: string; params: { plantId?: string } | undefined }[] = [];
 let historyResult: PartitionCoefficientResponse[] = [];
 
-vi.mock("../../api/supplies/supplies", () => ({
-  getAllSupplies: vi.fn().mockResolvedValue({ items: [], number: 0, totalPages: 1 }),
-  useGetPartitionCoefficientHistory: (
-    supplyId: string,
-    params: { plantId?: string } | undefined,
-    options?: { query?: { enabled?: boolean } },
-  ) => {
-    if (options?.query?.enabled) historyCalls.push({ supplyId, params });
-    return { data: options?.query?.enabled ? historyResult : undefined, isLoading: false, error: null };
-  },
+vi.mock(import("../../api/supplies/supplies"), () => ({
+  getAllSupplies: vi.fn(),
+  useGetPartitionCoefficientHistory: vi.fn(),
 }));
 
-vi.mock("../../context/success.context", () => ({ useSuccessDispatch: () => vi.fn() }));
-
-vi.mock("../../context/community.context", async () => {
-  const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
-  return { ...actual, useActiveCommunity: () => "community-1" };
+// The drawer's history query is enabled only while the drawer is open; closed,
+// it is disabled and returns no data.
+beforeEach(() => {
+  vi.mocked(getAllSupplies).mockResolvedValue({ items: [], number: 0, totalPages: 1 });
+  vi.mocked(useGetPartitionCoefficientHistory).mockImplementation((supplyId, params, options) => {
+    if (options?.query?.enabled) historyCalls.push({ supplyId, params });
+    return options?.query?.enabled
+      ? query.success<typeof getPartitionCoefficientHistory>(historyResult)
+      : query.disabled();
+  });
 });
 
-vi.mock("../../pages/production/useSharingAgreementCoefficientMutations", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useSuccessDispatch: () => vi.fn(),
+}));
+
+vi.mock(import("../../pages/production/useSharingAgreementCoefficientMutations"), () => ({
   useSharingAgreementCoefficientMutations: () => ({
     replaceCoefficients: vi.fn(),
     activateCoefficients: vi.fn(),
@@ -89,49 +94,31 @@ function historyPeriod(overrides: Partial<PartitionCoefficientResponse> = {}): P
   };
 }
 
+function setElement(
+  status: (typeof SharingAgreementResponseStatus)[keyof typeof SharingAgreementResponseStatus],
+  coefficients: SharingAgreementPartitionCoefficientResponse[],
+) {
+  return (
+    <SharingAgreementCoefficientSet
+      plantId={PLANT_ID}
+      sharingAgreementId={AGREEMENT_ID}
+      coefficients={coefficients}
+      installedPowerKw={100}
+      agreementStatus={status}
+    />
+  );
+}
+
 function renderSet(
   status: (typeof SharingAgreementResponseStatus)[keyof typeof SharingAgreementResponseStatus],
   coefficients: SharingAgreementPartitionCoefficientResponse[] = [appliedRow],
 ) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ErrorProvider>
-        <ThemeProvider theme={theme}>
-          <MemoryRouter>
-            <SharingAgreementCoefficientSet
-              plantId={PLANT_ID}
-              sharingAgreementId={AGREEMENT_ID}
-              coefficients={coefficients}
-              installedPowerKw={100}
-              agreementStatus={status}
-            />
-          </MemoryRouter>
-        </ThemeProvider>
-      </ErrorProvider>
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(setElement(status, coefficients), { activeCommunityId: "community-1" });
 }
 
+/** For rerender(): the harness keeps its providers across a rerender. */
 function setTree(coefficients: SharingAgreementPartitionCoefficientResponse[]) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorProvider>
-        <ThemeProvider theme={theme}>
-          <MemoryRouter>
-            <SharingAgreementCoefficientSet
-              plantId={PLANT_ID}
-              sharingAgreementId={AGREEMENT_ID}
-              coefficients={coefficients}
-              installedPowerKw={100}
-              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
-            />
-          </MemoryRouter>
-        </ThemeProvider>
-      </ErrorProvider>
-    </QueryClientProvider>
-  );
+  return setElement(SharingAgreementResponseStatus.PUBLISHED, coefficients);
 }
 
 async function openHistory(user: ReturnType<typeof userEvent.setup>) {

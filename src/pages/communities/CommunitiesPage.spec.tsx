@@ -1,34 +1,45 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation, query } from "../../test/queryState";
+import { buildCommunity, buildMembership, buildUser } from "../../test/fixtures";
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import {
+  useCreateMembership,
+  useDeleteMembership,
+  useGetMemberships,
+  useUpdateMembershipRole,
+  type getMemberships,
+} from "../../api/memberships/memberships";
+import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
-const mockInvalidateQueries = vi.fn();
 const mockCreateMutate = vi.fn().mockResolvedValue({});
 const mockDeleteMutate = vi.fn().mockResolvedValue({});
 const mockUpdateMutate = vi.fn().mockResolvedValue({});
 
 const MOCK_ALL_USERS = {
   items: [
-    { id: "u1", fullName: "Ana García", email: "ana@example.com" },
-    { id: "u2", fullName: "Bruno Leal", email: "bruno@example.com" },
+    buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com" }),
+    buildUser({ id: "u2", fullName: "Bruno Leal", email: "bruno@example.com" }),
   ],
 };
 
 const MOCK_MEMBERSHIPS = [
-  {
+  buildMembership({
     id: "m1",
-    user: { id: "u1", fullName: "Ana García", email: "ana@example.com" },
+    user: buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com" }),
     communityId: "c1",
     role: "COMMUNITY_ADMIN",
     enabled: true,
-  },
+  }),
 ];
 
 const MOCK_COMMUNITIES = [
-  {
+  buildCommunity({
     id: "c1",
     name: "Sol Común",
     code: "SOL",
@@ -38,8 +49,8 @@ const MOCK_COMMUNITIES = [
     adminNames: ["Ana García", "Bruno Leal", "Carlos Ruiz"],
     memberCount: 25,
     supplyPointCount: 12,
-  },
-  {
+  }),
+  buildCommunity({
     id: "c2",
     name: "Verde Activa",
     code: "VRD",
@@ -49,57 +60,50 @@ const MOCK_COMMUNITIES = [
     adminNames: ["Diana Mora"],
     memberCount: 8,
     supplyPointCount: 4,
-  },
+  }),
 ];
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  return { ...actual, useNavigate: () => mockNavigate };
-});
-
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual("@tanstack/react-query");
-  return {
-    ...actual,
-    useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
-  };
-});
-
-vi.mock("../../api/communities/communities", () => ({
-  useGetAllCommunities: () => ({ data: MOCK_COMMUNITIES, isLoading: false, error: null }),
-  getGetAllCommunitiesQueryKey: () => ["/api/v1/communities"],
+vi.mock(import("react-router"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../api/memberships/memberships", () => ({
-  useGetMemberships: () => ({ data: MOCK_MEMBERSHIPS, isLoading: false }),
-  useCreateMembership: () => ({ mutateAsync: mockCreateMutate, isPending: false }),
-  useDeleteMembership: () => ({ mutateAsync: mockDeleteMutate, isPending: false }),
-  useUpdateMembershipRole: () => ({ mutateAsync: mockUpdateMutate, isPending: false }),
-  getGetMembershipsQueryKey: (id: string) => [`/api/v1/communities/${id}/memberships`],
+vi.mock(import("../../api/communities/communities"), () => ({
+  useGetAllCommunities: vi.fn(),
+  getGetAllCommunitiesQueryKey: () => ["/api/v1/communities"] as const,
 }));
 
-vi.mock("../../api/users/users", () => ({
-  useGetAllUsers: () => ({ data: MOCK_ALL_USERS }),
+vi.mock(import("../../api/memberships/memberships"), () => ({
+  useGetMemberships: vi.fn(),
+  useCreateMembership: vi.fn(),
+  useDeleteMembership: vi.fn(),
+  useUpdateMembershipRole: vi.fn(),
+  getGetMembershipsQueryKey: (id: string) => [`/api/v1/communities/${id}/memberships`] as const,
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../api/users/users"), () => ({
+  useGetAllUsers: vi.fn(),
+}));
+
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-import { MemoryRouter } from "react-router";
 import { CommunitiesPage } from "./CommunitiesPage";
 
 describe("CommunitiesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useGetAllCommunities).mockReturnValue(query.success<typeof getAllCommunities>(MOCK_COMMUNITIES));
+    vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>(MOCK_MEMBERSHIPS));
+    vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>(MOCK_ALL_USERS));
+    vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutate }));
+    vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutate }));
+    vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutate }));
   });
 
-  const setup = () =>
-    render(
-      <MemoryRouter>
-        <CommunitiesPage />
-      </MemoryRouter>,
-    );
+  const setup = () => renderWithProviders(<CommunitiesPage />);
 
   it("renders community names and codes", () => {
     setup();

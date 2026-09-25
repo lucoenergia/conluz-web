@@ -1,21 +1,23 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { MemoryRouter } from "react-router";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import { buildPlant, buildSharingAgreement, buildUser } from "../../test/fixtures";
+import { useGetUserById, type getUserById } from "../../api/users/users";
 import { SharingAgreementDetailHeader, type SharingAgreementDetailHeaderProps } from "./SharingAgreementDetailHeader";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 
-const mockGetUserById = vi.fn();
-
-vi.mock("../../api/users/users", () => ({
-  useGetUserById: (id: string) => mockGetUserById(id),
+vi.mock(import("../../api/users/users"), () => ({
+  useGetUserById: vi.fn(),
 }));
+
+const mockGetUserById = vi.mocked(useGetUserById);
 
 const PENDING = SharingAgreementPartitionCoefficientResponseApplicationState.PENDING;
 const APPLIED = SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED;
@@ -35,10 +37,12 @@ const EDIT_ITEM = "Editar datos del acuerdo";
 
 describe("SharingAgreementDetailHeader", () => {
   beforeEach(() => {
-    mockGetUserById.mockReturnValue({ data: undefined, isLoading: false, error: null });
+    // Most fixtures have no updatedBy, and the header enables the editor lookup
+    // only when there is one (enabled: !!agreement?.updatedBy).
+    mockGetUserById.mockReturnValue(query.disabled());
   });
 
-  const mockAgreement = {
+  const mockAgreement = buildSharingAgreement({
     id: "agreement-1",
     plantId: "plant-1",
     name: "Acuerdo Comunidad Sur",
@@ -48,27 +52,25 @@ describe("SharingAgreementDetailHeader", () => {
     createdBy: "user-1",
     notes: "Revisión anual pendiente",
     file: null,
-  } as unknown as SharingAgreementResponse;
+  });
 
-  const mockPlant = {
+  const mockPlant = buildPlant({
     id: "plant-1",
     regulatoryCode: "ES0031300296192001MB",
-  } as PlantResponse;
+  });
 
   const draftAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.DRAFT };
   const publishedAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.PUBLISHED };
   const supersededAgreement = { ...mockAgreement, status: SharingAgreementResponseStatus.SUPERSEDED };
 
   function renderHeader(props: Partial<SharingAgreementDetailHeaderProps> = {}) {
-    return render(
-      <MemoryRouter>
-        <SharingAgreementDetailHeader
-          agreement={mockAgreement}
-          plant={mockPlant}
-          nextStep={{ kind: "NONE" }}
-          {...props}
-        />
-      </MemoryRouter>,
+    return renderWithProviders(
+      <SharingAgreementDetailHeader
+        agreement={mockAgreement}
+        plant={mockPlant}
+        nextStep={{ kind: "NONE" }}
+        {...props}
+      />,
     );
   }
 
@@ -135,7 +137,7 @@ describe("SharingAgreementDetailHeader", () => {
     });
 
     it("links the plant under the title, so the agreement says what it belongs to", () => {
-      renderHeader({ plant: { ...mockPlant, name: "21088 Luco de Jiloca" } as PlantResponse });
+      renderHeader({ plant: { ...mockPlant, name: "21088 Luco de Jiloca" } });
 
       expect(screen.getByRole("link", { name: "21088 Luco de Jiloca" })).toHaveAttribute(
         "href",
@@ -145,7 +147,7 @@ describe("SharingAgreementDetailHeader", () => {
 
     it("names the notes field even when the agreement has none, rather than showing a bare blank", async () => {
       const user = userEvent.setup();
-      renderHeader({ agreement: { ...mockAgreement, notes: null } as unknown as SharingAgreementResponse });
+      renderHeader({ agreement: { ...mockAgreement, notes: null } });
 
       const panel = await openDetails(user);
 
@@ -155,7 +157,10 @@ describe("SharingAgreementDetailHeader", () => {
 
     it("says the CAU is unavailable rather than leaving its field empty", async () => {
       const user = userEvent.setup();
-      renderHeader({ agreement: {} as SharingAgreementResponse, plant: {} as PlantResponse });
+      // Reachable triggers for both fallbacks: the agreement has not loaded yet
+      // (the header's agreement prop is optional), and the plant has no CAU
+      // (regulatoryCode is nullable).
+      renderHeader({ agreement: undefined, plant: buildPlant({ regulatoryCode: null }) });
 
       expect(screen.getByText("Acuerdo de reparto")).toBeInTheDocument();
       const panel = await openDetails(user);
@@ -166,13 +171,13 @@ describe("SharingAgreementDetailHeader", () => {
     // publication, so the record has to say when that happened and by whom.
     it("reports the last edit, with the editor's name rather than their id", async () => {
       const user = userEvent.setup();
-      mockGetUserById.mockReturnValue({ data: { fullName: "Ana García" }, isLoading: false, error: null });
+      mockGetUserById.mockReturnValue(query.success<typeof getUserById>(buildUser({ fullName: "Ana García" })));
       renderHeader({
         agreement: {
           ...mockAgreement,
           updatedAt: "2024-06-01T09:00:00Z",
           updatedBy: "user-2",
-        } as unknown as SharingAgreementResponse,
+        },
       });
 
       const panel = await openDetails(user);

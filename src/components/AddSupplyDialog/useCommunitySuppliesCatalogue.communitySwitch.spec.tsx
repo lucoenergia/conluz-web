@@ -1,17 +1,19 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { type FC, type ReactNode } from "react";
+import { screen, waitFor } from "@testing-library/react";
+import { type FC } from "react";
 import type { SupplyResponse } from "../../api/models";
+import { buildSupply } from "../../test/fixtures";
+import { renderWithProviders } from "../../test/renderWithProviders";
 
 const SUPPLIES_BY_COMMUNITY: Record<string, SupplyResponse[]> = {
-  "community-a": [{ id: "supply-a", code: "CODE-A", name: "Supply A" } as SupplyResponse],
-  "community-b": [{ id: "supply-b", code: "CODE-B", name: "Supply B" } as SupplyResponse],
+  "community-a": [buildSupply({ id: "supply-a", code: "CODE-A", name: "Supply A" })],
+  "community-b": [buildSupply({ id: "supply-b", code: "CODE-B", name: "Supply B" })],
 };
 
 let resolveNextFetch: (() => void) | null = null;
 
-vi.mock("../../api/supplies/supplies", () => ({
+vi.mock(import("../../api/supplies/supplies"), () => ({
   getAllSupplies: async (communityId: string) => {
     if (resolveNextFetch) {
       await new Promise<void>((resolve) => {
@@ -44,9 +46,8 @@ const Keyed: FC<{ communityId: string }> = ({ communityId }) => (
 );
 
 function renderCatalogue(communityId: string) {
-  const tree = (id: string): ReactNode => <Keyed communityId={id} />;
-  const { rerender } = render(tree(communityId));
-  return { switchTo: (id: string) => rerender(tree(id)) };
+  const { rerender } = renderWithProviders(<Keyed communityId={communityId} />);
+  return { switchTo: (id: string) => rerender(<Keyed communityId={id} />) };
 }
 
 describe("useCommunitySuppliesCatalogue across a community switch", () => {

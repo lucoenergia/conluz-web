@@ -1,29 +1,30 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation, query } from "../../test/queryState";
+import { buildUser } from "../../test/fixtures";
+import { useGetUserById, useUpdateUser, type getUserById } from "../../api/users/users";
 
 // Mocks
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
-const mockGetUserById = vi.fn();
+const mockGetUserById = vi.mocked(useGetUserById);
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-    useParams: () => ({ partnerId: "test-partner-id" }),
-  };
-});
-
-vi.mock("../../api/users/users", () => ({
-  useGetUserById: (id: string) => mockGetUserById(id),
-  useUpdateUser: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
+vi.mock(import("react-router"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../api/users/users"), () => ({
+  useGetUserById: vi.fn(),
+  useUpdateUser: vi.fn(),
+}));
+
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
@@ -57,10 +58,10 @@ vi.mock("../../components/PartnerForm/PartnerForm", () => ({
 }));
 
 // Imports after mocks
-import { MemoryRouter } from "react-router";
+import { Route, Routes } from "react-router";
 import { EditPartnerPage } from "./EditPartner";
 
-const mockPartnerData = {
+const mockPartnerData = buildUser({
   id: "test-partner-id",
   fullName: "María López",
   personalId: "87654321X",
@@ -69,24 +70,27 @@ const mockPartnerData = {
   phoneNumber: "611987654",
   number: 7,
   enabled: true,
-};
+});
 
 describe("EditPartnerPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUserById.mockReturnValue({ data: mockPartnerData, isLoading: false, error: null });
+    mockGetUserById.mockReturnValue(query.success<typeof getUserById>(mockPartnerData));
+    vi.mocked(useUpdateUser).mockReturnValue(mutation.idle({ mutateAsync: mockMutateAsync }));
   });
 
   const setup = () => {
-    render(
-      <MemoryRouter>
-        <EditPartnerPage />
-      </MemoryRouter>,
+    // The partnerId comes from real routing rather than a useParams stub.
+    renderWithProviders(
+      <Routes>
+        <Route path="/partners/:partnerId/edit" element={<EditPartnerPage />} />
+      </Routes>,
+      { route: "/partners/test-partner-id/edit" },
     );
   };
 
   it("shows loading spinner while fetching partner data", () => {
-    mockGetUserById.mockReturnValue({ data: null, isLoading: true, error: null });
+    mockGetUserById.mockReturnValue(query.loading());
     setup();
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
@@ -94,7 +98,7 @@ describe("EditPartnerPage", () => {
   });
 
   it("shows error alert when partner data cannot be loaded", () => {
-    mockGetUserById.mockReturnValue({ data: null, isLoading: false, error: new Error("Not found") });
+    mockGetUserById.mockReturnValue(query.error(new Error("Not found")));
     setup();
 
     expect(screen.getByText("No se pudo cargar la información del socio")).toBeInTheDocument();
@@ -102,7 +106,8 @@ describe("EditPartnerPage", () => {
   });
 
   it("shows error alert when partner data is null without an error", () => {
-    mockGetUserById.mockReturnValue({ data: null, isLoading: false, error: null });
+    // No data and no error: reachable only while the query is disabled (no id in the route).
+    mockGetUserById.mockReturnValue(query.disabled());
     setup();
 
     expect(screen.getByText("No se pudo cargar la información del socio")).toBeInTheDocument();

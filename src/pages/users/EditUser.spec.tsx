@@ -1,28 +1,29 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation, query } from "../../test/queryState";
+import { buildUser } from "../../test/fixtures";
+import { useGetUserById, useUpdateUser, type getUserById } from "../../api/users/users";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
-const mockGetUserById = vi.fn();
+const mockGetUserById = vi.mocked(useGetUserById);
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-    useParams: () => ({ userId: "test-user-id" }),
-  };
-});
-
-vi.mock("../../api/users/users", () => ({
-  useGetUserById: (id: string) => mockGetUserById(id),
-  useUpdateUser: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
+vi.mock(import("react-router"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../api/users/users"), () => ({
+  useGetUserById: vi.fn(),
+  useUpdateUser: vi.fn(),
+}));
+
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
@@ -55,10 +56,10 @@ vi.mock("../../components/PartnerForm/PartnerForm", () => ({
   ),
 }));
 
-import { MemoryRouter } from "react-router";
+import { Route, Routes } from "react-router";
 import { EditUserPage } from "./EditUser";
 
-const mockUserData = {
+const mockUserData = buildUser({
   id: "test-user-id",
   fullName: "Carlos Ruiz",
   personalId: "87654321X",
@@ -67,24 +68,27 @@ const mockUserData = {
   phoneNumber: "611987654",
   number: 3,
   enabled: true,
-};
+});
 
 describe("EditUserPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUserById.mockReturnValue({ data: mockUserData, isLoading: false, error: null });
+    mockGetUserById.mockReturnValue(query.success<typeof getUserById>(mockUserData));
+    vi.mocked(useUpdateUser).mockReturnValue(mutation.idle({ mutateAsync: mockMutateAsync }));
   });
 
   const setup = () => {
-    render(
-      <MemoryRouter>
-        <EditUserPage />
-      </MemoryRouter>,
+    // The userId comes from real routing, as under /users/:userId/edit in App.tsx.
+    renderWithProviders(
+      <Routes>
+        <Route path="/users/:userId/edit" element={<EditUserPage />} />
+      </Routes>,
+      { route: "/users/test-user-id/edit" },
     );
   };
 
   it("shows loading spinner while fetching user data", () => {
-    mockGetUserById.mockReturnValue({ data: null, isLoading: true, error: null });
+    mockGetUserById.mockReturnValue(query.loading());
     setup();
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
@@ -92,14 +96,15 @@ describe("EditUserPage", () => {
   });
 
   it("shows error alert when user data cannot be loaded", () => {
-    mockGetUserById.mockReturnValue({ data: null, isLoading: false, error: new Error("Not found") });
+    mockGetUserById.mockReturnValue(query.error(new Error("Not found")));
     setup();
 
     expect(screen.getByText("No se pudo cargar la información del usuario")).toBeInTheDocument();
   });
 
   it("shows error alert when user data is null without an error", () => {
-    mockGetUserById.mockReturnValue({ data: null, isLoading: false, error: null });
+    // No data and no error: reachable only while the query is disabled (no id in the route).
+    mockGetUserById.mockReturnValue(query.disabled());
     setup();
 
     expect(screen.getByText("No se pudo cargar la información del usuario")).toBeInTheDocument();

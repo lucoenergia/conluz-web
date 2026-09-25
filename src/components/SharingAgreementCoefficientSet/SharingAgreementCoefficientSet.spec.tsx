@@ -7,57 +7,19 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
-import { OPEN_UNCLOSED, renderWithTheme, coefficients } from "./SharingAgreementCoefficientSet.testUtils";
+import {
+  OPEN_UNCLOSED,
+  renderWithTheme,
+  coefficients,
+  mockMutateAsync,
+  mockSuccessDispatch,
+} from "./SharingAgreementCoefficientSet.testUtils";
 
 const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
 
-const mockMutateAsync = vi.fn();
-const mockActivateMutateAsync = vi.fn();
-const mockDeactivateMutateAsync = vi.fn();
-const mockCloseMutateAsync = vi.fn();
-const mockReopenMutateAsync = vi.fn();
-const mockSuccessDispatch = vi.fn();
-// No test in this file exercises an in-flight mutation, so every pending
-// flag stays false; the lifecycle and batch-activation specs vary them.
-const mockIsActivating = false;
-const mockIsDeactivating = false;
-const mockIsClosing = false;
-const mockIsReopening = false;
-
-vi.mock("../../context/community.context", async () => {
-  const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
-  return { ...actual, useActiveCommunity: () => "community-1" };
-});
-
-vi.mock("../../context/success.context", () => ({
-  useSuccessDispatch: () => mockSuccessDispatch,
-}));
-
-vi.mock("../../api/supplies/supplies", () => ({
-  getAllSupplies: vi.fn().mockResolvedValue({
-    items: [{ id: "s10", name: "Trastero Nuevo", code: "ES999" }],
-    number: 0,
-    totalPages: 1,
-  }),
-  // The row menu's history drawer reads this. Resolved-and-empty by default so
-  // it never interferes with the assertions in this file; the drawer's own
-  // behaviour is covered in CoefficientHistoryDrawer.spec.tsx.
-  useGetPartitionCoefficientHistory: () => ({ data: [], isLoading: false, error: null }),
-}));
-
-vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
-  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
-    "../../api/sharing-agreements/sharing-agreements",
-  );
-  return {
-    ...actual,
-    useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
-    useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
-    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: mockIsDeactivating }),
-    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: mockIsClosing }),
-    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: mockIsReopening }),
-  };
-});
+vi.mock(import("../../context/success.context"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.successContextModule(orig)));
+vi.mock(import("../../api/supplies/supplies"), () => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.suppliesModule()));
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.sharingAgreementsModule(orig)));
 
 describe("SharingAgreementCoefficientSet", () => {
   it("uses the exact search placeholder", () => {

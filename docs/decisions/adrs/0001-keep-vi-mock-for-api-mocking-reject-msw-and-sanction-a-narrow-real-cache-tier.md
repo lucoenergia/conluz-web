@@ -90,9 +90,16 @@ The pre-agreed criterion required all three of its conditions. The fidelity cond
 
 - The backend publishes its OpenAPI spec in CI so tests can be run spec-against-backend. That closes the drift neither tier can see, and changes the fidelity argument this ADR rests on.
 - A production regression escapes because cache or invalidation behaviour was mocked away in tier 1. That is the gap this decision knowingly accepts.
-- Tier 2 grows beyond roughly 10 specs, or the shared `customInstance` router becomes a maintenance burden of its own. At that point the cost gap against MSW narrows enough to re-measure.
+- Tier 2 grows beyond 10 specs, or `routeRequests` acquires per-spec forks or special cases — that is, any spec needing routing behaviour the shared helper does not provide. Either is the point at which the cost gap against MSW narrows enough to re-measure.
 - Orval changes how it emits mock handlers, specifically the route ordering that currently lets `/users/:userId` shadow `/users/current`.
 - Any spec needs to assert on a request body or URL outside a cache-behaviour test. That would mean tier 2's trigger is too narrow.
+- Casts of partial fixtures to API response types spread again: add an ESLint rule banning `as <…>Response` (and `as never` / `as unknown as …` escape hatches) in specs. The migration removed every such cast from the 38 spec files it touched (the 37 API-mocking specs and `Pagination.spec.tsx`), because a cast hides missing required fields the way untyped factories hide impossible hook states. Specs outside the migration still held **54** at closeout (2026-09-25, commit `450af81`). Trigger: the count below rises above 54, or any match appears in one of the 38 migrated specs. Reproduce the number with (this is the pattern of the `castcount.sh` helper used during the migration):
+
+  ```bash
+  rg -n --no-heading '\bas (unknown as )?(Supply|Plant|SharingAgreement|User|Membership|Community|PartitionCoefficient|PagedResult)\w*(\[\])?\b|\bas never\b|\bas unknown as (Awaited|ReturnType)\b|\bas ReturnType<' src -g '*.spec.ts' -g '*.spec.tsx' -g '*.testUtils.tsx' -g '*.mocks.ts' | wc -l
+  ```
+
+  The migrated specs are the spec files the migration changed, which `git diff --name-only 6b5ce1a..450af81 -- 'src/**/*.spec.ts' 'src/**/*.spec.tsx'` lists: the 38, plus the harness's own three specs under `src/test/`. All 41 held 0 matches at closeout.
 
 ## References
 

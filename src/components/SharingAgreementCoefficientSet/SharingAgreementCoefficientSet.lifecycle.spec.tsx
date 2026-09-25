@@ -2,14 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ErrorProvider } from "../../context/error.context";
-import {
-  SharingAgreementCoefficientSet,
-  type SharingAgreementCoefficientSetProps,
-} from "./SharingAgreementCoefficientSet";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
@@ -23,58 +15,21 @@ import {
   openBatchAction,
   renderWithTheme,
   coefficients,
+  setTree,
+  mockActivateMutateAsync,
+  mockDeactivateMutateAsync,
+  mockCloseMutateAsync,
+  mockReopenMutateAsync,
+  mockSuccessDispatch,
+  mutationPending,
 } from "./SharingAgreementCoefficientSet.testUtils";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, OPEN_ORPHAN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 
-const mockMutateAsync = vi.fn();
-const mockActivateMutateAsync = vi.fn();
-const mockDeactivateMutateAsync = vi.fn();
-const mockCloseMutateAsync = vi.fn();
-const mockReopenMutateAsync = vi.fn();
-const mockSuccessDispatch = vi.fn();
-// Mutable so a single test can exercise the in-flight (isActivating) state —
-// mirrors how the real hook forwards the mutation's own isPending.
-let mockIsActivating = false;
-let mockIsDeactivating = false;
-let mockIsClosing = false;
-let mockIsReopening = false;
-
-vi.mock("../../context/community.context", async () => {
-  const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
-  return { ...actual, useActiveCommunity: () => "community-1" };
-});
-
-vi.mock("../../context/success.context", () => ({
-  useSuccessDispatch: () => mockSuccessDispatch,
-}));
-
-vi.mock("../../api/supplies/supplies", () => ({
-  getAllSupplies: vi.fn().mockResolvedValue({
-    items: [{ id: "s10", name: "Trastero Nuevo", code: "ES999" }],
-    number: 0,
-    totalPages: 1,
-  }),
-  // The row menu's history drawer reads this. Resolved-and-empty by default so
-  // it never interferes with the assertions in this file; the drawer's own
-  // behaviour is covered in CoefficientHistoryDrawer.spec.tsx.
-  useGetPartitionCoefficientHistory: () => ({ data: [], isLoading: false, error: null }),
-}));
-
-vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
-  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
-    "../../api/sharing-agreements/sharing-agreements",
-  );
-  return {
-    ...actual,
-    useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
-    useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
-    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: mockIsDeactivating }),
-    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: mockIsClosing }),
-    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: mockIsReopening }),
-  };
-});
+vi.mock(import("../../context/success.context"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.successContextModule(orig)));
+vi.mock(import("../../api/supplies/supplies"), () => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.suppliesModule()));
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.sharingAgreementsModule(orig)));
 
 describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
   // Realistic multi-supply set covering both end-action states plus a
@@ -122,30 +77,8 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     mockCloseMutateAsync.mockReset();
     mockReopenMutateAsync.mockReset();
     mockSuccessDispatch.mockClear();
-    mockIsActivating = false;
-    mockIsDeactivating = false;
-    mockIsClosing = false;
-    mockIsReopening = false;
     Element.prototype.scrollIntoView = vi.fn();
   });
-
-  function coefficientSetElement(props: Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">) {
-    return (
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
-        <ErrorProvider>
-          <ThemeProvider theme={theme}>
-            <SharingAgreementCoefficientSet
-              plantId="plant-1"
-              sharingAgreementId="agreement-1"
-              installedPowerKw={100}
-              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
-              {...props}
-            />
-          </ThemeProvider>
-        </ErrorProvider>
-      </QueryClientProvider>
-    );
-  }
 
   /** Opens the row menu via its accessible name — matches the ⋯ button's own aria-label (supply name, or CUPS when there's no name). */
   async function openRowMenu(user: ReturnType<typeof userEvent.setup>, label: string) {
@@ -309,7 +242,7 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
 
     // c1 is no longer OPEN_ORPHAN — "close" is no longer among its actions.
     const updated = lifecycleMixed.map((c) => (c.coefficientId === "c1" ? { ...c, endState: CLOSED, endDate: "2026-01-01T00:00:00Z" } : c));
-    rerender(coefficientSetElement({ coefficients: updated }));
+    rerender(setTree({ coefficients: updated }));
 
     expect(screen.queryByRole("button", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -324,7 +257,7 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
 
     const withoutC1 = lifecycleMixed.filter((c) => c.coefficientId !== "c1");
-    rerender(coefficientSetElement({ coefficients: withoutC1 }));
+    rerender(setTree({ coefficients: withoutC1 }));
 
     expect(screen.queryByRole("button", { name: "Cerrar (baja)" })).not.toBeInTheDocument();
   });
@@ -400,7 +333,7 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     // button must freeze, not only the row whose action is actually running,
     // since re-opening another row's menu would act on data the in-flight
     // mutation's refetch hasn't refreshed yet.
-    mockIsDeactivating = true;
+    mutationPending.deactivating = true;
     renderWithTheme({ coefficients: lifecycleMixed });
 
     const buttons = screen.getAllByRole("button", { name: /Más acciones/ });
@@ -419,8 +352,8 @@ describe("SharingAgreementCoefficientSet (lifecycle actions)", () => {
     await user.click(screen.getByRole("menuitem", { name: "Cerrar (baja)" }));
     expect(screen.getByRole("button", { name: "Cerrar (baja)" })).toBeInTheDocument();
 
-    mockIsClosing = true;
-    rerender(coefficientSetElement({ coefficients: lifecycleMixed }));
+    mutationPending.closing = true;
+    rerender(setTree({ coefficients: lifecycleMixed }));
 
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
@@ -601,20 +534,7 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
     expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
 
     rerender(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { retry: false } } })}>
-        <ErrorProvider>
-          <ThemeProvider theme={theme}>
-            <SharingAgreementCoefficientSet
-              plantId="plant-1"
-              sharingAgreementId="agreement-1"
-              installedPowerKw={100}
-              coefficients={coefficients}
-              agreementStatus={DRAFT}
-              editRequestId={1}
-            />
-          </ThemeProvider>
-        </ErrorProvider>
-      </QueryClientProvider>,
+      setTree({ coefficients, agreementStatus: DRAFT, editRequestId: 1 })
     );
 
     expect(await screen.findByRole("button", { name: "Guardar" })).toBeInTheDocument();
@@ -632,20 +552,7 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
       expect(scrollIntoView).not.toHaveBeenCalled();
 
       rerender(
-        <QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { retry: false } } })}>
-          <ErrorProvider>
-            <ThemeProvider theme={theme}>
-              <SharingAgreementCoefficientSet
-                plantId="plant-1"
-                sharingAgreementId="agreement-1"
-                installedPowerKw={100}
-                coefficients={coefficients}
-                agreementStatus={DRAFT}
-                editRequestId={1}
-              />
-            </ThemeProvider>
-          </ErrorProvider>
-        </QueryClientProvider>,
+        setTree({ coefficients, agreementStatus: DRAFT, editRequestId: 1 })
       );
 
       expect(await screen.findByRole("button", { name: "Guardar" })).toBeInTheDocument();

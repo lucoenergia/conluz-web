@@ -1,21 +1,16 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import type { ChangeEvent } from "react";
+import { screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import { PaginationOutlined } from "./Pagination";
-
-// Helper para aplicar el theme de MUI
-const renderWithTheme = (ui: React.ReactElement) => {
-  const theme = createTheme();
-  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
-};
 
 describe("PaginationOutlined (unit)", () => {
   it("renders pagination and starts on page 1", () => {
-    renderWithTheme(<PaginationOutlined count={10} page={1} handleChange={() => {}} />);
+    renderWithProviders(<PaginationOutlined count={10} page={1} handleChange={() => {}} />);
 
+    // The project theme's esES locale labels the current page "página 1".
     const currentPage = screen.getByRole("button", {
-      name: /page 1/i,
+      name: "página 1",
     });
 
     expect(currentPage).toHaveAttribute("aria-current", "page");
@@ -23,18 +18,18 @@ describe("PaginationOutlined (unit)", () => {
 
   it("updates to page 2 when clicked", () => {
     let page = 1;
-    renderWithTheme(
+    renderWithProviders(
       <PaginationOutlined
         count={10}
         page={page}
-        handleChange={(_event: React.ChangeEvent<unknown>, value: number) => {
+        handleChange={(_event: ChangeEvent<unknown>, value: number) => {
           page = value;
         }}
       />,
     );
 
     const page2Button = screen.getByRole("button", {
-      name: /go to page 2/i,
+      name: "Ir a la página 2",
     });
 
     fireEvent.click(page2Button);

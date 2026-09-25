@@ -1,12 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { screen, fireEvent, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ErrorProvider } from "../../context/error.context";
-import { SharingAgreementCoefficientSet } from "./SharingAgreementCoefficientSet";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementReferenceResponseStatus,
@@ -14,63 +9,28 @@ import {
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getAllSupplies } from "../../api/supplies/supplies";
+import { buildSupply } from "../../test/fixtures";
 import {
   FIXTURE_COEFFICIENTS,
   FIXTURE_INSTALLED_POWER_KW,
   REPRODUCTION_ROW_NAME,
   REPRODUCTION_ROW_SUPPLY_ID,
 } from "../../pages/production/__fixtures__/coefficientSet63kw";
-import { OPEN_UNCLOSED, renderWithTheme, rerenderWithTheme } from "./SharingAgreementCoefficientSet.testUtils";
+import {
+  OPEN_UNCLOSED,
+  renderWithTheme,
+  rerenderWithTheme,
+  renderCoefficientSet,
+  setTree,
+  mockMutateAsync,
+  mockSuccessDispatch,
+} from "./SharingAgreementCoefficientSet.testUtils";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 
-const mockMutateAsync = vi.fn();
-const mockActivateMutateAsync = vi.fn();
-const mockDeactivateMutateAsync = vi.fn();
-const mockCloseMutateAsync = vi.fn();
-const mockReopenMutateAsync = vi.fn();
-const mockSuccessDispatch = vi.fn();
-// No test in this file exercises an in-flight mutation, so every pending
-// flag stays false; the lifecycle and batch-activation specs vary them.
-const mockIsActivating = false;
-const mockIsDeactivating = false;
-const mockIsClosing = false;
-const mockIsReopening = false;
-
-vi.mock("../../context/community.context", async () => {
-  const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
-  return { ...actual, useActiveCommunity: () => "community-1" };
-});
-
-vi.mock("../../context/success.context", () => ({
-  useSuccessDispatch: () => mockSuccessDispatch,
-}));
-
-vi.mock("../../api/supplies/supplies", () => ({
-  getAllSupplies: vi.fn().mockResolvedValue({
-    items: [{ id: "s10", name: "Trastero Nuevo", code: "ES999" }],
-    number: 0,
-    totalPages: 1,
-  }),
-  // The row menu's history drawer reads this. Resolved-and-empty by default so
-  // it never interferes with the assertions in this file; the drawer's own
-  // behaviour is covered in CoefficientHistoryDrawer.spec.tsx.
-  useGetPartitionCoefficientHistory: () => ({ data: [], isLoading: false, error: null }),
-}));
-
-vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
-  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
-    "../../api/sharing-agreements/sharing-agreements",
-  );
-  return {
-    ...actual,
-    useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
-    useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
-    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: mockIsDeactivating }),
-    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: mockIsClosing }),
-    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: mockIsReopening }),
-  };
-});
+vi.mock(import("../../context/success.context"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.successContextModule(orig)));
+vi.mock(import("../../api/supplies/supplies"), () => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.suppliesModule()));
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.sharingAgreementsModule(orig)));
 
 describe("SharingAgreementCoefficientSet (registering dates)", () => {
   // A new request id scrolls the table into view, and jsdom has no
@@ -89,27 +49,11 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
   ];
 
   function renderWithRequestId(registerDatesRequestId: number) {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-    return (
-      <QueryClientProvider client={queryClient}>
-        <ErrorProvider>
-          <ThemeProvider theme={theme}>
-            <SharingAgreementCoefficientSet
-              plantId="plant-1"
-              sharingAgreementId="agreement-1"
-              installedPowerKw={100}
-              coefficients={mixed}
-              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
-              registerDatesRequestId={registerDatesRequestId}
-            />
-          </ThemeProvider>
-        </ErrorProvider>
-      </QueryClientProvider>
-    );
+    return setTree({ coefficients: mixed, registerDatesRequestId });
   }
 
   it("narrows the table to the rows still waiting for a date", async () => {
-    const { rerender } = render(renderWithRequestId(0));
+    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
 
     expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
 
@@ -126,7 +70,7 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
   it("selects nothing — which rows share a date is the admin's judgement, not a default", async () => {
     // The distributor rarely applies every point on the same day. Arriving with
     // every row ticked invites a bulk action nobody decided on.
-    const { rerender } = render(renderWithRequestId(0));
+    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
     rerender(renderWithRequestId(1));
 
     await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
@@ -139,7 +83,7 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
 
   it("still lets the admin select the rows it surfaced, and only then offers the batch bar", async () => {
     const user = userEvent.setup({ delay: null });
-    const { rerender } = render(renderWithRequestId(0));
+    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
     rerender(renderWithRequestId(1));
 
     await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
@@ -154,7 +98,7 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
 
   it("clears a leftover search, so nothing the filter surfaced stays hidden behind it", async () => {
     const user = userEvent.setup({ delay: null });
-    const { rerender } = render(renderWithRequestId(0));
+    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
 
     await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Taller");
     await waitFor(() => expect(screen.queryByText("Local C")).not.toBeInTheDocument());
@@ -171,7 +115,7 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
     Element.prototype.scrollIntoView = scrollIntoView;
 
     try {
-      const { rerender } = render(renderWithRequestId(0));
+      const { rerender } = renderCoefficientSet(renderWithRequestId(0));
       expect(scrollIntoView).not.toHaveBeenCalled();
 
       rerender(renderWithRequestId(1));
@@ -183,7 +127,7 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
   });
 
   it("does nothing on mount just because a request id is present", () => {
-    render(renderWithRequestId(4));
+    renderCoefficientSet(renderWithRequestId(4));
 
     expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
@@ -259,10 +203,10 @@ describe("SharingAgreementCoefficientSet (per-row revert)", { timeout: 20_000 },
     mockMutateAsync.mockReset();
     mockSuccessDispatch.mockClear();
     vi.mocked(getAllSupplies).mockResolvedValue({
-      items: [{ id: REPRODUCTION_ROW_SUPPLY_ID, name: REPRODUCTION_ROW_NAME, code: "ES0031300000000015XY" }],
+      items: [buildSupply({ id: REPRODUCTION_ROW_SUPPLY_ID, name: REPRODUCTION_ROW_NAME, code: "ES0031300000000015XY" })],
       number: 0,
       totalPages: 1,
-    } as unknown as Awaited<ReturnType<typeof getAllSupplies>>);
+    });
   });
 
   function renderEditor() {

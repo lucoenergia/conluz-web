@@ -1,31 +1,30 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "../../theme";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { buildSupply } from "../../test/fixtures";
+import { getAllSupplies } from "../../api/supplies/supplies";
 import { AddSupplyDialog } from "./AddSupplyDialog";
 
-const mockGetAllSupplies = vi.fn();
-
-vi.mock("../../api/supplies/supplies", () => ({
-  getAllSupplies: (...args: unknown[]) => mockGetAllSupplies(...args),
+vi.mock(import("../../api/supplies/supplies"), () => ({
+  getAllSupplies: vi.fn(),
 }));
+
+const mockGetAllSupplies = vi.mocked(getAllSupplies);
 
 function renderDialog(props: Partial<React.ComponentProps<typeof AddSupplyDialog>> = {}) {
   const onCancel = vi.fn();
   const onConfirm = vi.fn();
-  const utils = render(
-    <ThemeProvider theme={theme}>
-      <AddSupplyDialog
-        isOpen
-        communityId="community-1"
-        alreadyAddedSupplyIds={new Set()}
-        onCancel={onCancel}
-        onConfirm={onConfirm}
-        {...props}
-      />
-    </ThemeProvider>,
+  const utils = renderWithProviders(
+    <AddSupplyDialog
+      isOpen
+      communityId="community-1"
+      alreadyAddedSupplyIds={new Set()}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      {...props}
+    />,
   );
   return { ...utils, onCancel, onConfirm };
 }
@@ -35,8 +34,8 @@ describe("AddSupplyDialog", () => {
     mockGetAllSupplies.mockReset();
     mockGetAllSupplies.mockResolvedValue({
       items: [
-        { id: "s1", name: "Vivienda A", code: "CUPS1" },
-        { id: "s2", name: "Local B", code: "CUPS2" },
+        buildSupply({ id: "s1", name: "Vivienda A", code: "CUPS1" }),
+        buildSupply({ id: "s2", name: "Local B", code: "CUPS2" }),
       ],
       number: 0,
       totalPages: 1,
@@ -44,10 +43,8 @@ describe("AddSupplyDialog", () => {
   });
 
   it("does not fetch the catalogue until opened", () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <AddSupplyDialog isOpen={false} communityId="community-1" alreadyAddedSupplyIds={new Set()} onCancel={vi.fn()} onConfirm={vi.fn()} />
-      </ThemeProvider>,
+    renderWithProviders(
+      <AddSupplyDialog isOpen={false} communityId="community-1" alreadyAddedSupplyIds={new Set()} onCancel={vi.fn()} onConfirm={vi.fn()} />,
     );
     expect(mockGetAllSupplies).not.toHaveBeenCalled();
   });

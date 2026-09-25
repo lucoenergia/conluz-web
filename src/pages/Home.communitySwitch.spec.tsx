@@ -1,17 +1,23 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { type FC, type ReactNode } from "react";
-import { MemoryRouter } from "react-router";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "../theme";
-import { ActiveCommunityContext } from "../context/community.context";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders } from "../test/renderWithProviders";
+import { query } from "../test/queryState";
+import { buildSupply, buildUser } from "../test/fixtures";
+import { useActiveCommunity } from "../context/community.context";
 import { CommunityRole } from "../api/models";
-import type { SupplyResponse, UserResponse } from "../api/models";
+import type { SupplyResponse } from "../api/models";
+import { useGetSuppliesByUserId } from "../api/users/users";
+import {
+  useGetAllSupplies,
+  useGetSupplyDailyConsumption,
+  useGetSupplyDailyProduction,
+  type getAllSupplies,
+} from "../api/supplies/supplies";
 
 const SUPPLIES_BY_COMMUNITY: Record<string, SupplyResponse[]> = {
-  "community-a": [{ id: "supply-a", name: "Supply A", address: "Street A" } as SupplyResponse],
-  "community-b": [{ id: "supply-b", name: "Supply B", address: "Street B" } as SupplyResponse],
+  "community-a": [buildSupply({ id: "supply-a", name: "Supply A", address: "Street A" })],
+  "community-b": [buildSupply({ id: "supply-b", name: "Supply B", address: "Street B" })],
 };
 
 /** Every supply id the consumption/production panels actually requested. */
@@ -22,61 +28,59 @@ const requestedSupplyIds: string[] = [];
 vi.mock("../components/Graph/GraphBar", () => ({ GraphBar: () => <div /> }));
 vi.mock("../components/Graph/MultiSeriesBar", () => ({ MultiSeriesBar: () => <div /> }));
 
-vi.mock("../api/users/users", () => ({
-  useGetSuppliesByUserId: () => ({ data: undefined, isLoading: false }),
+vi.mock(import("../api/users/users"), () => ({
+  useGetSuppliesByUserId: vi.fn(),
 }));
 
-vi.mock("../api/supplies/supplies", () => ({
-  useGetAllSupplies: (communityId: string) => ({
-    data: { items: SUPPLIES_BY_COMMUNITY[communityId] ?? [] },
-    isLoading: false,
-  }),
-  useGetSupplyDailyProduction: (supplyId: string) => {
-    if (supplyId) requestedSupplyIds.push(supplyId);
-    return { data: undefined, isLoading: false };
-  },
-  useGetSupplyDailyConsumption: (supplyId: string) => {
-    if (supplyId) requestedSupplyIds.push(supplyId);
-    return { data: undefined, isLoading: false };
-  },
+vi.mock(import("../api/supplies/supplies"), () => ({
+  useGetAllSupplies: vi.fn(),
+  useGetSupplyDailyProduction: vi.fn(),
+  useGetSupplyDailyConsumption: vi.fn(),
 }));
 
-vi.mock("../context/logged-user.context", () => ({
-  useLoggedUser: (): UserResponse =>
-    ({
+vi.mock(import("../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () =>
+    buildUser({
       id: "user-1",
       isPlatformAdmin: false,
       memberships: {
         "community-a": CommunityRole.COMMUNITY_ADMIN,
         "community-b": CommunityRole.COMMUNITY_ADMIN,
       },
-    }) as unknown as UserResponse,
+    }),
 }));
 
 import { HomePage } from "./Home";
 
 /** Mirrors AuthenticatedLayout's keyed Outlet. */
-const Keyed: FC<{ communityId: string }> = ({ communityId }) => (
-  <ActiveCommunityContext.Provider value={communityId}>
-    <HomePage key={communityId} />
-  </ActiveCommunityContext.Provider>
-);
+function Keyed() {
+  const communityId = useActiveCommunity();
+  return <HomePage key={communityId} />;
+}
 
 function renderHome(communityId: string) {
-  const tree = (id: string): ReactNode => (
-    <ThemeProvider theme={theme}>
-      <MemoryRouter>
-        <Keyed communityId={id} />
-      </MemoryRouter>
-    </ThemeProvider>
-  );
-  const { rerender } = render(tree(communityId));
-  return { switchTo: (id: string) => rerender(tree(id)) };
+  const { switchActiveCommunity } = renderWithProviders(<Keyed />, { activeCommunityId: communityId });
+  return { switchTo: (id: string) => switchActiveCommunity(id) };
 }
 
 describe("HomePage across a community switch", () => {
   beforeEach(() => {
     requestedSupplyIds.length = 0;
+    // The user is a community admin, so Home disables the per-user supplies query.
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
+    vi.mocked(useGetAllSupplies).mockImplementation((communityId) =>
+      query.success<typeof getAllSupplies>({ items: SUPPLIES_BY_COMMUNITY[communityId] ?? [] }),
+    );
+    // The panels only read data, which stays undefined while the fetch is in flight.
+    vi.mocked(useGetSupplyDailyProduction).mockImplementation((supplyId) => {
+      if (supplyId) requestedSupplyIds.push(supplyId);
+      return query.loading();
+    });
+    vi.mocked(useGetSupplyDailyConsumption).mockImplementation((supplyId) => {
+      if (supplyId) requestedSupplyIds.push(supplyId);
+      return query.loading();
+    });
   });
 
   // The old behaviour: selectedSupplyPoint kept community A's supply id, so the

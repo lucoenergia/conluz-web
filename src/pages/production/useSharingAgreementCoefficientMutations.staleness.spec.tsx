@@ -7,10 +7,9 @@
 // at the raw HTTP layer (customInstance), keeps the real hooks — and
 // therefore the real isPending timing — in play.
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
-import type { AxiosRequestConfig } from "axios";
+import { waitFor, act } from "@testing-library/react";
+import { renderHookWithProviders } from "../../test/renderWithProviders";
+import { routeRequests } from "../../test/requestRouter";
 import dayjs from "dayjs";
 import { customInstance } from "../../api/custom-instance";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
@@ -22,19 +21,25 @@ import {
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
-vi.mock("../../api/custom-instance", () => ({
+// Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
+vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
   customInstance: vi.fn(),
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => vi.fn(),
 }));
 
-vi.mock("../../context/success.context", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useSuccessDispatch: () => vi.fn(),
 }));
 
 const mockCustomInstance = vi.mocked(customInstance);
+
+const COEFFICIENTS_URL = "/api/v1/plants/plant-1/sharing-agreements/agreement-1/partition-coefficients";
 
 const { APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -67,14 +72,6 @@ function useHarness(plantId: string, sharingAgreementId: string) {
   return { query, mutations };
 }
 
-function makeWrapper() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  }
-  return Wrapper;
-}
-
 describe("coefficient mutations stay pending until the post-success refetch resolves", () => {
   beforeEach(() => {
     mockCustomInstance.mockReset();
@@ -84,25 +81,33 @@ describe("coefficient mutations stay pending until the post-success refetch reso
     let resolveRefetch!: (value: SharingAgreementPartitionCoefficientResponse[]) => void;
     let getCallCount = 0;
 
-    mockCustomInstance.mockImplementation((config: AxiosRequestConfig) => {
-      if (config.method === "GET") {
-        getCallCount += 1;
-        if (getCallCount === 1) return Promise.resolve([initialCoefficient]);
-        // The second GET is the invalidation-triggered refetch — held open
-        // deliberately, so the test controls exactly when "fresh data"
-        // arrives instead of racing a promise microtask.
-        return new Promise((resolve) => {
-          resolveRefetch = resolve;
-        });
-      }
+    const router = routeRequests([
+      {
+        method: "GET",
+        url: COEFFICIENTS_URL,
+        respond: () => {
+          getCallCount += 1;
+          if (getCallCount === 1) return [initialCoefficient];
+          // The second GET is the invalidation-triggered refetch — held open
+          // deliberately, so the test controls exactly when "fresh data"
+          // arrives instead of racing a promise microtask.
+          return new Promise((resolve) => {
+            resolveRefetch = resolve;
+          });
+        },
+      },
       // POST .../activate resolves immediately — the whole point is that the
       // HTTP call finishing is NOT the same moment the mutation should stop
       // reporting itself as pending.
-      return Promise.resolve({ coefficients: [{ coefficientId: "c1" }] });
-    });
+      {
+        method: "POST",
+        url: `${COEFFICIENTS_URL}/activate`,
+        respond: () => ({ coefficients: [{ coefficientId: "c1" }] }),
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
 
-    const Wrapper = makeWrapper();
-    const { result } = renderHook(() => useHarness("plant-1", "agreement-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
     await waitFor(() => expect(result.current.query.data).toEqual([initialCoefficient]));
     expect(result.current.mutations.isActivating).toBe(false);
@@ -137,20 +142,24 @@ describe("coefficient mutations stay pending until the post-success refetch reso
     let resolveRefetch!: (value: SharingAgreementPartitionCoefficientResponse[]) => void;
     let getCallCount = 0;
 
-    mockCustomInstance.mockImplementation((config: AxiosRequestConfig) => {
-      if (config.method === "GET") {
-        getCallCount += 1;
-        if (getCallCount === 1) return Promise.resolve([initialCoefficient]);
-        return new Promise((resolve) => {
-          resolveRefetch = resolve;
-        });
-      }
+    const router = routeRequests([
+      {
+        method: "GET",
+        url: COEFFICIENTS_URL,
+        respond: () => {
+          getCallCount += 1;
+          if (getCallCount === 1) return [initialCoefficient];
+          return new Promise((resolve) => {
+            resolveRefetch = resolve;
+          });
+        },
+      },
       // PUT .../partition-coefficients resolves immediately.
-      return Promise.resolve({ coefficients: [] });
-    });
+      { method: "PUT", url: COEFFICIENTS_URL, respond: () => ({ coefficients: [] }) },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
 
-    const Wrapper = makeWrapper();
-    const { result } = renderHook(() => useHarness("plant-1", "agreement-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
     await waitFor(() => expect(result.current.query.data).toEqual([initialCoefficient]));
     expect(result.current.mutations.isReplacing).toBe(false);

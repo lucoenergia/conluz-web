@@ -2,11 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ErrorProvider } from "../../context/error.context";
-import { SharingAgreementCoefficientSet } from "./SharingAgreementCoefficientSet";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
@@ -18,57 +13,16 @@ import {
   typeDate,
   openBatchAction,
   renderWithTheme,
+  setTree,
+  mockActivateMutateAsync,
+  mockSuccessDispatch,
 } from "./SharingAgreementCoefficientSet.testUtils";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 
-const mockMutateAsync = vi.fn();
-const mockActivateMutateAsync = vi.fn();
-const mockDeactivateMutateAsync = vi.fn();
-const mockCloseMutateAsync = vi.fn();
-const mockReopenMutateAsync = vi.fn();
-const mockSuccessDispatch = vi.fn();
-// Mutable so a single test can exercise the in-flight (isActivating) state —
-// mirrors how the real hook forwards the mutation's own isPending.
-let mockIsActivating = false;
-let mockIsDeactivating = false;
-let mockIsClosing = false;
-let mockIsReopening = false;
-
-vi.mock("../../context/community.context", async () => {
-  const actual = await vi.importActual<typeof import("../../context/community.context")>("../../context/community.context");
-  return { ...actual, useActiveCommunity: () => "community-1" };
-});
-
-vi.mock("../../context/success.context", () => ({
-  useSuccessDispatch: () => mockSuccessDispatch,
-}));
-
-vi.mock("../../api/supplies/supplies", () => ({
-  getAllSupplies: vi.fn().mockResolvedValue({
-    items: [{ id: "s10", name: "Trastero Nuevo", code: "ES999" }],
-    number: 0,
-    totalPages: 1,
-  }),
-  // The row menu's history drawer reads this. Resolved-and-empty by default so
-  // it never interferes with the assertions in this file; the drawer's own
-  // behaviour is covered in CoefficientHistoryDrawer.spec.tsx.
-  useGetPartitionCoefficientHistory: () => ({ data: [], isLoading: false, error: null }),
-}));
-
-vi.mock("../../api/sharing-agreements/sharing-agreements", async () => {
-  const actual = await vi.importActual<typeof import("../../api/sharing-agreements/sharing-agreements")>(
-    "../../api/sharing-agreements/sharing-agreements",
-  );
-  return {
-    ...actual,
-    useReplacePartitionCoefficients: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
-    useActivatePartitionCoefficients: () => ({ mutateAsync: mockActivateMutateAsync, isPending: mockIsActivating }),
-    useDeactivatePartitionCoefficients: () => ({ mutateAsync: mockDeactivateMutateAsync, isPending: mockIsDeactivating }),
-    useClosePartitionCoefficients: () => ({ mutateAsync: mockCloseMutateAsync, isPending: mockIsClosing }),
-    useReopenPartitionCoefficients: () => ({ mutateAsync: mockReopenMutateAsync, isPending: mockIsReopening }),
-  };
-});
+vi.mock(import("../../context/success.context"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.successContextModule(orig)));
+vi.mock(import("../../api/supplies/supplies"), () => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.suppliesModule()));
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.sharingAgreementsModule(orig)));
 
 describe("SharingAgreementCoefficientSet (batch activation)", () => {
   // Realistic multi-supply set: two PENDING (eligible), one APPLIED
@@ -94,10 +48,6 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
   beforeEach(() => {
     mockActivateMutateAsync.mockReset();
     mockSuccessDispatch.mockClear();
-    mockIsActivating = false;
-    mockIsDeactivating = false;
-    mockIsClosing = false;
-    mockIsReopening = false;
     Element.prototype.scrollIntoView = vi.fn();
   });
 
@@ -345,7 +295,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
     const alertNode = await screen.findByRole("alert");
 
-    const scrollMock = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
+    const scrollMock = vi.mocked(Element.prototype.scrollIntoView);
     expect(scrollMock).toHaveBeenCalledTimes(1);
     // The scrolled node is the panel wrapper (or the panel itself) — an
     // ancestor of the alert, not some unrelated element like document.body.
@@ -532,19 +482,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
       c.coefficientId === "c1" ? { ...c, applicationState: APPLIED, validFrom: "2026-01-01T00:00:00Z" } : c,
     );
     rerender(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
-        <ErrorProvider>
-          <ThemeProvider theme={theme}>
-            <SharingAgreementCoefficientSet
-              plantId="plant-1"
-              sharingAgreementId="agreement-1"
-              installedPowerKw={100}
-              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
-              coefficients={updated}
-            />
-          </ThemeProvider>
-        </ErrorProvider>
-      </QueryClientProvider>,
+      setTree({ coefficients: updated })
     );
 
     // The selection now spans one PENDING and one APPLIED coefficient — no
@@ -597,19 +535,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     // Simulate the invalidation-triggered refetch: c1 is now APPLIED too.
     const updated = mixed.map((c) => (c.coefficientId === "c1" ? { ...c, applicationState: APPLIED } : c));
     rerender(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
-        <ErrorProvider>
-          <ThemeProvider theme={theme}>
-            <SharingAgreementCoefficientSet
-              plantId="plant-1"
-              sharingAgreementId="agreement-1"
-              installedPowerKw={100}
-              agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
-              coefficients={updated}
-            />
-          </ThemeProvider>
-        </ErrorProvider>
-      </QueryClientProvider>,
+      setTree({ coefficients: updated })
     );
 
     // c1 (0.3) + c3 (0.4) now APPLIED = 70%, still below 100% — neutral info styling.

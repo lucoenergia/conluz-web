@@ -1,66 +1,43 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
 
 // Crear los mocks
 const mockNavigate = vi.fn();
 const mockHandleSubmit = vi.fn();
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
+vi.mock(import("react-router"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
+}));
 
 // The form loads the user list for its owner picker; answer with a settled,
 // empty page so no test reaches the network.
-vi.mock("../../api/users/users", () => ({
-  useGetAllUsers: () => ({
-    data: { items: [], size: 0, totalElements: 0, totalPages: 0, number: 0 },
-    isLoading: false,
-  }),
+vi.mock(import("../../api/users/users"), () => ({
+  useGetAllUsers: vi.fn(),
 }));
 
 // Imports después de los mocks
-import { MemoryRouter } from "react-router";
 import { SupplyForm } from "./SupplyForm";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
 
 describe("Supply Form", () => {
-  let queryClient: QueryClient;
-
   beforeEach(() => {
     // Limpiar mocks
     vi.clearAllMocks();
     // Configurar mocks
     mockNavigate.mockClear();
     mockHandleSubmit.mockClear();
-    // Create a new QueryClient for each test to ensure isolation
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
+    vi.mocked(useGetAllUsers).mockReturnValue(
+      query.success<typeof getAllUsers>({ items: [], size: 0, totalElements: 0, totalPages: 0, number: 0 }),
+    );
   });
 
-  const TestWrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{children}</MemoryRouter>
-    </QueryClientProvider>
-  );
-
   const setup = () => {
-    render(
-      <TestWrapper>
-        <SupplyForm handleSubmit={mockHandleSubmit} />
-      </TestWrapper>,
-    );
+    renderWithProviders(<SupplyForm handleSubmit={mockHandleSubmit} />);
   };
 
   it("Submits correct data", async () => {
@@ -81,18 +58,16 @@ describe("Supply Form", () => {
   });
 
   it("Loads inital values and shows correct button text", async () => {
-    render(
-      <TestWrapper>
-        <SupplyForm
-          handleSubmit={mockHandleSubmit}
-          initialValues={{
-            name: "Mi casa",
-            cups: "ES002100823463",
-            address: "Calle Escuadra 3",
-            addressRef: "AS35NB354223",
-          }}
-        />
-      </TestWrapper>,
+    renderWithProviders(
+      <SupplyForm
+        handleSubmit={mockHandleSubmit}
+        initialValues={{
+          name: "Mi casa",
+          cups: "ES002100823463",
+          address: "Calle Escuadra 3",
+          addressRef: "AS35NB354223",
+        }}
+      />,
     );
     expect(screen.getByDisplayValue("Mi casa")).toBeVisible();
     expect(screen.getByDisplayValue("ES002100823463")).toBeVisible();

@@ -236,5 +236,5 @@ color: "#ec4899",
 
 ```bash
 npm run lint     # must pass with 0 no-restricted-syntax errors
-npm test         # must pass (3 pre-existing form-spec timeouts are known failures)
+npm test         # must pass; the suite has no known failures
 ```

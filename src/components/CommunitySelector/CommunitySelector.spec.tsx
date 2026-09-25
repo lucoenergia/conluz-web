@@ -1,76 +1,52 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createContext, useContext, type ReactNode } from "react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import { buildUser } from "../../test/fixtures";
+import type { UserResponse, UserResponseMemberships } from "../../api/models";
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { CommunitySelector } from "./CommunitySelector";
 
 // Minimal fakes — we only test visibility logic here.
-const FakeLoggedUserContext = createContext<{
-  id?: string;
-  memberships?: Record<string, string>;
-} | null>(null);
+let loggedUser: UserResponse | null = null;
 
-vi.mock("../../context/logged-user.context", () => ({
-  useLoggedUser: () => useContext(FakeLoggedUserContext),
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () => loggedUser,
 }));
 
-vi.mock("../../context/community.context", () => ({
+vi.mock(import("../../context/community.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useActiveCommunity: () => "community-A",
   useActiveCommunityDispatch: () => vi.fn(),
 }));
 
-vi.mock("../../api/communities/communities", () => ({
-  useGetAllCommunities: () => ({ data: [] }),
+vi.mock(import("../../api/communities/communities"), () => ({
+  useGetAllCommunities: vi.fn(),
 }));
 
-function Wrapper({
-  memberships,
-  children,
-}: {
-  memberships: Record<string, string>;
-  children: ReactNode;
-}) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return (
-    <FakeLoggedUserContext.Provider value={{ id: "u1", memberships }}>
-      <QueryClientProvider client={qc}>
-        <MemoryRouter>{children}</MemoryRouter>
-      </QueryClientProvider>
-    </FakeLoggedUserContext.Provider>
-  );
+function renderSelector(memberships: UserResponseMemberships) {
+  loggedUser = buildUser({ id: "u1", memberships });
+  vi.mocked(useGetAllCommunities).mockReturnValue(query.success<typeof getAllCommunities>([]));
+  return renderWithProviders(<CommunitySelector />);
 }
 
 describe("CommunitySelector visibility", () => {
   test("shows a non-interactive community chip for a user with exactly one community", () => {
-    render(
-      <Wrapper memberships={{ "community-A": "COMMUNITY_MEMBER" }}>
-        <CommunitySelector />
-      </Wrapper>,
-    );
+    renderSelector({ "community-A": "COMMUNITY_MEMBER" });
     // Shows the chip but without a button role (non-interactive)
     expect(screen.getByTestId("BusinessIcon")).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
   });
 
   test("is visible for a user with more than one community", () => {
-    render(
-      <Wrapper
-        memberships={{ "community-A": "COMMUNITY_MEMBER", "community-B": "COMMUNITY_ADMIN" }}
-      >
-        <CommunitySelector />
-      </Wrapper>,
-    );
+    renderSelector({ "community-A": "COMMUNITY_MEMBER", "community-B": "COMMUNITY_ADMIN" });
     expect(screen.getByRole("button")).toBeInTheDocument();
   });
 
   test("is hidden for a user with zero communities", () => {
-    const { container } = render(
-      <Wrapper memberships={{}}>
-        <CommunitySelector />
-      </Wrapper>,
-    );
+    const { container } = renderSelector({});
     expect(container.firstChild).toBeNull();
   });
 });

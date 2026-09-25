@@ -1,47 +1,55 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { type ReactNode } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
-import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "../../theme";
-import { ActiveCommunityContext } from "../../context/community.context";
+import { screen, waitFor } from "@testing-library/react";
+import { Route, Routes } from "react-router";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import { useGetPlantById, type getPlantById } from "../../api/plants/plants";
+import {
+  useGetSharingAgreementById,
+  useGetSharingAgreementPartitionCoefficients,
+  useGetSharingAgreements,
+  type getSharingAgreementById,
+  type getSharingAgreementPartitionCoefficients,
+  type getSharingAgreements,
+} from "../../api/sharing-agreements/sharing-agreements";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
+import type { SharingAgreementResponse } from "../../api/models";
+import { buildPlant, buildSharingAgreement } from "../../test/fixtures";
 
-const PLANT: PlantResponse = {
+const PLANT = buildPlant({
   id: "plant-a",
   providerCode: "PC-1",
   name: "Planta Norte",
   address: "Calle Uno",
   totalPower: 10,
   community: { id: "community-a" },
-} as PlantResponse;
+});
 
 const AGREEMENTS: SharingAgreementResponse[] = [
-  {
+  buildSharingAgreement({
     id: "agreement-1",
     name: "Acuerdo vigente",
     status: SharingAgreementResponseStatus.PUBLISHED,
-  } as SharingAgreementResponse,
+  }),
 ];
 
-vi.mock("../../api/plants/plants", () => ({
-  useGetPlantById: () => ({ data: PLANT, isLoading: false, error: null, refetch: vi.fn() }),
+vi.mock(import("../../api/plants/plants"), () => ({
+  useGetPlantById: vi.fn(),
 }));
 
-vi.mock("../../api/sharing-agreements/sharing-agreements", () => ({
-  useGetSharingAgreements: () => ({ data: AGREEMENTS, isLoading: false, error: null }),
-  useGetSharingAgreementById: () => ({ data: AGREEMENTS[0], isLoading: false, error: null }),
-  useGetSharingAgreementPartitionCoefficients: () => ({ data: [], isLoading: false, error: null }),
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), () => ({
+  useGetSharingAgreements: vi.fn(),
+  useGetSharingAgreementById: vi.fn(),
+  useGetSharingAgreementPartitionCoefficients: vi.fn(),
 }));
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => vi.fn(),
 }));
 
-vi.mock("./useSharingAgreementMutations", () => ({
+vi.mock(import("./useSharingAgreementMutations"), () => ({
   useSharingAgreementMutations: () => ({
     createAgreement: vi.fn(),
     updateAgreement: vi.fn(),
@@ -59,21 +67,18 @@ vi.mock("./useSharingAgreementMutations", () => ({
 import { SharingAgreementsPage } from "./SharingAgreementsPage";
 
 function renderPage(activeCommunityId: string | null): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const tree: ReactNode = (
-    <QueryClientProvider client={client}>
-      <ThemeProvider theme={theme}>
-        <ActiveCommunityContext.Provider value={activeCommunityId}>
-          <MemoryRouter initialEntries={["/production/plant-a/sharing-agreements"]}>
-            <Routes>
-              <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
-            </Routes>
-          </MemoryRouter>
-        </ActiveCommunityContext.Provider>
-      </ThemeProvider>
-    </QueryClientProvider>
+  vi.mocked(useGetPlantById).mockReturnValue(query.success<typeof getPlantById>(PLANT));
+  vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>(AGREEMENTS));
+  vi.mocked(useGetSharingAgreementById).mockReturnValue(query.success<typeof getSharingAgreementById>(AGREEMENTS[0]));
+  vi.mocked(useGetSharingAgreementPartitionCoefficients).mockReturnValue(
+    query.success<typeof getSharingAgreementPartitionCoefficients>([]),
   );
-  render(tree);
+  renderWithProviders(
+    <Routes>
+      <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
+    </Routes>,
+    { route: "/production/plant-a/sharing-agreements", activeCommunityId },
+  );
 }
 
 /**
