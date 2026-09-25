@@ -1,7 +1,9 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { test } from "@playwright/test";
+
+const VISUAL_DIR = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Warms the Vite dev server's module graph before any visual test navigates.
@@ -60,5 +62,52 @@ test("warm the dev server's lazy page modules", async ({ page, baseURL }) => {
     await page.evaluate(async (url) => {
       await import(/* @vite-ignore */ url);
     }, moduleUrl);
+  }
+});
+
+/**
+ * Every toHaveScreenshot() name must be unique across the whole visual suite.
+ *
+ * playwright.config.ts builds the baseline path as {projectName}/{arg}: the
+ * name passed to toHaveScreenshot(), without the spec file. Two specs passing
+ * the same name would therefore read and write one PNG, and each would
+ * silently overwrite the other's baseline on the next update. Nothing in
+ * Playwright flags that, so it is checked here, before either viewport project
+ * runs. The check reads the source, so an unnamed or computed name is refused
+ * too: it could collide without this check ever seeing it.
+ */
+test("screenshot names are unique across the visual specs", () => {
+  const specFiles = readdirSync(VISUAL_DIR, { recursive: true, encoding: "utf8" })
+    .filter((file) => /\.spec\.ts$/.test(file))
+    .sort();
+
+  const filesByName = new Map<string, string[]>();
+  const unnamedCalls: string[] = [];
+  for (const file of specFiles) {
+    // Comments are dropped first: prose that mentions toHaveScreenshot() is not a call.
+    const source = readFileSync(resolve(VISUAL_DIR, file), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    for (const call of source.matchAll(/\.toHaveScreenshot\(\s*([^,)\s]*)/g)) {
+      const literal = /^(["'`])([^"'`$]+)\1$/.exec(call[1]);
+      if (!literal) {
+        unnamedCalls.push(`${file}: toHaveScreenshot(${call[1]}…)`);
+        continue;
+      }
+      filesByName.set(literal[2], [...(filesByName.get(literal[2]) ?? []), file]);
+    }
+  }
+
+  const problems = [
+    ...[...filesByName]
+      .filter(([, files]) => files.length > 1)
+      .map(([name, files]) => `"${name}" is declared ${files.length} times, in: ${files.join(", ")}`),
+    ...unnamedCalls.map((call) => `${call} — pass a string literal name`),
+  ];
+  if (filesByName.size === 0) {
+    problems.push(`No toHaveScreenshot() calls found under ${VISUAL_DIR} — the check would be a no-op.`);
+  }
+  if (problems.length > 0) {
+    throw new Error(`Screenshot names must be unique string literals across the visual specs:\n  ${problems.join("\n  ")}`);
   }
 });
