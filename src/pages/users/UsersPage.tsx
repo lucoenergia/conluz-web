@@ -8,20 +8,12 @@ import {
   Typography,
   Paper,
   Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TablePagination,
   IconButton,
-  Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
   Chip,
-  CircularProgress,
   Alert,
   Divider,
   TableSortLabel,
@@ -33,6 +25,7 @@ import { SearchBar } from "../../components/SearchBar";
 import { DetailHeader } from "../../components/DetailHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
 import { RecordList } from "../../components/RecordList";
+import { ListTable, ListTableHeaderText, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
@@ -462,170 +455,124 @@ export const UsersPage: FC = () => {
               />
 
               {!isNarrow && (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: colors.background.surface }}>
-                      <TableCell>
-                        <TableSortLabel
-                          active={orderBy === "fullName"}
-                          direction={orderBy === "fullName" ? orderDirection : "asc"}
-                          onClick={() => handleSort("fullName")}
-                        >
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                            Nombre
-                          </Typography>
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>
-                        <TableSortLabel
-                          active={orderBy === "personalId"}
-                          direction={orderBy === "personalId" ? orderDirection : "asc"}
-                          onClick={() => handleSort("personalId")}
-                        >
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                            NIF/CIF
-                          </Typography>
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                          Email
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                          Teléfono
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                          Estado
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                          Comunidades
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                          Acciones
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                          <CircularProgress />
-                        </TableCell>
-                      </TableRow>
-                    ) : paginatedUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                          <Typography variant="body1" color="text.secondary">
-                            No se encontraron usuarios
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      paginatedUsers.map((user) => (
-                        <TableRow
-                          key={user.id}
+              <ListTable
+                rows={paginatedUsers}
+                getRowKey={(user) => user.id}
+                isLoading={isLoading}
+                emptyMessage="No se encontraron usuarios"
+                rowActionsLabel={(user) => `Más acciones para ${user.fullName || "el usuario"}`}
+                onRowActionsClick={(e, user) =>
+                  handleMenuOpen(
+                    e,
+                    user.id || "",
+                    user.fullName || "Sin nombre",
+                    user.enabled || false,
+                    user.isPlatformAdmin || false,
+                  )
+                }
+                columns={[
+                  {
+                    key: "fullName",
+                    header: (
+                      <TableSortLabel
+                        active={orderBy === "fullName"}
+                        direction={orderBy === "fullName" ? orderDirection : "asc"}
+                        onClick={() => handleSort("fullName")}
+                      >
+                        <ListTableHeaderText>Nombre</ListTableHeaderText>
+                      </TableSortLabel>
+                    ),
+                    render: (user) => (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Avatar
                           sx={{
-                            "&:hover": { backgroundColor: colors.background.surface },
-                            transition: "background-color 0.2s",
+                            width: 36,
+                            height: 36,
+                            bgcolor: theme.palette.primary.main,
+                            fontSize: fontSizes.md,
                           }}
                         >
-                          <TableCell>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                              <Avatar
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  bgcolor: theme.palette.primary.main,
-                                  fontSize: fontSizes.md,
-                                }}
-                              >
-                                {user.fullName?.charAt(0).toUpperCase() || "?"}
-                              </Avatar>
-                              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
-                                  {user.fullName || "Sin nombre"}
-                                </Typography>
-                                {user.isPlatformAdmin && (
-                                  <Chip
-                                    icon={<AdminPanelSettingsIcon />}
-                                    label="Admin plataforma"
-                                    size="small"
-                                    color="primary"
-                                    variant="outlined"
-                                    aria-label="Administrador de plataforma"
-                                    sx={{ fontSize: fontSizes.xs }}
-                                  />
-                                )}
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                              {user.personalId || "-"}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                              {user.email || "-"}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                              {user.phoneNumber || "-"}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
+                          {user.fullName?.charAt(0).toUpperCase() || "?"}
+                        </Avatar>
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                            {user.fullName || "Sin nombre"}
+                          </Typography>
+                          {user.isPlatformAdmin && (
                             <Chip
-                              label={user.enabled ? "Activo" : "Inactivo"}
-                              color={user.enabled ? "success" : "error"}
+                              icon={<AdminPanelSettingsIcon />}
+                              label="Admin plataforma"
                               size="small"
-                              sx={{ fontWeight: 600 }}
+                              color="primary"
+                              variant="outlined"
+                              aria-label="Administrador de plataforma"
+                              sx={{ fontSize: fontSizes.xs }}
                             />
-                          </TableCell>
-                          <TableCell sx={{ maxWidth: 220 }}>
-                            <UserCommunitiesCell
-                              memberships={user.memberships as Record<string, string> | undefined}
-                              communities={communitiesList}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              aria-label={`Más acciones para ${user.fullName || "el usuario"}`}
-                              onClick={(e) =>
-                                handleMenuOpen(
-                                  e,
-                                  user.id || "",
-                                  user.fullName || "Sin nombre",
-                                  user.enabled || false,
-                                  user.isPlatformAdmin || false,
-                                )
-                              }
-                              sx={{
-                                color: colors.text.subtle,
-                                // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token
-                                "&:hover": { backgroundColor: "#f3f4f6" },
-                              }}
-                            >
-                              <MoreVertIcon />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                          )}
+                        </Box>
+                      </Box>
+                    ),
+                  },
+                  {
+                    key: "personalId",
+                    header: (
+                      <TableSortLabel
+                        active={orderBy === "personalId"}
+                        direction={orderBy === "personalId" ? orderDirection : "asc"}
+                        onClick={() => handleSort("personalId")}
+                      >
+                        <ListTableHeaderText>NIF/CIF</ListTableHeaderText>
+                      </TableSortLabel>
+                    ),
+                    render: (user) => (
+                      <Typography variant="body2" sx={{ color: "secondary.main" }}>
+                        {user.personalId || "-"}
+                      </Typography>
+                    ),
+                  },
+                  {
+                    key: "email",
+                    header: "Email",
+                    render: (user) => (
+                      <Typography variant="body2" sx={{ color: "secondary.main" }}>
+                        {user.email || "-"}
+                      </Typography>
+                    ),
+                  },
+                  {
+                    key: "phoneNumber",
+                    header: "Teléfono",
+                    render: (user) => (
+                      <Typography variant="body2" sx={{ color: "secondary.main" }}>
+                        {user.phoneNumber || "-"}
+                      </Typography>
+                    ),
+                  },
+                  {
+                    key: "status",
+                    header: "Estado",
+                    render: (user) => (
+                      <Chip
+                        label={user.enabled ? "Activo" : "Inactivo"}
+                        color={user.enabled ? "success" : "error"}
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "communities",
+                    header: "Comunidades",
+                    cellSx: { maxWidth: 220 },
+                    render: (user) => (
+                      <UserCommunitiesCell
+                        memberships={user.memberships as Record<string, string> | undefined}
+                        communities={communitiesList}
+                      />
+                    ),
+                  },
+                ]}
+              />
               )}
 
               {isNarrow && (
@@ -719,35 +666,7 @@ export const UsersPage: FC = () => {
         </Paper>
       </Box>
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          elevation: 0,
-          sx: {
-            overflow: "visible",
-            filter: shadows.menuFilter,
-            mt: 1.5,
-            minWidth: 200,
-            "& .MuiAvatar-root": { width: 32, height: 32, ml: -0.5, mr: 1 },
-            "&:before": {
-              content: '""',
-              display: "block",
-              position: "absolute",
-              top: 0,
-              right: 14,
-              width: 10,
-              height: 10,
-              bgcolor: "background.paper",
-              transform: "translateY(-50%) rotate(45deg)",
-              zIndex: 0,
-            },
-          },
-        }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-      >
+      <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
         <MenuItem onClick={handleEditClick}>
           <ListItemIcon>
             <EditIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
@@ -803,7 +722,7 @@ export const UsersPage: FC = () => {
               <ListItemText sx={{ color: "primary.main" }}>Conceder admin de plataforma</ListItemText>
             </MenuItem>
           ))}
-      </Menu>
+      </RowActionsMenu>
 
       {selectedUser?.enabled ? (
         <DisablePartnerConfirmationModal
