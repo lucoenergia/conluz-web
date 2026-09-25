@@ -1,3 +1,25 @@
+/**
+ * Layout budgets: measured assertions, not screenshot baselines.
+ *
+ * Nothing in this file calls toHaveScreenshot(), so it has no PNG under
+ * __screenshots__ and never needs a baseline regenerated. Each test measures
+ * the one property it cares about (a header's rendered height, whether the
+ * counters sit on one row, whether a label is clipped) and asserts an explicit
+ * bound.
+ *
+ * Prefer this pattern whenever the thing under test can be measured:
+ *   - An unrelated change elsewhere on the page (copy, a table column, the
+ *     side menu) cannot invalidate it, so it produces no review churn.
+ *   - A failure names the broken property and its value, instead of a pixel
+ *     diff someone has to interpret.
+ *   - The bound is exact. A screenshot's maxDiffPixelRatio can absorb a real
+ *     regression that is small relative to the capture.
+ *   - Agents can change and keep it green on their own; baselines need a
+ *     maintainer.
+ * Screenshots stay the right tool for "does this look right", which has no
+ * single number to assert.
+ */
+
 import { test, expect, type Page } from "@playwright/test";
 import {
   FIXED_COEFFICIENTS_MIXED,
