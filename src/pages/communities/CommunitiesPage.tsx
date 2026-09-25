@@ -316,7 +316,11 @@ export const CommunitiesPage: FC = () => {
                             size="small"
                             aria-label={`Más acciones para ${community.name || "la comunidad"}`}
                             onClick={(e) => handleMenuOpen(e, community)}
-                            sx={{ color: colors.text.subtle }}
+                            sx={{
+                              color: colors.text.subtle,
+                              // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token
+                              "&:hover": { backgroundColor: "#f3f4f6" },
+                            }}
                           >
                             <MoreVertIcon />
                           </IconButton>
@@ -373,7 +377,34 @@ export const CommunitiesPage: FC = () => {
         </Paper>
       </Box>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: "visible",
+            filter: shadows.menuFilter,
+            mt: 1.5,
+            minWidth: 200,
+            "&:before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      >
         <MenuItem onClick={handleEditClick}>
           <ListItemIcon>
             <EditIcon fontSize="small" sx={{ color: "primary.main" }} />
