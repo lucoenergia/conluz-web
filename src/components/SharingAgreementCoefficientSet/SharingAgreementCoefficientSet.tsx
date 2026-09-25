@@ -842,7 +842,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   if (coefficients.length === 0 && !isEditing) {
     return (
-      <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel}>
+      <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel} data-testid="sharing-agreement-coefficient-set">
         {sectionHeading}
         {authoringActions}
         <EmptyState
@@ -856,7 +856,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   }
 
   return (
-    <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel}>
+    <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel} data-testid="sharing-agreement-coefficient-set">
       {sectionHeading}
 
       {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}
@@ -1232,6 +1232,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       {isBatchBarMounted && (
         <Box
+          data-testid="sharing-agreement-batch-bar"
           sx={{
             // Fixed at every breakpoint now — static on desktop left the bar
             // far below the fold with a long table, off-screen from the rows

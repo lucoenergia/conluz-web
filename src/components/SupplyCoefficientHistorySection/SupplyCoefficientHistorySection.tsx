@@ -52,7 +52,7 @@ export const SupplyCoefficientHistorySection: FC<SupplyCoefficientHistorySection
 
   return (
     <Box sx={sxStyles.pageContainer}>
-      <Paper elevation={0} sx={sxStyles.softPanel}>
+      <Paper elevation={0} sx={sxStyles.softPanel} data-testid="supply-coefficient-history">
         <SectionHeading
           title="Histórico de coeficientes"
           description="Qué parte de la producción se ha asignado a este punto de suministro y desde cuándo, en cada planta en la que participa."
