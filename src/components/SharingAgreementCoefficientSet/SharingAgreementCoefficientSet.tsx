@@ -933,7 +933,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       {/* Row 1, read mode: three independent siblings — action button, filter chips,
           search — matching the canonical toolbar shape used across UsersPage,
-          Partners.page, SupplyPointsPage and SharingAgreementsPage. Each sibling
+          SupplyPointsPage and SharingAgreementsPage. Each sibling
           wraps on its own, so centering against justify-content: space-between
           holds regardless of which side grows taller. */}
       {!isEditing && (

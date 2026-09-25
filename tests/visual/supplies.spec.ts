@@ -176,6 +176,4 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-success-modal.png", await hideAppBar(page));
   });
-
-  // Note: "import partners modal" is intentionally omitted. See tests/visual/fixtures/index.ts.
 });

@@ -88,19 +88,12 @@ test.describe("Visual baselines", () => {
   /**
    * Every list page the suite can actually reach with its existing fixtures.
    *
-   * Three of the eight are absent, for two different reasons:
-   *
-   *   - Partners and partner supply points, because App.tsx routes neither.
-   *     There is no `path="partners"`, and nothing in the app links to one.
-   *     They were migrated all the same (the issue lists them), but no browser
-   *     test can open a page the router does not serve.
-   *
-   *   - /members, for the reason the file header already gives for its guard:
-   *     it redirects on a cold goto before community selection resolves. It
-   *     also has no memberships fixture — the broad communities mock would
-   *     answer that call with a list of communities. Its header is the same
-   *     three-counter shape as /users, which IS measured below, and the page
-   *     itself stays covered by MembersPage.spec.tsx.
+   * /members is absent, for the reason the file header already gives for its
+   * guard: it redirects on a cold goto before community selection resolves. It
+   * also has no memberships fixture — the broad communities mock would answer
+   * that call with a list of communities. Its header is the same three-counter
+   * shape as /users, which IS measured below, and the page itself stays covered
+   * by MembersPage.spec.tsx.
    */
   const LIST_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
     {
