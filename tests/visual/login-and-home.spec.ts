@@ -9,6 +9,7 @@ import {
   FIXED_MEMBER_USER,
   FIXED_NO_COMMUNITY_USER,
   injectAuthToken,
+  LAYOUT_MAX_DIFF_PIXELS,
   mainRegion,
   mockAllApiRoutes,
   seedActiveCommunity,
@@ -22,7 +23,7 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     // Full page on purpose: /login has no main landmark and no app bar, so the page is the content.
-    await expect(page).toHaveScreenshot("login-page.png", { fullPage: true });
+    await expect(page).toHaveScreenshot("login-page.png", { fullPage: true, maxDiffPixels: LAYOUT_MAX_DIFF_PIXELS });
   });
 
   // Member-fixture tests: home, supply-points, supply-detail, supply modals

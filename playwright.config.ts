@@ -31,12 +31,11 @@ export default defineConfig({
     // (tests/visual/fixtures/session.ts), which is what keeps captures stable.
     trace: "on-first-retry",
   },
-  expect: {
-    toHaveScreenshot: {
-      // Small ratio absorbs sub-pixel font rendering differences while still catching real color changes
-      maxDiffPixelRatio: 0.02,
-    },
-  },
+  // No global screenshot threshold. A single ratio was wrong at both ends: 2%
+  // let a relabelled menu item pass on a small capture and a whole table
+  // column pass on a tall page. Each capture takes an absolute maxDiffPixels
+  // sized to what it covers, from tests/visual/fixtures/capture.ts (or, for the
+  // chrome canaries, from chrome-canary.spec.ts).
   projects: [
     // Transforms every React.lazy page module before the two viewport projects
     // start, so neither of them pays a cold Vite transform mid-navigation.

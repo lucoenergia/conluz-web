@@ -218,8 +218,8 @@ test.describe("Visual baselines", () => {
     await viviendaAInput.fill("13,00");
 
     // Asserted explicitly, not left to the screenshot: a ~30x30 px icon button
-    // is well inside the 0.02 maxDiffPixelRatio on a full-page capture, so the
-    // image alone would not prove the control rendered.
+    // was well inside the former global 0.02 maxDiffPixelRatio, and an image
+    // alone never proves a control rendered.
     //
     // Exactly one, on each viewport. Both renderers are always in the DOM, but
     // the hidden one is display:none and so outside the accessibility tree that

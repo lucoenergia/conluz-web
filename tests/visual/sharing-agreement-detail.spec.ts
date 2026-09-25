@@ -116,8 +116,8 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("button", { name: "Sin aplicar" })).toBeVisible();
 
     // Asserted rather than left to the pixels: on a tall desktop fullPage shot
-    // a whole extra column diffs below maxDiffPixelRatio (0.02), so this
-    // baseline passed unchanged even though the column was there. The text
+    // a whole extra column diffed below the former global maxDiffPixelRatio
+    // (0.02), so this baseline passed unchanged with the column there. The text
     // assertion is what actually holds the column present on both viewports.
     await expectCurrentCoefficientShown(page, testInfo);
 

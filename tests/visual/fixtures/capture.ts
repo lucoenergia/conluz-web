@@ -33,11 +33,39 @@ async function hiddenAppBarStyle(page: Page): Promise<string> {
 }
 
 /**
+ * Differing pixels a baseline tolerates, by what the capture covers. There is
+ * no global value (playwright.config.ts sets none): every capture takes its
+ * threshold from here, or states its own (the chrome canaries).
+ *
+ * Absolute, not a ratio. A regression has an absolute size: a changed short
+ * label measured 175 px, the header wordmark 316 px. A ratio scales with the
+ * capture instead. The old global 2% allowed 253 px on the two-item Acciones
+ * menu (198×64), more than a relabelled item, and 57,920 px on the published
+ * agreement detail page (1164×2488), enough for a whole table column. Noise
+ * between two identical clean runs of the suite is 0 px (tolerance 0, the
+ * suite's per-pixel colour threshold of 0.2), so a threshold only has to sit
+ * below the smallest regression worth catching.
+ *
+ * - COMPONENT: dialogs, menus, drawer, panels, sections, bars, header. The
+ *   smallest capture is the Acciones menu; a single relabelled item (~175 px)
+ *   must fail.
+ * - LAYOUT: main-region and full-page layout captures (the largest is 1164×2488).
+ *   The concern is the same fixed-size regression (a label, a missing control,
+ *   an extra column) at any page height, so the value does not grow with the
+ *   capture.
+ * Both are 100: 43% below the smallest measured signal, with 100 px left for
+ * rendering differences between environments (checked by CI). Choosing a value
+ * for a new capture, and how to measure it: CLAUDE.md, "Screenshot thresholds".
+ */
+export const COMPONENT_MAX_DIFF_PIXELS = 100;
+export const LAYOUT_MAX_DIFF_PIXELS = 100;
+
+/**
  * Screenshot options for a region (component) capture: the app bar is hidden.
  *   await expect(page.getByRole("menu")).toHaveScreenshot("x.png", await hideAppBar(page));
  */
 export async function hideAppBar(page: Page): Promise<PageAssertionsToHaveScreenshotOptions> {
-  return { stylePath: await hiddenAppBarStyle(page) };
+  return { stylePath: await hiddenAppBarStyle(page), maxDiffPixels: COMPONENT_MAX_DIFF_PIXELS };
 }
 
 /**
@@ -68,5 +96,11 @@ export async function mainRegion(
     const rect = main.getBoundingClientRect();
     return { x: rect.x + window.scrollX, y: rect.y + window.scrollY, width: rect.width, height: rect.height };
   });
-  return { fullPage: true, clip, stylePath: await hiddenAppBarStyle(page), ...(masks.length > 0 ? { mask: masks } : {}) };
+  return {
+    fullPage: true,
+    clip,
+    stylePath: await hiddenAppBarStyle(page),
+    maxDiffPixels: LAYOUT_MAX_DIFF_PIXELS,
+    ...(masks.length > 0 ? { mask: masks } : {}),
+  };
 }
