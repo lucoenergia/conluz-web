@@ -13,6 +13,14 @@ export default defineConfig({
   // one file run by two projects, and matches the default on a 4-core CI runner.
   workers: 2,
   retries: 0,
+  // Never write a baseline implicitly. Playwright's default ("missing") writes a
+  // PNG for any screenshot name that has none, even on a plain run. So adding a
+  // test silently created its baseline, and the rule that agents never update
+  // baselines depended on discipline alone. With "none", an explicit CLI flag
+  // (e.g. `npm run test:visual -- --update-snapshots=changed`, the maintainer's
+  // regeneration path) is the only way a baseline is ever written. That is what
+  // makes the rule enforceable.
+  updateSnapshots: "none",
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: "http://localhost:3001",
