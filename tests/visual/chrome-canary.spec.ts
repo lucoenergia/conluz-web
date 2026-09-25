@@ -21,6 +21,7 @@ import {
   mockSharingAgreementsPlantRoutes,
   seedActiveCommunity,
   stabilizePage,
+  threshold,
 } from "./fixtures";
 
 /**
@@ -39,7 +40,7 @@ import {
  * 100 sits 43% below the smallest signal and leaves 100 px for rendering
  * differences between environments, which is unmeasured locally (CI decides).
  */
-const CANARY_MAX_DIFF_PIXELS = 100;
+const CANARY_MAX_DIFF_PIXELS = threshold(100);
 
 async function openProductionAsCommunityAdmin(page: Page) {
   await injectAuthToken(page);

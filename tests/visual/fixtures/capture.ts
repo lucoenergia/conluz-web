@@ -33,6 +33,19 @@ async function hiddenAppBarStyle(page: Page): Promise<string> {
 }
 
 /**
+ * A capture's pixel threshold, or 0 when VISUAL_EXACT=1.
+ *
+ * Measuring noise and signal (how thresholds are chosen, see CLAUDE.md)
+ * needs every capture compared exactly. Per-call thresholds take precedence
+ * over anything the config sets, so the switch has to live where the values
+ * do. With the config's updateSnapshots: "none", the measurement is just:
+ *   VISUAL_EXACT=1 npx playwright test --reporter=json
+ */
+export function threshold(maxDiffPixels: number): number {
+  return process.env.VISUAL_EXACT === "1" ? 0 : maxDiffPixels;
+}
+
+/**
  * Differing pixels a baseline tolerates, by what the capture covers. There is
  * no global value (playwright.config.ts sets none): every capture takes its
  * threshold from here, or states its own (the chrome canaries).
@@ -57,8 +70,8 @@ async function hiddenAppBarStyle(page: Page): Promise<string> {
  * rendering differences between environments (checked by CI). Choosing a value
  * for a new capture, and how to measure it: CLAUDE.md, "Screenshot thresholds".
  */
-export const COMPONENT_MAX_DIFF_PIXELS = 100;
-export const LAYOUT_MAX_DIFF_PIXELS = 100;
+export const COMPONENT_MAX_DIFF_PIXELS = threshold(100);
+export const LAYOUT_MAX_DIFF_PIXELS = threshold(100);
 
 /**
  * Screenshot options for a region (component) capture: the app bar is hidden.
