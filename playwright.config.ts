@@ -6,6 +6,12 @@ export default defineConfig({
   // {projectName} separates mobile and desktop baselines; {arg} is the screenshot name passed to toHaveScreenshot()
   snapshotPathTemplate: "{snapshotDir}/{projectName}/{arg}{ext}",
   fullyParallel: false,
+  // With fullyParallel off, Playwright parallelises across spec files, one
+  // worker per file × project. The suite is split into several area specs, so
+  // the default (half the cores) would run many of them at once against the
+  // single Vite dev server. Two workers keeps the concurrency the suite had as
+  // one file run by two projects, and matches the default on a 4-core CI runner.
+  workers: 2,
   retries: 0,
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
