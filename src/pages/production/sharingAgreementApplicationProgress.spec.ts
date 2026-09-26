@@ -19,7 +19,7 @@ describe("summarizeApplicationProgress", () => {
       buildCoefficient({ coefficientId: "c5", applicationState: PENDING, endState: PENDING_SUCCESSION }),
     ];
 
-    expect(summarizeApplicationProgress(coefficients)).toMatchObject({ appliedCount: 3, total: 5 });
+    expect(summarizeApplicationProgress(coefficients)).toMatchObject({ appliedCount: 3, total: 5, isComplete: false });
   });
 
   it("counts none applied when every row is pending", () => {
@@ -28,7 +28,17 @@ describe("summarizeApplicationProgress", () => {
       buildCoefficient({ coefficientId: "c2", applicationState: PENDING }),
     ];
 
-    expect(summarizeApplicationProgress(coefficients)).toMatchObject({ appliedCount: 0, total: 2 });
+    expect(summarizeApplicationProgress(coefficients)).toMatchObject({ appliedCount: 0, total: 2, isComplete: false });
+  });
+
+  it("is complete when every row is APPLIED, closed and derived rows included", () => {
+    const coefficients = [
+      buildCoefficient({ coefficientId: "c1", applicationState: APPLIED, endState: OPEN }),
+      buildCoefficient({ coefficientId: "c2", applicationState: APPLIED, endState: CLOSED }),
+      buildCoefficient({ coefficientId: "c3", applicationState: APPLIED, endState: DERIVED }),
+    ];
+
+    expect(summarizeApplicationProgress(coefficients)).toEqual({ appliedCount: 3, total: 3, isComplete: true });
   });
 
   it("reports an empty set as zero of zero", () => {

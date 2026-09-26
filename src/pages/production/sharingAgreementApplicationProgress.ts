@@ -5,6 +5,8 @@ export interface ApplicationProgress {
   /** Rows with an application date, whatever their endState — a closed row was applied too. */
   appliedCount: number;
   total: number;
+  /** Every row has an application date — there is no progress left to report. */
+  isComplete: boolean;
 }
 
 /**
@@ -19,5 +21,6 @@ export function summarizeApplicationProgress(
     (coefficient) =>
       coefficient.applicationState === SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
   ).length;
-  return { appliedCount, total: coefficients.length };
+  const total = coefficients.length;
+  return { appliedCount, total, isComplete: appliedCount === total };
 }
