@@ -4,6 +4,8 @@ import { sxStyles } from "../../theme/sx";
 import { SectionHeading } from "../SectionHeading";
 import { CoefficientHistory } from "../CoefficientHistory";
 import { useActiveCommunity } from "../../context/community.context";
+// Agreement links still gate on role.
+// eslint-disable-next-line no-restricted-imports -- moves onto the plant's canListSharingAgreements in epic PR 6
 import { useActiveCommunityRole } from "../../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../../api/models";
 // eslint no-restricted-imports allowlist (see eslint.config.js): the response is
@@ -50,6 +52,7 @@ export const SupplyCoefficientHistorySection: FC<SupplyCoefficientHistorySection
    * Safe as a single boolean only because the periods above are already
    * community-scoped.
    */
+  // eslint-disable-next-line no-restricted-syntax -- same migration, epic PR 6.
   const showAgreementLinks = role === CommunityRole.COMMUNITY_ADMIN;
 
   return (
