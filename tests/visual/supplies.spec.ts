@@ -92,8 +92,9 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-owner.png", await hideAppBar(page));
 
-    // Same periods, but the agreement route is CommunityAdminRoute-guarded, so
-    // an owner is shown names rather than links that would redirect them.
+    // Same periods, but the agreement route requires the plant's
+    // canListSharingAgreements, so an owner is shown names rather than links
+    // that would redirect them.
     await expect(page.getByText("Reparto vecinos bloque A")).toBeVisible();
     await expect(page.getByRole("link", { name: "Reparto vecinos bloque A" })).toHaveCount(0);
   });

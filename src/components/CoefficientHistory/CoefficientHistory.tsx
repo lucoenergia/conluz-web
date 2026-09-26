@@ -22,8 +22,8 @@ export interface CoefficientHistoryProps {
   /**
    * Whether agreement names become links. A plain boolean is safe only because
    * callers never pass periods from outside the selected community -- the
-   * agreement route is CommunityAdminRoute-guarded, so a link to another
-   * community's agreement would redirect or 404.
+   * agreement route is guarded on the plant's canListSharingAgreements, so a
+   * link to another community's agreement would redirect or 404.
    */
   showAgreementLinks?: boolean;
   /**

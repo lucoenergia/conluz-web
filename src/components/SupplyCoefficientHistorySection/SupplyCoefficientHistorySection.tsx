@@ -43,10 +43,12 @@ export const SupplyCoefficientHistorySection: FC<SupplyCoefficientHistorySection
   const periods = selectPeriodsInCommunity(data, activeCommunityId);
 
   /**
-   * Links point at /production/{plantId}/sharing-agreements/{id}, which is
-   * behind CommunityAdminRoute -- so this mirrors that guard exactly rather
-   * than adding isPlatformAdmin, which the guard ignores. Safe as a single
-   * boolean only because the periods above are already community-scoped.
+   * Links point at /production/{plantId}/sharing-agreements/{id}, which now
+   * requires the plant's canListSharingAgreements. This role check is the old
+   * approximation of that, left in place until this screen moves onto the
+   * capability; a link shown here that the guard then refuses would redirect.
+   * Safe as a single boolean only because the periods above are already
+   * community-scoped.
    */
   const showAgreementLinks = role === CommunityRole.COMMUNITY_ADMIN;
 

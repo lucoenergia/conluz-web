@@ -16,8 +16,8 @@ import {
 
 test.describe("Visual baselines", () => {
   // Platform-admin fixture tests: /platform (welcome) and /users (users management).
-  // PlatformAdminRoute reads isPlatformAdmin directly from loggedUser (no async
-  // community selection needed), so direct page.goto() works reliably.
+  // Platform capabilities come off the current user, with no community
+  // selection to wait for, so a direct page.goto() has always worked here.
 
   // Platform dashboard — populated. A richer communities fixture (registered
   // AFTER mockAllApiRoutes so it is consulted first) exercises every KPI, the

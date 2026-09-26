@@ -24,12 +24,12 @@
  * Role fixture mapping:
  *   FIXED_MEMBER_USER          → home, supply-points, supply-detail, supply modals
  *   FIXED_COMMUNITY_ADMIN_USER → sharing-agreements list (populated/empty/filtered). /members
- *                                itself is still not Playwright-tested via direct navigation
- *                                because CommunityAdminRoute defers community selection to a
- *                                useEffect that fires after the first render, causing a redirect
- *                                to / before the guard re-evaluates on a cold page.goto(). The
- *                                sharing-agreements specs route around the same limitation
- *                                by navigating from an unguarded page (/production) and clicking
+ *                                itself is still not Playwright-tested via direct navigation.
+ *                                That was once forced: the old guard redirected on a cold
+ *                                page.goto() before the community context's effect had resolved.
+ *                                CapabilityRoute now waits for that answer, so a deep link
+ *                                reaches the page. The sharing-agreements specs still navigate
+ *                                from an unguarded page (/production) and click
  *                                through via the app's own Link — by the time that client-side
  *                                navigation happens, the community-resolution effect has already
  *                                settled, so the guard passes. /members itself is still covered by

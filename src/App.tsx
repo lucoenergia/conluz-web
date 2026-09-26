@@ -3,9 +3,7 @@ import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
 import { LoginLayout } from "./layouts/login.layout";
 import { DynamicLayout } from "./layouts/dynamic.layout";
-import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
-import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
-import { CommunityOrPlatformAdminRoute } from "./components/Auth/CommunityOrPlatformAdminRoute";
+import { CapabilityRoute } from "./components/Auth/CapabilityRoute";
 
 /**
  * Route-level code splitting.
@@ -88,11 +86,11 @@ function App() {
               <Route path="edit" element={<EditPlantPage />} />
               <Route
                 path="sharing-agreements"
-                element={<CommunityAdminRoute><SharingAgreementsPage /></CommunityAdminRoute>}
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementsPage /></CapabilityRoute>}
               />
               <Route
                 path="sharing-agreements/:sharingAgreementId"
-                element={<CommunityAdminRoute><SharingAgreementDetailPage /></CommunityAdminRoute>}
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementDetailPage /></CapabilityRoute>}
               />
             </Route>
           </Route>
@@ -100,34 +98,34 @@ function App() {
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route
             path="integrations"
-            element={<CommunityOrPlatformAdminRoute><IntegrationsPage /></CommunityOrPlatformAdminRoute>}
+            element={<CapabilityRoute require={{ scope: "community", capability: "canManage" }}><IntegrationsPage /></CapabilityRoute>}
           />
           <Route
             path="members"
-            element={<CommunityOrPlatformAdminRoute><MembersPage /></CommunityOrPlatformAdminRoute>}
+            element={<CapabilityRoute require={{ scope: "community", capability: "canManageMemberships" }}><MembersPage /></CapabilityRoute>}
           />
           <Route path="communities">
             <Route
               index
-              element={<PlatformAdminRoute><CommunitiesPage /></PlatformAdminRoute>}
+              element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><CommunitiesPage /></CapabilityRoute>}
             />
             <Route
               path="new"
-              element={<PlatformAdminRoute><CreateCommunityPage /></PlatformAdminRoute>}
+              element={<CapabilityRoute require={{ scope: "platform", capability: "canCreateCommunity" }}><CreateCommunityPage /></CapabilityRoute>}
             />
             <Route
               path=":communityId/edit"
-              element={<PlatformAdminRoute><EditCommunityPage /></PlatformAdminRoute>}
+              element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><EditCommunityPage /></CapabilityRoute>}
             />
           </Route>
           <Route
             path="platform"
-            element={<PlatformAdminRoute><PlatformPage /></PlatformAdminRoute>}
+            element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><PlatformPage /></CapabilityRoute>}
           />
           <Route path="users">
-            <Route index element={<PlatformAdminRoute><UsersPage /></PlatformAdminRoute>} />
-            <Route path="new" element={<PlatformAdminRoute><CreateUserPage /></PlatformAdminRoute>} />
-            <Route path=":userId/edit" element={<PlatformAdminRoute><EditUserPage /></PlatformAdminRoute>} />
+            <Route index element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><UsersPage /></CapabilityRoute>} />
+            <Route path="new" element={<CapabilityRoute require={{ scope: "platform", capability: "canCreateUsers" }}><CreateUserPage /></CapabilityRoute>} />
+            <Route path=":userId/edit" element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><EditUserPage /></CapabilityRoute>} />
           </Route>
           <Route path="no-community" element={<NoCommunityPage />} />
         </Route>

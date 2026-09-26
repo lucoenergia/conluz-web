@@ -101,7 +101,7 @@ describe("SupplyCoefficientHistorySection", () => {
     expect(screen.getByText("Reparto 2024")).toBeInTheDocument();
   });
 
-  it("does not link for a platform admin either, since CommunityAdminRoute ignores that flag", () => {
+  it("does not link for a platform admin either, since the platform flag grants no community access", () => {
     activeRole = null;
     renderSection();
 
