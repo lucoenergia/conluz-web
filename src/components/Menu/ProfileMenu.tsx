@@ -7,9 +7,8 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { MenuTemplate } from "./MenuTemplate";
 import { colors, fontSizes } from "../../theme/tokens";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../../hooks/permissions/useActiveCommunityRole";
+import { useActiveCommunityRoleLabel } from "../../hooks/permissions";
 import { useLogout } from "../../hooks/useLogout";
-import { CommunityRole } from "../../api/models";
 
 interface ProfileMenuProps {
   username: string;
@@ -18,16 +17,7 @@ interface ProfileMenuProps {
 export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const logout = useLogout();
-  const isPlatformAdmin = useIsPlatformAdmin();
-  const communityRole = useActiveCommunityRole();
-
-  const roleLabel = isPlatformAdmin
-    ? "Administrador de plataforma"
-    : communityRole === CommunityRole.COMMUNITY_ADMIN
-    ? "Administrador de comunidad"
-    : communityRole === CommunityRole.COMMUNITY_MEMBER
-    ? "Miembro"
-    : "";
+  const roleLabel = useActiveCommunityRoleLabel();
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);

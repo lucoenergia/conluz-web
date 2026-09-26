@@ -1,31 +1,14 @@
 import type { FC, ReactNode } from "react";
 import { Navigate, useParams } from "react-router";
-import type {
-  CommunityCapabilitiesResponse,
-  PlantCapabilitiesResponse,
-  PlatformCapabilitiesResponse,
-} from "../../api/models";
 import {
   useActiveCommunityCapabilities,
   usePlantCapabilities,
   usePlatformCapabilities,
 } from "../../hooks/permissions";
 import { CapabilityLoadError } from "./CapabilityLoadError";
+import type { CapabilityRequirement } from "../../hooks/permissions";
 
-/**
- * Which capability a route requires.
- *
- * A closed union rather than a callback: a guard that could run arbitrary code
- * would become a way to fetch anything at route level, and the point of this
- * module is that route access is decided in one readable place. The capability
- * name is a key of the generated type for its scope, so a typo -- or a real
- * capability borrowed from the wrong resource -- does not compile.
- */
-export type CapabilityRequirement =
-  | { scope: "platform"; capability: keyof PlatformCapabilitiesResponse }
-  | { scope: "community"; capability: keyof CommunityCapabilitiesResponse }
-  /** Reads `:plantId` from the route. */
-  | { scope: "plant"; capability: keyof PlantCapabilitiesResponse };
+export type { CapabilityRequirement };
 
 interface CapabilityRouteProps {
   require: CapabilityRequirement;

@@ -4,15 +4,26 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { SideMenu } from "./SideMenu";
 import { CONTACT_ITEM, MENU_SECTIONS, type MenuSection } from "../../utils/constants";
+import { selectVisibleSections } from "../../utils/menuVisibility";
+import type { MenuRequirement } from "../../hooks/permissions";
 
-function filterSections(hasActiveCommunity: boolean, isCommunityAdmin: boolean, isPlatformAdmin: boolean): MenuSection[] {
-  return MENU_SECTIONS.filter((section) => {
-    if (section.visibility === "operational") return hasActiveCommunity;
-    if (section.visibility === "communityAdmin") return isCommunityAdmin;
-    if (section.visibility === "platformAdmin") return isPlatformAdmin;
-    return false;
-  });
+/**
+ * Visibility is exercised through the production rule, not a copy of it. The
+ * earlier version of this spec reimplemented the layout's filter, so the menu
+ * and the test could drift apart while both stayed green.
+ *
+ * A run is described by the capabilities the backend grants; anything not
+ * listed is refused, which is what the app does with an unknown capability.
+ */
+function menuFor(granted: string[]): MenuSection[] {
+  const isAllowed = (requirement: MenuRequirement) =>
+    requirement.scope === "always" || granted.includes(requirement.capability);
+  return selectVisibleSections(MENU_SECTIONS, isAllowed);
 }
+
+const MEMBER = ["canRead"];
+const COMMUNITY_ADMIN = ["canRead", "canManage", "canManageMemberships"];
+const PLATFORM_ADMIN = ["canAdministerPlatform", "canListUsers"];
 
 function setup(sections: MenuSection[]) {
   render(
@@ -22,76 +33,97 @@ function setup(sections: MenuSection[]) {
   );
 }
 
-describe("SideMenu role-aware section visibility", () => {
-  test("regular member with active community sees only operational items", () => {
-    setup(filterSections(true, false, false));
-    expect(screen.getByText("Inicio")).toBeInTheDocument();
-    expect(screen.getByText("Producción")).toBeInTheDocument();
-    expect(screen.getByText("Consumo")).toBeInTheDocument();
-    expect(screen.queryByText("Miembros")).not.toBeInTheDocument();
-    expect(screen.queryByText("Integraciones")).not.toBeInTheDocument();
-    expect(screen.queryByText("Comunidades")).not.toBeInTheDocument();
-    expect(screen.queryByText("Usuarios")).not.toBeInTheDocument();
+const shows = (label: string) => expect(screen.getByText(label)).toBeInTheDocument();
+const hides = (label: string) => expect(screen.queryByText(label)).not.toBeInTheDocument();
+
+describe("SideMenu visibility", () => {
+  test("a member of a community sees the operational entries and nothing else", () => {
+    setup(menuFor(MEMBER));
+    shows("Inicio");
+    shows("Producción");
+    shows("Consumo");
+    hides("Miembros");
+    hides("Integraciones");
+    hides("Comunidades");
+    hides("Usuarios");
   });
 
-  test("community admin sees operational + community-management items, not platform items", () => {
-    setup(filterSections(true, true, false));
-    expect(screen.getByText("Inicio")).toBeInTheDocument();
-    expect(screen.getByText("Consumo")).toBeInTheDocument();
-    expect(screen.getByText("Miembros")).toBeInTheDocument();
-    expect(screen.getByText("Integraciones")).toBeInTheDocument();
-    expect(screen.queryByText("Comunidades")).not.toBeInTheDocument();
-    expect(screen.queryByText("Usuarios")).not.toBeInTheDocument();
+  test("a community admin also sees the community-management entries, but no platform ones", () => {
+    setup(menuFor(COMMUNITY_ADMIN));
+    shows("Inicio");
+    shows("Miembros");
+    shows("Integraciones");
+    hides("Comunidades");
+    hides("Usuarios");
   });
 
-  test("platform admin without active community sees only platform-admin items", () => {
-    setup(filterSections(false, false, true));
-    expect(screen.queryByText("Inicio")).not.toBeInTheDocument();
-    expect(screen.queryByText("Miembros")).not.toBeInTheDocument();
-    expect(screen.getByText("Comunidades")).toBeInTheDocument();
-    expect(screen.getByText("Usuarios")).toBeInTheDocument();
+  // The golden rule, as a test: the platform flag grants nothing inside a
+  // community, so an admin with no membership gets no operational entries.
+  test("a platform admin with no membership sees only the platform entries", () => {
+    setup(menuFor(PLATFORM_ADMIN));
+    shows("Comunidades");
+    shows("Usuarios");
+    hides("Inicio");
+    hides("Miembros");
+    hides("Integraciones");
   });
 
-  test("platform admin who is also a community member sees all sections", () => {
-    setup(filterSections(true, true, true));
-    expect(screen.getByText("Inicio")).toBeInTheDocument();
-    expect(screen.getByText("Miembros")).toBeInTheDocument();
-    expect(screen.getByText("Comunidades")).toBeInTheDocument();
-    expect(screen.getByText("Usuarios")).toBeInTheDocument();
+  test("a platform admin who also belongs to a community sees both", () => {
+    setup(menuFor([...COMMUNITY_ADMIN, ...PLATFORM_ADMIN]));
+    shows("Inicio");
+    shows("Miembros");
+    shows("Comunidades");
   });
 
-  test("Contacto is always visible regardless of role", () => {
-    setup(filterSections(false, false, false));
-    expect(screen.getByText("Contacto")).toBeInTheDocument();
+  // The drift this epic fixes. Reaching /integrations needs the community's
+  // canManage, so a platform admin who does not administer this community must
+  // not be offered it -- the backend refuses every call that page makes.
+  test("a platform admin without community-admin rights is not offered Integraciones or Miembros", () => {
+    setup(menuFor([...PLATFORM_ADMIN, "canRead"]));
+    shows("Inicio");
+    shows("Comunidades");
+    hides("Integraciones");
+    hides("Miembros");
+  });
 
-    setup(filterSections(true, true, true));
-    expect(screen.getAllByText("Contacto")).toHaveLength(2);
+  // The two sit in one section but are not one decision.
+  test("granting only canManageMemberships offers Miembros without Integraciones", () => {
+    setup(menuFor(["canRead", "canManageMemberships"]));
+    shows("Miembros");
+    hides("Integraciones");
+  });
+
+  test("a section with nothing visible in it does not appear as an empty heading", () => {
+    setup(menuFor(MEMBER));
+    hides("Gestión de comunidad");
+    hides("Administración de plataforma");
+  });
+
+  test("Contacto is always offered", () => {
+    setup(menuFor([]));
+    shows("Contacto");
   });
 
   test("Socios is never in the menu", () => {
-    setup(filterSections(true, true, true));
-    expect(screen.queryByText("Socios")).not.toBeInTheDocument();
+    setup(menuFor([...COMMUNITY_ADMIN, ...PLATFORM_ADMIN]));
+    hides("Socios");
   });
 
-  test("community switch updates section visibility: admin of A, member of B → only operational when B is active", () => {
-    const adminSections = filterSections(true, true, false);
-    const memberSections = filterSections(true, false, false);
-
+  // Admin of A, member of B: switching drops the entries A allowed.
+  test("switching to a community the user does not administer drops its entries", () => {
     const { rerender } = render(
       <MemoryRouter>
-        <SideMenu isMenuOpened sections={adminSections} contactItem={CONTACT_ITEM} onMenuClose={() => {}} />
+        <SideMenu isMenuOpened sections={menuFor(COMMUNITY_ADMIN)} contactItem={CONTACT_ITEM} onMenuClose={() => {}} />
       </MemoryRouter>,
     );
-
-    expect(screen.getByText("Miembros")).toBeInTheDocument();
+    shows("Miembros");
 
     rerender(
       <MemoryRouter>
-        <SideMenu isMenuOpened sections={memberSections} contactItem={CONTACT_ITEM} onMenuClose={() => {}} />
+        <SideMenu isMenuOpened sections={menuFor(MEMBER)} contactItem={CONTACT_ITEM} onMenuClose={() => {}} />
       </MemoryRouter>,
     );
-
-    expect(screen.queryByText("Miembros")).not.toBeInTheDocument();
-    expect(screen.getByText("Inicio")).toBeInTheDocument();
+    hides("Miembros");
+    shows("Inicio");
   });
 });
