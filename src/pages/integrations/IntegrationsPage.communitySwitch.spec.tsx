@@ -32,14 +32,14 @@ vi.mock(import("../../api/consumption/consumption"), () => ({
   useGetDatadisConfig: vi.fn(),
   useConfigureDatadis: vi.fn(),
   useConfigureShelly: vi.fn(),
-  getGetDatadisConfigQueryKey: (communityId: string) => [`/api/v1/communities/${communityId}/config/datadis`] as const,
-  getGetShellyConfigQueryKey: (communityId: string) => [`/api/v1/communities/${communityId}/config/shelly`] as const,
+  getGetDatadisConfigQueryKey: (communityId?: string) => [`/api/v1/communities/${communityId}/config/datadis`] as const,
+  getGetShellyConfigQueryKey: (communityId?: string) => [`/api/v1/communities/${communityId}/config/shelly`] as const,
 }));
 
 vi.mock(import("../../api/production/production"), () => ({
   useGetHuaweiConfig: vi.fn(),
   useConfigureHuawei: vi.fn(),
-  getGetHuaweiConfigQueryKey: (plantId: string) => [`/api/v1/plants/${plantId}/production/huawei/config`] as const,
+  getGetHuaweiConfigQueryKey: (plantId?: string) => [`/api/v1/plants/${plantId}/production/huawei/config`] as const,
 }));
 
 import { IntegrationsPage } from "./IntegrationsPage";

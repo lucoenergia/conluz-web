@@ -78,7 +78,7 @@ vi.mock(import("../../api/memberships/memberships"), () => ({
   useCreateMembership: vi.fn(),
   useDeleteMembership: vi.fn(),
   useUpdateMembershipRole: vi.fn(),
-  getGetMembershipsQueryKey: (id: string) => [`/api/v1/communities/${id}/memberships`] as const,
+  getGetMembershipsQueryKey: (id?: string) => [`/api/v1/communities/${id}/memberships`] as const,
 }));
 
 vi.mock(import("../../api/users/users"), () => ({
