@@ -17,8 +17,8 @@ assumptions still lingering in fixtures, comments, or your own priors.
 ## Read the real code first
 
 - `src/context/community.context.tsx` — active-community context/provider.
-- `src/hooks/useActiveCommunityRole.ts` — derives the role in the active community.
-- `src/components/Auth/PlatformAdminRoute.tsx`, `CommunityAdminRoute.tsx` — route guards.
+- `src/hooks/permissions/` — capability hooks, and the only place a role is read.
+- `src/components/Auth/CapabilityRoute.tsx` — the route guard.
 - `src/components/CommunitySelector/`, `CommunityStatusChip/`.
 - The generated hooks under `src/api/` (path-scoped by `communityId`).
 
@@ -29,7 +29,11 @@ There is **no global user `role`**. Authorization is two separate dimensions:
 1. `isPlatformAdmin: boolean` — platform privilege (manage users/communities, assign
    community admins).
 2. Role **within the active community** — `COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`,
-   read via `useActiveCommunityRole` from the `memberships` map.
+   held in the `memberships` map.
+
+Both are the *shape* of authorization, not how you read it: the backend answers
+what the caller may do, per resource, and the app asks it rather than deriving
+from either axis. See the gating recipe below.
 
 **Golden rule (mirror of the backend):** `isPlatformAdmin` never grants access to a
 community's operational data. A platform admin does not see members' consumption/
@@ -106,11 +110,35 @@ Only two ids both present and different count.
 Mutations are not restricted: they take an explicit id from a screen the keyed Outlet
 already resets.
 
-## Gating recipe
+## Gating recipe — capabilities, not roles
 
-- Route level: wrap with `PlatformAdminRoute` or `CommunityAdminRoute`.
-- Menu/profile/actions: derive visibility from `isPlatformAdmin` **and**
-  `useActiveCommunityRole`, never from a global role field (it no longer exists).
+Every response carries a `capabilities` object, and `GET /users/current` carries
+`platformCapabilities`. The app reads those and never re-derives a rule locally.
+
+- **`src/hooks/permissions/` is the only module allowed to read a role or the
+  platform-admin flag.** `no-restricted-imports` and `no-restricted-syntax` in
+  `eslint.config.js` enforce it, so reaching for `useActiveCommunityRole` or
+  `useIsPlatformAdmin` elsewhere fails the build.
+- **Route level:** one guard, `CapabilityRoute`, given the capability the page
+  needs — `{ scope: "platform" | "community" | "plant", capability }`. The
+  capability name is a key of the generated type, so a typo does not compile.
+- **Menu:** entries in `MENU_SECTIONS` carry the same requirement as the route
+  they lead to, which is what stops the menu offering pages the router refuses.
+- **Anything else:** `useActiveCommunityCapabilities`, `usePlatformCapabilities`,
+  `usePlantCapabilities`, and `<Can>` for conditional rendering.
+- **An answer has four states, not two.** `pending` waits, `allowed` renders,
+  `denied` redirects, and `error` means the check itself failed — that one shows
+  a retry. Never fold `error` into `denied`: a network blip would tell somebody
+  they lack access they actually have. A 403 or 404 *is* a denial, because the
+  API hides what the caller may not see.
+- **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
+  `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
+- **Three screens have not migrated yet** and carry a numbered `eslint-disable`:
+  `Home.tsx` (epic PR 5), `SupplyCoefficientHistorySection.tsx` (epic PR 6),
+  `UsersPage.tsx` (epic PR 8). Do not add a fourth.
+
+> Written as the capability foundation landed; the full rewrite of this skill
+> comes with the epic's final PR.
 
 ## Sharp edges
 
