@@ -859,7 +859,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel} data-testid="sharing-agreement-coefficient-set">
       {sectionHeading}
 
-      {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}
+      {isDraft && !isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} />}
 
       {/* Installed power is an agreement field and now sits in the header's
           identity tiles. While editing in kW it is working context, not
