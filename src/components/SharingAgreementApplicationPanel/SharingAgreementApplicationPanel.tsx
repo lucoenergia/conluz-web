@@ -5,7 +5,7 @@ import { sxStyles } from "../../theme/sx";
 import { colors, fontSizes, radii } from "../../theme/tokens";
 import { SectionHeading } from "../SectionHeading";
 import { pluralize } from "../../utils/pluralize";
-import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
+import { summarizeApplicationProgress } from "../../pages/production/sharingAgreementApplicationProgress";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
 /**
@@ -44,11 +44,7 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
   coefficients,
   isClosed = false,
 }) => {
-  const total = coefficients.length;
-  const applied = coefficients.filter(
-    (coefficient) =>
-      coefficient.applicationState === SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
-  ).length;
+  const { appliedCount: applied, total } = summarizeApplicationProgress(coefficients);
   const progress = total === 0 ? 0 : (applied / total) * 100;
   const hasPendingPoints = applied < total;
 
