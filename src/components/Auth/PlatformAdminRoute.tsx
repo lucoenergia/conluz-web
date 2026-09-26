@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from "react";
 import { Navigate } from "react-router";
-import { useIsPlatformAdmin } from "../../hooks/useActiveCommunityRole";
+import { useIsPlatformAdmin } from "../../hooks/permissions/useActiveCommunityRole";
 
 interface PlatformAdminRouteProps {
   children: ReactNode;

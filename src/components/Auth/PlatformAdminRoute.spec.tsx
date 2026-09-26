@@ -4,12 +4,12 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { PlatformAdminRoute } from "./PlatformAdminRoute";
 
-vi.mock("../../hooks/useActiveCommunityRole", () => ({
+vi.mock("../../hooks/permissions/useActiveCommunityRole", () => ({
   useActiveCommunityRole: vi.fn(),
   useIsPlatformAdmin: vi.fn(),
 }));
 
-import * as hooks from "../../hooks/useActiveCommunityRole";
+import * as hooks from "../../hooks/permissions/useActiveCommunityRole";
 
 function setup(isPlatformAdmin: boolean) {
   vi.mocked(hooks.useActiveCommunityRole).mockReturnValue(null);

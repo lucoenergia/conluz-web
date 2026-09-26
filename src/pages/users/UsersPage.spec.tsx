@@ -91,7 +91,7 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   useLoggedUser: () => buildCurrentUser({ id: LOGGED_USER_ID }),
 }));
 
-vi.mock(import("../../hooks/useActiveCommunityRole"), () => ({
+vi.mock(import("../../hooks/permissions/useActiveCommunityRole"), () => ({
   useIsPlatformAdmin: () => true,
 }));
 

@@ -17,7 +17,7 @@ import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
 import { SuccessProvider } from "../context/success.context";
 import { SuccessDisplay } from "../components/Success/SuccessDisplay";
 import { useActiveCommunity } from "../context/community.context";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../api/models";
 import { resolveLandingRoute } from "../utils/routes";
 import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";

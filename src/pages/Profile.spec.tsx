@@ -5,7 +5,7 @@ import { renderWithProviders } from "../test/renderWithProviders";
 import { mutation, query } from "../test/queryState";
 import { buildCurrentUser } from "../test/fixtures";
 import { useGetCurrentUser, useUpdateUser, type getCurrentUser } from "../api/users/users";
-import type { useActiveCommunityRole } from "../hooks/useActiveCommunityRole";
+import type { useActiveCommunityRole } from "../hooks/permissions/useActiveCommunityRole";
 
 const mockErrorDispatch = vi.fn();
 const mockUpdateMutate = vi.fn();
@@ -32,7 +32,7 @@ vi.mock(import("../context/error.context"), async (importOriginal) => ({
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock(import("../hooks/useActiveCommunityRole"), () => ({
+vi.mock(import("../hooks/permissions/useActiveCommunityRole"), () => ({
   useIsPlatformAdmin: () => mockIsPlatformAdmin,
   useActiveCommunityRole: () => mockActiveCommunityRole,
 }));

@@ -8,7 +8,7 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { useGetCurrentUser, useUpdateUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../api/models";
 
 export const ProfilePage: FC = () => {

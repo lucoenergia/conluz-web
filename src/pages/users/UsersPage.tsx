@@ -62,7 +62,7 @@ import { RevokePlatformAdminConfirmationModal } from "../../components/Modals/Re
 import { PlatformAdminSuccessModal } from "../../components/Modals/PlatformAdminSuccessModal";
 import { useErrorDispatch } from "../../context/error.context";
 import { useLoggedUser } from "../../context/logged-user.context";
-import { useIsPlatformAdmin } from "../../hooks/useActiveCommunityRole";
+import { useIsPlatformAdmin } from "../../hooks/permissions/useActiveCommunityRole";
 
 type OrderDirection = "asc" | "desc";
 type OrderBy = "fullName" | "personalId";

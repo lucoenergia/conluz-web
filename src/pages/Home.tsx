@@ -25,7 +25,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useLoggedUser } from "../context/logged-user.context";
 import { useActiveCommunity } from "../context/community.context";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../api/models";
 
 // TODO: Set monitorig data methods when endpoints are ready

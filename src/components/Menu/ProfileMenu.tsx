@@ -7,7 +7,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { MenuTemplate } from "./MenuTemplate";
 import { colors, fontSizes } from "../../theme/tokens";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../../hooks/useActiveCommunityRole";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../../hooks/permissions/useActiveCommunityRole";
 import { useLogout } from "../../hooks/useLogout";
 import { CommunityRole } from "../../api/models";
 

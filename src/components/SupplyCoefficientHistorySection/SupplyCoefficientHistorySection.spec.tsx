@@ -25,7 +25,7 @@ vi.mock(import("../../api/supplies/supplies"), () => ({
   useGetPartitionCoefficientHistory: vi.fn(),
 }));
 
-vi.mock(import("../../hooks/useActiveCommunityRole"), () => ({ useActiveCommunityRole: () => activeRole }));
+vi.mock(import("../../hooks/permissions/useActiveCommunityRole"), () => ({ useActiveCommunityRole: () => activeRole }));
 
 function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoefficientResponse {
   return {

@@ -5,12 +5,12 @@ import { MemoryRouter, Routes, Route } from "react-router";
 import { CommunityAdminRoute } from "./CommunityAdminRoute";
 import { CommunityRole } from "../../api/models";
 
-vi.mock("../../hooks/useActiveCommunityRole", () => ({
+vi.mock("../../hooks/permissions/useActiveCommunityRole", () => ({
   useActiveCommunityRole: vi.fn(),
   useIsPlatformAdmin: vi.fn(),
 }));
 
-import * as hooks from "../../hooks/useActiveCommunityRole";
+import * as hooks from "../../hooks/permissions/useActiveCommunityRole";
 
 function setup(role: string | null, isPlatformAdmin: boolean, path = "/protected") {
   vi.mocked(hooks.useActiveCommunityRole).mockReturnValue(role as CommunityRole | null);

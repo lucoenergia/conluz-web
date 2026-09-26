@@ -4,7 +4,7 @@ import { sxStyles } from "../../theme/sx";
 import { SectionHeading } from "../SectionHeading";
 import { CoefficientHistory } from "../CoefficientHistory";
 import { useActiveCommunity } from "../../context/community.context";
-import { useActiveCommunityRole } from "../../hooks/useActiveCommunityRole";
+import { useActiveCommunityRole } from "../../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../../api/models";
 // eslint no-restricted-imports allowlist (see eslint.config.js): the response is
 // scoped in this component by selectPeriodsInCommunity.

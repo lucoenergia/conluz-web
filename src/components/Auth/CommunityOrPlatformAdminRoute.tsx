@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from "react";
 import { Navigate } from "react-router";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../../hooks/useActiveCommunityRole";
+import { useActiveCommunityRole, useIsPlatformAdmin } from "../../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../../api/models";
 
 interface CommunityOrPlatformAdminRouteProps {
