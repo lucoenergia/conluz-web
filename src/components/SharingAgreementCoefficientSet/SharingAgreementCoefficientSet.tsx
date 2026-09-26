@@ -1137,6 +1137,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         onRemove={() => handleRemoveRow(row.supplyId)}
                         onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                         showStateColumns={showStateColumns}
+                        isDraft={isDraft}
                         showCurrentCoefficient={showCurrentCoefficient}
                       />
                     ))
@@ -1146,6 +1147,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         coefficient={coefficient}
                         installedPowerKw={installedPowerKw}
                         showStateColumns={showStateColumns}
+                        isDraft={isDraft}
                         showCurrentCoefficient={showCurrentCoefficient}
                         showSelectionColumn={showSelectionColumn}
                         selected={selectedIds.has(coefficient.coefficientId)}
@@ -1188,6 +1190,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     onRemove={() => handleRemoveRow(row.supplyId)}
                     onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                     showStateColumns={showStateColumns}
+                    isDraft={isDraft}
                     showCurrentCoefficient={showCurrentCoefficient}
                   />
                 ))
@@ -1197,6 +1200,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     coefficient={coefficient}
                     installedPowerKw={installedPowerKw}
                     showStateColumns={showStateColumns}
+                    isDraft={isDraft}
                     showCurrentCoefficient={showCurrentCoefficient}
                     showSelectionColumn={showSelectionColumn}
                     selected={selectedIds.has(coefficient.coefficientId)}
