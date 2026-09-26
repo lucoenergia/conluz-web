@@ -9,6 +9,17 @@ type CommunityProviderProps = { children: ReactNode };
 const ActiveCommunityContext = createContext<string | null>(null);
 const ActiveCommunityDispatchContext = createContext<Dispatch | null>(null);
 
+/**
+ * Whether the auto-select effect has run for the current user.
+ *
+ * `activeCommunityId` alone cannot answer that: null means both "not worked out
+ * yet" and "worked out, and there is none". Anything that decides on the active
+ * community -- a route guard, a capability lookup -- must be able to tell those
+ * apart, or it either bounces a legitimate user off a deep link before the
+ * effect runs, or waits forever for a community that is never coming.
+ */
+const ActiveCommunityResolvedContext = createContext<boolean>(false);
+
 const STORAGE_KEY_PREFIX = "activeCommunity";
 
 function storageKey(userId: string): string {
@@ -31,6 +42,10 @@ function readPersistedCommunity(userId: string): string | null {
 const CommunityProvider = ({ children }: CommunityProviderProps) => {
   const loggedUser = useLoggedUser();
   const [activeCommunityId, setActiveCommunityId] = useState<string | null>(null);
+  // Which user the selection below was worked out for. Keyed by user rather
+  // than a boolean so that logging in as somebody else reads as unresolved
+  // again until the effect has run for them.
+  const [resolvedForUserId, setResolvedForUserId] = useState<string | null>(null);
 
   const memberships: UserResponseMemberships = loggedUser?.memberships ?? {};
   const communityIds = Object.keys(memberships);
@@ -40,6 +55,7 @@ const CommunityProvider = ({ children }: CommunityProviderProps) => {
   useEffect(() => {
     if (!userId) {
       setActiveCommunityId(null);
+      setResolvedForUserId(null);
       return;
     }
 
@@ -59,6 +75,10 @@ const CommunityProvider = ({ children }: CommunityProviderProps) => {
     } else {
       setActiveCommunityId(null);
     }
+
+    // Every branch above has decided, including the ones that decided "none".
+    // Marked here rather than per branch so a branch added later cannot forget.
+    setResolvedForUserId(userId);
   }, [userId, communityIds.join(",")]);
 
   const dispatch: Dispatch = (communityId) => {
@@ -70,15 +90,27 @@ const CommunityProvider = ({ children }: CommunityProviderProps) => {
 
   return (
     <ActiveCommunityContext.Provider value={activeCommunityId}>
-      <ActiveCommunityDispatchContext.Provider value={dispatch}>
-        {children}
-      </ActiveCommunityDispatchContext.Provider>
+      <ActiveCommunityResolvedContext.Provider value={!!userId && resolvedForUserId === userId}>
+        <ActiveCommunityDispatchContext.Provider value={dispatch}>
+          {children}
+        </ActiveCommunityDispatchContext.Provider>
+      </ActiveCommunityResolvedContext.Provider>
     </ActiveCommunityContext.Provider>
   );
 };
 
 const useActiveCommunity = (): string | null => {
   return useContext<string | null>(ActiveCommunityContext);
+};
+
+/**
+ * True once the active community has been worked out for the logged-in user,
+ * including when the answer is "none" -- a platform admin with no memberships,
+ * or somebody with several who has not picked one. It must become true in those
+ * cases too, or a caller waiting on it would wait forever.
+ */
+const useIsActiveCommunityResolved = (): boolean => {
+  return useContext<boolean>(ActiveCommunityResolvedContext);
 };
 
 const useActiveCommunityDispatch = (): Dispatch => {
@@ -89,5 +121,14 @@ const useActiveCommunityDispatch = (): Dispatch => {
   return context;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
-export { CommunityProvider, useActiveCommunity, useActiveCommunityDispatch, ActiveCommunityContext };
+/* eslint-disable react-refresh/only-export-components -- the hooks and contexts
+   belong beside the provider that owns them; splitting them out to satisfy fast
+   refresh would scatter one concept across three files. */
+export {
+  CommunityProvider,
+  useActiveCommunity,
+  useIsActiveCommunityResolved,
+  useActiveCommunityDispatch,
+  ActiveCommunityContext,
+  ActiveCommunityResolvedContext,
+};
