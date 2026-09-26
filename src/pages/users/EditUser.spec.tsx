@@ -27,8 +27,8 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../../components/PartnerForm/PartnerForm", () => ({
-  PartnerForm: ({ handleSubmit, submitLabel, initialValues, mode }: {
+vi.mock("../../components/UserForm/UserForm", () => ({
+  UserForm: ({ handleSubmit, submitLabel, initialValues, mode }: {
     handleSubmit: (v: Record<string, unknown>) => void;
     submitLabel: string;
     initialValues?: Record<string, string | number | undefined>;
@@ -39,7 +39,7 @@ vi.mock("../../components/PartnerForm/PartnerForm", () => ({
       <span data-testid="form-initial-fullname">{initialValues?.fullName}</span>
       <span data-testid="form-initial-email">{initialValues?.email}</span>
       <button
-        data-testid="mock-partner-form"
+        data-testid="mock-user-form"
         onClick={() =>
           handleSubmit({
             fullName: initialValues?.fullName ?? "Updated Name",
@@ -119,7 +119,7 @@ describe("EditUserPage", () => {
     expect(screen.queryByText("Socios")).not.toBeInTheDocument();
   });
 
-  it("renders PartnerForm in edit mode with user initial values", () => {
+  it("renders UserForm in edit mode with user initial values", () => {
     setup();
 
     expect(screen.getByTestId("form-mode")).toHaveTextContent("edit");

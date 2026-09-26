@@ -64,8 +64,6 @@ test.describe("Visual baselines", () => {
   });
 
   test("users page", async ({ page }) => {
-    // Migrated from "partners page" — /partners was removed in Phase 5.1/5.2.
-    // The users management screen (/users) is the platform-admin equivalent.
     await injectAuthToken(page);
     await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
 

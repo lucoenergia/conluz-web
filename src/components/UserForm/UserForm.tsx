@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { colors, fontSizes } from "../../theme/tokens";
 
-export interface PartnerFormValues {
+export interface UserFormValues {
   fullName: string;
   personalId: string;
   email: string;
@@ -18,17 +18,17 @@ export interface PartnerFormValues {
   password?: string;
 }
 
-interface PartnerFormProps {
+interface UserFormProps {
   mode: "create" | "edit";
-  initialValues?: Partial<PartnerFormValues>;
-  handleSubmit: (values: PartnerFormValues) => void;
+  initialValues?: Partial<UserFormValues>;
+  handleSubmit: (values: UserFormValues) => void;
   isPending: boolean;
   submitLabel: string;
   disabled?: boolean;
 }
 
 
-export const PartnerForm: FC<PartnerFormProps> = ({
+export const UserForm: FC<UserFormProps> = ({
   mode,
   initialValues: {
     fullName: initialFullName = "",

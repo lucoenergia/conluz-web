@@ -6,14 +6,7 @@ import {
   Box,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
-  CircularProgress,
   Alert,
   Button,
   Avatar,
@@ -26,7 +19,6 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Menu,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -41,6 +33,7 @@ import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
+import { ListTable, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
@@ -275,111 +268,63 @@ export const MembersPage: FC = () => {
             />
 
             {!isNarrow && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: colors.background.surface }}>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Miembro
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Rol
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Estado
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Acciones
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <CircularProgress />
-                      </TableCell>
-                    </TableRow>
-                  ) : memberships.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <Typography variant="body1" color="text.secondary">
-                          No hay miembros en esta comunidad
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    memberships.map((membership) => (
-                      <TableRow
-                        key={membership.id}
+            <ListTable
+              rows={memberships}
+              getRowKey={(membership) => membership.id}
+              isLoading={isLoading}
+              emptyMessage="No hay miembros en esta comunidad"
+              rowActionsLabel={(membership) => `Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
+              onRowActionsClick={handleMenuOpen}
+              columns={[
+                {
+                  key: "member",
+                  header: "Miembro",
+                  render: (membership) => (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar
                         sx={{
-                          "&:hover": { backgroundColor: colors.background.surface },
-                          transition: "background-color 0.2s",
+                          width: 36,
+                          height: 36,
+                          bgcolor: theme.palette.primary.main,
+                          fontSize: fontSizes.md,
                         }}
                       >
-                        <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                            <Avatar
-                              sx={{
-                                width: 36,
-                                height: 36,
-                                bgcolor: theme.palette.primary.main,
-                                fontSize: fontSizes.md,
-                              }}
-                            >
-                              {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {membership.user?.fullName ?? "Miembro desconocido"}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                                {membership.user?.email ?? ""}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={membership.enabled ? "Activo" : "Inactivo"}
-                            color={membership.enabled ? "success" : "error"}
-                            size="small"
-                            sx={{ fontWeight: 600 }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
-                            onClick={(e) => handleMenuOpen(e, membership)}
-                            sx={{
-                              color: colors.text.subtle,
-                              // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token
-                              "&:hover": { backgroundColor: "#f3f4f6" },
-                            }}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                        {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {membership.user?.fullName ?? "Miembro desconocido"}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: colors.text.subtle }}>
+                          {membership.user?.email ?? ""}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ),
+                },
+                {
+                  key: "role",
+                  header: "Rol",
+                  render: (membership) => (
+                    <Typography variant="body2">
+                      {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Estado",
+                  render: (membership) => (
+                    <Chip
+                      label={membership.enabled ? "Activo" : "Inactivo"}
+                      color={membership.enabled ? "success" : "error"}
+                      size="small"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  ),
+                },
+              ]}
+            />
             )}
 
             {isNarrow && (
@@ -432,34 +377,7 @@ export const MembersPage: FC = () => {
         onImportComplete={invalidateAfterWrite}
       />
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          elevation: 0,
-          sx: {
-            overflow: "visible",
-            filter: shadows.menuFilter,
-            mt: 1.5,
-            minWidth: 200,
-            "&:before": {
-              content: '""',
-              display: "block",
-              position: "absolute",
-              top: 0,
-              right: 14,
-              width: 10,
-              height: 10,
-              bgcolor: "background.paper",
-              transform: "translateY(-50%) rotate(45deg)",
-              zIndex: 0,
-            },
-          },
-        }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-      >
+      <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
         <MenuItem
           onClick={() => {
             handleMenuClose();
@@ -489,7 +407,7 @@ export const MembersPage: FC = () => {
           </ListItemIcon>
           <ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText>
         </MenuItem>
-      </Menu>
+      </RowActionsMenu>
 
       {/* Change role dialog */}
       <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)} maxWidth="sm" fullWidth>

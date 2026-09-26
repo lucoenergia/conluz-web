@@ -7,7 +7,7 @@ import { type CreateUserBody } from "../../api/models";
 import { useCreateUser } from "../../api/users/users";
 import { useErrorDispatch } from "../../context/error.context";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { PartnerForm, type PartnerFormValues } from "../../components/PartnerForm/PartnerForm";
+import { UserForm, type UserFormValues } from "../../components/UserForm/UserForm";
 import PersonIcon from "@mui/icons-material/Person";
 
 export const CreateUserPage: FC = () => {
@@ -15,7 +15,7 @@ export const CreateUserPage: FC = () => {
   const errorDispatch = useErrorDispatch();
   const createUser = useCreateUser();
 
-  const handleSubmit = async ({ fullName, personalId, number, email, address, phoneNumber, password }: PartnerFormValues) => {
+  const handleSubmit = async ({ fullName, personalId, number, email, address, phoneNumber, password }: UserFormValues) => {
     try {
       const newUser: CreateUserBody = {
         fullName,
@@ -93,7 +93,7 @@ export const CreateUserPage: FC = () => {
 
       <Box sx={sxStyles.pageContainerFull}>
         <Paper elevation={0} sx={sxStyles.softPanel}>
-          <PartnerForm
+          <UserForm
             mode="create"
             handleSubmit={handleSubmit}
             isPending={createUser.isPending}

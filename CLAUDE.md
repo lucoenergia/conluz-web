@@ -164,14 +164,35 @@ When working with API endpoints:
 
 **All data tables must use a three-dot kebab menu for row actions.** Never place action buttons or interactive controls (selects, toggles) inline in table rows.
 
-Canonical reference: `src/pages/users/UsersPage.tsx`
+Build list tables with `ListTable` and `RowActionsMenu` from `src/components/ListTable`; do not copy a page's table markup. `ListTable` renders the header row, the loading and empty rows, row hover, and a trailing "Acciones" column whose kebab `IconButton` (`MoreVertIcon`, no visible label) calls `onRowActionsClick`. `RowActionsMenu` is the `<Menu>` that button opens, with the arrow styling and right anchoring. Real usage, from `src/pages/members/MembersPage.tsx`:
 
-**Required structure:**
-1. State: `anchorEl: HTMLElement | null` + `selectedItem` typed to the row's data model.
-2. Handlers: `handleMenuOpen(event, item)` / `handleMenuClose()`.
-3. Actions cell: a single `IconButton` with `MoreVertIcon`; no visible labels.
-4. `<Menu>` placed outside the table (after the Paper), with `PaperProps` arrow styling matching UsersPage.
-5. Destructive items (delete) go below a `<Divider>` with `color: "error.main"`.
+```tsx
+const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const [selectedMembership, setSelectedMembership] = useState<MembershipResponse | null>(null);
+const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, membership: MembershipResponse) => { /* set both */ };
+const handleMenuClose = () => setAnchorEl(null);
+
+<ListTable
+  rows={memberships}
+  getRowKey={(membership) => membership.id}
+  isLoading={isLoading}
+  emptyMessage="No hay miembros en esta comunidad"
+  rowActionsLabel={(membership) => `Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
+  onRowActionsClick={handleMenuOpen}
+  columns={[
+    { key: "role", header: "Rol", render: (membership) => <Typography variant="body2">{ROLE_LABELS[…]}</Typography> },
+    // header: a string gets the standard header style; a node (TableSortLabel, icon + ListTableHeaderText) renders as is
+  ]}
+/>
+
+<RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
+  <MenuItem onClick={handleChangeRoleClick}>…</MenuItem>
+  <Divider />
+  <MenuItem onClick={…}><ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText></MenuItem>
+</RowActionsMenu>
+```
+
+The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus`, the narrow-viewport `RecordList`, pagination (`UsersPage`), the menu items, and the menu state (`anchorEl` + the selected row). Destructive items (delete) go last, below a `<Divider>`, with `color: "error.main"`.
 
 **For actions that change server state** (role change, status toggle, etc.) the menu item must open a confirmation `<Dialog>` that:
 - Names the affected entity.

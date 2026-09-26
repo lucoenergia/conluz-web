@@ -36,14 +36,6 @@
  *                                unit tests only (ImportPartnersModal.spec.tsx, etc.).
  *   FIXED_PLATFORM_ADMIN_USER  → /platform (platform dashboard: populated + empty), /users (users page)
  *   FIXED_NO_COMMUNITY_USER    → /no-community (asserts the screen renders correctly)
- *
- * Partners page migration:
- *   /partners has been removed from the route table (Phase 5.1/5.2). The "partners page"
- *   test has been migrated to "users page" (/users, PlatformAdminRoute). The "import
- *   partners modal" test has been removed: ImportPartnersModal now lives in MembersPage
- *   (/members, CommunityAdminRoute). The CommunityAdminRoute timing issue described above
- *   makes reliable direct Playwright navigation to /members impossible without app-level
- *   changes. The modal itself is unit-tested in ImportPartnersModal.spec.tsx.
  */
 
 export * from "./capture";
