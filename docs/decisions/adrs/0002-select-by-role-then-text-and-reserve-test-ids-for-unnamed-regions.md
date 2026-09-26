@@ -66,6 +66,8 @@ A `data-testid` in `src/` is a statement: this container has no role and no name
 - The `modal-panel` interim test id must be removed when the dialog-role issue is fixed. Otherwise the interim becomes permanent.
 - Known pre-existing exceptions remain: `csv-file-input` and `drop-zone` in `ImportSuppliesModal.tsx` and `ImportPartnersModal.tsx`. They are on interactive elements and are grandfathered, not endorsed. `drop-zone` also marks a keyboard-access defect.
 
+  > **Implementation note (conluzweb-180):** both modals now render through `src/components/Modals/CsvImportModal.tsx`, which is where `csv-file-input` and `drop-zone` live. `ImportSuppliesModal.tsx` and `ImportPartnersModal.tsx` remain as thin adapters without test ids. The decision above is unchanged.
+
 ## Revisit if
 
 - A `data-testid` appears on an interactive element other than the two grandfathered ones. Check with `grep -rnE 'data-testid' src --include=*.tsx --exclude=*.spec.tsx`, then inspect each element that also has `onClick`, or is a `Button`, `IconButton`, `MenuItem`, `Link`, `input` or `TextField`.
