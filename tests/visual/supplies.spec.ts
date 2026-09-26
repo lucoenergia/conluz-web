@@ -10,6 +10,7 @@ import {
   FIXED_MEMBER_USER,
   FIXED_SUPPLY_COEFFICIENT_HISTORY,
   FIXED_SUPPLY_ID,
+  freezeClock,
   hideAppBar,
   injectAuthToken,
   mainRegion,
@@ -40,6 +41,8 @@ test.describe("Visual baselines", () => {
   });
 
   test("supply detail page", async ({ page }) => {
+    // The capture includes GraphFilter's date input, which defaults to today.
+    await freezeClock(page);
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);

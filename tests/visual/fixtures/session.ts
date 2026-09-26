@@ -27,6 +27,28 @@ export async function seedActiveCommunity(page: Page, userId: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper: freeze the clock
+//
+// GraphFilter defaults its date input to today, so any capture containing one
+// encodes the day it was taken and fails every day after. That is production
+// non-determinism no fixture can pin, and the masking policy says to make it
+// deterministic rather than mask it or widen the tolerance.
+//
+// The instant below is the date the affected baselines were generated on, so
+// freezing to it keeps them valid instead of requiring a regeneration -- and
+// keeps them valid tomorrow, which is the actual point. Midday, so a timezone
+// offset either way cannot roll the date over.
+//
+// Call this before page.goto in any spec whose capture shows a date.
+// ---------------------------------------------------------------------------
+
+export const FIXED_NOW = new Date("2026-09-25T12:00:00");
+
+export async function freezeClock(page: Page) {
+  await page.clock.setFixedTime(FIXED_NOW);
+}
+
+// ---------------------------------------------------------------------------
 // Helper: inject CSS to kill all animations, then wait for fonts + network
 // ---------------------------------------------------------------------------
 
