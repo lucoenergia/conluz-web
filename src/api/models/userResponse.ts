@@ -8,6 +8,7 @@
 import type { UserResponseAddress } from './userResponseAddress';
 import type { UserResponsePhoneNumber } from './userResponsePhoneNumber';
 import type { UserResponseMemberships } from './userResponseMemberships';
+import type { UserCapabilitiesResponse } from './userCapabilitiesResponse';
 
 export interface UserResponse {
   id: string;
@@ -19,5 +20,7 @@ export interface UserResponse {
   phoneNumber: UserResponsePhoneNumber;
   enabled: boolean;
   memberships: UserResponseMemberships;
+  /** What the caller may do with this user. */
+  capabilities: UserCapabilitiesResponse;
   isPlatformAdmin: boolean;
 }

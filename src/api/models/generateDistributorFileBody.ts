@@ -8,7 +8,7 @@
 
 export interface GenerateDistributorFileBody {
   /**
-   * Used only to build the generated filename ({regulatoryCode}_{year}.txt); the i-DE file content itself never encodes a year or period.
+   * Used only to build the generated filename ({regulatoryCode}_{year}.txt); the file content itself never encodes a year or period.
    * @minimum 2000
    * @maximum 2100
    */

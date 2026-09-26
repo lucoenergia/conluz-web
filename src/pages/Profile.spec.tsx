@@ -3,7 +3,7 @@ import { screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { mutation, query } from "../test/queryState";
-import { buildUser } from "../test/fixtures";
+import { buildCurrentUser } from "../test/fixtures";
 import { useGetCurrentUser, useUpdateUser, type getCurrentUser } from "../api/users/users";
 import type { useActiveCommunityRole } from "../hooks/useActiveCommunityRole";
 
@@ -12,7 +12,7 @@ const mockUpdateMutate = vi.fn();
 let mockIsPlatformAdmin = false;
 let mockActiveCommunityRole: ReturnType<typeof useActiveCommunityRole> = null;
 
-const mockCurrentUser = buildUser({
+const mockCurrentUser = buildCurrentUser({
   id: "u1",
   number: 7,
   fullName: "Ana García",

@@ -8,9 +8,9 @@ import { query } from "../test/queryState";
 import { useGetCurrentUser } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
 import { CommunityRole } from "../api/models";
-import { buildUser } from "../test/fixtures";
+import { buildCurrentUser } from "../test/fixtures";
 
-const LOGGED_USER = buildUser({
+const LOGGED_USER = buildCurrentUser({
   id: "user-1",
   fullName: "Ada",
   isPlatformAdmin: false,

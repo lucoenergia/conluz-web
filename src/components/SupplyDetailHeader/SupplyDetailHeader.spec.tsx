@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { SupplyDetailHeader } from "./SupplyDetailHeader";
 import type { SupplyResponse } from "../../api/models";
+import { buildSupplyCapabilities, buildUser } from "../../test/fixtures";
 
 describe("SupplyDetailHeader", () => {
   const mockSupplyPoint: SupplyResponse = {
@@ -26,7 +27,7 @@ describe("SupplyDetailHeader", () => {
       id: "shelly-1",
       mqttPrefix: "shellies/test",
     },
-    user: {
+    user: buildUser({
       id: "user1",
       personalId: "12345678A",
       number: 1,
@@ -34,10 +35,8 @@ describe("SupplyDetailHeader", () => {
       address: "Calle Test 1",
       email: "john.doe@example.com",
       phoneNumber: "600000000",
-      enabled: true,
-      memberships: {},
-      isPlatformAdmin: false,
-    },
+    }),
+    capabilities: buildSupplyCapabilities(),
   };
 
   it("renders supply point information", () => {

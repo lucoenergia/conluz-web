@@ -4,14 +4,14 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createTestQueryClient, renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
-import { buildCommunity, buildUser } from "../../test/fixtures";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { CommunitySelector } from "./CommunitySelector";
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: () =>
-    buildUser({ id: "u1", memberships: { "community-A": "COMMUNITY_MEMBER", "community-B": "COMMUNITY_ADMIN" } }),
+    buildCurrentUser({ id: "u1", memberships: { "community-A": "COMMUNITY_MEMBER", "community-B": "COMMUNITY_ADMIN" } }),
 }));
 
 const mockDispatch = vi.fn();

@@ -1028,7 +1028,7 @@ Pass plantId to restrict the result to a single plant.
 Pending coefficients are excluded: one the distributor never applied covered no
 instant.
 
-**Required: Community Admin of the supply's community.**
+**Required: Community Admin of the supply's community, or the supply owner.**
 
  * @summary Returns the coefficients that were active at the given point in time, one per plant.
  */
@@ -1138,7 +1138,7 @@ A supply may be active in several plants at once, so this is a list. It is empty
 when the supply has no active coefficient anywhere, which is a normal result
 rather than an error. Pass plantId to restrict the result to a single plant.
 
-**Required: Community Admin of the supply's community.**
+**Required: Community Admin of the supply's community, or the supply owner.**
 
  * @summary Returns the active partition coefficients of a supply, one per plant.
  */

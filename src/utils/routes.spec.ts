@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { resolveCommunityScopedTarget, resolveLandingRoute } from "./routes";
 import type { UserResponse } from "../api/models";
+import { buildUserCapabilities } from "../test/fixtures";
 
 const baseUser: UserResponse = {
   id: "user-1",
@@ -13,6 +14,7 @@ const baseUser: UserResponse = {
   enabled: true,
   memberships: {},
   isPlatformAdmin: false,
+  capabilities: buildUserCapabilities(),
 };
 
 describe("resolveLandingRoute", () => {

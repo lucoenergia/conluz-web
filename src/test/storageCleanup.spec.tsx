@@ -4,7 +4,7 @@ import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useLoggedUserDispatch } from "../context/logged-user.context";
 import { useActiveCommunity } from "../context/community.context";
-import { buildUser } from "./fixtures";
+import { buildCurrentUser } from "./fixtures";
 import { renderWithProviders } from "./renderWithProviders";
 
 function SingleMembershipLogin() {
@@ -12,7 +12,7 @@ function SingleMembershipLogin() {
   const activeCommunityId = useActiveCommunity();
 
   useEffect(() => {
-    setLoggedUser(buildUser({ id: "u1", memberships: { c1: "COMMUNITY_MEMBER" } }));
+    setLoggedUser(buildCurrentUser({ id: "u1", memberships: { c1: "COMMUNITY_MEMBER" } }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- log in once on mount
   }, []);
 

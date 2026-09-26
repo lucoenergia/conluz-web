@@ -3,12 +3,21 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
+  type CommunityCapabilitiesResponse,
   type CommunityResponse,
+  type CurrentUserResponse,
+  type MembershipCapabilitiesResponse,
   type MembershipResponse,
+  type PlantCapabilitiesResponse,
   type PlantResponse,
+  type PlatformCapabilitiesResponse,
+  type SharingAgreementCapabilitiesResponse,
   type SharingAgreementPartitionCoefficientResponse,
   type SharingAgreementResponse,
+  type SupplyCapabilitiesResponse,
+  type SupplyReferenceResponse,
   type SupplyResponse,
+  type UserCapabilitiesResponse,
   type UserResponse,
 } from "../api/models";
 
@@ -29,6 +38,117 @@ import {
  *   valid on its own. A DRAFT agreement can never have APPLIED coefficients.
  */
 
+/**
+ * Capability builders. Every capability defaults to `false`, which is the same
+ * least-privilege rule the response builders already follow for `memberships`
+ * and `isPlatformAdmin`: a default that grants access would change gating
+ * rather than text, and a spec asserting "this is visible" would pass without
+ * having said why. It also matches src/hooks/permissions, where an absent or
+ * unknown capability reads as denied.
+ *
+ * A spec grants exactly what it exercises -- `buildUserCapabilities({ canEdit:
+ * true })` -- so the grant appears in the test that depends on it.
+ *
+ * Each default lists every field instead of being derived, so a capability
+ * added to the backend fails to compile here. This file is where that should be
+ * noticed, and fixing it once covers every spec that builds a response.
+ */
+
+export function buildUserCapabilities(
+  overrides: Partial<UserCapabilitiesResponse> = {},
+): UserCapabilitiesResponse {
+  return {
+    canRead: false,
+    canEdit: false,
+    canDelete: false,
+    canEnable: false,
+    canDisable: false,
+    canGrantPlatformAdmin: false,
+    canRevokePlatformAdmin: false,
+    canListSupplies: false,
+    ...overrides,
+  };
+}
+
+export function buildPlatformCapabilities(
+  overrides: Partial<PlatformCapabilitiesResponse> = {},
+): PlatformCapabilitiesResponse {
+  return {
+    canCreateCommunity: false,
+    canListUsers: false,
+    canAdministerPlatform: false,
+    canCreateUsers: false,
+    ...overrides,
+  };
+}
+
+export function buildCommunityCapabilities(
+  overrides: Partial<CommunityCapabilitiesResponse> = {},
+): CommunityCapabilitiesResponse {
+  return {
+    canRead: false,
+    canUpdate: false,
+    canEnable: false,
+    canDisable: false,
+    canManage: false,
+    canManageMemberships: false,
+    canManageMembershipInvestment: false,
+    canListPlants: false,
+    canCreatePlants: false,
+    canCreateUsers: false,
+    canReadProduction: false,
+    canListSupplies: false,
+    ...overrides,
+  };
+}
+
+export function buildSupplyCapabilities(
+  overrides: Partial<SupplyCapabilitiesResponse> = {},
+): SupplyCapabilitiesResponse {
+  return {
+    canRead: false,
+    canEdit: false,
+    canReadPartitionCoefficients: false,
+    canCreatePlant: false,
+    ...overrides,
+  };
+}
+
+export function buildPlantCapabilities(
+  overrides: Partial<PlantCapabilitiesResponse> = {},
+): PlantCapabilitiesResponse {
+  return {
+    canRead: false,
+    canManage: false,
+    canListSharingAgreements: false,
+    canManageSharingAgreements: false,
+    canReadSupply: false,
+    ...overrides,
+  };
+}
+
+export function buildMembershipCapabilities(
+  overrides: Partial<MembershipCapabilitiesResponse> = {},
+): MembershipCapabilitiesResponse {
+  return {
+    canUpdateRole: false,
+    canDelete: false,
+    canManageInvestment: false,
+    canReadPayback: false,
+    ...overrides,
+  };
+}
+
+export function buildSharingAgreementCapabilities(
+  overrides: Partial<SharingAgreementCapabilitiesResponse> = {},
+): SharingAgreementCapabilitiesResponse {
+  return {
+    canRead: false,
+    canManage: false,
+    ...overrides,
+  };
+}
+
 export function buildUser(overrides: Partial<UserResponse> = {}): UserResponse {
   return {
     ...({
@@ -42,7 +162,43 @@ export function buildUser(overrides: Partial<UserResponse> = {}): UserResponse {
       enabled: true,
       memberships: {},
       isPlatformAdmin: false,
+      capabilities: buildUserCapabilities(),
     } satisfies UserResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * The logged-in caller, as GET /users/current now answers: a user plus what
+ * they may do with their own record and on the platform. Distinct from
+ * buildUser, which is any user a caller can read -- only the current user
+ * carries `platformCapabilities`.
+ */
+export function buildCurrentUser(overrides: Partial<CurrentUserResponse> = {}): CurrentUserResponse {
+  return {
+    ...({
+      ...buildUser(),
+      platformCapabilities: buildPlatformCapabilities(),
+    } satisfies CurrentUserResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * The supply as a plant refers to it: id, code and name only. Listing plants is
+ * open to any member, but the supply behind one is not, so the reference
+ * carries no owner -- `plant.capabilities.canReadSupply` says whether following
+ * it would succeed.
+ */
+export function buildSupplyReference(
+  overrides: Partial<SupplyReferenceResponse> = {},
+): SupplyReferenceResponse {
+  return {
+    ...({
+      id: "TEST-SUPPLY-ID",
+      code: "TEST-SUPPLY-CODE",
+      name: null,
+    } satisfies SupplyReferenceResponse),
     ...overrides,
   };
 }
@@ -55,6 +211,7 @@ export function buildMembership(overrides: Partial<MembershipResponse> = {}): Me
       communityId: "TEST-COMMUNITY-ID",
       role: "COMMUNITY_MEMBER",
       enabled: true,
+      capabilities: buildMembershipCapabilities(),
     } satisfies MembershipResponse),
     ...overrides,
   };
@@ -72,6 +229,7 @@ export function buildCommunity(overrides: Partial<CommunityResponse> = {}): Comm
       adminNames: ["TEST-ADMIN-NAME"],
       memberCount: 90002,
       supplyPointCount: 90003,
+      capabilities: buildCommunityCapabilities(),
     } satisfies CommunityResponse),
     ...overrides,
   };
@@ -90,6 +248,7 @@ export function buildSupply(overrides: Partial<SupplyResponse> = {}): SupplyResp
       contract: null,
       distributor: null,
       shelly: null,
+      capabilities: buildSupplyCapabilities(),
     } satisfies SupplyResponse),
     ...overrides,
   };
@@ -101,7 +260,7 @@ export function buildPlant(overrides: Partial<PlantResponse> = {}): PlantRespons
       id: "TEST-PLANT-ID",
       providerCode: "TEST-PROVIDER-CODE",
       regulatoryCode: null,
-      supply: buildSupply(),
+      supply: buildSupplyReference(),
       name: "TEST-PLANT-NAME",
       address: "TEST-PLANT-ADDRESS",
       description: null,
@@ -109,6 +268,7 @@ export function buildPlant(overrides: Partial<PlantResponse> = {}): PlantRespons
       totalPower: 90004,
       connectionDate: null,
       community: { id: "TEST-COMMUNITY-ID" },
+      capabilities: buildPlantCapabilities(),
     } satisfies PlantResponse),
     ...overrides,
   };
@@ -128,6 +288,7 @@ export function buildSharingAgreement(overrides: Partial<SharingAgreementRespons
       updatedAt: null,
       updatedBy: null,
       file: null,
+      capabilities: buildSharingAgreementCapabilities(),
     } satisfies SharingAgreementResponse),
     ...overrides,
   };

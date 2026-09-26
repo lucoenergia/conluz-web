@@ -1,15 +1,15 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
-import type { UserResponse } from "../api/models";
+import type { CurrentUserResponse } from "../api/models";
 
-type Dispatch = (User: UserResponse | null) => void;
+type Dispatch = (User: CurrentUserResponse | null) => void;
 
 type LoggedUserProviderProps = { children: ReactNode };
 
-const LoggedUserContext = createContext<UserResponse | null>(null);
+const LoggedUserContext = createContext<CurrentUserResponse | null>(null);
 const LoggedUserDispatchContext = createContext<Dispatch | null>(null);
 
 const LoggedUserProvider = ({ children }: LoggedUserProviderProps) => {
-  const [user, setUser] = useState<UserResponse | null>(null);
+  const [user, setUser] = useState<CurrentUserResponse | null>(null);
 
   return (
     <LoggedUserContext.Provider value={user}>
@@ -18,8 +18,8 @@ const LoggedUserProvider = ({ children }: LoggedUserProviderProps) => {
   );
 };
 
-const useLoggedUser = (): UserResponse | null => {
-  return useContext<UserResponse | null>(LoggedUserContext);
+const useLoggedUser = (): CurrentUserResponse | null => {
+  return useContext<CurrentUserResponse | null>(LoggedUserContext);
 };
 
 const useLoggedUserDispatch = (): Dispatch => {

@@ -6,15 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface UpdateUserBody {
-  /** @minimum 0 */
-  number: number;
-  /** @minLength 1 */
-  personalId: string;
-  /** @minLength 1 */
-  fullName: string;
-  address?: string;
-  /** @minLength 1 */
-  email: string;
-  phoneNumber?: string;
-}
+export type CurrentUserResponseMemberships = {[key: string]: string};

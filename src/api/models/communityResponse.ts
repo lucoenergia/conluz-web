@@ -7,6 +7,7 @@
  */
 import type { CommunityResponseLegalId } from './communityResponseLegalId';
 import type { CommunityResponseAddress } from './communityResponseAddress';
+import type { CommunityCapabilitiesResponse } from './communityCapabilitiesResponse';
 
 export interface CommunityResponse {
   id: string;
@@ -21,4 +22,6 @@ export interface CommunityResponse {
   memberCount: number;
   /** Total number of supply points in the community */
   supplyPointCount: number;
+  /** What the caller may do with this community. */
+  capabilities: CommunityCapabilitiesResponse;
 }

@@ -7,6 +7,7 @@
  */
 import type { MembershipResponseUser } from './membershipResponseUser';
 import type { MembershipResponseRole } from './membershipResponseRole';
+import type { MembershipCapabilitiesResponse } from './membershipCapabilitiesResponse';
 
 export interface MembershipResponse {
   id: string;
@@ -15,4 +16,6 @@ export interface MembershipResponse {
   communityId: string;
   role: MembershipResponseRole;
   enabled: boolean;
+  /** What the caller may do with this membership. */
+  capabilities: MembershipCapabilitiesResponse;
 }
