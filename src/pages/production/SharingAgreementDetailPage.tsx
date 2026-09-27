@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FC } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
@@ -85,6 +85,13 @@ export const SharingAgreementDetailPage: FC = () => {
   const agreementName = agreement?.name || "Acuerdo de reparto";
   const { fileSumUnits } = computeSharingAgreementCoefficientSums(coefficients);
   const fileSumLabel = formatCoefficientPercentage(fileSumUnits / COEFFICIENT_SCALE);
+
+  // The router keeps the window's scroll position across navigations, so
+  // arriving from a scrolled list (or another agreement) would open this page
+  // halfway down. A layout effect resets it before the first paint.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [plantId, sharingAgreementId]);
 
   useEffect(() => {
     if (error) {

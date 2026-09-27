@@ -61,6 +61,11 @@ vi.mock("react-router", async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
+// jsdom does not implement window.scrollTo, which the page calls on entry.
+beforeEach(() => {
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+});
+
 function mockData(overrides: Partial<SharingAgreementDetailData> = {}) {
   mockUseSharingAgreementDetailData.mockReturnValue({ ...baseData(), ...overrides });
 }
@@ -198,6 +203,13 @@ describe("SharingAgreementDetailPage", () => {
 
     expect(screen.getByText("1 de 3 puntos con fecha de aplicación")).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Registrar fechas (2 pendientes)" })).toHaveLength(1);
+  });
+
+  test("opens scrolled to the top, whatever scroll position the previous page left", () => {
+    mockData();
+    setup();
+
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
   });
 
   // AC2, AC3: one progress reading on a sealed agreement with outstanding points.

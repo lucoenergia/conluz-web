@@ -87,6 +87,8 @@ describe("Activating the last pending coefficient — the refetch hides the appl
   let coefficientsGetCount = 0;
 
   beforeEach(() => {
+    // jsdom does not implement window.scrollTo, which the page calls on entry.
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
     activated = false;
     coefficientsGetCount = 0;
     mockCustomInstance.mockReset();
