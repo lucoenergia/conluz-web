@@ -320,8 +320,12 @@ describe("activateCoefficients", () => {
     expect(matches("/api/v1/plants/plant-1/sharing-agreements/agreement-1")).toBe(true);
     expect(matches("/api/v1/plants/plant-1/sharing-agreements/agreement-1/partition-coefficients")).toBe(true);
     expect(matches("/api/v1/plants/plant-1/sharing-agreements/agreement-2/partition-coefficients")).toBe(true);
+    // The plant's active coefficients live outside the sharing-agreements
+    // prefix, and activation changes exactly what they report.
+    expect(matches("/api/v1/plants/plant-1/partition-coefficients/active")).toBe(true);
     // Does not match: a different plant, or an unrelated endpoint on this plant.
     expect(matches("/api/v1/plants/plant-2/sharing-agreements")).toBe(false);
+    expect(matches("/api/v1/plants/plant-2/partition-coefficients/active")).toBe(false);
     expect(matches("/api/v1/plants/plant-1/consumption")).toBe(false);
   });
 });
