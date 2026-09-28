@@ -278,12 +278,6 @@ npx vitest run   # all tests pass
 # Language
 All code and documentation must be in english.
 
-# CLAUDE.md — snippet to add
-
-Add under the code-standards section, in both repos.
-
----
-
 ## Referring to work in the code
 
 Comments, `eslint-disable` justifications, `TODO`s and test names may reference **issues**, never
