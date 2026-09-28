@@ -128,7 +128,7 @@ describe("SharingAgreementNextStepBanner", () => {
   describe("a published agreement", () => {
     it("offers recording the outstanding dates, counted in the label", async () => {
       const handlers = renderBanner(
-        { kind: "RECORD_APPLICATION_DATES", pendingCount: 4, totalCount: 12 },
+        { kind: "RECORD_APPLICATION_DATES", pendingCount: 4, totalCount: 12, hasPendingWithoutCurrent: true },
         PUBLISHED,
       );
 
@@ -138,7 +138,7 @@ describe("SharingAgreementNextStepBanner", () => {
 
     it("offers reverting to draft when nothing has been applied", async () => {
       const onClick = vi.fn();
-      renderBanner({ kind: "RECORD_APPLICATION_DATES", pendingCount: 4, totalCount: 12 }, PUBLISHED, {
+      renderBanner({ kind: "RECORD_APPLICATION_DATES", pendingCount: 4, totalCount: 12, hasPendingWithoutCurrent: true }, PUBLISHED, {
         revert: { label: "Volver a borrador", onClick },
       });
 

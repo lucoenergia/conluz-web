@@ -937,7 +937,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     <Paper ref={panelRef} elevation={0} sx={sxStyles.softPanel} data-testid="sharing-agreement-coefficient-set">
       {sectionHeading}
 
-      {!isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} agreementStatus={agreementStatus} />}
+      {isDraft && !isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} />}
 
       {/* Installed power is an agreement field and now sits in the header's
           identity tiles. While editing in kW it is working context, not
@@ -1221,6 +1221,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                         showStateColumns={showStateColumns}
                         comparison={getRowComparison(row.coefficient)}
+                        isDraft={isDraft}
                       />
                     ))
                   : filteredCoefficients.map((coefficient) => (
@@ -1230,6 +1231,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         installedPowerKw={installedPowerKw}
                         showStateColumns={showStateColumns}
                         comparison={getRowComparison(coefficient)}
+                        isDraft={isDraft}
                         showSelectionColumn={showSelectionColumn}
                         selected={selectedIds.has(coefficient.coefficientId)}
                         onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
@@ -1272,6 +1274,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                     showStateColumns={showStateColumns}
                     comparison={getRowComparison(row.coefficient)}
+                    isDraft={isDraft}
                   />
                 ))
               : filteredCoefficients.map((coefficient) => (
@@ -1281,6 +1284,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     installedPowerKw={installedPowerKw}
                     showStateColumns={showStateColumns}
                     comparison={getRowComparison(coefficient)}
+                    isDraft={isDraft}
                     showSelectionColumn={showSelectionColumn}
                     selected={selectedIds.has(coefficient.coefficientId)}
                     onToggleSelected={() => toggleSelected(coefficient.coefficientId)}

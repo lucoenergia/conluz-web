@@ -37,7 +37,7 @@ describe("selectSharingAgreementLifecycleView", () => {
       { kind: "AUTHOR_COEFFICIENTS", blockedReason: "SUM_MISMATCH", deltaMillionths: 50_000 },
       { kind: "GENERATE_AND_SEND", canGenerate: true },
       { kind: "GENERATE_AND_SEND", canGenerate: false, blockedReason: "NO_REGULATORY_CODE" },
-      { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 12 },
+      { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 12, hasPendingWithoutCurrent: true },
       { kind: "ALL_DONE", totalCount: 12 },
     ];
 
@@ -80,7 +80,7 @@ describe("selectSharingAgreementLifecycleView", () => {
   });
 
   it("moves to stage 5 once the agreement is in force with coefficients still pending", () => {
-    const view = selectSharingAgreementLifecycleView({ kind: "RECORD_APPLICATION_DATES", pendingCount: 3, totalCount: 12 }, PUBLISHED);
+    const view = selectSharingAgreementLifecycleView({ kind: "RECORD_APPLICATION_DATES", pendingCount: 3, totalCount: 12, hasPendingWithoutCurrent: true }, PUBLISHED);
 
     expect(view.stages.map((stage) => stage.state)).toEqual(["done", "done", "unverifiable", "done", "current"]);
     expect(view.current?.requirement).toBe("3 coeficientes sin fecha de aplicación.");
@@ -88,7 +88,7 @@ describe("selectSharingAgreementLifecycleView", () => {
   });
 
   it("uses the singular form for a single pending coefficient", () => {
-    const view = selectSharingAgreementLifecycleView({ kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 12 }, PUBLISHED);
+    const view = selectSharingAgreementLifecycleView({ kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 12, hasPendingWithoutCurrent: true }, PUBLISHED);
 
     expect(view.current?.requirement).toBe("1 coeficiente sin fecha de aplicación.");
   });
@@ -232,20 +232,33 @@ describe("selectSharingAgreementLifecycleView", () => {
 
     it("offers recording the outstanding dates, counting them in the label", () => {
       const view = selectSharingAgreementLifecycleView(
-        { kind: "RECORD_APPLICATION_DATES", pendingCount: 4, totalCount: 12 },
+        { kind: "RECORD_APPLICATION_DATES", pendingCount: 4, totalCount: 12, hasPendingWithoutCurrent: true },
         PUBLISHED,
       );
 
       expect(view.primary).toEqual({ kind: "RECORD_DATES", label: "Registrar fechas (4 pendientes)" });
       expect(view.secondary).toBeUndefined();
       expect(view.headline).toBe(
-        "Registra la fecha de aplicación de los puntos que faltan: un punto sin fecha no recibe producción.",
+        "Registra la fecha de aplicación de los puntos que faltan: los puntos nuevos en la planta no reciben producción hasta entonces.",
       );
+    });
+
+    it("does not warn about missing production when every pending point keeps a coefficient in force", () => {
+      const view = selectSharingAgreementLifecycleView(
+        { kind: "RECORD_APPLICATION_DATES", pendingCount: 4, totalCount: 12, hasPendingWithoutCurrent: false },
+        PUBLISHED,
+      );
+
+      expect(view.headline).toBe(
+        "Registra la fecha de aplicación de cada punto cuando la distribuidora aplique su coeficiente.",
+      );
+      expect(view.headline).not.toMatch(/no recibe/);
+      expect(view.primary).toEqual({ kind: "RECORD_DATES", label: "Registrar fechas (4 pendientes)" });
     });
 
     it("keeps the pending-count label grammatical at one", () => {
       const view = selectSharingAgreementLifecycleView(
-        { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 12 },
+        { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 12, hasPendingWithoutCurrent: true },
         PUBLISHED,
       );
 
@@ -296,7 +309,7 @@ describe("selectSharingAgreementLifecycleView", () => {
         "Pasos 2, 3 y 4 en curso · Conluz no puede saber en cuál estás",
       );
       expect(
-        captionFor({ kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 12 }, PUBLISHED),
+        captionFor({ kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 12, hasPendingWithoutCurrent: true }, PUBLISHED),
       ).toBe("Paso 5 de 5 · Registra las fechas de aplicación");
       expect(captionFor({ kind: "ALL_DONE", totalCount: 12 }, PUBLISHED)).toBe("Los 5 pasos están hechos");
       expect(captionFor({ kind: "NONE" }, SUPERSEDED)).toBe("Ciclo cerrado · acuerdo histórico");

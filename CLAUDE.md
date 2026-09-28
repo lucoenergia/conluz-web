@@ -277,3 +277,56 @@ npx vitest run   # all tests pass
 
 # Language
 All code and documentation must be in english.
+
+## Referring to work in the code
+
+Comments, `eslint-disable` justifications, `TODO`s and test names may reference **issues**, never
+the way work was organised while it was being done.
+
+Use a durable identifier: an issue number (`#412`) or its URL. Those resolve to something a reader
+can open, years later, from a repo they have just cloned.
+
+Never use:
+
+- an epic's internal ordering — "epic PR 5", "PR 3 of 10", "the second PR of the capabilities epic";
+- a branch name (`feature/conluz-294`) — branches could be deleted after merge;
+- a commit hash for future work — it does not exist yet;
+- a person, a sprint, a milestone, or a date as the only pointer.
+
+The test: someone reading this line in two years, with no access to the plan that produced it, must
+be able to find what it refers to. "Migrates in epic PR 6" fails. "Migrates in #418" passes.
+
+## GitHub CLI
+
+`gh` is authenticated with a **read-only** credential and is available for reading. Use it whenever
+it saves a guess: checking an issue number before referencing it, reading a pull request's review
+comments, looking at why a workflow run failed, listing releases, labels or tags.
+
+**Never perform a write.** That covers creating, editing, closing, commenting on, reviewing or
+merging issues and pull requests; labels, releases and milestones; running, re-running or cancelling
+workflows; changing repository or organisation settings; and any `gh api` call with a method other
+than GET, GraphQL mutations included. `gh auth login`, `gh auth refresh`, `gh alias set` and
+`gh extension install` are equally off limits — they are ways to change what the tool can do.
+
+Writes fail twice over: the credential has no write permission, and `permissions.deny` blocks the
+commands. Do not work around either. If a command is refused, report it; do not look for a spelling
+that gets through, and never propose changing the deny rules or the credential.
+
+When a task appears to need a write — "open an issue for this", "comment on that PR", "merge it" —
+produce the content and say exactly where it goes (repository, issue or PR number, and the label or
+milestone if relevant), so a human can post it in one paste. Do not treat the restriction as a
+blocker to report and stop at: the deliverable is the text, not the API call.
+
+`git push` is likewise not yours to run. Commit locally, and leave pushing and opening pull requests
+to a human.
+
+### Referring to issues in code
+
+When a comment, a suppression justification, a `TODO` or a test name refers to work, use an issue
+number (`#412`) or its URL — never an epic's internal ordering ("epic PR 5"), a branch name, a
+milestone or a date. Branches are deleted after merge and plans are not in the repository; an issue
+number resolves years later from a fresh clone.
+
+`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
+invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
+is a permanent one.

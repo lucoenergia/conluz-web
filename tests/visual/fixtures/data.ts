@@ -4,6 +4,13 @@
 
 export const FIXED_TOKEN = "test-jwt-token-for-visual-regression";
 
+/**
+ * The browser clock for pages that render "today" (the chart date filter on the
+ * plant and supply detail pages). Noon UTC, so the calendar day is the same in
+ * any timezone a test host is likely to run in. Later than every fixture date.
+ */
+export const FIXED_NOW = new Date("2026-09-15T12:00:00Z");
+
 export const FIXED_SUPPLY_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
 /** Stable community UUID used in all member/community-admin fixtures. */

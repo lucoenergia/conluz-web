@@ -1,4 +1,3 @@
-import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { formatPercentage } from "../../utils/formatPercentage";
 
@@ -15,7 +14,6 @@ export function toIntegerUnits(coefficient: number | undefined): number {
 
 export interface SharingAgreementCoefficientSums {
   fileSumUnits: number;
-  appliedSumUnits: number;
 }
 
 export interface CoefficientSummable {
@@ -28,17 +26,12 @@ export function computeSharingAgreementCoefficientSums(
   coefficients: CoefficientSummable[],
 ): SharingAgreementCoefficientSums {
   let fileSumUnits = 0;
-  let appliedSumUnits = 0;
 
   for (const coefficient of coefficients) {
-    const units = toIntegerUnits(coefficient.coefficient);
-    fileSumUnits += units;
-    if (coefficient.applicationState === SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED) {
-      appliedSumUnits += units;
-    }
+    fileSumUnits += toIntegerUnits(coefficient.coefficient);
   }
 
-  return { fileSumUnits, appliedSumUnits };
+  return { fileSumUnits };
 }
 
 /**

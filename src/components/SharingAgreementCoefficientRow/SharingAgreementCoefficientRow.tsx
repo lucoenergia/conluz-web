@@ -50,6 +50,8 @@ export interface SharingAgreementCoefficientRowProps {
   onRevert?: () => void;
   /** Whether the applicationState/endState cells render. Defaults to true; the container hides them for a clean DRAFT. */
   showStateColumns?: boolean;
+  /** A DRAFT row has no pending caption; a sealed one names the coefficient in force meanwhile. */
+  isDraft?: boolean;
   /**
    * What this row's draft value is compared against, resolved by the
    * container. Absent when there is no comparison to make: on a published or
@@ -241,6 +243,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   onRevert,
   showStateColumns = true,
   comparison,
+  isDraft = false,
   showSelectionColumn = false,
   selected,
   onToggleSelected,
@@ -252,7 +255,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
   const identity = getRowIdentity(coefficient.supply);
-  const applicationStateDetail = getApplicationStateDetail(coefficient);
+  const applicationStateDetail = getApplicationStateDetail(coefficient, isDraft);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   // "Ver histórico" alone is reason enough to offer the menu — on a DRAFT the
   // lifecycle actions are withheld by the container, so without this the
@@ -388,6 +391,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   onRevert,
   showStateColumns = true,
   comparison,
+  isDraft = false,
   showSelectionColumn = false,
   selected,
   onToggleSelected,
@@ -399,7 +403,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
   const identity = getRowIdentity(coefficient.supply);
-  const applicationStateDetail = getApplicationStateDetail(coefficient);
+  const applicationStateDetail = getApplicationStateDetail(coefficient, isDraft);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   // "Ver histórico" alone is reason enough to offer the menu — on a DRAFT the
   // lifecycle actions are withheld by the container, so without this the
