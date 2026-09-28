@@ -14,7 +14,7 @@ export const ImportPartnersModal: FC<ImportPartnersModalProps> = (props) => {
   return (
     <CsvImportModal
       {...props}
-      title="Importar miembros desde CSV"
+      title={(community) => `Importar miembros a ${community}`}
       expectedColumns="number, fullName, personalId, address, email, phoneNumber, role, password"
       uploadingLabel="Importando miembros..."
       createdNoun={{ one: "miembro", other: "miembros" }}

@@ -14,7 +14,7 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = (props) => {
   return (
     <CsvImportModal
       {...props}
-      title="Importar Puntos de Suministro desde CSV"
+      title={(community) => `Importar puntos de suministro a ${community}`}
       expectedColumns="code, address, addressRef, personalId"
       uploadingLabel="Importando puntos de suministro..."
       createdNoun={{ one: "punto de suministro", other: "puntos de suministro" }}
