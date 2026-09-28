@@ -12,10 +12,22 @@ export async function injectAuthToken(page: Page) {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: freeze the browser clock at FIXED_NOW. Pages that default to "today"
-// (the chart date filter) otherwise render the run date and differ from their
-// baseline every day. Call before page.goto(). Timers keep running, so MUI and
-// React Query behave normally; only Date.now() / new Date() are pinned.
+// Helper: freeze the browser clock at FIXED_NOW.
+//
+// GraphFilter defaults its date input to today, so any capture containing one
+// encodes the day it was taken and fails every day after. That is production
+// non-determinism no fixture can pin, and the masking policy says to make it
+// deterministic rather than mask it or widen the tolerance.
+//
+// FIXED_NOW is the date the affected baselines were generated on, so freezing
+// to it keeps them valid instead of requiring a regeneration -- and keeps them
+// valid tomorrow, which is the actual point. It lives in ./data beside the
+// other fixed fixtures, and is midday so a timezone offset either way cannot
+// roll the date over.
+//
+// Call this before page.goto in any spec whose capture shows a date. Timers
+// keep running, so MUI and React Query behave normally; only Date.now() and
+// new Date() are pinned.
 // ---------------------------------------------------------------------------
 
 export async function freezeClock(page: Page) {
@@ -35,28 +47,6 @@ export async function seedActiveCommunity(page: Page, userId: string) {
     },
     { key: `activeCommunity:${userId}`, value: FIXED_COMMUNITY_ID }
   );
-}
-
-// ---------------------------------------------------------------------------
-// Helper: freeze the clock
-//
-// GraphFilter defaults its date input to today, so any capture containing one
-// encodes the day it was taken and fails every day after. That is production
-// non-determinism no fixture can pin, and the masking policy says to make it
-// deterministic rather than mask it or widen the tolerance.
-//
-// The instant below is the date the affected baselines were generated on, so
-// freezing to it keeps them valid instead of requiring a regeneration -- and
-// keeps them valid tomorrow, which is the actual point. Midday, so a timezone
-// offset either way cannot roll the date over.
-//
-// Call this before page.goto in any spec whose capture shows a date.
-// ---------------------------------------------------------------------------
-
-export const FIXED_NOW = new Date("2026-09-25T12:00:00");
-
-export async function freezeClock(page: Page) {
-  await page.clock.setFixedTime(FIXED_NOW);
 }
 
 // ---------------------------------------------------------------------------
