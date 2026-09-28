@@ -1,5 +1,19 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { FIXED_COMMUNITY_ID, FIXED_NOW, FIXED_TOKEN } from "./data";
+
+/**
+ * How long a lazily-loaded route may take to mount.
+ *
+ * Measured on an idle 20-core machine over 69 navigations in one full run:
+ * median 909 ms, slowest 980 ms. Under 16 busy cores the whole suite inflates
+ * by roughly a third. This is sized an order of magnitude above the measured
+ * worst case, because it is not an assertion about the product -- it is a
+ * budget for a Vite dev server transforming a module subtree while another
+ * worker hammers it, and the cost of sizing it tight is a red run that blames
+ * the page for the machine. It stays well under the 30 s test timeout so an
+ * genuinely stuck route still fails as itself rather than as a bare timeout.
+ */
+export const ROUTE_MOUNT_TIMEOUT_MS = 15_000;
 
 // ---------------------------------------------------------------------------
 // Helper: inject auth token so the app boots as authenticated
@@ -53,7 +67,35 @@ export async function seedActiveCommunity(page: Page, userId: string) {
 // Helper: inject CSS to kill all animations, then wait for fonts + network
 // ---------------------------------------------------------------------------
 
+/**
+ * Waits until the lazily-loaded route has actually mounted.
+ *
+ * Every page in App.tsx is React.lazy, and each layout renders a RouteFallback
+ * while its chunk arrives. Between `goto` and that chunk being transformed
+ * there is no request in flight, so `networkidle` fires with the content area
+ * still showing the fallback -- which is why waiting on it alone is not a "the
+ * app has rendered" signal, as navigateToSharingAgreements has said for a
+ * while. Eleven navigations relied on exactly that, and the way it failed was
+ * a capture helper waiting out the whole 30 s test timeout on getByRole("main")
+ * and reporting a bare timeout, which reads as a broken page rather than a
+ * route that had not arrived yet.
+ *
+ * The fallback is found by what it is rather than by a test id: it is the only
+ * role="status" in the app containing a progressbar. The other three -- the
+ * two visually-hidden live regions and the success Alert -- carry text, and
+ * can legitimately still be on screen when a capture is taken.
+ */
+async function waitForRouteMounted(page: Page) {
+  const routeFallback = page.getByRole("status").filter({ has: page.getByRole("progressbar") });
+  await expect(routeFallback).toHaveCount(0, { timeout: ROUTE_MOUNT_TIMEOUT_MS });
+}
+
 export async function stabilizePage(page: Page) {
+  // First, because everything below assumes the page has content: the
+  // animation-killing stylesheet is pointless against a spinner, and the
+  // scroll resets settle a layout that has not been painted yet.
+  await waitForRouteMounted(page);
+
   await page.addStyleTag({
     content: `
       *, *::before, *::after {
