@@ -136,9 +136,10 @@ export const AuthenticatedLayout: FC = () => {
                      * to the next one -- and a structural reset covers every screen
                      * that does this, including ones not written yet.
                      *
-                     * Only the routed page remounts: the header (and with it the
-                     * community selector), the side menu and the error/success
-                     * providers all live outside this Outlet.
+                     * Only the routed page remounts: the header, the side menu
+                     * (and with it the scope context and its community switch),
+                     * the context strip and the error/success providers all live
+                     * outside this Outlet.
                      *
                      * The "none" -> id step on first load remounts each page once. That
                      * costs nothing in practice: community-scoped queries are all gated
