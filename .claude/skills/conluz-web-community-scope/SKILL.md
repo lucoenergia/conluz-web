@@ -134,8 +134,21 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
 - **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
   `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
 - **Three screens have not migrated yet** and carry a numbered `eslint-disable`:
-  `Home.tsx` (epic PR 5), `SupplyCoefficientHistorySection.tsx` (epic PR 6),
-  `UsersPage.tsx` (epic PR 8). Do not add a fourth.
+  `Home.tsx` (#162), `SupplyCoefficientHistorySection.tsx` (#166),
+  `UsersPage.tsx` (#161). Do not add a fourth.
+- **Writes go through `src/hooks/actions/`, never a generated mutation hook.**
+  An action hook hands back only what this caller may do: a denied action is
+  `undefined`, and its `isPending` lives inside it, so there is no way to render
+  a control — or a spinner — for one you were not given. Resource-scoped hooks
+  expose `forX(resource)` rather than taking the resource, because a hook cannot
+  run once per table row. Each also returns a `CapabilityOutcome` per action for
+  the cases where `pending` must look different from `denied`. Reads are
+  unrestricted; `getGet…QueryKey()` getters too. `no-restricted-imports`
+  enforces it over all 52 mutation hooks, and
+  `src/contracts/mutationHooks.spec.ts` fails if a new mutation arrives with
+  nobody having decided who may perform it. The twenty screens that predate the
+  layer are listed, with the exact hooks each may still import, in
+  `MUTATION_CALL_SITES` in `eslint.config.js`.
 
 > Written as the capability foundation landed; the full rewrite of this skill
 > comes with the epic's final PR.

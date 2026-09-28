@@ -26,7 +26,7 @@ import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useLoggedUser } from "../context/logged-user.context";
 import { useActiveCommunity } from "../context/community.context";
 // SupplyPointAutocomplete still picks its supplies query by role.
-// eslint-disable-next-line no-restricted-imports -- moves onto community capabilities in epic PR 5
+// eslint-disable-next-line no-restricted-imports -- moves onto community capabilities in #162
 import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../api/models";
 
@@ -87,7 +87,7 @@ const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onCh
   const activeCommunityId = useActiveCommunity();
   const isPlatformAdmin = useIsPlatformAdmin();
   const activeCommunityRole = useActiveCommunityRole();
-  // eslint-disable-next-line no-restricted-syntax -- same migration, epic PR 5.
+  // eslint-disable-next-line no-restricted-syntax -- same migration, #162.
   const isAdmin = isPlatformAdmin || activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
 
   const { data: userSupplies, isLoading: isLoadingUserSupplies } = useGetSuppliesByUserId(
