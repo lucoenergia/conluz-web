@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildCommunity, buildUser } from "../../test/fixtures";
+import { buildCommunity, buildCurrentUser, buildUser } from "../../test/fixtures";
 import {
   useDisableUser,
   useEnableUser,
@@ -88,10 +88,10 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useLoggedUser: () => buildUser({ id: LOGGED_USER_ID }),
+  useLoggedUser: () => buildCurrentUser({ id: LOGGED_USER_ID }),
 }));
 
-vi.mock(import("../../hooks/useActiveCommunityRole"), () => ({
+vi.mock(import("../../hooks/permissions/useActiveCommunityRole"), () => ({
   useIsPlatformAdmin: () => true,
 }));
 

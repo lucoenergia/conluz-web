@@ -19,11 +19,16 @@ import {
 
 test.describe("Visual baselines", () => {
   // Community-admin fixture tests: sharing-agreements list.
-  // CommunityAdminRoute redirects on a cold page.goto() before the community
-  // context's useEffect resolves (see file header), so these tests reach the
-  // guarded route the same way a real user would — navigating from the
-  // unguarded /production list and clicking through the plant card's kebab
-  // menu — rather than deep-linking directly.
+  // These reach the guarded route by navigating from the unguarded /production
+  // list and clicking through the plant card's kebab menu, the way a real user
+  // would, rather than deep-linking.
+  //
+  // That began as a workaround: the old guard redirected on a cold page.goto()
+  // before the community context's effect had resolved. CapabilityRoute waits
+  // for that answer instead of redirecting, and a cold deep link now reaches
+  // the page — verified by running these with page.goto. Converting them is
+  // left as a follow-up because one capture differs on that path, and a
+  // baseline is not something to regenerate in passing.
 
   test("sharing agreements list page (populated)", async ({ page }) => {
     await injectAuthToken(page);

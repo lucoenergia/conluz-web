@@ -33,9 +33,10 @@ function getSupplyLabel(supply: SupplyReferenceResponse | undefined): string {
 /**
  * The coefficient timeline of one supply within one plant.
  *
- * Only ever rendered inside a CommunityAdminRoute-guarded agreement page for
- * this exact plant, so the caller's entitlement to that plant's community is
- * already proven -- which is why agreement links are always shown here.
+ * Only ever rendered inside an agreement page for this exact plant, which is
+ * guarded on that plant's canListSharingAgreements, so the caller's
+ * entitlement is already proven -- which is why agreement links are always
+ * shown here.
  */
 export const CoefficientHistoryDrawer: FC<CoefficientHistoryDrawerProps> = ({
   isOpen,

@@ -9,6 +9,121 @@ export const FIXED_SUPPLY_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 /** Stable community UUID used in all member/community-admin fixtures. */
 export const FIXED_COMMUNITY_ID = "cccccccc-dddd-eeee-ffff-000000000001";
 
+// ---------------------------------------------------------------------------
+// Capabilities
+//
+// Every response the backend returns now carries what the caller may do with
+// it, and the app reads only that -- never a role or the platform-admin flag.
+// These fixtures therefore decide what each baseline can see, so they mirror
+// the backend's answers per role instead of granting everything: a fixture that
+// said "true" everywhere would make every gating baseline pass without proving
+// anything.
+//
+// Two rules from the backend worth keeping in view here:
+//   - a platform admin gets no community operational data by virtue of the
+//     flag, so FIXED_PLATFORM_ADMIN_USER has full platform capabilities and no
+//     membership at all;
+//   - canUpdate/canEnable/canDisable on a community are platform-wide
+//     decisions, so a community admin does not get them.
+// ---------------------------------------------------------------------------
+
+const NO_PLATFORM_CAPABILITIES = {
+  canCreateCommunity: false,
+  canListUsers: false,
+  canAdministerPlatform: false,
+  canCreateUsers: false,
+};
+
+const FULL_PLATFORM_CAPABILITIES = {
+  canCreateCommunity: true,
+  canListUsers: true,
+  canAdministerPlatform: true,
+  canCreateUsers: true,
+};
+
+/** What an ordinary caller may do with their own user record. */
+const OWN_USER_CAPABILITIES = {
+  canRead: true,
+  canEdit: false,
+  canDelete: false,
+  canEnable: false,
+  canDisable: false,
+  canGrantPlatformAdmin: false,
+  canRevokePlatformAdmin: false,
+  canListSupplies: true,
+};
+
+/** What a platform admin may do with somebody else's user record. */
+const MANAGED_USER_CAPABILITIES = {
+  canRead: true,
+  canEdit: true,
+  canDelete: true,
+  canEnable: true,
+  canDisable: true,
+  canGrantPlatformAdmin: true,
+  canRevokePlatformAdmin: false,
+  canListSupplies: false,
+};
+
+/** Membership, without administration. */
+export const MEMBER_COMMUNITY_CAPABILITIES = {
+  canRead: true,
+  canUpdate: false,
+  canEnable: false,
+  canDisable: false,
+  canManage: false,
+  canManageMemberships: false,
+  canManageMembershipInvestment: false,
+  canListPlants: true,
+  canCreatePlants: false,
+  canCreateUsers: false,
+  canReadProduction: true,
+  canListSupplies: true,
+};
+
+/** Administration of one community, which is not platform administration. */
+export const COMMUNITY_ADMIN_CAPABILITIES = {
+  ...MEMBER_COMMUNITY_CAPABILITIES,
+  canManage: true,
+  canManageMemberships: true,
+  canManageMembershipInvestment: true,
+  canCreatePlants: true,
+  canCreateUsers: true,
+};
+
+const SUPPLY_CAPABILITIES = {
+  canRead: true,
+  canEdit: false,
+  canReadPartitionCoefficients: true,
+  canCreatePlant: false,
+};
+
+const PLANT_CAPABILITIES = {
+  canRead: true,
+  canManage: true,
+  canListSharingAgreements: true,
+  canManageSharingAgreements: true,
+  canReadSupply: true,
+};
+
+const SHARING_AGREEMENT_CAPABILITIES = { canRead: true, canManage: true };
+
+/**
+ * A community as a platform admin who is not one of its members sees it: the
+ * platform-wide decisions, and none of the membership ones. This is what makes
+ * the platform dashboard baseline honest -- listing communities is a platform
+ * right, reading their production is not.
+ */
+const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
+  ...MEMBER_COMMUNITY_CAPABILITIES,
+  canUpdate: true,
+  canEnable: true,
+  canDisable: true,
+  canListPlants: false,
+  canReadProduction: false,
+  canListSupplies: false,
+};
+
 /**
  * Member fixture — belongs to FIXED_COMMUNITY_ID as COMMUNITY_MEMBER.
  * Use for: home, supply-points, supply-detail, supply modal tests.
@@ -25,6 +140,8 @@ export const FIXED_MEMBER_USER = {
   role: "ADMIN",
   isPlatformAdmin: false,
   memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: NO_PLATFORM_CAPABILITIES,
 };
 
 /**
@@ -43,6 +160,8 @@ export const FIXED_COMMUNITY_ADMIN_USER = {
   role: "ADMIN",
   isPlatformAdmin: false,
   memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" },
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: NO_PLATFORM_CAPABILITIES,
 };
 
 /**
@@ -61,6 +180,8 @@ export const FIXED_PLATFORM_ADMIN_USER = {
   role: "ADMIN",
   isPlatformAdmin: true,
   memberships: {},
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: FULL_PLATFORM_CAPABILITIES,
 };
 
 /**
@@ -80,6 +201,8 @@ export const FIXED_NO_COMMUNITY_USER = {
   role: "PARTNER",
   isPlatformAdmin: false,
   memberships: {},
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: NO_PLATFORM_CAPABILITIES,
 };
 
 /** Secondary user shown in list responses — not the logged-in user. */
@@ -95,6 +218,7 @@ export const FIXED_USER_2 = {
   role: "PARTNER",
   isPlatformAdmin: false,
   memberships: {},
+  capabilities: MANAGED_USER_CAPABILITIES,
 };
 
 export const FIXED_SUPPLY = {
@@ -111,6 +235,7 @@ export const FIXED_SUPPLY = {
   datadisPointType: 5,
   datadisIsThirdParty: false,
   user: FIXED_MEMBER_USER,
+  capabilities: SUPPLY_CAPABILITIES,
 };
 
 export const FIXED_SUPPLY_2 = {
@@ -127,6 +252,7 @@ export const FIXED_SUPPLY_2 = {
   datadisPointType: 3,
   datadisIsThirdParty: false,
   user: FIXED_MEMBER_USER,
+  capabilities: SUPPLY_CAPABILITIES,
 };
 
 export const PAGED_SUPPLIES = {
@@ -156,11 +282,11 @@ export const PAGED_USERS = {
  *   - Deshabilitada (enabled false):       Río Verde
  */
 export const DASHBOARD_COMMUNITIES = [
-  { id: "c1", name: "Luco de Jiloca", code: "LDJ", enabled: true, adminNames: ["Ana Gil"], memberCount: 38, supplyPointCount: 42 },
-  { id: "c2", name: "Barrio del Sol", code: "BDS", enabled: true, adminNames: ["Luis Mora"], memberCount: 21, supplyPointCount: 24 },
-  { id: "c3", name: "Vega Baja", code: "VGB", enabled: true, adminNames: [], memberCount: 12, supplyPointCount: 8 },
-  { id: "c4", name: "Monte Alto", code: "MTA", enabled: true, adminNames: ["Sara Ruiz"], memberCount: 0, supplyPointCount: 3 },
-  { id: "c5", name: "Río Verde", code: "RVD", enabled: false, adminNames: ["Paco Díaz"], memberCount: 5, supplyPointCount: 2 },
+  { id: "c1", name: "Luco de Jiloca", code: "LDJ", enabled: true, adminNames: ["Ana Gil"], memberCount: 38, supplyPointCount: 42, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c2", name: "Barrio del Sol", code: "BDS", enabled: true, adminNames: ["Luis Mora"], memberCount: 21, supplyPointCount: 24, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c3", name: "Vega Baja", code: "VGB", enabled: true, adminNames: [], memberCount: 12, supplyPointCount: 8, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c4", name: "Monte Alto", code: "MTA", enabled: true, adminNames: ["Sara Ruiz"], memberCount: 0, supplyPointCount: 3, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c5", name: "Río Verde", code: "RVD", enabled: false, adminNames: ["Paco Díaz"], memberCount: 5, supplyPointCount: 2, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
 ];
 
 export const EMPTY_PRODUCTION: unknown[] = [];
@@ -181,6 +307,7 @@ export const FIXED_PLANT = {
   inverterProvider: "HUAWEI",
   totalPower: 120.5,
   connectionDate: "2023-05-10",
+  capabilities: PLANT_CAPABILITIES,
 };
 
 /**
@@ -227,6 +354,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     createdAt: "2024-06-15T10:00:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
     file: { id: "file-published", filename: "ES1234567890123456AB1F_2024.txt", uploadedAt: "2024-06-20T09:15:00Z" },
+    capabilities: SHARING_AGREEMENT_CAPABILITIES,
   },
   {
     id: "ffffffff-0000-1111-2222-333333333333",
@@ -238,6 +366,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     createdAt: "2024-09-01T09:30:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
     file: { id: "file-draft", filename: "ES1234567890123456AB1F_2025.txt", uploadedAt: "2025-01-10T08:00:00Z" },
+    capabilities: SHARING_AGREEMENT_CAPABILITIES,
   },
   {
     id: "00000000-1111-2222-3333-444444444444",
@@ -249,6 +378,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     createdAt: "2022-02-01T08:00:00Z",
     createdBy: null,
     file: null,
+    capabilities: SHARING_AGREEMENT_CAPABILITIES,
   },
 ];
 

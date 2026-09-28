@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { resolveCommunityScopedTarget, resolveLandingRoute } from "./routes";
-import type { UserResponse } from "../api/models";
+import type { CurrentUserResponse } from "../api/models";
+import { buildPlatformCapabilities, buildUserCapabilities } from "../test/fixtures";
 
-const baseUser: UserResponse = {
+const baseUser: CurrentUserResponse = {
   id: "user-1",
   personalId: "12345678A",
   number: 1,
@@ -13,11 +14,13 @@ const baseUser: UserResponse = {
   enabled: true,
   memberships: {},
   isPlatformAdmin: false,
+  capabilities: buildUserCapabilities(),
+  platformCapabilities: buildPlatformCapabilities(),
 };
 
 describe("resolveLandingRoute", () => {
   test("user with community memberships lands on /", () => {
-    const user: UserResponse = {
+    const user: CurrentUserResponse = {
       ...baseUser,
       isPlatformAdmin: false,
       memberships: { "community-1": "COMMUNITY_MEMBER" },
@@ -26,18 +29,20 @@ describe("resolveLandingRoute", () => {
   });
 
   test("platform admin with memberships still lands on /", () => {
-    const user: UserResponse = {
+    const user: CurrentUserResponse = {
       ...baseUser,
       isPlatformAdmin: true,
+      platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true }),
       memberships: { "community-1": "COMMUNITY_ADMIN" },
     };
     expect(resolveLandingRoute(user)).toBe("/");
   });
 
   test("platform admin with no memberships lands on /platform", () => {
-    const user: UserResponse = {
+    const user: CurrentUserResponse = {
       ...baseUser,
       isPlatformAdmin: true,
+      platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true }),
       memberships: {},
     };
     expect(resolveLandingRoute(user)).toBe("/platform");
@@ -50,13 +55,14 @@ describe("resolveLandingRoute", () => {
     const user = {
       ...baseUser,
       isPlatformAdmin: true,
+      platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true }),
       memberships: undefined,
-    } as unknown as UserResponse;
+    } as unknown as CurrentUserResponse;
     expect(resolveLandingRoute(user)).toBe("/platform");
   });
 
   test("user with no memberships and not platform admin lands on /no-community", () => {
-    const user: UserResponse = {
+    const user: CurrentUserResponse = {
       ...baseUser,
       isPlatformAdmin: false,
       memberships: {},
@@ -72,7 +78,7 @@ describe("resolveLandingRoute", () => {
       ...baseUser,
       isPlatformAdmin: undefined,
       memberships: {},
-    } as unknown as UserResponse;
+    } as unknown as CurrentUserResponse;
     expect(resolveLandingRoute(user)).toBe("/no-community");
   });
 });

@@ -8,25 +8,13 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { useGetCurrentUser, useUpdateUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
-import { CommunityRole } from "../api/models";
+import { useActiveCommunityRoleLabel } from "../hooks/permissions";
 
 export const ProfilePage: FC = () => {
   const { data: currentUser, isLoading, error, refetch } = useGetCurrentUser();
   const updateUser = useUpdateUser();
   const errorDispatch = useErrorDispatch();
-  const isPlatformAdmin = useIsPlatformAdmin();
-  const activeCommunityRole = useActiveCommunityRole();
-
-  // Derive a display label from the new membership model: platform admins first,
-  // then the role within the active community.
-  const roleLabel = isPlatformAdmin
-    ? "Administrador de plataforma"
-    : activeCommunityRole === CommunityRole.COMMUNITY_ADMIN
-      ? "Administrador de comunidad"
-      : activeCommunityRole === CommunityRole.COMMUNITY_MEMBER
-        ? "Socio"
-        : "";
+  const roleLabel = useActiveCommunityRoleLabel();
 
   const [formData, setFormData] = useState({
     name: "",

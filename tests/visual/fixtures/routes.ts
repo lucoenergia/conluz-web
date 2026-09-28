@@ -1,7 +1,9 @@
 import type { Page, Route } from "@playwright/test";
 import {
+  COMMUNITY_ADMIN_CAPABILITIES,
   EMPTY_PRODUCTION,
   FIXED_COMMUNITY_ID,
+  MEMBER_COMMUNITY_CAPABILITIES,
   FIXED_PLANT,
   FIXED_PLANT_ID,
   FIXED_PLANT_WITH_SUPPLY,
@@ -20,7 +22,22 @@ import {
 // All other responses are fixture-independent.
 // ---------------------------------------------------------------------------
 
+type CurrentUserFixture = { memberships?: Record<string, string> };
+
 export async function mockAllApiRoutes(page: Page, currentUser: object) {
+  // The app reads what it may do from the community itself, so the fixture has
+  // to answer differently for a member and for an admin of the same community
+  // -- otherwise every role would see the same menu. Derive it from the
+  // caller's membership, the way the backend does.
+  const role = (currentUser as CurrentUserFixture).memberships?.[FIXED_COMMUNITY_ID];
+  const activeCommunity = {
+    id: FIXED_COMMUNITY_ID,
+    name: "Sol Común",
+    code: "SOL",
+    enabled: true,
+    capabilities: role === "COMMUNITY_ADMIN" ? COMMUNITY_ADMIN_CAPABILITIES : MEMBER_COMMUNITY_CAPABILITIES,
+  };
+
   // Supply list and supply detail.
   // NOTE: Playwright's glob ** matching is unreliable for patterns like
   // `**/api/v1/**/supplies**`.  Function predicates match reliably and avoid
@@ -113,17 +130,22 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
     },
   );
 
-  // Communities (list only — exclude supplies URLs)
+  // Communities: the list, and a single community by id. The id form matters
+  // because the permissions layer reads the active community's capabilities
+  // from GET /communities/{communityId} -- served the list, it would hand an
+  // array to a caller expecting one community and every capability would read
+  // as denied.
   await page.route(
     (url) => url.href.includes("/api/v1/communities") && !url.href.includes("/supplies"),
-    (route: Route) =>
-      route.fulfill({
+    (route: Route) => {
+      const path = new URL(route.request().url()).pathname;
+      const byId = path.match(/\/api\/v1\/communities\/[^/]+$/);
+      return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([
-          { id: FIXED_COMMUNITY_ID, name: "Sol Común", code: "SOL", enabled: true },
-        ]),
-      }),
+        body: JSON.stringify(byId ? activeCommunity : [activeCommunity]),
+      });
+    },
   );
 
   // Plants — return empty to avoid loading spinners

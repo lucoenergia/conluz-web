@@ -3,13 +3,13 @@ import { describe, expect, test, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
-import { buildUser } from "../../test/fixtures";
-import type { UserResponse, UserResponseMemberships } from "../../api/models";
+import { buildCurrentUser } from "../../test/fixtures";
+import type { CurrentUserResponse, UserResponseMemberships } from "../../api/models";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { CommunitySelector } from "./CommunitySelector";
 
 // Minimal fakes — we only test visibility logic here.
-let loggedUser: UserResponse | null = null;
+let loggedUser: CurrentUserResponse | null = null;
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -27,7 +27,7 @@ vi.mock(import("../../api/communities/communities"), () => ({
 }));
 
 function renderSelector(memberships: UserResponseMemberships) {
-  loggedUser = buildUser({ id: "u1", memberships });
+  loggedUser = buildCurrentUser({ id: "u1", memberships });
   vi.mocked(useGetAllCommunities).mockReturnValue(query.success<typeof getAllCommunities>([]));
   return renderWithProviders(<CommunitySelector />);
 }

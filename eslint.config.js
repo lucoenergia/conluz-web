@@ -9,9 +9,7 @@ import { globalIgnores } from "eslint/config";
 // Prevent anti-patterns the Phases 1-8 refactor removed from creeping back.
 // Theme files (src/theme/**) are EXPLICITLY exempt — that's where literals live.
 // Test files (*.spec.*) are exempt — fixture data uses literal strings by design.
-const stylingRules = {
-  "no-restricted-syntax": [
-    "error",
+const STYLING_SELECTORS = [
     // 1. Hardcoded hex colour, ANYWHERE inside a string — not just as the whole
     //    value. The earlier anchored form (/^#[0-9a-f]{6}$/) only saw a literal
     //    that WAS a colour, so every hex embedded in a longer declaration slipped
@@ -64,9 +62,34 @@ const stylingRules = {
         "JSXAttribute[name.name='className'] > Literal[value=/\\b(p-\\d|px-\\d|py-\\d|m-\\d|gap-\\d|rounded|text-xs|text-sm|text-base|text-lg|text-xl|text-2xl|font-bold|font-semibold|font-medium|items-center|items-start|justify-center|justify-between|justify-start|w-full|h-full|grid-flow-col)\\b/]",
       message:
         "Tailwind utility classes have no effect — use MUI sx prop or Box with theme tokens instead. See docs/styling-conventions.md",
-    },
-  ],
+  },
+];
+
+// ─── Capability guard rail ────────────────────────────────────────────────────
+// Visibility is the backend's answer, carried on the resource it concerns. A
+// role or the platform-admin flag is the old way of guessing at that answer,
+// and guessing is how the menu came to offer pages the router refuses and how
+// a platform admin came to reach a community's integrations page that 403s
+// every call it makes.
+//
+// So the two hooks that produce those values, and any comparison against the
+// CommunityRole enum, stay inside src/hooks/permissions. Reading
+// `user.isPlatformAdmin` as a field to display is untouched: it is deciding on
+// it that this forbids.
+const COMMUNITY_ROLE_SELECTOR = {
+  selector: "MemberExpression[object.name='CommunityRole']",
+  message:
+    "Do not decide anything from a CommunityRole. Ask the backend through src/hooks/permissions -- useActiveCommunityCapabilities, usePlatformCapabilities or usePlantCapabilities -- and use useActiveCommunityRoleLabel if you only need to render the role's name.",
 };
+
+const PERMISSION_HOOKS = [
+  {
+    group: ["**/hooks/permissions/useActiveCommunityRole"],
+    importNames: ["useActiveCommunityRole", "useIsPlatformAdmin"],
+    message:
+      "Only src/hooks/permissions may read a role or the platform-admin flag. Gate on a capability instead (useActiveCommunityCapabilities / usePlatformCapabilities / usePlantCapabilities), or use useActiveCommunityRoleLabel to render the role's name.",
+  },
+];
 
 // ─── Community-scope guard rail ───────────────────────────────────────────────
 // A family of generated hooks is keyed by an entity id -- a plant or a supply --
@@ -161,7 +184,13 @@ export default tseslint.config([
       "src/theme/**",       // token definitions live here — literals are allowed
       "src/**/*.spec.{ts,tsx}", // test fixtures use literal colours intentionally
     ],
-    rules: stylingRules,
+    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, COMMUNITY_ROLE_SELECTOR] },
+  },
+  {
+    // The permissions module is where roles are legitimately read, so it keeps
+    // the styling rules and drops the capability one.
+    files: ["src/hooks/permissions/**/*.{ts,tsx}"],
+    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS] },
   },
   {
     // Community-scope guard rail. Specs are exempt: they mock these modules by
@@ -169,12 +198,20 @@ export default tseslint.config([
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["src/api/**", "src/**/*.spec.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: COMMUNITY_IMPLICIT_HOOKS }],
+      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS] }],
     },
   },
   {
-    // The wrappers, and the call sites that scope their own data.
+    // The wrappers, and the call sites that scope their own data. They are
+    // exempt from the community-implicit restriction only -- re-stated rather
+    // than turned off, because this list includes src/pages/Home.tsx, which is
+    // one of the files the capability rule exists to catch.
     files: COMMUNITY_SCOPE_WRAPPERS,
-    rules: { "no-restricted-imports": "off" },
+    rules: { "no-restricted-imports": ["error", { patterns: PERMISSION_HOOKS }] },
+  },
+  {
+    // The permissions module may import the hooks it owns.
+    files: ["src/hooks/permissions/**/*.{ts,tsx}"],
+    rules: { "no-restricted-imports": ["error", { patterns: COMMUNITY_IMPLICIT_HOOKS }] },
   },
 ]);

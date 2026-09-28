@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
-import { buildSupply, buildUser } from "../test/fixtures";
+import { buildCurrentUser, buildSupply } from "../test/fixtures";
 import { useActiveCommunity } from "../context/community.context";
 import { CommunityRole } from "../api/models";
 import type { SupplyResponse } from "../api/models";
@@ -41,7 +41,7 @@ vi.mock(import("../api/supplies/supplies"), () => ({
 vi.mock(import("../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: () =>
-    buildUser({
+    buildCurrentUser({
       id: "user-1",
       isPlatformAdmin: false,
       memberships: {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { deriveStatus, computeOverview } from "./usePlatformOverview";
 import type { CommunityResponse } from "../../api/models";
+import { buildCommunityCapabilities } from "../../test/fixtures";
 
 const community = (overrides: Partial<CommunityResponse>): CommunityResponse => ({
   id: "id",
@@ -12,6 +13,7 @@ const community = (overrides: Partial<CommunityResponse>): CommunityResponse => 
   adminNames: ["Admin One"],
   memberCount: 5,
   supplyPointCount: 3,
+  capabilities: buildCommunityCapabilities(),
   ...overrides,
 });
 

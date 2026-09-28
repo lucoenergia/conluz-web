@@ -17,8 +17,8 @@ import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
 import { SuccessProvider } from "../context/success.context";
 import { SuccessDisplay } from "../components/Success/SuccessDisplay";
 import { useActiveCommunity } from "../context/community.context";
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCommunityRole";
-import { CommunityRole } from "../api/models";
+import { useActiveCommunityCapabilities, usePlatformCapabilities, type MenuRequirement } from "../hooks/permissions";
+import { selectVisibleSections } from "../utils/menuVisibility";
 import { resolveLandingRoute } from "../utils/routes";
 import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";
 
@@ -29,23 +29,39 @@ export const AuthenticatedLayout: FC = () => {
   const loggedUser = useLoggedUser();
   const setLoggedUser = useLoggedUserDispatch();
   const activeCommunity = useActiveCommunity();
-  const activeCommunityRole = useActiveCommunityRole();
-  const isPlatformAdmin = useIsPlatformAdmin();
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
   const communitySwitchRedirect = useCommunitySwitchRedirect();
 
-  const hasActiveCommunity = activeCommunity !== null;
+  // One lookup per capability the menu asks about. Fixed calls rather than a
+  // loop, because the set of questions is known and hooks cannot be called per
+  // item. All share the queries the route guards already make.
+  const canReadCommunity = useActiveCommunityCapabilities("canRead");
+  const canManageCommunity = useActiveCommunityCapabilities("canManage");
+  const canManageMemberships = useActiveCommunityCapabilities("canManageMemberships");
+  const canAdministerPlatform = usePlatformCapabilities("canAdministerPlatform");
+  const canListUsers = usePlatformCapabilities("canListUsers");
 
-  const visibleSections = useMemo(
-    () =>
-      MENU_SECTIONS.filter((section) => {
-        if (section.visibility === "operational") return hasActiveCommunity;
-        if (section.visibility === "communityAdmin") return activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
-        if (section.visibility === "platformAdmin") return isPlatformAdmin;
-        return false;
-      }),
-    [hasActiveCommunity, activeCommunityRole, isPlatformAdmin],
-  );
+  const visibleSections = useMemo(() => {
+    // Only "allowed" offers an entry. Pending and error both hide it: a menu is
+    // not the place to report that a permission check failed, and an entry that
+    // appears before the answer arrives would flicker away again.
+    const isAllowed = (requirement: MenuRequirement): boolean => {
+      if (requirement.scope === "always") return true;
+      if (requirement.scope === "platform") {
+        return (requirement.capability === "canAdministerPlatform" ? canAdministerPlatform : canListUsers)
+          .state === "allowed";
+      }
+      const outcome =
+        requirement.capability === "canManage"
+          ? canManageCommunity
+          : requirement.capability === "canManageMemberships"
+            ? canManageMemberships
+            : canReadCommunity;
+      return outcome.state === "allowed";
+    };
+
+    return selectVisibleSections(MENU_SECTIONS, isAllowed);
+  }, [canReadCommunity, canManageCommunity, canManageMemberships, canAdministerPlatform, canListUsers]);
 
   const contentMargin = useMemo(() => {
     return isMenuOpened && width > MIN_DESKTOP_WIDTH ? SIDEMENU_WIDTH : 0;

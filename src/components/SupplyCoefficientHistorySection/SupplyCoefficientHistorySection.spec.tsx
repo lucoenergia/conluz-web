@@ -25,7 +25,7 @@ vi.mock(import("../../api/supplies/supplies"), () => ({
   useGetPartitionCoefficientHistory: vi.fn(),
 }));
 
-vi.mock(import("../../hooks/useActiveCommunityRole"), () => ({ useActiveCommunityRole: () => activeRole }));
+vi.mock(import("../../hooks/permissions/useActiveCommunityRole"), () => ({ useActiveCommunityRole: () => activeRole }));
 
 function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoefficientResponse {
   return {
@@ -101,7 +101,7 @@ describe("SupplyCoefficientHistorySection", () => {
     expect(screen.getByText("Reparto 2024")).toBeInTheDocument();
   });
 
-  it("does not link for a platform admin either, since CommunityAdminRoute ignores that flag", () => {
+  it("does not link for a platform admin either, since the platform flag grants no community access", () => {
     activeRole = null;
     renderSection();
 

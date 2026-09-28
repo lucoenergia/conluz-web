@@ -10,6 +10,7 @@ import {
   FIXED_MEMBER_USER,
   FIXED_SUPPLY_COEFFICIENT_HISTORY,
   FIXED_SUPPLY_ID,
+  freezeClock,
   hideAppBar,
   injectAuthToken,
   mainRegion,
@@ -40,6 +41,8 @@ test.describe("Visual baselines", () => {
   });
 
   test("supply detail page", async ({ page }) => {
+    // The capture includes GraphFilter's date input, which defaults to today.
+    await freezeClock(page);
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);
@@ -89,8 +92,9 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-owner.png", await hideAppBar(page));
 
-    // Same periods, but the agreement route is CommunityAdminRoute-guarded, so
-    // an owner is shown names rather than links that would redirect them.
+    // Same periods, but the agreement route requires the plant's
+    // canListSharingAgreements, so an owner is shown names rather than links
+    // that would redirect them.
     await expect(page.getByText("Reparto vecinos bloque A")).toBeVisible();
     await expect(page.getByRole("link", { name: "Reparto vecinos bloque A" })).toHaveCount(0);
   });

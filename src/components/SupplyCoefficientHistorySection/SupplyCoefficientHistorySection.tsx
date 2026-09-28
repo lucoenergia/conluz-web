@@ -4,7 +4,9 @@ import { sxStyles } from "../../theme/sx";
 import { SectionHeading } from "../SectionHeading";
 import { CoefficientHistory } from "../CoefficientHistory";
 import { useActiveCommunity } from "../../context/community.context";
-import { useActiveCommunityRole } from "../../hooks/useActiveCommunityRole";
+// Agreement links still gate on role.
+// eslint-disable-next-line no-restricted-imports -- moves onto the plant's canListSharingAgreements in epic PR 6
+import { useActiveCommunityRole } from "../../hooks/permissions/useActiveCommunityRole";
 import { CommunityRole } from "../../api/models";
 // eslint no-restricted-imports allowlist (see eslint.config.js): the response is
 // scoped in this component by selectPeriodsInCommunity.
@@ -43,11 +45,14 @@ export const SupplyCoefficientHistorySection: FC<SupplyCoefficientHistorySection
   const periods = selectPeriodsInCommunity(data, activeCommunityId);
 
   /**
-   * Links point at /production/{plantId}/sharing-agreements/{id}, which is
-   * behind CommunityAdminRoute -- so this mirrors that guard exactly rather
-   * than adding isPlatformAdmin, which the guard ignores. Safe as a single
-   * boolean only because the periods above are already community-scoped.
+   * Links point at /production/{plantId}/sharing-agreements/{id}, which now
+   * requires the plant's canListSharingAgreements. This role check is the old
+   * approximation of that, left in place until this screen moves onto the
+   * capability; a link shown here that the guard then refuses would redirect.
+   * Safe as a single boolean only because the periods above are already
+   * community-scoped.
    */
+  // eslint-disable-next-line no-restricted-syntax -- same migration, epic PR 6.
   const showAgreementLinks = role === CommunityRole.COMMUNITY_ADMIN;
 
   return (

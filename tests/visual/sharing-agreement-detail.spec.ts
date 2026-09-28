@@ -30,9 +30,10 @@ import {
 
 test.describe("Visual baselines", () => {
   // Community-admin fixture tests: sharing-agreement detail page.
-  // Same CommunityAdminRoute cold-navigation limitation as the list page (see
-  // file header) — reached by navigating through the list and clicking a
-  // card's own title link, never via a cold page.goto().
+  // Reached by navigating through the list and clicking a card's own title
+  // link, for the same reason as the list page (see its note): the cold-load
+  // redirect that forced this is fixed, and converting the navigation is a
+  // follow-up rather than part of this change.
   //
   // The file panel is driven entirely by `agreement.file` from the already-
   // loaded agreement response (no separate probe/fetch to learn whether a
