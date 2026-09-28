@@ -1,6 +1,8 @@
 import Typography from "@mui/material/Typography";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { radii, alphas, fontSizes } from "../../theme/tokens";
 
@@ -12,13 +14,15 @@ interface DisableConfirmationModalProps {
 }
 
 export const DisableConfirmationModal: FC<DisableConfirmationModalProps> = ({ isOpen, code, onCancel, onDisable }) => {
+  const communityName = useActiveCommunityName();
   return (
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
       confirmLabel="Deshabilitar"
       onConfirm={onDisable}
-      title="Deshabilitar punto de suministro"
+      title={`Deshabilitar punto de suministro en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<WarningAmberIcon sx={{ fontSize: 28, color: "error.main" }} />}
       iconBg={alphas.error.light}
     >
