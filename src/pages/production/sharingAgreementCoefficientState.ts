@@ -70,8 +70,8 @@ export function getApplicationStateColor(
  * coefficient may come from a newer agreement. With nothing in force, the
  * supply receives no production until its date is recorded.
  *
- * A DRAFT keeps its original prompt: its view is out of this copy's scope, and
- * it already compares against the coefficient in force in its own column.
+ * A DRAFT's pending row has no caption: nothing can be recorded on a draft,
+ * and its own "coefficient in force" column already shows what applies meanwhile.
  *
  * APPLIED has nothing left to say once its date moved into the headline —
  * `undefined` states "no caption" unambiguously, unlike an empty string a
@@ -83,7 +83,7 @@ export function getApplicationStateDetail(
 ): string | undefined {
   switch (coefficient.applicationState) {
     case PENDING: {
-      if (isDraft) return "Regístrala cuando la distribuidora lo aplique";
+      if (isDraft) return undefined;
       const current = coefficient.currentCoefficient;
       return current
         ? `En vigor: ${formatCoefficientPercentage(current.coefficient)} (${current.sharingAgreement.name})`

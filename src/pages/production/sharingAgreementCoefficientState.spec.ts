@@ -112,11 +112,14 @@ describe("getApplicationStateDetail", () => {
     expect(detail.match(/%/g)).toHaveLength(1);
   });
 
-  it("keeps the original prompt on every pending row of a DRAFT, whatever is in force", () => {
-    expect(rows.slice(0, 3).map((row) => getApplicationStateDetail(row, true))).toEqual([
-      "Regístrala cuando la distribuidora lo aplique",
-      "Regístrala cuando la distribuidora lo aplique",
-      "Regístrala cuando la distribuidora lo aplique",
+  it("gives no caption to any row of a DRAFT — nothing can be recorded there yet", () => {
+    expect(rows.map((row) => getApplicationStateDetail(row, true))).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
     ]);
   });
 });

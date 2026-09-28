@@ -189,11 +189,12 @@ describe("SharingAgreementCoefficientTableRow — application state caption", ()
     expect(appliedRow).not.toHaveTextContent(/En vigor:|No recibe producción/);
   });
 
-  it("keeps the original prompt on a DRAFT's pending rows", () => {
+  it("shows only the headline on a DRAFT's pending rows", () => {
     renderRows(true);
 
-    expect(screen.getAllByText("Regístrala cuando la distribuidora lo aplique")).toHaveLength(2);
+    expect(screen.getAllByText("Sin fecha de aplicación")).toHaveLength(2);
     expect(screen.queryByText(/^En vigor:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No recibe producción|Regístrala/)).not.toBeInTheDocument();
   });
 });
 
@@ -553,11 +554,12 @@ describe("SharingAgreementCoefficientCard — application state caption", () => 
     expect(appliedCard).not.toHaveTextContent(/En vigor:|No recibe producción/);
   });
 
-  it("keeps the original prompt on a DRAFT's pending card", () => {
+  it("shows only the headline on a DRAFT's pending card", () => {
     render(<SharingAgreementCoefficientCard coefficient={pendingInForceCoefficient} installedPowerKw={100} isDraft />);
 
-    expect(screen.getByText("Regístrala cuando la distribuidora lo aplique")).toBeInTheDocument();
+    expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
     expect(screen.queryByText(/^En vigor:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No recibe producción|Regístrala/)).not.toBeInTheDocument();
   });
 });
 
