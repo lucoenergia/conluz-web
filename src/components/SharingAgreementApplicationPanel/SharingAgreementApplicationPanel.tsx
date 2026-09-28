@@ -22,25 +22,20 @@ const NEW_SUPPLY_CONSEQUENCE =
 
 export interface SharingAgreementApplicationPanelProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];
-  /**
-   * A superseded agreement states why its schedule is finished. It is not
-   * "read only": correcting a date and reopening a closed coefficient are still
-   * reachable from the coefficient rows, and reopening one revives the
-   * agreement — there is simply nothing left to schedule.
-   */
-  isClosed?: boolean;
 }
 
 /**
+ * Status-agnostic: the page mounts it on published and superseded agreements
+ * only while some point is still missing its date, so it never states that a
+ * schedule is finished. On a superseded agreement that claim would be false
+ * exactly when the panel is on screen.
+ *
  * Reporting only: "Registrar fechas" belongs to the next-step banner, which
  * offers it for exactly as long as recording dates is the current step — the
  * same state in which this panel would have shown its own copy. Repeating it
  * here put the identical action twice on one screen.
  */
-export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPanelProps> = ({
-  coefficients,
-  isClosed = false,
-}) => {
+export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPanelProps> = ({ coefficients }) => {
   const { appliedCount: applied, total, hasPendingWithoutCurrent } = summarizeApplicationProgress(coefficients);
   const progress = total === 0 ? 0 : (applied / total) * 100;
 
@@ -95,11 +90,6 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
         </Box>
       )}
 
-      {isClosed && (
-        <Typography sx={{ mt: 2.5, fontSize: fontSizes.lg, lineHeight: 1.5, color: colors.text.subtle }}>
-          Todos los puntos tienen fecha de fin.
-        </Typography>
-      )}
     </Paper>
   );
 };

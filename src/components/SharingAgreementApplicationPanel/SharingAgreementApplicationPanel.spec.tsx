@@ -141,13 +141,6 @@ describe("SharingAgreementApplicationPanel", () => {
     expect(screen.queryByText(/no reciben producción/)).not.toBeInTheDocument();
   });
 
-  it("drops the zero-distribution warning on a closed agreement whose points all have dates", () => {
-    renderPanel({ coefficients: [coefficient("1", APPLIED), coefficient("2", APPLIED)], isClosed: true });
-
-    expect(screen.queryByText(/no reciben producción/)).not.toBeInTheDocument();
-    expect(screen.getByText("Todos los puntos tienen fecha de fin.")).toBeVisible();
-  });
-
   it("shows no warning when the agreement has no coefficients at all", () => {
     renderPanel({ coefficients: [] });
 
@@ -170,26 +163,19 @@ describe("SharingAgreementApplicationPanel", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
-  describe("on a superseded agreement", () => {
-    it("offers no action to start, and says why the schedule is finished", () => {
-      renderPanel({ isClosed: true });
+  it("never claims the schedule is finished or that every point has an end date", () => {
+    // The page only mounts the panel while some point is missing its date, so
+    // on a superseded agreement a closing line would be false exactly when shown.
+    renderPanel();
 
-      expect(screen.queryByRole("button", { name: /Registrar fechas/ })).not.toBeInTheDocument();
-      expect(screen.getByText("Todos los puntos tienen fecha de fin.")).toBeVisible();
-    });
+    expect(screen.queryByText(/fecha de fin/)).not.toBeInTheDocument();
+  });
 
-    it("never claims the record is read-only — row-level corrections stay reachable", () => {
-      // Correcting a date and reopening a closed coefficient are still offered
-      // in the coefficient table, and reopening one revives the agreement.
-      renderPanel({ isClosed: true });
+  it("never claims the record is read-only — row-level corrections stay reachable", () => {
+    // Correcting a date and reopening a closed coefficient are still offered
+    // in the coefficient table, and reopening one revives the agreement.
+    renderPanel();
 
-      expect(screen.queryByText(/solo lectura|no admite cambios/i)).not.toBeInTheDocument();
-    });
-
-    it("still reports the closing progress", () => {
-      renderPanel({ isClosed: true });
-
-      expect(screen.getByText("2 de 5 puntos con fecha de aplicación")).toBeVisible();
-    });
+    expect(screen.queryByText(/solo lectura|no admite cambios/i)).not.toBeInTheDocument();
   });
 });

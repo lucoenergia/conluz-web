@@ -236,6 +236,8 @@ describe("SharingAgreementDetailPage", () => {
       expect(progressBars[0]).toHaveAttribute("aria-valuenow", String(Math.round((2 / 3) * 100)));
       expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
       expect(screen.queryByText(/^Suma aplicada/)).not.toBeInTheDocument();
+      // A pending point has no end date either, so no closing line may claim otherwise.
+      expect(screen.queryByText("Todos los puntos tienen fecha de fin.")).not.toBeInTheDocument();
     },
   );
 

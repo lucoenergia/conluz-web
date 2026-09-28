@@ -195,7 +195,7 @@ export const SharingAgreementDetailPage: FC = () => {
 
           {!isLoading && !error && showApplicationPanel && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementApplicationPanel coefficients={coefficients} isClosed={isSuperseded} />
+              <SharingAgreementApplicationPanel coefficients={coefficients} />
             </Box>
           )}
 
