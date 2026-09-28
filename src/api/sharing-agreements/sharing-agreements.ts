@@ -32,6 +32,7 @@ import type {
   DeactivateCoefficientsBody,
   GenerateDistributorFileBody,
   GetSharingAgreementsParams,
+  PartitionCoefficientResponse,
   ReopenCoefficientsBody,
   ReplacePartitionCoefficientsBody,
   ReplacePartitionCoefficientsResponse,
@@ -1472,4 +1473,120 @@ export const useUploadSharingAgreementFile = <TError = ErrorType<RestError>,
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * Returns every partition coefficient currently in force in this plant, one per
+supply. A coefficient is in force when it has been activated (validFrom is set)
+and has not been closed (validTo is null); pending coefficients, including every
+coefficient of a DRAFT agreement, and closed coefficients are excluded.
+
+Coefficients are returned whatever the status of the agreement that authored
+them, and different supplies may be on coefficients authored by different
+agreements -- while the distributor is applying a plant's newest agreement, some
+supplies have already moved to it and the rest are still on the previous one.
+The coefficients therefore do not necessarily sum to 1: values are reported
+exactly as stored, without normalisation.
+
+Only coefficients of this plant are returned; a supply that participates in more
+than one plant appears here only for this one. Ordered by CUPS ascending. A plant
+with nothing in force returns an empty list.
+
+**Required: community admin of the plant's community.**
+
+Returns 404 if the plant does not exist or if the caller is not a member of its
+community, to avoid leaking the existence of plants by ID.
+Returns 403 if the caller is an enabled member of the plant's community but
+not a community admin.
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves the partition coefficients currently in force in a plant
+ */
+export const getPlantActivePartitionCoefficients = (
+    plantId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PartitionCoefficientResponse[]>(
+      {url: `/api/v1/plants/${plantId}/partition-coefficients/active`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetPlantActivePartitionCoefficientsQueryKey = (plantId?: string,) => {
+    return [
+    `/api/v1/plants/${plantId}/partition-coefficients/active`
+    ] as const;
+    }
+
     
+export const getGetPlantActivePartitionCoefficientsQueryOptions = <TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantActivePartitionCoefficientsQueryKey(plantId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>> = ({ signal }) => getPlantActivePartitionCoefficients(plantId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(plantId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantActivePartitionCoefficientsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>>
+export type GetPlantActivePartitionCoefficientsQueryError = ErrorType<unknown>
+
+
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the partition coefficients currently in force in a plant
+ */
+
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantActivePartitionCoefficientsQueryOptions(plantId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
