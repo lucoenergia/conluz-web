@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import {
@@ -48,6 +48,8 @@ const VIVIENDA_B = { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" 
 const LOCAL_C = { id: "s3", name: "Local C", code: "ES0031300000000003EF" };
 /** The supply the picker offers (see testUtils' getAllSupplies). */
 const TRASTERO = { id: "s10", name: "Trastero Nuevo", code: "ES999" };
+const GARAJE_D = { id: "s4", name: "Garaje D", code: "ES0031300000000004GH" };
+const NAVE_E = { id: "s5", name: "Nave E", code: "ES0031300000000005IJ" };
 
 function draftRow(
   supply: { id: string; name: string; code: string },
@@ -98,9 +100,13 @@ function renderDraft(coefficients: SharingAgreementPartitionCoefficientResponse[
   });
 }
 
-/** The desktop table. The card list is mounted alongside it (a CSS-only breakpoint), outside any table. */
+/**
+ * The draft's desktop table. The card list is mounted alongside it (a CSS-only
+ * breakpoint), outside any table. Structural pick: the draft table has no
+ * accessible name, and it precedes the outgoing-supplies table, which does.
+ */
 function table() {
-  return screen.getByRole("table");
+  return screen.getAllByRole("table")[0];
 }
 
 /** The table row that names `supplyName`. */
@@ -256,6 +262,87 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
     expect(screen.getAllByText("Vigente 24,00 kW")).toHaveLength(2);
   });
 
+  describe("outgoing supplies", () => {
+    /** Garaje D and Nave E are in force but not in the draft, from different agreements, in CUPS order. */
+    const WITH_OUTGOING = [
+      ...ACTIVE,
+      activeCoefficient(GARAJE_D, 0.125, REPARTO_2024),
+      activeCoefficient(NAVE_E, 0.05, REPARTO_AMPLIACION),
+    ];
+
+    function outgoingTable() {
+      return screen.getByRole("table", { name: /^Salen del reparto/ });
+    }
+
+    it("lists them below the draft, expanded, in the endpoint's CUPS order (AC9)", async () => {
+      givenActive(WITH_OUTGOING);
+      renderDraft();
+
+      expect(screen.getByRole("button", { name: /Salen del reparto \(2\)/ })).toHaveAttribute("aria-expanded", "true");
+      const [, garaje, nave] = within(outgoingTable()).getAllByRole("row");
+      expect(within(garaje).getByText("Garaje D")).toBeInTheDocument();
+      expect(within(garaje).getByText("Vigente 12,5000 %")).toBeInTheDocument();
+      expect(await within(garaje).findByText("Vigente 10,00 kW")).toBeInTheDocument();
+      expect(within(nave).getByText("Nave E")).toBeInTheDocument();
+      expect(within(nave).getByText("Vigente 5,0000 %")).toBeInTheDocument();
+      expect(await within(nave).findByText("Vigente 3,00 kW")).toBeInTheDocument();
+      // The narrow-viewport list carries the same entries.
+      expect(within(screen.getByRole("list", { name: /^Salen del reparto/ })).getAllByRole("listitem")).toHaveLength(2);
+    });
+
+    it("counts an agreement that only an outgoing supply comes from", () => {
+      const rows = [
+        draftRow(VIVIENDA_A, 0.6, { coefficient: 0.041667, agreement: REPARTO_2024 }),
+        draftRow(VIVIENDA_B, 0.4, { coefficient: 0.3, agreement: REPARTO_2024 }),
+      ];
+      givenActive([
+        activeCoefficient(VIVIENDA_A, 0.041667, REPARTO_2024),
+        activeCoefficient(VIVIENDA_B, 0.3, REPARTO_2024),
+        activeCoefficient(NAVE_E, 0.05, REPARTO_AMPLIACION),
+      ]);
+      renderDraft(rows);
+
+      expect(screen.getByText("Comparado con los coeficientes en vigor hoy")).toBeInTheDocument();
+    });
+
+    it("is not rendered when nothing leaves", () => {
+      renderDraft();
+      expect(screen.queryByText(/^Salen del reparto/)).not.toBeInTheDocument();
+    });
+
+    it("is not narrowed by the search box", async () => {
+      givenActive(WITH_OUTGOING);
+      renderDraft();
+      fireEvent.change(screen.getByPlaceholderText("Buscar por punto o CUPS"), { target: { value: "Vivienda A" } });
+      await waitFor(() => expect(within(table()).queryByText("Vivienda B")).not.toBeInTheDocument());
+
+      expect(within(outgoingTable()).getByText("Garaje D")).toBeInTheDocument();
+      expect(within(outgoingTable()).getByText("Nave E")).toBeInTheDocument();
+    });
+
+    it("reports a failed read inline, with a retry, and draws the rest as usual", async () => {
+      const failed = query.error(new Error("boom"));
+      vi.mocked(useGetPlantActivePartitionCoefficients).mockImplementation((_plantId, options) =>
+        options?.query?.enabled ? failed : query.disabled(),
+      );
+      const user = userEvent.setup({ delay: null });
+      renderDraft();
+
+      expect(screen.getByRole("alert")).toHaveTextContent("No se han podido cargar los puntos que salen del reparto.");
+      expect(screen.queryByText(/^Comparado con/)).not.toBeInTheDocument();
+      expect(within(tableRow("Vivienda A")).getByText("Vigente 4,1667 % · -0,9921 p.p.")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Reintentar" }));
+      expect(failed.refetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("is not shown on a PUBLISHED agreement (AC10)", () => {
+      givenActive(WITH_OUTGOING);
+      renderWithTheme({ coefficients: DRAFT_ROWS, agreementStatus: SharingAgreementResponseStatus.PUBLISHED, installedPowerKw: 100 });
+      expect(screen.queryByText(/^Salen del reparto/)).not.toBeInTheDocument();
+    });
+  });
+
   describe("while editing", () => {
     it("retracks the difference against the value being typed", async () => {
       const user = userEvent.setup({ delay: null });
@@ -289,7 +376,8 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
       renderDraft();
       await user.click(screen.getByRole("button", { name: "Editar a mano" }));
       await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
-      await user.click(await screen.findByText("Trastero Nuevo"));
+      // The picker has no role="dialog" yet; modal-panel is its interim test id (see BasicModal).
+      await user.click(await within(await screen.findByTestId("modal-panel")).findByText("Trastero Nuevo"));
       await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
 
       await waitFor(() => expect(within(table()).getByText("Trastero Nuevo")).toBeInTheDocument());
@@ -299,12 +387,39 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
       expect(within(trastero).queryByText("Nuevo")).not.toBeInTheDocument();
     });
 
+    it("moves a supply removed during the session into the outgoing section", async () => {
+      const user = userEvent.setup({ delay: null });
+      renderDraft();
+      expect(screen.queryByText(/^Salen del reparto/)).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Editar a mano" }));
+      await user.click(within(tableRow("Vivienda B")).getByRole("button", { name: "Quitar Vivienda B" }));
+
+      const outgoing = screen.getByRole("table", { name: "Salen del reparto (1)" });
+      expect(within(outgoing).getByText("Vivienda B")).toBeInTheDocument();
+      expect(within(outgoing).getByText("Vigente 40,0000 %")).toBeInTheDocument();
+    });
+
+    it("takes an outgoing supply out of the section when it is re-added", async () => {
+      givenActive([...ACTIVE, activeCoefficient(TRASTERO, 0.2, REPARTO_AMPLIACION)]);
+      const user = userEvent.setup({ delay: null });
+      renderDraft();
+      expect(within(screen.getByRole("table", { name: "Salen del reparto (1)" })).getByText("Trastero Nuevo")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Editar a mano" }));
+      await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
+      await user.click(await within(await screen.findByTestId("modal-panel")).findByText("Trastero Nuevo"));
+      await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
+
+      await waitFor(() => expect(screen.queryByText(/^Salen del reparto/)).not.toBeInTheDocument());
+    });
+
     it("calls a supply added during the session new when nothing is in force for it", async () => {
       const user = userEvent.setup({ delay: null });
       renderDraft();
       await user.click(screen.getByRole("button", { name: "Editar a mano" }));
       await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
-      await user.click(await screen.findByText("Trastero Nuevo"));
+      await user.click(await within(await screen.findByTestId("modal-panel")).findByText("Trastero Nuevo"));
       await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
 
       await waitFor(() => expect(within(table()).getByText("Trastero Nuevo")).toBeInTheDocument());

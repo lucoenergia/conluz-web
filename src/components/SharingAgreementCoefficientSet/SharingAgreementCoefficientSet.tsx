@@ -44,6 +44,7 @@ import { SharingAgreementCoefficientSumGauges } from "../SharingAgreementCoeffic
 import { AddSupplyDialog } from "../AddSupplyDialog";
 import type { AddSupplyDialogProps } from "../AddSupplyDialog";
 import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } from "../SharingAgreementCoefficientRow";
+import { SharingAgreementOutgoingSupplies } from "../SharingAgreementOutgoingSupplies";
 import { CoefficientHistoryDrawer } from "../CoefficientHistoryDrawer";
 import { CoefficientActionsMenuItems } from "../CoefficientActionsMenu";
 import { ApplyCoefficientDateConfirmationModal } from "../Modals/ApplyCoefficientDateConfirmationModal";
@@ -1288,6 +1289,17 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                 ))}
           </Box>
         </>
+      )}
+
+      {/* Below the list, and outside the search: it describes the draft as a
+          whole. Recomputed from the rows while editing. */}
+      {isDraft && draftRows.length > 0 && (
+        <SharingAgreementOutgoingSupplies
+          outgoing={outgoingCoefficients}
+          isError={activeCoefficients.isError}
+          onRetry={activeCoefficients.refetch}
+          powerByAgreementId={inForceAgreementPower}
+        />
       )}
 
       {batchActionError && (
