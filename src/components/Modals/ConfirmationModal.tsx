@@ -15,6 +15,8 @@ interface ConfirmationModalProps {
   /** Swaps the confirm button's label for a spinner. Opt-in and false by default — every other confirmation dialog using this component keeps its unchanged static-label behaviour. */
   confirmPending?: boolean;
   title?: string;
+  /** Forwarded to AppModal: rendered above the title. */
+  scopeHeader?: ReactNode;
   icon?: ReactNode;
   iconBg?: string;
   children: ReactNode;
@@ -29,6 +31,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
   confirmDisabled = false,
   confirmPending = false,
   title,
+  scopeHeader,
   icon,
   iconBg,
   children,
@@ -43,6 +46,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
       isOpen={isOpen}
       onClose={onCancel}
       title={title}
+      scopeHeader={scopeHeader}
       icon={icon}
       iconBg={iconBg}
       actions={
