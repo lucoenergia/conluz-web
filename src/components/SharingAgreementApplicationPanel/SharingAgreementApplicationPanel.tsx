@@ -5,52 +5,39 @@ import { sxStyles } from "../../theme/sx";
 import { colors, fontSizes, radii } from "../../theme/tokens";
 import { SectionHeading } from "../SectionHeading";
 import { pluralize } from "../../utils/pluralize";
-import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
+import { summarizeApplicationProgress } from "../../pages/production/sharingAgreementApplicationProgress";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
 /**
- * The consequence the surface never stated. Production distribution resolves
- * coefficients purely by `valid_from`/`valid_to`; the agreement's status plays
- * no part. A published agreement with no applied coefficient distributes zero,
- * and an admin who published and walked away has no way to know that.
- *
- * It is a warning about outstanding points, so it is shown only while some
- * point is still missing its date. Once every point has one — and on a
- * historical agreement, where the dates were recorded long ago — there is
- * nothing to warn about.
+ * Production distribution resolves coefficients purely by `valid_from`/`valid_to`.
+ * A pending supply keeps its previous coefficient until this one is activated,
+ * so only a supply with no coefficient in force in this plant — typically one
+ * joining the plant with this agreement — receives nothing in the meantime.
+ * The warning is about those supplies alone, and is shown only while one exists.
  */
-const ZERO_DISTRIBUTION_CONSEQUENCE =
-  "Los puntos de suministro sin fecha de aplicación no reciben producción de la planta. Su autoconsumo y sus excedentes solo se " +
-  "muestran con los datos de la distribuidora, que llegan con varios días de retraso.";
+const NEW_SUPPLY_CONSEQUENCE =
+  "Los puntos de suministro nuevos en la planta no reciben producción hasta que registres su fecha de aplicación. " +
+  "Mientras tanto, su autoconsumo y sus excedentes solo se muestran con los datos de la distribuidora, que llegan " +
+  "con varios días de retraso.";
 
 export interface SharingAgreementApplicationPanelProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];
-  /**
-   * A superseded agreement states why its schedule is finished. It is not
-   * "read only": correcting a date and reopening a closed coefficient are still
-   * reachable from the coefficient rows, and reopening one revives the
-   * agreement — there is simply nothing left to schedule.
-   */
-  isClosed?: boolean;
 }
 
 /**
+ * Status-agnostic: the page mounts it on published and superseded agreements
+ * only while some point is still missing its date, so it never states that a
+ * schedule is finished. On a superseded agreement that claim would be false
+ * exactly when the panel is on screen.
+ *
  * Reporting only: "Registrar fechas" belongs to the next-step banner, which
  * offers it for exactly as long as recording dates is the current step — the
  * same state in which this panel would have shown its own copy. Repeating it
  * here put the identical action twice on one screen.
  */
-export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPanelProps> = ({
-  coefficients,
-  isClosed = false,
-}) => {
-  const total = coefficients.length;
-  const applied = coefficients.filter(
-    (coefficient) =>
-      coefficient.applicationState === SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
-  ).length;
+export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPanelProps> = ({ coefficients }) => {
+  const { appliedCount: applied, total, hasPendingWithoutCurrent } = summarizeApplicationProgress(coefficients);
   const progress = total === 0 ? 0 : (applied / total) * 100;
-  const hasPendingPoints = applied < total;
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
@@ -84,7 +71,7 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
         />
       </Box>
 
-      {hasPendingPoints && (
+      {hasPendingWithoutCurrent && (
         <Box
           sx={{
             display: "flex",
@@ -98,16 +85,11 @@ export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPan
         >
           <ErrorOutlineOutlinedIcon sx={{ color: colors.text.secondary, fontSize: 22, flexShrink: 0 }} />
           <Typography sx={{ fontSize: fontSizes.xl, lineHeight: 1.5, color: colors.text.body, textWrap: "pretty" }}>
-            {ZERO_DISTRIBUTION_CONSEQUENCE}
+            {NEW_SUPPLY_CONSEQUENCE}
           </Typography>
         </Box>
       )}
 
-      {isClosed && (
-        <Typography sx={{ mt: 2.5, fontSize: fontSizes.lg, lineHeight: 1.5, color: colors.text.subtle }}>
-          Todos los puntos tienen fecha de fin.
-        </Typography>
-      )}
     </Paper>
   );
 };

@@ -4,13 +4,20 @@ import {
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import { COEFFICIENT_SCALE, computeSharingAgreementCoefficientSums, isFullSum } from "./sharingAgreementCoefficientSums";
+import { summarizeApplicationProgress } from "./sharingAgreementApplicationProgress";
 
 export type SharingAgreementNextStep =
   | { kind: "AUTHOR_COEFFICIENTS"; blockedReason: "NO_COEFFICIENTS" }
   | { kind: "AUTHOR_COEFFICIENTS"; blockedReason: "SUM_MISMATCH"; deltaMillionths: number }
   | { kind: "GENERATE_AND_SEND"; canGenerate: true }
   | { kind: "GENERATE_AND_SEND"; canGenerate: false; blockedReason: "NO_REGULATORY_CODE" }
-  | { kind: "RECORD_APPLICATION_DATES"; pendingCount: number; totalCount: number }
+  | {
+      kind: "RECORD_APPLICATION_DATES";
+      pendingCount: number;
+      totalCount: number;
+      /** Some pending point has no coefficient in force in the plant, so it receives no production yet. */
+      hasPendingWithoutCurrent: boolean;
+    }
   | { kind: "ALL_DONE"; totalCount: number }
   | { kind: "NONE" };
 
@@ -59,7 +66,9 @@ export function selectSharingAgreementNextStep(
   // rather than re-deriving a second count that could disagree.
   const totalCount = coefficients.length;
 
+  const { hasPendingWithoutCurrent } = summarizeApplicationProgress(coefficients);
+
   return pendingCount > 0
-    ? { kind: "RECORD_APPLICATION_DATES", pendingCount, totalCount }
+    ? { kind: "RECORD_APPLICATION_DATES", pendingCount, totalCount, hasPendingWithoutCurrent }
     : { kind: "ALL_DONE", totalCount };
 }

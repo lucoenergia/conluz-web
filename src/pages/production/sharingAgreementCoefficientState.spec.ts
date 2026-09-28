@@ -3,6 +3,7 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
+import { SharingAgreementReferenceResponseStatus } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import {
   getApplicationStateColor,
@@ -16,6 +17,7 @@ import {
   isFullyAvailable,
   summarizeSelectionActions,
 } from "./sharingAgreementCoefficientState";
+import { buildCoefficient } from "../../test/fixtures";
 
 // These tests exercise a single field at a time against otherwise-irrelevant
 // partial fixtures, so each literal is cast rather than fully fabricated.
@@ -74,14 +76,51 @@ describe("getApplicationStateColor", () => {
 });
 
 describe("getApplicationStateDetail", () => {
-  it("tells the admin to register it when the distributor applies it, for PENDING", () => {
-    expect(getApplicationStateDetail(asCoefficient({ applicationState: PENDING }))).toBe(
-      "Regístrala cuando la distribuidora lo aplique",
-    );
+  const inForce = (coefficient: number, name: string) => ({
+    coefficient,
+    validFrom: "2023-01-01T00:00:00Z",
+    sharingAgreement: { id: `sa-${name}`, name, status: SharingAgreementReferenceResponseStatus.SUPERSEDED },
   });
 
-  it("has no caption for APPLIED — the date lives in the headline instead", () => {
-    expect(getApplicationStateDetail(asCoefficient({ applicationState: APPLIED, validFrom: "2024-05-23T00:00:00Z" }))).toBeUndefined();
+  // A realistic mixed set on a sealed agreement, read row by row: the caption
+  // depends on each row's own state and coefficient in force, never on its
+  // neighbours.
+  const rows = [
+    buildCoefficient({ coefficientId: "pending-in-force", applicationState: PENDING, currentCoefficient: inForce(0.03125, "Reparto 2023") }),
+    buildCoefficient({ coefficientId: "pending-new", applicationState: PENDING, currentCoefficient: null }),
+    buildCoefficient({ coefficientId: "pending-newer", applicationState: PENDING, currentCoefficient: inForce(0.4, "Reparto 2026") }),
+    buildCoefficient({ coefficientId: "applied-open", applicationState: APPLIED, endState: OPEN, validFrom: "2024-05-23T00:00:00Z", currentCoefficient: inForce(0.2, "Reparto 2024") }),
+    buildCoefficient({ coefficientId: "applied-closed", applicationState: APPLIED, endState: CLOSED, validFrom: "2024-05-23T00:00:00Z", currentCoefficient: null }),
+    buildCoefficient({ coefficientId: "applied-derived", applicationState: APPLIED, endState: DERIVED, validFrom: "2024-05-23T00:00:00Z", currentCoefficient: null }),
+  ];
+
+  it("names the coefficient in force and its agreement for each pending row that has one, and warns for the one that has none", () => {
+    // formatCoefficientPercentage separates the unit with U+00A0; it renders as
+    // "En vigor: 3,1250 % (Reparto 2023)", with the unit exactly once.
+    expect(rows.map((row) => getApplicationStateDetail(row))).toEqual([
+      "En vigor: 3,1250 % (Reparto 2023)",
+      "No recibe producción hasta que registres la fecha",
+      "En vigor: 40,0000 % (Reparto 2026)",
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("never doubles the percent sign", () => {
+    const detail = getApplicationStateDetail(rows[0]) ?? "";
+    expect(detail.match(/%/g)).toHaveLength(1);
+  });
+
+  it("gives no caption to any row of a DRAFT — nothing can be recorded there yet", () => {
+    expect(rows.map((row) => getApplicationStateDetail(row, true))).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
   });
 });
 

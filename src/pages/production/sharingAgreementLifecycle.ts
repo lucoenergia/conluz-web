@@ -284,8 +284,11 @@ export function selectSharingAgreementLifecycleView(
     current,
     isClosed: false,
     isIndeterminate: false,
-    headline:
-      "Registra la fecha de aplicación de los puntos que faltan: un punto sin fecha no recibe producción.",
+    // A pending point keeps the coefficient in force until its date is
+    // recorded; only a point new to the plant receives nothing meanwhile.
+    headline: nextStep.hasPendingWithoutCurrent
+      ? "Registra la fecha de aplicación de los puntos que faltan: los puntos nuevos en la planta no reciben producción hasta entonces."
+      : "Registra la fecha de aplicación de cada punto cuando la distribuidora aplique su coeficiente.",
     railCaption: "Paso 5 de 5 · Registra las fechas de aplicación",
     primary: {
       kind: "RECORD_DATES",

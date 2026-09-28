@@ -289,7 +289,7 @@ describe("SharingAgreementDetailHeader", () => {
       renderHeader({
         agreement: publishedAgreement,
         coefficients: ONE_APPLIED,
-        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 2 },
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 2, hasPendingWithoutCurrent: true },
         onRevertRequest: vi.fn(),
       });
 
@@ -302,7 +302,7 @@ describe("SharingAgreementDetailHeader", () => {
       renderHeader({
         agreement: publishedAgreement,
         coefficients: ALL_PENDING,
-        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2, hasPendingWithoutCurrent: true },
         onRevertRequest,
       });
 
@@ -360,7 +360,7 @@ describe("SharingAgreementDetailHeader", () => {
       renderHeader({
         agreement: publishedAgreement,
         coefficients: ALL_PENDING,
-        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2, hasPendingWithoutCurrent: true },
         onEdit: vi.fn(),
         onDeleteRequest: vi.fn(),
       });
@@ -431,7 +431,7 @@ describe("SharingAgreementDetailHeader", () => {
       renderHeader({
         agreement: publishedAgreement,
         coefficients: ALL_PENDING,
-        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2, hasPendingWithoutCurrent: true },
       });
 
       expect(screen.getByText(NOTICE)).toBeVisible();
@@ -443,7 +443,7 @@ describe("SharingAgreementDetailHeader", () => {
       renderHeader({
         agreement: publishedAgreement,
         coefficients: ALL_PENDING,
-        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2 },
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 2, totalCount: 2, hasPendingWithoutCurrent: true },
       });
 
       const alert = screen.getByText(NOTICE).closest(".MuiAlert-root");
@@ -455,7 +455,7 @@ describe("SharingAgreementDetailHeader", () => {
       renderHeader({
         agreement: publishedAgreement,
         coefficients: ONE_APPLIED,
-        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 2 },
+        nextStep: { kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 2, hasPendingWithoutCurrent: true },
       });
 
       expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();

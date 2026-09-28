@@ -4,6 +4,7 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
+import { SharingAgreementReferenceResponseStatus } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import { COEFFICIENT_SCALE } from "./sharingAgreementCoefficientSums";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
@@ -178,7 +179,22 @@ describe("selectSharingAgreementNextStep", () => {
       ),
       // `totalCount` is the whole set, not just the pending slice — the surfaces
       // that report "X de N" read both from this one result.
-    ).toEqual({ kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 3 });
+    ).toEqual({ kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 3, hasPendingWithoutCurrent: true });
+  });
+
+  it("reports no point without production when every pending coefficient still has one in force", () => {
+    const inForce = {
+      coefficient: 0.25,
+      validFrom: "2023-01-01T00:00:00Z",
+      sharingAgreement: { id: "sa-previous", name: "Reparto 2023", status: SharingAgreementReferenceResponseStatus.SUPERSEDED },
+    };
+    const coefficients = PUBLISHED_WITH_PENDING_COEFFICIENTS.map((coefficient) =>
+      coefficient.applicationState === APPLIED ? coefficient : { ...coefficient, currentCoefficient: inForce },
+    );
+
+    expect(
+      selectSharingAgreementNextStep(agreement(SharingAgreementResponseStatus.PUBLISHED), coefficients, "ES1234567890123456AB1F"),
+    ).toEqual({ kind: "RECORD_APPLICATION_DATES", pendingCount: 1, totalCount: 3, hasPendingWithoutCurrent: false });
   });
 
   it("returns ALL_DONE for a PUBLISHED agreement whose coefficients are all APPLIED", () => {
