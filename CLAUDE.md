@@ -277,3 +277,27 @@ npx vitest run   # all tests pass
 
 # Language
 All code and documentation must be in english.
+
+# CLAUDE.md — snippet to add
+
+Add under the code-standards section, in both repos.
+
+---
+
+## Referring to work in the code
+
+Comments, `eslint-disable` justifications, `TODO`s and test names may reference **issues**, never
+the way work was organised while it was being done.
+
+Use a durable identifier: an issue number (`#412`) or its URL. Those resolve to something a reader
+can open, years later, from a repo they have just cloned.
+
+Never use:
+
+- an epic's internal ordering — "epic PR 5", "PR 3 of 10", "the second PR of the capabilities epic";
+- a branch name (`feature/conluz-294`) — branches could be deleted after merge;
+- a commit hash for future work — it does not exist yet;
+- a person, a sprint, a milestone, or a date as the only pointer.
+
+The test: someone reading this line in two years, with no access to the plan that produced it, must
+be able to find what it refers to. "Migrates in epic PR 6" fails. "Migrates in #418" passes.
