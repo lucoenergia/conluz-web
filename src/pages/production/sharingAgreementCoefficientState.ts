@@ -5,6 +5,7 @@ import {
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
+import { formatCoefficientPercentage } from "./sharingAgreementCoefficientSums";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, OPEN_ORPHAN, PENDING_SUCCESSION, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -61,18 +62,33 @@ export function getApplicationStateColor(
 }
 
 /**
- * Secondary caption shown under the headline. PENDING tells the admin what
- * to do and that the trigger is external (the distributor applies it, the
- * admin only registers it). APPLIED has nothing left to say once its date
- * moved into the headline — `undefined` states "no caption" unambiguously,
- * unlike an empty string a caller might render or measure unchecked.
+ * Secondary caption shown under the headline.
+ *
+ * On a sealed agreement a PENDING row says what the supply receives meanwhile:
+ * it stays on the coefficient currently in force in this plant, named by its
+ * agreement rather than "the previous one" — on a superseded agreement that
+ * coefficient may come from a newer agreement. With nothing in force, the
+ * supply receives no production until its date is recorded.
+ *
+ * A DRAFT's pending row has no caption: nothing can be recorded on a draft,
+ * and its own "coefficient in force" column already shows what applies meanwhile.
+ *
+ * APPLIED has nothing left to say once its date moved into the headline —
+ * `undefined` states "no caption" unambiguously, unlike an empty string a
+ * caller might render or measure unchecked.
  */
 export function getApplicationStateDetail(
   coefficient: SharingAgreementPartitionCoefficientResponse,
+  isDraft = false,
 ): string | undefined {
   switch (coefficient.applicationState) {
-    case PENDING:
-      return "Regístrala cuando la distribuidora lo aplique";
+    case PENDING: {
+      if (isDraft) return undefined;
+      const current = coefficient.currentCoefficient;
+      return current
+        ? `En vigor: ${formatCoefficientPercentage(current.coefficient)} (${current.sharingAgreement.name})`
+        : "No recibe producción hasta que registres la fecha";
+    }
     case APPLIED:
       return undefined;
     default:

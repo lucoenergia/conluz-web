@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { FIXED_COMMUNITY_ID, FIXED_TOKEN } from "./data";
+import { FIXED_COMMUNITY_ID, FIXED_NOW, FIXED_TOKEN } from "./data";
 
 // ---------------------------------------------------------------------------
 // Helper: inject auth token so the app boots as authenticated
@@ -9,6 +9,17 @@ export async function injectAuthToken(page: Page) {
   await page.addInitScript((token: string) => {
     window.localStorage.setItem("token", token);
   }, FIXED_TOKEN);
+}
+
+// ---------------------------------------------------------------------------
+// Helper: freeze the browser clock at FIXED_NOW. Pages that default to "today"
+// (the chart date filter) otherwise render the run date and differ from their
+// baseline every day. Call before page.goto(). Timers keep running, so MUI and
+// React Query behave normally; only Date.now() / new Date() are pinned.
+// ---------------------------------------------------------------------------
+
+export async function freezeClock(page: Page) {
+  await page.clock.setFixedTime(FIXED_NOW);
 }
 
 // ---------------------------------------------------------------------------

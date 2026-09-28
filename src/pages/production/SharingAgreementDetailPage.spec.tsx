@@ -7,10 +7,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "../../theme";
 import { SharingAgreementDetailPage } from "./SharingAgreementDetailPage";
-import { SharingAgreementResponseStatus } from "../../api/models";
+import {
+  SharingAgreementPartitionCoefficientResponseApplicationState,
+  SharingAgreementPartitionCoefficientResponseEndState,
+  SharingAgreementResponseStatus,
+} from "../../api/models";
+import { buildCoefficient, buildSharingAgreement } from "../../test/fixtures";
 import type { PlantResponse, SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
+
+const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
+const { OPEN, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 
 const mockErrorDispatch = vi.fn();
 const mockSuccessDispatch = vi.fn();
@@ -51,6 +59,11 @@ vi.mock("./useSharingAgreementMutations", () => ({
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return { ...actual, useNavigate: () => mockNavigate };
+});
+
+// jsdom does not implement window.scrollTo, which the page calls on entry.
+beforeEach(() => {
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
 });
 
 function mockData(overrides: Partial<SharingAgreementDetailData> = {}) {
@@ -190,6 +203,83 @@ describe("SharingAgreementDetailPage", () => {
 
     expect(screen.getByText("1 de 3 puntos con fecha de aplicación")).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Registrar fechas (2 pendientes)" })).toHaveLength(1);
+  });
+
+  test("opens scrolled to the top, whatever scroll position the previous page left", () => {
+    mockData();
+    setup();
+
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+  });
+
+  // #182 AC2, AC3: one progress reading on a sealed agreement with outstanding points.
+  test.each([SharingAgreementResponseStatus.PUBLISHED, SharingAgreementResponseStatus.SUPERSEDED])(
+    "shows a single application progress bar on a %s agreement with pending points",
+    (status) => {
+      const coefficients = [
+        buildCoefficient({ coefficientId: "c1", applicationState: APPLIED, endState: OPEN, validFrom: "2026-01-01" }),
+        buildCoefficient({ coefficientId: "c2", applicationState: APPLIED, endState: CLOSED, validFrom: "2025-01-01" }),
+        buildCoefficient({ coefficientId: "c3", applicationState: PENDING }),
+      ];
+      mockData({
+        agreement: buildSharingAgreement({ id: "agreement-1", status }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      // #182 AC4: the CLOSED row counts as applied.
+      expect(screen.getByText("2 de 3 puntos con fecha de aplicación")).toBeVisible();
+      const progressBars = screen.getAllByRole("progressbar");
+      expect(progressBars).toHaveLength(1);
+      expect(progressBars[0]).toHaveAccessibleName("Puntos con fecha de aplicación");
+      expect(progressBars[0]).toHaveAttribute("aria-valuenow", String(Math.round((2 / 3) * 100)));
+      expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Suma aplicada/)).not.toBeInTheDocument();
+      // A pending point has no end date either, so no closing line may claim otherwise.
+      expect(screen.queryByText("Todos los puntos tienen fecha de fin.")).not.toBeInTheDocument();
+    },
+  );
+
+  // #182 AC5: nothing left to report once every point has a date, closed rows included.
+  test.each([SharingAgreementResponseStatus.PUBLISHED, SharingAgreementResponseStatus.SUPERSEDED])(
+    "hides the application section on a %s agreement whose points all have a date",
+    (status) => {
+      const coefficients = [
+        buildCoefficient({ coefficientId: "c1", applicationState: APPLIED, endState: OPEN, validFrom: "2026-01-01" }),
+        buildCoefficient({ coefficientId: "c2", applicationState: APPLIED, endState: CLOSED, validFrom: "2025-01-01" }),
+        buildCoefficient({ coefficientId: "c3", applicationState: APPLIED, endState: DERIVED, validFrom: "2025-06-01" }),
+      ];
+      mockData({
+        agreement: buildSharingAgreement({ id: "agreement-1", status }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      expect(screen.queryByRole("heading", { name: "Aplicación del reparto" })).not.toBeInTheDocument();
+      expect(screen.queryByText(/puntos con fecha de aplicación/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/no reciben producción/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    },
+  );
+
+  // #182 AC1: a draft keeps its sum gauge and shows no application progress.
+  test("shows the coefficient sum and no application progress on a DRAFT agreement", () => {
+    const coefficients = [
+      buildCoefficient({ coefficientId: "c1", coefficient: 0.6 }),
+      buildCoefficient({ coefficientId: "c2", coefficient: 0.4 }),
+    ];
+    mockData({
+      agreement: buildSharingAgreement({ id: "agreement-1", status: SharingAgreementResponseStatus.DRAFT }),
+      coefficients,
+      coefficientsData: coefficients,
+    });
+    setup();
+
+    expect(screen.getByRole("progressbar", { name: "Suma de los coeficientes" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Aplicación del reparto" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/puntos con fecha de aplicación/)).not.toBeInTheDocument();
   });
 
   // The endpoint replaces all three fields, so the two the admin did not touch

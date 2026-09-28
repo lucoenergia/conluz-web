@@ -68,10 +68,23 @@ describe("SharingAgreementCoefficientSet", () => {
     expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument();
   });
 
-  it("renders the coefficient sum cards in read mode", () => {
-    renderWithTheme({ coefficients });
-    expect(screen.getByText("Suma de los coeficientes")).toBeInTheDocument();
+  it("renders the coefficient sum gauge in read mode on a DRAFT agreement", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    expect(screen.getByRole("progressbar", { name: "Suma de los coeficientes" })).toBeInTheDocument();
   });
+
+  // The set is sealed at 100 % once published, and a sum of only this
+  // agreement's applied coefficients misreads as undistributed production.
+  it.each([SharingAgreementResponseStatus.PUBLISHED, SharingAgreementResponseStatus.SUPERSEDED])(
+    "renders no sum gauge at all on a %s agreement",
+    (agreementStatus) => {
+      renderWithTheme({ coefficients, agreementStatus });
+      expect(screen.queryByText("Suma de los coeficientes")).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Suma aplicada/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/normal en transición/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    },
+  );
 });
 
 describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {

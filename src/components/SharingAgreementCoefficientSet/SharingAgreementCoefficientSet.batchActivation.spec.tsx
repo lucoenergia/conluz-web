@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import {
-  SharingAgreementPartitionCoefficientResponseApplicationState,
-  SharingAgreementResponseStatus,
-} from "../../api/models";
+import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import {
   OPEN_UNCLOSED,
@@ -511,38 +508,5 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     // is exercised structurally by the component compiling against its
     // sx={{ height: { xs: ..., sm: 0 } }} literal, verified by lint/tsc.
     expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
-  });
-
-  it("end-to-end: after a successful activation, the applied-sum card's percentage updates, staying styled neutral below 100%", async () => {
-    mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const user = userEvent.setup({ delay: null });
-    const { rerender } = renderWithTheme({ coefficients: mixed, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
-
-    // Only c3 is APPLIED, at 0.4 -> 40%. Read off the gauge's own accessible
-    // value rather than by text match: c3's row also displays "40,0000 %" for
-    // its individual coefficient, so an unscoped query would be ambiguous.
-    expect(screen.getByRole("progressbar", { name: "Suma aplicada" })).toHaveAttribute(
-      "aria-valuetext",
-      expect.stringContaining("40,0000"),
-    );
-
-    await selectPendingRow(user, "Vivienda A");
-    await openBatchAction(user, "Registrar fecha");
-    await typeDate(user, "10", "01", "2026");
-    await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
-    await waitFor(() => expect(mockSuccessDispatch).toHaveBeenCalled());
-
-    // Simulate the invalidation-triggered refetch: c1 is now APPLIED too.
-    const updated = mixed.map((c) => (c.coefficientId === "c1" ? { ...c, applicationState: APPLIED } : c));
-    rerender(
-      setTree({ coefficients: updated })
-    );
-
-    // c1 (0.3) + c3 (0.4) now APPLIED = 70%, still below 100% — neutral info styling.
-    expect(screen.getByRole("progressbar", { name: "Suma aplicada" })).toHaveAttribute(
-      "aria-valuetext",
-      expect.stringContaining("70,0000"),
-    );
-    expect(screen.getByText(/normal en transición/)).toBeInTheDocument();
   });
 });

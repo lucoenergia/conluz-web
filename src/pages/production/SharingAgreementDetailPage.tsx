@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FC } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
@@ -21,6 +21,7 @@ import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
+import { summarizeApplicationProgress } from "./sharingAgreementApplicationProgress";
 import { BATCH_BAR_HEIGHT_DESKTOP, BATCH_BAR_HEIGHT_MOBILE } from "./sharingAgreementBatchBar";
 import {
   COEFFICIENT_SCALE,
@@ -49,8 +50,10 @@ export const SharingAgreementDetailPage: FC = () => {
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
   const isSuperseded = agreement?.status === SharingAgreementResponseStatus.SUPERSEDED;
   // Scheduling only exists once the coefficient set is sealed. On a superseded
-  // agreement it is history, shown without an action to start.
-  const showApplicationPanel = (isPublished || isSuperseded) && coefficients.length > 0;
+  // agreement it is history, shown without an action to start. Once every point
+  // has a date there is no progress left to report, so the section goes.
+  const showApplicationPanel =
+    (isPublished || isSuperseded) && coefficients.length > 0 && !summarizeApplicationProgress(coefficients).isComplete;
 
   const nextStep = selectSharingAgreementNextStep(agreement, coefficientsData, plant?.regulatoryCode ?? undefined);
 
@@ -82,6 +85,13 @@ export const SharingAgreementDetailPage: FC = () => {
   const agreementName = agreement?.name || "Acuerdo de reparto";
   const { fileSumUnits } = computeSharingAgreementCoefficientSums(coefficients);
   const fileSumLabel = formatCoefficientPercentage(fileSumUnits / COEFFICIENT_SCALE);
+
+  // The router keeps the window's scroll position across navigations, so
+  // arriving from a scrolled list (or another agreement) would open this page
+  // halfway down. A layout effect resets it before the first paint.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [plantId, sharingAgreementId]);
 
   useEffect(() => {
     if (error) {
@@ -185,7 +195,7 @@ export const SharingAgreementDetailPage: FC = () => {
 
           {!isLoading && !error && showApplicationPanel && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementApplicationPanel coefficients={coefficients} isClosed={isSuperseded} />
+              <SharingAgreementApplicationPanel coefficients={coefficients} />
             </Box>
           )}
 

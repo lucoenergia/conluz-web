@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { Table, TableBody } from "@mui/material";
@@ -32,6 +32,23 @@ const pendingCoefficient: SharingAgreementPartitionCoefficientResponse = {
   currentCoefficient: null,
 };
 
+const pendingInForceCoefficient: SharingAgreementPartitionCoefficientResponse = {
+  ...pendingCoefficient,
+  coefficientId: "3",
+  supply: { id: "5e4d3c2b-1a0f-4b3a-9b8b-2b3c4d5e6f7a", name: "Vivienda C", code: "ES0031300000000003EF" },
+  currentCoefficient: {
+    coefficient: 0.03125,
+    validFrom: "2023-01-01T00:00:00Z",
+    sharingAgreement: {
+      id: "sa-previous",
+      name: "Reparto de la comunidad para el ejercicio 2023 con la ampliación de la planta norte",
+      status: SharingAgreementReferenceResponseStatus.SUPERSEDED,
+    },
+  },
+};
+
+const IN_FORCE_DETAIL = "En vigor: 3,1250 % (Reparto de la comunidad para el ejercicio 2023 con la ampliación de la planta norte)";
+
 const derivedCoefficient: SharingAgreementPartitionCoefficientResponse = {
   coefficientId: "2",
   supply: { id: "3d2c1b0a-4e5f-4b3a-9b8b-1a2b3c4d5e6f", name: "Vivienda B", code: "ES0031300000000002CD" },
@@ -62,7 +79,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     // 25% of 100 kW, matching the mock-up's coefficient×installedPowerKw derivation.
     expect(screen.getByText("25,00 kW")).toBeInTheDocument();
     expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
-    expect(screen.getByText("Regístrala cuando la distribuidora lo aplique")).toBeInTheDocument();
+    expect(screen.getByText("No recibe producción hasta que registres la fecha")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
@@ -123,7 +140,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     );
 
     expect(screen.queryByText("Sin fecha de aplicación")).not.toBeInTheDocument();
-    expect(screen.queryByText("Regístrala cuando la distribuidora lo aplique")).not.toBeInTheDocument();
+    expect(screen.queryByText("No recibe producción hasta que registres la fecha")).not.toBeInTheDocument();
     expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 
@@ -138,6 +155,46 @@ describe("SharingAgreementCoefficientTableRow", () => {
 
     expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientTableRow — application state caption", () => {
+  function renderRows(isDraft = false) {
+    render(
+      <Table>
+        <TableBody>
+          {[pendingInForceCoefficient, pendingCoefficient, derivedCoefficient].map((coefficient) => (
+            <SharingAgreementCoefficientTableRow
+              key={coefficient.coefficientId}
+              coefficient={coefficient}
+              installedPowerKw={100}
+              isDraft={isDraft}
+            />
+          ))}
+        </TableBody>
+      </Table>,
+    );
+  }
+
+  // #182 AC6, AC7, AC12.
+  it("tells each pending row apart by what is in force, and leaves the applied row unchanged", () => {
+    renderRows();
+
+    const [inForceRow, newRow, appliedRow] = screen.getAllByRole("row");
+    expect(inForceRow).toHaveTextContent("Sin fecha de aplicación");
+    expect(within(inForceRow).getByText(IN_FORCE_DETAIL)).toBeInTheDocument();
+    expect(newRow).toHaveTextContent("Sin fecha de aplicación");
+    expect(within(newRow).getByText("No recibe producción hasta que registres la fecha")).toBeInTheDocument();
+    expect(within(appliedRow).getByText("En vigor desde 23 de mayo de 2024")).toBeInTheDocument();
+    expect(appliedRow).not.toHaveTextContent(/En vigor:|No recibe producción/);
+  });
+
+  it("shows only the headline on a DRAFT's pending rows", () => {
+    renderRows(true);
+
+    expect(screen.getAllByText("Sin fecha de aplicación")).toHaveLength(2);
+    expect(screen.queryByText(/^En vigor:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No recibe producción|Regístrala/)).not.toBeInTheDocument();
   });
 });
 
@@ -472,7 +529,37 @@ describe("SharingAgreementCoefficientCard", () => {
     render(<SharingAgreementCoefficientCard coefficient={pendingCoefficient} installedPowerKw={100} showStateColumns={false} />);
 
     expect(screen.queryByText("Sin fecha de aplicación")).not.toBeInTheDocument();
-    expect(screen.queryByText("Regístrala cuando la distribuidora lo aplique")).not.toBeInTheDocument();
+    expect(screen.queryByText("No recibe producción hasta que registres la fecha")).not.toBeInTheDocument();
+  });
+});
+
+describe("SharingAgreementCoefficientCard — application state caption", () => {
+  // #182 AC10: the card carries the same per-row reading as the table.
+  it("tells each pending card apart by what is in force, and leaves the applied card unchanged", () => {
+    const { container } = render(
+      <>
+        {[pendingInForceCoefficient, pendingCoefficient, derivedCoefficient].map((coefficient) => (
+          <SharingAgreementCoefficientCard key={coefficient.coefficientId} coefficient={coefficient} installedPowerKw={100} />
+        ))}
+      </>,
+    );
+
+    // Cards have no role of their own; each is a direct child of the container.
+    const [inForceCard, newCard, appliedCard] = Array.from(container.children) as HTMLElement[];
+    expect(within(inForceCard).getByText("Sin fecha de aplicación")).toBeInTheDocument();
+    expect(within(inForceCard).getByText(IN_FORCE_DETAIL)).toBeInTheDocument();
+    expect(within(newCard).getByText("Sin fecha de aplicación")).toBeInTheDocument();
+    expect(within(newCard).getByText("No recibe producción hasta que registres la fecha")).toBeInTheDocument();
+    expect(within(appliedCard).getByText("En vigor desde 23 de mayo de 2024")).toBeInTheDocument();
+    expect(appliedCard).not.toHaveTextContent(/En vigor:|No recibe producción/);
+  });
+
+  it("shows only the headline on a DRAFT's pending card", () => {
+    render(<SharingAgreementCoefficientCard coefficient={pendingInForceCoefficient} installedPowerKw={100} isDraft />);
+
+    expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
+    expect(screen.queryByText(/^En vigor:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No recibe producción|Regístrala/)).not.toBeInTheDocument();
   });
 });
 

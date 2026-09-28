@@ -9,6 +9,7 @@ import {
   mockPlantDetailRoutes,
 } from "./routes";
 import {
+  freezeClock,
   injectAuthToken,
   seedActiveCommunity,
   stabilizePage,
@@ -57,6 +58,8 @@ export async function navigateToSharingAgreementDetail(page: Page, agreementName
 }
 
 export async function openPlantDetail(page: Page) {
+  // The chart date filter defaults to today.
+  await freezeClock(page);
   await injectAuthToken(page);
   await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
   await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
