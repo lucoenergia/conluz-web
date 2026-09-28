@@ -26,6 +26,7 @@ import {
   isEndStateReadOnly,
 } from "../../pages/production/sharingAgreementCoefficientState";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { getRowIdentity } from "../../pages/production/sharingAgreementCoefficientIdentity";
 
 export interface SharingAgreementCoefficientRowProps {
   coefficient: SharingAgreementPartitionCoefficientResponse;
@@ -135,23 +136,6 @@ function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, 
   if (unit === "kw") return formatCoefficientPercentage(value);
   if (installedPowerKw === undefined) return "-";
   return formatKilowatts(value * installedPowerKw);
-}
-
-/**
- * `supply.name` is nullable — the contract now says so too, since
- * SupplyReferenceResponse types it `string | null` — and it is empty for most
- * production rows. Falling back to "-" left the
- * CUPS — the only thing that actually identifies a supply point to the
- * distributor — demoted to a caption under a dash.
- *
- * When there is no name the CUPS becomes the primary identifier, and it is not
- * repeated underneath: one row, one identity.
- */
-function getRowIdentity(supply: SharingAgreementPartitionCoefficientResponse["supply"]) {
-  const name = supply?.name?.trim();
-  const code = supply?.code?.trim();
-  if (name) return { primary: name, secondary: code || "-" };
-  return { primary: code || "-", secondary: null };
 }
 
 /**
