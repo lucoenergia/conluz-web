@@ -1,0 +1,117 @@
+{
+  "generatedFrom": "api-docs.json",
+  "modules": [
+    {
+      "tag": "Authentication",
+      "module": "src/api/authentication/authentication",
+      "hooks": [
+        "useLogin",
+        "useLogout"
+      ]
+    },
+    {
+      "tag": "Communities",
+      "module": "src/api/communities/communities",
+      "hooks": [
+        "useCreateCommunity",
+        "useDisableCommunity",
+        "useEnableCommunity",
+        "useUpdateCommunity"
+      ]
+    },
+    {
+      "tag": "Configuration",
+      "module": "src/api/configuration/configuration",
+      "hooks": [
+        "useInit"
+      ]
+    },
+    {
+      "tag": "Consumption",
+      "module": "src/api/consumption/consumption",
+      "hooks": [
+        "useConfigureDatadis",
+        "useConfigureShelly",
+        "useSyncDatadisConsumptions",
+        "useSyncMonthlyDatadisConsumptions",
+        "useSyncYearlyDatadisConsumptions"
+      ]
+    },
+    {
+      "tag": "Memberships",
+      "module": "src/api/memberships/memberships",
+      "hooks": [
+        "useClearMembershipInvestment",
+        "useCreateMembership",
+        "useDeleteMembership",
+        "useSetMembershipInvestment",
+        "useUpdateMembershipRole"
+      ]
+    },
+    {
+      "tag": "Plants",
+      "module": "src/api/plants/plants",
+      "hooks": [
+        "useCreatePlant",
+        "useDeletePlant",
+        "useUpdatePlant"
+      ]
+    },
+    {
+      "tag": "Production",
+      "module": "src/api/production/production",
+      "hooks": [
+        "useConfigureHuawei",
+        "useSyncMonthlyDatadisProduction",
+        "useSyncMonthlyHuaweiProduction",
+        "useSyncYearlyDatadisProduction",
+        "useSyncYearlyHuaweiProduction"
+      ]
+    },
+    {
+      "tag": "Sharing agreements",
+      "module": "src/api/sharing-agreements/sharing-agreements",
+      "hooks": [
+        "useActivatePartitionCoefficients",
+        "useClosePartitionCoefficients",
+        "useCreateSharingAgreement",
+        "useDeactivatePartitionCoefficients",
+        "useDeleteSharingAgreement",
+        "useGenerateSharingAgreementDistributorFile",
+        "usePublishSharingAgreement",
+        "useReopenPartitionCoefficients",
+        "useReplacePartitionCoefficients",
+        "useRevertSharingAgreementToDraft",
+        "useUpdateSharingAgreement",
+        "useUploadSharingAgreementFile"
+      ]
+    },
+    {
+      "tag": "Supplies",
+      "module": "src/api/supplies/supplies",
+      "hooks": [
+        "useCreateSuppliesWithFile",
+        "useCreateSupply",
+        "useDisableSupply",
+        "useEnableSupply",
+        "useSyncDatadisSupplies",
+        "useUpdateSupply"
+      ]
+    },
+    {
+      "tag": "Users",
+      "module": "src/api/users/users",
+      "hooks": [
+        "useCreateUser",
+        "useCreateUsersWithFile",
+        "useDeleteUser",
+        "useDisableUser",
+        "useEnableUser",
+        "useGrantPlatformAdmin",
+        "useRevokePlatformAdmin",
+        "useUpdateProfile",
+        "useUpdateUser"
+      ]
+    }
+  ]
+}

@@ -49,7 +49,7 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
   useErrorDispatch: () => vi.fn(),
 }));
 
-vi.mock(import("./useSharingAgreementMutations"), () => ({
+vi.mock(import("../../hooks/actions/useSharingAgreementMutations"), () => ({
   useSharingAgreementMutations: () => ({
     createAgreement: vi.fn(),
     updateAgreement: vi.fn(),

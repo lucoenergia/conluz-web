@@ -1,3 +1,9 @@
+// TODO(#167): not yet on the Action contract in ./action.ts. Gating
+// update/delete/publish/revert on the agreement's canManage removes menu items
+// from SharingAgreementsPage and SharingAgreementDetailPage for a member who may
+// list agreements but not manage them -- a rendering change #165 deliberately
+// did not make. The capability each of these will gate on is already decided in
+// src/contracts/mutationHooks.spec.ts, so migrating is wiring, not deciding.
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetSharingAgreementByIdQueryKey,

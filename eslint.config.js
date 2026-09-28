@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
@@ -159,6 +160,126 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/supply-points/SupplyDetailPage.tsx",
 ];
 
+// ─── Mutation guard rail ──────────────────────────────────────────────────────
+// A generated mutation hook is a button that writes to the backend, and until
+// now any component could import one and render it. Nothing in the import asked
+// who may press it, so the answer was whatever the author happened to remember
+// -- which is how production/new and supply-points/new came to serve forms that
+// 403 on submit, and how a member came to be offered Editar and Eliminar on
+// cards the backend refuses to change.
+//
+// So every non-GET operation's hook is reachable only from src/hooks/actions,
+// where it is paired with the capability the backend answers on and withheld
+// entirely when the answer is no. Queries and getGet...QueryKey getters are
+// untouched: this restricts writes.
+//
+// The names are generated from api-docs.json by
+// scripts/generate-mutation-hook-list.mjs, run from orval's afterAllFilesWrite,
+// so a new endpoint is restricted the moment the client is regenerated rather
+// than the day somebody notices. src/contracts/mutationHooks.spec.ts fails if
+// that file goes stale.
+// A path relative to the working directory, not to import.meta.url: eslint and
+// vitest both run from the repository root, and src/contracts/mutationHooks.spec.ts
+// imports this file, where the bundler rewrites import.meta.url to a non-file URL.
+// endpointScope.spec.ts reads api-docs.json the same way.
+const GENERATED_MUTATION_HOOKS = JSON.parse(
+  readFileSync("src/contracts/generatedMutationHooks.json", "utf8"),
+);
+
+// One entry per tag module rather than one glob over all of them: an entry pairs
+// a group with importNames, so a single `**/api/*/*` would also fire on a
+// same-named export in an unrelated module -- and a per-module message can name
+// the hook that actually replaces it. The names are generated; these are the
+// hand-written half.
+const ACTION_LAYER_REPLACEMENTS = {
+  "src/api/authentication/authentication": "useSessionActions",
+  "src/api/communities/communities": "usePlatformActions / useCommunityActions",
+  "src/api/configuration/configuration": "the actions layer (no hook yet -- first-run bootstrap)",
+  "src/api/consumption/consumption": "useCommunityActions",
+  "src/api/memberships/memberships": "useMembershipActions",
+  "src/api/plants/plants": "usePlantActions / useSupplyActions / useCommunityActions",
+  "src/api/production/production": "usePlantActions",
+  "src/api/sharing-agreements/sharing-agreements":
+    "usePlantActions / useSharingAgreementMutations / useSharingAgreementCoefficientMutations",
+  "src/api/supplies/supplies": "useSupplyActions / useCommunityActions",
+  "src/api/users/users": "useUserActions / usePlatformActions / useProfileActions / useCommunityActions",
+};
+
+const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) => ({
+  // Every import of an api module in this repo is relative, never aliased, so
+  // this has to be a pattern group rather than an exact `paths` entry.
+  group: [`**/${module.replace(/^src\//, "")}`],
+  importNames: hooks,
+  message:
+    `Mutations are reached through the actions layer, never imported directly: use ` +
+    `${ACTION_LAYER_REPLACEMENTS[module]} from src/hooks/actions. An action the caller may not ` +
+    `perform is undefined, and its pending flag lives inside it, so a control cannot be rendered ` +
+    `for one they did not receive. If the action you need is not there yet, add it -- the ` +
+    `capability it gates on is already decided in src/contracts/mutationHooks.spec.ts.`,
+}));
+
+// ─── Mutation call sites that predate the actions layer ───────────────────────
+// Twenty screens wired a generated mutation directly, before there was anywhere
+// else to wire it. Each is migrated by giving it an action hook and deleting its
+// entry here; the capability every one will gate on is already decided in
+// src/contracts/mutationHooks.spec.ts, so migrating is wiring, not deciding.
+//
+// The PAIRS are what is frozen, not the paths. ESLint cannot express "this file
+// may import only these names" in a patterns entry, so the block below exempts
+// each file from the mutation rule wholesale and mutationHooks.spec.ts closes
+// the gap: a file's actual mutation imports must EQUAL the list recorded here,
+// so a second one added tomorrow fails even though lint stays green. One list
+// rather than twenty eslint-disable comments, so the debt is countable from one
+// place and the spec can assert it never grows.
+const MUTATION_CALL_SITES = {
+  // #166 -- supply points
+  "src/components/Modals/ImportSuppliesModal.tsx": ["useCreateSuppliesWithFile"],
+  "src/pages/supply-points/CreateSupply.tsx": ["useCreateSupply"],
+  "src/pages/supply-points/EditSupply.tsx": ["useUpdateSupply"],
+  "src/pages/supply-points/SupplyPointsPage.tsx": ["useDisableSupply", "useEnableSupply"],
+  // #167 -- production and sharing agreements
+  "src/components/SharingAgreementGenerateDialog/SharingAgreementGenerateDialog.tsx": [
+    "useGenerateSharingAgreementDistributorFile",
+  ],
+  "src/components/SharingAgreementUploadDialog/SharingAgreementUploadDialog.tsx": [
+    "useUploadSharingAgreementFile",
+  ],
+  "src/pages/production/CreatePlantPage.tsx": ["useCreatePlant"],
+  "src/pages/production/EditPlantPage.tsx": ["useUpdatePlant"],
+  "src/pages/production/PlantsPage.tsx": ["useDeletePlant"],
+  // #168 -- integrations and members
+  "src/pages/integrations/IntegrationsPage.tsx": [
+    "useConfigureDatadis",
+    "useConfigureHuawei",
+    "useConfigureShelly",
+  ],
+  "src/pages/members/MembersPage.tsx": [
+    "useCreateMembership",
+    "useDeleteMembership",
+    "useUpdateMembershipRole",
+  ],
+  // #161 -- communities, platform and users
+  "src/components/Modals/ImportPartnersModal.tsx": ["useCreateUsersWithFile"],
+  "src/pages/communities/CreateCommunityPage.tsx": ["useCreateCommunity"],
+  "src/pages/communities/EditCommunityPage.tsx": ["useUpdateCommunity"],
+  "src/pages/communities/ManageAdminsDialog.tsx": [
+    "useCreateMembership",
+    "useDeleteMembership",
+    "useUpdateMembershipRole",
+  ],
+  "src/pages/users/CreateUser.tsx": ["useCreateUser"],
+  "src/pages/users/EditUser.tsx": ["useUpdateUser"],
+  "src/pages/users/UsersPage.tsx": [
+    "useDisableUser",
+    "useEnableUser",
+    "useGrantPlatformAdmin",
+    "useRevokePlatformAdmin",
+  ],
+  // #162 -- home, profile and navigation leftovers
+  "src/pages/Profile.tsx": ["useUpdateUser"],
+  "src/pages/auth/Login.tsx": ["useLogin"],
+};
+
 export default tseslint.config([
   globalIgnores(["dist"]),
   {
@@ -198,7 +319,10 @@ export default tseslint.config([
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["src/api/**", "src/**/*.spec.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS] }],
+      "no-restricted-imports": [
+        "error",
+        { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS, ...MUTATION_HOOKS] },
+      ],
     },
   },
   {
@@ -206,12 +330,47 @@ export default tseslint.config([
     // exempt from the community-implicit restriction only -- re-stated rather
     // than turned off, because this list includes src/pages/Home.tsx, which is
     // one of the files the capability rule exists to catch.
+    //
+    // MUTATION_HOOKS has to be re-stated here too. No file in this list imports
+    // a mutation today, which is exactly why leaving it out would go unnoticed:
+    // the hole would open the first time one of these eight files grew a write.
     files: COMMUNITY_SCOPE_WRAPPERS,
-    rules: { "no-restricted-imports": ["error", { patterns: PERMISSION_HOOKS }] },
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [...PERMISSION_HOOKS, ...MUTATION_HOOKS] }],
+    },
   },
   {
-    // The permissions module may import the hooks it owns.
+    // The permissions module may import the hooks it owns. It decides; it must
+    // never write, so it keeps the mutation restriction.
     files: ["src/hooks/permissions/**/*.{ts,tsx}"],
-    rules: { "no-restricted-imports": ["error", { patterns: COMMUNITY_IMPLICIT_HOOKS }] },
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...MUTATION_HOOKS] }],
+    },
+  },
+  {
+    // The actions layer is the one place a generated mutation hook may be
+    // imported -- that is what it is for. Everything else still applies.
+    //
+    // Specs stay out, as they are everywhere else: re-stating a rule for this
+    // folder without repeating that exemption would restrict the layer's own
+    // specs, which have to name the modules they mock.
+    files: ["src/hooks/actions/**/*.{ts,tsx}"],
+    ignores: ["src/hooks/actions/**/*.spec.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS] }],
+    },
+  },
+  {
+    // Screens that predate the layer: exempt from the mutation restriction only,
+    // and only for the hooks recorded against them in MUTATION_CALL_SITES, which
+    // src/contracts/mutationHooks.spec.ts holds them to.
+    files: Object.keys(MUTATION_CALL_SITES),
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS] }],
+    },
   },
 ]);
+
+// Read by src/contracts/mutationHooks.spec.ts, which is what keeps the entries
+// above honest. Exported rather than duplicated so the two cannot disagree.
+export { MUTATION_CALL_SITES, COMMUNITY_SCOPE_WRAPPERS };

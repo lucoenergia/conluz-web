@@ -7,7 +7,7 @@ import { routeRequests } from "../../test/requestRouter";
 import { buildCoefficient } from "../../test/fixtures";
 import dayjs from "dayjs";
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
-import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
+import { useSharingAgreementCoefficientMutations } from "../../hooks/actions/useSharingAgreementCoefficientMutations";
 
 const PLANT_ID = "plant-1";
 const AGREEMENT_ID = "agreement-1";

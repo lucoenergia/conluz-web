@@ -1,3 +1,9 @@
+// TODO(#167): not yet on the Action contract in ./action.ts. The gate is the
+// agreement's canManage, but SharingAgreementCoefficientSet is handed a plantId,
+// a sharingAgreementId and a status rather than the SharingAgreementResponse, so
+// it has no capabilities object to gate on -- wiring one needs a prop change,
+// which is a rendering change #165 deliberately did not make. The capability is
+// already decided in src/contracts/mutationHooks.spec.ts.
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Dayjs } from "dayjs";
@@ -12,7 +18,7 @@ import {
 import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
 import { getFirstApiErrorMessage, getGroupedApiErrorDetails } from "../../errors/apiErrorCatalogue";
-import type { EditableCoefficientRow } from "./sharingAgreementCoefficientEditing";
+import type { EditableCoefficientRow } from "../../pages/production/sharingAgreementCoefficientEditing";
 
 export interface ReplaceCoefficientsResult {
   success: boolean;

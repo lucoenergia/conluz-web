@@ -20,11 +20,15 @@ import {
   type getPartitionCoefficientHistory,
 } from "../../api/supplies/supplies";
 import {
+  /* eslint-disable no-restricted-imports -- test helper: these five are imported
+     only to type and set the mocked hooks' results, never called. Not numbered:
+     this file is test infrastructure and is not migrating to the actions layer. */
   useActivatePartitionCoefficients,
   useClosePartitionCoefficients,
   useDeactivatePartitionCoefficients,
   useReopenPartitionCoefficients,
   useReplacePartitionCoefficients,
+  /* eslint-enable no-restricted-imports */
 } from "../../api/sharing-agreements/sharing-agreements";
 import {
   SharingAgreementCoefficientSet,

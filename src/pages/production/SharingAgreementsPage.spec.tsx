@@ -7,7 +7,7 @@ import { SharingAgreementsPage } from "./SharingAgreementsPage";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
 import type { SharingAgreementsData } from "./useSharingAgreementsData";
-import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
+import type { SharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
 
 const mockErrorDispatch = vi.fn();
 const mockUseSharingAgreementsData = vi.fn();
@@ -24,7 +24,7 @@ vi.mock("./useSharingAgreementsData", () => ({
   useSharingAgreementsData: (...args: unknown[]) => mockUseSharingAgreementsData(...args),
 }));
 
-vi.mock("./useSharingAgreementMutations", () => ({
+vi.mock("../../hooks/actions/useSharingAgreementMutations", () => ({
   useSharingAgreementMutations: (): SharingAgreementMutations => ({
     createAgreement: mockCreateAgreement,
     updateAgreement: mockUpdateAgreement,

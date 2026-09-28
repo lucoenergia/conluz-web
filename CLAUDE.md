@@ -14,6 +14,9 @@ npm test                      # Vitest: watch mode in an interactive terminal, a
 npx vitest run                # Run all tests once in any terminal (same as npm test -- --run)
 npm test -- --watch           # Run tests in watch mode
 npm run generate-client       # Regenerate API client from api-docs.json
+npm run generate-mutation-hook-list  # Re-derive the mutation-hook list from the api-docs.json already present.
+                              # This does NOT regenerate the client, so the "agents never run
+                              # generate-client" rule does not cover it — agents may run this.
 npm run test:visual           # Run visual tests
 npm run test:visual:mobile    # Run visual tests for mobile screens
 npm run test:visual:desktop   # Run visual tests for desktop screens
@@ -44,8 +47,9 @@ The app is **multi-community**. This is the single most important mental model f
 - **Active community context:** `src/context/community.context.tsx` selects and persists the active community (auto-selects when the user has exactly one; restores the persisted choice otherwise). `CommunitySelector` switches it.
 - **Data endpoints are path-scoped:** `/communities/{communityId}/{supplies,consumption,production,plants,config}`. Data hooks must pass `communityId` and be **gated on its presence** — no active community → no call, and controls that submit community-scoped data disable when none is selected.
 - **Capabilities decide visibility, not roles.** Every response carries a `capabilities` object and `GET /users/current` carries `platformCapabilities`; the app reads those and never re-derives a rule locally. `src/hooks/permissions/` is the only module allowed to read a role or the platform-admin flag, and `no-restricted-imports` / `no-restricted-syntax` in `eslint.config.js` enforce that. Reading `user.isPlatformAdmin` as a field to **display** stays legal — `useActiveCommunityRoleLabel()` is the sanctioned way to render a role's name.
+- **Mutations go through the actions layer.** No component imports a generated mutation hook. `src/hooks/actions/` is the only module allowed to, and its hooks hand back only the actions the backend says this caller may perform: an action they may not perform is `undefined`, and its `isPending` flag lives **inside** it, so there is no spinner left over and no `edit?.()` that looks like a call and quietly does nothing. Each hook also returns a `CapabilityOutcome` per action, so a screen can tell "not yet known" from "no". Resource-scoped hooks expose a `forX(resource)` selector rather than taking the resource, because a hook cannot be called once per table row. `no-restricted-imports` enforces this over all 52 mutation hooks, generated from `api-docs.json` into `src/contracts/generatedMutationHooks.json`; `src/contracts/mutationHooks.spec.ts` fails if that list goes stale **or** if any mutation lacks a recorded decision about who may perform it. Twenty screens predate the layer and are listed, with the exact hooks each may still import, in `MUTATION_CALL_SITES` in `eslint.config.js`; they migrate in #161, #162, #166, #167 and #168.
 - **Route guards:** one guard, `CapabilityRoute` (`src/components/Auth/`), taking the capability the page needs. Menu entries in `MENU_SECTIONS` carry the same requirement as the route they lead to, so the two cannot drift. A capability answer has four states — pending, allowed, denied, error — and only `denied` redirects: a failed check renders a retry rather than pretending the user lacks access.
-- **Temporary exemptions:** three screens still gate on a role and carry a numbered `eslint-disable` until they migrate — `Home.tsx` (epic PR 5), `SupplyCoefficientHistorySection.tsx` (epic PR 6), `UsersPage.tsx` (epic PR 8). No new ones.
+- **Temporary exemptions:** three screens still gate on a role and carry a numbered `eslint-disable` until they migrate — `Home.tsx` (#162), `SupplyCoefficientHistorySection.tsx` (#166), `UsersPage.tsx` (#161). No new ones.
 - **Legacy `X-Community-Id` header removed:** the axios interceptor that injected this header was removed from `community.context.tsx`. Data endpoints carry `communityId` in the **path** — that is the sole scoping mechanism.
 
 > These notes describe the model as of the capability epic's web foundation. The full rewrite of this section, and of the `conluz-web-community-scope` skill, lands with the epic's final PR.
@@ -81,7 +85,7 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
 - **Location**: Tests are colocated with components
 - **Rendering**: render through `renderWithProviders` / `renderHookWithProviders` from `src/test/renderWithProviders.tsx`, not with hand-built wrappers. They compose the production providers (theme from `src/theme`, `MemoryRouter`, auth, logged user, community, error, success) around a real `QueryClient` with retries off, and **return that `queryClient`** so specs can spy on it. Options: `route` (render the page under a real `<Route>` to get route params instead of stubbing `useParams`), `queryClient` (inject one created with `createTestQueryClient()` when the spy must exist before render), and opt-in seeding of `token` and `activeCommunityId` (`null` means explicitly none). A seeded community can be switched mid-test with the returned `switchActiveCommunity(id)`; key the page on `useActiveCommunity()` to mirror the layout's keyed Outlet. A spec that mocks a context module must keep its Provider export: `vi.mock(import("…/error.context"), async (importOriginal) => ({ ...(await importOriginal()), useErrorDispatch: () => mockDispatch }))`.
 - **API mocking follows two tiers** (decided in `docs/decisions/adrs/0001-keep-vi-mock-for-api-mocking-reject-msw-and-sanction-a-narrow-real-cache-tier.md`):
-  - **Tier 1 (default): `vi.mock` of the generated `src/api/<tag>/<tag>` modules.** Use the typed form `vi.mock(import("…/api/users/users"), () => ({ useGetAllUsers: vi.fn() }))`; the factory result **must be typed**, never a string path with hand-written hook shapes. Set results in `beforeEach` with `vi.mocked(hook).mockReturnValue(...)` and the builders in `src/test/queryState.ts`: `query.success<typeof getAllUsers>(data)` (typed by the generated fetcher), `query.loading()`, `query.disabled()`, `query.error(err)`, `mutation.idle({ mutateAsync })`, `mutation.pending(variables)`. Build fixtures with `src/test/fixtures.ts` (`buildUser`, `buildMembership`, `buildCommunity`, `buildSupply`, `buildPlant`, `buildSharingAgreement`, `buildCoefficient`) and never cast a partial object to a response type (`as SupplyResponse`, `as unknown as …`): the cast hides missing required fields, the way the agreement fixtures hid `updatedAt`/`updatedBy`. Builder defaults are deliberately synthetic (`TEST-…`, non-zero sentinels, nullables null), so a spec overrides every value it asserts on. A partial literal such as `{ data: undefined, isLoading: false }` does not compile; `src/test/queryState.typecheck.ts` keeps that true under `tsc -b`. Assert invalidation by spying on the returned client (`vi.spyOn(queryClient, "invalidateQueries")`) and check the keys, not just the call count. References: `src/pages/users/UsersPage.spec.tsx` (list), `src/pages/members/MembersPage.spec.tsx` (flow with invalidation).
+  - **Tier 1 (default): `vi.mock` of the generated `src/api/<tag>/<tag>` modules.** Use the typed form `vi.mock(import("…/api/users/users"), () => ({ useGetAllUsers: vi.fn() }))`; the factory result **must be typed**, never a string path with hand-written hook shapes. Set results in `beforeEach` with `vi.mocked(hook).mockReturnValue(...)` and the builders in `src/test/queryState.ts`: `query.success<typeof getAllUsers>(data)` (typed by the generated fetcher), `query.loading()`, `query.disabled()`, `query.error(err)`, `mutation.idle({ mutateAsync })`, `mutation.pending(variables)`. Build fixtures with `src/test/fixtures.ts` (`buildUser`, `buildMembership`, `buildCommunity`, `buildSupply`, `buildPlant`, `buildSharingAgreement`, `buildCoefficient`) and never cast a partial object to a response type (`as SupplyResponse`, `as unknown as …`): the cast hides missing required fields, the way the agreement fixtures hid `updatedAt`/`updatedBy`. Builder defaults are deliberately synthetic (`TEST-…`, non-zero sentinels, nullables null), so a spec overrides every value it asserts on. A partial literal such as `{ data: undefined, isLoading: false }` does not compile; `src/test/queryState.typecheck.ts` keeps that true under `tsc -b`. Assert invalidation by spying on the returned client (`vi.spyOn(queryClient, "invalidateQueries")`) and check the keys, not just the call count. A screen's spec mocks the **action hook** it uses; only the actions layer's own specs mock `src/api/<tag>/<tag>` for a mutation. Specs are exempt from the mutation lint rule precisely so they can name a mocked hook — mocking the client in a screen spec turns that exemption into a way round the whole rule. References: `src/pages/users/UsersPage.spec.tsx` (list), `src/pages/members/MembersPage.spec.tsx` (flow with invalidation), `src/hooks/actions/useMembershipActions.spec.tsx` (an action hook: allowed / denied / pending).
   - **Tier 2: a real `QueryClient` with `src/api/custom-instance.ts` mocked**, so the real generated hooks run. Use it **only when the subject of the test is cache behaviour**: invalidation, refetch, or a loading state that spans a refetch. Everything else stays in tier 1. Route requests with `routeRequests` from `src/test/requestRouter.ts`: one route per method + URL (a `RegExp` for sub-resources), and it rejects anything it does not match **and fails the test that sent it**, even when nothing awaits the rejection (TanStack Query would otherwise swallow it into query error state). A test whose subject is an unmatched request takes it with `router.takeUnmatched()`. Mock `custom-instance` by spreading the original and replacing only `customInstance`, because the harness's `AuthProvider` imports `AXIOS_INSTANCE` from it. References, all on `routeRequests`: `src/pages/production/SharingAgreementReopenInvalidation.spec.tsx`, `SupplyCoefficientHistoryInvalidation.spec.tsx`, `useSharingAgreementCoefficientMutations.staleness.spec.tsx`.
   - `vi.mock` is per test file, so a helper module shared between specs must not contain `vi.mock` calls. When several spec files mock the same modules the same way, keep each `vi.mock` call in the spec and move the factory into a mock-free module that the factory loads with `import()` (it must import nothing at runtime but `vitest`, so it cannot cycle back into a mocked module). Reference: `src/components/SharingAgreementCoefficientSet/SharingAgreementCoefficientSet.mocks.ts`.
 - **Browser storage**: storage is cleared before each render and after each test in any file that imports the harness; no spec cleans up by hand. Rendering with a single-membership user persists `activeCommunity:<userId>`, because that is what `CommunityProvider` does in production. Specs assert the active community through observable behaviour (what the UI shows, what the hook returns), never by reading the storage key. The specs that assert storage directly are the ones that own that behaviour: `src/context/community.context.spec.tsx` (persistence) and the harness's own `src/test/renderWithProviders.spec.tsx` and `src/test/storageCleanup.spec.tsx` (isolation).
@@ -151,7 +155,9 @@ components/ComponentName/
 ### Critical Files to Understand
 - `src/main.tsx`: Application bootstrap with provider hierarchy
 - `src/api/custom-instance.ts`: Axios configuration with auth interceptor
-- `orval.config.js`: API client generation configuration
+- `orval.config.js`: API client generation configuration, and the `afterAllFilesWrite` hook that refreshes the mutation-hook list
+- `src/hooks/actions/action.ts`: the `Action` contract every write goes through
+- `src/contracts/generatedMutationHooks.json`: generated list of all 52 mutation hooks, read by the lint rule
 - `src/context/auth.context.tsx`: Authentication state management
 - `src/layouts/authenticated.layout.tsx`: Protected route implementation
 
@@ -160,9 +166,9 @@ components/ComponentName/
 ### API Integration Pattern
 When working with API endpoints:
 1. Never modify files in `src/api/` directly
-2. Use the auto-generated React Query hooks (e.g., `useGetSupplies`, `useCreateSupply`)
+2. **Reads:** use the auto-generated React Query hooks (e.g. `useGetSupplies`), subject to the community-scope wrappers. **Writes:** only through `src/hooks/actions/` — importing a generated mutation hook anywhere else is a lint error. `getGet…QueryKey()` getters stay importable everywhere.
 3. Handle loading/error states using React Query's built-in states
-4. Invalidation is explicit: after a mutation, call `queryClient.invalidateQueries` (or `removeQueries` after a delete) with the generated `get…QueryKey()` getters — see `src/pages/production/useSharingAgreementMutations.ts`
+4. Invalidation is explicit: after a mutation, call `queryClient.invalidateQueries` (or `removeQueries` after a delete) with the generated `get…QueryKey()` getters — see `src/hooks/actions/useSharingAgreementMutations.ts`
 
 ### Table Row Actions Pattern
 
@@ -210,17 +216,26 @@ The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus
 Forms use controlled components with Material-UI inputs. Supply forms (`SupplyForm`) serve as the primary reference for complex form patterns.
 
 ### Data Fetching Pattern
-```typescript
-// Use auto-generated hooks
-const { data, isLoading, error } = useGetSupplies();
+```tsx
+// Reads: the generated hook (or its community-scope wrapper)
+const { data, isLoading, error } = useGetAllSupplies(communityId);
 
-// Mutations with automatic cache invalidation
-const mutation = useCreateSupply();
-mutation.mutate(data, {
-  onSuccess: () => {
-    // Handle success
-  }
-});
+// Writes: an action hook, which returns only what this caller may do.
+// The gate and the control are one expression -- there is no way to render a
+// button for an action that was not handed over.
+const { forSupply } = useSupplyActions();
+const { actions, outcomes } = forSupply(supply);
+
+{actions.disable && (
+  <MenuItem disabled={actions.disable.isPending} onClick={() => void actions.disable.run()}>
+    Deshabilitar
+  </MenuItem>
+)}
+
+// `undefined` covers denied, pending and error alike. When a screen needs to
+// tell them apart -- a skeleton rather than a missing row action -- it reads
+// the outcome instead:
+{outcomes.disable.state === "pending" && <Skeleton width={80} />}
 ```
 
 ### Docker Development
@@ -282,6 +297,9 @@ npx vitest run   # all tests pass
 # Language
 All code and documentation must be in english.
 
+## PR description
+Once every work finishes on a branch, generate a PR description in english and markdown format ready to be pasted in GitHub. Generate it in a file on /tmp folder and give me the full path to the file.
+
 ## Referring to work in the code
 
 Comments, `eslint-disable` justifications, `TODO`s and test names may reference **issues**, never
@@ -299,3 +317,38 @@ Never use:
 
 The test: someone reading this line in two years, with no access to the plan that produced it, must
 be able to find what it refers to. "Migrates in epic PR 6" fails. "Migrates in #418" passes.
+
+## GitHub CLI
+
+`gh` is authenticated with a **read-only** credential and is available for reading. Use it whenever
+it saves a guess: checking an issue number before referencing it, reading a pull request's review
+comments, looking at why a workflow run failed, listing releases, labels or tags.
+
+**Never perform a write.** That covers creating, editing, closing, commenting on, reviewing or
+merging issues and pull requests; labels, releases and milestones; running, re-running or cancelling
+workflows; changing repository or organisation settings; and any `gh api` call with a method other
+than GET, GraphQL mutations included. `gh auth login`, `gh auth refresh`, `gh alias set` and
+`gh extension install` are equally off limits — they are ways to change what the tool can do.
+
+Writes fail twice over: the credential has no write permission, and `permissions.deny` blocks the
+commands. Do not work around either. If a command is refused, report it; do not look for a spelling
+that gets through, and never propose changing the deny rules or the credential.
+
+When a task appears to need a write — "open an issue for this", "comment on that PR", "merge it" —
+produce the content and say exactly where it goes (repository, issue or PR number, and the label or
+milestone if relevant), so a human can post it in one paste. Do not treat the restriction as a
+blocker to report and stop at: the deliverable is the text, not the API call.
+
+`git push` is likewise not yours to run. Commit locally, and leave pushing and opening pull requests
+to a human.
+
+### Referring to issues in code
+
+When a comment, a suppression justification, a `TODO` or a test name refers to work, use an issue
+number (`#412`) or its URL — never an epic's internal ordering ("epic PR 5"), a branch name, a
+milestone or a date. Branches are deleted after merge and plans are not in the repository; an issue
+number resolves years later from a fresh clone.
+
+`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
+invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
+is a permanent one.

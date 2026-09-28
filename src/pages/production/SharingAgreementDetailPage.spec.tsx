@@ -15,7 +15,7 @@ import {
 import { buildCoefficient, buildSharingAgreement } from "../../test/fixtures";
 import type { PlantResponse, SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData";
-import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
+import type { SharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -41,7 +41,7 @@ vi.mock("./useSharingAgreementDetailData", () => ({
   useSharingAgreementDetailData: (...args: unknown[]) => mockUseSharingAgreementDetailData(...args),
 }));
 
-vi.mock("./useSharingAgreementMutations", () => ({
+vi.mock("../../hooks/actions/useSharingAgreementMutations", () => ({
   useSharingAgreementMutations: (): SharingAgreementMutations => ({
     createAgreement: vi.fn(),
     updateAgreement: mockUpdateAgreement,
