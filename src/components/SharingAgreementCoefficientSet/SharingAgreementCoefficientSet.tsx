@@ -96,7 +96,7 @@ import {
 import {
   useSharingAgreementCoefficientMutations,
   type CoefficientActivationResult,
-} from "../../pages/production/useSharingAgreementCoefficientMutations";
+} from "../../hooks/actions/useSharingAgreementCoefficientMutations";
 import {
   BATCH_BAR_HEIGHT_DESKTOP,
   BATCH_BAR_HEIGHT_MOBILE,

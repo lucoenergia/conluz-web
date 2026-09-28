@@ -19,7 +19,7 @@ import { RevertSharingAgreementToDraftConfirmationModal } from "../../components
 import { SharingAgreementResponseStatus } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
-import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
+import { useSharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { summarizeApplicationProgress } from "./sharingAgreementApplicationProgress";
 import { BATCH_BAR_HEIGHT_DESKTOP, BATCH_BAR_HEIGHT_MOBILE } from "./sharingAgreementBatchBar";

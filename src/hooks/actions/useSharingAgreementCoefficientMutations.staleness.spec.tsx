@@ -13,7 +13,7 @@ import { routeRequests } from "../../test/requestRouter";
 import dayjs from "dayjs";
 import { customInstance } from "../../api/custom-instance";
 import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
-import type { EditableCoefficientRow } from "./sharingAgreementCoefficientEditing";
+import type { EditableCoefficientRow } from "../../pages/production/sharingAgreementCoefficientEditing";
 import { useGetSharingAgreementPartitionCoefficients } from "../../api/sharing-agreements/sharing-agreements";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,

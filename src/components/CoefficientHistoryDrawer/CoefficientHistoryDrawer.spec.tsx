@@ -48,7 +48,7 @@ vi.mock(import("../../context/success.context"), async (importOriginal) => ({
   useSuccessDispatch: () => vi.fn(),
 }));
 
-vi.mock(import("../../pages/production/useSharingAgreementCoefficientMutations"), () => ({
+vi.mock(import("../../hooks/actions/useSharingAgreementCoefficientMutations"), () => ({
   useSharingAgreementCoefficientMutations: () => ({
     replaceCoefficients: vi.fn(),
     activateCoefficients: vi.fn(),

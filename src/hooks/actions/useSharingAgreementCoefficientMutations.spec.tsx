@@ -18,7 +18,7 @@ import {
   retextRowsForUnit,
   updateRowInput,
   type EditableCoefficientRow,
-} from "./sharingAgreementCoefficientEditing";
+} from "../../pages/production/sharingAgreementCoefficientEditing";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,

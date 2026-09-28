@@ -20,7 +20,7 @@ import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
-import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
+import { useSharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
 import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
 import { getSharingAgreementStatusColor, getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
 
