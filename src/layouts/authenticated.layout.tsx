@@ -3,7 +3,7 @@ import { Header } from "../components/Header/Header";
 import { Navigate, Outlet, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
-import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
+import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH, visibleMenuSections } from "../utils/constants";
 import { Box, CircularProgress, Toolbar } from "@mui/material";
 import { radii } from "../theme/tokens";
 import { RouteFallback } from "../components/RouteFallback";
@@ -39,11 +39,10 @@ export const AuthenticatedLayout: FC = () => {
 
   const visibleSections = useMemo(
     () =>
-      MENU_SECTIONS.filter((section) => {
-        if (section.visibility === "operational") return hasActiveCommunity;
-        if (section.visibility === "communityAdmin") return activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
-        if (section.visibility === "platformAdmin") return isPlatformAdmin;
-        return false;
+      visibleMenuSections(MENU_SECTIONS, {
+        hasActiveCommunity,
+        isCommunityAdmin: activeCommunityRole === CommunityRole.COMMUNITY_ADMIN,
+        isPlatformAdmin,
       }),
     [hasActiveCommunity, activeCommunityRole, isPlatformAdmin],
   );

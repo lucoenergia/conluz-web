@@ -3,15 +3,10 @@ import { describe, expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { SideMenu } from "./SideMenu";
-import { CONTACT_ITEM, MENU_SECTIONS, type MenuSection } from "../../utils/constants";
+import { CONTACT_ITEM, MENU_SECTIONS, visibleMenuSections, type MenuSection } from "../../utils/constants";
 
 function filterSections(hasActiveCommunity: boolean, isCommunityAdmin: boolean, isPlatformAdmin: boolean): MenuSection[] {
-  return MENU_SECTIONS.filter((section) => {
-    if (section.visibility === "operational") return hasActiveCommunity;
-    if (section.visibility === "communityAdmin") return isCommunityAdmin;
-    if (section.visibility === "platformAdmin") return isPlatformAdmin;
-    return false;
-  });
+  return visibleMenuSections(MENU_SECTIONS, { hasActiveCommunity, isCommunityAdmin, isPlatformAdmin });
 }
 
 function setup(sections: MenuSection[]) {

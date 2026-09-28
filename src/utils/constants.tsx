@@ -11,7 +11,14 @@ import type { SvgIconComponent } from "@mui/icons-material";
 export const MIN_DESKTOP_WIDTH = 768;
 export const SIDEMENU_WIDTH = 260;
 
-export type MenuItemAccess = "all" | "communityAdmin" | "platformAdmin";
+/**
+ * Who sees a menu item:
+ * - `all`: every logged user.
+ * - `communityMember`: anyone with an active community.
+ * - `communityAdmin`: a COMMUNITY_ADMIN of the active community.
+ * - `platformAdmin`: a platform admin, whatever the active community.
+ */
+export type MenuItemAccess = "all" | "communityMember" | "communityAdmin" | "platformAdmin";
 
 export interface MenuItem {
   to: string;
@@ -21,12 +28,9 @@ export interface MenuItem {
   access: MenuItemAccess;
 }
 
-export type SectionVisibility = "operational" | "communityAdmin" | "platformAdmin";
-
 export interface MenuSection {
   id: string;
   title: string;
-  visibility: SectionVisibility;
   items: MenuItem[];
 }
 
@@ -34,17 +38,15 @@ export const MENU_SECTIONS: MenuSection[] = [
   {
     id: "operational",
     title: "Operativo",
-    visibility: "operational",
     items: [
-      { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio", access: "all" },
-      { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", access: "all" },
-      { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", access: "all" },
+      { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio", access: "communityMember" },
+      { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", access: "communityMember" },
+      { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", access: "communityMember" },
     ],
   },
   {
     id: "community-management",
     title: "Gestión de comunidad",
-    visibility: "communityAdmin",
     items: [
       { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", access: "communityAdmin" },
       { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones", access: "communityAdmin" },
@@ -53,7 +55,6 @@ export const MENU_SECTIONS: MenuSection[] = [
   {
     id: "platform-admin",
     title: "Administración de plataforma",
-    visibility: "platformAdmin",
     items: [
       { to: "/communities", id: "communities", icon: BusinessRoundedIcon, label: "Comunidades", access: "platformAdmin" },
       { to: "/users", id: "users", icon: ManageAccountsRoundedIcon, label: "Usuarios", access: "platformAdmin" },
@@ -68,3 +69,29 @@ export const CONTACT_ITEM: MenuItem = {
   label: "Contacto",
   access: "all",
 };
+
+export interface MenuAccessContext {
+  hasActiveCommunity: boolean;
+  isCommunityAdmin: boolean;
+  isPlatformAdmin: boolean;
+}
+
+function canSee(access: MenuItemAccess, context: MenuAccessContext): boolean {
+  switch (access) {
+    case "all":
+      return true;
+    case "communityMember":
+      return context.hasActiveCommunity;
+    case "communityAdmin":
+      return context.hasActiveCommunity && context.isCommunityAdmin;
+    case "platformAdmin":
+      return context.isPlatformAdmin;
+  }
+}
+
+/** The menu sections a user sees: each item filtered by its access, empty sections dropped. */
+export function visibleMenuSections(sections: MenuSection[], context: MenuAccessContext): MenuSection[] {
+  return sections
+    .map((section) => ({ ...section, items: section.items.filter((item) => canSee(item.access, context)) }))
+    .filter((section) => section.items.length > 0);
+}
