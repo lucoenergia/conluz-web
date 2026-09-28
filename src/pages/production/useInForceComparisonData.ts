@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
 import {
-  getGetSharingAgreementByIdQueryOptions,
+  getGetSharingAgreementByIdQueryKey,
+  getSharingAgreementById,
   useGetPlantActivePartitionCoefficients,
 } from "../../api/sharing-agreements/sharing-agreements";
 import type { PartitionCoefficientResponse } from "../../api/models";
@@ -46,7 +47,10 @@ export function useInForceAgreementPower(
   agreementIds: readonly string[],
   enabled: boolean,
 ): ReadonlyMap<string, InForceAgreementPower> {
-  const distinctIds = useMemo(() => [...new Set(agreementIds)].sort(), [agreementIds]);
+  // Keyed on the joined ids, so a caller passing a new array with the same
+  // agreements keeps the queries (and the returned map) where they are.
+  const idsKey = [...new Set(agreementIds)].sort().join("\n");
+  const distinctIds = useMemo(() => (idsKey ? idsKey.split("\n") : []), [idsKey]);
 
   // `combine` is re-run only when a query's result changes, so the map keeps
   // its identity across unrelated renders.
@@ -65,7 +69,11 @@ export function useInForceAgreementPower(
   );
 
   return useQueries({
-    queries: distinctIds.map((id) => getGetSharingAgreementByIdQueryOptions(plantId, id, { query: { enabled } })),
+    queries: distinctIds.map((id) => ({
+      queryKey: getGetSharingAgreementByIdQueryKey(plantId, id),
+      queryFn: ({ signal }: { signal: AbortSignal }) => getSharingAgreementById(plantId, id, signal),
+      enabled,
+    })),
     combine,
   });
 }

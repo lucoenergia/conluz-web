@@ -1,5 +1,5 @@
-import type { FC, MouseEvent } from "react";
-import { Box, Checkbox, IconButton, InputAdornment, TableCell, TableRow, TextField, Tooltip, Typography } from "@mui/material";
+import type { FC, MouseEvent, ReactNode } from "react";
+import { Box, Checkbox, Chip, IconButton, InputAdornment, Skeleton, TableCell, TableRow, TextField, Tooltip, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -8,16 +8,16 @@ import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatDecimalForInput } from "../../utils/parseDecimalInput";
 import {
   MAX_PERCENTAGE_DECIMALS,
-  isUnsavedCoefficientRow,
   isValidCoefficientValue,
   parsePercentageInput,
   type CoefficientInputUnit,
 } from "../../pages/production/sharingAgreementCoefficientEditing";
+import { formatCoefficientPercentage } from "../../pages/production/sharingAgreementCoefficientSums";
 import {
-  computeCoefficientDelta,
-  formatCoefficientDelta,
-  formatCoefficientPercentage,
-} from "../../pages/production/sharingAgreementCoefficientSums";
+  formatInForceCoefficientLine,
+  formatInForcePowerLine,
+  type RowComparisonView,
+} from "../../pages/production/sharingAgreementComparison";
 import {
   getApplicationStateDetail,
   getApplicationStateHeadline,
@@ -51,12 +51,12 @@ export interface SharingAgreementCoefficientRowProps {
   /** Whether the applicationState/endState cells render. Defaults to true; the container hides them for a clean DRAFT. */
   showStateColumns?: boolean;
   /**
-   * Whether the "coefficient currently in force" column/line renders at all
-   * (the desktop table needs a matching header cell). DRAFT-only: on a
-   * published or superseded agreement the row's own value *is* the one in
-   * force, so comparing it against itself says nothing.
+   * What this row's draft value is compared against, resolved by the
+   * container. Absent when there is no comparison to make: on a published or
+   * superseded agreement the row's own value *is* the one in force, and a
+   * plant's first agreement has nothing in force at all.
    */
-  showCurrentCoefficient?: boolean;
+  comparison?: RowComparisonView;
   /** Whether the batch-activation checkbox column/slot renders at all (the desktop table needs a matching header cell). */
   showSelectionColumn?: boolean;
   selected?: boolean;
@@ -99,35 +99,44 @@ function getCoefficientInputErrorMessage(
 }
 
 /**
- * What the current-coefficient column has to say about a row. Three cases,
- * not two — `null` from the server and `null` because nobody has asked yet
- * are different claims:
- *
- * - `unknown`: a row this session's picker synthesized. There is no server
- *   answer for it, so the column stays empty; rendering "—" would assert
- *   "nothing in force", which may well be false.
- * - `none`: a server row whose supply genuinely has no coefficient in force
- *   in this plant. "—" is the answer.
- * - `present`: the value, plus the difference the draft would make — `null`
- *   difference while the field is empty or unparseable mid-edit.
+ * The secondary "Vigente" lines. Neutral secondary text whatever the sign of
+ * the change: a coefficient going down is a decision, not a failure, and the
+ * alert colours are kept for failures.
  */
-type CurrentCoefficientView =
-  | { kind: "unknown" }
-  | { kind: "none" }
-  | { kind: "present"; coefficient: number; delta: number | null };
+function ComparisonCaption({ children }: { children: ReactNode }) {
+  return (
+    <Typography variant="caption" sx={{ color: colors.text.secondary, display: "block", fontVariantNumeric: "tabular-nums" }}>
+      {children}
+    </Typography>
+  );
+}
 
-function getCurrentCoefficientView(
-  coefficient: SharingAgreementPartitionCoefficientResponse,
-  draftValue: number | undefined,
-): CurrentCoefficientView {
-  if (isUnsavedCoefficientRow(coefficient)) return { kind: "unknown" };
-  const current = coefficient.currentCoefficient;
-  if (!current) return { kind: "none" };
-  return {
-    kind: "present",
-    coefficient: current.coefficient,
-    delta: computeCoefficientDelta(draftValue, current.coefficient),
-  };
+/** Under the coefficient: what is in force and how the draft moves it, or that nothing is. */
+function CoefficientComparisonLine({ comparison, draftValue }: { comparison: RowComparisonView | undefined; draftValue: number | undefined }) {
+  if (comparison?.kind === "new") return <ComparisonCaption>Sin coeficiente vigente</ComparisonCaption>;
+  if (comparison?.kind !== "inForce") return null;
+  return <ComparisonCaption>{formatInForceCoefficientLine(comparison.coefficient, draftValue)}</ComparisonCaption>;
+}
+
+/**
+ * Under the assigned power: the power in force, with no delta. The in-force
+ * value uses its own agreement's installed power, which may differ from the
+ * draft's, so a kW difference would mix two causes. Holds the line's height
+ * with a skeleton while that agreement loads.
+ */
+function PowerComparisonLine({ comparison }: { comparison: RowComparisonView | undefined }) {
+  if (comparison?.kind !== "inForce") return null;
+  const line = formatInForcePowerLine(comparison.coefficient, comparison.power);
+  return (
+    <ComparisonCaption>
+      {line ?? <Skeleton variant="text" aria-label="Cargando potencia vigente" sx={{ display: "inline-block", width: 72 }} />}
+    </ComparisonCaption>
+  );
+}
+
+/** Marks a supply the draft brings into the distribution. Neutral: joining is not a warning. */
+function NewSupplyBadge() {
+  return <Chip label="Nuevo" size="small" variant="outlined" sx={{ flexShrink: 0 }} />;
 }
 
 /** "Potencia asignada" in percentage mode; the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
@@ -231,7 +240,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   onRemove,
   onRevert,
   showStateColumns = true,
-  showCurrentCoefficient = false,
+  comparison,
   showSelectionColumn = false,
   selected,
   onToggleSelected,
@@ -251,7 +260,12 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   const hasMenu = showHistoryAction || availableActions.length > 0;
   // While editing, the draft side of the comparison is what's in the field,
   // so the difference retracks as the admin types.
-  const currentView = getCurrentCoefficientView(coefficient, isEditing ? editedValue : coefficient.coefficient);
+  const draftValue = isEditing ? editedValue : coefficient.coefficient;
+  // Each "Vigente" line follows the value in its own unit: the percentage line
+  // sits under whichever column shows the percentage, the kW line under the kW.
+  const isEditingInKw = isEditing && inputUnit === "kw";
+  const coefficientLine = <CoefficientComparisonLine comparison={comparison} draftValue={draftValue} />;
+  const powerLine = <PowerComparisonLine comparison={comparison} />;
 
   return (
     <TableRow>
@@ -267,9 +281,12 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
         </TableCell>
       )}
       <TableCell>
-        <Typography variant="body2" fontWeight="600" sx={{ fontVariantNumeric: "tabular-nums" }}>
-          {identity.primary}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="body2" fontWeight="600" sx={{ fontVariantNumeric: "tabular-nums" }}>
+            {identity.primary}
+          </Typography>
+          {comparison?.kind === "new" && <NewSupplyBadge />}
+        </Box>
       </TableCell>
       <TableCell>
         {identity.secondary !== null && (
@@ -278,25 +295,6 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           </Typography>
         )}
       </TableCell>
-      {showCurrentCoefficient && (
-        <TableCell align="right">
-          {currentView.kind === "none" && (
-            <Typography variant="body2" sx={{ color: colors.text.muted }}>
-              —
-            </Typography>
-          )}
-          {currentView.kind === "present" && (
-            <>
-              <Typography variant="body2">{formatCoefficientPercentage(currentView.coefficient)}</Typography>
-              {currentView.delta !== null && (
-                <Typography variant="caption" sx={{ color: colors.text.secondary, display: "block" }}>
-                  {formatCoefficientDelta(currentView.delta)}
-                </Typography>
-              )}
-            </>
-          )}
-        </TableCell>
-      )}
       <TableCell align="right">
         {isEditing && inputUnit && onCoefficientChange ? (
           <CoefficientInput
@@ -313,11 +311,13 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
             {formatCoefficientPercentage(coefficient.coefficient ?? 0)}
           </Typography>
         )}
+        {isEditingInKw ? powerLine : coefficientLine}
       </TableCell>
       <TableCell align="right">
         <Typography variant="body2" fontWeight="600">
           {isEditing ? otherUnitValue : formatAssignedEnergy(coefficient.coefficient, installedPowerKw)}
         </Typography>
+        {isEditingInKw ? coefficientLine : powerLine}
       </TableCell>
       {showStateColumns && (
         <TableCell>
@@ -387,7 +387,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   onRemove,
   onRevert,
   showStateColumns = true,
-  showCurrentCoefficient = false,
+  comparison,
   showSelectionColumn = false,
   selected,
   onToggleSelected,
@@ -406,7 +406,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   // button would never appear there.
   const hasMenu = showHistoryAction || availableActions.length > 0;
   const showCheckbox = showSelectionColumn && !!onToggleSelected && availableActions.length > 0;
-  const currentView = getCurrentCoefficientView(coefficient, isEditing ? editedValue : coefficient.coefficient);
+  const draftValue = isEditing ? editedValue : coefficient.coefficient;
 
   return (
     <Box
@@ -455,6 +455,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
           >
             {identity.primary}
           </Typography>
+          {comparison?.kind === "new" && <NewSupplyBadge />}
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
           {isEditing && inputUnit && onCoefficientChange ? (
@@ -507,23 +508,16 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
         </Typography>
       )}
 
-      {/* The card has no column headers, so the line names itself. Not mounted
-          at all for an unsaved row — a blank line would just add height. */}
-      {showCurrentCoefficient && currentView.kind !== "unknown" && (
-        <Typography variant="caption" sx={{ color: colors.text.secondary }}>
-          {currentView.kind === "none"
-            ? "Actual —"
-            : `Actual ${formatCoefficientPercentage(currentView.coefficient)}${
-                currentView.delta !== null ? ` · ${formatCoefficientDelta(currentView.delta)}` : ""
-              }`}
-        </Typography>
-      )}
-
       {isEditing && (
         <Typography variant="caption" sx={{ color: colors.text.secondary }}>
           {otherUnitValue}
         </Typography>
       )}
+
+      {/* The card has no columns, so both lines sit together under the values
+          they describe, percentage first, as in the table's reading order. */}
+      <CoefficientComparisonLine comparison={comparison} draftValue={draftValue} />
+      <PowerComparisonLine comparison={comparison} />
 
       {!isEditing && showStateColumns && (
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, mt: 0.5 }}>

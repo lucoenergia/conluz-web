@@ -134,14 +134,16 @@ describe("SharingAgreementCoefficientSet (registering dates)", () => {
   });
 });
 
-describe("SharingAgreementCoefficientSet (current coefficient column)", () => {
+describe("SharingAgreementCoefficientSet (in-force comparison gating)", () => {
+  // In force means authored by a PUBLISHED agreement: a SUPERSEDED one never
+  // holds an open coefficient.
   const IN_FORCE = {
     coefficient: 0.35,
     validFrom: "2024-01-01T00:00:00Z",
     sharingAgreement: {
       id: "a0",
       name: "Acuerdo anterior",
-      status: SharingAgreementReferenceResponseStatus.SUPERSEDED,
+      status: SharingAgreementReferenceResponseStatus.PUBLISHED,
     },
   };
 
@@ -154,32 +156,39 @@ describe("SharingAgreementCoefficientSet (current coefficient column)", () => {
 
   const withoutCurrent = withCurrent.map((c) => ({ ...c, currentCoefficient: null }));
 
-  it("mounts the column on a DRAFT where at least one supply is already on a coefficient", () => {
+  it("compares a DRAFT where at least one supply is already on a coefficient, in a single draft column", () => {
     renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
-    expect(screen.getByText("Coeficiente actual")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Coeficiente" })).toBeInTheDocument();
+    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+    expect(screen.queryByText("Coeficiente (%)")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Vigente 35,0000 % · +5,0000 p.p.").length).toBeGreaterThan(0);
   });
 
   it("is absent on PUBLISHED even when every row carries one — the row's own value IS the one in force", () => {
     renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
-    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Vigente/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Comparado con/)).not.toBeInTheDocument();
   });
 
   it("is absent on SUPERSEDED for the same reason", () => {
     renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.SUPERSEDED });
-    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Vigente/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Comparado con/)).not.toBeInTheDocument();
   });
 
-  it("is absent on a DRAFT where no supply is on one yet — a first agreement, where the column would be all dashes", () => {
+  it("is absent on a DRAFT where no supply is on one yet and nothing leaves — a first agreement", () => {
     renderWithTheme({ coefficients: withoutCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
-    expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Vigente|^Sin coeficiente vigente$/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Nuevo")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Comparado con/)).not.toBeInTheDocument();
   });
 
-  it("stays mounted while a search filters out every row that has one", () => {
-    // Deliberately unlike the actions column, which does track the filter: a
-    // display-only column appearing and vanishing as the admin types is noise.
+  it("keeps the context line while a search filters out every row that has one", () => {
+    // The context describes the draft, not the search box: a line appearing
+    // and vanishing as the admin types would just be noise.
     renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
     fireEvent.change(screen.getByPlaceholderText(/Buscar/i), { target: { value: "Local C" } });
-    expect(screen.getByText("Coeficiente actual")).toBeInTheDocument();
+    expect(screen.getByText("Comparado con el acuerdo vigente «Acuerdo anterior»")).toBeInTheDocument();
   });
 });
 

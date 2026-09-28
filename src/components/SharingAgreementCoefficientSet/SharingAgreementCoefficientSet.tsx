@@ -13,6 +13,7 @@ import {
   Menu,
   MenuItem,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -97,6 +98,16 @@ import {
   useSharingAgreementCoefficientMutations,
   type CoefficientActivationResult,
 } from "../../pages/production/useSharingAgreementCoefficientMutations";
+import {
+  buildRowComparisonView,
+  findOutgoingCoefficients,
+  resolveComparisonContext,
+  resolveRowInForce,
+  type ComparisonContext,
+  type RowComparisonView,
+  type RowInForce,
+} from "../../pages/production/sharingAgreementComparison";
+import { useInForceAgreementPower, usePlantActiveCoefficients } from "../../pages/production/useInForceComparisonData";
 import {
   BATCH_BAR_HEIGHT_DESKTOP,
   BATCH_BAR_HEIGHT_MOBILE,
@@ -280,6 +291,33 @@ const AssignedPowerInfoButton: FC = () => {
         </IconButton>
       </Tooltip>
     </ClickAwayListener>
+  );
+};
+
+/**
+ * What the draft is compared against, above the list. It waits for the plant's
+ * active coefficients, because an outgoing supply can add an agreement, and it
+ * is left out when they fail rather than show a half-true line. While they
+ * load, a skeleton holds the line only when some row already guarantees there
+ * will be one.
+ */
+const ComparisonContextLine: FC<{
+  context: ComparisonContext;
+  isLoading: boolean;
+  isError: boolean;
+  hasRowInForce: boolean;
+}> = ({ context, isLoading, isError, hasRowInForce }) => {
+  if (isError) return null;
+  if (isLoading) {
+    return hasRowInForce ? <Skeleton variant="text" aria-label="Cargando comparación" sx={{ mb: 1.5, maxWidth: 360 }} /> : null;
+  }
+  if (context.kind === "none") return null;
+  return (
+    <Typography variant="body2" sx={{ color: colors.text.secondary, mb: 1.5 }}>
+      {context.kind === "single"
+        ? `Comparado con el acuerdo vigente «${context.agreement.name}»`
+        : "Comparado con los coeficientes en vigor hoy"}
+    </Typography>
   );
 };
 
@@ -643,21 +681,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     [coefficients],
   );
   const showStateColumns = !isDraft || hasAnomalousRow;
-  // What each supply's coefficient would replace. DRAFT-only: on a published
-  // or superseded agreement the row's own value IS the one in force, so the
-  // comparison would be against itself.
-  //
-  // Mounted only when at least one row actually has one — a first-ever
-  // agreement has none by definition, and a column of dashes costs width on a
-  // 390px viewport to say nothing.
-  //
-  // Gated on `coefficients`, NOT filteredCoefficients: a display-only column
-  // that appeared and vanished as the admin typed in the search box would
-  // just be noise.
-  const showCurrentCoefficient = useMemo(
-    () => isDraft && coefficients.some((c) => c.currentCoefficient != null),
-    [isDraft, coefficients],
-  );
   // Extra columns appearing is the CONSEQUENCE of the anomaly; on its own it
   // renders a broken draft as an ordinary one. This is the message.
   const hasDraftAnomaly = isDraft && hasAnomalousRow;
@@ -721,6 +744,60 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const selectionActionSummary = useMemo(() => summarizeSelectionActions(selectedCoefficients), [selectedCoefficients]);
 
   const filteredRows = useMemo(() => filterEditableRows(rows, effectiveSearchText), [rows, effectiveSearchText]);
+
+  // ── Draft vs. in force ────────────────────────────────────────────────────
+  // DRAFT-only: on a published or superseded agreement the rows' own values
+  // ARE what is in force, so there is nothing to compare, and the plant's
+  // active coefficients are not even requested.
+  //
+  // Everything below reads the full set (`rows` while editing, `coefficients`
+  // otherwise), never the filtered one: the context line and the outgoing
+  // supplies describe the draft, not the search box. While editing it tracks
+  // the rows live, so removing a supply moves it to the outgoing section and
+  // re-adding it brings its in-force value back.
+  const activeCoefficients = usePlantActiveCoefficients(plantId, isDraft);
+  const draftRows = useMemo(() => (isEditing ? rows.map((row) => row.coefficient) : coefficients), [isEditing, rows, coefficients]);
+  const activeBySupplyId = useMemo(
+    () => (activeCoefficients.active ? new Map(activeCoefficients.active.map((c) => [c.supply.id, c])) : undefined),
+    [activeCoefficients.active],
+  );
+  const inForceBySupplyId = useMemo(() => {
+    const inForce = new Map<string, RowInForce>();
+    for (const row of draftRows) inForce.set(row.supply.id, resolveRowInForce(row, activeBySupplyId));
+    return inForce;
+  }, [draftRows, activeBySupplyId]);
+  const outgoingCoefficients = useMemo(
+    () =>
+      activeCoefficients.active
+        ? findOutgoingCoefficients(activeCoefficients.active, new Set(draftRows.map((row) => row.supply.id)))
+        : [],
+    [activeCoefficients.active, draftRows],
+  );
+  const comparisonContext: ComparisonContext = useMemo(
+    () =>
+      resolveComparisonContext(
+        [...inForceBySupplyId.values()].map((inForce) => (inForce.kind === "present" ? inForce.inForce.sharingAgreement : null)),
+        outgoingCoefficients,
+      ),
+    [inForceBySupplyId, outgoingCoefficients],
+  );
+  // Nothing to compare for a plant's first agreement, and nothing to say about
+  // an empty set: a fresh draft would otherwise list the whole plant as leaving.
+  const showComparison = isDraft && draftRows.length > 0 && comparisonContext.kind !== "none";
+  const inForceAgreementIds = useMemo(() => {
+    const ids: string[] = [];
+    inForceBySupplyId.forEach((inForce) => {
+      if (inForce.kind === "present") ids.push(inForce.inForce.sharingAgreement.id);
+    });
+    outgoingCoefficients.forEach((c) => ids.push(c.sharingAgreement.id));
+    return ids;
+  }, [inForceBySupplyId, outgoingCoefficients]);
+  const inForceAgreementPower = useInForceAgreementPower(plantId, inForceAgreementIds, showComparison);
+  const getRowComparison = (row: SharingAgreementPartitionCoefficientResponse): RowComparisonView | undefined => {
+    if (!showComparison) return undefined;
+    return buildRowComparisonView(inForceBySupplyId.get(row.supply.id) ?? { kind: "unknown" }, inForceAgreementPower);
+  };
+  const hasRowInForce = [...inForceBySupplyId.values()].some((inForce) => inForce.kind === "present");
 
   // Unit-independent: always reads the canonical `value`, never re-derives it
   // from text — the sum (and canSave, and the save payload below) can't be
@@ -1034,6 +1111,15 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         </Box>
       )}
 
+      {isDraft && draftRows.length > 0 && (
+        <ComparisonContextLine
+          context={comparisonContext}
+          isLoading={activeCoefficients.isLoading}
+          isError={activeCoefficients.isError}
+          hasRowInForce={hasRowInForce}
+        />
+      )}
+
       {isEditing && filteredRows.length === 0 && rows.length === 0 ? (
         <EmptyState
           icon={HandshakeOutlinedIcon}
@@ -1075,16 +1161,9 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                       CUPS
                     </Typography>
                   </TableCell>
-                  {showCurrentCoefficient && (
-                    <TableCell align="right">
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        Coeficiente actual
-                      </Typography>
-                    </TableCell>
-                  )}
                   <TableCell align="right">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente (%)"}
+                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente"}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
@@ -1137,7 +1216,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         onRemove={() => handleRemoveRow(row.supplyId)}
                         onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                         showStateColumns={showStateColumns}
-                        showCurrentCoefficient={showCurrentCoefficient}
+                        comparison={getRowComparison(row.coefficient)}
                       />
                     ))
                   : filteredCoefficients.map((coefficient) => (
@@ -1146,7 +1225,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         coefficient={coefficient}
                         installedPowerKw={installedPowerKw}
                         showStateColumns={showStateColumns}
-                        showCurrentCoefficient={showCurrentCoefficient}
+                        comparison={getRowComparison(coefficient)}
                         showSelectionColumn={showSelectionColumn}
                         selected={selectedIds.has(coefficient.coefficientId)}
                         onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
@@ -1188,7 +1267,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     onRemove={() => handleRemoveRow(row.supplyId)}
                     onRevert={isRowRevertable(row, snapshot) ? () => handleRevertRow(row.supplyId) : undefined}
                     showStateColumns={showStateColumns}
-                    showCurrentCoefficient={showCurrentCoefficient}
+                    comparison={getRowComparison(row.coefficient)}
                   />
                 ))
               : filteredCoefficients.map((coefficient) => (
@@ -1197,7 +1276,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     coefficient={coefficient}
                     installedPowerKw={installedPowerKw}
                     showStateColumns={showStateColumns}
-                    showCurrentCoefficient={showCurrentCoefficient}
+                    comparison={getRowComparison(coefficient)}
                     showSelectionColumn={showSelectionColumn}
                     selected={selectedIds.has(coefficient.coefficientId)}
                     onToggleSelected={() => toggleSelected(coefficient.coefficientId)}

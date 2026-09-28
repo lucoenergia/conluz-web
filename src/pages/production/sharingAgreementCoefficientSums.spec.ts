@@ -4,7 +4,6 @@ import {
   COEFFICIENT_SCALE,
   computeSharingAgreementCoefficientSums,
   computeCoefficientDelta,
-  formatCoefficientDelta,
   formatCoefficientPercentage,
   isFullSum,
   toIntegerUnits,
@@ -119,21 +118,6 @@ describe("sharingAgreementCoefficientSums", () => {
       // comparison yet" must not render as "no change".
       expect(computeCoefficientDelta(undefined, 0.35)).toBeNull();
       expect(computeCoefficientDelta(NaN, 0.35)).toBeNull();
-    });
-  });
-
-  describe("formatCoefficientDelta", () => {
-    it("signs an increase and a decrease, at the same fixed 4 decimals as every other percentage", () => {
-      expect(formatCoefficientDelta(0.05)).toBe("+5,0000 %");
-      expect(formatCoefficientDelta(-0.025)).toBe("-2,5000 %");
-    });
-
-    it("leaves an unchanged coefficient unsigned — no change is not an increase", () => {
-      expect(formatCoefficientDelta(0)).toBe("0,0000 %");
-    });
-
-    it("keeps a 1-unit difference visible", () => {
-      expect(formatCoefficientDelta(1 / COEFFICIENT_SCALE)).toBe("+0,0001 %");
     });
   });
 });

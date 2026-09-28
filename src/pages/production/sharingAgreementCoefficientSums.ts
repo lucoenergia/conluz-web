@@ -92,12 +92,3 @@ export function computeCoefficientDelta(
   if (currentValue === undefined || !Number.isFinite(currentValue)) return null;
   return (toIntegerUnits(draftValue) - toIntegerUnits(currentValue)) / COEFFICIENT_SCALE;
 }
-
-/**
- * A difference as a signed percentage, at the same fixed 4 decimals as every
- * other percentage on this page. `exceptZero` so an unchanged coefficient
- * reads "0,0000 %" rather than "+0,0000 %" — no change is not an increase.
- */
-export function formatCoefficientDelta(delta: number): string {
-  return formatPercentage(delta, { signDisplay: "exceptZero" });
-}

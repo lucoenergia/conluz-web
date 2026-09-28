@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { Table, TableBody } from "@mui/material";
@@ -8,10 +8,9 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
-import { SharingAgreementReferenceResponseStatus } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import type { InForceAgreementPower, RowComparisonView } from "../../pages/production/sharingAgreementComparison";
 import {
-  buildEditableRowFromSupply,
   updateRowInput,
   type EditableCoefficientRow,
 } from "../../pages/production/sharingAgreementCoefficientEditing";
@@ -817,43 +816,37 @@ describe("row identity when the supply has no name", () => {
   });
 });
 
-describe("current coefficient (DRAFT-only column)", () => {
-  // An explicit sign followed by a digit: a lone "-" is formatOtherUnit's
-  // "no value" marker, not a difference of minus-nothing.
-  const SIGNED_DELTA = /^[+-]\d[\d.,]*\s*%$/;
+describe("draft vs. in-force comparison (DRAFT-only)", () => {
+  // A delta line: the in-force value, then an explicit sign, a digit and the
+  // percentage-point suffix. A lone "-" elsewhere is formatOtherUnit's "no
+  // value" marker, not a difference.
+  const DELTA_LINE = /^Vigente .+ · [+-]\d[\d.,]* p\.p\.$/;
 
-  const AGREEMENT = {
-    id: "a1",
-    name: "Acuerdo 2024",
-    status: SharingAgreementReferenceResponseStatus.PUBLISHED,
-  };
-
-  /** A DRAFT row proposing `draft` for a supply currently on `current`. */
-  function row(draft: number, current: number | null): SharingAgreementPartitionCoefficientResponse {
-    return {
-      ...pendingCoefficient,
-      coefficient: draft,
-      currentCoefficient:
-        current === null ? null : { coefficient: current, validFrom: "2024-01-01T00:00:00Z", sharingAgreement: AGREEMENT },
-    };
+  /** A DRAFT row proposing `draft`; what it is compared against comes in through `comparison`. */
+  function row(draft: number): SharingAgreementPartitionCoefficientResponse {
+    return { ...pendingCoefficient, coefficient: draft };
   }
 
-  /** A row the picker synthesized this session — no server answer exists for it. */
-  function unsavedRow(): SharingAgreementPartitionCoefficientResponse {
-    return buildEditableRowFromSupply({ id: "s9", name: "Nave Nueva", code: "CUPS9" } as SupplyResponse).coefficient;
+  /**
+   * In force at `coefficient`, authored by an agreement whose installed power
+   * (80 kW) differs from the draft's (100 kW), so a line computed with the
+   * wrong one shows.
+   */
+  function inForce(coefficient: number, power: InForceAgreementPower = { status: "success", installedPowerKw: 80 }): RowComparisonView {
+    return { kind: "inForce", coefficient, power };
   }
 
   // A clean DRAFT hides the state columns, and their end-state readout is also
-  // an em dash — rendering them here would make "—" ambiguous.
+  // an em dash, which would make "Vigente —" assertions ambiguous.
   function renderRow(props: Partial<React.ComponentProps<typeof SharingAgreementCoefficientTableRow>>) {
     return render(
       <Table>
         <TableBody>
           <SharingAgreementCoefficientTableRow
-            coefficient={row(0.4, 0.35)}
+            coefficient={row(0.4)}
             installedPowerKw={100}
             showStateColumns={false}
-            showCurrentCoefficient
+            comparison={inForce(0.35)}
             {...props}
           />
         </TableBody>
@@ -864,85 +857,116 @@ describe("current coefficient (DRAFT-only column)", () => {
   function renderCard(props: Partial<React.ComponentProps<typeof SharingAgreementCoefficientCard>>) {
     return render(
       <SharingAgreementCoefficientCard
-        coefficient={row(0.4, 0.35)}
+        coefficient={row(0.4)}
         installedPowerKw={100}
         showStateColumns={false}
-        showCurrentCoefficient
+        comparison={inForce(0.35)}
         {...props}
       />,
     );
   }
 
   describe("table row", () => {
-    it("shows the coefficient in force and the signed difference the draft would make", () => {
+    it("keeps the draft as the main value and puts what is in force, and the change in points, beneath it", () => {
       renderRow({});
-      expect(screen.getByText("35,0000 %")).toBeInTheDocument();
-      expect(screen.getByText("+5,0000 %")).toBeInTheDocument();
+      const [, , coefficientCell, powerCell] = screen.getAllByRole("cell");
+      expect(within(coefficientCell).getByText("40,0000 %")).toBeInTheDocument();
+      expect(within(coefficientCell).getByText("Vigente 35,0000 % · +5,0000 p.p.")).toBeInTheDocument();
+      expect(within(powerCell).getByText("40,00 kW")).toBeInTheDocument();
+      // 0.35 × the authoring agreement's 80 kW, not the draft's 100 kW.
+      expect(within(powerCell).getByText("Vigente 28,00 kW")).toBeInTheDocument();
     });
 
     it("signs a reduction negatively", () => {
-      renderRow({ coefficient: row(0.25, 0.3) });
-      expect(screen.getByText("-5,0000 %")).toBeInTheDocument();
+      renderRow({ coefficient: row(0.25), comparison: inForce(0.3) });
+      expect(screen.getByText("Vigente 30,0000 % · -5,0000 p.p.")).toBeInTheDocument();
     });
 
-    it("shows an unsigned zero when the draft keeps the same coefficient", () => {
-      renderRow({ coefficient: row(0.3, 0.3) });
-      expect(screen.getByText("0,0000 %")).toBeInTheDocument();
+    it("drops the difference when the draft keeps the same coefficient", () => {
+      renderRow({ coefficient: row(0.3), comparison: inForce(0.3) });
+      expect(screen.getByText("Vigente 30,0000 %")).toBeInTheDocument();
+      expect(screen.queryByText(DELTA_LINE)).not.toBeInTheDocument();
     });
 
-    it("renders an em dash, and no difference, for a server row with nothing in force", () => {
-      renderRow({ coefficient: row(0.4, null) });
-      expect(screen.getByText("—")).toBeInTheDocument();
-      expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+    it("renders the colour-neutral secondary text whatever the sign", () => {
+      renderRow({ coefficient: row(0.25), comparison: inForce(0.3) });
+      expect(screen.getByText("Vigente 30,0000 % · -5,0000 p.p.")).toHaveStyle({ color: colors.text.secondary });
     });
 
-    it("renders nothing at all for a row the picker just added — no server answer is not an answer of 'none'", () => {
-      renderRow({ coefficient: unsavedRow() });
-      expect(screen.queryByText("—")).not.toBeInTheDocument();
-      expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+    it("badges a supply with nothing in force as new, with no power line", () => {
+      renderRow({ comparison: { kind: "new" } });
+      const [pointCell, , coefficientCell, powerCell] = screen.getAllByRole("cell");
+      expect(within(pointCell).getByText("Nuevo")).toBeInTheDocument();
+      expect(within(coefficientCell).getByText("Sin coeficiente vigente")).toBeInTheDocument();
+      expect(within(powerCell).queryByText(/^Vigente/)).not.toBeInTheDocument();
+      expect(screen.queryByText(DELTA_LINE)).not.toBeInTheDocument();
     });
 
-    it("is absent entirely when the container doesn't ask for it (PUBLISHED, SUPERSEDED)", () => {
-      renderRow({ showCurrentCoefficient: false });
-      expect(screen.queryByText("35,0000 %")).not.toBeInTheDocument();
-      expect(screen.queryByText("+5,0000 %")).not.toBeInTheDocument();
+    it("says nothing about a row whose supply has not been looked up yet", () => {
+      renderRow({ comparison: { kind: "unknown" } });
+      expect(screen.queryByText(/^Vigente|^Sin coeficiente vigente$/)).not.toBeInTheDocument();
+      expect(screen.queryByText("Nuevo")).not.toBeInTheDocument();
+    });
+
+    it("is absent entirely when there is no comparison (PUBLISHED, SUPERSEDED, first agreement)", () => {
+      renderRow({ comparison: undefined });
+      expect(screen.queryByText(/^Vigente|^Sin coeficiente vigente$/)).not.toBeInTheDocument();
+      expect(screen.queryByText("Nuevo")).not.toBeInTheDocument();
+    });
+
+    it("holds the power line with a skeleton while the authoring agreement loads, and shows a dash if it fails", () => {
+      const { unmount } = renderRow({ comparison: inForce(0.35, { status: "loading" }) });
+      expect(screen.getByLabelText("Cargando potencia vigente")).toBeInTheDocument();
+      expect(screen.getByText("Vigente 35,0000 % · +5,0000 p.p.")).toBeInTheDocument();
+      unmount();
+
+      renderRow({ comparison: inForce(0.35, { status: "error" }) });
+      expect(screen.getByText("Vigente —")).toBeInTheDocument();
+      expect(screen.getByText("Vigente 35,0000 % · +5,0000 p.p.")).toBeInTheDocument();
     });
   });
 
   describe("mobile card", () => {
-    it("names itself, since a card has no column header", () => {
+    it("shows the same lines as the table row", () => {
       renderCard({});
-      expect(screen.getByText("Actual 35,0000 % · +5,0000 %")).toBeInTheDocument();
+      expect(screen.getByText("40,0000 %")).toBeInTheDocument();
+      expect(screen.getByText("Vigente 35,0000 % · +5,0000 p.p.")).toBeInTheDocument();
+      expect(screen.getByText("Vigente 28,00 kW")).toBeInTheDocument();
     });
 
-    it("says 'Actual —' for a server row with nothing in force", () => {
-      renderCard({ coefficient: row(0.4, null) });
-      expect(screen.getByText("Actual —")).toBeInTheDocument();
+    it("badges a new supply and says it has nothing in force", () => {
+      renderCard({ comparison: { kind: "new" } });
+      expect(screen.getByText("Nuevo")).toBeInTheDocument();
+      expect(screen.getByText("Sin coeficiente vigente")).toBeInTheDocument();
     });
 
-    it("omits the line entirely for a freshly picked supply, rather than growing a blank one", () => {
-      renderCard({ coefficient: unsavedRow() });
-      expect(screen.queryByText(/^Actual/)).not.toBeInTheDocument();
-    });
-
-    it("is absent entirely when the container doesn't ask for it", () => {
-      renderCard({ showCurrentCoefficient: false });
-      expect(screen.queryByText(/^Actual/)).not.toBeInTheDocument();
+    it("omits the lines for an unknown row and when there is no comparison", () => {
+      const { unmount } = renderCard({ comparison: { kind: "unknown" } });
+      expect(screen.queryByText(/^Vigente|^Sin coeficiente vigente$/)).not.toBeInTheDocument();
+      unmount();
+      renderCard({ comparison: undefined });
+      expect(screen.queryByText(/^Vigente|^Sin coeficiente vigente$/)).not.toBeInTheDocument();
     });
   });
 
   describe("while editing", () => {
     it("compares against what is in the field, not the saved value", () => {
       renderRow({ isEditing: true, inputUnit: "percentage", coefficientInput: "50", editedValue: 0.5, onCoefficientChange: vi.fn() });
-      // 0.50 against a current 0.35, not the row's own saved 0.40.
-      expect(screen.getByText("+15,0000 %")).toBeInTheDocument();
+      // 0.50 against 0.35 in force, not the row's own saved 0.40.
+      expect(screen.getByText("Vigente 35,0000 % · +15,0000 p.p.")).toBeInTheDocument();
     });
 
-    it("drops the difference while the field is empty — 'no comparison' is not 'no change'", () => {
+    it("keeps the in-force value, without a difference, while the field is empty", () => {
       renderRow({ isEditing: true, inputUnit: "percentage", coefficientInput: "", editedValue: undefined, onCoefficientChange: vi.fn() });
-      expect(screen.getByText("35,0000 %")).toBeInTheDocument();
-      expect(screen.queryByText("0,0000 %")).not.toBeInTheDocument();
-      expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+      expect(screen.getByText("Vigente 35,0000 %")).toBeInTheDocument();
+      expect(screen.queryByText(DELTA_LINE)).not.toBeInTheDocument();
+    });
+
+    it("keeps each line under the value in its own unit when editing in kW", () => {
+      renderRow({ isEditing: true, inputUnit: "kw", coefficientInput: "50", editedValue: 0.5, onCoefficientChange: vi.fn() });
+      const [, , inputCell, equivalentCell] = screen.getAllByRole("cell");
+      expect(within(inputCell).getByText("Vigente 28,00 kW")).toBeInTheDocument();
+      expect(within(equivalentCell).getByText("Vigente 35,0000 % · +15,0000 p.p.")).toBeInTheDocument();
     });
 
     /**
@@ -955,55 +979,45 @@ describe("current coefficient (DRAFT-only column)", () => {
       const INSTALLED_KW = 200;
       const seed: EditableCoefficientRow = {
         supplyId: "s1",
-        coefficient: row(0.4, 0.35),
+        coefficient: row(0.4),
         value: undefined,
         inputText: "",
       };
 
-      function deltaTextFor(inputText: string, unit: "percentage" | "kw"): string | null {
-        const [updated] = updateRowInput([seed], "s1", inputText, unit, INSTALLED_KW);
+      function deltaLineFor(inputText: string, unit: "percentage" | "kw", installedPowerKw = INSTALLED_KW): string | null {
+        const [updated] = updateRowInput([seed], "s1", inputText, unit, installedPowerKw);
         const { unmount } = renderRow({
           coefficient: updated.coefficient,
           isEditing: true,
           inputUnit: unit,
-          installedPowerKw: INSTALLED_KW,
+          installedPowerKw,
           coefficientInput: updated.inputText,
           editedValue: updated.value,
           onCoefficientChange: vi.fn(),
         });
-        const match = screen.queryByText(SIGNED_DELTA);
+        const match = screen.queryByText(DELTA_LINE);
         const text = match ? match.textContent : null;
         unmount();
         return text;
       }
 
       it("reports the same difference for 50 % and for the 100 kW that equals it", () => {
-        const asPercentage = deltaTextFor("50", "percentage");
-        // 100 kW of 200 kW installed is 0.5 — the same coefficient as "50 %".
-        expect(deltaTextFor("100", "kw")).toBe(asPercentage);
+        const asPercentage = deltaLineFor("50", "percentage");
+        // 100 kW of 200 kW installed is 0.5, the same coefficient as "50 %".
+        expect(deltaLineFor("100", "kw")).toBe(asPercentage);
         // ...and it is the real figure, not two matching nulls. \s rather than
         // a literal space: textContent keeps the formatter's U+00A0, which
         // getByText's normalizer would otherwise have hidden.
-        expect(asPercentage).toMatch(/^\+15,0000\s%$/);
+        expect(asPercentage).toMatch(/^Vigente 35,0000\s% · \+15,0000 p\.p\.$/);
       });
 
       it("drops the difference when the kW field is emptied or unparseable", () => {
-        expect(deltaTextFor("", "kw")).toBeNull();
-        expect(deltaTextFor("abc", "kw")).toBeNull();
+        expect(deltaLineFor("", "kw")).toBeNull();
+        expect(deltaLineFor("abc", "kw")).toBeNull();
       });
 
       it("drops the difference when installed power can't convert the kW figure", () => {
-        const [updated] = updateRowInput([seed], "s1", "100", "kw", 0);
-        renderRow({
-          coefficient: updated.coefficient,
-          isEditing: true,
-          inputUnit: "kw",
-          installedPowerKw: 0,
-          coefficientInput: updated.inputText,
-          editedValue: updated.value,
-          onCoefficientChange: vi.fn(),
-        });
-        expect(screen.queryByText(SIGNED_DELTA)).not.toBeInTheDocument();
+        expect(deltaLineFor("100", "kw", 0)).toBeNull();
       });
     });
   });
