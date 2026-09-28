@@ -31,6 +31,25 @@ export function decide<T>(capabilities: T | undefined, key: keyof T): Capability
   return capabilities?.[key] === true ? { state: "allowed" } : DENIED;
 }
 
+/**
+ * The same decision, for capabilities carried on a resource the caller already
+ * holds -- a supply, a user, a membership, an agreement. Those have no scope
+ * hook, because there is no second request to make: the row that arrived is the
+ * answer.
+ *
+ * An absent resource is `pending`, not `denied`. `decide` cannot tell the two
+ * apart -- an absent capabilities object legitimately means no -- and
+ * collapsing them is the same bug one level down from the one this module
+ * exists to prevent: a row that has not loaded renders as a row the caller may
+ * do nothing with, and the menu item appears a moment later.
+ */
+export function outcomeFromResource<TCapabilities>(
+  capabilities: TCapabilities | undefined,
+  key: keyof TCapabilities,
+): CapabilityOutcome {
+  return capabilities === undefined ? PENDING : decide(capabilities, key);
+}
+
 function statusOf(error: unknown): number | undefined {
   return (error as { response?: { status?: number } } | null | undefined)?.response?.status;
 }

@@ -14,6 +14,7 @@ export {
   decide,
   isDenial,
   outcomeFromQuery,
+  outcomeFromResource,
   DENIED,
   PENDING,
 } from "./capabilityOutcome";
