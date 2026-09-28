@@ -3,30 +3,12 @@ import { Box, Typography, MenuItem, Chip } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { MenuTemplate } from "../Menu/MenuTemplate";
-import { useLoggedUser } from "../../context/logged-user.context";
-import { useActiveCommunity, useActiveCommunityDispatch } from "../../context/community.context";
-import { useGetAllCommunities } from "../../api/communities/communities";
-import { useQueryClient } from "@tanstack/react-query";
 import { colors, fontSizes } from "../../theme/tokens";
-import type { CommunityResponse } from "../../api/models";
+import { useActiveCommunityDetails } from "../../hooks/useActiveCommunityDetails";
 
 export const CommunitySelector: FC = () => {
-  const loggedUser = useLoggedUser();
-  const activeCommunityId = useActiveCommunity();
-  const setActiveCommunity = useActiveCommunityDispatch();
-  const queryClient = useQueryClient();
+  const { activeCommunityId, activeCommunity, communities, membershipCount, select } = useActiveCommunityDetails();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-
-  const memberships = loggedUser?.memberships ?? {};
-  const communityIds = Object.keys(memberships);
-
-  const { data: allCommunities = [] } = useGetAllCommunities({
-    query: { enabled: communityIds.length >= 1 },
-  });
-
-  const activeCommunity: CommunityResponse | undefined = allCommunities.find(
-    (c) => c.id === activeCommunityId,
-  );
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElement(event.currentTarget);
@@ -37,18 +19,13 @@ export const CommunitySelector: FC = () => {
   };
 
   const handleSelect = (communityId: string) => {
-    if (communityId === activeCommunityId) {
-      handleClose();
-      return;
-    }
-    setActiveCommunity(communityId);
-    queryClient.invalidateQueries();
+    select(communityId);
     handleClose();
   };
 
-  if (communityIds.length === 0) return null;
+  if (membershipCount === 0) return null;
 
-  if (communityIds.length === 1) {
+  if (membershipCount === 1) {
     return (
       <Chip
         icon={<BusinessIcon sx={{ fontSize: 16 }} />}
@@ -97,7 +74,7 @@ export const CommunitySelector: FC = () => {
           >
             Tus comunidades
           </Typography>
-          {allCommunities.filter((c) => c.id && communityIds.includes(c.id)).map((community) => (
+          {communities.map((community) => (
             <MenuItem
               key={community.id}
               selected={community.id === activeCommunityId}
