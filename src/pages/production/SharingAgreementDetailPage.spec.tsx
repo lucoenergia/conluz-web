@@ -16,6 +16,12 @@ import { buildCoefficient, buildSharingAgreement } from "../../test/fixtures";
 import type { PlantResponse, SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import type { SharingAgreementMutations } from "./useSharingAgreementMutations";
+import { query } from "../../test/queryState";
+import {
+  getSharingAgreementById,
+  useGetPlantActivePartitionCoefficients,
+  type getPlantActivePartitionCoefficients,
+} from "../../api/sharing-agreements/sharing-agreements";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -54,6 +60,14 @@ vi.mock("./useSharingAgreementMutations", () => ({
     isPublishing: false,
     isReverting: false,
   }),
+}));
+
+// The coefficient set compares a DRAFT against the plant's active
+// coefficients; nothing is in force here, and no request leaves the spec.
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetPlantActivePartitionCoefficients: vi.fn(),
+  getSharingAgreementById: vi.fn(),
 }));
 
 vi.mock("react-router", async () => {
@@ -129,6 +143,10 @@ function setup(plantId = "plant-1", sharingAgreementId = "agreement-1") {
 describe("SharingAgreementDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useGetPlantActivePartitionCoefficients).mockImplementation((_plantId, options) =>
+      options?.query?.enabled ? query.success<typeof getPlantActivePartitionCoefficients>([]) : query.disabled(),
+    );
+    vi.mocked(getSharingAgreementById).mockRejectedValue(new Error("No agreement fixture"));
   });
 
   test("offers editing and deleting in the kebab for a DRAFT agreement", async () => {
@@ -373,7 +391,7 @@ describe("SharingAgreementDetailPage", () => {
   });
 
   test("warns that changing capacity shifts each supply's kW when the agreement already has coefficients", async () => {
-    mockData({ coefficients: [{ coefficientId: "c1" }] as SharingAgreementPartitionCoefficientResponse[] });
+    mockData({ coefficients: [buildCoefficient({ coefficientId: "c1" })] });
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 

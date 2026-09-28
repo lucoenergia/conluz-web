@@ -71,7 +71,7 @@ export function getApplicationStateColor(
  * supply receives no production until its date is recorded.
  *
  * A DRAFT's pending row has no caption: nothing can be recorded on a draft,
- * and its own "coefficient in force" column already shows what applies meanwhile.
+ * and its own "Vigente" line already shows what applies meanwhile.
  *
  * APPLIED has nothing left to say once its date moved into the headline —
  * `undefined` states "no caption" unambiguously, unlike an empty string a

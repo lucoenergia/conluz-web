@@ -2,9 +2,11 @@ import {
   PlantResponseInverterProvider,
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
+  SharingAgreementReferenceResponseStatus,
   SharingAgreementResponseStatus,
   type CommunityResponse,
   type MembershipResponse,
+  type PartitionCoefficientResponse,
   type PlantResponse,
   type SharingAgreementPartitionCoefficientResponse,
   type SharingAgreementResponse,
@@ -149,6 +151,36 @@ export function buildCoefficient(
       endDate: null,
       currentCoefficient: null,
     } satisfies SharingAgreementPartitionCoefficientResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * A coefficient currently in force in a plant, as the plant's active
+ * coefficients endpoint returns it. Unlike the other builders this one does
+ * not start at the beginning of the lifecycle, because "in force" is the only
+ * state that endpoint returns: `validFrom` is set, `validTo` is open, and the
+ * authoring agreement is PUBLISHED. A SUPERSEDED agreement never holds an
+ * open coefficient, so a fixture must not pair one with an in-force row.
+ */
+export function buildActiveCoefficient(overrides: Partial<PartitionCoefficientResponse> = {}): PartitionCoefficientResponse {
+  return {
+    ...({
+      id: "TEST-ACTIVE-COEFFICIENT-ID",
+      supply: { id: "TEST-SUPPLY-ID", code: "TEST-SUPPLY-CODE", name: null },
+      community: { id: "TEST-COMMUNITY-ID", name: "TEST-COMMUNITY-NAME" },
+      plant: { id: "TEST-PLANT-ID", name: "TEST-PLANT-NAME" },
+      sharingAgreement: {
+        id: "TEST-IN-FORCE-AGREEMENT-ID",
+        name: "TEST-IN-FORCE-AGREEMENT-NAME",
+        status: SharingAgreementReferenceResponseStatus.PUBLISHED,
+      },
+      // Not zero, and not a round share, so an unintended default stands out.
+      coefficient: 0.070001,
+      validFrom: "2001-01-01",
+      validTo: null,
+      createdAt: "2001-01-01T00:00:00Z",
+    } satisfies PartitionCoefficientResponse),
     ...overrides,
   };
 }
