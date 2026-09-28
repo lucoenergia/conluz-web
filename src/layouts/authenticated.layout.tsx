@@ -21,6 +21,7 @@ import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCo
 import { CommunityRole } from "../api/models";
 import { resolveLandingRoute } from "../utils/routes";
 import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";
+import { ScopeContext } from "../components/ScopeContext";
 
 export const AuthenticatedLayout: FC = () => {
   const { width } = useWindowDimensions();
@@ -89,11 +90,19 @@ export const AuthenticatedLayout: FC = () => {
         onMenuClick={() => setIsMenuOpened(!isMenuOpened)}
         username={loggedUser?.fullName}
       />
+      {/*
+        * The page scope is stated exactly once (#186): in the side-menu header
+        * while the menu is open, in the strip under the app bar while it is
+        * closed. Both hang off `isMenuOpened`, so the two cannot coexist, and
+        * on a narrow viewport, where the menu starts closed, the strip shows
+        * without the user opening anything.
+        */}
       <SideMenu
         isMenuOpened={isMenuOpened}
         onMenuClose={setIsMenuOpened}
         sections={visibleSections}
         contactItem={CONTACT_ITEM}
+        header={isMenuOpened ? <ScopeContext variant="menuHeader" /> : null}
       />
       <Box
         sx={{
@@ -107,6 +116,7 @@ export const AuthenticatedLayout: FC = () => {
         tabIndex={-1}
       >
         <Toolbar />
+        {!isMenuOpened && <ScopeContext variant="strip" />}
         <AuthErrorBoundry onError={logout}>
           <ErrorProvider>
             <SuccessProvider>

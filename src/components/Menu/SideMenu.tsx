@@ -1,7 +1,7 @@
 import { Box, Divider, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { colors, fontSizes, radii } from "../../theme/tokens";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { APP_VERSION } from "../../utils/appVersion";
@@ -13,9 +13,11 @@ interface SideMenuProps {
   onMenuClose: (open: boolean) => void;
   sections: MenuSection[];
   contactItem: MenuItem;
+  /** Rendered above the navigation groups, under the app bar. */
+  header?: ReactNode;
 }
 
-export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, sections, contactItem }) => {
+export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, sections, contactItem, header }) => {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const location = useLocation();
@@ -99,6 +101,8 @@ export const SideMenu: FC<SideMenuProps> = ({ isMenuOpened, onMenuClose, section
         sx={{ width: SIDEMENU_WIDTH, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}
       >
         <Toolbar />
+
+        {header}
 
         <Box sx={{ flex: 1, overflowY: 'auto', pt: 2 }}>
           {sections.map((section, index) => (
