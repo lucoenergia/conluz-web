@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { SideMenu } from "./SideMenu";
 import { CONTACT_ITEM, MENU_SECTIONS, visibleMenuSections, type MenuSection } from "../../utils/constants";
@@ -61,6 +61,27 @@ describe("SideMenu role-aware section visibility", () => {
 
     setup(filterSections(true, true, true));
     expect(screen.getAllByText("Contacto")).toHaveLength(2);
+  });
+
+  test("AC6: community and platform entries sit under distinct visible labels", () => {
+    setup(filterSections(true, true, true));
+    const community = screen.getByRole("list", { name: "Comunidad" });
+    const platform = screen.getByRole("list", { name: "Plataforma" });
+
+    expect(screen.getByText("Comunidad")).toBeVisible();
+    expect(screen.getByText("Plataforma")).toBeVisible();
+    for (const label of ["Inicio", "Producción", "Consumo", "Miembros", "Integraciones"]) {
+      expect(within(community).getByText(label)).toBeInTheDocument();
+    }
+    for (const label of ["Comunidades", "Usuarios"]) {
+      expect(within(platform).getByText(label)).toBeInTheDocument();
+    }
+  });
+
+  test("a member without platform rights sees no platform group", () => {
+    setup(filterSections(true, false, false));
+    expect(screen.getByRole("list", { name: "Comunidad" })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Plataforma" })).not.toBeInTheDocument();
   });
 
   test("Socios is never in the menu", () => {

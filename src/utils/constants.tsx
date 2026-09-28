@@ -34,27 +34,26 @@ export interface MenuSection {
   items: MenuItem[];
 }
 
+/**
+ * Two labelled groups by scope (#186): what belongs to the active community,
+ * and what administers the platform. Personal entries (profile, password)
+ * live in the profile menu, and Contacto in the menu footer.
+ */
 export const MENU_SECTIONS: MenuSection[] = [
   {
-    id: "operational",
-    title: "Operativo",
+    id: "community",
+    title: "Comunidad",
     items: [
       { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio", access: "communityMember" },
       { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", access: "communityMember" },
       { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", access: "communityMember" },
-    ],
-  },
-  {
-    id: "community-management",
-    title: "Gestión de comunidad",
-    items: [
       { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", access: "communityAdmin" },
       { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones", access: "communityAdmin" },
     ],
   },
   {
-    id: "platform-admin",
-    title: "Administración de plataforma",
+    id: "platform",
+    title: "Plataforma",
     items: [
       { to: "/communities", id: "communities", icon: BusinessRoundedIcon, label: "Comunidades", access: "platformAdmin" },
       { to: "/users", id: "users", icon: ManageAccountsRoundedIcon, label: "Usuarios", access: "platformAdmin" },
