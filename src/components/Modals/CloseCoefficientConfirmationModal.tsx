@@ -12,6 +12,8 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
 import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface CloseCoefficientConfirmationModalProps {
   isOpen: boolean;
@@ -33,6 +35,7 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
   onCancel,
   onConfirm,
 }) => {
+  const communityName = useActiveCommunityName();
   const isBatch = (coefficients?.length ?? 0) > 1;
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [dateValidationError, setDateValidationError] = useState<string | null>(null);
@@ -59,7 +62,8 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
       confirmColor="primary"
       confirmDisabled={confirmDisabledReason !== null}
       onConfirm={handleConfirm}
-      title="Cerrar coeficiente"
+      title={`Cerrar coeficiente en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<EventBusyOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
     >

@@ -3,6 +3,8 @@ import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { radii, alphas, fontSizes } from "../../theme/tokens";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface DeleteSharingAgreementConfirmationModalProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ export const DeleteSharingAgreementConfirmationModal: FC<DeleteSharingAgreementC
   onCancel,
   onConfirm,
 }) => {
+  const communityName = useActiveCommunityName();
   return (
     <ConfirmationModal
       isOpen={isOpen}
@@ -26,7 +29,8 @@ export const DeleteSharingAgreementConfirmationModal: FC<DeleteSharingAgreementC
       confirmLabel="Eliminar"
       confirmDisabled={isDeleting}
       onConfirm={onConfirm}
-      title="Eliminar acuerdo de reparto"
+      title={`Eliminar acuerdo de reparto de ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<WarningAmberIcon sx={{ fontSize: 28, color: "error.main" }} />}
       iconBg={alphas.error.light}
     >

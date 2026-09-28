@@ -3,6 +3,8 @@ import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface RevertSharingAgreementToDraftConfirmationModalProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface RevertSharingAgreementToDraftConfirmationModalProps {
 export const RevertSharingAgreementToDraftConfirmationModal: FC<
   RevertSharingAgreementToDraftConfirmationModalProps
 > = ({ isOpen, agreementName, isReverting = false, onCancel, onConfirm }) => {
+  const communityName = useActiveCommunityName();
   return (
     <ConfirmationModal
       isOpen={isOpen}
@@ -24,7 +27,8 @@ export const RevertSharingAgreementToDraftConfirmationModal: FC<
       confirmDisabled={isReverting}
       confirmPending={isReverting}
       onConfirm={onConfirm}
-      title="Volver a borrador"
+      title={`Volver a borrador en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<UndoOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
     >
