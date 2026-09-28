@@ -124,8 +124,8 @@ test.describe("Visual baselines", () => {
     await importBtn.scrollIntoViewIfNeeded();
     await importBtn.click();
 
-    // Wait for the modal title text to appear (MUI Modal doesn't use role="dialog")
-    await page.waitForSelector("text=Importar Puntos de Suministro desde CSV");
+    // Wait for the modal title to appear (MUI Modal doesn't use role="dialog")
+    await expect(page.getByRole("heading", { name: /^Importar puntos de suministro a / })).toBeVisible();
     await stabilizePage(page);
 
     await expect(page.getByTestId("modal-panel")).toHaveScreenshot("import-supplies-modal.png", await hideAppBar(page));
