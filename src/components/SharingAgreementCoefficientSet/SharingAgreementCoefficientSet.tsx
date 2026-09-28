@@ -1162,9 +1162,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                       CUPS
                     </Typography>
                   </TableCell>
+                  {/* "Coeficiente" on a DRAFT, where its "Vigente" line underneath
+                      already says which value is the draft's; other statuses
+                      keep their established label. */}
                   <TableCell align="right">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : "Coeficiente"}
+                      {isEditing && inputUnit === "kw" ? "Potencia (kW)" : isDraft ? "Coeficiente" : "Coeficiente (%)"}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">

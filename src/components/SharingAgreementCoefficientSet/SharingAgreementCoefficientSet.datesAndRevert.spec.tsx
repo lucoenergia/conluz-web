@@ -167,6 +167,8 @@ describe("SharingAgreementCoefficientSet (in-force comparison gating)", () => {
   it("is absent on PUBLISHED even when every row carries one — the row's own value IS the one in force", () => {
     renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
     expect(screen.queryByText(/^Vigente/)).not.toBeInTheDocument();
+    // The header keeps its established label outside DRAFT.
+    expect(screen.getByRole("columnheader", { name: "Coeficiente (%)" })).toBeInTheDocument();
     expect(screen.queryByText(/^Comparado con/)).not.toBeInTheDocument();
   });
 
