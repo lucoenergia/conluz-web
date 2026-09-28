@@ -85,12 +85,18 @@ const Description: FC<{ children: ReactNode }> = ({ children }) => (
   </Typography>
 );
 
+// Both variants sit right under a <Toolbar /> spacer, but the app bar's own
+// toolbar adds `py: 1` (Header.tsx), so it is 2 spacing units taller than
+// the spacer. The extra top padding keeps the label clear of the bar.
+const APP_BAR_OVERHANG = 2;
+
 const frameSx = (variant: ScopeContextVariant) =>
   variant === "menuHeader"
-    ? { px: 2.5, pt: 2, pb: 1.5, borderBottom: `1px solid ${colors.divider}` }
+    ? { px: 2.5, pt: 2 + APP_BAR_OVERHANG, pb: 1.5, borderBottom: `1px solid ${colors.divider}` }
     : {
         px: { xs: 2, sm: 3 },
-        py: 1,
+        pt: 1 + APP_BAR_OVERHANG,
+        pb: 1,
         bgcolor: "background.paper",
         borderBottom: `1px solid ${colors.divider}`,
       };
