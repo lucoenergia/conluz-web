@@ -212,7 +212,7 @@ describe("SharingAgreementDetailPage", () => {
     expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
   });
 
-  // AC2, AC3: one progress reading on a sealed agreement with outstanding points.
+  // #182 AC2, AC3: one progress reading on a sealed agreement with outstanding points.
   test.each([SharingAgreementResponseStatus.PUBLISHED, SharingAgreementResponseStatus.SUPERSEDED])(
     "shows a single application progress bar on a %s agreement with pending points",
     (status) => {
@@ -228,7 +228,7 @@ describe("SharingAgreementDetailPage", () => {
       });
       setup();
 
-      // AC4: the CLOSED row counts as applied.
+      // #182 AC4: the CLOSED row counts as applied.
       expect(screen.getByText("2 de 3 puntos con fecha de aplicación")).toBeVisible();
       const progressBars = screen.getAllByRole("progressbar");
       expect(progressBars).toHaveLength(1);
@@ -241,7 +241,7 @@ describe("SharingAgreementDetailPage", () => {
     },
   );
 
-  // AC5: nothing left to report once every point has a date, closed rows included.
+  // #182 AC5: nothing left to report once every point has a date, closed rows included.
   test.each([SharingAgreementResponseStatus.PUBLISHED, SharingAgreementResponseStatus.SUPERSEDED])(
     "hides the application section on a %s agreement whose points all have a date",
     (status) => {
@@ -264,7 +264,7 @@ describe("SharingAgreementDetailPage", () => {
     },
   );
 
-  // AC1: a draft keeps its sum gauge and shows no application progress.
+  // #182 AC1: a draft keeps its sum gauge and shows no application progress.
   test("shows the coefficient sum and no application progress on a DRAFT agreement", () => {
     const coefficients = [
       buildCoefficient({ coefficientId: "c1", coefficient: 0.6 }),

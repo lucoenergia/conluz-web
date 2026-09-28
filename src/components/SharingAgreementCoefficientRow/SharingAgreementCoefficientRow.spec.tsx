@@ -176,7 +176,7 @@ describe("SharingAgreementCoefficientTableRow — application state caption", ()
     );
   }
 
-  // AC6, AC7, AC12.
+  // #182 AC6, AC7, AC12.
   it("tells each pending row apart by what is in force, and leaves the applied row unchanged", () => {
     renderRows();
 
@@ -534,7 +534,7 @@ describe("SharingAgreementCoefficientCard", () => {
 });
 
 describe("SharingAgreementCoefficientCard — application state caption", () => {
-  // AC10: the card carries the same per-row reading as the table.
+  // #182 AC10: the card carries the same per-row reading as the table.
   it("tells each pending card apart by what is in force, and leaves the applied card unchanged", () => {
     const { container } = render(
       <>

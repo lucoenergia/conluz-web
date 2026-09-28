@@ -89,14 +89,14 @@ describe("SharingAgreementApplicationPanel", () => {
     expect(screen.getByText("2 de 5 puntos con fecha de aplicación")).toBeVisible();
   });
 
-  // AC9.
+  // #182 AC9.
   it("warns about points new to the plant while one of them is still pending", () => {
     renderPanel();
 
     expect(screen.getByText(NEW_SUPPLY_CONSEQUENCE)).toBeVisible();
   });
 
-  // AC8.
+  // #182 AC8.
   it("reports progress without the warning when every pending point still has a coefficient in force", () => {
     renderPanel({ coefficients: PENDING_ALL_IN_FORCE });
 
