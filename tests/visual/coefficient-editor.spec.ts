@@ -139,15 +139,17 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Editar a mano" }).click();
     // The editor opens in kW; the sibling "toggled to kW" spec ends in percent,
-    // so this is the only baseline that shows the column with a kW input beside
-    // it. The difference is a percentage either way — it is computed from the
-    // canonical 0-1 coefficient, which the kW text is only a view of.
+    // so this is the only baseline that shows the in-force lines around a kW
+    // input: "Vigente … kW" under the input, "Vigente … % · … p.p." under the
+    // percentage equivalent. The difference is in points either way — it is
+    // computed from the canonical 0-1 coefficient, which the kW text is only a
+    // view of.
     await expect(page.getByRole("button", { name: "kW" })).toHaveAttribute("aria-pressed", "true");
 
     const vivendaA = page.locator("tr", { hasText: "Vivienda A" });
     await expect(vivendaA.getByRole("textbox")).toHaveValue("13,50");
     // 13,50 kW of 45 kW installed is 0.3, against a current 0.25.
-    await expect(vivendaA).toContainText("+5,0000");
+    await expect(vivendaA).toContainText("+5,0000 p.p.");
 
     await stabilizePage(page);
 
