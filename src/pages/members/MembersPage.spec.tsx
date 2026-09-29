@@ -5,7 +5,12 @@ import userEvent from "@testing-library/user-event";
 import type { QueryClient } from "@tanstack/react-query";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildMembership, buildUser } from "../../test/fixtures";
+import {
+  buildMembership,
+  buildMembershipCapabilities,
+  buildUser,
+  buildUserCapabilities,
+} from "../../test/fixtures";
 import {
   getGetMembershipsQueryKey,
   useCreateMembership,
@@ -23,20 +28,43 @@ const mockCreateMutate = vi.fn().mockResolvedValue({});
 const mockDeleteMutate = vi.fn().mockResolvedValue({});
 const mockUpdateMutate = vi.fn().mockResolvedValue({});
 
+// The builders deny every capability by default, so a fixture that says nothing
+// asks for a row the caller may do nothing with. These tests are all about what
+// an administrator of the community can do, so each row names the capabilities
+// that let it: the page does not read them yet, and will.
+const ADMINISTRABLE = buildMembershipCapabilities({
+  canUpdateRole: true,
+  canDelete: true,
+  canManageInvestment: true,
+  canReadPayback: true,
+});
+
+// "Puntos de suministro" is the member's own supplies, not the membership's, so
+// it is the USER that carries its answer.
+const member = (id: string, fullName: string, email: string) =>
+  buildUser({
+    id,
+    fullName,
+    email,
+    capabilities: buildUserCapabilities({ canRead: true, canListSupplies: true }),
+  });
+
 const MOCK_MEMBERSHIPS = [
   buildMembership({
     id: "m1",
-    user: buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com" }),
+    user: member("u1", "Ana García", "ana@example.com"),
     communityId: "c1",
     role: "COMMUNITY_MEMBER",
     enabled: true,
+    capabilities: ADMINISTRABLE,
   }),
   buildMembership({
     id: "m2",
-    user: buildUser({ id: "u2", fullName: "Bruno Leal", email: "bruno@example.com" }),
+    user: member("u2", "Bruno Leal", "bruno@example.com"),
     communityId: "c1",
     role: "COMMUNITY_ADMIN",
     enabled: true,
+    capabilities: ADMINISTRABLE,
   }),
 ];
 
