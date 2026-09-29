@@ -26,6 +26,8 @@ import type {
 
 import type {
   CreateMembershipBody,
+  GetMembershipEnergyMetricsParams,
+  MembershipEnergyMetricsResponse,
   MembershipPaybackResponse,
   MembershipResponse,
   RestError,
@@ -486,9 +488,11 @@ energy has recovered, and roughly how long the rest would take.
 
 `savedEur` is the estimated value of the self-consumed energy of **all** the
 member's supplies in this community, from `startDate` until now, priced per
-tariff segment with taxes included. It is computed on each request and never
-stored, so it reflects both new consumption and any later correction. Supplies
-in the member's other communities are not counted.
+tariff segment. It prices the **energy term before taxes** only: the power term,
+access tolls, charges and electricity tax are all excluded, and VAT is applied
+only where the resolved tariff carries a rate. It is computed on each request and
+never stored, so it reflects both new consumption and any later correction.
+Supplies in the member's other communities are not counted.
 
 `startDate` is the civil date the community first activated a partition
 coefficient, and is therefore **community-wide rather than per member**. A
@@ -600,6 +604,176 @@ export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMem
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetMembershipPaybackQueryOptions(communityId,userId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Aggregates the consumption data stored for **every** supply the member owns in
+this community into energy totals and two ratios, on a 0-1 scale. Supplies in the
+member's other communities are not counted.
+
+- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.
+- `selfConsumptionRatio`: self-consumed energy divided by the assigned energy.
+
+Every supply is computed over the same period, exactly as the per-supply
+energy-metrics endpoint computes it, and the results are added up: the energy
+totals are summed across supplies and each ratio is derived **once** from those
+sums, never by averaging the per-supply ratios. A ratio whose summed denominator
+is zero is returned as `null`, never as `0`.
+
+**Period:**
+The period is resolved in exactly one of three ways, and the resolved bounds are
+always reported in `period`, also when the caller supplied them.
+
+- `startDate` and `endDate`: an explicit period, with the same semantics as the
+  per-supply endpoint. They must be supplied together, and a `startDate` after
+  the `endDate` is a bad request. **Both bounds are inclusive**: a single
+  calendar day runs from `00:00` to `23:00` of that day.
+- `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in
+  the community's time zone, in which any of the member's supplies has stored
+  assigned production (self-consumed or surplus energy). The distributor
+  publishes a month's assigned production only some days after it ends, so this
+  is not necessarily the previous month: an unpublished previous month is
+  skipped and the search continues backwards through the 24 complete months
+  before the current one. The current month is never a candidate. The period
+  runs from `00:00` of the first day to `23:00` of the last day. Combining it
+  with `startDate` or `endDate` is a bad request.
+- Neither: from the earliest to the latest record stored for any of the member's
+  supplies.
+
+When no period can be resolved -- no assigned production in the search window, no
+stored record at all, or no supplies to search -- the response is still
+successful, with null period bounds, zero totals and null ratios.
+
+**Coverage:**
+`coverage.hoursWithData` counts the hourly records found across every supply.
+`coverage.expectedHours` is the number of hours the period spans **times the
+number of supplies of the membership**, so a single supply without any record
+lowers coverage even when every other supply is complete. `supplyCount` and
+`suppliesWithData` tell one silent supply apart from gaps spread across all of
+them. Hours without a record are left out of the sums; they are never counted as
+zero.
+
+**Savings:**
+`savings.amountEur` is an **estimate** of what the self-consumed energy of all
+the member's supplies was worth, pricing the **energy term before taxes** only,
+exactly as the per-supply endpoint does, and summed before being rounded.
+It is `null` only when no period could be resolved; whenever a period exists it
+is a figure, `0.00` when nothing was priced. An explicit period always resolves,
+so it never yields `null`. `savings.tariffSource` is `ESTIMATE` when any part of
+any supply was priced with the estimate, and `savings.estimatedPrice` then carries
+the estimated price; it is `null` when every supply was priced with its contracted
+tariff, and when nothing was priced with the estimate.
+
+Readable by the member themself and by community admins of this community.
+Platform admins are **not** granted access on that basis alone and are answered
+404, as is every other caller who may not read it, so the membership's existence
+is not disclosed. A membership without supplies is answered successfully, not
+with 404.
+
+ * @summary Retrieves the energy metrics of every supply of a membership, added up.
+ */
+export const getMembershipEnergyMetrics = (
+    communityId: string,
+    userId: string,
+    params?: GetMembershipEnergyMetricsParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MembershipEnergyMetricsResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/energy-metrics`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetMembershipEnergyMetricsQueryKey = (communityId?: string,
+    userId?: string,
+    params?: GetMembershipEnergyMetricsParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/memberships/${userId}/energy-metrics`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetMembershipEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(communityId: string,
+    userId: string,
+    params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipEnergyMetricsQueryKey(communityId,userId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>> = ({ signal }) => getMembershipEnergyMetrics(communityId,userId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMembershipEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>>
+export type GetMembershipEnergyMetricsQueryError = ErrorType<unknown>
+
+
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params: undefined |  GetMembershipEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the energy metrics of every supply of a membership, added up.
+ */
+
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMembershipEnergyMetricsQueryOptions(communityId,userId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

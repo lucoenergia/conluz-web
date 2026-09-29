@@ -7,10 +7,13 @@
  */
 import type { SupplyEnergyMetricsSavingsResponseAmountEur } from './supplyEnergyMetricsSavingsResponseAmountEur';
 import type { SupplyEnergyMetricsSavingsResponseTariffSource } from './supplyEnergyMetricsSavingsResponseTariffSource';
+import type { SupplyEnergyMetricsSavingsResponseEstimatedPrice } from './supplyEnergyMetricsSavingsResponseEstimatedPrice';
 
 export interface SupplyEnergyMetricsSavingsResponse {
   /** Estimated amount saved over the period, in euros, rounded to cents. Null when no period could be resolved, which is not the same as a saving of zero. */
   amountEur: SupplyEnergyMetricsSavingsResponseAmountEur;
   /** Whether the prices behind the amount are the supply's contracted tariff or an estimate. A single estimated stretch of the period makes the whole amount an estimate. */
   tariffSource: SupplyEnergyMetricsSavingsResponseTariffSource;
+  /** The estimated energy-term price, before taxes, the amount was priced with. Present only when the estimated price was used to price at least part of the period; null when the whole period was priced with the supply's contracted tariff, and when no period could be resolved. */
+  estimatedPrice: SupplyEnergyMetricsSavingsResponseEstimatedPrice;
 }

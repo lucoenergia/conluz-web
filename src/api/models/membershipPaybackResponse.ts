@@ -12,11 +12,12 @@ import type { MembershipPaybackResponseProgressRatio } from './membershipPayback
 import type { MembershipPaybackResponseStartDate } from './membershipPaybackResponseStartDate';
 import type { MembershipPaybackResponseEstimatedRemainingMonths } from './membershipPaybackResponseEstimatedRemainingMonths';
 import type { MembershipPaybackResponseTariffSource } from './membershipPaybackResponseTariffSource';
+import type { MembershipPaybackResponseEstimatedPrice } from './membershipPaybackResponseEstimatedPrice';
 
 export interface MembershipPaybackResponse {
   /** What the member initially contributed, in euros. Null when no investment has been recorded for this membership, which is not the same as an investment of zero. */
   investmentEur: MembershipPaybackResponseInvestmentEur;
-  /** Estimated value of the self-consumed energy of all the member's supplies in this community since startDate, in euros, taxes included. Null when the community has never activated a partition coefficient, so there is no period to price; zero when the period exists but the member's supplies consumed nothing from it. */
+  /** Estimated value of the self-consumed energy of all the member's supplies in this community since startDate, in euros. It prices the energy term before taxes only; VAT is applied only where the resolved tariff carries a rate. Null when the community has never activated a partition coefficient, so there is no period to price; zero when the period exists but the member's supplies consumed nothing from it. */
   savedEur: MembershipPaybackResponseSavedEur;
   /** What is left to recover, in euros, floored at zero once the investment has been recovered. Null when either amount above is null. */
   remainingEur: MembershipPaybackResponseRemainingEur;
@@ -28,4 +29,6 @@ export interface MembershipPaybackResponse {
   estimatedRemainingMonths: MembershipPaybackResponseEstimatedRemainingMonths;
   /** Where the prices behind savedEur came from. ESTIMATE when any part of the figure was priced from an estimated tariff rather than a contracted one, and also when no tariff was consulted at all. Never null: an amount derived from an estimate is not interchangeable with one derived from a real tariff. */
   tariffSource: MembershipPaybackResponseTariffSource;
+  /** The estimated energy-term price, before taxes, savedEur was priced with. Present only when the estimated price was used to price at least part of savedEur; null when every supply was priced with its contracted tariff, and when nothing was priced at all (no period to price, or no supplies). */
+  estimatedPrice: MembershipPaybackResponseEstimatedPrice;
 }

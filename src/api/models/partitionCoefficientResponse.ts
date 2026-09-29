@@ -11,6 +11,7 @@ import type { PlantReferenceResponse } from './plantReferenceResponse';
 import type { SharingAgreementReferenceResponse } from './sharingAgreementReferenceResponse';
 import type { PartitionCoefficientResponseValidFrom } from './partitionCoefficientResponseValidFrom';
 import type { PartitionCoefficientResponseValidTo } from './partitionCoefficientResponseValidTo';
+import type { PartitionCoefficientCapabilitiesResponse } from './partitionCoefficientCapabilitiesResponse';
 
 export interface PartitionCoefficientResponse {
   /** Internal unique identifier */
@@ -31,4 +32,6 @@ export interface PartitionCoefficientResponse {
   validTo: PartitionCoefficientResponseValidTo;
   /** Timestamp when this record was created */
   createdAt: string;
+  /** What the caller may do from this period, including whether its sharingAgreement reference can be followed. */
+  capabilities: PartitionCoefficientCapabilitiesResponse;
 }
