@@ -232,10 +232,6 @@ const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) 
 // rather than twenty eslint-disable comments, so the debt is countable from one
 // place and the spec can assert it never grows.
 const MUTATION_CALL_SITES = {
-  // #167 -- production and sharing agreements
-  "src/pages/production/CreatePlantPage.tsx": ["useCreatePlant"],
-  "src/pages/production/EditPlantPage.tsx": ["useUpdatePlant"],
-  "src/pages/production/PlantsPage.tsx": ["useDeletePlant"],
   // #168 -- integrations and members
   "src/pages/integrations/IntegrationsPage.tsx": [
     "useConfigureDatadis",
