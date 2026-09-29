@@ -186,6 +186,19 @@ describe("useCommunityActions", () => {
       });
     });
 
+    it("scopes a supply import to the community it was handed", async () => {
+      const { result } = render(communityWith({ canManage: true }));
+
+      await result.current.actions.importSupplies?.run(IMPORT_BODY);
+
+      // The screen used to pass this itself, from the active community, which
+      // is a second place the target could be decided -- and disagree.
+      expect(mutateAsync).toHaveBeenCalledWith({
+        data: IMPORT_BODY,
+        params: { communityId: COMMUNITY_ID },
+      });
+    });
+
     it("refreshes the list the created thing appears in", async () => {
       const { result, queryClient } = render(communityWith({ canManage: true }));
       const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");

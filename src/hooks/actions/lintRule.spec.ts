@@ -72,8 +72,8 @@ describe("the mutation guard rail", () => {
   describe("the screens that predate the layer", () => {
     it("may still import the mutation they already had", async () => {
       const errors = await restrictedImportErrors(
-        `import { useUpdateSupply } from "../../api/supplies/supplies";\nexport const x = useUpdateSupply;\n`,
-        "src/pages/supply-points/EditSupply.tsx",
+        `import { useUpdatePlant } from "../../api/plants/plants";\nexport const x = useUpdatePlant;\n`,
+        "src/pages/production/EditPlantPage.tsx",
       );
 
       expect(errors).toEqual([]);
@@ -83,12 +83,25 @@ describe("the mutation guard rail", () => {
       // The exemption is narrow by construction: its block re-states the other
       // two arrays rather than switching the rule off for the file.
       const errors = await restrictedImportErrors(
-        `import { useGetSupply } from "../../api/supplies/supplies";\nexport const x = useGetSupply;\n`,
+        `import { useGetPlantById } from "../../api/plants/plants";\nexport const x = useGetPlantById;\n`,
+        "src/pages/production/EditPlantPage.tsx",
+      );
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("usePlantInActiveCommunity");
+    });
+
+    it("stop being exempt once they migrate", async () => {
+      // The supply screens came off the list when they moved onto the actions
+      // layer. Deleting the entry is what makes the rule bite again, and a
+      // migration that left the entry behind would look identical without it.
+      const errors = await restrictedImportErrors(
+        `import { useUpdateSupply } from "../../api/supplies/supplies";\nexport const x = useUpdateSupply;\n`,
         "src/pages/supply-points/EditSupply.tsx",
       );
 
       expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain("useSupplyInActiveCommunity");
+      expect(errors[0]).toContain("useSupplyActions");
     });
   });
 });

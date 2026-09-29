@@ -4,6 +4,7 @@ import {
   useActiveCommunityCapabilities,
   usePlantCapabilities,
   usePlatformCapabilities,
+  useSupplyCapabilities,
 } from "../../hooks/permissions";
 import { CapabilityLoadError } from "./CapabilityLoadError";
 import type { CapabilityRequirement } from "../../hooks/permissions";
@@ -33,12 +34,12 @@ interface CapabilityRouteProps {
  * read. That costs nothing it would not otherwise cost: platform capabilities
  * are a context read; the community query is the one the side menu already
  * makes on every authenticated page, so React Query serves both from a single
- * fetch. The plant resolver is the exception -- it is keyed by a route
- * parameter that other routes do not have -- so it is disabled unless the
- * requirement is a plant one, and a platform route fires no plant request.
+ * fetch. The plant and supply resolvers are the exceptions -- each is keyed by
+ * a route parameter that other routes do not have -- so each is disabled unless
+ * the requirement names its scope, and a platform route fires neither request.
  */
 export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children }) => {
-  const { plantId } = useParams();
+  const { plantId, supplyPointId } = useParams();
 
   const platform = usePlatformCapabilities(
     require.scope === "platform" ? require.capability : "canAdministerPlatform",
@@ -49,9 +50,20 @@ export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children })
   const plant = usePlantCapabilities(plantId, require.scope === "plant" ? require.capability : "canRead", {
     enabled: require.scope === "plant",
   });
+  const supply = useSupplyCapabilities(
+    supplyPointId,
+    require.scope === "supply" ? require.capability : "canRead",
+    { enabled: require.scope === "supply" },
+  );
 
   const outcome =
-    require.scope === "platform" ? platform : require.scope === "community" ? community : plant;
+    require.scope === "platform"
+      ? platform
+      : require.scope === "community"
+        ? community
+        : require.scope === "plant"
+          ? plant
+          : supply;
 
   if (outcome.state === "pending") return null;
   if (outcome.state === "error") return <CapabilityLoadError onRetry={outcome.retry} />;

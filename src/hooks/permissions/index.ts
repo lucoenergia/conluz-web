@@ -22,5 +22,6 @@ export type { CapabilityRequirement, MenuRequirement } from "./capabilityRequire
 export { usePlatformCapabilities } from "./usePlatformCapabilities";
 export { useActiveCommunityCapabilities } from "./useActiveCommunityCapabilities";
 export { usePlantCapabilities } from "./usePlantCapabilities";
+export { useSupplyCapabilities } from "./useSupplyCapabilities";
 export { Can } from "./Can";
 export { useActiveCommunityRoleLabel } from "./roleLabel";

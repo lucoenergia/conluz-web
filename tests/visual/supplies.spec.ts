@@ -112,10 +112,14 @@ test.describe("Visual baselines", () => {
     await expect(page.getByTestId("supply-coefficient-history")).toHaveScreenshot("supply-detail-coefficient-history-empty.png", await hideAppBar(page));
   });
 
+  // Creating and importing supplies are the community's canManage, and the
+  // three modal captures below reach controls only an admin is given. They open
+  // as an admin for that reason, not because the modals differ by role -- the
+  // panels themselves are identical.
   test("import supplies modal open", async ({ page }) => {
     await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
-    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
     await page.goto("/supply-points");
     await stabilizePage(page);
@@ -134,8 +138,8 @@ test.describe("Visual baselines", () => {
 
   test("disable confirmation modal open", async ({ page }) => {
     await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
-    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
     await page.goto("/supply-points");
     await stabilizePage(page);
@@ -157,8 +161,8 @@ test.describe("Visual baselines", () => {
 
   test("disable success modal open", async ({ page }) => {
     await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
-    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
     await page.goto("/supply-points");
     await stabilizePage(page);

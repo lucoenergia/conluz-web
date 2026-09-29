@@ -98,11 +98,24 @@ export const COMMUNITY_ADMIN_CAPABILITIES = {
   canCreateUsers: true,
 };
 
-const SUPPLY_CAPABILITIES = {
+/**
+ * A supply as its owner sees it: readable, and its coefficients with it --
+ * they describe the owner's own share -- but not editable. canEdit is the
+ * narrower flag by its own documentation, and this is the pairing that shows
+ * it: the member keeps the coefficient panel and loses the actions menu.
+ */
+export const OWNER_SUPPLY_CAPABILITIES = {
   canRead: true,
   canEdit: false,
   canReadPartitionCoefficients: true,
   canCreatePlant: false,
+};
+
+/** The same supply as an admin of its community sees it. */
+export const COMMUNITY_ADMIN_SUPPLY_CAPABILITIES = {
+  ...OWNER_SUPPLY_CAPABILITIES,
+  canEdit: true,
+  canCreatePlant: true,
 };
 
 const PLANT_CAPABILITIES = {
@@ -242,7 +255,11 @@ export const FIXED_SUPPLY = {
   datadisPointType: 5,
   datadisIsThirdParty: false,
   user: FIXED_MEMBER_USER,
-  capabilities: SUPPLY_CAPABILITIES,
+  // The active-community guard compares this with the selected community; a
+  // supply without one is never foreign, so omitting it would quietly disable
+  // the guard in every baseline.
+  community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+  capabilities: OWNER_SUPPLY_CAPABILITIES,
 };
 
 export const FIXED_SUPPLY_2 = {
@@ -259,7 +276,11 @@ export const FIXED_SUPPLY_2 = {
   datadisPointType: 3,
   datadisIsThirdParty: false,
   user: FIXED_MEMBER_USER,
-  capabilities: SUPPLY_CAPABILITIES,
+  // The active-community guard compares this with the selected community; a
+  // supply without one is never foreign, so omitting it would quietly disable
+  // the guard in every baseline.
+  community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+  capabilities: OWNER_SUPPLY_CAPABILITIES,
 };
 
 export const PAGED_SUPPLIES = {
