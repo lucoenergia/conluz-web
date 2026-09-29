@@ -87,6 +87,9 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
         coefficient.applicationState !== SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
     );
 
+  // Status only. Capability is answered by whether `onRevertRequest` was handed
+  // over at all, which the banner's `revert` prop below already requires -- a
+  // second check here would read as a rule of its own and prove nothing.
   const showRevert = isPublished && coefficients !== undefined && isInert;
 
   /**
@@ -104,7 +107,11 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   // `PUT /sharing-agreements/{id}` no longer requires DRAFT — name, notes and
   // installed power can be corrected in any status. Deleting still requires it:
   // removing a published agreement would destroy the basis of past billing.
-  const showMenu = isResolved && !!agreement;
+  //
+  // A handler the caller was not given is undefined, so a menu with nothing in
+  // it is never mounted rather than mounted empty.
+  const showDelete = !!onDeleteRequest && isDraft;
+  const showMenu = isResolved && !!agreement && (!!onEdit || showDelete);
 
   const view = selectSharingAgreementLifecycleView(nextStep, agreement?.status);
 
@@ -202,13 +209,15 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
           {/* "Editar a mano" in the split section edits coefficients; this
               edits the agreement's own fields. Two different verbs on one
               screen need two different labels. */}
-          <MenuItem onClick={handleEditClick}>
-            <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-              Editar datos del acuerdo
-            </Typography>
-          </MenuItem>
-          {isDraft && [
+          {onEdit && (
+            <MenuItem onClick={handleEditClick}>
+              <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                Editar datos del acuerdo
+              </Typography>
+            </MenuItem>
+          )}
+          {showDelete && [
             <Divider key="divider" sx={{ my: 1 }} />,
             <MenuItem
               key="delete"

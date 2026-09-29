@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { computeSharingAgreementCounts, isNotFoundError } from "./useSharingAgreementsData";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
+import { buildSharingAgreement } from "../../test/fixtures";
 
 describe("computeSharingAgreementCounts", () => {
   test("returns zeroed counts for an empty list", () => {
@@ -10,16 +11,21 @@ describe("computeSharingAgreementCounts", () => {
 
   test("counts vigentes, drafts and históricos independently", () => {
     const agreements = [
-      { status: SharingAgreementResponseStatus.DRAFT },
-      { status: SharingAgreementResponseStatus.DRAFT },
-      { status: SharingAgreementResponseStatus.PUBLISHED },
-      { status: SharingAgreementResponseStatus.SUPERSEDED },
-    ] as SharingAgreementResponse[];
+      buildSharingAgreement({ id: "a1", status: SharingAgreementResponseStatus.DRAFT }),
+      buildSharingAgreement({ id: "a2", status: SharingAgreementResponseStatus.DRAFT }),
+      buildSharingAgreement({ id: "a3", status: SharingAgreementResponseStatus.PUBLISHED }),
+      buildSharingAgreement({ id: "a4", status: SharingAgreementResponseStatus.SUPERSEDED }),
+    ];
     expect(computeSharingAgreementCounts(agreements)).toEqual({ vigentes: 1, drafts: 2, historicos: 1 });
   });
 
   test("treats an undefined or unrecognized status as neither vigente, draft nor histórico", () => {
-    const agreements = [{ status: undefined }, {}] as unknown as SharingAgreementResponse[];
+    // Deliberately malformed: the subject of the case is a payload whose status
+    // the builder cannot produce, so the cast is the point rather than a shortcut.
+    const agreements = [
+      { ...buildSharingAgreement(), status: undefined },
+      {},
+    ] as unknown as SharingAgreementResponse[];
     expect(computeSharingAgreementCounts(agreements)).toEqual({ vigentes: 0, drafts: 0, historicos: 0 });
   });
 });

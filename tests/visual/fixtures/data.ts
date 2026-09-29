@@ -118,14 +118,34 @@ export const COMMUNITY_ADMIN_SUPPLY_CAPABILITIES = {
   canCreatePlant: true,
 };
 
-const PLANT_CAPABILITIES = {
+/**
+ * A plant as a plain member of its community sees it: listing plants is open to
+ * any member, and nothing else is. canListSharingAgreements is admin-only by
+ * its own documentation, and canReadSupply says whether following the supply
+ * reference would succeed -- for a member it would not.
+ */
+export const MEMBER_PLANT_CAPABILITIES = {
   canRead: true,
+  canManage: false,
+  canListSharingAgreements: false,
+  canManageSharingAgreements: false,
+  canReadSupply: false,
+};
+
+/** The same plant as an admin of its community sees it. */
+export const COMMUNITY_ADMIN_PLANT_CAPABILITIES = {
+  ...MEMBER_PLANT_CAPABILITIES,
   canManage: true,
   canListSharingAgreements: true,
   canManageSharingAgreements: true,
   canReadSupply: true,
 };
 
+/**
+ * Reaching an agreement at all needs the plant's canListSharingAgreements,
+ * which is admin-only, so there is no member shape here to split off: a member
+ * never gets as far as one.
+ */
 const SHARING_AGREEMENT_CAPABILITIES = { canRead: true, canManage: true };
 
 /**
@@ -335,7 +355,13 @@ export const FIXED_PLANT = {
   inverterProvider: "HUAWEI",
   totalPower: 120.5,
   connectionDate: "2023-05-10",
-  capabilities: PLANT_CAPABILITIES,
+  // The guard in usePlantInActiveCommunity compares this with the selected
+  // community; without it the guard is silently inert in every plant baseline.
+  community: { id: FIXED_COMMUNITY_ID },
+  // Overwritten per caller by asPlantCaller in routes.ts. The admin shape is
+  // the default so a route that forgets to re-stamp it keeps today's baseline
+  // rather than quietly emptying a screen.
+  capabilities: COMMUNITY_ADMIN_PLANT_CAPABILITIES,
 };
 
 /**

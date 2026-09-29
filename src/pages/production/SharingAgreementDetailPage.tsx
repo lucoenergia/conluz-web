@@ -19,7 +19,7 @@ import { RevertSharingAgreementToDraftConfirmationModal } from "../../components
 import { SharingAgreementResponseStatus } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
-import { useSharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
+import { useSharingAgreementActions, useSharingAgreementCoefficientActions } from "../../hooks/actions";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { summarizeApplicationProgress } from "./sharingAgreementApplicationProgress";
 import { BATCH_BAR_HEIGHT_DESKTOP, BATCH_BAR_HEIGHT_MOBILE } from "./sharingAgreementBatchBar";
@@ -37,16 +37,14 @@ export const SharingAgreementDetailPage: FC = () => {
     plantId,
     sharingAgreementId,
   );
-  const {
-    updateAgreement,
-    deleteAgreement,
-    publishAgreement,
-    revertAgreementToDraft,
-    isUpdating,
-    isDeleting,
-    isPublishing,
-    isReverting,
-  } = useSharingAgreementMutations(plantId);
+  // Every control below is mounted only when its action was handed over. An
+  // action the caller may not perform is undefined, so there is no disabled
+  // placeholder and no submit path that would 403.
+  const { update, remove, publish, revertToDraft, uploadFile, generateFile } =
+    useSharingAgreementActions(plantId).forAgreement(agreement).actions;
+  // The banner's stage actions open surfaces that live in the coefficient set,
+  // so they follow the same two writes that set gates on.
+  const { replace, activate } = useSharingAgreementCoefficientActions(plantId).forAgreement(agreement).actions;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
   const isSuperseded = agreement?.status === SharingAgreementResponseStatus.SUPERSEDED;
   // Scheduling only exists once the coefficient set is sealed. On a superseded
@@ -100,12 +98,14 @@ export const SharingAgreementDetailPage: FC = () => {
   }, [error, errorDispatch]);
 
   const handleEditSubmit = async (values: SharingAgreementFormValues) => {
-    const success = await updateAgreement(sharingAgreementId, values);
+    if (!update) return;
+    const success = await update.run(values);
     if (success) setIsEditDialogOpen(false);
   };
 
   const handleDeleteConfirm = async () => {
-    const success = await deleteAgreement(sharingAgreementId);
+    if (!remove) return;
+    const success = await remove.run();
     if (success) navigate(`/production/${plantId}/sharing-agreements`);
   };
 
@@ -118,7 +118,8 @@ export const SharingAgreementDetailPage: FC = () => {
   const returnFocusToHeading = () => headingRef.current?.focus();
 
   const handlePublishConfirm = async () => {
-    const success = await publishAgreement(sharingAgreementId);
+    if (!publish) return;
+    const success = await publish.run();
     if (success) {
       setIsPublishConfirmationOpen(false);
       setAnnouncement(`El acuerdo «${agreementName}» está en vigor.`);
@@ -127,7 +128,8 @@ export const SharingAgreementDetailPage: FC = () => {
   };
 
   const handleRevertConfirm = async () => {
-    const success = await revertAgreementToDraft(sharingAgreementId);
+    if (!revertToDraft) return;
+    const success = await revertToDraft.run();
     if (success) {
       setIsRevertConfirmationOpen(false);
       setAnnouncement(`El acuerdo «${agreementName}» ha vuelto a borrador. Sus coeficientes se pueden editar de nuevo.`);
@@ -182,14 +184,14 @@ export const SharingAgreementDetailPage: FC = () => {
               coefficients={coefficientsData}
               nextStep={nextStep}
               headingRef={headingRef}
-              onEdit={() => setIsEditDialogOpen(true)}
-              onDeleteRequest={() => setIsDeleteConfirmationOpen(true)}
-              onPublishRequest={() => setIsPublishConfirmationOpen(true)}
-              onRevertRequest={() => setIsRevertConfirmationOpen(true)}
-              onGenerateRequest={() => setIsGenerateDialogOpen(true)}
-              onEditCoefficientsRequest={() => setEditCoefficientsRequestId((id) => id + 1)}
-              onImportRequest={() => setIsUploadDialogOpen(true)}
-              onRecordDatesRequest={() => setRegisterDatesRequestId((id) => id + 1)}
+              onEdit={update && (() => setIsEditDialogOpen(true))}
+              onDeleteRequest={remove && (() => setIsDeleteConfirmationOpen(true))}
+              onPublishRequest={publish && (() => setIsPublishConfirmationOpen(true))}
+              onRevertRequest={revertToDraft && (() => setIsRevertConfirmationOpen(true))}
+              onGenerateRequest={generateFile && (() => setIsGenerateDialogOpen(true))}
+              onEditCoefficientsRequest={replace && (() => setEditCoefficientsRequestId((id) => id + 1))}
+              onImportRequest={uploadFile && (() => setIsUploadDialogOpen(true))}
+              onRecordDatesRequest={activate && (() => setRegisterDatesRequestId((id) => id + 1))}
             />
           </Box>
 
@@ -203,12 +205,11 @@ export const SharingAgreementDetailPage: FC = () => {
             <Box sx={sxStyles.pageContainer}>
               <SharingAgreementCoefficientSet
                 plantId={plantId}
-                sharingAgreementId={sharingAgreementId}
+                agreement={agreement}
                 coefficients={coefficients}
                 installedPowerKw={agreement?.installedPowerKw}
-                agreementStatus={agreement?.status}
                 editRequestId={editCoefficientsRequestId}
-                onImportRequest={() => setIsUploadDialogOpen(true)}
+                onImportRequest={uploadFile && (() => setIsUploadDialogOpen(true))}
                 registerDatesRequestId={registerDatesRequestId}
                 // The banner promotes "Editar a mano" / "Importar TXT" exactly
                 // while authoring is the current step; the section offers them
@@ -223,7 +224,6 @@ export const SharingAgreementDetailPage: FC = () => {
             <Box sx={sxStyles.pageContainer}>
               <SharingAgreementFilePanel
                 plantId={plantId}
-                sharingAgreementId={sharingAgreementId}
                 agreement={agreement}
                 coefficients={coefficients}
                 plantRegulatoryCode={plant?.regulatoryCode ?? undefined}
@@ -244,15 +244,16 @@ export const SharingAgreementDetailPage: FC = () => {
         </>
       )}
 
-      <SharingAgreementUploadDialog
-        isOpen={isUploadDialogOpen}
-        plantId={plantId}
-        sharingAgreementId={sharingAgreementId}
-        regulatoryCode={plant?.regulatoryCode ?? undefined}
-        onClose={() => setIsUploadDialogOpen(false)}
-      />
+      {uploadFile && (
+        <SharingAgreementUploadDialog
+          isOpen={isUploadDialogOpen}
+          uploadFile={uploadFile}
+          regulatoryCode={plant?.regulatoryCode ?? undefined}
+          onClose={() => setIsUploadDialogOpen(false)}
+        />
+      )}
 
-      {isEditDialogOpen && agreement && (
+      {isEditDialogOpen && agreement && update && (
         <SharingAgreementFormDialog
           key={sharingAgreementId}
           isOpen
@@ -263,37 +264,43 @@ export const SharingAgreementDetailPage: FC = () => {
             installedPowerKw: agreement.installedPowerKw,
           }}
           hasCoefficients={coefficients.length > 0}
-          isSubmitting={isUpdating}
+          isSubmitting={update.isPending}
           onCancel={() => setIsEditDialogOpen(false)}
           onSubmit={handleEditSubmit}
         />
       )}
 
-      <DeleteSharingAgreementConfirmationModal
-        isOpen={isDeleteConfirmationOpen}
-        agreementName={agreementName}
-        isDeleting={isDeleting}
-        onCancel={() => setIsDeleteConfirmationOpen(false)}
-        onConfirm={handleDeleteConfirm}
-      />
+      {remove && (
+        <DeleteSharingAgreementConfirmationModal
+          isOpen={isDeleteConfirmationOpen}
+          agreementName={agreementName}
+          isDeleting={remove.isPending}
+          onCancel={() => setIsDeleteConfirmationOpen(false)}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
 
-      <PublishSharingAgreementConfirmationModal
-        isOpen={isPublishConfirmationOpen}
-        agreementName={agreementName}
-        fileSumLabel={fileSumLabel}
-        coefficientCount={coefficients.length}
-        isPublishing={isPublishing}
-        onCancel={() => setIsPublishConfirmationOpen(false)}
-        onConfirm={handlePublishConfirm}
-      />
+      {publish && (
+        <PublishSharingAgreementConfirmationModal
+          isOpen={isPublishConfirmationOpen}
+          agreementName={agreementName}
+          fileSumLabel={fileSumLabel}
+          coefficientCount={coefficients.length}
+          isPublishing={publish.isPending}
+          onCancel={() => setIsPublishConfirmationOpen(false)}
+          onConfirm={handlePublishConfirm}
+        />
+      )}
 
-      <RevertSharingAgreementToDraftConfirmationModal
-        isOpen={isRevertConfirmationOpen}
-        agreementName={agreementName}
-        isReverting={isReverting}
-        onCancel={() => setIsRevertConfirmationOpen(false)}
-        onConfirm={handleRevertConfirm}
-      />
+      {revertToDraft && (
+        <RevertSharingAgreementToDraftConfirmationModal
+          isOpen={isRevertConfirmationOpen}
+          agreementName={agreementName}
+          isReverting={revertToDraft.isPending}
+          onCancel={() => setIsRevertConfirmationOpen(false)}
+          onConfirm={handleRevertConfirm}
+        />
+      )}
     </Box>
   );
 };

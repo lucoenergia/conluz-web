@@ -6,8 +6,8 @@ import { useNavigate, useParams } from "react-router";
 import type { UpdatePlantBody } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
-import { useUpdatePlant } from "../../api/plants/plants";
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
+import { usePlantActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
@@ -17,32 +17,31 @@ export const EditPlantPage: FC = () => {
   const { plantId = "" } = useParams();
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const updatePlant = useUpdatePlant();
 
-  const { plant, isLoading, isNotFound, error, refetch } = usePlantInActiveCommunity(plantId);
+  const { plant, isLoading, isNotFound, error } = usePlantInActiveCommunity(plantId);
+  const { edit } = usePlantActions().forPlant(plant).actions;
 
   const handleSubmit = async (values: PlantFormValues) => {
-    try {
-      const updatedPlant: UpdatePlantBody = {
-        providerCode: values.providerCode,
-        regulatoryCode: values.regulatoryCode || undefined,
-        name: values.name,
-        address: values.address,
-        description: values.description || undefined,
-        totalPower: values.totalPower,
-        connectionDate: values.connectionDate || undefined,
-        supplyCode: values.supplyCode,
-        inverterProvider: "HUAWEI",
-      };
+    // The route guard has already established canManage, so this only covers
+    // the render before the plant itself has arrived.
+    if (!edit) return;
+    const updatedPlant: UpdatePlantBody = {
+      providerCode: values.providerCode,
+      regulatoryCode: values.regulatoryCode || undefined,
+      name: values.name,
+      address: values.address,
+      description: values.description || undefined,
+      totalPower: values.totalPower,
+      connectionDate: values.connectionDate || undefined,
+      supplyCode: values.supplyCode,
+      inverterProvider: "HUAWEI",
+    };
 
-      const response = await updatePlant.mutateAsync({ plantId, data: updatedPlant });
-      if (response) {
-        refetch();
-        navigate("/production");
-      } else {
-        errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
-      }
-    } catch {
+    // The action invalidates the plant and the list itself, so there is no
+    // refetch to fire here.
+    if (await edit.run(updatedPlant)) {
+      navigate("/production");
+    } else {
       errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
     }
   };
@@ -138,6 +137,7 @@ export const EditPlantPage: FC = () => {
                 supplyCode: plant?.supply?.code,
               }}
               handleSubmit={handleSubmit}
+              disabled={!edit}
               selectedSupplyCode={plant?.supply?.code}
               disableSupplySelector={true}
             />

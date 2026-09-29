@@ -1,5 +1,5 @@
 // Deliberately does NOT mock "../../api/sharing-agreements/sharing-agreements"
-// the way useSharingAgreementCoefficientMutations.spec.tsx does — that mock
+// the way useSharingAgreementCoefficientActions.spec.tsx does — that mock
 // replaces the Orval-generated useMutation/useQuery hooks outright, which
 // would hide exactly the bug this file exists to catch: the real TanStack
 // isPending flag only tracks the mutation's own HTTP call, not the
@@ -12,7 +12,8 @@ import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { routeRequests } from "../../test/requestRouter";
 import dayjs from "dayjs";
 import { customInstance } from "../../api/custom-instance";
-import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
+import { useSharingAgreementCoefficientActions } from "./useSharingAgreementCoefficientActions";
+import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { EditableCoefficientRow } from "../../pages/production/sharingAgreementCoefficientEditing";
 import { useGetSharingAgreementPartitionCoefficients } from "../../api/sharing-agreements/sharing-agreements";
 import {
@@ -68,8 +69,13 @@ const replacedCoefficient: SharingAgreementPartitionCoefficientResponse = {
 
 function useHarness(plantId: string, sharingAgreementId: string) {
   const query = useGetSharingAgreementPartitionCoefficients(plantId, sharingAgreementId);
-  const mutations = useSharingAgreementCoefficientMutations(plantId);
-  return { query, mutations };
+  const agreement = buildSharingAgreement({
+    id: sharingAgreementId,
+    plantId,
+    capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
+  });
+  const { actions } = useSharingAgreementCoefficientActions(plantId).forAgreement(agreement);
+  return { query, actions };
 }
 
 describe("coefficient mutations stay pending until the post-success refetch resolves", () => {
@@ -110,11 +116,11 @@ describe("coefficient mutations stay pending until the post-success refetch reso
     const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
     await waitFor(() => expect(result.current.query.data).toEqual([initialCoefficient]));
-    expect(result.current.mutations.isActivating).toBe(false);
+    expect(result.current.actions.activate!.isPending).toBe(false);
 
     let activatePromise!: Promise<unknown>;
     act(() => {
-      activatePromise = result.current.mutations.activateCoefficients("agreement-1", ["c1"], dayjs("2026-02-01"));
+      activatePromise = result.current.actions.activate!.run(["c1"], dayjs("2026-02-01"));
     });
 
     // The POST has already resolved by now (it's an immediately-resolving
@@ -122,14 +128,14 @@ describe("coefficient mutations stay pending until the post-success refetch reso
     // already report false here. The real assertion: the refetch it
     // triggered is still in flight, and isActivating must still be true.
     await waitFor(() => expect(getCallCount).toBe(2));
-    expect(result.current.mutations.isActivating).toBe(true);
+    expect(result.current.actions.activate!.isPending).toBe(true);
 
     act(() => resolveRefetch([correctedCoefficient]));
     await act(async () => {
       await activatePromise;
     });
 
-    await waitFor(() => expect(result.current.mutations.isActivating).toBe(false));
+    await waitFor(() => expect(result.current.actions.activate!.isPending).toBe(false));
     expect(result.current.query.data).toEqual([correctedCoefficient]);
   });
 
@@ -162,7 +168,7 @@ describe("coefficient mutations stay pending until the post-success refetch reso
     const { result } = renderHookWithProviders(() => useHarness("plant-1", "agreement-1"));
 
     await waitFor(() => expect(result.current.query.data).toEqual([initialCoefficient]));
-    expect(result.current.mutations.isReplacing).toBe(false);
+    expect(result.current.actions.replace!.isPending).toBe(false);
 
     const rows: EditableCoefficientRow[] = [
       { supplyId: "s1", coefficient: initialCoefficient, value: 0.6, inputText: "60,0000" },
@@ -170,18 +176,18 @@ describe("coefficient mutations stay pending until the post-success refetch reso
 
     let replacePromise!: Promise<unknown>;
     act(() => {
-      replacePromise = result.current.mutations.replaceCoefficients("agreement-1", rows);
+      replacePromise = result.current.actions.replace!.run(rows);
     });
 
     await waitFor(() => expect(getCallCount).toBe(2));
-    expect(result.current.mutations.isReplacing).toBe(true);
+    expect(result.current.actions.replace!.isPending).toBe(true);
 
     act(() => resolveRefetch([replacedCoefficient]));
     await act(async () => {
       await replacePromise;
     });
 
-    await waitFor(() => expect(result.current.mutations.isReplacing).toBe(false));
+    await waitFor(() => expect(result.current.actions.replace!.isPending).toBe(false));
     // Only once this is true may the editor reopen: it is what the next
     // session's snapshot would be built from.
     expect(result.current.query.data).toEqual([replacedCoefficient]);

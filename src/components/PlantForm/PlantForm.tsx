@@ -29,6 +29,11 @@ interface PlantFormProps {
   handleSubmit: (values: PlantFormValues) => void;
   selectedSupplyCode?: string;
   disableSupplySelector?: boolean;
+  /**
+   * Blocks the submit. The route guard is the first line; this is the second,
+   * covering the render before the plant or the community has arrived.
+   */
+  disabled?: boolean;
 }
 
 export const PlantForm: FC<PlantFormProps> = ({
@@ -45,6 +50,7 @@ export const PlantForm: FC<PlantFormProps> = ({
   handleSubmit,
   selectedSupplyCode,
   disableSupplySelector = false,
+  disabled = false,
 }) => {
   const [providerCode, setProviderCode] = useState(initialProviderCode);
   const [regulatoryCode, setRegulatoryCode] = useState(initialRegulatoryCode);
@@ -64,6 +70,17 @@ export const PlantForm: FC<PlantFormProps> = ({
     { size: 10000 },
     { query: { enabled: !!activeCommunityId } },
   );
+
+  // Only the supplies this caller may build a plant on. The community's
+  // canCreatePlants answers "may this person create plants at all" and gates the
+  // entry point; the supply's own canCreatePlant answers "on this one", and its
+  // doc is explicit that the community flag is not sufficient for any particular
+  // supply. Filtering here is what keeps the form from offering a choice the
+  // backend would refuse. Editing passes disableSupplySelector, so the plant's
+  // existing supply is never filtered out from under it.
+  const selectableSupplies = disableSupplySelector
+    ? (suppliesData?.items ?? [])
+    : (suppliesData?.items ?? []).filter((supply) => supply.capabilities.canCreatePlant);
 
   // Set initial selected supply when editing
   useEffect(() => {
@@ -164,7 +181,7 @@ export const PlantForm: FC<PlantFormProps> = ({
         />
 
         <Autocomplete
-          options={suppliesData?.items || []}
+          options={selectableSupplies}
           getOptionLabel={(option) => `${option.name || option.code} (${option.code})`}
           value={selectedSupply}
           onChange={(_, newValue) => setSelectedSupply(newValue)}
@@ -305,6 +322,7 @@ export const PlantForm: FC<PlantFormProps> = ({
         <Button
           type="submit"
           variant="contained"
+          disabled={disabled}
           sx={(theme) => ({
             background: theme.palette.primary.main,
             px: 3,

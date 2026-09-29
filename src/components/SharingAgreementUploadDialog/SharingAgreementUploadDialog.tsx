@@ -1,44 +1,33 @@
 import { useState, type ChangeEvent, type FC } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Chip, Divider, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { AppModal } from "../Modals/AppModal";
 import { colors, fontSizes, shadows } from "../../theme/tokens";
-import {
-  getGetSharingAgreementByIdQueryKey,
-  getGetSharingAgreementPartitionCoefficientsQueryKey,
-  useUploadSharingAgreementFile,
-} from "../../api/sharing-agreements/sharing-agreements";
-import { useErrorDispatch } from "../../context/error.context";
-import { getFirstApiErrorMessage, getGroupedApiErrorDetails, type GroupedApiErrors } from "../../errors/apiErrorCatalogue";
+import type { GroupedApiErrors } from "../../errors/apiErrorCatalogue";
+import type { Action, SharingAgreementFileUploadResult } from "../../hooks/actions";
 
 export interface SharingAgreementUploadDialogProps {
   isOpen: boolean;
-  plantId: string;
-  sharingAgreementId: string;
+  /**
+   * Required, not optional: the dialog does not decide whether importing is
+   * permitted, it is only mounted by a caller that was handed the action.
+   */
+  uploadFile: Action<[File], SharingAgreementFileUploadResult>;
   regulatoryCode: string | undefined;
   onClose: () => void;
   onUploadSuccess?: () => void;
 }
 
-function isBadRequest(error: unknown): boolean {
-  return (error as { response?: { status?: number } } | null | undefined)?.response?.status === 400;
-}
-
 export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps> = ({
   isOpen,
-  plantId,
-  sharingAgreementId,
+  uploadFile,
   regulatoryCode,
   onClose,
   onUploadSuccess,
 }) => {
   const theme = useTheme();
-  const queryClient = useQueryClient();
-  const errorDispatch = useErrorDispatch();
-  const uploadMutation = useUploadSharingAgreementFile();
 
   const [file, setFile] = useState<File | null>(null);
   const [groupedErrors, setGroupedErrors] = useState<GroupedApiErrors | null>(null);
@@ -48,7 +37,6 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
   const reset = () => {
     setFile(null);
     setGroupedErrors(null);
-    uploadMutation.reset();
   };
 
   const handleClose = () => {
@@ -67,23 +55,16 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
 
   const handleSubmit = async () => {
     if (!file) return;
-    try {
-      await uploadMutation.mutateAsync({ plantId, sharingAgreementId, data: { file } });
-      queryClient.invalidateQueries({
-        queryKey: getGetSharingAgreementPartitionCoefficientsQueryKey(plantId, sharingAgreementId),
-      });
-      queryClient.invalidateQueries({ queryKey: getGetSharingAgreementByIdQueryKey(plantId, sharingAgreementId) });
+    const result = await uploadFile.run(file);
+    if (result.success) {
       onUploadSuccess?.();
       handleClose();
-    } catch (error) {
-      if (isBadRequest(error)) {
-        setGroupedErrors(getGroupedApiErrorDetails(error));
-      } else {
-        errorDispatch(
-          getFirstApiErrorMessage(error, "Ha habido un problema al subir el fichero. Por favor, inténtalo más tarde"),
-        );
-      }
+      return;
     }
+    // `null` means the failure was a single message the actions layer already
+    // raised as a toast; a grouped set is the per-line work list this dialog
+    // renders instead.
+    if (result.groupedErrors) setGroupedErrors(result.groupedErrors);
   };
 
   return (
@@ -98,7 +79,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
           <Button
             variant="outlined"
             onClick={handleClose}
-            disabled={uploadMutation.isPending}
+            disabled={uploadFile.isPending}
             sx={{
               minWidth: "64px",
               padding: "5px 15px",
@@ -117,7 +98,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={!file || uploadMutation.isPending}
+              disabled={!file || uploadFile.isPending}
               sx={{
                 minWidth: "64px",
                 padding: "5px 15px",
@@ -126,7 +107,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
                 "&:hover": { boxShadow: shadows.strong },
               }}
             >
-              {uploadMutation.isPending ? "Subiendo…" : "Subir fichero"}
+              {uploadFile.isPending ? "Subiendo…" : "Subir fichero"}
             </Button>
           )}
         </>

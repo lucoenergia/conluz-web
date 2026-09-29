@@ -1,21 +1,31 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "../../theme";
+import { Routes, Route } from "react-router";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
 import { SharingAgreementDetailPage } from "./SharingAgreementDetailPage";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import { buildCoefficient, buildSharingAgreement } from "../../test/fixtures";
-import type { PlantResponse, SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
+import {
+  buildCoefficient,
+  buildPlant,
+  buildPlantCapabilities,
+  buildSharingAgreement,
+  buildSharingAgreementCapabilities,
+} from "../../test/fixtures";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData";
-import type { SharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
+import {
+  useDeleteSharingAgreement,
+  usePublishSharingAgreement,
+  useRevertSharingAgreementToDraft,
+  useUpdateSharingAgreement,
+} from "../../api/sharing-agreements/sharing-agreements";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -23,37 +33,37 @@ const { OPEN, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEn
 const mockErrorDispatch = vi.fn();
 const mockSuccessDispatch = vi.fn();
 const mockUseSharingAgreementDetailData = vi.fn();
-const mockUpdateAgreement = vi.fn();
-const mockDeleteAgreement = vi.fn();
-const mockPublishAgreement = vi.fn();
-const mockRevertAgreementToDraft = vi.fn();
+const mockUpdateMutateAsync = vi.fn();
+const mockDeleteMutateAsync = vi.fn();
+const mockPublishMutateAsync = vi.fn();
+const mockRevertMutateAsync = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("../../context/error.context", () => ({
+// Spread the originals: the harness renders the real providers.
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../../context/success.context", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useSuccessDispatch: () => mockSuccessDispatch,
 }));
 
-vi.mock("./useSharingAgreementDetailData", () => ({
-  useSharingAgreementDetailData: (...args: unknown[]) => mockUseSharingAgreementDetailData(...args),
+vi.mock(import("./useSharingAgreementDetailData"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useSharingAgreementDetailData: (...args: Parameters<typeof mockUseSharingAgreementDetailData>) =>
+    mockUseSharingAgreementDetailData(...args),
 }));
 
-vi.mock("../../hooks/actions/useSharingAgreementMutations", () => ({
-  useSharingAgreementMutations: (): SharingAgreementMutations => ({
-    createAgreement: vi.fn(),
-    updateAgreement: mockUpdateAgreement,
-    deleteAgreement: mockDeleteAgreement,
-    publishAgreement: mockPublishAgreement,
-    revertAgreementToDraft: mockRevertAgreementToDraft,
-    isCreating: false,
-    isUpdating: false,
-    isDeleting: false,
-    isPublishing: false,
-    isReverting: false,
-  }),
+// Only the reads are replaced; the actions layer runs for real, so what is
+// under test is that each control follows the agreement's capabilities.
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useUpdateSharingAgreement: vi.fn(),
+  useDeleteSharingAgreement: vi.fn(),
+  usePublishSharingAgreement: vi.fn(),
+  useRevertSharingAgreementToDraft: vi.fn(),
 }));
 
 vi.mock("react-router", async () => {
@@ -70,22 +80,35 @@ function mockData(overrides: Partial<SharingAgreementDetailData> = {}) {
   mockUseSharingAgreementDetailData.mockReturnValue({ ...baseData(), ...overrides });
 }
 
-// Fixtures deliberately stay minimal — only the fields these tests actually
-// exercise — and are cast rather than fully populated to every now-required
-// field on the generated types, matching the pattern used elsewhere in this
-// codebase for partial test fixtures.
+// Fixtures name only the fields these tests exercise; the builders supply the
+// rest, including the capabilities the screen now gates on.
+const MANAGEABLE = buildSharingAgreementCapabilities({ canRead: true, canManage: true });
+
+function agreementFixture(overrides: Parameters<typeof buildSharingAgreement>[0] = {}) {
+  return buildSharingAgreement({
+    id: "agreement-1",
+    name: "Reparto 2025",
+    status: SharingAgreementResponseStatus.DRAFT,
+    installedPowerKw: 12.5,
+    notes: "Nota original",
+    createdAt: "2026-01-15T10:00:00Z",
+    capabilities: MANAGEABLE,
+    ...overrides,
+  });
+}
+
 function baseData(): SharingAgreementDetailData {
   return {
-    agreement: {
-      id: "agreement-1",
-      name: "Reparto 2025",
-      status: SharingAgreementResponseStatus.DRAFT,
-      installedPowerKw: 12.5,
-      notes: "Nota original",
-      createdAt: "2026-01-15T10:00:00Z",
-      file: null,
-    } as unknown as SharingAgreementResponse,
-    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" } as PlantResponse,
+    agreement: agreementFixture(),
+    plant: buildPlant({
+      name: "Planta Solar Norte",
+      regulatoryCode: "CAU-123",
+      capabilities: buildPlantCapabilities({
+        canRead: true,
+        canListSharingAgreements: true,
+        canManageSharingAgreements: true,
+      }),
+    }),
     coefficients: [],
     coefficientsData: [],
     isLoading: false,
@@ -95,40 +118,38 @@ function baseData(): SharingAgreementDetailData {
 }
 
 function coefficient(id: string, applicationState: "PENDING" | "APPLIED"): SharingAgreementPartitionCoefficientResponse {
-  return {
+  return buildCoefficient({
     coefficientId: id,
     supply: { id: `s${id}`, name: `Punto ${id}`, code: `ES00313000000000${id}AB` },
     coefficient: 0.2,
     applicationState,
     validFrom: applicationState === "APPLIED" ? "2026-01-01" : null,
-    validTo: null,
-    endState: "OPEN",
-    endDate: null,
-    currentCoefficient: null,
-  } as unknown as SharingAgreementPartitionCoefficientResponse;
+    endState: OPEN,
+  });
 }
 
 function setup(plantId = "plant-1", sharingAgreementId = "agreement-1") {
-  const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={[`/production/${plantId}/sharing-agreements/${sharingAgreementId}`]}>
-          <Routes>
-            <Route
-              path="/production/:plantId/sharing-agreements/:sharingAgreementId"
-              element={<SharingAgreementDetailPage />}
-            />
-          </Routes>
-        </MemoryRouter>
-      </ThemeProvider>
-    </QueryClientProvider>,
+  renderWithProviders(
+    <Routes>
+      <Route
+        path="/production/:plantId/sharing-agreements/:sharingAgreementId"
+        element={<SharingAgreementDetailPage />}
+      />
+    </Routes>,
+    {
+      route: `/production/${plantId}/sharing-agreements/${sharingAgreementId}`,
+      activeCommunityId: "TEST-COMMUNITY-ID",
+    },
   );
 }
 
 describe("SharingAgreementDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useUpdateSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutateAsync }));
+    vi.mocked(useDeleteSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutateAsync }));
+    vi.mocked(usePublishSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockPublishMutateAsync }));
+    vi.mocked(useRevertSharingAgreementToDraft).mockReturnValue(mutation.idle({ mutateAsync: mockRevertMutateAsync }));
   });
 
   test("offers editing and deleting in the kebab for a DRAFT agreement", async () => {
@@ -146,12 +167,7 @@ describe("SharingAgreementDetailPage", () => {
     // outside DRAFT, since removing a published agreement would destroy the
     // historical basis of past billing.
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.PUBLISHED,
-        installedPowerKw: 12.5,
-      } as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED, notes: null }),
     });
     const user = userEvent.setup();
     setup();
@@ -165,12 +181,7 @@ describe("SharingAgreementDetailPage", () => {
   // gets its own case: nothing guarantees it takes the same branch as PUBLISHED.
   test("keeps editing available on a SUPERSEDED agreement too", async () => {
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.SUPERSEDED,
-        installedPowerKw: 12.5,
-      } as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.SUPERSEDED, notes: null }),
     });
     const user = userEvent.setup();
     setup();
@@ -190,12 +201,7 @@ describe("SharingAgreementDetailPage", () => {
       coefficient("3", "PENDING"),
     ];
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.PUBLISHED,
-        installedPowerKw: 12.5,
-      } as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED, notes: null }),
       coefficients,
       coefficientsData: coefficients,
     });
@@ -287,17 +293,9 @@ describe("SharingAgreementDetailPage", () => {
   // on a draft, where omitting them would silently blank the record.
   test("submits all three fields on a PUBLISHED agreement even when only the name changed", async () => {
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.PUBLISHED,
-        installedPowerKw: 12.5,
-        notes: "Nota original",
-        createdAt: "2026-01-15T10:00:00Z",
-        file: null,
-      } as unknown as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED }),
     });
-    mockUpdateAgreement.mockResolvedValue(true);
+    mockUpdateMutateAsync.mockResolvedValue(undefined);
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
@@ -310,30 +308,23 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     await waitFor(() =>
-      expect(mockUpdateAgreement).toHaveBeenCalledWith(
-        "agreement-1",
-        expect.objectContaining({
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        plantId: "plant-1",
+        sharingAgreementId: "agreement-1",
+        data: expect.objectContaining({
           name: "Reparto 2025 corregido",
           notes: "Nota original",
           installedPowerKw: 12.5,
         }),
-      ),
+      }),
     );
   });
 
   test("a successful edit refreshes the header without a full reload", async () => {
     mockData();
-    mockUpdateAgreement.mockImplementation(async () => {
+    mockUpdateMutateAsync.mockImplementation(async () => {
       mockData({
-        agreement: {
-          id: "agreement-1",
-          name: "Reparto 2025 corregido",
-          status: SharingAgreementResponseStatus.DRAFT,
-          installedPowerKw: 12.5,
-          notes: "Nota original",
-          createdAt: "2026-01-15T10:00:00Z",
-          file: null,
-        } as unknown as SharingAgreementResponse,
+        agreement: agreementFixture({ name: "Reparto 2025 corregido" }),
       });
       return true;
     });
@@ -351,7 +342,7 @@ describe("SharingAgreementDetailPage", () => {
 
   test("editing seeds the dialog with the agreement's current values and calls updateAgreement with the route's id", async () => {
     mockData();
-    mockUpdateAgreement.mockResolvedValue(true);
+    mockUpdateMutateAsync.mockResolvedValue(undefined);
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
@@ -365,15 +356,16 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     await waitFor(() =>
-      expect(mockUpdateAgreement).toHaveBeenCalledWith(
-        "agreement-1",
-        expect.objectContaining({ name: "Reparto 2025", notes: "Nota original", installedPowerKw: 12.5 }),
-      ),
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        plantId: "plant-1",
+        sharingAgreementId: "agreement-1",
+        data: expect.objectContaining({ name: "Reparto 2025", notes: "Nota original", installedPowerKw: 12.5 }),
+      }),
     );
   });
 
   test("warns that changing capacity shifts each supply's kW when the agreement already has coefficients", async () => {
-    mockData({ coefficients: [{ coefficientId: "c1" }] as SharingAgreementPartitionCoefficientResponse[] });
+    mockData({ coefficients: [buildCoefficient({ coefficientId: "c1" })] });
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
@@ -406,7 +398,7 @@ describe("SharingAgreementDetailPage", () => {
 
   test("deleting navigates back to the list on success, removing (not invalidating) the detail query is the hook's job", async () => {
     mockData();
-    mockDeleteAgreement.mockResolvedValue(true);
+    mockDeleteMutateAsync.mockResolvedValue(undefined);
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 
@@ -416,13 +408,13 @@ describe("SharingAgreementDetailPage", () => {
     expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
-    await waitFor(() => expect(mockDeleteAgreement).toHaveBeenCalledWith("agreement-1"));
+    await waitFor(() => expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ plantId: "plant-1", sharingAgreementId: "agreement-1" }));
     expect(mockNavigate).toHaveBeenCalledWith("/production/plant-1/sharing-agreements");
   });
 
   test("does not navigate away when delete fails", async () => {
     mockData();
-    mockDeleteAgreement.mockResolvedValue(false);
+    mockDeleteMutateAsync.mockRejectedValue(new Error("network error"));
     const user = userEvent.setup();
     setup();
 
@@ -430,7 +422,7 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(await screen.findByText("Eliminar"));
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
-    await waitFor(() => expect(mockDeleteAgreement).toHaveBeenCalled());
+    await waitFor(() => expect(mockDeleteMutateAsync).toHaveBeenCalled());
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
@@ -440,5 +432,56 @@ describe("SharingAgreementDetailPage", () => {
 
     expect(screen.getByText("Acuerdo no encontrado")).toBeInTheDocument();
     expect(mockErrorDispatch).not.toHaveBeenCalled();
+  });
+
+  describe("a caller who may list the agreements but not manage them", () => {
+    const READ_ONLY = buildSharingAgreementCapabilities({ canRead: true, canManage: false });
+
+    it("gets no kebab on a DRAFT, so neither editing nor deleting is offered", () => {
+      mockData({ agreement: agreementFixture({ capabilities: READ_ONLY }) });
+      setup();
+
+      expect(screen.queryByRole("button", { name: "Más opciones del acuerdo" })).not.toBeInTheDocument();
+    });
+
+    it("is offered no lifecycle transition on a DRAFT whose coefficients are complete", () => {
+      const coefficients = [coefficient("1", "PENDING")];
+      mockData({
+        agreement: agreementFixture({ capabilities: READ_ONLY }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
+    });
+
+    it("is offered no way back to draft on a PUBLISHED agreement whose coefficients are inert", () => {
+      const coefficients = [coefficient("1", "PENDING")];
+      mockData({
+        agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED, capabilities: READ_ONLY }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+    });
+
+    // Capability first, then status: the same caller with canManage does get it,
+    // which is what makes the three cases above about the gate and not the rule.
+    it("still gets the way back to draft when the agreement says they may manage it", () => {
+      const coefficients = [coefficient("1", "PENDING")];
+      mockData({
+        agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      expect(screen.getByRole("button", { name: "Volver a borrador" })).toBeInTheDocument();
+    });
   });
 });

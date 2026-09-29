@@ -13,7 +13,12 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
-import { buildCoefficient, buildPlant, buildSharingAgreement } from "../../test/fixtures";
+import {
+  buildCoefficient,
+  buildPlant,
+  buildSharingAgreement,
+  buildSharingAgreementCapabilities,
+} from "../../test/fixtures";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -49,6 +54,9 @@ const agreement = buildSharingAgreement({
   name: "Reparto 2026",
   status: SharingAgreementResponseStatus.PUBLISHED,
   installedPowerKw: 100,
+  // Registering an application date is a write: without canManage the row menu
+  // this spec drives would not be there to click.
+  capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
 });
 
 const appliedOpen = buildCoefficient({

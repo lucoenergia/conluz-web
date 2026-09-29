@@ -322,6 +322,35 @@ describe("SharingAgreementDetailHeader", () => {
 
   // AC5.
   describe("the kebab", () => {
+    // Each item follows its own handler. The page withholds a handler when the
+    // agreement does not permit that write, so the two answers are independent
+    // here even though one capability decides both today.
+    it("offers only the items whose handler it was given", async () => {
+      const user = userEvent.setup();
+      renderHeader({
+        agreement: draftAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
+        onDeleteRequest: vi.fn(),
+      });
+
+      await user.click(screen.getByRole("button", { name: KEBAB }));
+
+      const menu = await screen.findByRole("menu");
+      expect(menu).toHaveTextContent("Eliminar");
+      expect(menu).not.toHaveTextContent(EDIT_ITEM);
+    });
+
+    it("mounts no kebab at all when it was given neither handler", () => {
+      renderHeader({
+        agreement: draftAgreement,
+        coefficients: ALL_PENDING,
+        nextStep: { kind: "GENERATE_AND_SEND", canGenerate: true },
+      });
+
+      expect(screen.queryByRole("button", { name: KEBAB })).not.toBeInTheDocument();
+    });
+
     it("offers editing and deleting for a draft", async () => {
       const onEdit = vi.fn();
       const onDeleteRequest = vi.fn();

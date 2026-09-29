@@ -99,9 +99,9 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useCreatePlant: {
     scope: "supply",
     capability: "canCreatePlant",
-    hook: "useSupplyActions",
+    hook: "useCommunityActions",
     approximates:
-      "two surfaces: the supply's canCreatePlant answers for a given supply, the community's canCreatePlants is 'necessary but not sufficient' by its own doc and gates the community-level entry point in useCommunityActions",
+      "two surfaces, and CreatePlantPage uses both: the community's canCreatePlants gates the entry point (the Nueva Planta button, the production/new route) and hands out the action, while the supply's canCreatePlant bounds the choice -- PlantForm offers only supplies that report it, so the form cannot submit one the backend would refuse. useSupplyActions carries the per-supply action for callers that start from a supply",
   },
   useUpdatePlant: {
     scope: "plant",
@@ -125,23 +125,70 @@ const ACTION_COVERAGE: Record<string, Decision> = {
 
   // ── Sharing agreements ────────────────────────────────────────────────────
   useCreateSharingAgreement: { scope: "plant", capability: "canManageSharingAgreements", hook: "usePlantActions" },
-  useUpdateSharingAgreement: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  useDeleteSharingAgreement: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  usePublishSharingAgreement: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  useRevertSharingAgreementToDraft: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  useReplacePartitionCoefficients: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  useActivatePartitionCoefficients: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  useDeactivatePartitionCoefficients: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  useClosePartitionCoefficients: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
-  useReopenPartitionCoefficients: { scope: "sharingAgreement", capability: "canManage", approximates: AGREEMENT_LIFECYCLE },
+  useUpdateSharingAgreement: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useDeleteSharingAgreement: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  usePublishSharingAgreement: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useRevertSharingAgreementToDraft: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useReplacePartitionCoefficients: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useActivatePartitionCoefficients: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useDeactivatePartitionCoefficients: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useClosePartitionCoefficients: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useReopenPartitionCoefficients: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
   useGenerateSharingAgreementDistributorFile: {
     scope: "sharingAgreement",
     capability: "canManage",
+    hook: "useSharingAgreementActions",
     approximates: "a write not named in canManage's documented verb list; canRead covers reading the file and there is no other write flag",
   },
   useUploadSharingAgreementFile: {
     scope: "sharingAgreement",
     capability: "canManage",
+    hook: "useSharingAgreementActions",
     approximates: "as useGenerateSharingAgreementDistributorFile",
   },
 
@@ -401,7 +448,7 @@ describe("the screens that predate the actions layer", () => {
   it("never grows", () => {
     // Lowered by hand as screens migrate, so growing it takes a deliberate edit
     // with a diff rather than a quiet addition.
-    expect(entries.length).toBeLessThanOrEqual(16);
+    expect(entries.length).toBeLessThanOrEqual(11);
   });
 
   it("does not overlap the community-scope wrapper list", () => {

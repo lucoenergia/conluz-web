@@ -3,7 +3,7 @@ import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
 import { colors, interactiveTransition, motion} from "../../theme/tokens";
-import { useGetAllPlants, useDeletePlant } from "../../api/plants/plants";
+import { useGetAllPlants } from "../../api/plants/plants";
 import type { PlantResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
@@ -17,6 +17,8 @@ import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import { useActiveCommunity } from "../../context/community.context";
+import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { useCommunityActions, usePlantActions } from "../../hooks/actions";
 
 export const PlantsPage: FC = () => {
   const theme = useTheme();
@@ -24,23 +26,14 @@ export const PlantsPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const activeCommunityId = useActiveCommunity();
-  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllPlants(
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllPlants(
     activeCommunityId ?? "",
     { size: 10000 },
     { query: { enabled: !!activeCommunityId } },
   );
-  const deletePlant = useDeletePlant();
-
-  const deletePlantHandler = async (id: string) => {
-    try {
-      await deletePlant.mutateAsync({ plantId: id });
-      refetch();
-      return true;
-    } catch {
-      errorDispatch("Ha habido un problema al eliminar la planta. Por favor inténtalo más tarde");
-      return false;
-    }
-  };
+  const activeCommunity = useActiveCommunityResource();
+  const { createPlant } = useCommunityActions().forCommunity(activeCommunity).actions;
+  const { forPlant } = usePlantActions();
 
   useEffect(() => {
     if (error) {
@@ -125,25 +118,27 @@ export const PlantsPage: FC = () => {
             }}
           >
           {/* New Plant Button */}
-          <Button
-            component={Link}
-            to="/production/new"
-            variant="contained"
-            startIcon={<AddCircleOutlineIcon />}
-            sx={{
-              background: theme.palette.primary.main,
-              px: 3,
-              py: 1.5,
-              boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
-              "&:hover": {
-                transform: `translateY(${motion.lift})`,
-                boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
-              },
-              transition: interactiveTransition("0.3s", "ease"),
-            }}
-          >
-            Nueva Planta
-          </Button>
+          {createPlant && (
+            <Button
+              component={Link}
+              to="/production/new"
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              sx={{
+                background: theme.palette.primary.main,
+                px: 3,
+                py: 1.5,
+                boxShadow: `0 4px 15px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
+                "&:hover": {
+                  transform: `translateY(${motion.lift})`,
+                  boxShadow: `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
+                },
+                transition: interactiveTransition("0.3s", "ease"),
+              }}
+            >
+              Nueva Planta
+            </Button>
+          )}
 
           {/* Search Bar */}
           <SearchBar value={searchText} onChange={setSearchText} />
@@ -157,18 +152,35 @@ export const PlantsPage: FC = () => {
           <CardGrid
             items={filteredItems}
             getKey={(item) => item.id || ""}
-            renderCard={(item) => (
-              <PlantCard
-                id={item.id}
-                code={item.providerCode}
-                name={item.name}
-                address={item.address}
-                totalPower={item.totalPower}
-                connectionDate={item.connectionDate ?? undefined}
-                description={item.description ?? undefined}
-                onDelete={deletePlantHandler}
-              />
-            )}
+            renderCard={(item) => {
+              // Destructured so TypeScript narrows them: an action the caller
+              // was not given is undefined, and the card is handed nothing.
+              const { remove } = forPlant(item).actions;
+              const { canManage, canListSharingAgreements } = item.capabilities;
+              return (
+                <PlantCard
+                  id={item.id}
+                  code={item.providerCode}
+                  name={item.name}
+                  address={item.address}
+                  totalPower={item.totalPower}
+                  connectionDate={item.connectionDate ?? undefined}
+                  description={item.description ?? undefined}
+                  canManage={canManage}
+                  canListSharingAgreements={canListSharingAgreements}
+                  onDelete={
+                    remove &&
+                    (async () => {
+                      const deleted = await remove.run();
+                      if (!deleted) {
+                        errorDispatch("Ha habido un problema al eliminar la planta. Por favor inténtalo más tarde");
+                      }
+                      return deleted;
+                    })
+                  }
+                />
+              );
+            }}
           />
         </Box>
       )}
@@ -189,10 +201,12 @@ export const PlantsPage: FC = () => {
             subtitle={
               searchText
                 ? `No hay resultados para "${searchText}"`
-                : "Comienza agregando tu primera planta de producción"
+                : createPlant
+                  ? "Comienza agregando tu primera planta de producción"
+                  : "Todavía no hay ninguna planta de producción en esta comunidad."
             }
             actionButton={
-              !searchText
+              !searchText && createPlant
                 ? {
                     label: "Crear Planta",
                     onClick: () => navigate("/production/new"),

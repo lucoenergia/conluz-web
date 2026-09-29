@@ -2,9 +2,10 @@ import { radii, colors, alphas } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import { useCreatePlant } from "../../api/plants/plants";
 import type { CreatePlantBody } from "../../api/models";
 import { useNavigate } from "react-router";
+import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { useCommunityActions } from "../../hooks/actions";
 import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
 import { useErrorDispatch } from "../../context/error.context";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -13,29 +14,32 @@ import SolarPowerIcon from "@mui/icons-material/SolarPower";
 export const CreatePlantPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const createPlant = useCreatePlant();
+  const activeCommunity = useActiveCommunityResource();
+  // The community answers "may this person create plants at all", which is what
+  // the route guard enforces too; PlantForm bounds the choice to the supplies
+  // whose own canCreatePlant is true.
+  const { createPlant } = useCommunityActions().forCommunity(activeCommunity).actions;
 
   const handleSubmit = async (values: PlantFormValues) => {
-    try {
-      const newPlant: CreatePlantBody = {
-        providerCode: values.providerCode,
-        regulatoryCode: values.regulatoryCode || undefined,
-        name: values.name,
-        address: values.address,
-        description: values.description || undefined,
-        totalPower: values.totalPower,
-        connectionDate: values.connectionDate || undefined,
-        supplyCode: values.supplyCode,
-        inverterProvider: "HUAWEI",
-      };
+    // The route guard has already established this; it only covers the render
+    // before the community itself has arrived.
+    if (!createPlant) return;
+    const newPlant: CreatePlantBody = {
+      providerCode: values.providerCode,
+      regulatoryCode: values.regulatoryCode || undefined,
+      name: values.name,
+      address: values.address,
+      description: values.description || undefined,
+      totalPower: values.totalPower,
+      connectionDate: values.connectionDate || undefined,
+      supplyCode: values.supplyCode,
+      inverterProvider: "HUAWEI",
+    };
 
-      const response = await createPlant.mutateAsync({ data: newPlant });
-      if (response) {
-        navigate("/production");
-      } else {
-        errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
-      }
-    } catch {
+    // The action invalidates the plant list itself, so there is no refetch here.
+    if (await createPlant.run(newPlant)) {
+      navigate("/production");
+    } else {
       errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
     }
   };
@@ -104,7 +108,7 @@ export const CreatePlantPage: FC = () => {
           elevation={0}
           sx={[sxStyles.softPanel, { width: { xs: "100%", sm: "auto" } }]}
         >
-          <PlantForm handleSubmit={handleSubmit} />
+          <PlantForm handleSubmit={handleSubmit} disabled={!createPlant} />
         </Paper>
       </Box>
     </Box>

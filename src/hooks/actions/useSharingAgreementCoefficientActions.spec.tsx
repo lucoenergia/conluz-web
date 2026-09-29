@@ -11,7 +11,8 @@ import type { QueryKey } from "@tanstack/react-query";
 import { createTestQueryClient, renderHookWithProviders } from "../../test/renderWithProviders";
 import { mutation } from "../../test/queryState";
 import dayjs from "dayjs";
-import { useSharingAgreementCoefficientMutations } from "./useSharingAgreementCoefficientMutations";
+import { useSharingAgreementCoefficientActions } from "./useSharingAgreementCoefficientActions";
+import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import {
   buildEditableRowFromSupply,
   buildEditableRowsFromCoefficients,
@@ -86,7 +87,19 @@ beforeEach(() => {
   vi.mocked(useReopenPartitionCoefficients).mockReturnValue(mutation.idle({ mutateAsync: mockReopenMutateAsync }));
 });
 
-describe("useSharingAgreementCoefficientMutations", () => {
+const MANAGEABLE_AGREEMENT = buildSharingAgreement({
+  id: "agreement-1",
+  plantId: "plant-1",
+  capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
+});
+
+const READ_ONLY_AGREEMENT = buildSharingAgreement({
+  id: "agreement-1",
+  plantId: "plant-1",
+  capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: false }),
+});
+
+describe("useSharingAgreementCoefficientActions", () => {
   beforeEach(() => {
     mockErrorDispatch.mockClear();
     mockSuccessDispatch.mockClear();
@@ -94,11 +107,47 @@ describe("useSharingAgreementCoefficientMutations", () => {
     mockActivateMutateAsync.mockClear();
   });
 
+  describe("what the caller is handed", () => {
+    it("hands over all five writes when the agreement reports canManage", () => {
+      const { result } = renderHookWithProviders(() =>
+        useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT),
+      );
+
+      expect(result.current.actions.replace).toBeDefined();
+      expect(result.current.actions.activate).toBeDefined();
+      expect(result.current.actions.deactivate).toBeDefined();
+      expect(result.current.actions.close).toBeDefined();
+      expect(result.current.actions.reopen).toBeDefined();
+    });
+
+    it("withholds all five when the agreement does not report canManage", () => {
+      const { result } = renderHookWithProviders(() =>
+        useSharingAgreementCoefficientActions("plant-1").forAgreement(READ_ONLY_AGREEMENT),
+      );
+
+      expect(result.current.actions.replace).toBeUndefined();
+      expect(result.current.actions.activate).toBeUndefined();
+      expect(result.current.actions.deactivate).toBeUndefined();
+      expect(result.current.actions.close).toBeUndefined();
+      expect(result.current.actions.reopen).toBeUndefined();
+      expect(result.current.outcomes.activate).toEqual({ state: "denied" });
+    });
+
+    it("withholds all five as pending, not denied, while the agreement has not arrived", () => {
+      const { result } = renderHookWithProviders(() =>
+        useSharingAgreementCoefficientActions("plant-1").forAgreement(undefined),
+      );
+
+      expect(result.current.actions.activate).toBeUndefined();
+      expect(result.current.outcomes.activate).toEqual({ state: "pending" });
+    });
+  });
+
   it("issues exactly one PUT for the whole row set, keyed by supplyId", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5), row("s2", 0.5)]);
+    await result.current.actions.replace!.run([row("s1", 0.5), row("s2", 0.5)]);
 
     expect(mockMutateAsync).toHaveBeenCalledTimes(1);
     expect(mockMutateAsync).toHaveBeenCalledWith({
@@ -110,9 +159,9 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("sends a row whose value is 0 as a real 0 in the request body — never filtered, never coerced from empty", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    await result.current.replaceCoefficients("agreement-1", [row("s1", 0), row("s2", 1)]);
+    await result.current.actions.replace!.run([row("s1", 0), row("s2", 1)]);
 
     const body = mockMutateAsync.mock.calls[0][0].data;
     expect(body.coefficients).toHaveLength(2);
@@ -127,9 +176,9 @@ describe("useSharingAgreementCoefficientMutations", () => {
     // from typing "30" kW on a 60 kWp plant is exactly 0.5, same as typing
     // "50" as a percentage) — the hook never re-parses text or knows about units.
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    await result.current.replaceCoefficients("agreement-1", [row("s1", 0), row("s2", 0.5)]);
+    await result.current.actions.replace!.run([row("s1", 0), row("s2", 0.5)]);
 
     expect(mockMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -140,16 +189,16 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("does not surface the backend's coefficientSumWarning string on the result, even when present", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [], coefficientSumWarning: "La suma se aleja del 100%" });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5), row("s2", 0.4)]);
+    const outcome = await result.current.actions.replace!.run([row("s1", 0.5), row("s2", 0.4)]);
 
     expect(outcome).toEqual({ success: true });
   });
 
   it("reproduction case: rows entered in kW mode against a 48,40 kW plant reach the request body as exact 6-decimal values", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
     const installedPowerKw = 48.4;
     // Only id/name are exercised by buildEditableRowFromSupply; the rest of each supply is builder defaults.
@@ -165,7 +214,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
       return updateRowInput([empty], supply.id!, kwText[i], "kw", installedPowerKw)[0];
     });
 
-    await result.current.replaceCoefficients("agreement-1", rows);
+    await result.current.actions.replace!.run(rows);
 
     const body = mockMutateAsync.mock.calls[0][0].data;
     expect(body.coefficients).toEqual([
@@ -178,7 +227,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("round-trip: exact 6-decimal coefficients summing to 1,000,000 units survive display, unit toggling, and save unchanged", async () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
     const installedPowerKw = 45;
     const seeded = buildEditableRowsFromCoefficients(
@@ -194,7 +243,7 @@ describe("useSharingAgreementCoefficientMutations", () => {
     let rows = retextRowsForUnit(seeded, "kw", installedPowerKw);
     rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
 
-    await result.current.replaceCoefficients("agreement-1", rows);
+    await result.current.actions.replace!.run(rows);
 
     const body = mockMutateAsync.mock.calls[0][0].data;
     expect(body.coefficients).toEqual([
@@ -206,9 +255,9 @@ describe("useSharingAgreementCoefficientMutations", () => {
 
   it("dispatches a toast and returns success:false on error, without throwing", async () => {
     mockMutateAsync.mockRejectedValue(new Error("network error"));
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.replaceCoefficients("agreement-1", [row("s1", 0.5)]);
+    const outcome = await result.current.actions.replace!.run([row("s1", 0.5)]);
 
     expect(outcome).toEqual({ success: false });
     await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
@@ -224,7 +273,7 @@ describe("activateCoefficients", () => {
 
   it("serialises appliedOn with .format('YYYY-MM-DD'), never a UTC-converting method — proven by asserting on the request body actually sent", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
     // Local midnight on a fixed date. If the conversion ever used
     // .toISOString() (which converts to UTC first), Europe/Madrid's +1/+2
@@ -233,7 +282,7 @@ describe("activateCoefficients", () => {
     // just that dayjs itself can format the date correctly.
     const localMidnight = dayjs("2026-03-15T00:00:00");
 
-    await result.current.activateCoefficients("agreement-1", ["c1"], localMidnight);
+    await result.current.actions.activate!.run(["c1"], localMidnight);
 
     expect(mockActivateMutateAsync).toHaveBeenCalledWith({
       plantId: "plant-1",
@@ -244,9 +293,9 @@ describe("activateCoefficients", () => {
 
   it("treats an empty coefficients response (no-op batch) as success and dispatches the transient confirmation", async () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.activateCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+    const outcome = await result.current.actions.activate!.run(["c1"], dayjs("2026-01-10"));
 
     expect(outcome).toEqual({ success: true });
     expect(mockSuccessDispatch).toHaveBeenCalledWith("Fechas de aplicación registradas.");
@@ -272,9 +321,9 @@ describe("activateCoefficients", () => {
         },
       },
     });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.activateCoefficients("agreement-1", ["c1", "c2"], dayjs("2026-01-10"));
+    const outcome = await result.current.actions.activate!.run(["c1", "c2"], dayjs("2026-01-10"));
 
     expect(outcome.success).toBe(false);
     if (!outcome.success) {
@@ -287,9 +336,9 @@ describe("activateCoefficients", () => {
 
   it("on a non-RestError rejection (network error), returns an empty errorMessages array rather than throwing", async () => {
     mockActivateMutateAsync.mockRejectedValue(new Error("network error"));
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.activateCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+    const outcome = await result.current.actions.activate!.run(["c1"], dayjs("2026-01-10"));
 
     expect(outcome).toEqual({ success: false, errorMessages: [] });
   });
@@ -298,9 +347,11 @@ describe("activateCoefficients", () => {
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [] });
     const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT), {
+      queryClient,
+    });
 
-    await result.current.activateCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+    await result.current.actions.activate!.run(["c1"], dayjs("2026-01-10"));
 
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
     const filters = invalidateSpy.mock.calls[0][0];
@@ -335,9 +386,9 @@ describe("deactivateCoefficients", () => {
 
   it("sends coefficientIds only, invalidates the plant subtree, and dispatches the transient confirmation", async () => {
     mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+    const outcome = await result.current.actions.deactivate!.run(["c1"]);
 
     expect(mockDeactivateMutateAsync).toHaveBeenCalledWith({
       plantId: "plant-1",
@@ -350,9 +401,9 @@ describe("deactivateCoefficients", () => {
 
   it("treats an empty coefficients response (no-op) as success", async () => {
     mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+    const outcome = await result.current.actions.deactivate!.run(["c1"]);
 
     expect(outcome).toEqual({ success: true });
   });
@@ -363,9 +414,9 @@ describe("deactivateCoefficients", () => {
         data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT", params: {} }] },
       },
     });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+    const outcome = await result.current.actions.deactivate!.run(["c1"]);
 
     expect(outcome.success).toBe(false);
     if (!outcome.success) expect(outcome.errorMessages).toHaveLength(1);
@@ -377,9 +428,11 @@ describe("deactivateCoefficients", () => {
     mockDeactivateMutateAsync.mockResolvedValue({ coefficients: [] });
     const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT), {
+      queryClient,
+    });
 
-    await result.current.deactivateCoefficients("agreement-1", ["c1"]);
+    await result.current.actions.deactivate!.run(["c1"]);
 
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
   });
@@ -394,14 +447,14 @@ describe("closeCoefficients", () => {
 
   it("serialises closedOn with .format('YYYY-MM-DD'), never a UTC-converting method — proven by asserting on the request body actually sent", async () => {
     mockCloseMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
     // Local midnight on a fixed date — same hazard as activateCoefficients'
     // appliedOn test: .toISOString() would shift this to the previous day
     // under Europe/Madrid's +1/+2 offset (process.env.TZ set at top of file).
     const localMidnight = dayjs("2026-03-15T00:00:00");
 
-    await result.current.closeCoefficients("agreement-1", ["c1"], localMidnight);
+    await result.current.actions.close!.run(["c1"], localMidnight);
 
     expect(mockCloseMutateAsync).toHaveBeenCalledWith({
       plantId: "plant-1",
@@ -412,9 +465,9 @@ describe("closeCoefficients", () => {
 
   it("treats an empty coefficients response (no-op) as success and dispatches the transient confirmation", async () => {
     mockCloseMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+    const outcome = await result.current.actions.close!.run(["c1"], dayjs("2026-01-10"));
 
     expect(outcome).toEqual({ success: true });
     expect(mockSuccessDispatch).toHaveBeenCalledWith("Cierre registrado.");
@@ -426,9 +479,9 @@ describe("closeCoefficients", () => {
         data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE", params: { cups: "ES1111111111111111AA" } }] },
       },
     });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+    const outcome = await result.current.actions.close!.run(["c1"], dayjs("2026-01-10"));
 
     expect(outcome.success).toBe(false);
     if (!outcome.success) expect(outcome.errorMessages).toHaveLength(1);
@@ -440,9 +493,11 @@ describe("closeCoefficients", () => {
     mockCloseMutateAsync.mockResolvedValue({ coefficients: [] });
     const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT), {
+      queryClient,
+    });
 
-    await result.current.closeCoefficients("agreement-1", ["c1"], dayjs("2026-01-10"));
+    await result.current.actions.close!.run(["c1"], dayjs("2026-01-10"));
 
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
   });
@@ -457,9 +512,9 @@ describe("reopenCoefficients", () => {
 
   it("sends coefficientIds only, invalidates the plant subtree, and dispatches the transient confirmation", async () => {
     mockReopenMutateAsync.mockResolvedValue({ coefficients: [{ coefficientId: "c1" }] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
+    const outcome = await result.current.actions.reopen!.run(["c1"]);
 
     expect(mockReopenMutateAsync).toHaveBeenCalledWith({
       plantId: "plant-1",
@@ -472,9 +527,9 @@ describe("reopenCoefficients", () => {
 
   it("treats an empty coefficients response (no-op) as success", async () => {
     mockReopenMutateAsync.mockResolvedValue({ coefficients: [] });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
+    const outcome = await result.current.actions.reopen!.run(["c1"]);
 
     expect(outcome).toEqual({ success: true });
   });
@@ -487,9 +542,9 @@ describe("reopenCoefficients", () => {
         },
       },
     });
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"));
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const outcome = await result.current.reopenCoefficients("agreement-1", ["c1"]);
+    const outcome = await result.current.actions.reopen!.run(["c1"]);
 
     expect(outcome.success).toBe(false);
     if (!outcome.success) expect(outcome.errorMessages).toHaveLength(1);
@@ -501,9 +556,11 @@ describe("reopenCoefficients", () => {
     mockReopenMutateAsync.mockResolvedValue({ coefficients: [] });
     const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientMutations("plant-1"), { queryClient });
+    const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT), {
+      queryClient,
+    });
 
-    await result.current.reopenCoefficients("agreement-1", ["c1"]);
+    await result.current.actions.reopen!.run(["c1"]);
 
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
   });

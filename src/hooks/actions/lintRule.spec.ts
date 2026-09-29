@@ -72,8 +72,8 @@ describe("the mutation guard rail", () => {
   describe("the screens that predate the layer", () => {
     it("may still import the mutation they already had", async () => {
       const errors = await restrictedImportErrors(
-        `import { useUpdatePlant } from "../../api/plants/plants";\nexport const x = useUpdatePlant;\n`,
-        "src/pages/production/EditPlantPage.tsx",
+        `import { useUpdateUser } from "../../api/users/users";\nexport const x = useUpdateUser;\n`,
+        "src/pages/users/EditUser.tsx",
       );
 
       expect(errors).toEqual([]);
@@ -84,7 +84,7 @@ describe("the mutation guard rail", () => {
       // two arrays rather than switching the rule off for the file.
       const errors = await restrictedImportErrors(
         `import { useGetPlantById } from "../../api/plants/plants";\nexport const x = useGetPlantById;\n`,
-        "src/pages/production/EditPlantPage.tsx",
+        "src/pages/integrations/IntegrationsPage.tsx",
       );
 
       expect(errors).toHaveLength(1);
@@ -102,6 +102,16 @@ describe("the mutation guard rail", () => {
 
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain("useSupplyActions");
+    });
+
+    it("stop being exempt once they migrate, for the production screens too", async () => {
+      const errors = await restrictedImportErrors(
+        `import { useUpdatePlant } from "../../api/plants/plants";\nexport const x = useUpdatePlant;\n`,
+        "src/pages/production/EditPlantPage.tsx",
+      );
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("usePlantActions");
     });
   });
 });

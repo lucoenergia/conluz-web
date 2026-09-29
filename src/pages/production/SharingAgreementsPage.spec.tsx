@@ -1,42 +1,45 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { Routes, Route } from "react-router";
+import { renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
 import { SharingAgreementsPage } from "./SharingAgreementsPage";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
+import { buildPlant, buildPlantCapabilities, buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { SharingAgreementsData } from "./useSharingAgreementsData";
-import type { SharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
+import {
+  useCreateSharingAgreement,
+  useDeleteSharingAgreement,
+} from "../../api/sharing-agreements/sharing-agreements";
 
 const mockErrorDispatch = vi.fn();
 const mockUseSharingAgreementsData = vi.fn();
-const mockCreateAgreement = vi.fn();
-const mockUpdateAgreement = vi.fn();
-const mockDeleteAgreement = vi.fn();
+const mockCreateMutateAsync = vi.fn();
+const mockDeleteMutateAsync = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("../../context/error.context", () => ({
+// Spread the original: the harness renders the real ErrorProvider.
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("./useSharingAgreementsData", () => ({
-  useSharingAgreementsData: (...args: unknown[]) => mockUseSharingAgreementsData(...args),
+vi.mock(import("./useSharingAgreementsData"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useSharingAgreementsData: (...args: Parameters<typeof mockUseSharingAgreementsData>) =>
+    mockUseSharingAgreementsData(...args),
 }));
 
-vi.mock("../../hooks/actions/useSharingAgreementMutations", () => ({
-  useSharingAgreementMutations: (): SharingAgreementMutations => ({
-    createAgreement: mockCreateAgreement,
-    updateAgreement: mockUpdateAgreement,
-    deleteAgreement: mockDeleteAgreement,
-    publishAgreement: vi.fn(),
-    revertAgreementToDraft: vi.fn(),
-    isCreating: false,
-    isUpdating: false,
-    isDeleting: false,
-    isPublishing: false,
-    isReverting: false,
-  }),
+// Only the reads are replaced. The actions layer runs for real -- which is the
+// point: what is under test is that the page's button and each card's menu
+// follow the capabilities on the payload, and stubbing the action hooks would
+// restate that rule instead of exercising it.
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useCreateSharingAgreement: vi.fn(),
+  useDeleteSharingAgreement: vi.fn(),
 }));
 
 vi.mock("react-router", async () => {
@@ -44,11 +47,35 @@ vi.mock("react-router", async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
+const MANAGEABLE = buildSharingAgreementCapabilities({ canRead: true, canManage: true });
+
 const AGREEMENTS = [
-  { id: "1", name: "Reparto vecinos bloque A", status: SharingAgreementResponseStatus.PUBLISHED },
-  { id: "2", name: "Borrador reciente", status: SharingAgreementResponseStatus.DRAFT, installedPowerKw: 5 },
-  { id: "3", name: "Acuerdo histórico norte", status: SharingAgreementResponseStatus.SUPERSEDED },
-] as SharingAgreementResponse[];
+  buildSharingAgreement({
+    id: "1",
+    name: "Reparto vecinos bloque A",
+    status: SharingAgreementResponseStatus.PUBLISHED,
+    capabilities: MANAGEABLE,
+  }),
+  buildSharingAgreement({
+    id: "2",
+    name: "Borrador reciente",
+    status: SharingAgreementResponseStatus.DRAFT,
+    installedPowerKw: 5,
+    capabilities: MANAGEABLE,
+  }),
+  buildSharingAgreement({
+    id: "3",
+    name: "Acuerdo histórico norte",
+    status: SharingAgreementResponseStatus.SUPERSEDED,
+    capabilities: MANAGEABLE,
+  }),
+];
+
+const MANAGING_PLANT = buildPlantCapabilities({
+  canRead: true,
+  canListSharingAgreements: true,
+  canManageSharingAgreements: true,
+});
 
 function mockData(overrides: Partial<SharingAgreementsData> = {}) {
   mockUseSharingAgreementsData.mockReturnValue({ ...baseData(), ...overrides });
@@ -57,7 +84,7 @@ function mockData(overrides: Partial<SharingAgreementsData> = {}) {
 function baseData(): SharingAgreementsData {
   return {
     agreements: AGREEMENTS,
-    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" } as PlantResponse,
+    plant: buildPlant({ name: "Planta Solar Norte", regulatoryCode: "CAU-123", capabilities: MANAGING_PLANT }),
     counts: { vigentes: 5, drafts: 1, historicos: 2 },
     isLoading: false,
     isNotFound: false,
@@ -66,18 +93,19 @@ function baseData(): SharingAgreementsData {
 }
 
 function setup(plantId = "plant-1") {
-  render(
-    <MemoryRouter initialEntries={[`/production/${plantId}/sharing-agreements`]}>
-      <Routes>
-        <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithProviders(
+    <Routes>
+      <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
+    </Routes>,
+    { route: `/production/${plantId}/sharing-agreements`, activeCommunityId: "TEST-COMMUNITY-ID" },
   );
 }
 
 describe("SharingAgreementsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useCreateSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutateAsync }));
+    vi.mocked(useDeleteSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutateAsync }));
   });
 
   test("renders plant name, CAU, counts and every agreement card on normal load", () => {
@@ -157,9 +185,14 @@ describe("SharingAgreementsPage", () => {
 
   test("create dialog prefills capacity from the plant's totalPower and navigates to the new agreement on submit", async () => {
     mockData({
-      plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123", totalPower: 30 } as PlantResponse,
+      plant: buildPlant({
+        name: "Planta Solar Norte",
+        regulatoryCode: "CAU-123",
+        totalPower: 30,
+        capabilities: MANAGING_PLANT,
+      }),
     });
-    mockCreateAgreement.mockResolvedValue({ id: "new-agreement", name: "Reparto nuevo" });
+    mockCreateMutateAsync.mockResolvedValue({ id: "new-agreement", name: "Reparto nuevo" });
     const user = userEvent.setup();
     setup("plant-42");
 
@@ -169,13 +202,13 @@ describe("SharingAgreementsPage", () => {
     await user.type(screen.getByLabelText("Nombre del acuerdo", { exact: false }), "Reparto nuevo");
     await user.click(screen.getByRole("button", { name: "Crear borrador" }));
 
-    await waitFor(() => expect(mockCreateAgreement).toHaveBeenCalled());
+    await waitFor(() => expect(mockCreateMutateAsync).toHaveBeenCalled());
     expect(mockNavigate).toHaveBeenCalledWith("/production/plant-42/sharing-agreements/new-agreement");
   });
 
   test("does not navigate to a route with a missing id when create succeeds without an id", async () => {
     mockData();
-    mockCreateAgreement.mockResolvedValue({ name: "Reparto nuevo" });
+    mockCreateMutateAsync.mockResolvedValue({ name: "Reparto nuevo" });
     const user = userEvent.setup();
     setup("plant-42");
 
@@ -184,7 +217,7 @@ describe("SharingAgreementsPage", () => {
     await user.type(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }), "10");
     await user.click(screen.getByRole("button", { name: "Crear borrador" }));
 
-    await waitFor(() => expect(mockCreateAgreement).toHaveBeenCalled());
+    await waitFor(() => expect(mockCreateMutateAsync).toHaveBeenCalled());
     expect(mockNavigate).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument());
   });
@@ -211,9 +244,9 @@ describe("SharingAgreementsPage", () => {
     expect(screen.queryByText("Ver detalle")).not.toBeInTheDocument();
   });
 
-  test("deleting from the card kebab shows the confirmation and calls deleteAgreement with the agreement's id", async () => {
+  test("deleting from the card kebab shows the confirmation and deletes the agreement it was opened on", async () => {
     mockData();
-    mockDeleteAgreement.mockResolvedValue(true);
+    mockDeleteMutateAsync.mockResolvedValue(undefined);
     const user = userEvent.setup();
     setup();
 
@@ -224,6 +257,46 @@ describe("SharingAgreementsPage", () => {
     expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
-    await waitFor(() => expect(mockDeleteAgreement).toHaveBeenCalledWith("2"));
+    await waitFor(() =>
+      expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ plantId: "plant-1", sharingAgreementId: "2" }),
+    );
+  });
+
+  describe("a member who may list the agreements but not manage them", () => {
+    const READ_ONLY_PLANT = buildPlantCapabilities({ canRead: true, canListSharingAgreements: true });
+    const READ_ONLY_AGREEMENTS = AGREEMENTS.map((agreement) =>
+      buildSharingAgreement({ ...agreement, capabilities: buildSharingAgreementCapabilities({ canRead: true }) }),
+    );
+
+    test("is not offered a way to create one", () => {
+      mockData({
+        plant: buildPlant({ name: "Planta Solar Norte", capabilities: READ_ONLY_PLANT }),
+        agreements: READ_ONLY_AGREEMENTS,
+      });
+      setup();
+
+      expect(screen.queryByRole("button", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument();
+    });
+
+    test("gets no kebab on the DRAFT card, which still opens as a link", () => {
+      mockData({
+        plant: buildPlant({ name: "Planta Solar Norte", capabilities: READ_ONLY_PLANT }),
+        agreements: READ_ONLY_AGREEMENTS,
+      });
+      setup("plant-42");
+
+      expect(screen.getAllByRole("button").filter((button) => button.textContent === "")).toHaveLength(0);
+      expect(screen.getByRole("link", { name: "Borrador reciente" })).toHaveAttribute(
+        "href",
+        "/production/plant-42/sharing-agreements/2",
+      );
+    });
+  });
+
+  test("offers nothing while the plant has not arrived -- not yet known is not 'no'", () => {
+    mockData({ plant: undefined, isLoading: true });
+    setup();
+
+    expect(screen.queryByRole("button", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument();
   });
 });
