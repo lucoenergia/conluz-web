@@ -73,4 +73,27 @@ test.describe("Visual baselines", () => {
     // Layout subject: the main region, with the app bar masked (see mainRegion).
     await expect(page).toHaveScreenshot("users-page.png", await mainRegion(page));
   });
+
+  /**
+   * Not a baseline: an assertion, so it writes no PNG and nothing has to be
+   * regenerated for it. The subject is reachability, which a screenshot would
+   * only record indirectly.
+   *
+   * /integrations gates on the community's canManage. A platform admin who
+   * belongs to no community holds no community capability at all, and the
+   * platform flag is never a grant over a community's data -- so the guard
+   * denies, sends them to "/", and the landing redirect lands them on
+   * /platform. The page's own cards are gated too (IntegrationsPage.spec.tsx),
+   * but this is the route refusing before any of that is reached.
+   */
+  test("a platform admin who is not a member cannot reach integrations", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/integrations");
+    await stabilizePage(page);
+
+    await expect(page).toHaveURL(/\/platform$/);
+    await expect(page.getByRole("heading", { name: "Integraciones" })).toHaveCount(0);
+  });
 });

@@ -299,4 +299,124 @@ describe("MembersPage", () => {
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
   });
+  describe("an admin of the community", () => {
+    it("is offered both ways to bring a member in", () => {
+      setup();
+
+      expect(screen.getByRole("button", { name: "Añadir miembro" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Importar miembros" })).toBeInTheDocument();
+    });
+
+    it("gets every row action the backend granted on the row", async () => {
+      const user = userEvent.setup();
+      setup();
+
+      await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+
+      expect(await screen.findByRole("menuitem", { name: /Puntos de suministro/ })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: /Cambiar rol/ })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: /Eliminar/ })).toBeInTheDocument();
+    });
+  });
+
+  describe("a caller who may see the roster but change nothing", () => {
+    const READ_ONLY = [
+      buildMembership({
+        id: "m1",
+        user: buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com" }),
+        communityId: "c1",
+        role: "COMMUNITY_MEMBER",
+        enabled: true,
+      }),
+    ];
+
+    it("is offered no way to add or import", () => {
+      setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: READ_ONLY });
+
+      expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
+    });
+
+    it("gets a row with no menu at all, rather than a menu with nothing in it", () => {
+      setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: READ_ONLY });
+
+      expect(screen.getByText("Ana García")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Más acciones para Ana García" })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("a platform admin who is not a member of this community", () => {
+    it("gets nothing, because the flag is not a grant over a community's roster", () => {
+      // canManageMembershipInvestment's doc puts it plainly for the money; the
+      // roster is the same shape of answer. Only what the backend said is read.
+      setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: [] });
+
+      expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("decides each row from its own membership, not from the community", async () => {
+    const user = userEvent.setup();
+    setup({
+      memberships: [
+        buildMembership({
+          id: "m1",
+          user: member("u1", "Ana García", "ana@example.com"),
+          communityId: "c1",
+          role: "COMMUNITY_MEMBER",
+          enabled: true,
+          capabilities: buildMembershipCapabilities({ canDelete: true }),
+        }),
+        buildMembership({
+          id: "m2",
+          user: buildUser({ id: "u2", fullName: "Bruno Leal", email: "bruno@example.com" }),
+          communityId: "c1",
+          role: "COMMUNITY_ADMIN",
+          enabled: true,
+        }),
+      ],
+    });
+
+    // Bruno's row carries no capability at all, so it loses its menu even
+    // though the caller may administer the roster as a whole.
+    expect(screen.queryByRole("button", { name: "Más acciones para Bruno Leal" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+
+    expect(await screen.findByRole("menuitem", { name: /Eliminar/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Cambiar rol/ })).not.toBeInTheDocument();
+  });
+
+  it("reads the caller's own row like any other -- the answer is the backend's", async () => {
+    const user = userEvent.setup();
+    setup({
+      memberships: [
+        buildMembership({
+          id: "m1",
+          user: member("u1", "Ana García", "ana@example.com"),
+          communityId: "c1",
+          role: "COMMUNITY_ADMIN",
+          enabled: true,
+          // What the backend answers for an admin looking at themselves: they
+          // may still be re-roled by a peer, but not removed by themselves.
+          capabilities: buildMembershipCapabilities({ canUpdateRole: true, canDelete: false }),
+        }),
+      ],
+    });
+
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+
+    expect(await screen.findByRole("menuitem", { name: /Cambiar rol/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Eliminar/ })).not.toBeInTheDocument();
+  });
+
+  it("offers nothing while the community has not loaded -- not yet known is not 'no'", () => {
+    // The rows are deliberately permissive, so the only unresolved answer is
+    // the community's.
+    setup({ communityLoading: true });
+
+    expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
+  });
 });
