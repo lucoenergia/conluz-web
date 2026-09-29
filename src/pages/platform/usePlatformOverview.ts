@@ -1,5 +1,6 @@
 import { useGetAllCommunities } from "../../api/communities/communities";
 import { useGetAllUsers } from "../../api/users/users";
+import { usePlatformCapabilities } from "../../hooks/permissions";
 import type { CommunityResponse } from "../../api/models";
 import type { CommunityStatus } from "../../components/CommunityStatusChip";
 
@@ -83,8 +84,8 @@ export interface PlatformOverview {
   communities: CommunityResponse[];
   /** Distinct people = totalElements from GET /api/v1/users. */
   usersCount: number;
-  /** True when the users count could not be fetched (e.g. 403) — hide the Usuarios KPI. */
-  usersCountUnavailable: boolean;
+  /** Whether the caller may list users at all, which is what the Usuarios KPI needs. */
+  mayListUsers: boolean;
   /** Page-level loading, driven by the communities request. */
   isLoading: boolean;
   /** Page-level error, driven by the communities request. */
@@ -95,11 +96,19 @@ export interface PlatformOverview {
  * Composes the two existing fetches (communities + a size-1 users page) into the
  * derived KPIs, attention counts and community list the dashboard renders.
  * No extra API calls are made.
+ *
+ * The page itself gates on `canAdministerPlatform`, which its schema doc names as
+ * covering the platform overview; listing users is a separate answer, so the
+ * users request is asked for only when the caller holds it. It used to be fired
+ * regardless and its 403 read back off `isError` to hide the KPI -- which worked,
+ * but made a refused request part of how the page decided what to show, and
+ * could not tell a refusal from a network failure.
  */
 export function usePlatformOverview(): PlatformOverview {
   const communitiesQuery = useGetAllCommunities();
+  const mayListUsers = usePlatformCapabilities("canListUsers").state === "allowed";
   // size: 1 — we only read totalElements, never the full user list.
-  const usersQuery = useGetAllUsers({ size: 1 });
+  const usersQuery = useGetAllUsers({ size: 1 }, { query: { enabled: mayListUsers } });
 
   const communities = communitiesQuery.data ?? [];
   const { kpis, attention } = computeOverview(communities);
@@ -109,7 +118,7 @@ export function usePlatformOverview(): PlatformOverview {
     attention,
     communities,
     usersCount: usersQuery.data?.totalElements ?? 0,
-    usersCountUnavailable: usersQuery.isError,
+    mayListUsers,
     isLoading: communitiesQuery.isLoading,
     error: communitiesQuery.error,
   };

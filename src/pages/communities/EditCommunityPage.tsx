@@ -1,6 +1,5 @@
 import { useState, type FC } from "react";
 import { useNavigate, useParams } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -15,22 +14,20 @@ import BusinessIcon from "@mui/icons-material/Business";
 import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import {
-  useGetCommunityById,
-  useUpdateCommunity,
-  getGetAllCommunitiesQueryKey,
-} from "../../api/communities/communities";
-import type { UpdateCommunityBody } from "../../api/models";
+import { useGetCommunityById } from "../../api/communities/communities";
+import { useCommunityActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
 
 export const EditCommunityPage: FC = () => {
   const { communityId = "" } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const errorDispatch = useErrorDispatch();
-  const updateCommunity = useUpdateCommunity();
 
   const { data: communityData, isLoading, error } = useGetCommunityById(communityId);
+
+  // The community itself carries the answer, and the action invalidates both the
+  // community and the list, so there is nothing left for the page to do.
+  const { update } = useCommunityActions().forCommunity(communityData).actions;
 
   const [name, setName] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
@@ -63,21 +60,21 @@ export const EditCommunityPage: FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate() || !communityId) return;
+    if (!validate()) return;
+    // The route guard has already established canUpdate, so this only covers the
+    // render before the community itself has arrived.
+    if (!update) return;
 
-    try {
-      await updateCommunity.mutateAsync({
-        communityId,
-        data: {
-          name: currentName.trim(),
-          code: currentCode.trim(),
-          legalId: currentLegalId.trim() || undefined,
-          address: currentAddress.trim() || undefined,
-        } as UpdateCommunityBody,
-      });
-      await queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
+    if (
+      await update.run({
+        name: currentName.trim(),
+        code: currentCode.trim(),
+        legalId: currentLegalId.trim() || undefined,
+        address: currentAddress.trim() || undefined,
+      })
+    ) {
       navigate("/communities");
-    } catch {
+    } else {
       errorDispatch("Ha habido un problema al editar la comunidad. Por favor, inténtalo más tarde.");
     }
   };
@@ -186,16 +183,16 @@ export const EditCommunityPage: FC = () => {
               <Button
                 variant="outlined"
                 onClick={() => navigate("/communities")}
-                disabled={updateCommunity.isPending}
+                disabled={update?.isPending}
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 variant="contained"
-                disabled={updateCommunity.isPending}
+                disabled={!update || update.isPending}
               >
-                {updateCommunity.isPending ? "Guardando..." : "Guardar cambios"}
+                {update?.isPending ? "Guardando..." : "Guardar cambios"}
               </Button>
             </Box>
           </Box>
