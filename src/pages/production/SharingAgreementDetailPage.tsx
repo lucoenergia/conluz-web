@@ -19,7 +19,7 @@ import { RevertSharingAgreementToDraftConfirmationModal } from "../../components
 import { SharingAgreementResponseStatus } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
-import { useSharingAgreementActions } from "../../hooks/actions";
+import { useSharingAgreementActions, useSharingAgreementCoefficientActions } from "../../hooks/actions";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { summarizeApplicationProgress } from "./sharingAgreementApplicationProgress";
 import { BATCH_BAR_HEIGHT_DESKTOP, BATCH_BAR_HEIGHT_MOBILE } from "./sharingAgreementBatchBar";
@@ -40,8 +40,11 @@ export const SharingAgreementDetailPage: FC = () => {
   // Every control below is mounted only when its action was handed over. An
   // action the caller may not perform is undefined, so there is no disabled
   // placeholder and no submit path that would 403.
-  const { update, remove, publish, revertToDraft, uploadFile } =
+  const { update, remove, publish, revertToDraft, uploadFile, generateFile } =
     useSharingAgreementActions(plantId).forAgreement(agreement).actions;
+  // The banner's stage actions open surfaces that live in the coefficient set,
+  // so they follow the same two writes that set gates on.
+  const { replace, activate } = useSharingAgreementCoefficientActions(plantId).forAgreement(agreement).actions;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
   const isSuperseded = agreement?.status === SharingAgreementResponseStatus.SUPERSEDED;
   // Scheduling only exists once the coefficient set is sealed. On a superseded
@@ -185,10 +188,10 @@ export const SharingAgreementDetailPage: FC = () => {
               onDeleteRequest={remove && (() => setIsDeleteConfirmationOpen(true))}
               onPublishRequest={publish && (() => setIsPublishConfirmationOpen(true))}
               onRevertRequest={revertToDraft && (() => setIsRevertConfirmationOpen(true))}
-              onGenerateRequest={() => setIsGenerateDialogOpen(true)}
-              onEditCoefficientsRequest={() => setEditCoefficientsRequestId((id) => id + 1)}
+              onGenerateRequest={generateFile && (() => setIsGenerateDialogOpen(true))}
+              onEditCoefficientsRequest={replace && (() => setEditCoefficientsRequestId((id) => id + 1))}
               onImportRequest={uploadFile && (() => setIsUploadDialogOpen(true))}
-              onRecordDatesRequest={() => setRegisterDatesRequestId((id) => id + 1)}
+              onRecordDatesRequest={activate && (() => setRegisterDatesRequestId((id) => id + 1))}
             />
           </Box>
 

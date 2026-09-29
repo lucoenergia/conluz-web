@@ -124,6 +124,23 @@ describe("PlantDetailHeader", () => {
       expect(screen.getByText("Casa de Luco")).toBeInTheDocument();
     });
 
+    // Listing plants is open to any member, but GET /supplies/{id} is not, so
+    // following the reference would 403 unless the plant says otherwise.
+    it("shows the CUPS as plain text when the plant says the supply is not readable", async () => {
+      const user = userEvent.setup();
+      renderHeader({
+        ...mockPlant,
+        capabilities: buildPlantCapabilities({ canRead: true, canReadSupply: false }),
+      });
+      await expandDetails(user);
+
+      expect(screen.queryByRole("link", { name: /ES0031300806333002ET0F/ })).not.toBeInTheDocument();
+      expect(screen.getByText("ES0031300806333002ET0F")).toBeInTheDocument();
+      // The name is still secondary text, and the row is still there: this
+      // hides a route the caller cannot follow, not the plant's own data.
+      expect(screen.getByText("Casa de Luco")).toBeInTheDocument();
+    });
+
     it("still links the supply when it has no name at all", async () => {
       const user = userEvent.setup();
       renderHeader({ ...mockPlant, supply: { ...linkedSupply, name: null } });

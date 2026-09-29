@@ -8,8 +8,10 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { buildSharingAgreementCapabilities } from "../../test/fixtures";
 import {
   OPEN_UNCLOSED,
+  buildSetAgreement,
   selectPendingRow,
   typeDate,
   openBatchAction,
@@ -572,3 +574,59 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
 
 // AC8. Three PENDING and two APPLIED: a single-element collection would prove
 // nothing about which rows are surfaced.
+
+// Capability first, then status. Every case above is about a status rule; these
+// are about the one gate, against the same fixtures, so a difference can only
+// come from who the caller is.
+describe("SharingAgreementCoefficientSet (a caller who may not manage the agreement)", () => {
+  const readOnly = buildSharingAgreementCapabilities({ canRead: true, canManage: false });
+
+  // The row menu survives, because it also carries "Ver histórico", which is a
+  // read. What goes is every item that would write.
+  it("opens a row menu with the history and no lifecycle action on it", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients, agreement: buildSetAgreement({ capabilities: readOnly }) });
+
+    await user.click(screen.getAllByRole("button", { name: /^Más acciones para/ })[0]);
+
+    expect(await screen.findByRole("menuitem", { name: "Ver histórico" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Registrar fecha" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Corregir fecha" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Desactivar" })).not.toBeInTheDocument();
+  });
+
+  it("gets no selection checkboxes, so the batch bar can never appear", () => {
+    renderWithTheme({ coefficients, agreement: buildSetAgreement({ capabilities: readOnly }) });
+
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+  });
+
+  it("gets no authoring actions on a DRAFT", () => {
+    renderWithTheme({
+      coefficients,
+      agreement: buildSetAgreement({ status: SharingAgreementResponseStatus.DRAFT, capabilities: readOnly }),
+      onImportRequest: vi.fn(),
+    });
+
+    expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
+  });
+
+  it("still reads the set", () => {
+    renderWithTheme({ coefficients, agreement: buildSetAgreement({ capabilities: readOnly }) });
+
+    expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
+  });
+
+  // The same fixtures with canManage true: what the four cases above withhold
+  // is the gate, not the status rules.
+  it("gets all of it back when the agreement says they may manage it", async () => {
+    const user = userEvent.setup();
+    renderWithTheme({ coefficients, agreement: buildSetAgreement() });
+
+    expect(screen.queryAllByRole("checkbox").length).toBeGreaterThan(0);
+    await user.click(screen.getAllByRole("button", { name: /^Más acciones para/ })[0]);
+
+    expect(await screen.findByRole("menuitem", { name: "Corregir fecha" })).toBeInTheDocument();
+  });
+});

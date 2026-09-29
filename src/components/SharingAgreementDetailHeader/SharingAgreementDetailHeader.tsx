@@ -87,10 +87,10 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
         coefficient.applicationState !== SharingAgreementPartitionCoefficientResponseApplicationState.APPLIED,
     );
 
-  // Capability first, then status: the caller was handed `onRevertRequest` only
-  // if they may manage the agreement, and the status rule decides whether the
-  // transition is legal right now.
-  const showRevert = !!onRevertRequest && isPublished && coefficients !== undefined && isInert;
+  // Status only. Capability is answered by whether `onRevertRequest` was handed
+  // over at all, which the banner's `revert` prop below already requires -- a
+  // second check here would read as a rule of its own and prove nothing.
+  const showRevert = isPublished && coefficients !== undefined && isInert;
 
   /**
    * A published agreement whose coefficients all still lack an application date

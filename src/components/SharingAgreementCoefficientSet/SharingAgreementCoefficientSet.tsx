@@ -1342,7 +1342,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         />
         {/* Read-only, and available in every status, so it sits below the
             actions that change state rather than among them. */}
-        {!isDraft && actionsMenuCoefficient && <Divider />}
+        {!isDraft && showRowLifecycleActions && actionsMenuCoefficient && <Divider />}
         <MenuItem onClick={handleOpenHistory}>
           <ListItemIcon>
             <HistoryIcon fontSize="small" sx={{ color: colors.text.subtle }} />

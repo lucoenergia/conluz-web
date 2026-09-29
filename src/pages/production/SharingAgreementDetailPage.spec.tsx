@@ -433,4 +433,55 @@ describe("SharingAgreementDetailPage", () => {
     expect(screen.getByText("Acuerdo no encontrado")).toBeInTheDocument();
     expect(mockErrorDispatch).not.toHaveBeenCalled();
   });
+
+  describe("a caller who may list the agreements but not manage them", () => {
+    const READ_ONLY = buildSharingAgreementCapabilities({ canRead: true, canManage: false });
+
+    it("gets no kebab on a DRAFT, so neither editing nor deleting is offered", () => {
+      mockData({ agreement: agreementFixture({ capabilities: READ_ONLY }) });
+      setup();
+
+      expect(screen.queryByRole("button", { name: "Más opciones del acuerdo" })).not.toBeInTheDocument();
+    });
+
+    it("is offered no lifecycle transition on a DRAFT whose coefficients are complete", () => {
+      const coefficients = [coefficient("1", "PENDING")];
+      mockData({
+        agreement: agreementFixture({ capabilities: READ_ONLY }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      expect(screen.queryByRole("button", { name: "Poner en vigor" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
+    });
+
+    it("is offered no way back to draft on a PUBLISHED agreement whose coefficients are inert", () => {
+      const coefficients = [coefficient("1", "PENDING")];
+      mockData({
+        agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED, capabilities: READ_ONLY }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      expect(screen.queryByRole("button", { name: "Volver a borrador" })).not.toBeInTheDocument();
+    });
+
+    // Capability first, then status: the same caller with canManage does get it,
+    // which is what makes the three cases above about the gate and not the rule.
+    it("still gets the way back to draft when the agreement says they may manage it", () => {
+      const coefficients = [coefficient("1", "PENDING")];
+      mockData({
+        agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED }),
+        coefficients,
+        coefficientsData: coefficients,
+      });
+      setup();
+
+      expect(screen.getByRole("button", { name: "Volver a borrador" })).toBeInTheDocument();
+    });
+  });
 });
