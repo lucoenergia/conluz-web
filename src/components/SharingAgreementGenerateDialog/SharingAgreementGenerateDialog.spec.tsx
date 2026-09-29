@@ -3,30 +3,15 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { mutation } from "../../test/queryState";
-import { useGenerateSharingAgreementDistributorFile } from "../../api/sharing-agreements/sharing-agreements";
 import { SharingAgreementGenerateDialog } from "./SharingAgreementGenerateDialog";
 
-const mockErrorDispatch = vi.fn();
-const mockMutateAsync = vi.fn();
+const mockRun = vi.fn();
 
-vi.mock(import("../../context/error.context"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useErrorDispatch: () => mockErrorDispatch,
-}));
-
-vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useGenerateSharingAgreementDistributorFile: vi.fn(),
-}));
-
-function renderDialog(onGenerateSuccess?: () => void) {
-  vi.mocked(useGenerateSharingAgreementDistributorFile).mockReturnValue(mutation.idle({ mutateAsync: mockMutateAsync }));
+function renderDialog(onGenerateSuccess?: () => void, isPending = false) {
   return renderWithProviders(
     <SharingAgreementGenerateDialog
       isOpen
-      plantId="plant-1"
-      sharingAgreementId="agreement-1"
+      generateFile={{ run: mockRun, isPending }}
       regulatoryCode="CAU0001"
       onClose={vi.fn()}
       onGenerateSuccess={onGenerateSuccess}
@@ -38,8 +23,7 @@ describe("SharingAgreementGenerateDialog", () => {
   const currentYear = new Date().getFullYear();
 
   beforeEach(() => {
-    mockErrorDispatch.mockClear();
-    mockMutateAsync.mockClear();
+    mockRun.mockClear();
     // jsdom has no createObjectURL/revokeObjectURL implementation.
     vi.stubGlobal("URL", { ...URL, createObjectURL: vi.fn(() => "blob:mock"), revokeObjectURL: vi.fn() });
   });
@@ -62,34 +46,36 @@ describe("SharingAgreementGenerateDialog", () => {
     expect(screen.getByText(/Introduce un año entre 2000 y 2100/)).toBeInTheDocument();
   });
 
-  it("calls the mutation with the current year on confirm and reports success", async () => {
-    mockMutateAsync.mockResolvedValue(new Blob(["fake"]));
+  it("runs the action with the current year on confirm and reports success", async () => {
+    mockRun.mockResolvedValue(new Blob(["fake"]));
     const onGenerateSuccess = vi.fn();
     const user = userEvent.setup();
     renderDialog(onGenerateSuccess);
 
     await user.click(screen.getByRole("button", { name: "Generar" }));
 
-    await waitFor(() =>
-      expect(mockMutateAsync).toHaveBeenCalledWith({
-        plantId: "plant-1",
-        sharingAgreementId: "agreement-1",
-        data: { year: currentYear },
-      }),
-    );
+    await waitFor(() => expect(mockRun).toHaveBeenCalledWith(currentYear));
     await waitFor(() => expect(onGenerateSuccess).toHaveBeenCalled());
   });
 
-  it("on error, dispatches a toast and keeps the dialog open", async () => {
-    mockMutateAsync.mockRejectedValue({ response: { status: 409 } });
+  // The toast belongs to the actions layer now, which is where it is asserted;
+  // what this dialog owes on failure is to stay open with the year still typed.
+  it("keeps the dialog open and reports nothing when the action produces no file", async () => {
+    mockRun.mockResolvedValue(undefined);
     const onGenerateSuccess = vi.fn();
     const user = userEvent.setup();
     renderDialog(onGenerateSuccess);
 
     await user.click(screen.getByRole("button", { name: "Generar" }));
 
-    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
+    await waitFor(() => expect(mockRun).toHaveBeenCalled());
     expect(onGenerateSuccess).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Generar" })).toBeInTheDocument();
+  });
+
+  it("reports the action's pending state on its own button", () => {
+    renderDialog(undefined, true);
+
+    expect(screen.getByRole("button", { name: "Generando…" })).toBeDisabled();
   });
 });

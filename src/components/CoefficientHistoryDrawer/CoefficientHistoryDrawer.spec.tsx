@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
+import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import {
   getAllSupplies,
   useGetPartitionCoefficientHistory,
@@ -48,21 +49,6 @@ vi.mock(import("../../context/success.context"), async (importOriginal) => ({
   useSuccessDispatch: () => vi.fn(),
 }));
 
-vi.mock(import("../../hooks/actions/useSharingAgreementCoefficientMutations"), () => ({
-  useSharingAgreementCoefficientMutations: () => ({
-    replaceCoefficients: vi.fn(),
-    activateCoefficients: vi.fn(),
-    deactivateCoefficients: vi.fn(),
-    closeCoefficients: vi.fn(),
-    reopenCoefficients: vi.fn(),
-    isReplacing: false,
-    isActivating: false,
-    isDeactivating: false,
-    isClosing: false,
-    isReopening: false,
-  }),
-}));
-
 const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null, currentCoefficient: null };
 
 const draftRow: SharingAgreementPartitionCoefficientResponse = {
@@ -101,10 +87,14 @@ function setElement(
   return (
     <SharingAgreementCoefficientSet
       plantId={PLANT_ID}
-      sharingAgreementId={AGREEMENT_ID}
+      agreement={buildSharingAgreement({
+        id: AGREEMENT_ID,
+        plantId: PLANT_ID,
+        status,
+        capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
+      })}
       coefficients={coefficients}
       installedPowerKw={100}
-      agreementStatus={status}
     />
   );
 }

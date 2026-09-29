@@ -22,11 +22,11 @@ vi.mock("react-router", async () => {
 
 function renderCard(
   agreement: SharingAgreementResponse,
-  handlers: { onDeleteRequest?: (a: SharingAgreementResponse) => void } = {},
+  props: { canDelete?: boolean; onDeleteRequest?: (a: SharingAgreementResponse) => void } = {},
 ) {
   return render(
     <MemoryRouter>
-      <SharingAgreementCard plantId="plant-1" agreement={agreement} {...handlers} />
+      <SharingAgreementCard plantId="plant-1" agreement={agreement} {...props} />
     </MemoryRouter>,
   );
 }
@@ -93,6 +93,7 @@ describe("SharingAgreementCard", () => {
     const user = userEvent.setup();
     renderCard(
       buildSharingAgreement({ id: "agreement-3", name: "Borrador", status: SharingAgreementResponseStatus.DRAFT }),
+      { canDelete: true },
     );
 
     await user.click(getKebabButton());
@@ -129,7 +130,7 @@ describe("SharingAgreementCard", () => {
       name: "Borrador",
       status: SharingAgreementResponseStatus.DRAFT,
     });
-    renderCard(agreement, { onDeleteRequest });
+    renderCard(agreement, { canDelete: true, onDeleteRequest });
 
     await user.click(getKebabButton());
     await waitFor(() => expect(screen.getByText("Eliminar")).toBeInTheDocument());
@@ -147,6 +148,18 @@ describe("SharingAgreementCard", () => {
     expect(screen.getByRole("link", { name: "Vigente" })).toBeInTheDocument();
     expect(screen.getByTestId("ChevronRightIcon")).toBeInTheDocument();
     expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
+  });
+
+  // Withheld by default rather than on request: a card rendered by a caller
+  // that forgot the prop must not become the permissive one.
+  test("renders no kebab on a DRAFT when the caller was not told it may delete it", () => {
+    renderCard(
+      buildSharingAgreement({ id: "agreement-3", name: "Borrador", status: SharingAgreementResponseStatus.DRAFT }),
+    );
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.getByRole("link", { name: "Borrador" })).toBeInTheDocument();
+    expect(screen.getByTestId("ChevronRightIcon")).toBeInTheDocument();
   });
 
   test("truncates long notes with an ellipsis", () => {

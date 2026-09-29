@@ -1,12 +1,10 @@
 import { useState, type FC } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { Alert, Box, Button, Paper, Typography } from "@mui/material";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { sxStyles } from "../../theme/sx";
 import { colors, fontSizes, radii } from "../../theme/tokens";
-import { useErrorDispatch } from "../../context/error.context";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
 import { SectionHeading } from "../SectionHeading";
 import { SharingAgreementActionButton } from "../SharingAgreementActionButton";
@@ -19,12 +17,11 @@ import {
 import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
-import { downloadSharingAgreementFile, triggerBrowserDownload } from "./downloadSharingAgreementFile";
+import { useSharingAgreementActions } from "../../hooks/actions";
 import { SharingAgreementGenerateDialog } from "../SharingAgreementGenerateDialog";
 
 export interface SharingAgreementFilePanelProps {
   plantId: string;
-  sharingAgreementId: string;
   agreement: SharingAgreementResponse | undefined;
   coefficients: CoefficientSummable[];
   plantRegulatoryCode: string | undefined;
@@ -52,15 +49,14 @@ const BODY_SX = {
 
 export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   plantId,
-  sharingAgreementId,
   agreement,
   coefficients,
   plantRegulatoryCode,
   isGenerateDialogOpen,
   onGenerateDialogOpenChange,
 }) => {
-  const errorDispatch = useErrorDispatch();
   const [showGeneratedNotice, setShowGeneratedNotice] = useState(false);
+  const { generateFile, downloadFile } = useSharingAgreementActions(plantId).forAgreement(agreement).actions;
 
   // Defensive: the generated type claims `file` is never null, but the OpenAPI
   // schema marks it nullable and Orval didn't emit the usual `| null` alias
@@ -80,12 +76,6 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
       ? (formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits) ?? undefined)
       : undefined;
 
-  const downloadMutation = useMutation({
-    mutationFn: () => downloadSharingAgreementFile(plantId, sharingAgreementId),
-    onSuccess: ({ blob, filename }) => triggerBrowserDownload(blob, filename),
-    onError: () => errorDispatch("Ha habido un problema al descargar el fichero. Por favor, inténtalo más tarde"),
-  });
-
   return (
     <Paper elevation={0} sx={sxStyles.softPanel} data-testid="sharing-agreement-file-panel">
       <SectionHeading
@@ -104,14 +94,16 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
           Se construye en este momento con los coeficientes actuales. Conluz no guarda el fichero: se descarga en tu
           dispositivo y lo envías tú.
         </Typography>
-        <SharingAgreementActionButton
-          emphasis="primary"
-          action={{
-            label: "Generar y descargar TXT",
-            onClick: () => onGenerateDialogOpenChange(true),
-            disabledReason: generateDisabledReason,
-          }}
-        />
+        {generateFile && (
+          <SharingAgreementActionButton
+            emphasis="primary"
+            action={{
+              label: "Generar y descargar TXT",
+              onClick: () => onGenerateDialogOpenChange(true),
+              disabledReason: generateDisabledReason,
+            }}
+          />
+        )}
         {showGeneratedNotice && (
           <Alert severity="info" onClose={() => setShowGeneratedNotice(false)} sx={{ mt: 2 }}>
             El fichero se ha generado a partir de los coeficientes actuales y se ha descargado. Conluz no guarda
@@ -164,16 +156,18 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
               </Box>
             )}
 
-            <Box sx={{ mt: 2 }}>
-              <Button
-                variant="outlined"
-                startIcon={<DownloadOutlinedIcon />}
-                onClick={() => downloadMutation.mutate()}
-                disabled={downloadMutation.isPending}
-              >
-                {downloadMutation.isPending ? "Descargando…" : "Descargar fichero importado"}
-              </Button>
-            </Box>
+            {downloadFile && (
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadOutlinedIcon />}
+                  onClick={() => void downloadFile.run()}
+                  disabled={downloadFile.isPending}
+                >
+                  {downloadFile.isPending ? "Descargando…" : "Descargar fichero importado"}
+                </Button>
+              </Box>
+            )}
           </>
         ) : (
           <Typography sx={{ ...BODY_SX, color: colors.text.secondary }}>
@@ -182,11 +176,10 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
         )}
       </Box>
 
-      {plantRegulatoryCode && (
+      {plantRegulatoryCode && generateFile && (
         <SharingAgreementGenerateDialog
           isOpen={isGenerateDialogOpen}
-          plantId={plantId}
-          sharingAgreementId={sharingAgreementId}
+          generateFile={generateFile}
           regulatoryCode={plantRegulatoryCode}
           onClose={() => onGenerateDialogOpenChange(false)}
           onGenerateSuccess={() => setShowGeneratedNotice(true)}

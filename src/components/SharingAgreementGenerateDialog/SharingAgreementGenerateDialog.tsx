@@ -4,9 +4,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { AppModal } from "../Modals/AppModal";
 import { fontSizes, shadows } from "../../theme/tokens";
-import { useGenerateSharingAgreementDistributorFile } from "../../api/sharing-agreements/sharing-agreements";
-import { useErrorDispatch } from "../../context/error.context";
-import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import type { Action } from "../../hooks/actions";
 import { triggerBrowserDownload } from "../SharingAgreementFilePanel/downloadSharingAgreementFile";
 
 const MIN_YEAR = 2000;
@@ -14,8 +12,11 @@ const MAX_YEAR = 2100;
 
 export interface SharingAgreementGenerateDialogProps {
   isOpen: boolean;
-  plantId: string;
-  sharingAgreementId: string;
+  /**
+   * Required, not optional: the dialog does not decide whether generating is
+   * permitted, it is only mounted by a caller that was handed the action.
+   */
+  generateFile: Action<[number], Blob | undefined>;
   /** Caller only opens this dialog when Generate wasn't disabled, so the plant is known to have one. */
   regulatoryCode: string;
   onClose: () => void;
@@ -28,15 +29,12 @@ function isYearInRange(year: number): boolean {
 
 export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogProps> = ({
   isOpen,
-  plantId,
-  sharingAgreementId,
+  generateFile,
   regulatoryCode,
   onClose,
   onGenerateSuccess,
 }) => {
   const theme = useTheme();
-  const errorDispatch = useErrorDispatch();
-  const generateMutation = useGenerateSharingAgreementDistributorFile();
 
   const [year, setYear] = useState(() => new Date().getFullYear());
 
@@ -45,7 +43,6 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
 
   const reset = () => {
     setYear(new Date().getFullYear());
-    generateMutation.reset();
   };
 
   const handleClose = () => {
@@ -58,19 +55,16 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
   };
 
   const handleConfirm = async () => {
-    try {
-      // The generated hook's customInstance wrapper discards Content-Disposition
-      // (same open issue as downloadSharingAgreementFile.ts), so the filename is
-      // built client-side from the same {regulatoryCode}_{year}.txt convention
-      // the backend uses — fixing that header issue will require touching this
-      // code too.
-      const blob = await generateMutation.mutateAsync({ plantId, sharingAgreementId, data: { year } });
-      triggerBrowserDownload(blob, filename);
-      onGenerateSuccess?.();
-      handleClose();
-    } catch (error) {
-      errorDispatch(getFirstApiErrorMessage(error, "Ha habido un problema al generar el fichero. Por favor, inténtalo más tarde"));
-    }
+    // The generated hook's customInstance wrapper discards Content-Disposition
+    // (same open issue as downloadSharingAgreementFile.ts), so the filename is
+    // built client-side from the same {regulatoryCode}_{year}.txt convention
+    // the backend uses — fixing that header issue will require touching this
+    // code too.
+    const blob = await generateFile.run(year);
+    if (!blob) return;
+    triggerBrowserDownload(blob, filename);
+    onGenerateSuccess?.();
+    handleClose();
   };
 
   return (
@@ -85,7 +79,7 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
           <Button
             variant="outlined"
             onClick={handleClose}
-            disabled={generateMutation.isPending}
+            disabled={generateFile.isPending}
             sx={{
               minWidth: "64px",
               padding: "5px 15px",
@@ -103,7 +97,7 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
           <Button
             variant="contained"
             onClick={handleConfirm}
-            disabled={!yearIsValid || generateMutation.isPending}
+            disabled={!yearIsValid || generateFile.isPending}
             sx={{
               minWidth: "64px",
               padding: "5px 15px",
@@ -112,7 +106,7 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
               "&:hover": { boxShadow: shadows.strong },
             }}
           >
-            {generateMutation.isPending ? "Generando…" : "Generar"}
+            {generateFile.isPending ? "Generando…" : "Generar"}
           </Button>
         </>
       }

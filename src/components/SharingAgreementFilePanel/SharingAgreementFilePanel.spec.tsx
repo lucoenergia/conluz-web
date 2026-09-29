@@ -20,7 +20,7 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
-import { buildSharingAgreement } from "../../test/fixtures";
+import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 
 const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -60,6 +60,9 @@ function makeAgreement(overrides: Partial<SharingAgreementResponse> = {}): Shari
     createdAt: "2024-01-01T00:00:00Z",
     createdBy: "user-1",
     file: null,
+    // Generating and importing gate on canManage, downloading on canRead. The
+    // cases about a caller who has neither pass their own capabilities.
+    capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
     ...overrides,
   });
 }
@@ -84,7 +87,6 @@ function renderPanel(overrides: {
     return (
       <SharingAgreementFilePanel
         plantId="plant-1"
-        sharingAgreementId="agreement-1"
         agreement={agreement}
         coefficients={coefficients}
         plantRegulatoryCode={plantRegulatoryCode}
@@ -177,6 +179,16 @@ describe("SharingAgreementFilePanel", () => {
       expect(screen.getByText("Esta planta no tiene código regulatorio (CAU) asignado.")).toBeVisible();
     });
 
+    it("is not offered at all to a caller the agreement does not let manage it", () => {
+      renderPanel({
+        agreement: makeAgreement({
+          capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: false }),
+        }),
+      });
+
+      expect(screen.queryByRole("button", { name: GENERATE })).not.toBeInTheDocument();
+    });
+
     it("opens the generate dialog when nothing blocks it", async () => {
       const user = userEvent.setup();
       renderPanel();
@@ -248,6 +260,18 @@ describe("SharingAgreementFilePanel", () => {
       await user.click(screen.getByRole("button", { name: "Descargar fichero importado" }));
 
       await waitFor(() => expect(mockDownload).toHaveBeenCalledWith("plant-1", "agreement-1"));
+    });
+
+    it("offers no download to a caller the agreement does not let read it", () => {
+      renderPanel({
+        agreement: makeAgreement({
+          file: withFile.file,
+          capabilities: buildSharingAgreementCapabilities({ canRead: false, canManage: false }),
+        }),
+      });
+
+      expect(screen.getByText("CAU0001_2026.txt")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Descargar fichero importado" })).not.toBeInTheDocument();
     });
 
     it("on a download error, dispatches a toast and keeps the button clickable", async () => {

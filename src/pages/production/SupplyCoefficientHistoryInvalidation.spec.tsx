@@ -4,10 +4,10 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests } from "../../test/requestRouter";
-import { buildCoefficient } from "../../test/fixtures";
+import { buildCoefficient, buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import dayjs from "dayjs";
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
-import { useSharingAgreementCoefficientMutations } from "../../hooks/actions/useSharingAgreementCoefficientMutations";
+import { useSharingAgreementCoefficientActions } from "../../hooks/actions";
 
 const PLANT_ID = "plant-1";
 const AGREEMENT_ID = "agreement-1";
@@ -43,17 +43,23 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
  * matched one and missed the other would leave half the app stale, so both
  * are asserted in the same render.
  */
+const MANAGEABLE_AGREEMENT = buildSharingAgreement({
+  id: AGREEMENT_ID,
+  plantId: PLANT_ID,
+  capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
+});
+
 function Harness({ action }: { action: "reopen" | "activate" | "deactivate" | "close" | "replace" }) {
   useGetPartitionCoefficientHistory(SUPPLY_ID, { plantId: PLANT_ID });
   useGetPartitionCoefficientHistory(SUPPLY_ID);
-  const mutations = useSharingAgreementCoefficientMutations(PLANT_ID);
+  const { actions } = useSharingAgreementCoefficientActions(PLANT_ID).forAgreement(MANAGEABLE_AGREEMENT);
 
   const run = () => {
-    if (action === "reopen") return mutations.reopenCoefficients(AGREEMENT_ID, ["c1"]);
-    if (action === "activate") return mutations.activateCoefficients(AGREEMENT_ID, ["c1"], dayjs("2025-06-01"));
-    if (action === "deactivate") return mutations.deactivateCoefficients(AGREEMENT_ID, ["c1"]);
-    if (action === "close") return mutations.closeCoefficients(AGREEMENT_ID, ["c1"], dayjs("2025-06-01"));
-    return mutations.replaceCoefficients(AGREEMENT_ID, [
+    if (action === "reopen") return actions.reopen!.run(["c1"]);
+    if (action === "activate") return actions.activate!.run(["c1"], dayjs("2025-06-01"));
+    if (action === "deactivate") return actions.deactivate!.run(["c1"]);
+    if (action === "close") return actions.close!.run(["c1"], dayjs("2025-06-01"));
+    return actions.replace!.run([
       { supplyId: SUPPLY_ID, value: 1, coefficient: buildCoefficient(), inputText: "100" },
     ]);
   };

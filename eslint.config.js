@@ -200,7 +200,7 @@ const ACTION_LAYER_REPLACEMENTS = {
   "src/api/plants/plants": "usePlantActions / useSupplyActions / useCommunityActions",
   "src/api/production/production": "usePlantActions",
   "src/api/sharing-agreements/sharing-agreements":
-    "usePlantActions / useSharingAgreementMutations / useSharingAgreementCoefficientMutations",
+    "usePlantActions / useSharingAgreementActions / useSharingAgreementCoefficientActions",
   "src/api/supplies/supplies": "useSupplyActions / useCommunityActions",
   "src/api/users/users": "useUserActions / usePlatformActions / useProfileActions / useCommunityActions",
 };
@@ -233,12 +233,6 @@ const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) 
 // place and the spec can assert it never grows.
 const MUTATION_CALL_SITES = {
   // #167 -- production and sharing agreements
-  "src/components/SharingAgreementGenerateDialog/SharingAgreementGenerateDialog.tsx": [
-    "useGenerateSharingAgreementDistributorFile",
-  ],
-  "src/components/SharingAgreementUploadDialog/SharingAgreementUploadDialog.tsx": [
-    "useUploadSharingAgreementFile",
-  ],
   "src/pages/production/CreatePlantPage.tsx": ["useCreatePlant"],
   "src/pages/production/EditPlantPage.tsx": ["useUpdatePlant"],
   "src/pages/production/PlantsPage.tsx": ["useDeletePlant"],

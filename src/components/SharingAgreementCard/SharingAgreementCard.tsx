@@ -18,6 +18,12 @@ import type { SharingAgreementResponse } from "../../api/models";
 export interface SharingAgreementCardProps {
   plantId: string;
   agreement: SharingAgreementResponse;
+  /**
+   * Whether this caller may delete the agreement. Withheld by default, so a
+   * card whose caller forgot the prop is the restrictive one. Status still
+   * decides on top: only a DRAFT can be deleted.
+   */
+  canDelete?: boolean;
   onDeleteRequest?: (agreement: SharingAgreementResponse) => void;
 }
 
@@ -41,7 +47,12 @@ function excerpt(text: string | undefined, maxLength: number): string | undefine
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 }
 
-export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, agreement, onDeleteRequest }) => {
+export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({
+  plantId,
+  agreement,
+  canDelete = false,
+  onDeleteRequest,
+}) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const notesExcerpt = excerpt(agreement.notes ?? undefined, NOTES_EXCERPT_LENGTH);
@@ -106,7 +117,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({ plantId, a
           {detailPath && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
               <ChevronRightIcon aria-hidden sx={{ color: "white", opacity: 0.7 }} />
-              {isDraft && (
+              {isDraft && canDelete && (
                 <>
                   <IconButton
                     onClick={handleOpenMenu}

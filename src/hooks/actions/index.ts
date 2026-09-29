@@ -24,17 +24,18 @@ export { usePlantActions } from "./usePlantActions";
 export { usePlatformActions } from "./usePlatformActions";
 export { useProfileActions } from "./useProfileActions";
 export { useSessionActions } from "./useSessionActions";
-export { useSupplyActions } from "./useSupplyActions";
-export { useUserActions } from "./useUserActions";
-
-// Not yet on the Action contract -- see the TODO(#167) headers in each.
 export {
-  useSharingAgreementMutations,
-  type SharingAgreementMutations,
-} from "./useSharingAgreementMutations";
+  useSharingAgreementActions,
+  type SharingAgreementActions,
+  type SharingAgreementRowActions,
+  type SharingAgreementFileUploadResult,
+} from "./useSharingAgreementActions";
 export {
-  useSharingAgreementCoefficientMutations,
-  type SharingAgreementCoefficientMutations,
+  useSharingAgreementCoefficientActions,
+  type SharingAgreementCoefficientActions,
+  type SharingAgreementCoefficientRowActions,
   type CoefficientActivationResult,
   type ReplaceCoefficientsResult,
-} from "./useSharingAgreementCoefficientMutations";
+} from "./useSharingAgreementCoefficientActions";
+export { useSupplyActions } from "./useSupplyActions";
+export { useUserActions } from "./useUserActions";
