@@ -435,6 +435,40 @@ describe("UsersPage", () => {
       expect(screen.getByText(/Disable modal for Ana García/)).toBeInTheDocument();
     });
 
+    // Ana is enabled and permits disabling, Bruno is disabled and permits
+    // enabling, so in the list above status and capability agree and either would
+    // explain the menu. These two rows are the ones where they disagree, which is
+    // the only shape that can tell the gate apart from the status it replaced.
+    it("follows the capability, not the row's status", async () => {
+      const user = userEvent.setup();
+      setup({
+        users: [
+          buildUser({
+            ...MOCK_USERS[0],
+            fullName: "Carla Núñez",
+            enabled: true,
+            capabilities: buildUserCapabilities({ canRead: true, canEdit: true, canDisable: false }),
+          }),
+          buildUser({
+            ...MOCK_USERS[1],
+            fullName: "Diego Ortiz",
+            enabled: false,
+            capabilities: buildUserCapabilities({ canRead: true, canEdit: true, canEnable: false }),
+          }),
+        ],
+      });
+
+      await user.click(menuFor("Carla Núñez"));
+      await screen.findByRole("menuitem", { name: /Editar datos/ });
+      expect(screen.queryByRole("menuitem", { name: /Deshabilitar/ })).not.toBeInTheDocument();
+      await user.keyboard("{Escape}");
+
+      await user.click(menuFor("Diego Ortiz"));
+      await waitFor(() =>
+        expect(screen.queryByRole("menuitem", { name: /Habilitar/ })).not.toBeInTheDocument(),
+      );
+    });
+
     it("opens enable confirmation on a row that permits enabling", async () => {
       const user = userEvent.setup();
       setup();
