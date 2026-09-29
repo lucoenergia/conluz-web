@@ -134,7 +134,7 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
 - **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
   `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
 - **Three screens have not migrated yet** and carry a numbered `eslint-disable`:
-  `Home.tsx` (#162), `SupplyCoefficientHistorySection.tsx` (#166),
+  `Home.tsx` (#162), `SupplyCoefficientHistorySection.tsx` (#163),
   `UsersPage.tsx` (#161). Do not add a fourth.
 - **Writes go through `src/hooks/actions/`, never a generated mutation hook.**
   An action hook hands back only what this caller may do: a denied action is
@@ -146,7 +146,7 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   unrestricted; `getGet…QueryKey()` getters too. `no-restricted-imports`
   enforces it over all 52 mutation hooks, and
   `src/contracts/mutationHooks.spec.ts` fails if a new mutation arrives with
-  nobody having decided who may perform it. The twenty screens that predate the
+  nobody having decided who may perform it. The eleven screens that predate the
   layer are listed, with the exact hooks each may still import, in
   `MUTATION_CALL_SITES` in `eslint.config.js`.
 
