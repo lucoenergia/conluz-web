@@ -22,6 +22,8 @@ import {
 import type {
   CommunityResponse,
   ConfigureDatadisBody,
+  CreationInBulkResponse,
+  CreateUsersInBulkResponse,
   ConfigureShellyBody,
   CreatePlantBody,
   CreateSuppliesWithFileBody,
@@ -64,9 +66,9 @@ export interface CommunityRowActions {
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
     createUser: MaybeAction<[CreateUserBody], UserResponse | undefined>;
-    importUsers: MaybeAction<[CreateUsersWithFileBody], unknown>;
+    importUsers: MaybeAction<[CreateUsersWithFileBody], CreateUsersInBulkResponse | undefined>;
     createSupply: MaybeAction<[CreateSupplyBody], SupplyResponse | undefined>;
-    importSupplies: MaybeAction<[CreateSuppliesWithFileBody], unknown>;
+    importSupplies: MaybeAction<[CreateSuppliesWithFileBody], CreationInBulkResponse | undefined>;
     configureDatadis: MaybeAction<[ConfigureDatadisBody], boolean>;
     configureShelly: MaybeAction<[ConfigureShellyBody], boolean>;
   };

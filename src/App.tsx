@@ -72,10 +72,16 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="supply-points">
             <Route index element={<SupplyPointsPage />}></Route>
-            <Route path="new" element={<CreateSupplyPage />} />
+            <Route
+              path="new"
+              element={<CapabilityRoute require={{ scope: "community", capability: "canManage" }}><CreateSupplyPage /></CapabilityRoute>}
+            />
             <Route path=":supplyPointId">
               <Route index element={<SupplyDetailPage />} />
-              <Route path="edit" element={<EditSupplyPage />} />
+              <Route
+                path="edit"
+                element={<CapabilityRoute require={{ scope: "supply", capability: "canEdit" }}><EditSupplyPage /></CapabilityRoute>}
+              />
             </Route>
           </Route>
           <Route path="production">

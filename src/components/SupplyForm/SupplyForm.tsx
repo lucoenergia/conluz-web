@@ -145,7 +145,6 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           value={addressRef}
           onChange={(e) => setAddressRef(e.target.value)}
           slotProps={{ htmlInput: { maxLength: 50 } }}
-          required
           fullWidth
           variant="outlined"
         />

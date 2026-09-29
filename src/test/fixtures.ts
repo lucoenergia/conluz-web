@@ -248,6 +248,10 @@ export function buildSupply(overrides: Partial<SupplyResponse> = {}): SupplyResp
       contract: null,
       distributor: null,
       shelly: null,
+      // The same community buildPlant and renderWithProviders use, so a supply
+      // and the active community agree by default and a spec only has to
+      // override this when the point of the test is that they do not.
+      community: { id: "TEST-COMMUNITY-ID", name: "TEST-COMMUNITY-NAME" },
       capabilities: buildSupplyCapabilities(),
     } satisfies SupplyResponse),
     ...overrides,

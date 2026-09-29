@@ -1,6 +1,7 @@
 import type { Page, Route } from "@playwright/test";
 import {
   COMMUNITY_ADMIN_CAPABILITIES,
+  COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
   EMPTY_PRODUCTION,
   FIXED_COMMUNITY_ID,
   MEMBER_COMMUNITY_CAPABILITIES,
@@ -10,6 +11,7 @@ import {
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
   FIXED_SUPPLY_ID,
+  OWNER_SUPPLY_CAPABILITIES,
   PAGED_PLANTS,
   PAGED_SUPPLIES,
   PAGED_USERS,
@@ -37,6 +39,16 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
     enabled: true,
     capabilities: role === "COMMUNITY_ADMIN" ? COMMUNITY_ADMIN_CAPABILITIES : MEMBER_COMMUNITY_CAPABILITIES,
   };
+
+  // Each supply carries its own answer, and the card reads it rather than the
+  // community's -- so this has to vary by role too. The fixtures are untyped,
+  // so a capability left out reads as false and silently hides a control.
+  const supplyCapabilities =
+    role === "COMMUNITY_ADMIN" ? COMMUNITY_ADMIN_SUPPLY_CAPABILITIES : OWNER_SUPPLY_CAPABILITIES;
+  const asCaller = <T extends object>(supply: T) => ({ ...supply, capabilities: supplyCapabilities });
+  const fixedSupply = asCaller(FIXED_SUPPLY);
+  const fixedSupply2 = asCaller(FIXED_SUPPLY_2);
+  const pagedSupplies = { ...PAGED_SUPPLIES, items: [fixedSupply, fixedSupply2] };
 
   // Supply list and supply detail.
   // NOTE: Playwright's glob ** matching is unreliable for patterns like
@@ -67,7 +79,7 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(FIXED_SUPPLY),
+        body: JSON.stringify(fixedSupply),
       });
     }
     // User-scoped supplies endpoint (e.g. GET /api/v1/users/{id}/supplies)
@@ -76,7 +88,7 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([FIXED_SUPPLY, FIXED_SUPPLY_2]),
+        body: JSON.stringify([fixedSupply, fixedSupply2]),
       });
     }
     if (
@@ -88,7 +100,7 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(PAGED_SUPPLIES),
+        body: JSON.stringify(pagedSupplies),
       });
     }
     return route.continue();

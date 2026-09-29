@@ -2,6 +2,7 @@ import type {
   CommunityCapabilitiesResponse,
   PlantCapabilitiesResponse,
   PlatformCapabilitiesResponse,
+  SupplyCapabilitiesResponse,
 } from "../../api/models";
 
 /**
@@ -17,7 +18,9 @@ export type CapabilityRequirement =
   | { scope: "platform"; capability: keyof PlatformCapabilitiesResponse }
   | { scope: "community"; capability: keyof CommunityCapabilitiesResponse }
   /** Reads `:plantId` from the route. */
-  | { scope: "plant"; capability: keyof PlantCapabilitiesResponse };
+  | { scope: "plant"; capability: keyof PlantCapabilitiesResponse }
+  /** Reads `:supplyPointId` from the route. */
+  | { scope: "supply"; capability: keyof SupplyCapabilitiesResponse };
 
 
 /**
@@ -25,6 +28,8 @@ export type CapabilityRequirement =
  * Sharing one vocabulary with the routes is what keeps the menu and the router
  * from drifting apart: an entry and the page it leads to name the same rule.
  *
- * No plant scope -- the menu has no entry keyed by a route parameter.
+ * No plant or supply scope -- the menu has no entry keyed by a route parameter.
  */
-export type MenuRequirement = { scope: "always" } | Exclude<CapabilityRequirement, { scope: "plant" }>;
+export type MenuRequirement =
+  | { scope: "always" }
+  | Exclude<CapabilityRequirement, { scope: "plant" } | { scope: "supply" }>;
