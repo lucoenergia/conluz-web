@@ -448,7 +448,7 @@ describe("the screens that predate the actions layer", () => {
   it("never grows", () => {
     // Lowered by hand as screens migrate, so growing it takes a deliberate edit
     // with a diff rather than a quiet addition.
-    expect(entries.length).toBeLessThanOrEqual(11);
+    expect(entries.length).toBeLessThanOrEqual(8);
   });
 
   it("does not overlap the community-scope wrapper list", () => {

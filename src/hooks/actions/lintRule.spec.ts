@@ -84,7 +84,7 @@ describe("the mutation guard rail", () => {
       // two arrays rather than switching the rule off for the file.
       const errors = await restrictedImportErrors(
         `import { useGetPlantById } from "../../api/plants/plants";\nexport const x = useGetPlantById;\n`,
-        "src/pages/integrations/IntegrationsPage.tsx",
+        "src/pages/users/UsersPage.tsx",
       );
 
       expect(errors).toHaveLength(1);
@@ -112,6 +112,35 @@ describe("the mutation guard rail", () => {
 
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain("usePlantActions");
+    });
+
+    it("stop being exempt once they migrate, for members and integrations too", async () => {
+      const members = await restrictedImportErrors(
+        `import { useUpdateMembershipRole } from "../../api/memberships/memberships";\nexport const x = useUpdateMembershipRole;\n`,
+        "src/pages/members/MembersPage.tsx",
+      );
+
+      expect(members).toHaveLength(1);
+      expect(members[0]).toContain("useMembershipActions");
+
+      // The import modal came off the list with the page that mounts it, so its
+      // own entry had to go too -- a modal that still reached for the mutation
+      // would have been exempt in a file nobody was looking at.
+      const importModal = await restrictedImportErrors(
+        `import { useCreateUsersWithFile } from "../../api/users/users";\nexport const x = useCreateUsersWithFile;\n`,
+        "src/components/Modals/ImportPartnersModal.tsx",
+      );
+
+      expect(importModal).toHaveLength(1);
+      expect(importModal[0]).toContain("useCommunityActions");
+
+      const integrations = await restrictedImportErrors(
+        `import { useConfigureDatadis } from "../../api/consumption/consumption";\nexport const x = useConfigureDatadis;\n`,
+        "src/pages/integrations/IntegrationsPage.tsx",
+      );
+
+      expect(integrations).toHaveLength(1);
+      expect(integrations[0]).toContain("useCommunityActions");
     });
   });
 });
