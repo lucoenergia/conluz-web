@@ -7,6 +7,7 @@ import { useGetPartitionCoefficientHistory, type getPartitionCoefficientHistory 
 import { SupplyCoefficientHistorySection } from "./SupplyCoefficientHistorySection";
 import { CommunityRole } from "../../api/models";
 import type { PartitionCoefficientResponse } from "../../api/models";
+import { buildPartitionCoefficientCapabilities } from "../../test/fixtures";
 
 const SUPPLY_ID = "supply-1";
 const ACTIVE_COMMUNITY = { id: "community-1", name: "Sol Común" };
@@ -38,6 +39,7 @@ function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoef
     validFrom: "2024-01-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-01-01T00:00:00Z",
+    capabilities: buildPartitionCoefficientCapabilities(),
     ...overrides,
   };
 }

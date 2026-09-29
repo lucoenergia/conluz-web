@@ -10,6 +10,7 @@ import {
   type MembershipResponse,
   type PlantCapabilitiesResponse,
   type PlantResponse,
+  type PartitionCoefficientCapabilitiesResponse,
   type PlatformCapabilitiesResponse,
   type SharingAgreementCapabilitiesResponse,
   type SharingAgreementPartitionCoefficientResponse,
@@ -135,6 +136,20 @@ export function buildMembershipCapabilities(
     canDelete: false,
     canManageInvestment: false,
     canReadPayback: false,
+    ...overrides,
+  };
+}
+
+/**
+ * What a coefficient period lets the caller reach. Its `sharingAgreement` is a
+ * reference and references carry no capabilities, so the period is where the
+ * answer lives.
+ */
+export function buildPartitionCoefficientCapabilities(
+  overrides: Partial<PartitionCoefficientCapabilitiesResponse> = {},
+): PartitionCoefficientCapabilitiesResponse {
+  return {
+    canReadSharingAgreement: false,
     ...overrides,
   };
 }
