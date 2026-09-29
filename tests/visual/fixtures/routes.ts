@@ -5,8 +5,10 @@ import {
   EMPTY_PRODUCTION,
   FIXED_COMMUNITY_ID,
   MEMBER_COMMUNITY_CAPABILITIES,
+  COMMUNITY_ADMIN_PLANT_CAPABILITIES,
   FIXED_PLANT,
   FIXED_PLANT_ID,
+  MEMBER_PLANT_CAPABILITIES,
   FIXED_PLANT_WITH_SUPPLY,
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
@@ -200,14 +202,33 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
 // exact URLs.
 // ---------------------------------------------------------------------------
 
-export async function mockSharingAgreementsPlantRoutes(page: Page, agreements: unknown[]) {
+/**
+ * A plant carries its own answer, and the card and the detail header read it
+ * rather than the community's -- so it has to vary by role too, exactly as the
+ * supply fixtures do. The fixtures are untyped, so a capability left out reads
+ * as false and silently empties a screen.
+ */
+function asPlantCaller<T extends object>(plant: T, currentUser?: { memberships?: Record<string, string> }) {
+  const role = currentUser?.memberships?.[FIXED_COMMUNITY_ID];
+  return {
+    ...plant,
+    capabilities: role === "COMMUNITY_MEMBER" ? MEMBER_PLANT_CAPABILITIES : COMMUNITY_ADMIN_PLANT_CAPABILITIES,
+  };
+}
+
+export async function mockSharingAgreementsPlantRoutes(
+  page: Page,
+  agreements: unknown[],
+  currentUser?: { memberships?: Record<string, string> },
+) {
+  const plant = asPlantCaller(FIXED_PLANT, currentUser);
   await page.route(
     (url) => url.href.includes(`/api/v1/communities/${FIXED_COMMUNITY_ID}/plants`),
     (route: Route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(PAGED_PLANTS),
+        body: JSON.stringify({ ...PAGED_PLANTS, items: [plant] }),
       }),
   );
 
@@ -217,7 +238,7 @@ export async function mockSharingAgreementsPlantRoutes(page: Page, agreements: u
       route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(FIXED_PLANT),
+        body: JSON.stringify(plant),
       }),
   );
 
@@ -237,14 +258,15 @@ export async function mockSharingAgreementsPlantRoutes(page: Page, agreements: u
 // so it wins over that file's broad, deliberately-empty /plants mock.
 // ---------------------------------------------------------------------------
 
-export async function mockPlantDetailRoutes(page: Page) {
+export async function mockPlantDetailRoutes(page: Page, currentUser?: { memberships?: Record<string, string> }) {
+  const plant = asPlantCaller(FIXED_PLANT_WITH_SUPPLY, currentUser);
   await page.route(
     (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}`) && !url.href.includes("sharing-agreements"),
     (route: Route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(FIXED_PLANT_WITH_SUPPLY),
+        body: JSON.stringify(plant),
       }),
   );
 }

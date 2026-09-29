@@ -64,13 +64,13 @@ export async function navigateToSharingAgreementDetail(page: Page, agreementName
   await stabilizePage(page);
 }
 
-export async function openPlantDetail(page: Page) {
+export async function openPlantDetail(page: Page, currentUser = FIXED_COMMUNITY_ADMIN_USER) {
   // The chart date filter defaults to today.
   await freezeClock(page);
   await injectAuthToken(page);
-  await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-  await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-  await mockPlantDetailRoutes(page);
+  await seedActiveCommunity(page, currentUser.id);
+  await mockAllApiRoutes(page, currentUser);
+  await mockPlantDetailRoutes(page, currentUser);
 
   await page.goto(`/production/${FIXED_PLANT_ID}`);
   await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();
