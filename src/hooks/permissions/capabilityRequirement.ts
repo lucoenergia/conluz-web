@@ -3,6 +3,7 @@ import type {
   PlantCapabilitiesResponse,
   PlatformCapabilitiesResponse,
   SupplyCapabilitiesResponse,
+  UserCapabilitiesResponse,
 } from "../../api/models";
 
 /**
@@ -20,7 +21,15 @@ export type CapabilityRequirement =
   /** Reads `:plantId` from the route. */
   | { scope: "plant"; capability: keyof PlantCapabilitiesResponse }
   /** Reads `:supplyPointId` from the route. */
-  | { scope: "supply"; capability: keyof SupplyCapabilitiesResponse };
+  | { scope: "supply"; capability: keyof SupplyCapabilitiesResponse }
+  /** Reads `:userId` from the route. */
+  | { scope: "user"; capability: keyof UserCapabilitiesResponse }
+  /**
+   * Reads `:communityId` from the route. Distinct from `community`, which is
+   * the ACTIVE one: administering a community is not working in it, and a
+   * platform admin administering one has no membership of it at all.
+   */
+  | { scope: "communityById"; capability: keyof CommunityCapabilitiesResponse };
 
 
 /**
@@ -28,8 +37,13 @@ export type CapabilityRequirement =
  * Sharing one vocabulary with the routes is what keeps the menu and the router
  * from drifting apart: an entry and the page it leads to name the same rule.
  *
- * No plant or supply scope -- the menu has no entry keyed by a route parameter.
+ * No scope keyed by a route parameter -- a menu entry is a fixed destination,
+ * so it has no `:plantId`, `:supplyPointId`, `:userId` or `:communityId` to
+ * resolve. Excluding them here is what stops one being written.
  */
 export type MenuRequirement =
   | { scope: "always" }
-  | Exclude<CapabilityRequirement, { scope: "plant" } | { scope: "supply" }>;
+  | Exclude<
+      CapabilityRequirement,
+      { scope: "plant" } | { scope: "supply" } | { scope: "user" } | { scope: "communityById" }
+    >;
