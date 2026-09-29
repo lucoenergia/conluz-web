@@ -13,6 +13,8 @@ import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreement
 import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
 import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface CorrectCoefficientDateConfirmationModalProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
   onCancel,
   onConfirm,
 }) => {
+  const communityName = useActiveCommunityName();
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [dateValidationError, setDateValidationError] = useState<string | null>(null);
 
@@ -75,7 +78,8 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
       confirmLabel="Confirmar y recalcular"
       confirmDisabled={confirmDisabledReason !== null}
       onConfirm={handleConfirm}
-      title="Corregir fecha de aplicación"
+      title={`Corregir fecha de aplicación en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<WarningAmberIcon sx={{ fontSize: 28, color: "error.main" }} />}
       iconBg={alphas.error.light}
     >

@@ -1,12 +1,13 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import { DeleteSharingAgreementConfirmationModal } from "./DeleteSharingAgreementConfirmationModal";
 
 describe("DeleteSharingAgreementConfirmationModal", () => {
   test("names the affected agreement and gives calm, specific copy about the consequences", () => {
-    render(
+    renderWithProviders(
       <DeleteSharingAgreementConfirmationModal
         isOpen
         agreementName="Reparto 2025"
@@ -15,7 +16,7 @@ describe("DeleteSharingAgreementConfirmationModal", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Eliminar acuerdo de reparto (en|de) / })).toBeInTheDocument();
     expect(screen.getByText("Reparto 2025")).toBeInTheDocument();
     expect(screen.getByText(/coeficientes que se hayan introducido/)).toBeInTheDocument();
     expect(screen.getByText(/el historial de los miembros no se ve afectado/)).toBeInTheDocument();
@@ -25,7 +26,7 @@ describe("DeleteSharingAgreementConfirmationModal", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithProviders(
       <DeleteSharingAgreementConfirmationModal
         isOpen
         agreementName="Reparto 2025"
@@ -42,7 +43,7 @@ describe("DeleteSharingAgreementConfirmationModal", () => {
   });
 
   test("disables the confirm button while the delete is pending", () => {
-    render(
+    renderWithProviders(
       <DeleteSharingAgreementConfirmationModal
         isOpen
         agreementName="Reparto 2025"

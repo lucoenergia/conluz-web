@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import type { QueryClient } from "@tanstack/react-query";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildMembership, buildUser } from "../../test/fixtures";
+import { buildCommunity, buildMembership, buildUser } from "../../test/fixtures";
 import {
   getGetMembershipsQueryKey,
   useCreateMembership,
@@ -14,7 +14,11 @@ import {
   useUpdateMembershipRole,
   type getMemberships,
 } from "../../api/memberships/memberships";
-import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
+import {
+  getGetAllCommunitiesQueryKey,
+  useGetAllCommunities,
+  type getAllCommunities,
+} from "../../api/communities/communities";
 import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
 
 const mockNavigate = vi.fn();
@@ -63,7 +67,22 @@ vi.mock(import("../../api/memberships/memberships"), () => ({
 
 vi.mock(import("../../api/communities/communities"), () => ({
   getGetAllCommunitiesQueryKey: () => ["/api/v1/communities"] as const,
+  useGetAllCommunities: vi.fn(),
 }));
+
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () => buildUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN", c2: "COMMUNITY_MEMBER" } }),
+}));
+
+const COMMUNITY_NAME = "Comunidad Solar Norte";
+
+/** AC9: the confirming dialog names the community in its header line and in its title. */
+function expectNamesTheCommunity(dialog: HTMLElement, title: string) {
+  expect(dialog).toHaveAccessibleName(title);
+  expect(within(dialog).getByRole("heading", { name: title })).toBeInTheDocument();
+  expect(within(dialog).getByText(`Comunidad · ${COMMUNITY_NAME}`)).toBeInTheDocument();
+}
 
 vi.mock(import("../../api/users/users"), () => ({
   useGetAllUsers: vi.fn(),
@@ -91,6 +110,12 @@ describe("MembersPage", () => {
     vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutate }));
     vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutate }));
     vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutate }));
+    vi.mocked(useGetAllCommunities).mockReturnValue(
+      query.success<typeof getAllCommunities>([
+        buildCommunity({ id: "c1", name: COMMUNITY_NAME }),
+        buildCommunity({ id: "c2", name: "Comunidad Sur" }),
+      ]),
+    );
   });
 
   // Invalidation is observed on the real QueryClient the harness creates.
@@ -126,6 +151,7 @@ describe("MembersPage", () => {
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
 
     const dialog = screen.getByRole("dialog");
+    expectNamesTheCommunity(dialog, `Añadir miembro a ${COMMUNITY_NAME}`);
     // Open first combobox (user picker) inside the dialog
     const comboboxes = within(dialog).getAllByRole("combobox");
     await user.click(comboboxes[0]);
@@ -174,8 +200,8 @@ describe("MembersPage", () => {
     const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
     await user.click(eliminarMenuItem);
 
-    await waitFor(() => expect(screen.getByText("Confirmar eliminación")).toBeInTheDocument());
-    const dialog = screen.getByRole("dialog");
+    const dialog = await screen.findByRole("dialog");
+    expectNamesTheCommunity(dialog, `Eliminar miembro de ${COMMUNITY_NAME}`);
     expect(within(dialog).getByText(/Ana García/)).toBeInTheDocument();
   });
 
@@ -214,6 +240,7 @@ describe("MembersPage", () => {
 
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
     const dialog = screen.getByRole("dialog");
+    expectNamesTheCommunity(dialog, `Cambiar rol en ${COMMUNITY_NAME}`);
 
     // Open the role select inside the dialog and pick Administrador
     const combobox = within(dialog).getByRole("combobox");

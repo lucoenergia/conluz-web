@@ -19,6 +19,9 @@ import { useActiveCommunity } from "../../context/community.context";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetShellyConfigQueryKey, getGetDatadisConfigQueryKey } from "../../api/consumption/consumption";
 import { getGetHuaweiConfigQueryKey } from "../../api/production/production";
+import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
+import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 /**
  * Integration credentials change only when someone edits them on this page, so
@@ -71,6 +74,7 @@ const ACCENT = colors.brand.main;
 
 export const IntegrationsPage: FC = () => {
   const activeCommunityId = useActiveCommunity();
+  const communityName = useActiveCommunityName();
   const queryClient = useQueryClient();
 
   const [state, setState] = useState<IntegrationState>({
@@ -82,6 +86,11 @@ export const IntegrationsPage: FC = () => {
   const [configLoaded, setConfigLoaded] = useState<{ [key: string]: boolean }>({});
   const [snack, setSnack] = useState<string | null>(null);
   const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
+  // Credentials are community configuration: saving them into the wrong
+  // community is the silent failure #186 guards against, so every save goes
+  // through a confirmation that names the community.
+  const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
+  const pendingProvider = PROVIDERS.find((provider) => provider.id === pendingSaveId);
 
   const { data: plantsData, isLoading: plantsLoading } = useGetAllPlants(
     activeCommunityId ?? "",
@@ -326,12 +335,30 @@ export const IntegrationsPage: FC = () => {
             accent={ACCENT}
             value={state[p.id]}
             onChange={update}
-            onSave={save}
+            onSave={setPendingSaveId}
             isSaving={!!saving[p.id]}
             isLoading={loadingByProvider[p.id]}
           />
         ))}
       </Box>
+
+      <ConfirmationModal
+        isOpen={pendingProvider !== undefined}
+        onCancel={() => setPendingSaveId(null)}
+        onConfirm={() => {
+          if (pendingSaveId) save(pendingSaveId);
+          setPendingSaveId(null);
+        }}
+        confirmLabel="Guardar"
+        confirmColor="primary"
+        title={`Guardar integración en ${communityLabel(communityName)}`}
+        scopeHeader={<CommunityScopeHeader name={communityName} />}
+      >
+        <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+          La configuración de <strong>{pendingProvider?.name}</strong> se guardará en{" "}
+          <strong>{communityLabel(communityName)}</strong> y sustituirá la que tenga ahora esta comunidad.
+        </Typography>
+      </ConfirmationModal>
 
       {/* Snackbar */}
       <Snackbar

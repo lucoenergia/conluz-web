@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import { vi } from "vitest";
 import { ThemeProvider } from "@mui/material/styles";
 import { CorrectCoefficientDateConfirmationModal } from "./CorrectCoefficientDateConfirmationModal";
@@ -28,7 +29,7 @@ const coefficient = (id: string, name: string, validFrom: string): SharingAgreem
 function setup(coefficients: SharingAgreementPartitionCoefficientResponse[]) {
   // Rendered inside the app theme so the date field carries the same locale it
   // does in production; without it the sections fall back to English.
-  render(
+  renderWithProviders(
     <ThemeProvider theme={theme}>
     <CorrectCoefficientDateConfirmationModal
       isOpen
@@ -72,7 +73,7 @@ describe("CorrectCoefficientDateConfirmationModal — batch distinct-dates handl
   });
 
   it("reports how many targets are hidden by the filter", () => {
-    render(
+    renderWithProviders(
       <CorrectCoefficientDateConfirmationModal
         isOpen
         coefficients={[coefficient("c1", "Vivienda A", "2026-01-15T00:00:00Z"), coefficient("c2", "Vivienda B", "2026-01-15T00:00:00Z")]}

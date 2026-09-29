@@ -1,13 +1,14 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import { RevertSharingAgreementToDraftConfirmationModal } from "./RevertSharingAgreementToDraftConfirmationModal";
 
 function renderModal(
   props: Partial<React.ComponentProps<typeof RevertSharingAgreementToDraftConfirmationModal>> = {},
 ) {
-  return render(
+  return renderWithProviders(
     <RevertSharingAgreementToDraftConfirmationModal
       isOpen
       agreementName="Reparto vecinos bloque A"
@@ -22,7 +23,7 @@ describe("RevertSharingAgreementToDraftConfirmationModal", () => {
   test("states the agreement stops being in force and its coefficients become editable", () => {
     renderModal();
 
-    expect(screen.getByRole("heading", { name: "Volver a borrador" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Volver a borrador (en|de) / })).toBeInTheDocument();
     expect(screen.getByText(/dejará de estar en vigor y sus coeficientes volverán a ser editables/)).toBeInTheDocument();
   });
 

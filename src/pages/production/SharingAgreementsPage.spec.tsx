@@ -1,8 +1,9 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { Routes, Route } from "react-router";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import { SharingAgreementsPage } from "./SharingAgreementsPage";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
@@ -16,7 +17,8 @@ const mockUpdateAgreement = vi.fn();
 const mockDeleteAgreement = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
@@ -66,12 +68,11 @@ function baseData(): SharingAgreementsData {
 }
 
 function setup(plantId = "plant-1") {
-  render(
-    <MemoryRouter initialEntries={[`/production/${plantId}/sharing-agreements`]}>
-      <Routes>
-        <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithProviders(
+    <Routes>
+      <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
+    </Routes>,
+    { route: `/production/${plantId}/sharing-agreements` },
   );
 }
 
@@ -186,7 +187,7 @@ describe("SharingAgreementsPage", () => {
 
     await waitFor(() => expect(mockCreateAgreement).toHaveBeenCalled());
     expect(mockNavigate).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole("heading", { name: /^Nuevo acuerdo de reparto (en|de) / })).not.toBeInTheDocument());
   });
 
   test("renders each agreement's title as a link to its detail page", () => {
@@ -221,7 +222,7 @@ describe("SharingAgreementsPage", () => {
     await user.click(kebabButtons[0]); // the only kebab is on "Borrador reciente", the DRAFT agreement
     await user.click(await screen.findByText("Eliminar"));
 
-    expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^Eliminar acuerdo de reparto (en|de) / })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
     await waitFor(() => expect(mockDeleteAgreement).toHaveBeenCalledWith("2"));

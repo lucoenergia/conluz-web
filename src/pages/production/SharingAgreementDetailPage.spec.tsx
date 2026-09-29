@@ -1,11 +1,9 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "../../theme";
+import { Routes, Route } from "react-router";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import { SharingAgreementDetailPage } from "./SharingAgreementDetailPage";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -35,11 +33,13 @@ const mockPublishAgreement = vi.fn();
 const mockRevertAgreementToDraft = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("../../context/error.context", () => ({
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
-vi.mock("../../context/success.context", () => ({
+vi.mock(import("../../context/success.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useSuccessDispatch: () => mockSuccessDispatch,
 }));
 
@@ -123,20 +123,11 @@ function coefficient(id: string, applicationState: "PENDING" | "APPLIED"): Shari
 }
 
 function setup(plantId = "plant-1", sharingAgreementId = "agreement-1") {
-  const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={[`/production/${plantId}/sharing-agreements/${sharingAgreementId}`]}>
-          <Routes>
-            <Route
-              path="/production/:plantId/sharing-agreements/:sharingAgreementId"
-              element={<SharingAgreementDetailPage />}
-            />
-          </Routes>
-        </MemoryRouter>
-      </ThemeProvider>
-    </QueryClientProvider>,
+  renderWithProviders(
+    <Routes>
+      <Route path="/production/:plantId/sharing-agreements/:sharingAgreementId" element={<SharingAgreementDetailPage />} />
+    </Routes>,
+    { route: `/production/${plantId}/sharing-agreements/${sharingAgreementId}` },
   );
 }
 
@@ -431,7 +422,7 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Eliminar"));
 
-    expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^Eliminar acuerdo de reparto (en|de) / })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
     await waitFor(() => expect(mockDeleteAgreement).toHaveBeenCalledWith("agreement-1"));

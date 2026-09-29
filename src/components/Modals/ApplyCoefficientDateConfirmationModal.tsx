@@ -12,6 +12,8 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
 import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface ApplyCoefficientDateConfirmationModalProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
   onCancel,
   onConfirm,
 }) => {
+  const communityName = useActiveCommunityName();
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [dateValidationError, setDateValidationError] = useState<string | null>(null);
 
@@ -70,7 +73,8 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
       confirmDisabled={confirmDisabledReason !== null}
       confirmPending={isPending}
       onConfirm={handleConfirm}
-      title="Registrar fecha de aplicación"
+      title={`Registrar fecha de aplicación en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<EventAvailableOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
     >

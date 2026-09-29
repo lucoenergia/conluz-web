@@ -3,13 +3,24 @@ import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { mutation } from "../../test/queryState";
+import { mutation, query } from "../../test/queryState";
+import { buildCommunity, buildUser } from "../../test/fixtures";
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { useCreateUsersWithFile } from "../../api/users/users";
 
 const mockMutate = vi.fn();
 
 vi.mock(import("../../api/users/users"), () => ({
   useCreateUsersWithFile: vi.fn(),
+}));
+
+vi.mock(import("../../api/communities/communities"), () => ({
+  useGetAllCommunities: vi.fn(),
+}));
+
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () => buildUser({ id: "admin", memberships: { "community-a": "COMMUNITY_ADMIN" } }),
 }));
 
 import { ImportPartnersModal } from "./ImportPartnersModal";
@@ -20,6 +31,9 @@ describe("ImportPartnersModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useGetAllCommunities).mockReturnValue(
+      query.success<typeof getAllCommunities>([buildCommunity({ id: "community-a", name: "Comunidad Solar Norte" })]),
+    );
     vi.mocked(useCreateUsersWithFile).mockReturnValue(mutation.idle({ mutate: mockMutate }));
   });
 
@@ -36,9 +50,10 @@ describe("ImportPartnersModal", () => {
   };
 
   describe("Upload view", () => {
-    it("renders the modal title", () => {
+    it("AC9: names the target community in its header and in its title", () => {
       setup();
-      expect(screen.getByText("Importar miembros desde CSV")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Importar miembros a Comunidad Solar Norte" })).toBeInTheDocument();
+      expect(screen.getByText("Comunidad · Comunidad Solar Norte")).toBeInTheDocument();
     });
 
     it("renders the CSV drop zone", () => {

@@ -3,7 +3,7 @@ import { Header } from "../components/Header/Header";
 import { Navigate, Outlet, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
-import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
+import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH, visibleMenuSections } from "../utils/constants";
 import { Box, CircularProgress, Toolbar } from "@mui/material";
 import { radii } from "../theme/tokens";
 import { RouteFallback } from "../components/RouteFallback";
@@ -21,6 +21,7 @@ import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/useActiveCo
 import { CommunityRole } from "../api/models";
 import { resolveLandingRoute } from "../utils/routes";
 import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";
+import { ScopeContext } from "../components/ScopeContext";
 
 export const AuthenticatedLayout: FC = () => {
   const { width } = useWindowDimensions();
@@ -38,11 +39,10 @@ export const AuthenticatedLayout: FC = () => {
 
   const visibleSections = useMemo(
     () =>
-      MENU_SECTIONS.filter((section) => {
-        if (section.visibility === "operational") return hasActiveCommunity;
-        if (section.visibility === "communityAdmin") return activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
-        if (section.visibility === "platformAdmin") return isPlatformAdmin;
-        return false;
+      visibleMenuSections(MENU_SECTIONS, {
+        hasActiveCommunity,
+        isCommunityAdmin: activeCommunityRole === CommunityRole.COMMUNITY_ADMIN,
+        isPlatformAdmin,
       }),
     [hasActiveCommunity, activeCommunityRole, isPlatformAdmin],
   );
@@ -89,11 +89,19 @@ export const AuthenticatedLayout: FC = () => {
         onMenuClick={() => setIsMenuOpened(!isMenuOpened)}
         username={loggedUser?.fullName}
       />
+      {/*
+        * The page scope is stated exactly once (#186): in the side-menu header
+        * while the menu is open, in the strip under the app bar while it is
+        * closed. Both hang off `isMenuOpened`, so the two cannot coexist, and
+        * on a narrow viewport, where the menu starts closed, the strip shows
+        * without the user opening anything.
+        */}
       <SideMenu
         isMenuOpened={isMenuOpened}
         onMenuClose={setIsMenuOpened}
         sections={visibleSections}
         contactItem={CONTACT_ITEM}
+        header={isMenuOpened ? <ScopeContext variant="menuHeader" /> : null}
       />
       <Box
         sx={{
@@ -107,6 +115,7 @@ export const AuthenticatedLayout: FC = () => {
         tabIndex={-1}
       >
         <Toolbar />
+        {!isMenuOpened && <ScopeContext variant="strip" />}
         <AuthErrorBoundry onError={logout}>
           <ErrorProvider>
             <SuccessProvider>
@@ -127,9 +136,10 @@ export const AuthenticatedLayout: FC = () => {
                      * to the next one -- and a structural reset covers every screen
                      * that does this, including ones not written yet.
                      *
-                     * Only the routed page remounts: the header (and with it the
-                     * community selector), the side menu and the error/success
-                     * providers all live outside this Outlet.
+                     * Only the routed page remounts: the header, the side menu
+                     * (and with it the scope context and its community switch),
+                     * the context strip and the error/success providers all live
+                     * outside this Outlet.
                      *
                      * The "none" -> id step on first load remounts each page once. That
                      * costs nothing in practice: community-scoped queries are all gated
