@@ -1,7 +1,6 @@
 import { useState, type FC } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "@mui/material/styles";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -40,14 +39,7 @@ import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
 import { useActiveCommunity } from "../../context/community.context";
-import {
-  useGetMemberships,
-  useCreateMembership,
-  useDeleteMembership,
-  useUpdateMembershipRole,
-  getGetMembershipsQueryKey,
-} from "../../api/memberships/memberships";
-import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
+import { useGetMemberships } from "../../api/memberships/memberships";
 import { useGetAllUsers } from "../../api/users/users";
 import {
   type MembershipResponse,
@@ -55,6 +47,9 @@ import {
   MembershipResponseRole,
   UpdateMembershipRoleBodyRole,
 } from "../../api/models";
+import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { useCommunityActions, useMembershipActions } from "../../hooks/actions";
+import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useErrorDispatch } from "../../context/error.context";
 import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 
@@ -71,8 +66,8 @@ export const MembersPage: FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const activeCommunityId = useActiveCommunity();
+  const activeCommunity = useActiveCommunityResource();
   const errorDispatch = useErrorDispatch();
-  const queryClient = useQueryClient();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -80,7 +75,10 @@ export const MembersPage: FC = () => {
   const [selectedRole, setSelectedRole] = useState<string>(CreateMembershipBodyRole.COMMUNITY_MEMBER);
   const [removeConfirmUserId, setRemoveConfirmUserId] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedMembership, setSelectedMembership] = useState<MembershipResponse | null>(null);
+  // The id, not the row. A write invalidates the list, so a stored row would go
+  // on answering from before the change -- and it is that row's capabilities
+  // that now decide what its menu offers.
+  const [selectedMembershipId, setSelectedMembershipId] = useState<string | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [pendingRole, setPendingRole] = useState<string>("");
 
@@ -94,14 +92,14 @@ export const MembersPage: FC = () => {
 
   const { data: allUsersData } = useGetAllUsers({ size: 10000 });
 
-  const createMembership = useCreateMembership();
-  const deleteMembership = useDeleteMembership();
-  const updateRole = useUpdateMembershipRole();
-
-  const invalidateAfterWrite = () => {
-    queryClient.invalidateQueries({ queryKey: getGetMembershipsQueryKey(activeCommunityId ?? "") });
-    queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
-  };
+  // What this caller may do, as the backend answers it. forMembership is a
+  // plain function rather than a hook precisely so it can be asked once per row.
+  const { actions: membershipActions, forMembership } = useMembershipActions(activeCommunity);
+  // The CSV import creates users, not memberships: POST /users/import is
+  // guarded on canCreateUserIn, which the community reports as canCreateUsers.
+  // It is a different answer from canManageMemberships even where the two
+  // coincide today.
+  const { importUsers } = useCommunityActions().forCommunity(activeCommunity).actions;
 
   if (!activeCommunityId) {
     return (
@@ -113,50 +111,50 @@ export const MembersPage: FC = () => {
     );
   }
 
+  // Resolved from the list on every render rather than stored, so the row the
+  // menu and its dialogs act on is the one the cache currently holds.
+  const selectedMembership = selectedMembershipId
+    ? (memberships.find((m) => m.id === selectedMembershipId) ?? null)
+    : null;
+  const selectedActions = forMembership(selectedMembership ?? undefined).actions;
+
+  // "Puntos de suministro" opens the member's own supply list, which is the
+  // user's decision to make, not the membership's -- canListSupplies is
+  // deliberately narrower than being able to read the user at all.
+  const rowSupplies = (membership: MembershipResponse | null) =>
+    outcomeFromResource(membership?.user?.capabilities, "canListSupplies");
+
+  // No permitted action means no menu at all, rather than a menu with nothing
+  // in it or items the backend would refuse.
+  const hasRowActions = (membership: MembershipResponse) => {
+    const { changeRole, remove } = forMembership(membership).actions;
+    return !!changeRole || !!remove || rowSupplies(membership).state === "allowed";
+  };
+
   const handleAddMember = async () => {
-    if (!selectedUserId || !activeCommunityId) return;
-    try {
-      await createMembership.mutateAsync({
-        communityId: activeCommunityId,
-        data: { userId: selectedUserId, role: selectedRole as CreateMembershipBodyRole },
-      });
+    if (!selectedUserId || !membershipActions.add) return;
+    if (await membershipActions.add.run({ userId: selectedUserId, role: selectedRole as CreateMembershipBodyRole })) {
       setAddDialogOpen(false);
       setSelectedUserId("");
       setSelectedRole(CreateMembershipBodyRole.COMMUNITY_MEMBER);
-      invalidateAfterWrite();
-    } catch {
+    } else {
       errorDispatch("Error al añadir el miembro. Por favor, inténtalo de nuevo.");
     }
   };
 
   const handleRemoveMember = async (userId: string) => {
-    if (!activeCommunityId) return;
-    try {
-      await deleteMembership.mutateAsync({ communityId: activeCommunityId, userId });
+    const remove = forMembership(memberships.find((m) => m.user?.id === userId)).actions.remove;
+    if (!remove) return;
+    if (await remove.run()) {
       setRemoveConfirmUserId(null);
-      invalidateAfterWrite();
-    } catch {
+    } else {
       errorDispatch("Error al eliminar el miembro. Por favor, inténtalo de nuevo.");
-    }
-  };
-
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    if (!activeCommunityId) return;
-    try {
-      await updateRole.mutateAsync({
-        communityId: activeCommunityId,
-        userId,
-        data: { role: newRole as UpdateMembershipRoleBodyRole },
-      });
-      invalidateAfterWrite();
-    } catch {
-      errorDispatch("Error al actualizar el rol. Por favor, inténtalo de nuevo.");
     }
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, membership: MembershipResponse) => {
     setAnchorEl(event.currentTarget);
-    setSelectedMembership(membership);
+    setSelectedMembershipId(membership.id ?? null);
   };
 
   const handleMenuClose = () => setAnchorEl(null);
@@ -168,9 +166,12 @@ export const MembersPage: FC = () => {
   };
 
   const handleRoleDialogConfirm = async () => {
-    if (!selectedMembership?.user?.id) return;
-    await handleRoleChange(selectedMembership.user.id, pendingRole);
-    setRoleDialogOpen(false);
+    if (!selectedActions.changeRole) return;
+    if (await selectedActions.changeRole.run({ role: pendingRole as UpdateMembershipRoleBodyRole })) {
+      setRoleDialogOpen(false);
+    } else {
+      errorDispatch("Error al actualizar el rol. Por favor, inténtalo de nuevo.");
+    }
   };
 
   const existingUserIds = new Set(memberships.map((m) => m.user?.id).filter(Boolean));
@@ -182,6 +183,7 @@ export const MembersPage: FC = () => {
   const removeTarget = removeConfirmUserId
     ? memberships.find((m) => m.user?.id === removeConfirmUserId)
     : null;
+  const removeTargetRemove = forMembership(removeTarget ?? undefined).actions.remove;
 
   return (
     <Box
@@ -218,27 +220,31 @@ export const MembersPage: FC = () => {
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <Paper elevation={0} sx={sxStyles.softPanel}>
+          {/* Each is mounted only when the backend hands over the action behind
+              it -- never disabled, which would advertise something the caller
+              cannot do. The action carries its own community, so there is no
+              longer a "no community selected" case to disable for either. */}
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-            <Button
-              variant="outlined"
-              startIcon={<CloudUploadIcon />}
-              onClick={() => setShowImportModal(true)}
-              // Import writes into a community. With none selected there is no
-              // target, and the endpoint would fall back to one of its own choosing.
-              disabled={!activeCommunityId}
-              title={activeCommunityId ? undefined : "Selecciona una comunidad para importar"}
-              sx={{ px: 3, py: 1.5 }}
-            >
-              Importar miembros
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<PersonAddIcon />}
-              onClick={() => setAddDialogOpen(true)}
-              sx={{ px: 3, py: 1.5 }}
-            >
-              Añadir miembro
-            </Button>
+            {importUsers && (
+              <Button
+                variant="outlined"
+                startIcon={<CloudUploadIcon />}
+                onClick={() => setShowImportModal(true)}
+                sx={{ px: 3, py: 1.5 }}
+              >
+                Importar miembros
+              </Button>
+            )}
+            {membershipActions.add && (
+              <Button
+                variant="contained"
+                startIcon={<PersonAddIcon />}
+                onClick={() => setAddDialogOpen(true)}
+                sx={{ px: 3, py: 1.5 }}
+              >
+                Añadir miembro
+              </Button>
+            )}
           </Box>
         </Paper>
       </Box>
@@ -275,6 +281,7 @@ export const MembersPage: FC = () => {
               emptyMessage="No hay miembros en esta comunidad"
               rowActionsLabel={(membership) => `Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
               onRowActionsClick={handleMenuOpen}
+              hasRowActions={hasRowActions}
               columns={[
                 {
                   key: "member",
@@ -349,7 +356,7 @@ export const MembersPage: FC = () => {
                       sx={{ fontWeight: 600 }}
                     />
                   ),
-                  actions: (
+                  actions: hasRowActions(membership) ? (
                     <IconButton
                       aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
                       onClick={(e) => handleMenuOpen(e, membership)}
@@ -357,7 +364,7 @@ export const MembersPage: FC = () => {
                     >
                       <MoreVertIcon />
                     </IconButton>
-                  ),
+                  ) : undefined,
                   fields: [
                     { label: "Email", value: membership.user?.email ?? "-" },
                     { label: "Rol", value: ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER] },
@@ -371,46 +378,69 @@ export const MembersPage: FC = () => {
         </Paper>
       </Box>
 
-      <ImportPartnersModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImportComplete={invalidateAfterWrite}
-      />
+      {/* Mounted with its button: no import action, nothing that can open it.
+          The action invalidates the roster itself, so there is nothing left for
+          the page to do when it completes. */}
+      {importUsers && (
+        <ImportPartnersModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          importUsers={importUsers}
+        />
+      )}
 
+      {/* Every item is the selected row's own answer, including when that row is
+          the caller's: the backend decides per membership, so there is no
+          self-check here. */}
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
-        <MenuItem
-          onClick={() => {
-            handleMenuClose();
-            navigate(`/supply-points?personId=${selectedMembership?.user?.id}`);
-          }}
-        >
-          <ListItemIcon>
-            <ElectricBoltIcon fontSize="small" sx={{ color: "primary.main" }} />
-          </ListItemIcon>
-          <ListItemText>Puntos de suministro</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleChangeRoleClick}>
-          <ListItemIcon>
-            <ManageAccountsIcon fontSize="small" sx={{ color: "primary.main" }} />
-          </ListItemIcon>
-          <ListItemText>Cambiar rol</ListItemText>
-        </MenuItem>
-        <Divider />
-        <MenuItem
-          onClick={() => {
-            handleMenuClose();
-            setRemoveConfirmUserId(selectedMembership?.user?.id ?? null);
-          }}
-        >
-          <ListItemIcon>
-            <DeleteOutlineIcon fontSize="small" sx={{ color: "error.main" }} />
-          </ListItemIcon>
-          <ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText>
-        </MenuItem>
+        <Can outcome={rowSupplies(selectedMembership)}>
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              navigate(`/supply-points?personId=${selectedMembership?.user?.id}`);
+            }}
+          >
+            <ListItemIcon>
+              <ElectricBoltIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText>Puntos de suministro</ListItemText>
+          </MenuItem>
+        </Can>
+        {selectedActions.changeRole && (
+          <MenuItem onClick={handleChangeRoleClick}>
+            <ListItemIcon>
+              <ManageAccountsIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText>Cambiar rol</ListItemText>
+          </MenuItem>
+        )}
+        {selectedActions.remove && [
+          <Divider key="divider" />,
+          <MenuItem
+            key="remove"
+            onClick={() => {
+              handleMenuClose();
+              setRemoveConfirmUserId(selectedMembership?.user?.id ?? null);
+            }}
+          >
+            <ListItemIcon>
+              <DeleteOutlineIcon fontSize="small" sx={{ color: "error.main" }} />
+            </ListItemIcon>
+            <ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText>
+          </MenuItem>,
+        ]}
       </RowActionsMenu>
 
       {/* Change role dialog */}
-      <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)} maxWidth="sm" fullWidth>
+      {/* Mounted inside the same gate as the item that opens it: a confirmation
+          dialog for an action the caller was never given has no way to be
+          reached, and no way to be left open across a switch that revokes it. */}
+      <Dialog
+        open={roleDialogOpen && !!selectedActions.changeRole}
+        onClose={() => setRoleDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Cambiar rol</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           <Typography variant="body2">
@@ -442,15 +472,20 @@ export const MembersPage: FC = () => {
           <Button
             variant="contained"
             onClick={handleRoleDialogConfirm}
-            disabled={pendingRole === selectedMembership?.role || updateRole.isPending}
+            disabled={pendingRole === selectedMembership?.role || selectedActions.changeRole?.isPending}
           >
-            {updateRole.isPending ? "Guardando..." : "Confirmar"}
+            {selectedActions.changeRole?.isPending ? "Guardando..." : "Confirmar"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add member dialog */}
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={addDialogOpen && !!membershipActions.add}
+        onClose={() => setAddDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Añadir miembro a la comunidad</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           <FormControl fullWidth>
@@ -488,16 +523,16 @@ export const MembersPage: FC = () => {
           <Button
             variant="contained"
             onClick={handleAddMember}
-            disabled={!selectedUserId || createMembership.isPending}
+            disabled={!selectedUserId || membershipActions.add?.isPending}
           >
-            {createMembership.isPending ? "Añadiendo..." : "Añadir"}
+            {membershipActions.add?.isPending ? "Añadiendo..." : "Añadir"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Remove confirmation dialog */}
+      {/* Remove confirmation dialog, gated like the item that opens it. */}
       <Dialog
-        open={!!removeConfirmUserId}
+        open={!!removeConfirmUserId && !!removeTargetRemove}
         onClose={() => setRemoveConfirmUserId(null)}
         maxWidth="xs"
         fullWidth
@@ -516,9 +551,9 @@ export const MembersPage: FC = () => {
             variant="contained"
             color="error"
             onClick={() => removeConfirmUserId && handleRemoveMember(removeConfirmUserId)}
-            disabled={deleteMembership.isPending}
+            disabled={removeTargetRemove?.isPending}
           >
-            {deleteMembership.isPending ? "Eliminando..." : "Eliminar"}
+            {removeTargetRemove?.isPending ? "Eliminando..." : "Eliminar"}
           </Button>
         </DialogActions>
       </Dialog>

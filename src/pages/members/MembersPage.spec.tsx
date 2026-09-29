@@ -6,21 +6,15 @@ import type { QueryClient } from "@tanstack/react-query";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import {
+  buildCommunity,
+  buildCommunityCapabilities,
   buildMembership,
   buildMembershipCapabilities,
   buildUser,
   buildUserCapabilities,
 } from "../../test/fixtures";
-import {
-  getGetMembershipsQueryKey,
-  useCreateMembership,
-  useDeleteMembership,
-  useGetMemberships,
-  useUpdateMembershipRole,
-  type getMemberships,
-} from "../../api/memberships/memberships";
-import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
-import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
+import type { MembershipResponse } from "../../api/models";
+import type { CommunityCapabilitiesResponse } from "../../api/models";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
@@ -81,19 +75,29 @@ vi.mock(import("react-router"), async (importOriginal) => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock(import("../../api/memberships/memberships"), () => ({
+// Only the reads are replaced, plus the three mutations these tests assert the
+// arguments of. The actions layer runs for real -- which is the point: what is
+// under test is that the toolbar and each row menu follow the capabilities on
+// the payload, and stubbing the action hooks would mean restating that rule in
+// the test instead of exercising it. Everything else the layer instantiates is
+// inert until called, so leaving it real reaches no network.
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetMemberships: vi.fn(),
   useCreateMembership: vi.fn(),
   useDeleteMembership: vi.fn(),
   useUpdateMembershipRole: vi.fn(),
-  getGetMembershipsQueryKey: (id?: string) => [`/api/v1/communities/${id}/memberships`] as const,
 }));
 
-vi.mock(import("../../api/communities/communities"), () => ({
-  getGetAllCommunitiesQueryKey: () => ["/api/v1/communities"] as const,
+// useActiveCommunityResource reads this one, and it is what carries the
+// community-level answers the toolbar is built from.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCommunityById: vi.fn(),
 }));
 
-vi.mock(import("../../api/users/users"), () => ({
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
 }));
 
@@ -107,14 +111,32 @@ vi.mock("../../components/Modals/ImportPartnersModal", () => ({
     isOpen ? <div>Import modal</div> : null,
 }));
 
+import {
+  getGetAllCommunitiesQueryKey,
+  getCommunityById,
+  useGetCommunityById,
+} from "../../api/communities/communities";
+import {
+  getGetMembershipsQueryKey,
+  getMemberships,
+  useCreateMembership,
+  useDeleteMembership,
+  useGetMemberships,
+  useUpdateMembershipRole,
+} from "../../api/memberships/memberships";
+import { getAllUsers, useGetAllUsers } from "../../api/users/users";
 import { MembersPage } from "./MembersPage";
+
+const ADMIN_COMMUNITY: Partial<CommunityCapabilitiesResponse> = {
+  canManageMemberships: true,
+  canCreateUsers: true,
+};
 
 describe("MembersPage", () => {
   let mockInvalidateQueries: MockInstance<QueryClient["invalidateQueries"]>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>(MOCK_MEMBERSHIPS));
     vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>(MOCK_ALL_USERS));
     vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutate }));
     vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutate }));
@@ -122,7 +144,27 @@ describe("MembersPage", () => {
   });
 
   // Invalidation is observed on the real QueryClient the harness creates.
-  const setup = () => {
+  const setup = (
+    options: {
+      community?: Partial<CommunityCapabilitiesResponse>;
+      memberships?: MembershipResponse[];
+      communityLoading?: boolean;
+    } = {},
+  ) => {
+    const { community = ADMIN_COMMUNITY, memberships = MOCK_MEMBERSHIPS, communityLoading = false } = options;
+
+    vi.mocked(useGetCommunityById).mockReturnValue(
+      communityLoading
+        ? query.loading()
+        : query.success<typeof getCommunityById>(
+            buildCommunity({
+              id: "c1",
+              capabilities: buildCommunityCapabilities({ canRead: true, ...community }),
+            }),
+          ),
+    );
+    vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>(memberships));
+
     const rendered = renderWithProviders(<MembersPage />, { activeCommunityId: "c1" });
     mockInvalidateQueries = vi.spyOn(rendered.queryClient, "invalidateQueries");
     return rendered;
@@ -195,9 +237,7 @@ describe("MembersPage", () => {
     const user = userEvent.setup();
     setup();
 
-    // Buttons: [0] Importar miembros, [1] Añadir miembro, [2] MoreVert Ana, [3] MoreVert Bruno
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[2]);
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
 
     const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
     await user.click(eliminarMenuItem);
@@ -211,8 +251,7 @@ describe("MembersPage", () => {
     const user = userEvent.setup();
     setup();
 
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[2]);
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
 
     const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
     await user.click(eliminarMenuItem);
@@ -233,9 +272,7 @@ describe("MembersPage", () => {
     const user = userEvent.setup();
     setup();
 
-    // Open menu for Ana's row (first MoreVert button after the two header buttons)
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[2]);
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
 
     const cambiarRolItem = await screen.findByRole("menuitem", { name: /Cambiar rol/ });
     await user.click(cambiarRolItem);

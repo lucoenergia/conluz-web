@@ -5,16 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { useActiveCommunity } from "../../context/community.context";
-import { useGetAllPlants, type getAllPlants } from "../../api/plants/plants";
-import {
-  useConfigureDatadis,
-  useConfigureShelly,
-  useGetDatadisConfig,
-  useGetShellyConfig,
-  type getDatadisConfig,
-  type getShellyConfig,
-} from "../../api/consumption/consumption";
-import { useConfigureHuawei, useGetHuaweiConfig } from "../../api/production/production";
+import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures";
 
 const CONFIG_BY_COMMUNITY: Record<string, { username: string; baseUrl: string }> = {
   "community-a": { username: "datadis-a", baseUrl: "https://a.example" },
@@ -23,25 +14,43 @@ const CONFIG_BY_COMMUNITY: Record<string, { username: string; baseUrl: string }>
 
 const mockConfigureDatadis = vi.fn().mockResolvedValue({});
 
-vi.mock(import("../../api/plants/plants"), () => ({
+// Only the reads are replaced, plus the one mutation this file asserts the
+// arguments of. The actions layer runs for real, so the cards here exist for
+// the same reason they exist in the app: the community answered canManage.
+vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllPlants: vi.fn(),
 }));
 
-vi.mock(import("../../api/consumption/consumption"), () => ({
+// useActiveCommunityResource reads this, and it now re-keys on the switch too:
+// the Datadis card depends on the NEW community's canManage, not the old one's.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCommunityById: vi.fn(),
+}));
+
+vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetShellyConfig: vi.fn(),
   useGetDatadisConfig: vi.fn(),
   useConfigureDatadis: vi.fn(),
-  useConfigureShelly: vi.fn(),
-  getGetDatadisConfigQueryKey: (communityId?: string) => [`/api/v1/communities/${communityId}/config/datadis`] as const,
-  getGetShellyConfigQueryKey: (communityId?: string) => [`/api/v1/communities/${communityId}/config/shelly`] as const,
 }));
 
-vi.mock(import("../../api/production/production"), () => ({
+vi.mock(import("../../api/production/production"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetHuaweiConfig: vi.fn(),
-  useConfigureHuawei: vi.fn(),
-  getGetHuaweiConfigQueryKey: (plantId?: string) => [`/api/v1/plants/${plantId}/production/huawei/config`] as const,
 }));
 
+import { useGetAllPlants, type getAllPlants } from "../../api/plants/plants";
+import { getCommunityById, useGetCommunityById } from "../../api/communities/communities";
+import {
+  useConfigureDatadis,
+  useGetDatadisConfig,
+  useGetShellyConfig,
+  type getDatadisConfig,
+  type getShellyConfig,
+} from "../../api/consumption/consumption";
+import { useGetHuaweiConfig } from "../../api/production/production";
 import { IntegrationsPage } from "./IntegrationsPage";
 
 /**
@@ -67,6 +76,14 @@ function datadisCard(): HTMLElement {
 describe("IntegrationsPage across a community switch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useGetCommunityById).mockImplementation((communityId) =>
+      query.success<typeof getCommunityById>(
+        buildCommunity({
+          id: communityId,
+          capabilities: buildCommunityCapabilities({ canRead: true, canManage: true }),
+        }),
+      ),
+    );
     vi.mocked(useGetAllPlants).mockReturnValue(query.success<typeof getAllPlants>({ items: [] }));
     vi.mocked(useGetShellyConfig).mockReturnValue(query.success<typeof getShellyConfig>({ enabled: false }));
     vi.mocked(useGetDatadisConfig).mockImplementation((communityId) =>
@@ -74,11 +91,11 @@ describe("IntegrationsPage across a community switch", () => {
       // field's previous absence (no "password saved" hint).
       query.success<typeof getDatadisConfig>({ enabled: true, passwordSet: false, ...CONFIG_BY_COMMUNITY[communityId] }),
     );
-    // No plants, so the page disables the Huawei config query (enabled: !!firstPlantId).
+    // No plants, so the page disables the Huawei config query (enabled: !!firstPlantId)
+    // and, now, mounts no Huawei card at all -- there is no plant to carry the
+    // canManage that one is gated on.
     vi.mocked(useGetHuaweiConfig).mockReturnValue(query.disabled());
     vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureDatadis }));
-    vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync: vi.fn().mockResolvedValue({}) }));
-    vi.mocked(useConfigureHuawei).mockReturnValue(mutation.idle({ mutateAsync: vi.fn().mockResolvedValue({}) }));
   });
 
   it("shows the newly selected community's Datadis credentials", async () => {
