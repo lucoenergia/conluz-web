@@ -5,7 +5,8 @@ import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router";
 import { useMediaQuery } from "@mui/material";
 import { PlantDetailHeader } from "./PlantDetailHeader";
-import type { PlantResponse, SupplyResponse } from "../../api/models";
+import type { PlantResponse } from "../../api/models";
+import { buildPlant, buildPlantCapabilities, buildSupplyReference } from "../../test/fixtures";
 
 vi.mock("@mui/material", async () => {
   const actual = await vi.importActual("@mui/material");
@@ -14,13 +15,13 @@ vi.mock("@mui/material", async () => {
 
 const mockUseMediaQuery = useMediaQuery as unknown as ReturnType<typeof vi.fn>;
 
-const linkedSupply = {
+const linkedSupply = buildSupplyReference({
   id: "supply-7",
   code: "ES0031300806333002ET0F",
   name: "Casa de Luco",
-} as SupplyResponse;
+});
 
-const mockPlant = {
+const mockPlant = buildPlant({
   id: "plant-1",
   name: "21088 Luco de Jiloca",
   address: "Calle Callejas 4, 44391, Luco de Jiloca, Teruel",
@@ -28,10 +29,10 @@ const mockPlant = {
   providerCode: "NE=35899672",
   totalPower: 63,
   connectionDate: "2024-04-20",
-  inverterProvider: "HUAWEI",
   description: "Huerto solar Luco Energía",
   supply: linkedSupply,
-} as unknown as PlantResponse;
+  capabilities: buildPlantCapabilities({ canRead: true, canReadSupply: true }),
+});
 
 /**
  * `plant` is explicit rather than defaulted: a default parameter would silently
@@ -90,7 +91,7 @@ describe("PlantDetailHeader", () => {
 
     // AC2.
     it("shows a dash and no copy button when the plant has no CAU", () => {
-      renderHeader({ ...mockPlant, regulatoryCode: null } as unknown as PlantResponse);
+      renderHeader({ ...mockPlant, regulatoryCode: null });
 
       expect(screen.queryByRole("button", { name: "Copiar CAU" })).not.toBeInTheDocument();
       expect(screen.getByText("CAU").parentElement).toHaveTextContent("-");
@@ -125,10 +126,7 @@ describe("PlantDetailHeader", () => {
 
     it("still links the supply when it has no name at all", async () => {
       const user = userEvent.setup();
-      renderHeader({
-        ...mockPlant,
-        supply: { ...linkedSupply, name: null },
-      } as unknown as PlantResponse);
+      renderHeader({ ...mockPlant, supply: { ...linkedSupply, name: null } });
       await expandDetails(user);
 
       expect(screen.getByRole("link", { name: /ES0031300806333002ET0F/ })).toHaveAttribute(
@@ -138,7 +136,10 @@ describe("PlantDetailHeader", () => {
     });
 
     it("omits the optional fields the plant does not have, and counts only what is left", () => {
-      renderHeader({ ...mockPlant, supply: undefined, description: null } as unknown as PlantResponse);
+      // `supply` is required on the type, so a plant that has none can only be
+      // expressed by dropping it -- which is the case under test.
+      const noSupply = { ...mockPlant, supply: undefined, description: null } as unknown as PlantResponse;
+      renderHeader(noSupply);
 
       expect(screen.getByRole("button", { name: "Ver 3 datos más" })).toBeInTheDocument();
     });

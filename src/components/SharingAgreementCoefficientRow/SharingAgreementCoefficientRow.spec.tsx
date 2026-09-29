@@ -9,7 +9,8 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
 import { SharingAgreementReferenceResponseStatus } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { buildSupply } from "../../test/fixtures";
 import {
   buildEditableRowFromSupply,
   updateRowInput,
@@ -927,7 +928,7 @@ describe("current coefficient (DRAFT-only column)", () => {
 
   /** A row the picker synthesized this session — no server answer exists for it. */
   function unsavedRow(): SharingAgreementPartitionCoefficientResponse {
-    return buildEditableRowFromSupply({ id: "s9", name: "Nave Nueva", code: "CUPS9" } as SupplyResponse).coefficient;
+    return buildEditableRowFromSupply(buildSupply({ id: "s9", name: "Nave Nueva", code: "CUPS9" })).coefficient;
   }
 
   // A clean DRAFT hides the state columns, and their end-state readout is also

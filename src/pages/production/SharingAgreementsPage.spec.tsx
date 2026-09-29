@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { SharingAgreementsPage } from "./SharingAgreementsPage";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { PlantResponse, SharingAgreementResponse } from "../../api/models";
+import { buildPlant, buildPlantCapabilities, buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { SharingAgreementsData } from "./useSharingAgreementsData";
 import type { SharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
 
@@ -44,11 +44,35 @@ vi.mock("react-router", async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
+const MANAGEABLE = buildSharingAgreementCapabilities({ canRead: true, canManage: true });
+
 const AGREEMENTS = [
-  { id: "1", name: "Reparto vecinos bloque A", status: SharingAgreementResponseStatus.PUBLISHED },
-  { id: "2", name: "Borrador reciente", status: SharingAgreementResponseStatus.DRAFT, installedPowerKw: 5 },
-  { id: "3", name: "Acuerdo histórico norte", status: SharingAgreementResponseStatus.SUPERSEDED },
-] as SharingAgreementResponse[];
+  buildSharingAgreement({
+    id: "1",
+    name: "Reparto vecinos bloque A",
+    status: SharingAgreementResponseStatus.PUBLISHED,
+    capabilities: MANAGEABLE,
+  }),
+  buildSharingAgreement({
+    id: "2",
+    name: "Borrador reciente",
+    status: SharingAgreementResponseStatus.DRAFT,
+    installedPowerKw: 5,
+    capabilities: MANAGEABLE,
+  }),
+  buildSharingAgreement({
+    id: "3",
+    name: "Acuerdo histórico norte",
+    status: SharingAgreementResponseStatus.SUPERSEDED,
+    capabilities: MANAGEABLE,
+  }),
+];
+
+const MANAGING_PLANT = buildPlantCapabilities({
+  canRead: true,
+  canListSharingAgreements: true,
+  canManageSharingAgreements: true,
+});
 
 function mockData(overrides: Partial<SharingAgreementsData> = {}) {
   mockUseSharingAgreementsData.mockReturnValue({ ...baseData(), ...overrides });
@@ -57,7 +81,7 @@ function mockData(overrides: Partial<SharingAgreementsData> = {}) {
 function baseData(): SharingAgreementsData {
   return {
     agreements: AGREEMENTS,
-    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" } as PlantResponse,
+    plant: buildPlant({ name: "Planta Solar Norte", regulatoryCode: "CAU-123", capabilities: MANAGING_PLANT }),
     counts: { vigentes: 5, drafts: 1, historicos: 2 },
     isLoading: false,
     isNotFound: false,
@@ -157,7 +181,12 @@ describe("SharingAgreementsPage", () => {
 
   test("create dialog prefills capacity from the plant's totalPower and navigates to the new agreement on submit", async () => {
     mockData({
-      plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123", totalPower: 30 } as PlantResponse,
+      plant: buildPlant({
+        name: "Planta Solar Norte",
+        regulatoryCode: "CAU-123",
+        totalPower: 30,
+        capabilities: MANAGING_PLANT,
+      }),
     });
     mockCreateAgreement.mockResolvedValue({ id: "new-agreement", name: "Reparto nuevo" });
     const user = userEvent.setup();

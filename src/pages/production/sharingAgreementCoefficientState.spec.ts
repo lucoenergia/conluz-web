@@ -20,8 +20,15 @@ import {
 import { buildCoefficient } from "../../test/fixtures";
 
 // These tests exercise a single field at a time against otherwise-irrelevant
-// partial fixtures, so each literal is cast rather than fully fabricated.
+// fixtures, so each literal only names the field under test and the builder
+// supplies the rest.
 const asCoefficient = (partial: Partial<SharingAgreementPartitionCoefficientResponse>) =>
+  buildCoefficient(partial);
+
+// A payload missing a field the type says is always there. Only for the cases
+// whose subject is that absence -- the builder cannot express it, and reaching
+// for it anywhere else would be the cast this file just stopped using.
+const asMalformedCoefficient = (partial: Partial<SharingAgreementPartitionCoefficientResponse>) =>
   partial as SharingAgreementPartitionCoefficientResponse;
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -57,7 +64,7 @@ describe("getApplicationStateHeadline", () => {
   });
 
   it("falls back for an unexpected state", () => {
-    expect(getApplicationStateHeadline(asCoefficient({}))).toBe("-");
+    expect(getApplicationStateHeadline(asMalformedCoefficient({}))).toBe("-");
   });
 });
 
@@ -247,6 +254,6 @@ describe("getCoefficientCupsLabel", () => {
 
   it("returns an empty string when there's no coefficient or no supply at all", () => {
     expect(getCoefficientCupsLabel(undefined)).toBe("");
-    expect(getCoefficientCupsLabel(asCoefficient({}))).toBe("");
+    expect(getCoefficientCupsLabel(asMalformedCoefficient({}))).toBe("");
   });
 });

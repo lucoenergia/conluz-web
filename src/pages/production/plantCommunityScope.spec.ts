@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { isPlantOutsideActiveCommunity } from "./plantCommunityScope";
 import type { PlantResponse } from "../../api/models";
+import { buildPlant } from "../../test/fixtures";
 
 const plantIn = (communityId: string): PlantResponse =>
-  ({ id: "plant-1", name: "Plant", community: { id: communityId } }) as PlantResponse;
+  buildPlant({ id: "plant-1", name: "Plant", community: { id: communityId } });
 
 describe("isPlantOutsideActiveCommunity", () => {
   it("is false when the plant belongs to the active community", () => {
@@ -26,6 +27,9 @@ describe("isPlantOutsideActiveCommunity", () => {
   });
 
   it("is false when the plant carries no community reference at all", () => {
-    expect(isPlantOutsideActiveCommunity({ id: "plant-1" } as PlantResponse, "community-a")).toBe(false);
+    // Deliberately malformed: the point of the case is a payload with no
+    // community at all, which the builder cannot express.
+    const noCommunity = { ...buildPlant(), community: undefined } as unknown as PlantResponse;
+    expect(isPlantOutsideActiveCommunity(noCommunity, "community-a")).toBe(false);
   });
 });

@@ -12,8 +12,14 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import { buildCoefficient, buildSharingAgreement } from "../../test/fixtures";
-import type { PlantResponse, SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
+import {
+  buildCoefficient,
+  buildPlant,
+  buildPlantCapabilities,
+  buildSharingAgreement,
+  buildSharingAgreementCapabilities,
+} from "../../test/fixtures";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import type { SharingAgreementMutations } from "../../hooks/actions/useSharingAgreementMutations";
 
@@ -70,22 +76,35 @@ function mockData(overrides: Partial<SharingAgreementDetailData> = {}) {
   mockUseSharingAgreementDetailData.mockReturnValue({ ...baseData(), ...overrides });
 }
 
-// Fixtures deliberately stay minimal — only the fields these tests actually
-// exercise — and are cast rather than fully populated to every now-required
-// field on the generated types, matching the pattern used elsewhere in this
-// codebase for partial test fixtures.
+// Fixtures name only the fields these tests exercise; the builders supply the
+// rest, including the capabilities the screen now gates on.
+const MANAGEABLE = buildSharingAgreementCapabilities({ canRead: true, canManage: true });
+
+function agreementFixture(overrides: Parameters<typeof buildSharingAgreement>[0] = {}) {
+  return buildSharingAgreement({
+    id: "agreement-1",
+    name: "Reparto 2025",
+    status: SharingAgreementResponseStatus.DRAFT,
+    installedPowerKw: 12.5,
+    notes: "Nota original",
+    createdAt: "2026-01-15T10:00:00Z",
+    capabilities: MANAGEABLE,
+    ...overrides,
+  });
+}
+
 function baseData(): SharingAgreementDetailData {
   return {
-    agreement: {
-      id: "agreement-1",
-      name: "Reparto 2025",
-      status: SharingAgreementResponseStatus.DRAFT,
-      installedPowerKw: 12.5,
-      notes: "Nota original",
-      createdAt: "2026-01-15T10:00:00Z",
-      file: null,
-    } as unknown as SharingAgreementResponse,
-    plant: { name: "Planta Solar Norte", regulatoryCode: "CAU-123" } as PlantResponse,
+    agreement: agreementFixture(),
+    plant: buildPlant({
+      name: "Planta Solar Norte",
+      regulatoryCode: "CAU-123",
+      capabilities: buildPlantCapabilities({
+        canRead: true,
+        canListSharingAgreements: true,
+        canManageSharingAgreements: true,
+      }),
+    }),
     coefficients: [],
     coefficientsData: [],
     isLoading: false,
@@ -95,17 +114,14 @@ function baseData(): SharingAgreementDetailData {
 }
 
 function coefficient(id: string, applicationState: "PENDING" | "APPLIED"): SharingAgreementPartitionCoefficientResponse {
-  return {
+  return buildCoefficient({
     coefficientId: id,
     supply: { id: `s${id}`, name: `Punto ${id}`, code: `ES00313000000000${id}AB` },
     coefficient: 0.2,
     applicationState,
     validFrom: applicationState === "APPLIED" ? "2026-01-01" : null,
-    validTo: null,
-    endState: "OPEN",
-    endDate: null,
-    currentCoefficient: null,
-  } as unknown as SharingAgreementPartitionCoefficientResponse;
+    endState: OPEN,
+  });
 }
 
 function setup(plantId = "plant-1", sharingAgreementId = "agreement-1") {
@@ -146,12 +162,7 @@ describe("SharingAgreementDetailPage", () => {
     // outside DRAFT, since removing a published agreement would destroy the
     // historical basis of past billing.
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.PUBLISHED,
-        installedPowerKw: 12.5,
-      } as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED, notes: null }),
     });
     const user = userEvent.setup();
     setup();
@@ -165,12 +176,7 @@ describe("SharingAgreementDetailPage", () => {
   // gets its own case: nothing guarantees it takes the same branch as PUBLISHED.
   test("keeps editing available on a SUPERSEDED agreement too", async () => {
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.SUPERSEDED,
-        installedPowerKw: 12.5,
-      } as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.SUPERSEDED, notes: null }),
     });
     const user = userEvent.setup();
     setup();
@@ -190,12 +196,7 @@ describe("SharingAgreementDetailPage", () => {
       coefficient("3", "PENDING"),
     ];
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.PUBLISHED,
-        installedPowerKw: 12.5,
-      } as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED, notes: null }),
       coefficients,
       coefficientsData: coefficients,
     });
@@ -287,15 +288,7 @@ describe("SharingAgreementDetailPage", () => {
   // on a draft, where omitting them would silently blank the record.
   test("submits all three fields on a PUBLISHED agreement even when only the name changed", async () => {
     mockData({
-      agreement: {
-        id: "agreement-1",
-        name: "Reparto 2025",
-        status: SharingAgreementResponseStatus.PUBLISHED,
-        installedPowerKw: 12.5,
-        notes: "Nota original",
-        createdAt: "2026-01-15T10:00:00Z",
-        file: null,
-      } as unknown as SharingAgreementResponse,
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED }),
     });
     mockUpdateAgreement.mockResolvedValue(true);
     const user = userEvent.setup();
@@ -325,15 +318,7 @@ describe("SharingAgreementDetailPage", () => {
     mockData();
     mockUpdateAgreement.mockImplementation(async () => {
       mockData({
-        agreement: {
-          id: "agreement-1",
-          name: "Reparto 2025 corregido",
-          status: SharingAgreementResponseStatus.DRAFT,
-          installedPowerKw: 12.5,
-          notes: "Nota original",
-          createdAt: "2026-01-15T10:00:00Z",
-          file: null,
-        } as unknown as SharingAgreementResponse,
+        agreement: agreementFixture({ name: "Reparto 2025 corregido" }),
       });
       return true;
     });
@@ -373,7 +358,7 @@ describe("SharingAgreementDetailPage", () => {
   });
 
   test("warns that changing capacity shifts each supply's kW when the agreement already has coefficients", async () => {
-    mockData({ coefficients: [{ coefficientId: "c1" }] as SharingAgreementPartitionCoefficientResponse[] });
+    mockData({ coefficients: [buildCoefficient({ coefficientId: "c1" })] });
     const user = userEvent.setup();
     setup("plant-1", "agreement-1");
 

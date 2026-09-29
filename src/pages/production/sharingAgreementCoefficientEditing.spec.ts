@@ -27,7 +27,8 @@ import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SupplyResponse } from "../../api/models";
+import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import { buildCoefficient, buildSupply } from "../../test/fixtures";
 
 // Fields every SharingAgreementPartitionCoefficientResponse fixture now needs but that
 // these tests don't care about — a clean pending/never-applied default.
@@ -120,7 +121,7 @@ describe("buildEditableRowsFromCoefficients", () => {
 describe("buildEditableRowFromSupply", () => {
   it("starts with an empty inputText and undefined value, never '0'/0", () => {
     // Only id/name/code are exercised by this function; the rest of SupplyResponse is irrelevant here.
-    const row = buildEditableRowFromSupply({ id: "s2", name: "Local B", code: "CUPS2" } as SupplyResponse);
+    const row = buildEditableRowFromSupply(buildSupply({ id: "s2", name: "Local B", code: "CUPS2" }));
     expect(row.inputText).toBe("");
     expect(row.value).toBeUndefined();
     expect(row.supplyId).toBe("s2");
@@ -264,13 +265,13 @@ describe("isValidCoefficientValue", () => {
 
 describe("updateRowInput", () => {
   const rows: EditableCoefficientRow[] = [
-    { supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.3, inputText: "0,3" },
-    { supplyId: "s2", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.5, inputText: "0,5" },
+    { supplyId: "s1", coefficient: buildCoefficient(), value: 0.3, inputText: "0,3" },
+    { supplyId: "s2", coefficient: buildCoefficient(), value: 0.5, inputText: "0,5" },
   ];
 
   it("stores the typed text verbatim and derives value, leaving other rows untouched", () => {
     const next = updateRowInput(rows, "s1", "40", "percentage", 100);
-    expect(next[0]).toEqual({ supplyId: "s1", coefficient: {}, value: 0.4, inputText: "40" });
+    expect(next[0]).toEqual({ supplyId: "s1", coefficient: rows[0].coefficient, value: 0.4, inputText: "40" });
     expect(next[1]).toBe(rows[1]);
   });
 
@@ -309,9 +310,9 @@ describe("retextRowsForUnit — toggle invariance", () => {
     const installedPowerKw = 45;
     // Exact 6-decimal coefficients summing to exactly 1,000,000 units.
     const original: EditableCoefficientRow[] = [
-      { supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.333333, inputText: "0,333333" },
-      { supplyId: "s2", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.333333, inputText: "0,333333" },
-      { supplyId: "s3", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.333334, inputText: "0,333334" },
+      { supplyId: "s1", coefficient: buildCoefficient(), value: 0.333333, inputText: "0,333333" },
+      { supplyId: "s2", coefficient: buildCoefficient(), value: 0.333333, inputText: "0,333333" },
+      { supplyId: "s3", coefficient: buildCoefficient(), value: 0.333334, inputText: "0,333334" },
     ];
     const sumOf = (rows: EditableCoefficientRow[]) =>
       computeSharingAgreementCoefficientSums(rows.map((r) => ({ coefficient: r.value }))).fileSumUnits;
@@ -332,13 +333,13 @@ describe("retextRowsForUnit — toggle invariance", () => {
     // 0.016670 * 60 = 1.0002 kW, which rounds to "1,00" at 2dp — retextRowsForUnit
     // must not re-derive value from that rounded text: it always re-derives text
     // from the still-precise value, never the reverse.
-    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: 0.01667, inputText: "0,01667" }];
+    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: buildCoefficient(), value: 0.01667, inputText: "0,01667" }];
     const toggled = retextRowsForUnit(retextRowsForUnit(rows, "kw", 60), "percentage", 60);
     expect(toggled[0].value).toBe(0.01667);
   });
 
   it("formats a row with no value as empty text, in either direction", () => {
-    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: {} as SharingAgreementPartitionCoefficientResponse, value: undefined, inputText: "" }];
+    const rows: EditableCoefficientRow[] = [{ supplyId: "s1", coefficient: buildCoefficient(), value: undefined, inputText: "" }];
     expect(retextRowsForUnit(rows, "kw", 60)[0].inputText).toBe("");
     expect(retextRowsForUnit(rows, "percentage", 60)[0].inputText).toBe("");
   });
@@ -447,7 +448,7 @@ describe("updateRowInput — no-op guard", () => {
   // The degenerate "" === "" case. A row with no value yet must accept its
   // first keystroke, not be frozen by a guard comparing two empty renderings.
   it("never fires on a row whose canonical value is undefined", () => {
-    const empty = buildEditableRowFromSupply({ id: "supply-new", name: "Nuevo", code: "ES999" } as SupplyResponse);
+    const empty = buildEditableRowFromSupply(buildSupply({ id: "supply-new", name: "Nuevo", code: "ES999" }));
     expect(empty.value).toBeUndefined();
 
     const next = updateRowInput([empty], "supply-new", "1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
@@ -602,7 +603,7 @@ describe("isRowRevertable", () => {
 
   // AC4
   it("is false for a row added during the session, whatever its value", () => {
-    const added = buildEditableRowFromSupply({ id: "supply-new", name: "Nuevo", code: "ES999" } as SupplyResponse);
+    const added = buildEditableRowFromSupply(buildSupply({ id: "supply-new", name: "Nuevo", code: "ES999" }));
     expect(isRowRevertable(added, snapshot)).toBe(false);
 
     const filled = updateRowInput([added], "supply-new", "1,0000", "percentage", FIXTURE_INSTALLED_POWER_KW);
@@ -614,11 +615,11 @@ describe("isRowRevertable", () => {
   // measured like any other row. It comes back with no value at all, which
   // already differs from its snapshot integer.
   it("is true for a re-added supply before anything is typed into it", () => {
-    const reAdded = buildEditableRowFromSupply({
+    const reAdded = buildEditableRowFromSupply(buildSupply({
       id: REPRODUCTION_ROW_SUPPLY_ID,
       name: REPRODUCTION_ROW_NAME,
       code: "ES0031300000000015XY",
-    } as SupplyResponse);
+    }));
     expect(reAdded.value).toBeUndefined();
 
     expect(isRowRevertable(reAdded, snapshot)).toBe(true);
