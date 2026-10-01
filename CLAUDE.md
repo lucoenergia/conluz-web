@@ -351,14 +351,6 @@ Work on the branch that is already checked out. If the task needs a branch that 
 **stop and ask for it by name**, saying which base it should come from. Do not create it "to
 unblock yourself" — that is the slowest option available, not the fastest.
 
-Why this is a hard rule and not a preference: a branch created locally is created from whatever
-the local clone happens to hold, and a local clone goes stale silently. In this repository the
-epic branches are **squash-merged**, so `feature/conluz-292` absorbs each sub-issue branch as one
-new commit while the local sub-issue branch keeps its originals. The two then hold byte-identical
-trees under different commit objects. Branching from the local one produces a history that
-`git pull` reports as divergent and refuses to reconcile, and the person who has to untangle it is
-not the one who created it.
-
 The same staleness rule applies to reading git facts at all: establish them from `git fetch` plus
 `git ls-remote` or `origin/<branch>`, never from a local branch ref that may not have moved in
 weeks.
