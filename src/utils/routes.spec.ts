@@ -48,6 +48,19 @@ describe("resolveLandingRoute", () => {
     expect(resolveLandingRoute(user)).toBe("/platform");
   });
 
+  // The two axes pulled apart. Every other /platform case here sets the flag
+  // and the capability together, so none of them can tell which one the
+  // function reads -- and reading the flag is what it must not do.
+  test("the platform flag alone does not land anybody on /platform", () => {
+    const user: CurrentUserResponse = {
+      ...baseUser,
+      isPlatformAdmin: true,
+      platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: false }),
+      memberships: {},
+    };
+    expect(resolveLandingRoute(user)).toBe("/no-community");
+  });
+
   test("platform admin with undefined memberships lands on /platform", () => {
     // Intentionally testing behavior when `memberships` is absent at runtime,
     // even though the generated type now requires it — narrow assertion scoped
