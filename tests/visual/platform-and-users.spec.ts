@@ -7,10 +7,14 @@
 import { test, expect, type Route } from "@playwright/test";
 import {
   DASHBOARD_COMMUNITIES,
+  FIXED_COMMUNITY_ADMIN_USER,
+  FIXED_COMMUNITY_ID,
   FIXED_PLATFORM_ADMIN_USER,
+  FIXED_USER_2,
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
+  seedActiveCommunity,
   stabilizePage,
 } from "./fixtures";
 
@@ -95,5 +99,109 @@ test.describe("Visual baselines", () => {
 
     await expect(page).toHaveURL(/\/platform$/);
     await expect(page.getByRole("heading", { name: "Integraciones" })).toHaveCount(0);
+  });
+
+  /**
+   * An assertion rather than a baseline, because a screenshot cannot carry this
+   * one: removing the kebab from a row changes 12 pixels on desktop -- the
+   * MoreVert icon is three ~2 px dots -- and every layout capture allows 100.
+   * The mobile capture does move, because the card reflows 8 px shorter, but
+   * relying on that would leave the desktop half of the rule untested.
+   *
+   * The row is the caller's own. canEdit, canDisable and canRevokePlatformAdmin
+   * are all false for one's own account by documented design, so the backend
+   * hands over nothing and the row has no menu at all -- while the row beside it
+   * keeps one. UsersPage.spec.tsx owns the same rule against the component; this
+   * owns it against the fixtures the baselines are taken from.
+   */
+  test("a platform admin's own row offers no actions, while another user's does", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/users");
+    await stabilizePage(page);
+
+    await expect(
+      page.getByRole("button", { name: `Más acciones para ${FIXED_PLATFORM_ADMIN_USER.fullName}` }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: `Más acciones para ${FIXED_USER_2.fullName}` }),
+    ).toBeVisible();
+  });
+
+  /**
+   * Assertions, not baselines, for the same reason as the one above: the subject
+   * is which capability each route asks for, and no screenshot records that.
+   *
+   * Nothing else covers it. No unit test reads the route-to-capability mapping in
+   * App.tsx -- CapabilityRoute.spec passes the requirement in directly -- so these
+   * are the only tests that fail if one of those three lines is changed back.
+   */
+  test("the platform overview asks for canAdministerPlatform, not canListUsers", async ({ page }) => {
+    // A community admin holds no platform capability at all, so the overview
+    // refuses them whichever of the two it asks for. What this pins is that it
+    // asks: the page's own loading and error state comes from GET /communities,
+    // which canListUsers says nothing about.
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto("/platform");
+    await stabilizePage(page);
+
+    await expect(page).not.toHaveURL(/\/platform$/);
+    await expect(page.getByRole("heading", { name: "Administración de plataforma" })).toHaveCount(0);
+  });
+
+  test("editing a user asks that account's canEdit, not the caller's canListUsers", async ({ page }) => {
+    // The route used to gate on canListUsers, which answers a different
+    // question: anyone who could list users reached a live edit form for an
+    // account they may not change, and found out on submit. The fixture answers
+    // canEdit per caller (UserAccessPolicy.canEdit allows a platform admin, or a
+    // community admin of one of the target's communities), so these two cases
+    // differ only in who is asking.
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto(`/users/${FIXED_USER_2.id}/edit`);
+    await stabilizePage(page);
+
+    await expect(page.getByRole("heading", { name: "Editar usuario" })).toBeVisible();
+  });
+
+  test("and refuses a community admin who administers none of that user's communities", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto(`/users/${FIXED_USER_2.id}/edit`);
+    await stabilizePage(page);
+
+    await expect(page.getByRole("heading", { name: "Editar usuario" })).toHaveCount(0);
+  });
+
+  test("editing a community asks that community's canUpdate, not canAdministerPlatform", async ({ page }) => {
+    // canUpdate is a platform-wide decision about a community the caller may
+    // merely be administering, so the answer has to come from the community in
+    // the URL rather than from the active one -- a platform admin has no
+    // membership of it at all.
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/edit`);
+    await stabilizePage(page);
+
+    await expect(page.getByRole("heading", { name: "Editar comunidad" })).toBeVisible();
+  });
+
+  test("and refuses a community admin, who does not hold canUpdate on it", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/edit`);
+    await stabilizePage(page);
+
+    await expect(page.getByRole("heading", { name: "Editar comunidad" })).toHaveCount(0);
   });
 });
