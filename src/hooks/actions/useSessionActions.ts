@@ -10,9 +10,9 @@ import { type Action, ungated } from "./action";
  * can precede the request that obtains one. Logging out is the same question
  * backwards -- refusing it on a capability would strand the caller.
  *
- * They still live here rather than being excluded from the lint rule, so that
- * every mutation in the app reaches a screen by one road and the ones with no
- * answer say so out loud. src/contracts/mutationHooks.spec.ts reads these
+ * They live here rather than being excluded from the lint rule, so that every
+ * mutation in the app reaches a screen by one road and the ones with no answer
+ * say so out loud. src/contracts/mutationHooks.spec.ts reads these
  * reasons and holds them to a shape.
  *
  * Note this is NOT the app's logout. `src/hooks/useLogout.ts` is hand-written,

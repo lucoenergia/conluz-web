@@ -20,12 +20,11 @@ import { grant, type MaybeAction } from "./action";
  * The one resource whose capabilities are fully granular: six actions, six
  * flags, no umbrella. Nothing here is approximated.
  *
- * Note what is NOT here: the profile screen's save. It edits the signed-in user
- * through PUT /users/{userId}, whose canEdit is false for an ordinary member
- * looking at their own record, so routing it through `edit` would hide the save
- * button from every non-admin. That screen wants PUT /users/profile -- see
- * useProfileActions and the entry for useUpdateUser in
- * src/contracts/mutationHooks.spec.ts.
+ * Note what is NOT here: the profile screen's save. `edit` is the
+ * administrative PUT /users/{userId}, whose canEdit is false for an ordinary
+ * member looking at their own record, so a self-edit routed through it would
+ * have no save button at all. Saving your own contact details is
+ * useProfileActions, on PUT /users/profile.
  */
 export interface UserRowActions {
   actions: {

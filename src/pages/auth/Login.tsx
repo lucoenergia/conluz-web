@@ -16,8 +16,8 @@ import {
 } from "@mui/material";
 import WavingHandOutlinedIcon from "@mui/icons-material/WavingHandOutlined";
 import { Link as RouterLink, useNavigate } from "react-router";
-import { useLogin } from "../../api/authentication/authentication";
 import { PasswordInput } from "../../components/Forms/PasswordInput";
+import { useSessionActions } from "../../hooks/actions";
 import { useAuthDispatch } from "../../context/auth.context";
 
 export const Login: FC = () => {
@@ -29,7 +29,7 @@ export const Login: FC = () => {
 
   const passwordErrorMessage = "Por favor, introduce tu contraseña";
   const idErrorMessage = "Por favor, introduce tu DNI/NIF";
-  const login = useLogin();
+  const { actions } = useSessionActions();
   const dispatchAuth = useAuthDispatch();
   const navigate = useNavigate();
 
@@ -50,16 +50,15 @@ export const Login: FC = () => {
     const remember = data.get("remember") ? true : false;
 
     if (!validateInput(id, password)) return;
-    try {
-      const response = await login.mutateAsync({ data: { username: id.trim(), password: password.trim() } });
-      if (response && response.token) {
-        setLoginError(false);
-        dispatchAuth({ token: response.token, remember });
-        navigate("/");
-      } else {
-        setLoginError(true);
-      }
-    } catch {
+
+    // The action reports a rejected login as undefined rather than throwing,
+    // so a refused credential and a missing token take the same branch.
+    const response = await actions.login.run({ username: id.trim(), password: password.trim() });
+    if (response?.token) {
+      setLoginError(false);
+      dispatchAuth({ token: response.token, remember });
+      navigate("/");
+    } else {
       setLoginError(true);
     }
   };
