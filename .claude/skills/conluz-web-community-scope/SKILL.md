@@ -120,12 +120,27 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   `eslint.config.js` enforce it, so reaching for `useActiveCommunityRole` or
   `useIsPlatformAdmin` elsewhere fails the build.
 - **Route level:** one guard, `CapabilityRoute`, given the capability the page
-  needs — `{ scope: "platform" | "community" | "plant", capability }`. The
-  capability name is a key of the generated type, so a typo does not compile.
+  needs. Six scopes: `platform`; `community`, meaning the **active** one; and
+  four read from a route parameter — `plant`, `supply`, `user` (`:userId`) and
+  `communityById` (`:communityId`). The capability name is a key of the generated
+  type for its scope, so a typo — or a real capability borrowed from the wrong
+  resource — does not compile.
+- **`communityById` is not `community`.** The active community is the one the
+  caller is working in; a community they are merely administering is another
+  resource, and a platform admin has no membership of it at all. Editing one
+  gates on its own `canUpdate`, a platform-wide decision that being its admin
+  does not confer. Asking the active community would answer about the wrong
+  resource, or about none.
 - **Menu:** entries in `MENU_SECTIONS` carry the same requirement as the route
   they lead to, which is what stops the menu offering pages the router refuses.
+  `MenuRequirement` excludes every parameter-keyed scope: a menu entry is a fixed
+  destination, so it has no `:userId` or `:communityId` to resolve.
 - **Anything else:** `useActiveCommunityCapabilities`, `usePlatformCapabilities`,
-  `usePlantCapabilities`, and `<Can>` for conditional rendering.
+  `usePlantCapabilities`, `useSupplyCapabilities`, `useUserCapabilities`,
+  `useCommunityCapabilities`, and `<Can>` for conditional rendering. A screen
+  that already holds the resource does not need any of them:
+  `outcomeFromResource(row.capabilities, "canX")` reads the answer the payload
+  came with, and an action hook's `forX(row)` does it for you.
 - **An answer has four states, not two.** `pending` waits, `allowed` renders,
   `denied` redirects, and `error` means the check itself failed — that one shows
   a retry. Never fold `error` into `denied`: a network blip would tell somebody
@@ -133,9 +148,10 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   API hides what the caller may not see.
 - **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
   `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
-- **Three screens have not migrated yet** and carry a numbered `eslint-disable`:
-  `Home.tsx` (#162), `SupplyCoefficientHistorySection.tsx` (#163),
-  `UsersPage.tsx` (#161). Do not add a fourth.
+- **Two screens have not migrated yet** and carry a numbered `eslint-disable`:
+  `Home.tsx` (#162) and `SupplyCoefficientHistorySection.tsx` (#163). Do not add
+  a third. The capability #163 was waiting for now exists:
+  `PartitionCoefficientCapabilitiesResponse.canReadSharingAgreement`.
 - **Writes go through `src/hooks/actions/`, never a generated mutation hook.**
   An action hook hands back only what this caller may do: a denied action is
   `undefined`, and its `isPending` lives inside it, so there is no way to render
@@ -146,9 +162,39 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   unrestricted; `getGet…QueryKey()` getters too. `no-restricted-imports`
   enforces it over all 52 mutation hooks, and
   `src/contracts/mutationHooks.spec.ts` fails if a new mutation arrives with
-  nobody having decided who may perform it. The eleven screens that predate the
+  nobody having decided who may perform it. The two screens that predate the
   layer are listed, with the exact hooks each may still import, in
-  `MUTATION_CALL_SITES` in `eslint.config.js`.
+  `MUTATION_CALL_SITES` in `eslint.config.js`; both migrate in #162.
+
+## Gating a list
+
+Every row carries its own answer, so a list may legitimately mix them. Four rules,
+all of them learned by getting one wrong:
+
+1. **Ask per row, from the row.** `forX(row).actions` and
+   `outcomeFromResource(row.capabilities, …)` need no request. Destructure the
+   actions so TypeScript narrows them, and hand the card or menu what it was
+   given rather than a boolean you re-derived.
+2. **No permitted action, no menu.** `ListTable`'s `hasRowActions` predicate
+   drops that row's kebab — the button is a promise of something to do. The
+   narrow-viewport `RecordList` takes a node, not a predicate, so apply the same
+   answer by hand there or one layout becomes a way round the gate.
+3. **Store the row's id, not the row.** A write invalidates the list, so a stored
+   object answers from before the change. Resolve it from the list on every
+   render, and mount each confirmation dialog inside the same gate as the item
+   that opens it (`open={flag && !!action}`) so it cannot be left open across a
+   write that revokes it.
+4. **Never offer a choice the backend will refuse.** Filter a picker on the
+   capability of the thing being picked — `ManageAdminsDialog` leaves out a
+   member whose membership refuses a role change, and drops the whole section
+   when that empties it.
+
+**Status is not a capability.** `enabled` and a lifecycle `status` are data the
+backend has already folded into its answer; gating on them instead reproduces a
+rule rather than reading it. Where both genuinely apply, say so — a sharing
+agreement card needs `isDraft && canDelete`. A spec whose fixtures let status and
+capability agree everywhere cannot tell the two apart, and will pass against the
+pre-capability code.
 
 > Written as the capability foundation landed; the full rewrite of this skill
 > comes with the epic's final PR.

@@ -5,6 +5,7 @@ import {
   EMPTY_PRODUCTION,
   FIXED_COMMUNITY_ID,
   MEMBER_COMMUNITY_CAPABILITIES,
+  PLATFORM_VIEW_COMMUNITY_CAPABILITIES,
   COMMUNITY_ADMIN_PLANT_CAPABILITIES,
   FIXED_PLANT,
   FIXED_PLANT_ID,
@@ -13,6 +14,9 @@ import {
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
   FIXED_SUPPLY_ID,
+  FIXED_USER_2,
+  MANAGED_USER_CAPABILITIES,
+  UNMANAGEABLE_USER_CAPABILITIES,
   OWNER_SUPPLY_CAPABILITIES,
   PAGED_PLANTS,
   PAGED_SUPPLIES,
@@ -26,7 +30,7 @@ import {
 // All other responses are fixture-independent.
 // ---------------------------------------------------------------------------
 
-type CurrentUserFixture = { memberships?: Record<string, string> };
+type CurrentUserFixture = { memberships?: Record<string, string>; isPlatformAdmin?: boolean };
 
 export async function mockAllApiRoutes(page: Page, currentUser: object) {
   // The app reads what it may do from the community itself, so the fixture has
@@ -34,12 +38,23 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
   // -- otherwise every role would see the same menu. Derive it from the
   // caller's membership, the way the backend does.
   const role = (currentUser as CurrentUserFixture).memberships?.[FIXED_COMMUNITY_ID];
+  // A platform admin belongs to no community, so there is no membership to read
+  // and the member shape would be the wrong answer: canUpdate, canEnable,
+  // canDisable and canManageMemberships are decisions a platform admin holds on
+  // every community, while the operational ones stay out of reach. Without this
+  // branch /communities/:communityId/edit refuses them, because the fixture --
+  // not the product -- says they may not update it.
+  const isPlatformAdmin = (currentUser as CurrentUserFixture).isPlatformAdmin === true;
   const activeCommunity = {
     id: FIXED_COMMUNITY_ID,
     name: "Sol Común",
     code: "SOL",
     enabled: true,
-    capabilities: role === "COMMUNITY_ADMIN" ? COMMUNITY_ADMIN_CAPABILITIES : MEMBER_COMMUNITY_CAPABILITIES,
+    capabilities: isPlatformAdmin
+      ? PLATFORM_VIEW_COMMUNITY_CAPABILITIES
+      : role === "COMMUNITY_ADMIN"
+        ? COMMUNITY_ADMIN_CAPABILITIES
+        : MEMBER_COMMUNITY_CAPABILITIES,
   };
 
   // Each supply carries its own answer, and the card reads it rather than the
@@ -113,6 +128,13 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
     suppliesHandler,
   );
 
+  const otherUser = {
+    ...FIXED_USER_2,
+    capabilities: (currentUser as CurrentUserFixture).isPlatformAdmin
+      ? MANAGED_USER_CAPABILITIES
+      : UNMANAGEABLE_USER_CAPABILITIES,
+  };
+
   // User list and current user.
   await page.route(
     (url) => url.href.includes("/api/v1/users"),
@@ -125,12 +147,31 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
       if (url.includes("/supplies")) {
         return route.fallback();
       }
-      // Matches /users/current and /users/{uuid}
-      if (url.match(/\/api\/v1\/users\/[a-z0-9-]+$/)) {
+      // GET /users/current -- the caller themselves.
+      if (url.match(/\/api\/v1\/users\/current$/)) {
         return route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify(currentUser),
+        });
+      }
+      // GET /users/{uuid} -- somebody else. This used to answer with the caller's
+      // own record whatever id was asked for, which was harmless while nothing
+      // read the response's capabilities. It is not any more: /users/:userId/edit
+      // gates on that account's canEdit, and one's own record reports canEdit
+      // false by design, so serving it here would send a platform admin home
+      // from every user they tried to edit.
+      //
+      // And it carries what THIS caller may do with it, exactly as the supply and
+      // plant fixtures do. UserAccessPolicy.canEdit allows a platform admin, or a
+      // community admin of one of the target's communities; FIXED_USER_2 belongs
+      // to none, so nobody else gets it. One fixed answer here would let every
+      // caller through that guard.
+      if (url.match(/\/api\/v1\/users\/[a-z0-9-]+$/)) {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(otherUser),
         });
       }
       if (route.request().method() === "GET") {

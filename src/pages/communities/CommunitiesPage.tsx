@@ -31,6 +31,8 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
 import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
+import { useCommunityActions, usePlatformActions } from "../../hooks/actions";
+import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { ManageAdminsDialog } from "./ManageAdminsDialog";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
@@ -68,15 +70,45 @@ export const CommunitiesPage: FC = () => {
   const { data: communities = [], isLoading, error } = useGetAllCommunities();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedCommunity, setSelectedCommunity] = useState<CommunityResponse | null>(null);
+  // The id, not the row. A write invalidates the list, so a stored row would go
+  // on answering from before the change -- and it is that row's capabilities
+  // that now decide what its menu offers.
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+
+  // What this caller may do, as the backend answers it. forCommunity is a plain
+  // function rather than a hook precisely so it can be asked once per row, and
+  // it takes the row's community rather than the active one -- administering a
+  // community is not working in it.
+  const { forCommunity } = useCommunityActions();
+  const { createCommunity } = usePlatformActions().actions;
 
   const totalActive = communities.filter((c) => c.enabled).length;
   const totalInactive = communities.filter((c) => !c.enabled).length;
 
+  // Resolved from the list on every render rather than stored, so the row the
+  // menu and its dialog act on is the one the cache currently holds.
+  const selectedCommunity = selectedCommunityId
+    ? (communities.find((community) => community.id === selectedCommunityId) ?? null)
+    : null;
+
+  // Managing a community's admins is its canManageMemberships. The menu item
+  // opens a dialog rather than performing the write itself, so it reads the
+  // capability directly; the writes inside the dialog come from the actions
+  // layer.
+  const rowAdmins = (community: CommunityResponse | null) =>
+    outcomeFromResource(community?.capabilities, "canManageMemberships");
+
+  // No permitted action means no menu at all, rather than a menu with nothing
+  // in it or items the backend would refuse.
+  const hasRowActions = (community: CommunityResponse) =>
+    !!forCommunity(community).actions.update || rowAdmins(community).state === "allowed";
+
+  const selectedUpdate = forCommunity(selectedCommunity ?? undefined).actions.update;
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, community: CommunityResponse) => {
     setAnchorEl(event.currentTarget);
-    setSelectedCommunity(community);
+    setSelectedCommunityId(community.id ?? null);
   };
 
   const handleMenuClose = () => {
@@ -130,7 +162,11 @@ export const CommunitiesPage: FC = () => {
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <Paper elevation={0} sx={sxStyles.softPanel}>
+          {/* Mounted only when the backend hands over the action behind it --
+              never disabled, which would advertise something the caller cannot
+              do. */}
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            {createCommunity && (
             <Button
               component={Link}
               to="/communities/new"
@@ -150,6 +186,7 @@ export const CommunitiesPage: FC = () => {
             >
               Nueva Comunidad
             </Button>
+            )}
           </Box>
         </Paper>
       </Box>
@@ -186,6 +223,7 @@ export const CommunitiesPage: FC = () => {
               emptyMessage="No hay comunidades registradas"
               rowActionsLabel={(community) => `Más acciones para ${community.name || "la comunidad"}`}
               onRowActionsClick={handleMenuOpen}
+              hasRowActions={hasRowActions}
               columns={[
                 {
                   key: "name",
@@ -295,7 +333,7 @@ export const CommunitiesPage: FC = () => {
                       sx={{ fontWeight: 600 }}
                     />
                   ),
-                  actions: (
+                  actions: hasRowActions(community) ? (
                     <IconButton
                       aria-label={`Más acciones para ${community.name || "la comunidad"}`}
                       onClick={(e) => handleMenuOpen(e, community)}
@@ -303,7 +341,7 @@ export const CommunitiesPage: FC = () => {
                     >
                       <MoreVertIcon />
                     </IconButton>
-                  ),
+                  ) : undefined,
                   fields: [
                     { label: "Código", value: community.code || "—" },
                     { label: "CIF", value: community.legalId || "—" },
@@ -321,24 +359,35 @@ export const CommunitiesPage: FC = () => {
         </Paper>
       </Box>
 
+      {/* Every item is the selected row's own answer. Editing is the
+          community's canUpdate, a platform-wide decision that being its admin
+          does not confer; managing its admins is canManageMemberships, which a
+          community admin does have. The two differ, so they are asked
+          separately. */}
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
-        <MenuItem onClick={handleEditClick}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" sx={{ color: "primary.main" }} />
-          </ListItemIcon>
-          <ListItemText>Editar</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleManageAdminsClick}>
-          <ListItemIcon>
-            <AdminPanelSettingsIcon fontSize="small" sx={{ color: "primary.main" }} />
-          </ListItemIcon>
-          <ListItemText>Gestionar administradores</ListItemText>
-        </MenuItem>
+        {selectedUpdate && (
+          <MenuItem onClick={handleEditClick}>
+            <ListItemIcon>
+              <EditIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText>Editar</ListItemText>
+          </MenuItem>
+        )}
+        <Can outcome={rowAdmins(selectedCommunity)}>
+          <MenuItem onClick={handleManageAdminsClick}>
+            <ListItemIcon>
+              <AdminPanelSettingsIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText>Gestionar administradores</ListItemText>
+          </MenuItem>
+        </Can>
       </RowActionsMenu>
 
+      {/* Mounted inside the same gate as the item that opens it: a dialog for an
+          action the caller was never given has no way to be reached. */}
       <ManageAdminsDialog
         community={selectedCommunity}
-        open={adminDialogOpen}
+        open={adminDialogOpen && rowAdmins(selectedCommunity).state === "allowed"}
         onClose={() => setAdminDialogOpen(false)}
       />
     </Box>

@@ -71,9 +71,12 @@ describe("the mutation guard rail", () => {
 
   describe("the screens that predate the layer", () => {
     it("may still import the mutation they already had", async () => {
+      // Profile.tsx and Login.tsx are the last two. Profile's own migration is
+      // not a swap: PUT /users/profile takes a narrower body than the form edits,
+      // which is why it is still here -- see #162.
       const errors = await restrictedImportErrors(
-        `import { useUpdateUser } from "../../api/users/users";\nexport const x = useUpdateUser;\n`,
-        "src/pages/users/EditUser.tsx",
+        `import { useUpdateUser } from "../api/users/users";\nexport const x = useUpdateUser;\n`,
+        "src/pages/Profile.tsx",
       );
 
       expect(errors).toEqual([]);
@@ -83,8 +86,8 @@ describe("the mutation guard rail", () => {
       // The exemption is narrow by construction: its block re-states the other
       // two arrays rather than switching the rule off for the file.
       const errors = await restrictedImportErrors(
-        `import { useGetPlantById } from "../../api/plants/plants";\nexport const x = useGetPlantById;\n`,
-        "src/pages/users/UsersPage.tsx",
+        `import { useGetPlantById } from "../api/plants/plants";\nexport const x = useGetPlantById;\n`,
+        "src/pages/Profile.tsx",
       );
 
       expect(errors).toHaveLength(1);
@@ -141,6 +144,50 @@ describe("the mutation guard rail", () => {
 
       expect(integrations).toHaveLength(1);
       expect(integrations[0]).toContain("useCommunityActions");
+    });
+
+    it("stop being exempt once they migrate, for communities, platform and users too", async () => {
+      // The six files that made up the last large block on the list. Each is
+      // named with the hook that replaced it, because the message is what tells
+      // the next author where to go -- a bare refusal would send them looking.
+      const cases: [string, string, string, string][] = [
+        [
+          "useCreateCommunity",
+          "../../api/communities/communities",
+          "src/pages/communities/CreateCommunityPage.tsx",
+          "usePlatformActions",
+        ],
+        [
+          "useUpdateCommunity",
+          "../../api/communities/communities",
+          "src/pages/communities/EditCommunityPage.tsx",
+          "useCommunityActions",
+        ],
+        [
+          "useUpdateMembershipRole",
+          "../../api/memberships/memberships",
+          "src/pages/communities/ManageAdminsDialog.tsx",
+          "useMembershipActions",
+        ],
+        ["useCreateUser", "../../api/users/users", "src/pages/users/CreateUser.tsx", "usePlatformActions"],
+        ["useUpdateUser", "../../api/users/users", "src/pages/users/EditUser.tsx", "useUserActions"],
+        [
+          "useGrantPlatformAdmin",
+          "../../api/users/users",
+          "src/pages/users/UsersPage.tsx",
+          "useUserActions",
+        ],
+      ];
+
+      for (const [hook, module, filePath, replacement] of cases) {
+        const errors = await restrictedImportErrors(
+          `import { ${hook} } from "${module}";\nexport const x = ${hook};\n`,
+          filePath,
+        );
+
+        expect(errors, filePath).toHaveLength(1);
+        expect(errors[0], filePath).toContain(replacement);
+      }
     });
   });
 });

@@ -18,7 +18,6 @@ import {
   Divider,
   TableSortLabel,
   Button,
-  Tooltip,
 } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar";
@@ -42,16 +41,10 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import RemoveModeratorIcon from "@mui/icons-material/RemoveModerator";
 
-import {
-  useGetAllUsers,
-  useDisableUser,
-  useEnableUser,
-  useGrantPlatformAdmin,
-  useRevokePlatformAdmin,
-} from "../../api/users/users";
+import { useGetAllUsers } from "../../api/users/users";
 import { useGetAllCommunities } from "../../api/communities/communities";
-import type { CommunityResponse } from "../../api/models";
-import type { AxiosError } from "axios";
+import type { CommunityResponse, UserResponse } from "../../api/models";
+import { usePlatformActions, useUserActions } from "../../hooks/actions";
 import { useDebounce } from "../../utils/useDebounce";
 import { DisablePartnerConfirmationModal } from "../../components/Modals/DisablePartnerConfirmationModal";
 import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
@@ -61,10 +54,6 @@ import { GrantPlatformAdminConfirmationModal } from "../../components/Modals/Gra
 import { RevokePlatformAdminConfirmationModal } from "../../components/Modals/RevokePlatformAdminConfirmationModal";
 import { PlatformAdminSuccessModal } from "../../components/Modals/PlatformAdminSuccessModal";
 import { useErrorDispatch } from "../../context/error.context";
-import { useLoggedUser } from "../../context/logged-user.context";
-// The grant/revoke platform-admin menu items still gate on the flag.
-// eslint-disable-next-line no-restricted-imports -- moves onto user capabilities in #161
-import { useIsPlatformAdmin } from "../../hooks/permissions/useActiveCommunityRole";
 
 type OrderDirection = "asc" | "desc";
 type OrderBy = "fullName" | "personalId";
@@ -138,12 +127,10 @@ export const UsersPage: FC = () => {
     status: "all",
   });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedUser, setSelectedUser] = useState<{
-    id: string;
-    name: string;
-    enabled: boolean;
-    isPlatformAdmin: boolean;
-  } | null>(null);
+  // The id, not the row. A write invalidates the list, so a stored row would go
+  // on answering from before the change -- and the flattened copy this used to
+  // keep threw away `user.capabilities`, which is what now decides the menu.
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showDisableConfirmation, setShowDisableConfirmation] = useState(false);
   const [showDisableSuccess, setShowDisableSuccess] = useState(false);
   const [showResetPasswordConfirmation, setShowResetPasswordConfirmation] = useState(false);
@@ -155,14 +142,13 @@ export const UsersPage: FC = () => {
   const debouncedSearch = useDebounce(filters.search, 500);
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const loggedUser = useLoggedUser();
-  const isPlatformAdmin = useIsPlatformAdmin();
-  const disableUserMutation = useDisableUser();
-  const enableUserMutation = useEnableUser();
-  const grantMutation = useGrantPlatformAdmin();
-  const revokeMutation = useRevokePlatformAdmin();
 
-  const { data, isLoading, error, refetch } = useGetAllUsers({ size: 10000 });
+  // What this caller may do, as the backend answers it. forUser is a plain
+  // function rather than a hook precisely so it can be asked once per row.
+  const { forUser } = useUserActions();
+  const { createUser } = usePlatformActions().actions;
+
+  const { data, isLoading, error } = useGetAllUsers({ size: 10000 });
   const { data: communitiesList = [] } = useGetAllCommunities();
 
   const { filteredUsers, paginatedUsers } = useMemo(() => {
@@ -198,6 +184,22 @@ export const UsersPage: FC = () => {
     return { filteredUsers: filtered, paginatedUsers };
   }, [data?.items, debouncedSearch, filters.status, orderBy, orderDirection, page, rowsPerPage]);
 
+  // Resolved from the list on every render rather than stored, so the row the
+  // menu and its dialogs act on is the one the cache currently holds.
+  const selectedUser = selectedUserId
+    ? (data?.items?.find((user) => user.id === selectedUserId) ?? null)
+    : null;
+  const selectedActions = forUser(selectedUser ?? undefined).actions;
+  const selectedUserName = selectedUser?.fullName ?? "Sin nombre";
+
+  // No permitted action means no menu at all, rather than a menu with nothing in
+  // it or items the backend would refuse. Deleting an account is not offered on
+  // this screen, so `remove` is deliberately not part of the answer.
+  const hasRowActions = (user: UserResponse) => {
+    const { edit, enable, disable, grantPlatformAdmin, revokePlatformAdmin } = forUser(user).actions;
+    return !!edit || !!enable || !!disable || !!grantPlatformAdmin || !!revokePlatformAdmin;
+  };
+
   const handleSort = (property: OrderBy) => {
     const isAsc = orderBy === property && orderDirection === "asc";
     setOrderDirection(isAsc ? "desc" : "asc");
@@ -213,15 +215,9 @@ export const UsersPage: FC = () => {
     setPage(0);
   };
 
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    userId: string,
-    userName: string,
-    enabled: boolean,
-    userIsPlatformAdmin: boolean,
-  ) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, user: UserResponse) => {
     setAnchorEl(event.currentTarget);
-    setSelectedUser({ id: userId, name: userName, enabled, isPlatformAdmin: userIsPlatformAdmin });
+    setSelectedUserId(user.id ?? null);
   };
 
   const handleMenuClose = () => {
@@ -234,27 +230,23 @@ export const UsersPage: FC = () => {
   };
 
   const handleDisableConfirm = async () => {
-    if (!selectedUser) return;
+    // Whichever of the two the caller was given; the other is undefined, and the
+    // action invalidates the list itself, so there is no refetch left to do.
+    const action = selectedActions.disable ?? selectedActions.enable;
+    if (!action) return;
 
-    try {
-      if (selectedUser.enabled) {
-        await disableUserMutation.mutateAsync({ userId: selectedUser.id });
-        setWasEnabled(false);
-      } else {
-        await enableUserMutation.mutateAsync({ userId: selectedUser.id });
-        setWasEnabled(true);
-      }
+    const wasDisabling = !!selectedActions.disable;
+    if (await action.run()) {
+      setWasEnabled(!wasDisabling);
       setShowDisableConfirmation(false);
       setShowDisableSuccess(true);
-      refetch();
-    } catch (err) {
+    } else {
       errorDispatch(
-        selectedUser.enabled
+        wasDisabling
           ? "Error al deshabilitar el usuario. Por favor, inténtalo de nuevo."
           : "Error al habilitar el usuario. Por favor, inténtalo de nuevo.",
       );
       setShowDisableConfirmation(false);
-      console.error("Error toggling user status:", err);
     }
   };
 
@@ -264,7 +256,7 @@ export const UsersPage: FC = () => {
 
   const handleDisableSuccessClose = () => {
     setShowDisableSuccess(false);
-    setSelectedUser(null);
+    setSelectedUserId(null);
   };
 
   const handlePlatformAdminClick = () => {
@@ -273,26 +265,20 @@ export const UsersPage: FC = () => {
   };
 
   const handlePlatformAdminConfirm = async () => {
-    if (!selectedUser) return;
+    // Whichever of the two the caller was given. The action also invalidates the
+    // current user, so a caller who changed their own flag sees the menu and the
+    // route guards follow without a reload.
+    const action = selectedActions.revokePlatformAdmin ?? selectedActions.grantPlatformAdmin;
+    if (!action) return;
 
-    const wasGrantOperation = !selectedUser.isPlatformAdmin;
-    try {
-      if (selectedUser.isPlatformAdmin) {
-        await revokeMutation.mutateAsync({ userId: selectedUser.id });
-      } else {
-        await grantMutation.mutateAsync({ userId: selectedUser.id });
-      }
+    const wasGrantOperation = !selectedActions.revokePlatformAdmin;
+    if (await action.run()) {
       setWasGranted(wasGrantOperation);
       setShowPlatformAdminConfirmation(false);
       setShowPlatformAdminSuccess(true);
-      refetch();
-    } catch (err) {
-      const message =
-        (err as AxiosError<{ message?: string }>)?.response?.data?.message ??
-        "No se pudo actualizar el rol de administrador de plataforma.";
-      errorDispatch(message);
+    } else {
+      errorDispatch("No se pudo actualizar el rol de administrador de plataforma.");
       setShowPlatformAdminConfirmation(false);
-      console.error("Error updating platform-admin role:", err);
     }
   };
 
@@ -302,7 +288,7 @@ export const UsersPage: FC = () => {
 
   const handlePlatformAdminSuccessClose = () => {
     setShowPlatformAdminSuccess(false);
-    setSelectedUser(null);
+    setSelectedUserId(null);
   };
 
   const handleResetPasswordClick = () => {
@@ -311,16 +297,8 @@ export const UsersPage: FC = () => {
   };
 
   const handleResetPasswordConfirm = async () => {
-    if (!selectedUser) return;
-
-    try {
-      // TODO: Call reset password API endpoint when available
-      setShowResetPasswordConfirmation(false);
-    } catch (err) {
-      errorDispatch("Error al enviar el email de reestablecimiento. Por favor, inténtalo de nuevo.");
-      setShowResetPasswordConfirmation(false);
-      console.error("Error resetting password:", err);
-    }
+    // TODO: Call reset password API endpoint when available
+    setShowResetPasswordConfirmation(false);
   };
 
   const handleResetPasswordCancel = () => {
@@ -328,7 +306,7 @@ export const UsersPage: FC = () => {
   };
 
   const handleEditClick = () => {
-    if (!selectedUser) return;
+    if (!selectedUser?.id) return;
     handleMenuClose();
     navigate(`/users/${selectedUser.id}/edit`);
   };
@@ -397,7 +375,11 @@ export const UsersPage: FC = () => {
               mb: 2,
             }}
           >
+            {/* Mounted only when the backend hands over the action behind it --
+                never disabled, which would advertise something the caller cannot
+                do. */}
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              {createUser && (
               <Button
                 component={Link}
                 to="/users/new"
@@ -417,6 +399,7 @@ export const UsersPage: FC = () => {
               >
                 Nuevo Usuario
               </Button>
+              )}
             </Box>
 
             <FilterChipsBar value={filters.status} onChange={(value) => handleFilterChange("status", value)} />
@@ -463,15 +446,8 @@ export const UsersPage: FC = () => {
                 isLoading={isLoading}
                 emptyMessage="No se encontraron usuarios"
                 rowActionsLabel={(user) => `Más acciones para ${user.fullName || "el usuario"}`}
-                onRowActionsClick={(e, user) =>
-                  handleMenuOpen(
-                    e,
-                    user.id || "",
-                    user.fullName || "Sin nombre",
-                    user.enabled || false,
-                    user.isPlatformAdmin || false,
-                  )
-                }
+                onRowActionsClick={handleMenuOpen}
+                hasRowActions={hasRowActions}
                 columns={[
                   {
                     key: "fullName",
@@ -612,23 +588,15 @@ export const UsersPage: FC = () => {
                         sx={{ fontWeight: 600 }}
                       />
                     ),
-                    actions: (
+                    actions: hasRowActions(user) ? (
                       <IconButton
                         aria-label={`Más acciones para ${user.fullName || "el usuario"}`}
-                        onClick={(e) =>
-                          handleMenuOpen(
-                            e,
-                            user.id || "",
-                            user.fullName || "Sin nombre",
-                            user.enabled || false,
-                            user.isPlatformAdmin || false,
-                          )
-                        }
+                        onClick={(e) => handleMenuOpen(e, user)}
                         sx={sxStyles.touchTarget}
                       >
                         <MoreVertIcon />
                       </IconButton>
-                    ),
+                    ) : undefined,
                     fields: [
                       { label: "NIF/CIF", value: user.personalId || "-" },
                       { label: "Email", value: user.email || "-" },
@@ -668,28 +636,40 @@ export const UsersPage: FC = () => {
         </Paper>
       </Box>
 
+      {/* Every item is the selected row's own answer, including when that row is
+          the caller's: canDelete, canDisable and canRevokePlatformAdmin are
+          documented as always false for the caller themselves, so the self-check
+          that used to disable "Revocar" here is the backend's to make. A second
+          copy of a rule reads as a rule of its own while proving nothing. */}
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
-        <MenuItem onClick={handleEditClick}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
-          </ListItemIcon>
-          <ListItemText>Editar datos</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleResetPasswordClick}>
-          <ListItemIcon>
-            <LockResetIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
-          </ListItemIcon>
-          <ListItemText>Reestablecer contraseña</ListItemText>
-        </MenuItem>
-        <Divider />
-        {selectedUser?.enabled ? (
+        {selectedActions.edit && [
+          <MenuItem key="edit" onClick={handleEditClick}>
+            <ListItemIcon>
+              <EditIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
+            </ListItemIcon>
+            <ListItemText>Editar datos</ListItemText>
+          </MenuItem>,
+          // A password reset has no endpoint of its own yet (#161 leaves the TODO
+          // in place), so it gates on canEdit: resetting somebody's password is
+          // an administrative change to their account, which is what canEdit
+          // answers.
+          <MenuItem key="reset-password" onClick={handleResetPasswordClick}>
+            <ListItemIcon>
+              <LockResetIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
+            </ListItemIcon>
+            <ListItemText>Reestablecer contraseña</ListItemText>
+          </MenuItem>,
+          <Divider key="divider" />,
+        ]}
+        {selectedActions.disable && (
           <MenuItem onClick={handleToggleStatusClick}>
             <ListItemIcon>
               <BlockIcon fontSize="small" sx={{ color: "error.main" }} />
             </ListItemIcon>
             <ListItemText sx={{ color: "error.main" }}>Deshabilitar</ListItemText>
           </MenuItem>
-        ) : (
+        )}
+        {selectedActions.enable && (
           <MenuItem onClick={handleToggleStatusClick}>
             <ListItemIcon>
               <CheckCircleIcon fontSize="small" sx={{ color: "success.main" }} />
@@ -697,46 +677,41 @@ export const UsersPage: FC = () => {
             <ListItemText sx={{ color: "success.main" }}>Habilitar</ListItemText>
           </MenuItem>
         )}
-        {isPlatformAdmin &&
-          (selectedUser?.isPlatformAdmin ? (
-            // Tooltip needs a non-disabled wrapper to receive hover events when the item is disabled.
-            <Tooltip
-              title={selectedUser?.id === loggedUser?.id ? "No puedes revocar tu propio rol" : ""}
-              placement="left"
-            >
-              <span>
-                <MenuItem
-                  onClick={handlePlatformAdminClick}
-                  disabled={selectedUser?.id === loggedUser?.id}
-                >
-                  <ListItemIcon>
-                    <RemoveModeratorIcon fontSize="small" sx={{ color: "error.main" }} />
-                  </ListItemIcon>
-                  <ListItemText sx={{ color: "error.main" }}>Revocar admin de plataforma</ListItemText>
-                </MenuItem>
-              </span>
-            </Tooltip>
-          ) : (
-            <MenuItem onClick={handlePlatformAdminClick}>
-              <ListItemIcon>
-                <AddModeratorIcon fontSize="small" sx={{ color: "primary.main" }} />
-              </ListItemIcon>
-              <ListItemText sx={{ color: "primary.main" }}>Conceder admin de plataforma</ListItemText>
-            </MenuItem>
-          ))}
+        {selectedActions.revokePlatformAdmin && (
+          <MenuItem onClick={handlePlatformAdminClick}>
+            <ListItemIcon>
+              <RemoveModeratorIcon fontSize="small" sx={{ color: "error.main" }} />
+            </ListItemIcon>
+            <ListItemText sx={{ color: "error.main" }}>Revocar admin de plataforma</ListItemText>
+          </MenuItem>
+        )}
+        {selectedActions.grantPlatformAdmin && (
+          <MenuItem onClick={handlePlatformAdminClick}>
+            <ListItemIcon>
+              <AddModeratorIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText sx={{ color: "primary.main" }}>Conceder admin de plataforma</ListItemText>
+          </MenuItem>
+        )}
       </RowActionsMenu>
 
-      {selectedUser?.enabled ? (
+      {/* Each confirmation is mounted inside the same gate as the item that
+          opens it: a dialog for an action the caller was never given has no way
+          to be reached, and no way to be left open across a write that revokes
+          it. Which of each pair appears is the action the caller holds, not the
+          row's status -- the backend has already folded status into the answer. */}
+      {selectedActions.disable && (
         <DisablePartnerConfirmationModal
           isOpen={showDisableConfirmation}
-          partnerName={selectedUser?.name || ""}
+          partnerName={selectedUserName}
           onCancel={handleDisableCancel}
           onDisable={handleDisableConfirm}
         />
-      ) : (
+      )}
+      {selectedActions.enable && (
         <EnablePartnerConfirmationModal
           isOpen={showDisableConfirmation}
-          partnerName={selectedUser?.name || ""}
+          partnerName={selectedUserName}
           onCancel={handleDisableCancel}
           onEnable={handleDisableConfirm}
         />
@@ -744,31 +719,34 @@ export const UsersPage: FC = () => {
 
       <DisablePartnerSuccessModal
         isOpen={showDisableSuccess}
-        partnerName={selectedUser?.name || ""}
+        partnerName={selectedUserName}
         wasEnabled={wasEnabled}
         onClose={handleDisableSuccessClose}
       />
 
-      <ResetPasswordConfirmationModal
-        isOpen={showResetPasswordConfirmation}
-        partnerName={selectedUser?.name || ""}
-        onCancel={handleResetPasswordCancel}
-        onReset={handleResetPasswordConfirm}
-      />
+      {selectedActions.edit && (
+        <ResetPasswordConfirmationModal
+          isOpen={showResetPasswordConfirmation}
+          partnerName={selectedUserName}
+          onCancel={handleResetPasswordCancel}
+          onReset={handleResetPasswordConfirm}
+        />
+      )}
 
-      {selectedUser?.isPlatformAdmin ? (
+      {selectedActions.revokePlatformAdmin && (
         <RevokePlatformAdminConfirmationModal
           isOpen={showPlatformAdminConfirmation}
-          userName={selectedUser?.name || ""}
-          isPending={revokeMutation.isPending}
+          userName={selectedUserName}
+          isPending={selectedActions.revokePlatformAdmin.isPending}
           onCancel={handlePlatformAdminCancel}
           onConfirm={handlePlatformAdminConfirm}
         />
-      ) : (
+      )}
+      {selectedActions.grantPlatformAdmin && (
         <GrantPlatformAdminConfirmationModal
           isOpen={showPlatformAdminConfirmation}
-          userName={selectedUser?.name || ""}
-          isPending={grantMutation.isPending}
+          userName={selectedUserName}
+          isPending={selectedActions.grantPlatformAdmin.isPending}
           onCancel={handlePlatformAdminCancel}
           onConfirm={handlePlatformAdminConfirm}
         />
@@ -776,7 +754,7 @@ export const UsersPage: FC = () => {
 
       <PlatformAdminSuccessModal
         isOpen={showPlatformAdminSuccess}
-        userName={selectedUser?.name || ""}
+        userName={selectedUserName}
         wasGranted={wasGranted}
         onClose={handlePlatformAdminSuccessClose}
       />

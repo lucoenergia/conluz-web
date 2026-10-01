@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { theme } from "../../theme";
 import { CoefficientHistory, type CoefficientHistoryProps } from "./CoefficientHistory";
 import type { PartitionCoefficientResponse } from "../../api/models";
+import { buildPartitionCoefficientCapabilities } from "../../test/fixtures";
 
 const ACTIVE_COMMUNITY = { id: "community-1", name: "Sol Común" };
 const PLANT_NORTE = { id: "plant-norte", name: "Planta Solar Norte" };
@@ -22,6 +23,7 @@ function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoef
     validFrom: "2024-01-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-01-01T00:00:00Z",
+    capabilities: buildPartitionCoefficientCapabilities(),
     ...overrides,
   };
 }

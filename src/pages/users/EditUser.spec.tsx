@@ -4,20 +4,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildUser } from "../../test/fixtures";
-import { useGetUserById, useUpdateUser, type getUserById } from "../../api/users/users";
+import { buildUser, buildUserCapabilities } from "../../test/fixtures";
+import type { UserCapabilitiesResponse, UserResponse } from "../../api/models";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
 const mockMutateAsync = vi.fn();
-const mockGetUserById = vi.mocked(useGetUserById);
 
 vi.mock(import("react-router"), async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock(import("../../api/users/users"), () => ({
+// The read, and the write whose arguments these tests assert. Everything else in
+// the module stays real, including the query-key getters the actions layer
+// invalidates with -- and the gate runs for real, which is the point: what is
+// under test is that the submit follows the account's own canEdit.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetUserById: vi.fn(),
   useUpdateUser: vi.fn(),
 }));
@@ -27,12 +31,17 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
   useErrorDispatch: () => mockErrorDispatch,
 }));
 
+// The form is stubbed so one click stands in for filling it, as it was before.
+// It passes `disabled` through, because that is the part of the contract this
+// page now depends on: a caller without canEdit must not be offered a live
+// submit. UserForm.spec owns whether the real form honours it.
 vi.mock("../../components/UserForm/UserForm", () => ({
-  UserForm: ({ handleSubmit, submitLabel, initialValues, mode }: {
+  UserForm: ({ handleSubmit, submitLabel, initialValues, mode, disabled }: {
     handleSubmit: (v: Record<string, unknown>) => void;
     submitLabel: string;
     initialValues?: Record<string, string | number | undefined>;
     mode: string;
+    disabled?: boolean;
   }) => (
     <div>
       <span data-testid="form-mode">{mode}</span>
@@ -40,6 +49,7 @@ vi.mock("../../components/UserForm/UserForm", () => ({
       <span data-testid="form-initial-email">{initialValues?.email}</span>
       <button
         data-testid="mock-user-form"
+        disabled={disabled}
         onClick={() =>
           handleSubmit({
             fullName: initialValues?.fullName ?? "Updated Name",
@@ -57,18 +67,27 @@ vi.mock("../../components/UserForm/UserForm", () => ({
 }));
 
 import { Route, Routes } from "react-router";
+import { useGetUserById, useUpdateUser, type getUserById } from "../../api/users/users";
 import { EditUserPage } from "./EditUser";
 
-const mockUserData = buildUser({
-  id: "test-user-id",
-  fullName: "Carlos Ruiz",
-  personalId: "87654321X",
-  email: "carlos@example.com",
-  address: "Avenida Libertad 5",
-  phoneNumber: "611987654",
-  number: 3,
-  enabled: true,
-});
+const mockGetUserById = vi.mocked(useGetUserById);
+
+const SUBMIT = "Guardar cambios";
+
+const editableUser = (capabilities: Partial<UserCapabilitiesResponse> = { canEdit: true }): UserResponse =>
+  buildUser({
+    id: "test-user-id",
+    fullName: "Carlos Ruiz",
+    personalId: "87654321X",
+    email: "carlos@example.com",
+    address: "Avenida Libertad 5",
+    phoneNumber: "611987654",
+    number: 3,
+    enabled: true,
+    capabilities: buildUserCapabilities({ canRead: true, ...capabilities }),
+  });
+
+const mockUserData = editableUser();
 
 describe("EditUserPage", () => {
   beforeEach(() => {
@@ -125,60 +144,60 @@ describe("EditUserPage", () => {
     expect(screen.getByTestId("form-mode")).toHaveTextContent("edit");
     expect(screen.getByTestId("form-initial-fullname")).toHaveTextContent("Carlos Ruiz");
     expect(screen.getByTestId("form-initial-email")).toHaveTextContent("carlos@example.com");
-    expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled();
   });
 
   it("calls updateUser with correct data and navigates to /users on success", async () => {
     const user = userEvent.setup();
-    mockMutateAsync.mockResolvedValueOnce({ id: "test-user-id", fullName: "Carlos Ruiz" });
+    mockMutateAsync.mockResolvedValueOnce(mockUserData);
     setup();
 
-    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    await user.click(screen.getByRole("button", { name: SUBMIT }));
 
     await waitFor(() => {
-      expect(mockMutateAsync).toHaveBeenCalledWith(
-        {
-          userId: "test-user-id",
-          data: expect.objectContaining({
-            fullName: mockUserData.fullName,
-            email: mockUserData.email,
-          }),
-        },
-        {},
-      );
-      const submittedData = mockMutateAsync.mock.calls[0][0].data;
-      expect(submittedData).not.toHaveProperty("role");
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        userId: "test-user-id",
+        data: expect.objectContaining({
+          fullName: mockUserData.fullName,
+          email: mockUserData.email,
+          // Read off the loaded account rather than cast away. UpdateUserBody
+          // requires it, and the cast this page used to carry hid that.
+          number: 3,
+        }),
+      });
       expect(mockNavigate).toHaveBeenCalledWith("/users");
     });
+
+    expect(mockMutateAsync.mock.calls[0][0].data).not.toHaveProperty("role");
   });
 
-  it("dispatches user-scoped error and does not navigate when API returns falsy response", async () => {
-    const user = userEvent.setup();
-    mockMutateAsync.mockResolvedValueOnce(null);
-    setup();
-
-    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
-
-    await waitFor(() => {
-      expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Ha habido un problema al editar el usuario. Por favor, inténtalo más tarde",
-      );
-      expect(mockNavigate).not.toHaveBeenCalled();
-    });
-  });
-
-  it("dispatches user-scoped error and does not navigate when API throws", async () => {
+  it("dispatches user-scoped error and does not navigate when the write fails", async () => {
     const user = userEvent.setup();
     mockMutateAsync.mockRejectedValueOnce(new Error("Network error"));
     setup();
 
-    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    await user.click(screen.getByRole("button", { name: SUBMIT }));
 
     await waitFor(() => {
       expect(mockErrorDispatch).toHaveBeenCalledWith(
         "Ha habido un problema al editar el usuario. Por favor, inténtalo más tarde",
       );
-      expect(mockNavigate).not.toHaveBeenCalled();
     });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  // The route guard already refuses this, so it is the second line rather than
+  // the first -- but the form must not present itself as a live write path.
+  // canEdit is false for an ordinary member on their own record by documented
+  // design: changing one's own details is PUT /users/profile.
+  it("offers no way to submit when the account does not permit an administrative edit", async () => {
+    mockGetUserById.mockReturnValue(query.success<typeof getUserById>(editableUser({ canEdit: false })));
+    setup();
+
+    expect(screen.getByRole("button", { name: SUBMIT })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: SUBMIT }));
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
-import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
+import { buildPartitionCoefficientCapabilities, buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import {
   getAllSupplies,
   useGetPartitionCoefficientHistory,
@@ -76,6 +76,7 @@ function historyPeriod(overrides: Partial<PartitionCoefficientResponse> = {}): P
     validFrom: "2023-01-01T00:00:00Z",
     validTo: "2024-01-01T00:00:00Z",
     createdAt: "2023-01-01T00:00:00Z",
+    capabilities: buildPartitionCoefficientCapabilities(),
     ...overrides,
   };
 }

@@ -121,17 +121,17 @@ function App() {
             />
             <Route
               path=":communityId/edit"
-              element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><EditCommunityPage /></CapabilityRoute>}
+              element={<CapabilityRoute require={{ scope: "communityById", capability: "canUpdate" }}><EditCommunityPage /></CapabilityRoute>}
             />
           </Route>
           <Route
             path="platform"
-            element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><PlatformPage /></CapabilityRoute>}
+            element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><PlatformPage /></CapabilityRoute>}
           />
           <Route path="users">
             <Route index element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><UsersPage /></CapabilityRoute>} />
             <Route path="new" element={<CapabilityRoute require={{ scope: "platform", capability: "canCreateUsers" }}><CreateUserPage /></CapabilityRoute>} />
-            <Route path=":userId/edit" element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><EditUserPage /></CapabilityRoute>} />
+            <Route path=":userId/edit" element={<CapabilityRoute require={{ scope: "user", capability: "canEdit" }}><EditUserPage /></CapabilityRoute>} />
           </Route>
           <Route path="no-community" element={<NoCommunityPage />} />
         </Route>

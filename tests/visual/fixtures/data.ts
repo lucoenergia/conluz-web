@@ -48,6 +48,22 @@ const FULL_PLATFORM_CAPABILITIES = {
   canCreateUsers: true,
 };
 
+/**
+ * What somebody else's user record offers a caller who administers neither the
+ * platform nor any community of theirs: nothing. FIXED_USER_2 belongs to no
+ * community, so this is every caller but a platform admin.
+ */
+export const UNMANAGEABLE_USER_CAPABILITIES = {
+  canRead: true,
+  canEdit: false,
+  canDelete: false,
+  canEnable: false,
+  canDisable: false,
+  canGrantPlatformAdmin: false,
+  canRevokePlatformAdmin: false,
+  canListSupplies: false,
+};
+
 /** What an ordinary caller may do with their own user record. */
 const OWN_USER_CAPABILITIES = {
   canRead: true,
@@ -60,8 +76,15 @@ const OWN_USER_CAPABILITIES = {
   canListSupplies: true,
 };
 
-/** What a platform admin may do with somebody else's user record. */
-const MANAGED_USER_CAPABILITIES = {
+/**
+ * What a platform admin may do with somebody else's user record.
+ *
+ * Exported because the route mocks have to serve it conditionally:
+ * UserAccessPolicy.canEdit allows a platform admin, or a community admin of one
+ * of the target's communities, and nobody else -- so another user's record
+ * cannot carry one fixed answer for every caller.
+ */
+export const MANAGED_USER_CAPABILITIES = {
   canRead: true,
   canEdit: true,
   canDelete: true,
@@ -153,12 +176,22 @@ const SHARING_AGREEMENT_CAPABILITIES = { canRead: true, canManage: true };
  * platform-wide decisions, and none of the membership ones. This is what makes
  * the platform dashboard baseline honest -- listing communities is a platform
  * right, reading their production is not.
+ *
+ * canManageMemberships is one of the platform-wide ones, despite sitting beside
+ * the membership flags. MembershipAccessPolicy.canManageMemberships allows any
+ * platform admin who can see the community, and CallerMemberships.canSeeCommunity
+ * is true for a platform admin on every community -- so a fixture that inherited
+ * `false` from the member shape was stating the opposite of the rule, and would
+ * have hidden "Gestionar administradores" from the communities row menu in every
+ * capture. Its stricter sibling canManageMembershipInvestment has no platform
+ * bypass and stays false.
  */
-const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
+export const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
   ...MEMBER_COMMUNITY_CAPABILITIES,
   canUpdate: true,
   canEnable: true,
   canDisable: true,
+  canManageMemberships: true,
   canListPlants: false,
   canReadProduction: false,
   canListSupplies: false,

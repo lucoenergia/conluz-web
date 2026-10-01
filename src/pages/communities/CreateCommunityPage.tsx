@@ -7,19 +7,18 @@ import {
   Avatar,
   TextField,
   Button,
-  Alert,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { useCreateCommunity } from "../../api/communities/communities";
+import { usePlatformActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
 
 export const CreateCommunityPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const createCommunity = useCreateCommunity();
+  const { createCommunity } = usePlatformActions().actions;
 
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
@@ -48,30 +47,20 @@ export const CreateCommunityPage: FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    // The route guard has already established canCreateCommunity, so this only
+    // covers the render before the current user has arrived.
+    if (!createCommunity) return;
 
-    try {
-      const response = await createCommunity.mutateAsync({
-        data: {
-          name: name.trim(),
-          code: code.trim(),
-          legalId: legalId.trim() || undefined,
-          address: address.trim() || undefined,
-        },
-      });
-      if (response) {
-        navigate("/communities");
-      }
-    } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 404) {
-        errorDispatch(
-          "La creación de comunidades no está habilitada en este servidor (multi-community mode desactivado).",
-        );
-      } else {
-        errorDispatch(
-          "Ha habido un problema al crear la comunidad. Por favor, inténtalo más tarde.",
-        );
-      }
+    const created = await createCommunity.run({
+      name: name.trim(),
+      code: code.trim(),
+      legalId: legalId.trim() || undefined,
+      address: address.trim() || undefined,
+    });
+    if (created) {
+      navigate("/communities");
+    } else {
+      errorDispatch("Ha habido un problema al crear la comunidad. Por favor, inténtalo más tarde.");
     }
   };
 
@@ -124,10 +113,6 @@ export const CreateCommunityPage: FC = () => {
 
       <Box sx={sxStyles.pageContainerFull}>
         <Paper elevation={0} sx={sxStyles.softPanel}>
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Esta operación requiere que el servidor tenga el modo multi-comunidad habilitado.
-          </Alert>
-
           <Box
             component="form"
             onSubmit={handleSubmit}
@@ -166,16 +151,16 @@ export const CreateCommunityPage: FC = () => {
               <Button
                 variant="outlined"
                 onClick={() => navigate("/communities")}
-                disabled={createCommunity.isPending}
+                disabled={createCommunity?.isPending}
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 variant="contained"
-                disabled={createCommunity.isPending}
+                disabled={!createCommunity || createCommunity.isPending}
               >
-                {createCommunity.isPending ? "Creando..." : "Crear comunidad"}
+                {createCommunity?.isPending ? "Creando..." : "Crear comunidad"}
               </Button>
             </Box>
           </Box>

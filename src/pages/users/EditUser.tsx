@@ -5,7 +5,8 @@ import { Box, Typography, Paper, Avatar, CircularProgress, Alert } from "@mui/ma
 import { useNavigate, useParams } from "react-router";
 import type { UpdateUserBody } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { useGetUserById, useUpdateUser } from "../../api/users/users";
+import { useGetUserById } from "../../api/users/users";
+import { useUserActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
 import { UserForm, type UserFormValues } from "../../components/UserForm/UserForm";
 import PersonIcon from "@mui/icons-material/Person";
@@ -14,28 +15,33 @@ export const EditUserPage: FC = () => {
   const { userId = "" } = useParams();
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const updateUser = useUpdateUser();
-
   const { data: userData, isLoading, error } = useGetUserById(userId);
 
-  const handleSubmit = async ({ fullName, personalId, email, address, phoneNumber }: UserFormValues) => {
-    try {
-      const updatedUser = {
-        number: userData?.number,
-        personalId,
-        fullName,
-        address,
-        email,
-        phoneNumber,
-      } as UpdateUserBody;
+  // The account itself carries the answer. This is the ADMINISTRATIVE edit, whose
+  // canEdit is false for an ordinary member on their own record -- changing one's
+  // own details is PUT /users/profile, which the profile screen owns.
+  const { edit } = useUserActions().forUser(userData).actions;
 
-      const response = await updateUser.mutateAsync({ userId, data: updatedUser }, {});
-      if (response) {
-        navigate("/users");
-      } else {
-        errorDispatch("Ha habido un problema al editar el usuario. Por favor, inténtalo más tarde");
-      }
-    } catch {
+  const handleSubmit = async ({ fullName, personalId, email, address, phoneNumber }: UserFormValues) => {
+    // The route guard has already established canEdit, so this only covers the
+    // render before the account itself has arrived.
+    if (!edit || !userData) return;
+
+    // No cast: UpdateUserBody requires `number`, and reading it off the loaded
+    // account is what makes it a number rather than `number | undefined`. The
+    // cast that used to be here hid exactly that.
+    const updatedUser: UpdateUserBody = {
+      number: userData.number,
+      personalId,
+      fullName,
+      address,
+      email,
+      phoneNumber,
+    };
+
+    if (await edit.run(updatedUser)) {
+      navigate("/users");
+    } else {
       errorDispatch("Ha habido un problema al editar el usuario. Por favor, inténtalo más tarde");
     }
   };
@@ -122,7 +128,8 @@ export const EditUserPage: FC = () => {
               phoneNumber: userData.phoneNumber || "",
             }}
             handleSubmit={handleSubmit}
-            isPending={updateUser.isPending}
+            isPending={edit?.isPending ?? false}
+            disabled={!edit}
             submitLabel="Guardar cambios"
           />
         </Paper>

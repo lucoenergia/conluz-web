@@ -2,9 +2,11 @@ import type { FC, ReactNode } from "react";
 import { Navigate, useParams } from "react-router";
 import {
   useActiveCommunityCapabilities,
+  useCommunityCapabilities,
   usePlantCapabilities,
   usePlatformCapabilities,
   useSupplyCapabilities,
+  useUserCapabilities,
 } from "../../hooks/permissions";
 import { CapabilityLoadError } from "./CapabilityLoadError";
 import type { CapabilityRequirement } from "../../hooks/permissions";
@@ -34,12 +36,12 @@ interface CapabilityRouteProps {
  * read. That costs nothing it would not otherwise cost: platform capabilities
  * are a context read; the community query is the one the side menu already
  * makes on every authenticated page, so React Query serves both from a single
- * fetch. The plant and supply resolvers are the exceptions -- each is keyed by
- * a route parameter that other routes do not have -- so each is disabled unless
- * the requirement names its scope, and a platform route fires neither request.
+ * fetch. The resolvers keyed by a route parameter are the exceptions -- plant,
+ * supply, user and a named community -- so each is disabled unless the
+ * requirement names its scope, and a platform route fires none of them.
  */
 export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children }) => {
-  const { plantId, supplyPointId } = useParams();
+  const { plantId, supplyPointId, userId, communityId } = useParams();
 
   const platform = usePlatformCapabilities(
     require.scope === "platform" ? require.capability : "canAdministerPlatform",
@@ -55,6 +57,17 @@ export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children })
     require.scope === "supply" ? require.capability : "canRead",
     { enabled: require.scope === "supply" },
   );
+  const user = useUserCapabilities(userId, require.scope === "user" ? require.capability : "canRead", {
+    enabled: require.scope === "user",
+  });
+  // The community named in the URL, not the active one. A platform admin
+  // editing a community is not a member of it, so the active-community answer
+  // would be about the wrong resource, or about none.
+  const namedCommunity = useCommunityCapabilities(
+    communityId,
+    require.scope === "communityById" ? require.capability : "canRead",
+    { enabled: require.scope === "communityById" },
+  );
 
   const outcome =
     require.scope === "platform"
@@ -63,7 +76,11 @@ export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children })
         ? community
         : require.scope === "plant"
           ? plant
-          : supply;
+          : require.scope === "supply"
+            ? supply
+            : require.scope === "user"
+              ? user
+              : namedCommunity;
 
   if (outcome.state === "pending") return null;
   if (outcome.state === "error") return <CapabilityLoadError onRetry={outcome.retry} />;
