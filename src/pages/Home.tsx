@@ -7,7 +7,6 @@ import { visuallyHidden } from "@mui/utils";
 import { GraphCard } from "../components/Graph/GraphCard";
 import { GraphBar } from "../components/Graph/GraphBar";
 import { MultiSeriesBar } from "../components/Graph/MultiSeriesBar";
-import { useGetSuppliesByUserId } from "../api/users/users";
 // eslint no-restricted-imports allowlist (see eslint.config.js): the supply id
 // driving these comes from a community-scoped list, and the keyed Outlet
 // remounts this page when the community changes.
@@ -23,12 +22,7 @@ import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 import EvStationIcon from "@mui/icons-material/EvStation";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import { useLoggedUser } from "../context/logged-user.context";
 import { useActiveCommunity } from "../context/community.context";
-// SupplyPointAutocomplete still picks its supplies query by role.
-// eslint-disable-next-line no-restricted-imports -- moves onto community capabilities in #162
-import { useActiveCommunityRole, useIsPlatformAdmin } from "../hooks/permissions/useActiveCommunityRole";
-import { CommunityRole } from "../api/models";
 
 // TODO: Set monitorig data methods when endpoints are ready
 
@@ -83,30 +77,23 @@ interface SupplyPointAutocompleteProps {
 }
 
 const SupplyPointAutocomplete: FC<SupplyPointAutocompleteProps> = ({ value, onChange }) => {
-  const loggedUser = useLoggedUser();
   const activeCommunityId = useActiveCommunity();
-  const isPlatformAdmin = useIsPlatformAdmin();
-  const activeCommunityRole = useActiveCommunityRole();
-  // eslint-disable-next-line no-restricted-syntax -- same migration, #162.
-  const isAdmin = isPlatformAdmin || activeCommunityRole === CommunityRole.COMMUNITY_ADMIN;
 
-  const { data: userSupplies, isLoading: isLoadingUserSupplies } = useGetSuppliesByUserId(
-    loggedUser?.id || "",
-    {
-      query: { enabled: !!loggedUser?.id && !isAdmin },
-    },
-  );
-
-  const { data: allSupplies, isLoading: isLoadingAllSupplies } = useGetAllSupplies(
+  // One query for everybody. The backend decides who sees what: a community
+  // admin gets the whole community's supplies, a member gets the ones they own
+  // within it. The screen asking that question itself was both redundant and
+  // wrong -- the per-user endpoint it used for members carries no community
+  // predicate, so it listed their supplies across every community they belong
+  // to.
+  const { data: supplies, isLoading } = useGetAllSupplies(
     activeCommunityId ?? "",
     { size: 100 },
     {
-      query: { enabled: isAdmin && !!activeCommunityId },
+      query: { enabled: !!activeCommunityId },
     },
   );
 
-  const supplyPoints = isAdmin ? allSupplies?.items : userSupplies;
-  const isLoading = isAdmin ? isLoadingAllSupplies : isLoadingUserSupplies;
+  const supplyPoints = supplies?.items;
 
   const options = useMemo(
     () =>
