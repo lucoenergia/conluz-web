@@ -71,15 +71,23 @@ describe("the mutation guard rail", () => {
 
   describe("the screens that predate the layer", () => {
     it("may still import the mutation they already had", async () => {
-      // Profile.tsx and Login.tsx are the last two. Profile's own migration is
-      // not a swap: PUT /users/profile takes a narrower body than the form edits,
-      // which is why it is still here -- see #162.
+      // Login.tsx is the last one.
+      const errors = await restrictedImportErrors(
+        `import { useLogin } from "../../api/authentication/authentication";\nexport const x = useLogin;\n`,
+        "src/pages/auth/Login.tsx",
+      );
+
+      expect(errors).toEqual([]);
+    });
+
+    it("holds the profile screen to the rule now that it has migrated", async () => {
       const errors = await restrictedImportErrors(
         `import { useUpdateUser } from "../api/users/users";\nexport const x = useUpdateUser;\n`,
         "src/pages/Profile.tsx",
       );
 
-      expect(errors).toEqual([]);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("useProfileActions");
     });
 
     it("are exempt from the mutation rule only, not from the community-scope one", async () => {

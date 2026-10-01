@@ -233,7 +233,6 @@ const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) 
 // place and the spec can assert it never grows.
 const MUTATION_CALL_SITES = {
   // #162 -- home, profile and navigation leftovers
-  "src/pages/Profile.tsx": ["useUpdateUser"],
   "src/pages/auth/Login.tsx": ["useLogin"],
 };
 

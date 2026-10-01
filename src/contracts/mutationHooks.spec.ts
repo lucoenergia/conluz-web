@@ -222,12 +222,10 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     scope: "user",
     capability: "canEdit",
     hook: "useUserActions",
-    // RELEASE BLOCKER, not a note. Profile.tsx saves the signed-in user through
-    // this administrative endpoint, and canEdit is false for an ordinary member
-    // looking at their own record -- so once the backend enforces capabilities,
-    // no member can save their profile. The fix is to call PUT /users/profile
-    // (useProfileActions), and it has to ship before or with the backend.
-    approximates: "administrative edit of any user; NOT the profile screen's save -- see useProfileActions and the release blocker recorded in the #165 PR",
+    // canEdit is false for an ordinary member looking at their own record, by
+    // design: self-service goes to PUT /users/profile. Nothing on the profile
+    // screen reads this entry.
+    approximates: "administrative edit of any user; the profile screen saves its own caller through useProfileActions / PUT /users/profile, which asks no capability",
   },
   useDeleteUser: { scope: "user", capability: "canDelete", hook: "useUserActions" },
   useEnableUser: { scope: "user", capability: "canEnable", hook: "useUserActions" },
@@ -448,7 +446,7 @@ describe("the screens that predate the actions layer", () => {
   it("never grows", () => {
     // Lowered by hand as screens migrate, so growing it takes a deliberate edit
     // with a diff rather than a quiet addition.
-    expect(entries.length).toBeLessThanOrEqual(2);
+    expect(entries.length).toBeLessThanOrEqual(1);
   });
 
   it("does not overlap the community-scope wrapper list", () => {
