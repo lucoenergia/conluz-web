@@ -1,4 +1,7 @@
 import type {
+  GetDatadisConfigResponse,
+  GetShellyConfigResponse,
+  MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
   SupplyResponse,
@@ -719,3 +722,106 @@ export const PUBLISHED_AGREEMENT_EDITED = {
   updatedAt: "2026-08-01T09:00:00Z",
   updatedBy: FIXED_COMMUNITY_ADMIN_USER.id,
 };
+
+// ---------------------------------------------------------------------------
+// Community management: members and integrations
+// ---------------------------------------------------------------------------
+
+/**
+ * One community's roster: an admin, an active member and a disabled one, so the
+ * role labels, the status chips and the counters all have something to show.
+ *
+ * Every row carries its own capabilities, as the backend returns them -- the
+ * members screen reads those per row rather than asking once for the community,
+ * so a single shape would make every row's menu identical and prove nothing.
+ */
+export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
+  {
+    id: "membership-admin",
+    communityId: FIXED_COMMUNITY_ID,
+    user: {
+      id: FIXED_COMMUNITY_ADMIN_USER.id,
+      fullName: FIXED_COMMUNITY_ADMIN_USER.fullName,
+      email: FIXED_COMMUNITY_ADMIN_USER.email,
+      personalId: FIXED_COMMUNITY_ADMIN_USER.personalId,
+      number: FIXED_COMMUNITY_ADMIN_USER.number,
+      address: FIXED_COMMUNITY_ADMIN_USER.address,
+      phoneNumber: FIXED_COMMUNITY_ADMIN_USER.phoneNumber,
+      enabled: true,
+      isPlatformAdmin: false,
+      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" },
+      capabilities: OWN_USER_CAPABILITIES,
+    },
+    role: "COMMUNITY_ADMIN",
+    enabled: true,
+    // Their own membership: the backend does not offer them their own removal
+    // or demotion, which is the safety rail the row menu has to respect.
+    capabilities: {
+      canUpdateRole: false,
+      canDelete: false,
+      canManageInvestment: true,
+      canReadPayback: true,
+    },
+  },
+  {
+    id: "membership-member",
+    communityId: FIXED_COMMUNITY_ID,
+    user: {
+      id: FIXED_MEMBER_USER.id,
+      fullName: FIXED_MEMBER_USER.fullName,
+      email: FIXED_MEMBER_USER.email,
+      personalId: FIXED_MEMBER_USER.personalId,
+      number: FIXED_MEMBER_USER.number,
+      address: FIXED_MEMBER_USER.address,
+      phoneNumber: FIXED_MEMBER_USER.phoneNumber,
+      enabled: true,
+      isPlatformAdmin: false,
+      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+      capabilities: MANAGED_USER_CAPABILITIES,
+    },
+    role: "COMMUNITY_MEMBER",
+    enabled: true,
+    capabilities: {
+      canUpdateRole: true,
+      canDelete: true,
+      canManageInvestment: true,
+      canReadPayback: true,
+    },
+  },
+  {
+    id: "membership-disabled",
+    communityId: FIXED_COMMUNITY_ID,
+    user: {
+      id: FIXED_USER_2.id,
+      fullName: FIXED_USER_2.fullName,
+      email: FIXED_USER_2.email,
+      personalId: FIXED_USER_2.personalId,
+      number: FIXED_USER_2.number,
+      address: FIXED_USER_2.address,
+      phoneNumber: FIXED_USER_2.phoneNumber,
+      enabled: false,
+      isPlatformAdmin: false,
+      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+      capabilities: MANAGED_USER_CAPABILITIES,
+    },
+    role: "COMMUNITY_MEMBER",
+    enabled: false,
+    capabilities: {
+      canUpdateRole: true,
+      canDelete: true,
+      canManageInvestment: false,
+      canReadPayback: false,
+    },
+  },
+];
+
+/** Datadis configured and on, which is the state the integration card shows most. */
+export const FIXED_DATADIS_CONFIG: GetDatadisConfigResponse = {
+  username: "comunidad@conluz.test",
+  passwordSet: true,
+  baseUrl: "https://datadis.es",
+  enabled: true,
+};
+
+/** Shelly off, so the two cards do not render the same state. */
+export const FIXED_SHELLY_CONFIG: GetShellyConfigResponse = { enabled: false };

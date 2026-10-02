@@ -14,6 +14,9 @@ import {
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
   FIXED_SUPPLY_OTHER_COMMUNITY,
+  FIXED_MEMBERSHIPS,
+  FIXED_DATADIS_CONFIG,
+  FIXED_SHELLY_CONFIG,
   FIXED_SUPPLY_ID,
   FIXED_USER_2,
   MANAGED_USER_CAPABILITIES,
@@ -567,6 +570,46 @@ export async function mockUserSuppliesAcrossCommunities(page: Page) {
           { ...FIXED_SUPPLY, capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES },
           { ...FIXED_SUPPLY_OTHER_COMMUNITY, capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES },
         ]),
+      }),
+  );
+}
+
+/**
+ * The community-management screens: the member roster and the integration
+ * configs.
+ *
+ * Registered AFTER mockAllApiRoutes so these win. Without them the broad
+ * communities predicate answers both with a list of communities -- the wrong
+ * shape, which renders as an empty roster and as cards stuck loading.
+ */
+export async function mockCommunityManagementRoutes(page: Page) {
+  await page.route(
+    (url) => /\/api\/v1\/communities\/[^/]+\/memberships(\?|$)/.test(url.href),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FIXED_MEMBERSHIPS),
+      }),
+  );
+
+  await page.route(
+    (url) => url.href.includes("/config/datadis"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FIXED_DATADIS_CONFIG),
+      }),
+  );
+
+  await page.route(
+    (url) => url.href.includes("/config/shelly"),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FIXED_SHELLY_CONFIG),
       }),
   );
 }

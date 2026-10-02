@@ -206,4 +206,69 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByRole("heading", { name: "Editar comunidad" })).toHaveCount(0);
   });
+
+  // ── The four platform screens that had no capture ────────────────────────
+  // /communities appeared only in layout-budgets.spec.ts, which measures its
+  // header and takes no picture; the other three had assertion-only coverage
+  // proving who may reach them, which says nothing about what they look like.
+
+  test("communities list page", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    // Registered after mockAllApiRoutes so it is consulted first: the richer
+    // fixture is what gives the table more than one row.
+    await page.route(
+      (url) => /\/api\/v1\/communities(\?|$)/.test(url.href),
+      (route: Route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(DASHBOARD_COMMUNITIES),
+        }),
+    );
+
+    await page.goto("/communities");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("communities-list-page.png", await mainRegion(page));
+  });
+
+  test("edit community page", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/edit`);
+    await expect(page.getByRole("main")).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("edit-community-page.png", await mainRegion(page));
+  });
+
+  test("create user page", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/users/new");
+    await expect(page.getByRole("main")).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("create-user-page.png", await mainRegion(page));
+  });
+
+  test("edit user page", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto(`/users/${FIXED_USER_2.id}/edit`);
+    await expect(page.getByRole("main")).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("edit-user-page.png", await mainRegion(page));
+  });
+
 });
