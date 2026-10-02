@@ -10,7 +10,6 @@ import {
   FIXED_PLANT,
   FIXED_PLANT_ID,
   MEMBER_PLANT_CAPABILITIES,
-  FIXED_PLANT_WITH_SUPPLY,
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
   FIXED_SUPPLY_ID,
@@ -300,7 +299,7 @@ export async function mockSharingAgreementsPlantRoutes(
 // ---------------------------------------------------------------------------
 
 export async function mockPlantDetailRoutes(page: Page, currentUser?: { memberships?: Record<string, string> }) {
-  const plant = asPlantCaller(FIXED_PLANT_WITH_SUPPLY, currentUser);
+  const plant = asPlantCaller(FIXED_PLANT, currentUser);
   await page.route(
     (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}`) && !url.href.includes("sharing-agreements"),
     (route: Route) =>

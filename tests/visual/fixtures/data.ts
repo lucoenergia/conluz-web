@@ -1,3 +1,9 @@
+import type {
+  PartitionCoefficientResponse,
+  PlantResponse,
+  SupplyResponse,
+} from "../../../src/api/models";
+
 // ---------------------------------------------------------------------------
 // Fixed fixtures — these values NEVER change between runs
 // ---------------------------------------------------------------------------
@@ -294,19 +300,23 @@ export const FIXED_USER_2 = {
   capabilities: MANAGED_USER_CAPABILITIES,
 };
 
-export const FIXED_SUPPLY = {
+/**
+ * Named separately because `SupplyResponse.name` is nullable, so specs that
+ * select on it cannot pass the field straight to a locator. The constant keeps
+ * one source of truth without casting the null away.
+ */
+export const FIXED_SUPPLY_NAME = "Casa Principal";
+
+export const FIXED_SUPPLY: SupplyResponse = {
   id: FIXED_SUPPLY_ID,
   code: "ES0021000000000000AA",
-  name: "Casa Principal",
+  name: FIXED_SUPPLY_NAME,
   address: "Calle Mayor, 1, 28001 Madrid",
   addressRef: "ESC D PTA 1",
-  partitionCoefficient: 0.1234,
   enabled: true,
-  datadisValidDateFrom: "2024-01-01",
-  datadisDistributor: "Iberdrola",
-  datadisDistributorCode: "2",
-  datadisPointType: 5,
-  datadisIsThirdParty: false,
+  contract: { validDateFrom: "2024-01-01" },
+  distributor: { name: "Iberdrola", code: "2", pointType: 5 },
+  shelly: null,
   user: FIXED_MEMBER_USER,
   // The active-community guard compares this with the selected community; a
   // supply without one is never foreign, so omitting it would quietly disable
@@ -315,19 +325,16 @@ export const FIXED_SUPPLY = {
   capabilities: OWNER_SUPPLY_CAPABILITIES,
 };
 
-export const FIXED_SUPPLY_2 = {
+export const FIXED_SUPPLY_2: SupplyResponse = {
   id: "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
   code: "ES0021000000000000BB",
   name: "Garaje",
   address: "Calle Mayor, 1, Sótano, 28001 Madrid",
   addressRef: "",
-  partitionCoefficient: 0.0566,
   enabled: false,
-  datadisValidDateFrom: "2024-03-15",
-  datadisDistributor: "Endesa",
-  datadisDistributorCode: "1",
-  datadisPointType: 3,
-  datadisIsThirdParty: false,
+  contract: { validDateFrom: "2024-03-15" },
+  distributor: { name: "Endesa", code: "1", pointType: 3 },
+  shelly: null,
   user: FIXED_MEMBER_USER,
   // The active-community guard compares this with the selected community; a
   // supply without one is never foreign, so omitting it would quietly disable
@@ -378,7 +385,7 @@ export const FIXED_PLANT_ID = "dddddddd-eeee-ffff-0000-111111111111";
 // history needs it, so it has no PlantResponse fixture of its own.
 export const SECOND_PLANT_ID = "dddddddd-eeee-ffff-0000-222222222222";
 
-export const FIXED_PLANT = {
+export const FIXED_PLANT: PlantResponse = {
   id: FIXED_PLANT_ID,
   providerCode: "HWI-001",
   regulatoryCode: "ES1234567890123456AB1F",
@@ -388,6 +395,15 @@ export const FIXED_PLANT = {
   inverterProvider: "HUAWEI",
   totalPower: 120.5,
   connectionDate: "2023-05-10",
+  // Required and non-nullable on PlantResponse: a plant always produces onto a
+  // supply, so a fixture without one described a response the backend cannot
+  // return. It is a reference, not the supply itself -- PlantDetailHeader shows
+  // the CUPS either way and links it only on canReadSupply.
+  supply: {
+    id: FIXED_SUPPLY_ID,
+    code: "ES0031300806333002ET0F",
+    name: "Casa de Luco",
+  },
   // The guard in usePlantInActiveCommunity compares this with the selected
   // community; without it the guard is silently inert in every plant baseline.
   community: { id: FIXED_COMMUNITY_ID },
@@ -395,21 +411,6 @@ export const FIXED_PLANT = {
   // the default so a route that forgets to re-stamp it keeps today's baseline
   // rather than quietly emptying a screen.
   capabilities: COMMUNITY_ADMIN_PLANT_CAPABILITIES,
-};
-
-/**
- * The plant fixture plus a linked supply. Kept separate from FIXED_PLANT so the
- * sharing-agreement baselines, which share that fixture, stay byte-identical.
- * The detail header needs it: without a linked supply it would have four
- * details rather than five, and the "+5" toggle is part of what AC1 specifies.
- */
-export const FIXED_PLANT_WITH_SUPPLY = {
-  ...FIXED_PLANT,
-  supply: {
-    id: FIXED_SUPPLY_ID,
-    code: "ES0031300806333002ET0F",
-    name: "Casa de Luco",
-  },
 };
 
 export const PAGED_PLANTS = {
@@ -617,7 +618,7 @@ export const FIXED_COEFFICIENTS_INCOMPLETE = [
 // from FIXED_SUPPLY_ID, which identifies the standalone supply-detail fixture.
 export const HISTORY_SUPPLY_ID = "supply-1";
 
-export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
+export const FIXED_SUPPLY_COEFFICIENT_HISTORY: PartitionCoefficientResponse[] = [
   {
     id: "hist-1",
     supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
@@ -628,6 +629,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: "2022-03-01T00:00:00Z",
     validTo: "2023-01-01T00:00:00Z",
     createdAt: "2022-02-01T08:00:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
   {
     id: "hist-2",
@@ -639,6 +644,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: "2023-01-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-06-15T10:00:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
   {
     id: "hist-3",
@@ -650,6 +659,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: "2024-04-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-03-01T10:00:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
   {
     id: "hist-pending",
@@ -661,6 +674,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: null,
     validTo: null,
     createdAt: "2024-09-01T09:30:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
 ];
 
