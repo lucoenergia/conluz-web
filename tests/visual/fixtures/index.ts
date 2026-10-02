@@ -23,21 +23,21 @@
  *     reducedMotion (it was once set where Playwright ignores it). The injected
  *     stylesheet above is the only animation suppression.
  *
- * Role fixture mapping:
- *   FIXED_MEMBER_USER          → home, supply-points, supply-detail, supply modals
- *   FIXED_COMMUNITY_ADMIN_USER → sharing-agreements list (populated/empty/filtered). /members
- *                                itself is still not Playwright-tested via direct navigation.
- *                                That was once forced: the old guard redirected on a cold
- *                                page.goto() before the community context's effect had resolved.
- *                                CapabilityRoute now waits for that answer, so a deep link
- *                                reaches the page. The sharing-agreements specs still navigate
- *                                from an unguarded page (/production) and click
- *                                through via the app's own Link — by the time that client-side
- *                                navigation happens, the community-resolution effect has already
- *                                settled, so the guard passes. /members itself is still covered by
- *                                unit tests only (ImportPartnersModal.spec.tsx, etc.).
- *   FIXED_PLATFORM_ADMIN_USER  → /platform (platform dashboard: populated + empty), /users (users page)
+ * Role fixture mapping. Each screen is captured with the personas that can
+ * actually reach it, and with no others — there is no hybrid persona here, and
+ * adding one would capture a caller the backend cannot produce.
+ *   FIXED_MEMBER_USER          → home, profile, change-password, supply-points,
+ *                                supply-detail, production list and plant detail
+ *   FIXED_COMMUNITY_ADMIN_USER → supply-points and production as an admin, the supply and plant
+ *                                forms, members, integrations, and the whole
+ *                                sharing-agreement surface
+ *   FIXED_PLATFORM_ADMIN_USER  → /platform (populated + empty), /users, /users/new,
+ *                                /users/:id/edit, /communities, /communities/:id/edit
  *   FIXED_NO_COMMUNITY_USER    → /no-community (asserts the screen renders correctly)
+ *
+ * The sharing-agreement specs still navigate by clicking from /production rather
+ * than by a cold page.goto. That is now a convenience, not a requirement:
+ * CapabilityRoute waits for the capability answer, so a deep link lands.
  */
 
 export * from "./capture";

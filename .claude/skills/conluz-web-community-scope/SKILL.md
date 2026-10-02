@@ -19,6 +19,9 @@ assumptions still lingering in fixtures, comments, or your own priors.
 - `src/context/community.context.tsx` — active-community context/provider.
 - `src/hooks/permissions/` — capability hooks, and the only place a role is read.
 - `src/components/Auth/CapabilityRoute.tsx` — the route guard.
+- `src/contracts/` — the four contracts that hold all of this: `endpointScope`, `mutationHooks`,
+  `routeAccess`, `userScopedReads`. Read these before changing a route, an action or a user-scoped
+  read; they are what will fail.
 - `src/components/CommunitySelector/`, `CommunityStatusChip/`.
 - The generated hooks under `src/api/` (path-scoped by `communityId`).
 
@@ -97,9 +100,9 @@ Reach them through a wrapper that applies the guard:
   plant as `isNotFound` so pages reuse the existing "Planta no encontrada" empty state.
 - `useSharingAgreementsData` / `useSharingAgreementDetailData` — same guard, folded into
   their existing `isNotFound`.
-- `useSupplyInActiveCommunity` (`src/pages/supply-points/`) — **applies no guard yet**:
-  `SupplyResponse` carries no community reference, so there is nothing to compare. It exists
-  so that when the backend adds one, the fix lands in a single place.
+- `useSupplyInActiveCommunity` (`src/pages/supply-points/`) — same guard, via
+  `isSupplyOutsideActiveCommunity` (`src/pages/supply-points/supplyCommunityScope.ts`).
+  `SupplyResponse.community` is a required reference, so there is something to compare.
 - `selectPeriodsInCommunity` (`src/pages/production/coefficientHistory.ts`) — the other
   valid shape: filter an entity-keyed *response* by community at render time.
 
@@ -148,10 +151,17 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   API hides what the caller may not see.
 - **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
   `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
-- **One screen has not migrated yet** and carries a numbered `eslint-disable`:
-  `SupplyCoefficientHistorySection.tsx` (#163). Do not add a second. It is
-  unblocked -- the capability it was waiting for now exists:
-  `PartitionCoefficientCapabilitiesResponse.canReadSharingAgreement`.
+- **There are no exemptions.** Nothing under `src/` reads a role or the
+  platform-admin flag to decide what to render, and nothing carries an
+  `eslint-disable` for the permission rules. If you want one, the capability you
+  need either exists on the payload or is missing from the backend — ask for it
+  rather than approximating it with a role.
+- **Do not restate a payload answer as a prop.** A boolean threaded down from a
+  screen is a second source of truth for something each row already carries, and
+  it cannot express a list that spans several resources. The coefficient history
+  had exactly that: one `showAgreementLinks` for a timeline spanning several
+  plants, where the caller may administer one and not another. Each period now
+  reads its own `capabilities.canReadSharingAgreement`.
 - **Writes go through `src/hooks/actions/`, never a generated mutation hook.**
   An action hook hands back only what this caller may do: a denied action is
   `undefined`, and its `isPending` lives inside it, so there is no way to render
@@ -160,12 +170,11 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   run once per table row. Each also returns a `CapabilityOutcome` per action for
   the cases where `pending` must look different from `denied`. Reads are
   unrestricted; `getGet…QueryKey()` getters too. `no-restricted-imports`
-  enforces it over all 52 mutation hooks, and
+  enforces it over every generated mutation hook, and
   `src/contracts/mutationHooks.spec.ts` fails if a new mutation arrives with
-  nobody having decided who may perform it. No screen is exempt: the
-  `MUTATION_CALL_SITES` list retired at zero in #162, and the spec now asserts
-  over the whole tree that nothing outside the actions layer, the generated
-  client and the specs imports one. Test helpers that name a hook they never
+  nobody having decided who may perform it. No screen is exempt: the spec
+  asserts over the whole tree that nothing outside the actions layer, the
+  generated client and the specs imports one. Test helpers that name a hook they never
   call are recorded by file and hook in `TEST_HELPER_MUTATION_IMPORTS`.
 
 ## Gating a list
@@ -198,8 +207,53 @@ agreement card needs `isDraft && canDelete`. A spec whose fixtures let status an
 capability agree everywhere cannot tell the two apart, and will pass against the
 pre-capability code.
 
-> Written as the capability foundation landed; the full rewrite of this skill
-> comes with the epic's final PR.
+## A capability gates the call, not the rows
+
+`canListSupplies` predicts whether `GET /users/{userId}/supplies` is **allowed**. It says nothing
+about **what comes back**. Those are different questions, and conflating them produced two backend
+bugs (`lucoenergia/conluz#326`, `#336`) where the guard admitted a caller on one rule and the query
+picked rows by another.
+
+The endpoints are scoped now: a listing returns only what the caller may read one by one. But "may
+read" is **plural** — somebody administering two communities may read both — while the selector
+names one. So a client reading a user-scoped listing still narrows it:
+
+```tsx
+// GET /users/{userId}/supplies answers for every community the caller administers.
+const inCommunity = useMemo(
+  () => userSupplies.filter((s) => !isSupplyOutsideActiveCommunity(s, activeCommunityId)),
+  [userSupplies, activeCommunityId],
+);
+```
+
+Gate the query on the active community too. The helper treats an unresolved community as "don't
+know", which is right for a single resource and wrong for a list, where it would pass everything
+through.
+
+`src/contracts/userScopedReads.spec.ts` derives the user-scoped listings from `api-docs.json` and
+requires every call site to declare the filter it applies, freezing the file/hook/filter triple. A
+new call site fails until it declares one.
+
+Community-scoped listings need none of this: their `communityId` is in the path, so they re-key
+themselves when the selection changes.
+
+## Routes are a contract
+
+`src/contracts/routeAccess.spec.ts` parses `src/App.tsx` and requires every authenticated path to be
+classified in `ROUTE_ACCESS` — either the capability its `CapabilityRoute` requires, or
+`authenticated` with the reason any signed-in caller may see it. It also requires each
+`MENU_SECTIONS` entry to name the same requirement as the page it leads to.
+
+So adding a route is two edits, in this order: wrap it, then classify it. The suite failing in
+between is the design working, not an obstacle.
+
+Two things worth knowing before you touch it:
+
+- **`/` is deliberately unguarded.** `CapabilityRoute` sends a denied caller there, so guarding it
+  would redirect to itself.
+- **A guard on a parent route counts.** The spec looks for the nearest enclosing `CapabilityRoute`,
+  so moving one up does not silently un-guard its children — and does not make the spec demand a
+  second guard on each of them.
 
 ## Sharp edges
 
@@ -217,11 +271,23 @@ pre-capability code.
   multi-community model and omit `isPlatformAdmin`/`memberships`. Fixtures built with
   `src/test/fixtures.ts` (`buildUser` and friends) always carry both, at least privilege by
   default. The ones that can still be stale are partial objects cast to a response type
-  (`as UserResponse`, `as unknown as …`) in specs outside the test-harness migration, and the
-  Playwright fixtures in `tests/visual/fixtures/`. If gating or a visual test misbehaves,
-  suspect a stale fixture before suspecting the code.
+  (`as UserResponse`, `as unknown as …`) in specs outside the test-harness migration. The
+  Playwright fixtures are no longer among them: `tsconfig.tests.json` puts `tests/` in
+  `tsc -b` and the response fixtures are annotated, so a missing field is a build error
+  rather than a `false` that silently hides a control. If gating misbehaves, suspect a
+  stale fixture before suspecting the code.
 - **No role selector:** user create/edit forms have no global role field, and rows show
   no role label; community role is assigned through membership, not a user field.
+- **A green visual suite is not an authorization guarantee.** The Playwright route mocks refuse what
+  the served capabilities refuse, and `tests/visual/fixtures/test.ts` fails a test on any unexpected
+  403/404 — so a green run shows the UI is consistent with the capabilities it is **served**. It
+  does not show the backend enforces them. The backend's own policy-equivalence and
+  endpoint-coverage tests are what prove that. Do not cite one for the other.
+- **Another user's `memberships` is filtered to the caller.** Since `lucoenergia/conluz#336`,
+  `GET /users` and `GET /users/{userId}` return only the memberships in communities the caller
+  administers. The caller's own, from `GET /users/current`, are still complete — which is why the
+  active-community context can rely on them. Do not read another user's `memberships` as their
+  complete set.
 
 ## API client is an input — do not regenerate
 

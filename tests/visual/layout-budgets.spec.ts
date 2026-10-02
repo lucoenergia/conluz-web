@@ -88,14 +88,13 @@ test.describe("Visual baselines", () => {
   // -------------------------------------------------------------------------
 
   /**
-   * Every list page the suite can actually reach with its existing fixtures.
+   * Every list page whose header carries counters.
    *
-   * /members is absent, for the reason the file header already gives for its
-   * guard: it redirects on a cold goto before community selection resolves. It
-   * also has no memberships fixture — the broad communities mock would answer
-   * that call with a list of communities. Its header is the same three-counter
-   * shape as /users, which IS measured below, and the page itself stays covered
-   * by MembersPage.spec.tsx.
+   * /members is absent because its header is the same three-counter shape as
+   * /users, which IS measured below — not because it cannot be reached. It has
+   * a roster fixture and a capture of its own now
+   * (community-management.spec.ts), and CapabilityRoute waits for the
+   * capability answer, so a cold goto lands.
    */
   const LIST_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
     {

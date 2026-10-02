@@ -106,13 +106,26 @@ These steps are for human maintainers only. Automated agents must never perform 
 
 ### Updating visual regression baselines
 
-When an intentional UI change alters a captured screen, regenerate the Playwright baselines manually:
+`playwright.config.ts` sets `updateSnapshots: "none"`, so nothing writes a PNG unless a CLI flag
+says to. That is what makes "agents never touch baselines" enforceable rather than a matter of
+discipline, and it is why a brand-new screenshot name fails as **missing** instead of quietly
+creating its own baseline.
+
+When an intentional UI change alters a captured screen, or a change adds a capture, regenerate the
+baselines manually:
 
 ```bash
-npx playwright test --update-snapshots
+# Changed captures only — the usual case.
+npm run test:visual -- --update-snapshots=changed
+
+# Also write baselines for names that have none yet, after a change that adds captures.
+npm run test:visual -- --update-snapshots=missing
 ```
 
-Review every changed PNG under `tests/visual/__screenshots__/` before committing. An unreviewed baseline turns a regression into the new expected result.
+Review every changed PNG under `tests/visual/__screenshots__/` before committing. An unreviewed
+baseline turns a regression into the new expected result — and a new name's first baseline is
+accepted sight unseen unless you look, so check that a newly added capture shows a populated screen
+rather than an empty table or a card still loading.
 
 ### Regenerating the API client
 
