@@ -76,7 +76,10 @@ function historyPeriod(overrides: Partial<PartitionCoefficientResponse> = {}): P
     validFrom: "2023-01-01T00:00:00Z",
     validTo: "2024-01-01T00:00:00Z",
     createdAt: "2023-01-01T00:00:00Z",
-    capabilities: buildPartitionCoefficientCapabilities(),
+    // The drawer is only reachable from an agreement page for this plant, so
+    // the backend answers that its own agreements can be followed. Granted
+    // here rather than defaulted, so a test that wants it withheld says so.
+    capabilities: buildPartitionCoefficientCapabilities({ canReadSharingAgreement: true }),
     ...overrides,
   };
 }
@@ -159,6 +162,17 @@ describe("CoefficientHistoryDrawer — reachable from every agreement status", (
     await openHistory(user);
 
     expect(await screen.findByLabelText("Histórico de coeficientes de Vivienda A")).toBeInTheDocument();
+  });
+
+  it("shows a name rather than a link for a period the caller may not follow", async () => {
+    historyResult = [historyPeriod({ capabilities: { canReadSharingAgreement: false } })];
+    const user = userEvent.setup();
+    renderSet(SharingAgreementResponseStatus.PUBLISHED);
+
+    await openHistory(user);
+
+    expect(await screen.findByText("Reparto 2023")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Reparto 2023" })).not.toBeInTheDocument();
   });
 
   it("links each period to its own agreement", async () => {

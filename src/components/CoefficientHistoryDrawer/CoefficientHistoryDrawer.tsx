@@ -35,8 +35,9 @@ function getSupplyLabel(supply: SupplyReferenceResponse | undefined): string {
  *
  * Only ever rendered inside an agreement page for this exact plant, which is
  * guarded on that plant's canListSharingAgreements, so the caller's
- * entitlement is already proven -- which is why agreement links are always
- * shown here.
+ * entitlement is already proven. It passes no link flag even so: each period
+ * carries its own canReadSharingAgreement, and restating the answer here would
+ * be a second source of truth for it.
  */
 export const CoefficientHistoryDrawer: FC<CoefficientHistoryDrawerProps> = ({
   isOpen,
@@ -120,7 +121,6 @@ export const CoefficientHistoryDrawer: FC<CoefficientHistoryDrawerProps> = ({
             periods={periods}
             isLoading={isLoading}
             error={error}
-            showAgreementLinks
             currentSharingAgreementId={currentSharingAgreementId}
             emptySubtitle="Este suministro todavía no tiene periodos aplicados en esta planta."
           />
