@@ -33,7 +33,7 @@ describe("SharingAgreementUploadDialog", () => {
 
   it("titles the dialog as importing a file you already have, never as the distributor's file", () => {
     renderDialog("CAU0001");
-    expect(screen.getByRole("heading", { name: "Importar un fichero que ya tengas" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Importar un fichero que ya tengas (en|de) / })).toBeInTheDocument();
     expect(screen.queryByText(/de la distribuidora/)).not.toBeInTheDocument();
   });
 

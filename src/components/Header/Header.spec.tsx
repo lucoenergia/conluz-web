@@ -1,8 +1,26 @@
+import "@testing-library/jest-dom";
 import { screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { Header } from "./Header";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
+import type { CurrentUserResponse } from "../../api/models";
+
+let loggedUser: CurrentUserResponse | null = null;
+
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () => loggedUser,
+}));
+
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetAllCommunities: vi.fn(),
+}));
+
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 
 // Through the harness rather than a hand-built provider stack: LoggedUserProvider
 // is a query now (#203), so it has to sit under the QueryClientProvider, and the
@@ -16,4 +34,28 @@ test("Header gets render and menu fn triggered", async () => {
   await user.click(screen.getByLabelText("menu"));
 
   expect(menuFn.mock.calls.length).toBe(1);
+});
+
+// The scope surface moved off the app bar and into the side menu and the strip
+// beneath it (#186). Asserted here because a user with several communities is
+// exactly the caller who used to get a selector in the bar.
+test("the app bar holds no community selector, even for a user with several communities", () => {
+  loggedUser = buildCurrentUser({
+    id: "u1",
+    fullName: "Ada",
+    memberships: { "community-a": "COMMUNITY_ADMIN", "community-b": "COMMUNITY_MEMBER" },
+  });
+  vi.mocked(useGetAllCommunities).mockReturnValue(
+    query.success<typeof getAllCommunities>([
+      buildCommunity({ id: "community-a", name: "Comunidad Alpha" }),
+      buildCommunity({ id: "community-b", name: "Comunidad Beta" }),
+    ]),
+  );
+
+  renderWithProviders(<Header onMenuClick={vi.fn()} username="Ada" />, { activeCommunityId: "community-a" });
+
+  const appBar = screen.getByRole("banner");
+  expect(appBar).not.toHaveTextContent("Comunidad Alpha");
+  expect(screen.queryByRole("button", { name: /comunidad/i })).not.toBeInTheDocument();
+  expect(appBar.querySelector('[aria-haspopup="menu"]')).toBeNull();
 });

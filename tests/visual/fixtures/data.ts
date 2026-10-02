@@ -498,6 +498,34 @@ export const FIXED_SHARING_AGREEMENTS = [
 export const NO_FILE_DRAFT_AGREEMENT = { ...FIXED_SHARING_AGREEMENTS[1], file: null };
 
 /**
+ * A second agreement with coefficients in force, beside the published one in
+ * the list. Two PUBLISHED agreements in force at once is the legitimate state
+ * during a distributor activation transition. It has its own installed power
+ * (60 kW, against 120,5 kW and the draft's 45 kW), so a power line computed
+ * with the wrong agreement shows. Not part of FIXED_SHARING_AGREEMENTS, so the
+ * list baselines are unaffected; its by-id GET is served by
+ * mockInForceComparisonRoutes.
+ */
+export const SECOND_IN_FORCE_AGREEMENT = {
+  id: "11111111-2222-3333-4444-555555555555",
+  plantId: FIXED_PLANT_ID,
+  name: "Reparto bloque C",
+  notes: null,
+  status: "PUBLISHED",
+  installedPowerKw: 60,
+  createdAt: "2025-03-01T09:00:00Z",
+  createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
+  file: null,
+};
+
+/**
+ * References to the agreements that author in-force coefficients. Both are
+ * PUBLISHED: a SUPERSEDED agreement never holds an open coefficient.
+ */
+const IN_FORCE_AGREEMENT_REF = { id: FIXED_SHARING_AGREEMENTS[0].id, name: FIXED_SHARING_AGREEMENTS[0].name, status: "PUBLISHED" };
+const SECOND_IN_FORCE_AGREEMENT_REF = { id: SECOND_IN_FORCE_AGREEMENT.id, name: SECOND_IN_FORCE_AGREEMENT.name, status: "PUBLISHED" };
+
+/**
  * Coefficient set covering every case the detail-page baselines must exercise:
  *   - PENDING with no validFrom (row 2) and APPLIED with validFrom (rows 1,3,4,5,6)
  *   - all 5 endState values: OPEN (1,2), OPEN_ORPHAN (3), PENDING_SUCCESSION (4), DERIVED (5), CLOSED (6)
@@ -520,7 +548,7 @@ export const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2024-01-01T00:00:00Z",
     endState: "OPEN",
-    currentCoefficient: { coefficient: 0.25, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
+    currentCoefficient: { coefficient: 0.25, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: IN_FORCE_AGREEMENT_REF },
   },
   {
     coefficientId: "coef-2",
@@ -537,7 +565,7 @@ export const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2024-02-01T00:00:00Z",
     endState: "OPEN_ORPHAN",
-    currentCoefficient: { coefficient: 0.2, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
+    currentCoefficient: { coefficient: 0.2, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: IN_FORCE_AGREEMENT_REF },
   },
   {
     coefficientId: "coef-4",
@@ -546,7 +574,7 @@ export const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2023-01-01T00:00:00Z",
     endState: "PENDING_SUCCESSION",
-    currentCoefficient: { coefficient: 0.15, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
+    currentCoefficient: { coefficient: 0.15, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: IN_FORCE_AGREEMENT_REF },
   },
   {
     coefficientId: "coef-5",
@@ -556,7 +584,7 @@ export const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2022-01-01T00:00:00Z",
     endState: "DERIVED",
     endDate: "2023-12-31T00:00:00Z",
-    currentCoefficient: { coefficient: 0.1, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
+    currentCoefficient: { coefficient: 0.1, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: IN_FORCE_AGREEMENT_REF },
   },
   {
     coefficientId: "coef-6",
@@ -566,7 +594,7 @@ export const FIXED_COEFFICIENTS_MIXED = [
     validFrom: "2024-03-01T00:00:00Z",
     endState: "CLOSED",
     endDate: "2024-05-01T00:00:00Z",
-    currentCoefficient: { coefficient: 0, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
+    currentCoefficient: { coefficient: 0, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: IN_FORCE_AGREEMENT_REF },
   },
 ];
 
@@ -583,7 +611,7 @@ export const FIXED_COEFFICIENTS_ALL_PENDING = [
     applicationState: "PENDING",
     endState: "OPEN",
     // Raised by this draft: 0.35 -> 0.40.
-    currentCoefficient: { coefficient: 0.35, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
+    currentCoefficient: { coefficient: 0.35, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: IN_FORCE_AGREEMENT_REF },
   },
   {
     coefficientId: "coef-2",
@@ -592,7 +620,9 @@ export const FIXED_COEFFICIENTS_ALL_PENDING = [
     applicationState: "PENDING",
     endState: "OPEN",
     // Lowered by this draft: 0.40 -> 0.35, so one baseline shows both signs.
-    currentCoefficient: { coefficient: 0.4, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: { id: "sa-0", name: "Reparto 2023", status: "SUPERSEDED" } },
+    // In force from the second agreement, so the context line reads "en
+    // vigor hoy" and this row's power uses that agreement's 60 kW.
+    currentCoefficient: { coefficient: 0.4, validFrom: "2025-04-01T00:00:00Z", sharingAgreement: SECOND_IN_FORCE_AGREEMENT_REF },
   },
   {
     coefficientId: "coef-3",
@@ -600,12 +630,40 @@ export const FIXED_COEFFICIENTS_ALL_PENDING = [
     coefficient: 0.25,
     applicationState: "PENDING",
     endState: "OPEN",
-    // Genuinely on nothing yet — the "—" branch of AC8, in the same baseline.
+    // Genuinely on nothing yet: the "Nuevo" badge, in the same baseline.
     currentCoefficient: null,
   },
 ];
 
 export const FIXED_COEFFICIENTS_EMPTY: unknown[] = [];
+
+function activeCoefficient(id: string, supply: { id: string; name: string; code: string }, coefficient: number, sharingAgreement: object, validFrom: string) {
+  return {
+    id,
+    supply,
+    community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+    plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
+    sharingAgreement,
+    coefficient,
+    validFrom,
+    validTo: null,
+    createdAt: "2024-06-15T10:00:00Z",
+  };
+}
+
+/**
+ * GET /plants/{plantId}/partition-coefficients/active for the full DRAFT
+ * comparison, in CUPS order as the endpoint returns it: the in-force values of
+ * Vivienda A and B (matching their rows' currentCoefficient), plus Nave D and
+ * Trastero E, which are in force but not in FIXED_COEFFICIENTS_ALL_PENDING and
+ * so leave the distribution, one from each in-force agreement.
+ */
+export const FIXED_ACTIVE_COEFFICIENTS = [
+  activeCoefficient("active-1", { id: "supply-1", name: "Vivienda A", code: "ES0031300000000001AA" }, 0.35, IN_FORCE_AGREEMENT_REF, "2023-01-01"),
+  activeCoefficient("active-2", { id: "supply-2", name: "Vivienda B", code: "ES0031300000000002BB" }, 0.4, SECOND_IN_FORCE_AGREEMENT_REF, "2025-04-01"),
+  activeCoefficient("active-4", { id: "supply-4", name: "Nave D", code: "ES0031300000000004DD" }, 0.15, IN_FORCE_AGREEMENT_REF, "2023-01-01"),
+  activeCoefficient("active-5", { id: "supply-5", name: "Trastero E", code: "ES0031300000000005EE" }, 0.1, SECOND_IN_FORCE_AGREEMENT_REF, "2025-04-01"),
+];
 
 /**
  * A DRAFT set that genuinely doesn't sum to 100% (0.4 + 0.35 = 0.75), for the

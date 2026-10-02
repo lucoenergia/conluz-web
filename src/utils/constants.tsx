@@ -33,12 +33,22 @@ export interface MenuSection {
   items: MenuItem[];
 }
 
+/**
+ * Two labelled groups by scope (#186): what belongs to the active community,
+ * and what administers the platform. Personal entries (profile, password)
+ * live in the profile menu, and Contacto in the menu footer.
+ *
+ * `requires` is the capability the backend must grant, per item rather than
+ * per section: Miembros and Integraciones sit in the same group but are not
+ * the same decision, and a section-wide rule is how the menu came to offer
+ * pages the router then refused.
+ */
 const COMMUNITY_READ: MenuRequirement = { scope: "community", capability: "canRead" };
 
 export const MENU_SECTIONS: MenuSection[] = [
   {
-    id: "operational",
-    title: "Operativo",
+    id: "community",
+    title: "Comunidad",
     items: [
       // Operational screens are about one community's own data, so they appear
       // once the caller may read the community they are working in -- which is
@@ -46,19 +56,13 @@ export const MENU_SECTIONS: MenuSection[] = [
       { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio", requires: COMMUNITY_READ },
       { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", requires: COMMUNITY_READ },
       { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", requires: COMMUNITY_READ },
-    ],
-  },
-  {
-    id: "community-management",
-    title: "Gestión de comunidad",
-    items: [
       { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", requires: { scope: "community", capability: "canManageMemberships" } },
       { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones", requires: { scope: "community", capability: "canManage" } },
     ],
   },
   {
-    id: "platform-admin",
-    title: "Administración de plataforma",
+    id: "platform",
+    title: "Plataforma",
     items: [
       { to: "/communities", id: "communities", icon: BusinessRoundedIcon, label: "Comunidades", requires: { scope: "platform", capability: "canAdministerPlatform" } },
       { to: "/users", id: "users", icon: ManageAccountsRoundedIcon, label: "Usuarios", requires: { scope: "platform", capability: "canListUsers" } },

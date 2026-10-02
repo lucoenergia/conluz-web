@@ -4,7 +4,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Routes, Route } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { mutation } from "../../test/queryState";
+import { mutation, query } from "../../test/queryState";
 import { SharingAgreementDetailPage } from "./SharingAgreementDetailPage";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -21,6 +21,9 @@ import {
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import type { SharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import {
+  getSharingAgreementById,
+  useGetPlantActivePartitionCoefficients,
+  type getPlantActivePartitionCoefficients,
   useDeleteSharingAgreement,
   usePublishSharingAgreement,
   useRevertSharingAgreementToDraft,
@@ -58,12 +61,22 @@ vi.mock(import("./useSharingAgreementDetailData"), async (importOriginal) => ({
 
 // Only the reads are replaced; the actions layer runs for real, so what is
 // under test is that each control follows the agreement's capabilities.
+//
+// One factory per module, not two: a second vi.mock of the same specifier
+// REPLACES the first rather than adding to it, so both sides' hooks have to be
+// listed together or one set silently stops being mocked.
+//
+// The last two are for the coefficient set, which compares a DRAFT against the
+// plant's active coefficients; nothing is in force here, and no request leaves
+// the spec.
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
   useUpdateSharingAgreement: vi.fn(),
   useDeleteSharingAgreement: vi.fn(),
   usePublishSharingAgreement: vi.fn(),
   useRevertSharingAgreementToDraft: vi.fn(),
+  useGetPlantActivePartitionCoefficients: vi.fn(),
+  getSharingAgreementById: vi.fn(),
 }));
 
 vi.mock("react-router", async () => {
@@ -150,6 +163,10 @@ describe("SharingAgreementDetailPage", () => {
     vi.mocked(useDeleteSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutateAsync }));
     vi.mocked(usePublishSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockPublishMutateAsync }));
     vi.mocked(useRevertSharingAgreementToDraft).mockReturnValue(mutation.idle({ mutateAsync: mockRevertMutateAsync }));
+    vi.mocked(useGetPlantActivePartitionCoefficients).mockImplementation((_plantId, options) =>
+      options?.query?.enabled ? query.success<typeof getPlantActivePartitionCoefficients>([]) : query.disabled(),
+    );
+    vi.mocked(getSharingAgreementById).mockRejectedValue(new Error("No agreement fixture"));
   });
 
   test("offers editing and deleting in the kebab for a DRAFT agreement", async () => {
@@ -405,7 +422,7 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Eliminar"));
 
-    expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^Eliminar acuerdo de reparto (en|de) / })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
     await waitFor(() => expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ plantId: "plant-1", sharingAgreementId: "agreement-1" }));

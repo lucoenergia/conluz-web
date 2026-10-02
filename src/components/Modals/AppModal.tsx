@@ -7,6 +7,8 @@ interface AppModalProps {
   isOpen: boolean;
   onClose: (event: React.MouseEvent<HTMLElement>) => void;
   title?: string;
+  /** Rendered above the title, e.g. the community a confirmed write lands in. */
+  scopeHeader?: ReactNode;
   icon?: ReactNode;
   iconBg?: string;
   iconSize?: number;
@@ -19,6 +21,7 @@ export const AppModal: FC<AppModalProps> = ({
   isOpen,
   onClose,
   title,
+  scopeHeader,
   icon,
   iconBg,
   iconSize,
@@ -40,6 +43,7 @@ export const AppModal: FC<AppModalProps> = ({
             p: { xs: 2, sm: 3 },
           }}
         >
+          {scopeHeader}
           {icon && (
             <Box
               sx={{
@@ -66,6 +70,7 @@ export const AppModal: FC<AppModalProps> = ({
   return (
     <BasicModal isOpen={isOpen} onClose={onClose}>
       <Box sx={{ p: { xs: 2, sm: 3 } }}>
+        {scopeHeader}
         {(icon || title) && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
             {icon && (

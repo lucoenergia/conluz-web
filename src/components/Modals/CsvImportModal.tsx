@@ -8,6 +8,8 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ErrorIcon from "@mui/icons-material/Error";
 import { AppModal } from "./AppModal";
 import { useActiveCommunity } from "../../context/community.context";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { radii, shadows, alphas, colors, fontSizes, interactiveTransition} from "../../theme/tokens";
 
 /** A bulk-import response, normalised across the endpoints that accept a CSV. */
@@ -26,7 +28,8 @@ export interface CsvImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImportComplete?: () => void;
-  title: string;
+  /** The title, given the name of the community the rows are imported into (#186). */
+  title: (communityName: string) => string;
   /** The CSV header line shown in the format hint. */
   expectedColumns: string;
   uploadingLabel: string;
@@ -52,6 +55,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({
   // destination to a backend fallback instead of to the community the user
   // is actually looking at.
   const activeCommunityId = useActiveCommunity();
+  const communityName = useActiveCommunityName();
   const [step, setStep] = useState<Step>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<CsvImportResult | null>(null);
@@ -113,14 +117,14 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({
   const errors = result?.errors || [];
 
   return (
-    <AppModal isOpen={isOpen} onClose={handleClose}>
+    <AppModal isOpen={isOpen} onClose={handleClose} scopeHeader={<CommunityScopeHeader name={communityName} />}>
       {step === "upload" && (
         <>
           <Typography
             component="h2" variant="h6"
             sx={{ color: "text.primary", mb: 3 }}
           >
-            {title}
+            {title(communityLabel(communityName))}
           </Typography>
 
           <Box

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Dayjs } from "dayjs";
 import {
+  getGetPlantActivePartitionCoefficientsQueryKey,
   getGetSharingAgreementPartitionCoefficientsQueryKey,
   useActivatePartitionCoefficients,
   useClosePartitionCoefficients,
@@ -177,6 +178,10 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
        * Agreements per plant are few and only mounted queries actually refetch, so
        * invalidating the whole plant subtree is cheap.
        *
+       * The plant's active coefficients (`/api/v1/plants/{plantId}/partition-coefficients/active`,
+       * what a DRAFT is compared against) sit outside that prefix too, and every
+       * one of these actions changes what is in force.
+       *
        * The supply timelines live under a different root (`/api/v1/supplies/...`)
        * and are keyed by supplyId, so the plant prefix can never reach them — the
        * history drawer and the supply detail section would both have gone stale
@@ -202,6 +207,7 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
             if (typeof key !== "string") return false;
             return (
               key.startsWith(`/api/v1/plants/${plantId}/sharing-agreements`) ||
+              key === getGetPlantActivePartitionCoefficientsQueryKey(plantId)[0] ||
               SUPPLY_COEFFICIENT_QUERY_URL.test(key)
             );
           },

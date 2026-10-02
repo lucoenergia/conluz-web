@@ -25,6 +25,7 @@ import {
   PAGED_PLANTS,
   PAGED_SUPPLIES,
   PAGED_USERS,
+  SECOND_IN_FORCE_AGREEMENT,
 } from "./data";
 
 // ---------------------------------------------------------------------------
@@ -375,7 +376,10 @@ export async function mockSharingAgreementsPlantRoutes(
   );
 
   await page.route(
-    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}`) && !url.href.includes("sharing-agreements"),
+    (url) =>
+      url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}`) &&
+      !url.href.includes("sharing-agreements") &&
+      !url.href.includes("/partition-coefficients"),
     (route: Route) =>
       route.fulfill({
         status: 200,
@@ -384,14 +388,45 @@ export async function mockSharingAgreementsPlantRoutes(
       }),
   );
 
+  // Nothing in force elsewhere in the plant by default, so a DRAFT lists no
+  // outgoing supplies. mockInForceComparisonRoutes overrides it.
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}/partition-coefficients/active`),
+    (route: Route) => route.fulfill({ status: 200, contentType: "application/json", body: "[]" }),
+  );
+
+  // The list, and the by-id GET of any agreement it holds or of the second
+  // in-force agreement: a DRAFT reads the agreements its in-force coefficients
+  // come from, for their installed power. Sub-resources of the viewed
+  // agreement are served by mockSharingAgreementDetailRoutes, registered later.
+  const byId = new Map(
+    [...(agreements as { id: string }[]), SECOND_IN_FORCE_AGREEMENT].map((agreement) => [agreement.id, agreement]),
+  );
   await page.route(
     (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements`),
-    (route: Route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(agreements),
-      }),
+    (route: Route) => {
+      const id = new URL(route.request().url()).pathname.match(/\/sharing-agreements\/([^/]+)$/)?.[1];
+      if (id === undefined) {
+        return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(agreements) });
+      }
+      const agreement = byId.get(id);
+      return agreement
+        ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(agreement) })
+        : route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({}) });
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: the plant's active coefficients, which a DRAFT is compared against.
+// Registered AFTER mockSharingAgreementsPlantRoutes() so it wins over that
+// helper's empty default.
+// ---------------------------------------------------------------------------
+
+export async function mockInForceComparisonRoutes(page: Page, activeCoefficients: unknown[]) {
+  await page.route(
+    (url) => url.href.includes(`/api/v1/plants/${FIXED_PLANT_ID}/partition-coefficients/active`),
+    (route: Route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(activeCoefficients) }),
   );
 }
 

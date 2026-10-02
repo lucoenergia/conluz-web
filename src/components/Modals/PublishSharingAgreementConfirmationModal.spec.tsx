@@ -1,11 +1,12 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import { PublishSharingAgreementConfirmationModal } from "./PublishSharingAgreementConfirmationModal";
 
 function renderModal(props: Partial<React.ComponentProps<typeof PublishSharingAgreementConfirmationModal>> = {}) {
-  return render(
+  return renderWithProviders(
     <PublishSharingAgreementConfirmationModal
       isOpen
       agreementName="Reparto vecinos bloque A"
@@ -22,7 +23,7 @@ describe("PublishSharingAgreementConfirmationModal", () => {
   test("states the coefficient set is sealed, that publishing applies nothing, and the reversibility window", () => {
     renderModal();
 
-    expect(screen.getByRole("heading", { name: "Poner en vigor" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Poner en vigor (en|de) / })).toBeInTheDocument();
     expect(
       screen.getByText(
         "Al poner el acuerdo en vigor, el reparto queda sellado: no podrás editar los coeficientes mientras esté vigente.",

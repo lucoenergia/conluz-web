@@ -1,29 +1,30 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import { SharingAgreementFormDialog } from "./SharingAgreementFormDialog";
 
 describe("SharingAgreementFormDialog", () => {
   test("create mode starts with an empty, required capacity field when no prefill is given", () => {
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={vi.fn()} />,
     );
 
     const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
     expect(capacityField).toHaveValue("");
-    expect(screen.getByRole("heading", { name: "Nuevo acuerdo de reparto" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Nuevo acuerdo de reparto (en|de) / })).toBeInTheDocument();
   });
 
   test("create mode describes attaching a file you already have, never one facilitated by the distributor", () => {
-    render(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={vi.fn()} />);
+    renderWithProviders(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={vi.fn()} />);
 
     expect(screen.getByText(/el fichero TXT que ya tengas hecho por otro medio/)).toBeInTheDocument();
     expect(screen.queryByText(/te haya facilitado la distribuidora/)).not.toBeInTheDocument();
   });
 
   test("create mode prefills capacity from the plant's totalPower, formatted with a Spanish comma", () => {
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="create"
@@ -39,7 +40,7 @@ describe("SharingAgreementFormDialog", () => {
   test("submitting with an empty name shows a field error and does not call onSubmit", async () => {
     const onSubmit = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="create"
@@ -58,7 +59,7 @@ describe("SharingAgreementFormDialog", () => {
   test("submitting with a non-numeric capacity shows a field error and does not call onSubmit", async () => {
     const onSubmit = vi.fn();
     const user = userEvent.setup();
-    render(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={onSubmit} />);
+    renderWithProviders(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText("Nombre del acuerdo", { exact: false }), "Reparto 2025");
     await user.click(screen.getByRole("button", { name: "Crear borrador" }));
@@ -70,7 +71,7 @@ describe("SharingAgreementFormDialog", () => {
   test("submits parsed values, treating the Spanish decimal comma correctly", async () => {
     const onSubmit = vi.fn();
     const user = userEvent.setup();
-    render(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={onSubmit} />);
+    renderWithProviders(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText("Nombre del acuerdo", { exact: false }), "Reparto 2025");
     await user.type(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }), "12,5");
@@ -87,7 +88,7 @@ describe("SharingAgreementFormDialog", () => {
   test("edit mode is seeded with the agreement's current values and sends all three fields on submit", async () => {
     const onSubmit = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
@@ -100,7 +101,7 @@ describe("SharingAgreementFormDialog", () => {
     expect(screen.getByLabelText("Nombre del acuerdo", { exact: false })).toHaveValue("Reparto 2024");
     expect(screen.getByLabelText("Notas internas", { exact: false })).toHaveValue("Nota original");
     expect(screen.getByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("8");
-    expect(screen.getByRole("heading", { name: "Editar acuerdo de reparto" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Editar acuerdo de reparto (en|de) / })).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("Nombre del acuerdo", { exact: false }));
     await user.type(screen.getByLabelText("Nombre del acuerdo", { exact: false }), "Reparto 2024 (revisado)");
@@ -114,7 +115,7 @@ describe("SharingAgreementFormDialog", () => {
   });
 
   test("create mode shows the plant/draft intro line and the publish info box, with field examples", () => {
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog isOpen mode="create" plantName="Planta Castellnovo I" onCancel={vi.fn()} onSubmit={vi.fn()} />,
     );
 
@@ -128,7 +129,7 @@ describe("SharingAgreementFormDialog", () => {
   });
 
   test("edit mode does not show the create-only intro line or publish info box", () => {
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
@@ -146,7 +147,7 @@ describe("SharingAgreementFormDialog", () => {
 
   test("warns when hasCoefficients and the capacity is changed to a different valid value", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
@@ -168,7 +169,7 @@ describe("SharingAgreementFormDialog", () => {
 
   test("does not warn while the capacity field is cleared mid-edit", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
@@ -186,7 +187,7 @@ describe("SharingAgreementFormDialog", () => {
 
   test("does not warn when the capacity is retyped to the same value", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
@@ -206,7 +207,7 @@ describe("SharingAgreementFormDialog", () => {
 
   test("does not warn when hasCoefficients is false, even if capacity changes", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
@@ -227,7 +228,7 @@ describe("SharingAgreementFormDialog", () => {
     const onCancel = vi.fn();
     const onSubmit = vi.fn();
     const user = userEvent.setup();
-    render(<SharingAgreementFormDialog isOpen mode="create" onCancel={onCancel} onSubmit={onSubmit} />);
+    renderWithProviders(<SharingAgreementFormDialog isOpen mode="create" onCancel={onCancel} onSubmit={onSubmit} />);
 
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
 

@@ -11,10 +11,13 @@ import { useErrorDispatch } from "../../context/error.context";
 import { useCommunityActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { BreadCrumb } from "../../components/Breadcrumb";
+import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
 export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
+  const communityName = useActiveCommunityName();
   const loggedUser = useLoggedUser();
   const activeCommunityId = useActiveCommunity();
   const errorDispatch = useErrorDispatch();
@@ -90,9 +93,10 @@ export const CreateSupplyPage: FC = () => {
           >
             <ElectricMeterIcon sx={{ fontSize: 32 }} />
           </Avatar>
-          <Box>
-            <Typography variant="h4" component="h1">
-              Crear nuevo punto de suministro
+          <Box sx={{ minWidth: 0 }}>
+            <CommunityScopeHeader name={communityName} tone="onBrand" />
+            <Typography variant="h4" component="h1" sx={{ overflowWrap: "anywhere" }}>
+              Crear punto de suministro en {communityLabel(communityName)}
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
               Registra un nuevo punto de suministro en la comunidad energética

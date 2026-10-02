@@ -3,6 +3,8 @@ import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import PublishOutlinedIcon from "@mui/icons-material/PublishOutlined";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface PublishSharingAgreementConfirmationModalProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
   onCancel,
   onConfirm,
 }) => {
+  const communityName = useActiveCommunityName();
   return (
     <ConfirmationModal
       isOpen={isOpen}
@@ -41,7 +44,8 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
       confirmDisabled={isPublishing}
       confirmPending={isPublishing}
       onConfirm={onConfirm}
-      title="Poner en vigor"
+      title={`Poner en vigor en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<PublishOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
     >

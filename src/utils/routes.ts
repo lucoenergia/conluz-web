@@ -16,6 +16,41 @@ export function resolveLandingRoute(user: CurrentUserResponse): string {
 }
 
 /**
+ * What a page reads and writes, as stated to the user by the scope context
+ * surface (side-menu header or context strip).
+ *
+ * - `community`: the page's data belongs to the active community.
+ * - `platform`: the page manages the platform and ignores the active community.
+ * - `personal`: the page affects only the logged user's own data.
+ * - `none`: there is deliberately nothing to state (a user with no community).
+ * - `unknown`: the route is not classified. No surface is rendered for it: a
+ *   surface whose job is to be trusted must never guess.
+ */
+export type PageScope = "community" | "platform" | "personal" | "none" | "unknown";
+
+const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "unknown"> }> = [
+  { prefix: "/production", scope: "community" },
+  { prefix: "/supply-points", scope: "community" },
+  { prefix: "/members", scope: "community" },
+  { prefix: "/integrations", scope: "community" },
+  { prefix: "/platform", scope: "platform" },
+  { prefix: "/communities", scope: "platform" },
+  { prefix: "/users", scope: "platform" },
+  { prefix: "/profile", scope: "personal" },
+  { prefix: "/change-password", scope: "personal" },
+  { prefix: "/contact", scope: "personal" },
+  { prefix: "/no-community", scope: "none" },
+];
+
+export function resolvePageScope(pathname: string): PageScope {
+  if (pathname === "/") return "community";
+  const match = PAGE_SCOPES.find(
+    ({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+  return match?.scope ?? "unknown";
+}
+
+/**
  * Sections whose detail routes carry an entity id in the URL. The endpoints
  * behind them are entity-scoped -- /api/v1/plants/{plantId}/...,
  * /api/v1/supplies/{supplyId}/... -- so they carry no community at all and

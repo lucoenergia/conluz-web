@@ -50,7 +50,9 @@ const ADMIN = buildCurrentUser({
 });
 const DEMOTED: CurrentUserResponse = { ...ADMIN, platformCapabilities: buildPlatformCapabilities({}) };
 
-const PLATFORM_SECTION = "Administración de plataforma";
+// The side-menu group, renamed to the scope it names in #186. Distinct from
+// the /platform page's own "Administración de plataforma" heading.
+const PLATFORM_SECTION = "Plataforma";
 
 /**
  * Pushed from a mount effect, not from render: it is what distinguishes "the

@@ -22,7 +22,8 @@ assumptions still lingering in fixtures, comments, or your own priors.
 - `src/contracts/` — the four contracts that hold all of this: `endpointScope`, `mutationHooks`,
   `routeAccess`, `userScopedReads`. Read these before changing a route, an action or a user-scoped
   read; they are what will fail.
-- `src/components/CommunitySelector/`, `CommunityStatusChip/`.
+- `src/components/ScopeContext/` (the page-scope surface and community switch),
+  `src/hooks/useActiveCommunityDetails.ts`, `src/hooks/usePageScope.ts`, `CommunityStatusChip/`.
 - The generated hooks under `src/api/` (path-scoped by `communityId`).
 
 ## The signed-in user is a live query
@@ -41,7 +42,7 @@ Two facts follow, and both decide where an invalidation belongs:
    invalidate the current user, and a spec says so.
 2. **The caller's own memberships CAN change in this session.** The membership endpoints gate only on
    `canManageMemberships(communityId)` and have no self rail, so a community admin may re-role or
-   remove themselves. `memberships` lives on the current user — it is what `CommunitySelector`
+   remove themselves. `memberships` lives on the current user — it is what `ScopeContext`
    offers, what the role label reads and what `CommunityProvider` resolves the active community from
    — so `useMembershipActions` invalidates `getGetCurrentUserQueryKey()` alongside the roster.
 
@@ -69,8 +70,17 @@ production by virtue of the flag; they must go through community membership.
 
 `community.context.tsx` selects and persists the active community: auto-selects when the
 user has exactly one membership; restores the persisted choice when there are several.
-`CommunitySelector` switches it. Most data views are meaningless without an active
-community.
+`ScopeContext` switches it, through `useActiveCommunityDetails().select`. Most data views
+are meaningless without an active community.
+
+## Stating the scope on screen
+
+`resolvePageScope` (`src/utils/routes.ts`) classifies every route as `community`,
+`platform`, `personal`, `none` (`/no-community`) or `unknown`. `ScopeContext` states it:
+in the side-menu header while the menu is open, in the strip under the app bar while it
+is closed, never both (#186). An unclassified route renders **no** surface rather than a
+guess, and `src/utils/pageScope.spec.ts` fails when a route in `App.tsx` is unclassified,
+so a new route forces the decision. The app bar carries no community control.
 
 ## Endpoints come in four scopes, not one
 
@@ -283,7 +293,7 @@ Two things worth knowing before you touch it:
 - **Legacy `X-Community-Id` header removed:** the axios interceptor that injected this
   header was removed from `community.context.tsx`. Community-scoped data endpoints carry
   `communityId` in the **path**; entity-scoped ones carry no community at all (see above).
-- **`invalidateQueries()` cannot re-scope anything.** `CommunitySelector` calls it on every
+- **`invalidateQueries()` cannot re-scope anything.** `useActiveCommunityDetails().select` calls it on every
   switch, and it is correct for community-path-scoped queries. It does nothing for an
   entity-scoped one (same key, same foreign entity back) and nothing at all for data already
   copied into `useState`. The keyed Outlet is what handles both.

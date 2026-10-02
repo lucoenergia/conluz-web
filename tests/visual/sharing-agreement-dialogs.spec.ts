@@ -77,7 +77,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Acciones", exact: true }).click();
     await page.getByRole("menuitem", { name: "Registrar fecha" }).click();
 
-    await expect(page.getByRole("heading", { name: "Registrar fecha de aplicación" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Registrar fecha de aplicación (en|de) / })).toBeVisible();
     const confirmButton = page.getByRole("button", { name: "Registrar fecha" });
     await expect(confirmButton).toBeDisabled();
     await expect(page.getByText("Selecciona una fecha")).toBeVisible();
@@ -160,7 +160,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
     await page.getByRole("menuitem", { name: "Corregir fecha" }).click();
 
-    await expect(page.getByRole("heading", { name: "Corregir fecha de aplicación" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Corregir fecha de aplicación (en|de) / })).toBeVisible();
     await expect(page.getByText(/producción ya atribuida a este suministro/)).toBeVisible();
     await stabilizePage(page);
 
@@ -179,7 +179,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Más acciones para Local C" }).first().click();
     await page.getByRole("menuitem", { name: "Cerrar (baja)" }).click();
 
-    await expect(page.getByRole("heading", { name: "Cerrar coeficiente" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Cerrar coeficiente (en|de) / })).toBeVisible();
     await expect(page.getByText(/dejará de recibir atribución de producción/)).toBeVisible();
     await stabilizePage(page);
 
@@ -214,7 +214,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
     await page.getByRole("menuitem", { name: "Eliminar" }).click();
 
-    await expect(page.getByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Eliminar acuerdo de reparto (en|de) / })).toBeVisible();
     await stabilizePage(page);
 
     await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-delete-confirmation.png", await hideAppBar(page));
@@ -236,7 +236,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
     await page.getByRole("button", { name: "Poner en vigor" }).click();
 
-    await expect(page.getByRole("heading", { name: "Poner en vigor" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Poner en vigor (en|de) / })).toBeVisible();
     await expect(page.getByText(/Poner en vigor no aplica nada por sí mismo/)).toBeVisible();
     await stabilizePage(page);
 
@@ -261,7 +261,7 @@ test.describe("Visual baselines", () => {
     // agreement's kebab is gone entirely: editing and deleting are draft-only.
     await page.getByRole("button", { name: "Volver a borrador" }).click();
 
-    await expect(page.getByRole("heading", { name: "Volver a borrador" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Volver a borrador (en|de) / })).toBeVisible();
     await expect(
       page.getByText(/dejará de estar en vigor y sus coeficientes volverán a ser editables/),
     ).toBeVisible();

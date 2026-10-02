@@ -6,6 +6,8 @@ import { alphas, fontSizes, radii } from "../../theme/tokens";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
 import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface DeactivateOrReopenCoefficientConfirmationModalProps {
   isOpen: boolean;
@@ -46,6 +48,7 @@ export const DeactivateOrReopenCoefficientConfirmationModal: FC<DeactivateOrReop
   onCancel,
   onConfirm,
 }) => {
+  const communityName = useActiveCommunityName();
   const copy = COPY[action];
   const isBatch = (coefficients?.length ?? 0) > 1;
 
@@ -56,7 +59,8 @@ export const DeactivateOrReopenCoefficientConfirmationModal: FC<DeactivateOrReop
       confirmLabel="Confirmar y recalcular"
       confirmDisabled={isPending}
       onConfirm={onConfirm}
-      title={copy.title}
+      title={`${copy.title} en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<WarningAmberIcon sx={{ fontSize: 28, color: "error.main" }} />}
       iconBg={alphas.error.light}
     >

@@ -4,11 +4,12 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { type Page, type TestInfo } from "@playwright/test";
+import { type Page } from "@playwright/test";
 import {
   test,
   expect,
   DRAFT_AGREEMENT,
+  FIXED_ACTIVE_COEFFICIENTS,
   FIXED_COEFFICIENTS_ALL_PENDING,
   FIXED_COEFFICIENTS_EMPTY,
   FIXED_COEFFICIENTS_INCOMPLETE,
@@ -19,6 +20,7 @@ import {
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
+  mockInForceComparisonRoutes,
   mockSharingAgreementDetailRoutes,
   mockSharingAgreementsPlantRoutes,
   navigateToSharingAgreementDetail,
@@ -45,23 +47,24 @@ test.describe("Visual baselines", () => {
   // state C (no file, sealed — explained-and-closed, no action button).
 
   /**
-   * The current-coefficient readout has two shapes: a column header on the
-   * desktop table, and a self-naming line on the mobile card, which has no
-   * headers. Both DOM trees are always mounted and swapped by a CSS
-   * breakpoint, so asserting the desktop header on mobile finds it hidden
-   * rather than absent.
+   * The draft comparison renders its per-row lines twice (table and cards,
+   * swapped by a CSS breakpoint), so the assertions use the single-instance
+   * parts: the context line above the list. The in-force power lines load
+   * after the rows, from each authoring agreement's GET; the capture waits
+   * for them so it never records a skeleton.
    */
-  async function expectCurrentCoefficientShown(page: Page, testInfo: TestInfo) {
-    const label = testInfo.project.name === "desktop" ? page.getByText("Coeficiente actual") : page.getByText(/^Actual /);
-    await expect(label.first()).toBeVisible();
+  async function expectComparisonSettled(page: Page, contextLine: string) {
+    await expect(page.getByText(contextLine)).toBeVisible();
+    await expect(page.getByLabel("Cargando potencia vigente")).toHaveCount(0);
   }
 
-  test("sharing agreement detail page (draft, with coefficients)", async ({ page }, testInfo) => {
+  test("sharing agreement detail page (draft, with coefficients)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_ALL_PENDING, 200);
+    await mockInForceComparisonRoutes(page, FIXED_ACTIVE_COEFFICIENTS);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
@@ -69,10 +72,11 @@ test.describe("Visual baselines", () => {
     // and filter chips are hidden entirely — this is what a real user sees.
     await expect(page.getByText("Estado de aplicación")).toHaveCount(0);
 
-    // Both branches of the current-coefficient readout in one shot: two
-    // supplies are already on a coefficient (one raised, one lowered by this
-    // draft) and Local C is on none.
-    await expectCurrentCoefficientShown(page, testInfo);
+    // The whole comparison in one shot: Vivienda A raised and Vivienda B
+    // lowered, from two PUBLISHED agreements (so no agreement is named),
+    // Local C new, and Nave D and Trastero E leaving the distribution.
+    await expectComparisonSettled(page, "Comparado con los coeficientes en vigor hoy");
+    await expect(page.getByRole("button", { name: /Salen del reparto \(2\)/ })).toHaveAttribute("aria-expanded", "true");
 
     // Layout subject: the main region, with the app bar masked (see mainRegion).
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", await mainRegion(page));
@@ -89,14 +93,14 @@ test.describe("Visual baselines", () => {
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
-    // The column is not mounted at all — a column of dashes would cost width
-    // on a 390px viewport to say nothing.
-    await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
+    // No comparison at all: nothing in force and nothing leaving.
+    await expect(page.getByText(/^Comparado con/)).toHaveCount(0);
+    await expect(page.getByText("Nuevo")).toHaveCount(0);
 
     await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-no-current-coefficient.png", await hideAppBar(page));
   });
 
-  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }, testInfo) => {
+  test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }) => {
     // FIXED_COEFFICIENTS_MIXED represents a state the backend guarantees a
     // real DRAFT can never reach (APPLIED requires publishing first; revert-
     // to-draft is refused once anything is applied). This test exists solely
@@ -121,8 +125,8 @@ test.describe("Visual baselines", () => {
     // Asserted rather than left to the pixels: on a tall desktop fullPage shot
     // a whole extra column diffed below the former global maxDiffPixelRatio
     // (0.02), so this baseline passed unchanged with the column there. The text
-    // assertion is what actually holds the column present on both viewports.
-    await expectCurrentCoefficientShown(page, testInfo);
+    // assertion is what actually holds the comparison present on both viewports.
+    await expectComparisonSettled(page, "Comparado con el acuerdo vigente «Reparto vecinos bloque A»");
 
     await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-defensive.png", await hideAppBar(page));
   });
@@ -168,9 +172,10 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     // FIXED_COEFFICIENTS_MIXED carries currentCoefficient on every row, as the
-    // backend sends it whatever the status. The column is still absent: on a
+    // backend sends it whatever the status. There is still no comparison: on a
     // published agreement the row's own value IS the one in force.
-    await expect(page.getByText("Coeficiente actual")).toHaveCount(0);
+    // Scoped to the section: the PUBLISHED status chip itself reads "Vigente".
+    await expect(page.getByTestId("sharing-agreement-coefficient-set").getByText(/^Comparado con|^Vigente/)).toHaveCount(0);
 
     // Layout subject: the main region, with the app bar masked (see mainRegion).
     await expect(page).toHaveScreenshot("sharing-agreement-detail-published.png", await mainRegion(page));

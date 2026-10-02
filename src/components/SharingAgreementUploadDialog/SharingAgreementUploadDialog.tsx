@@ -7,6 +7,8 @@ import { AppModal } from "../Modals/AppModal";
 import { colors, fontSizes, shadows } from "../../theme/tokens";
 import type { GroupedApiErrors } from "../../errors/apiErrorCatalogue";
 import type { Action, SharingAgreementFileUploadResult } from "../../hooks/actions";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 export interface SharingAgreementUploadDialogProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
   onClose,
   onUploadSuccess,
 }) => {
+  const communityName = useActiveCommunityName();
   const theme = useTheme();
 
   const [file, setFile] = useState<File | null>(null);
@@ -71,7 +74,8 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
     <AppModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Importar un fichero que ya tengas"
+      title={`Importar un fichero que ya tengas en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<UploadFileOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}
       actions={

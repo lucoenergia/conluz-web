@@ -7,6 +7,8 @@ import { AppModal } from "../Modals/AppModal";
 import { sxStyles } from "../../theme/sx";
 import { fontSizes, shadows } from "../../theme/tokens";
 import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 export interface SharingAgreementFormValues {
   name: string;
@@ -58,6 +60,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
   onCancel,
   onSubmit,
 }) => {
+  const communityName = useActiveCommunityName();
   const [name, setName] = useState(initialValues?.name ?? "");
   const [notes, setNotes] = useState(initialValues?.notes ?? "");
   const [capacityInput, setCapacityInput] = useState(
@@ -112,7 +115,8 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
     <AppModal
       isOpen={isOpen}
       onClose={onCancel}
-      title={mode === "create" ? "Nuevo acuerdo de reparto" : "Editar acuerdo de reparto"}
+      title={`${mode === "create" ? "Nuevo" : "Editar"} acuerdo de reparto en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<HandshakeOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}
       actions={

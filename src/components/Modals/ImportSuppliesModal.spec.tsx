@@ -3,6 +3,23 @@ import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
+
+// CsvImportModal names the community the rows are imported into (#186), which
+// it resolves from the caller's memberships and the community list.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetAllCommunities: vi.fn(),
+}));
+
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () => buildCurrentUser({ id: "admin", memberships: { "community-a": "COMMUNITY_ADMIN" } }),
+}));
+
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+
 import { ImportSuppliesModal } from "./ImportSuppliesModal";
 
 // The modal is handed the import by whoever may perform it, so there is no
@@ -18,6 +35,9 @@ describe("ImportSuppliesModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRun.mockResolvedValue({ created: [], errors: [] });
+    vi.mocked(useGetAllCommunities).mockReturnValue(
+      query.success<typeof getAllCommunities>([buildCommunity({ id: "community-a", name: "Comunidad Solar Norte" })]),
+    );
   });
 
   const setup = (props = {}, activeCommunityId: string | null = "community-a") => {
@@ -34,11 +54,10 @@ describe("ImportSuppliesModal", () => {
   };
 
   describe("Upload view", () => {
-    it("renders the modal title", () => {
+    it("AC9: names the target community in its header and in its title", () => {
       setup();
-      expect(
-        screen.getByText("Importar Puntos de Suministro desde CSV"),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Importar puntos de suministro a Comunidad Solar Norte" })).toBeInTheDocument();
+      expect(screen.getByText("Comunidad · Comunidad Solar Norte")).toBeInTheDocument();
     });
 
     it("renders the CSV drop zone", () => {

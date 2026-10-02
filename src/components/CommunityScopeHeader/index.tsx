@@ -1,0 +1,1 @@
+export { CommunityScopeHeader } from "./CommunityScopeHeader";

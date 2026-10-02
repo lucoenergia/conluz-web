@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { useActiveCommunity } from "../../context/community.context";
-import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
 
 const CONFIG_BY_COMMUNITY: Record<string, { username: string; baseUrl: string }> = {
   "community-a": { username: "datadis-a", baseUrl: "https://a.example" },
@@ -27,6 +27,7 @@ vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCommunityById: vi.fn(),
+  useGetAllCommunities: vi.fn(),
 }));
 
 vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => ({
@@ -41,8 +42,25 @@ vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   useGetHuaweiConfig: vi.fn(),
 }));
 
+// useActiveCommunityName -> useActiveCommunityDetails reads the caller's
+// memberships, so the confirmation can name the community it is about to write
+// into (#186).
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () =>
+    buildCurrentUser({
+      id: "admin",
+      memberships: { "community-a": "COMMUNITY_ADMIN", "community-b": "COMMUNITY_ADMIN" },
+    }),
+}));
+
 import { useGetAllPlants, type getAllPlants } from "../../api/plants/plants";
-import { getCommunityById, useGetCommunityById } from "../../api/communities/communities";
+import {
+  getAllCommunities,
+  getCommunityById,
+  useGetAllCommunities,
+  useGetCommunityById,
+} from "../../api/communities/communities";
 import {
   useConfigureDatadis,
   useGetDatadisConfig,
@@ -73,6 +91,11 @@ function datadisCard(): HTMLElement {
   return screen.getByText("Datadis").closest(".MuiPaper-root") as HTMLElement;
 }
 
+/** The save confirmation, by BasicModal's interim test id until the panel gets a dialog role. */
+function confirmation(): HTMLElement {
+  return screen.getByTestId("modal-panel");
+}
+
 describe("IntegrationsPage across a community switch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -96,6 +119,12 @@ describe("IntegrationsPage across a community switch", () => {
     // canManage that one is gated on.
     vi.mocked(useGetHuaweiConfig).mockReturnValue(query.disabled());
     vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureDatadis }));
+    vi.mocked(useGetAllCommunities).mockReturnValue(
+      query.success<typeof getAllCommunities>([
+        buildCommunity({ id: "community-a", name: "Comunidad Alpha" }),
+        buildCommunity({ id: "community-b", name: "Comunidad Beta" }),
+      ]),
+    );
   });
 
   it("shows the newly selected community's Datadis credentials", async () => {
@@ -126,6 +155,7 @@ describe("IntegrationsPage across a community switch", () => {
     });
 
     await userEvent.click(within(datadisCard()).getByRole("button", { name: "Guardar" }));
+    await userEvent.click(within(confirmation()).getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalled());
     expect(mockConfigureDatadis).toHaveBeenCalledWith(
@@ -134,5 +164,27 @@ describe("IntegrationsPage across a community switch", () => {
         data: expect.objectContaining({ username: "datadis-b", baseUrl: "https://b.example" }),
       }),
     );
+  });
+
+  it("AC9: saving asks for confirmation naming the community, and writes nothing until confirmed", async () => {
+    const user = userEvent.setup();
+    renderPage("community-b");
+    await waitFor(() => {
+      expect(within(datadisCard()).getByLabelText("Usuario")).toHaveValue("datadis-b");
+    });
+
+    await user.click(within(datadisCard()).getByRole("button", { name: "Guardar" }));
+
+    expect(screen.getByRole("heading", { name: "Guardar integración en Comunidad Beta" })).toBeInTheDocument();
+    expect(within(confirmation()).getByText("Comunidad · Comunidad Beta")).toBeInTheDocument();
+    expect(within(confirmation()).getByText("Datadis")).toBeInTheDocument();
+    expect(mockConfigureDatadis).not.toHaveBeenCalled();
+
+    await user.click(within(confirmation()).getByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: /^Guardar integración/ })).not.toBeInTheDocument(),
+    );
+    expect(mockConfigureDatadis).not.toHaveBeenCalled();
   });
 });

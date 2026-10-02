@@ -14,7 +14,10 @@ import type { ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models"
 import { colors, alphas } from "../../theme/tokens";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
-import { useCommunityActions, usePlantActions, type MaybeAction } from "../../hooks/actions";
+import { useCommunityActions, usePlantActions, type Action, type MaybeAction } from "../../hooks/actions";
+import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
+import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 /**
  * Integration credentials change only when someone edits them on this page, so
@@ -96,9 +99,27 @@ function bindSave<TBody>(
   };
 }
 
+/**
+ * Turns a save the caller may perform into the one the card is given: same gate,
+ * same pending flag, but clicking asks for confirmation instead of writing.
+ *
+ * Credentials are community configuration and the dialog names the community
+ * (#186), so the write cannot be aimed at the wrong one by accident. The card's
+ * contract is "decide WHEN the save happens", which is exactly this seam, so no
+ * card prop changes and `isPending` stays the mutation's own state.
+ *
+ * Only ever called with a save that exists: `cards` has already dropped the
+ * providers whose action was never handed over, so one of those renders no card
+ * and can never reach the confirmation either.
+ */
+function requestSave(save: Action<[], void>, providerId: string, ask: (id: string) => void): Action<[], void> {
+  return { isPending: save.isPending, run: async () => ask(providerId) };
+}
+
 export const IntegrationsPage: FC = () => {
   const activeCommunityId = useActiveCommunity();
   const activeCommunity = useActiveCommunityResource();
+  const communityName = useActiveCommunityName();
 
   const [state, setState] = useState<IntegrationState>({
     datadis: { enabled: false, username: "", password: "", baseUrl: "" },
@@ -108,6 +129,10 @@ export const IntegrationsPage: FC = () => {
 
   const [configLoaded, setConfigLoaded] = useState<{ [key: string]: boolean }>({});
   const [snack, setSnack] = useState<string | null>(null);
+  // Credentials are community configuration: saving them into the wrong
+  // community is the silent failure #186 guards against, so every save goes
+  // through a confirmation that names the community.
+  const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
 
   const { data: plantsData, isLoading: plantsLoading } = useGetAllPlants(
     activeCommunityId ?? "",
@@ -233,6 +258,11 @@ export const IntegrationsPage: FC = () => {
     return save ? [{ provider, save }] : [];
   });
 
+  // Resolved from the cards, not from PROVIDERS: a provider whose save was
+  // never handed over has no card to click, so it must not be confirmable
+  // either.
+  const pendingCard = cards.find(({ provider }) => provider.id === pendingSaveId);
+
   // Counted over the cards that exist, not over PROVIDERS: saying "1 de 3" to
   // someone who is shown two of them describes a page they are not looking at.
   const activeCount = cards.filter(({ provider }) => state[provider.id].enabled).length;
@@ -357,11 +387,29 @@ export const IntegrationsPage: FC = () => {
             accent={ACCENT}
             value={state[provider.id]}
             onChange={update}
-            save={save}
+            save={requestSave(save, provider.id, setPendingSaveId)}
             isLoading={loadingByProvider[provider.id]}
           />
         ))}
       </Box>
+
+      <ConfirmationModal
+        isOpen={pendingCard !== undefined}
+        onCancel={() => setPendingSaveId(null)}
+        onConfirm={() => {
+          void pendingCard?.save.run();
+          setPendingSaveId(null);
+        }}
+        confirmLabel="Guardar"
+        confirmColor="primary"
+        title={`Guardar integración en ${communityLabel(communityName)}`}
+        scopeHeader={<CommunityScopeHeader name={communityName} />}
+      >
+        <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+          La configuración de <strong>{pendingCard?.provider.name}</strong> se guardará en{" "}
+          <strong>{communityLabel(communityName)}</strong> y sustituirá la que tenga ahora esta comunidad.
+        </Typography>
+      </ConfirmationModal>
 
       {/* Snackbar */}
       <Snackbar

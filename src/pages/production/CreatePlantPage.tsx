@@ -9,10 +9,13 @@ import { useCommunityActions } from "../../hooks/actions";
 import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
 import { useErrorDispatch } from "../../context/error.context";
 import { BreadCrumb } from "../../components/Breadcrumb";
+import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 
 export const CreatePlantPage: FC = () => {
   const navigate = useNavigate();
+  const communityName = useActiveCommunityName();
   const errorDispatch = useErrorDispatch();
   const activeCommunity = useActiveCommunityResource();
   // The community answers "may this person create plants at all", which is what
@@ -91,9 +94,10 @@ export const CreatePlantPage: FC = () => {
           >
             <SolarPowerIcon sx={{ fontSize: 32 }} />
           </Avatar>
-          <Box>
-            <Typography variant="h4" component="h1">
-              Crear nueva planta
+          <Box sx={{ minWidth: 0 }}>
+            <CommunityScopeHeader name={communityName} tone="onBrand" />
+            <Typography variant="h4" component="h1" sx={{ overflowWrap: "anywhere" }}>
+              Crear planta en {communityLabel(communityName)}
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
               Registra una nueva planta de producción en la comunidad energética

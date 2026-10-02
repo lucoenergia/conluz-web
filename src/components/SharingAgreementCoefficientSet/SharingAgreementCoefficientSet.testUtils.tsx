@@ -20,10 +20,13 @@ import {
   type getPartitionCoefficientHistory,
 } from "../../api/supplies/supplies";
 import {
+  getSharingAgreementById,
   /* eslint-disable no-restricted-imports -- test helper: these five are imported
      only to type and set the mocked hooks' results, never called. Not numbered:
      this file is test infrastructure and is not migrating to the actions layer. */
   useActivatePartitionCoefficients,
+  useGetPlantActivePartitionCoefficients,
+  type getPlantActivePartitionCoefficients,
   useClosePartitionCoefficients,
   useDeactivatePartitionCoefficients,
   useReopenPartitionCoefficients,
@@ -82,6 +85,17 @@ beforeEach(() => {
   // it never interferes with the specs' own assertions.
   vi.mocked(useGetPartitionCoefficientHistory).mockImplementation((_supplyId, _params, options) =>
     options?.query?.enabled ? query.success<typeof getPartitionCoefficientHistory>([]) : query.disabled(),
+  );
+
+  // Nothing in force elsewhere in the plant, unless a spec says otherwise. The
+  // hook is read only for a DRAFT; for any other status it stays disabled.
+  vi.mocked(useGetPlantActivePartitionCoefficients).mockImplementation((_plantId, options) =>
+    options?.query?.enabled ? query.success<typeof getPlantActivePartitionCoefficients>([]) : query.disabled(),
+  );
+  // An agreement a spec has not provided is a failed read, which renders as
+  // "Vigente —" rather than inventing an installed power.
+  vi.mocked(getSharingAgreementById).mockImplementation((_plantId, sharingAgreementId) =>
+    Promise.reject(new Error(`No agreement fixture for ${sharingAgreementId}`)),
   );
 
   const target = { plantId: PLANT_ID, sharingAgreementId: AGREEMENT_ID };

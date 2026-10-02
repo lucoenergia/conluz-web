@@ -45,7 +45,7 @@ type CommunityControl = { set: ((communityId: string | null) => void) | null };
 
 type HarnessExtras = {
   queryClient: QueryClient;
-  /** Switches the seeded active community, as `CommunitySelector` does. Requires `activeCommunityId`. */
+  /** Switches the seeded active community, as the scope context control does. Requires `activeCommunityId`. */
   switchActiveCommunity: (communityId: string | null) => void;
 };
 

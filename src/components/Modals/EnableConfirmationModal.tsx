@@ -1,6 +1,8 @@
 import Typography from "@mui/material/Typography";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
+import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { radii, alphas, fontSizes } from "../../theme/tokens";
 
@@ -12,6 +14,7 @@ interface EnableConfirmationModalProps {
 }
 
 export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOpen, code, onCancel, onEnable }) => {
+  const communityName = useActiveCommunityName();
   return (
     <ConfirmationModal
       isOpen={isOpen}
@@ -19,7 +22,8 @@ export const EnableConfirmationModal: FC<EnableConfirmationModalProps> = ({ isOp
       confirmLabel="Rehabilitar"
       confirmColor="success"
       onConfirm={onEnable}
-      title="Rehabilitar punto de suministro"
+      title={`Rehabilitar punto de suministro en ${communityLabel(communityName)}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<CheckCircleOutlineIcon sx={{ fontSize: 28, color: "success.main" }} />}
       iconBg={alphas.success.light}
     >

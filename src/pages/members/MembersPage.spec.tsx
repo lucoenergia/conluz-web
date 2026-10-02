@@ -8,6 +8,7 @@ import { mutation, query } from "../../test/queryState";
 import {
   buildCommunity,
   buildCommunityCapabilities,
+  buildCurrentUser,
   buildMembership,
   buildMembershipCapabilities,
   buildUser,
@@ -90,11 +91,30 @@ vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => (
 }));
 
 // useActiveCommunityResource reads this one, and it is what carries the
-// community-level answers the toolbar is built from.
+// community-level answers the toolbar is built from. useGetAllCommunities is
+// what names the community in the confirming dialogs (#186).
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCommunityById: vi.fn(),
+  useGetAllCommunities: vi.fn(),
 }));
+
+// The community name is resolved from the caller's own memberships, so the
+// dialogs can state which community they are about to write into.
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () =>
+    buildCurrentUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN", c2: "COMMUNITY_MEMBER" } }),
+}));
+
+const COMMUNITY_NAME = "Comunidad Solar Norte";
+
+/** The confirming dialog names the community in its header line and in its title (#186). */
+function expectNamesTheCommunity(dialog: HTMLElement, title: string) {
+  expect(dialog).toHaveAccessibleName(title);
+  expect(within(dialog).getByRole("heading", { name: title })).toBeInTheDocument();
+  expect(within(dialog).getByText(`Comunidad · ${COMMUNITY_NAME}`)).toBeInTheDocument();
+}
 
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -112,8 +132,10 @@ vi.mock("../../components/Modals/ImportPartnersModal", () => ({
 }));
 
 import {
+  getAllCommunities,
   getGetAllCommunitiesQueryKey,
   getCommunityById,
+  useGetAllCommunities,
   useGetCommunityById,
 } from "../../api/communities/communities";
 import {
@@ -141,6 +163,12 @@ describe("MembersPage", () => {
     vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutate }));
     vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutate }));
     vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutate }));
+    vi.mocked(useGetAllCommunities).mockReturnValue(
+      query.success<typeof getAllCommunities>([
+        buildCommunity({ id: "c1", name: COMMUNITY_NAME }),
+        buildCommunity({ id: "c2", name: "Comunidad Sur" }),
+      ]),
+    );
   });
 
   // Invalidation is observed on the real QueryClient the harness creates.
@@ -196,6 +224,7 @@ describe("MembersPage", () => {
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
 
     const dialog = screen.getByRole("dialog");
+    expectNamesTheCommunity(dialog, `Añadir miembro a ${COMMUNITY_NAME}`);
     // Open first combobox (user picker) inside the dialog
     const comboboxes = within(dialog).getAllByRole("combobox");
     await user.click(comboboxes[0]);
@@ -245,8 +274,8 @@ describe("MembersPage", () => {
     const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
     await user.click(eliminarMenuItem);
 
-    await waitFor(() => expect(screen.getByText("Confirmar eliminación")).toBeInTheDocument());
-    const dialog = screen.getByRole("dialog");
+    const dialog = await screen.findByRole("dialog");
+    expectNamesTheCommunity(dialog, `Eliminar miembro de ${COMMUNITY_NAME}`);
     expect(within(dialog).getByText(/Ana García/)).toBeInTheDocument();
   });
 
@@ -285,6 +314,7 @@ describe("MembersPage", () => {
 
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
     const dialog = screen.getByRole("dialog");
+    expectNamesTheCommunity(dialog, `Cambiar rol en ${COMMUNITY_NAME}`);
 
     // Open the role select inside the dialog and pick Administrador
     const combobox = within(dialog).getByRole("combobox");

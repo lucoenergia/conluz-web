@@ -130,6 +130,10 @@ describe("IntegrationsPage", () => {
 
       const datadis = screen.getByRole("heading", { name: "Datadis" }).closest(".MuiPaper-root") as HTMLElement;
       await userEvent.click(within(datadis).getByRole("button", { name: "Guardar" }));
+      // Credentials are community configuration, so the save is confirmed
+      // against the community it names first (#186). The gate is still what
+      // decides the button exists at all.
+      await userEvent.click(within(screen.getByTestId("modal-panel")).getByRole("button", { name: "Guardar" }));
 
       expect(mockConfigureDatadis).toHaveBeenCalledWith(
         expect.objectContaining({

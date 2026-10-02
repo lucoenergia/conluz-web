@@ -52,6 +52,8 @@ import { useCommunityActions, useMembershipActions } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useErrorDispatch } from "../../context/error.context";
 import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
+import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
+import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
@@ -67,6 +69,8 @@ export const MembersPage: FC = () => {
   const navigate = useNavigate();
   const activeCommunityId = useActiveCommunity();
   const activeCommunity = useActiveCommunityResource();
+  const communityName = useActiveCommunityName();
+  const community = communityLabel(communityName);
   const errorDispatch = useErrorDispatch();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -441,7 +445,10 @@ export const MembersPage: FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Cambiar rol</DialogTitle>
+        <Box sx={{ px: 3, pt: 2.5 }}>
+          <CommunityScopeHeader name={communityName} />
+        </Box>
+        <DialogTitle sx={{ pt: 0 }}>Cambiar rol en {community}</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           <Typography variant="body2">
             Cambiando el rol de <strong>{selectedMembership?.user?.fullName}</strong>.
@@ -486,7 +493,10 @@ export const MembersPage: FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Añadir miembro a la comunidad</DialogTitle>
+        <Box sx={{ px: 3, pt: 2.5 }}>
+          <CommunityScopeHeader name={communityName} />
+        </Box>
+        <DialogTitle sx={{ pt: 0 }}>Añadir miembro a {community}</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           <FormControl fullWidth>
             <InputLabel>Miembro</InputLabel>
@@ -537,11 +547,14 @@ export const MembersPage: FC = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Confirmar eliminación</DialogTitle>
+        <Box sx={{ px: 3, pt: 2.5 }}>
+          <CommunityScopeHeader name={communityName} />
+        </Box>
+        <DialogTitle sx={{ pt: 0 }}>Eliminar miembro de {community}</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
             ¿Eliminar a{" "}
-            <strong>{removeTarget?.user?.fullName ?? "este miembro"}</strong> de la comunidad?
+            <strong>{removeTarget?.user?.fullName ?? "este miembro"}</strong> de {community}?
             Esta acción no se puede deshacer.
           </Typography>
         </DialogContent>

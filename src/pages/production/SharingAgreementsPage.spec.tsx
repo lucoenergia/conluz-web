@@ -219,7 +219,7 @@ describe("SharingAgreementsPage", () => {
 
     await waitFor(() => expect(mockCreateMutateAsync).toHaveBeenCalled());
     expect(mockNavigate).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole("heading", { name: /^Nuevo acuerdo de reparto (en|de) / })).not.toBeInTheDocument());
   });
 
   test("renders each agreement's title as a link to its detail page", () => {
@@ -254,7 +254,7 @@ describe("SharingAgreementsPage", () => {
     await user.click(kebabButtons[0]); // the only kebab is on "Borrador reciente", the DRAFT agreement
     await user.click(await screen.findByText("Eliminar"));
 
-    expect(await screen.findByRole("heading", { name: "Eliminar acuerdo de reparto" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^Eliminar acuerdo de reparto (en|de) / })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
     await waitFor(() =>

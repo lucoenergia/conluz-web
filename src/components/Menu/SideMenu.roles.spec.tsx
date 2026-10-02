@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, expect, test } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { SideMenu } from "./SideMenu";
 import { CONTACT_ITEM, MENU_SECTIONS, type MenuSection } from "../../utils/constants";
@@ -93,10 +93,28 @@ describe("SideMenu visibility", () => {
     hides("Integraciones");
   });
 
+  // Each group carries its own accessible name, so the two scopes are told
+  // apart by what the reader actually perceives rather than by DOM order.
+  test("the community and platform entries sit under distinct visible labels", () => {
+    setup(menuFor([...COMMUNITY_ADMIN, ...PLATFORM_ADMIN]));
+    const community = screen.getByRole("list", { name: "Comunidad" });
+    const platform = screen.getByRole("list", { name: "Plataforma" });
+
+    expect(screen.getByText("Comunidad")).toBeVisible();
+    expect(screen.getByText("Plataforma")).toBeVisible();
+    for (const label of ["Inicio", "Producción", "Consumo", "Miembros", "Integraciones"]) {
+      expect(within(community).getByText(label)).toBeInTheDocument();
+    }
+    for (const label of ["Comunidades", "Usuarios"]) {
+      expect(within(platform).getByText(label)).toBeInTheDocument();
+    }
+  });
+
   test("a section with nothing visible in it does not appear as an empty heading", () => {
     setup(menuFor(MEMBER));
-    hides("Gestión de comunidad");
-    hides("Administración de plataforma");
+    expect(screen.getByRole("list", { name: "Comunidad" })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Plataforma" })).not.toBeInTheDocument();
+    hides("Plataforma");
   });
 
   test("Contacto is always offered", () => {

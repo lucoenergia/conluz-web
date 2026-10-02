@@ -38,6 +38,16 @@ const sharingAgreementMutationHooks = {
   useReopenPartitionCoefficients: vi.fn(),
 };
 
+/**
+ * The draft comparison's reads: the plant's active coefficients and the
+ * fetcher behind each authoring agreement's GET. Mocked like the mutation
+ * hooks, so no spec reaches the network; testUtils sets their defaults.
+ */
+const sharingAgreementComparisonReads = {
+  useGetPlantActivePartitionCoefficients: vi.fn(),
+  getSharingAgreementById: vi.fn(),
+};
+
 const supplies = {
   getAllSupplies: vi.fn(),
   // The row menu's history drawer reads this; its own behaviour is covered in
@@ -50,9 +60,12 @@ const supplies = {
 type SharingAgreementsModule = typeof import("../../api/sharing-agreements/sharing-agreements");
 type SuccessContextModule = typeof import("../../context/success.context");
 
-/** The sharing-agreements module with its mutation hooks replaced; the rest (query keys, fetchers) stays real. */
+/**
+ * The sharing-agreements module with its mutation hooks and the comparison's
+ * reads replaced; the rest (query keys, other fetchers) stays real.
+ */
 export async function sharingAgreementsModule(importOriginal: () => Promise<SharingAgreementsModule>) {
-  return { ...(await importOriginal()), ...sharingAgreementMutationHooks };
+  return { ...(await importOriginal()), ...sharingAgreementMutationHooks, ...sharingAgreementComparisonReads };
 }
 
 /** The supplies module: only what the coefficient set reaches. */
