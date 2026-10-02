@@ -13,6 +13,7 @@ import {
   MEMBER_PLANT_CAPABILITIES,
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
+  FIXED_SUPPLY_OTHER_COMMUNITY,
   FIXED_SUPPLY_ID,
   FIXED_USER_2,
   MANAGED_USER_CAPABILITIES,
@@ -543,5 +544,29 @@ export async function mockSharingAgreementGenerateFile(page: Page, plantId: stri
     (url) => url.href.includes(`/api/v1/plants/${plantId}/sharing-agreements/${agreementId}/generate-file`),
     (route: Route) =>
       route.fulfill({ status: 200, contentType: "application/octet-stream", body: "fake-generated-file-bytes" }),
+  );
+}
+
+/**
+ * Makes the user-scoped supplies listing answer with two communities' rows, as
+ * it does for a caller who administers both.
+ *
+ * Registered AFTER mockAllApiRoutes so it wins. Exists for the cross-community
+ * assertions: the screen must narrow this to the community in the selector,
+ * because every row here is one the caller may read and none of it is a leak --
+ * it is simply not all about the community on screen.
+ */
+export async function mockUserSuppliesAcrossCommunities(page: Page) {
+  await page.route(
+    (url) => /\/api\/v1\/users\/[^/]+\/supplies/.test(url.href),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([
+          { ...FIXED_SUPPLY, capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES },
+          { ...FIXED_SUPPLY_OTHER_COMMUNITY, capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES },
+        ]),
+      }),
   );
 }

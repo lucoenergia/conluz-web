@@ -21,6 +21,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import { ImportSuppliesModal } from "../../components/Modals/ImportSuppliesModal";
 import { useActiveCommunity } from "../../context/community.context";
+import { isSupplyOutsideActiveCommunity } from "./supplyCommunityScope";
 import { useCommunityActions, useSupplyActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 
@@ -41,12 +42,29 @@ export const SupplyPointsPage: FC = () => {
     { query: { enabled: !personId && !!activeCommunityId } },
   );
   const { data: userSupplies = [], isLoading: isLoadingUser, error: errorUser, refetch: refetchUser } =
-    useGetSuppliesByUserId(personId ?? "", { query: { enabled: !!personId } });
+    useGetSuppliesByUserId(personId ?? "", { query: { enabled: !!personId && !!activeCommunityId } });
   const { data: personData } = useGetUserById(personId ?? "", { query: { enabled: !!personId } });
 
+  /**
+   * GET /users/{userId}/supplies is scoped to what the caller may read, not to
+   * the community on screen. Since conluz#326 every row is one this caller is
+   * entitled to -- but "may read" is plural: an admin of two communities
+   * viewing a member of both receives both communities' supplies, while the
+   * selector names one. Listing them together would present another
+   * community's supplies under this one's heading, and offer actions scoped to
+   * the wrong community.
+   *
+   * The community-scoped branch needs no such filter: its communityId is in
+   * the path, so it re-keys by itself when the selection changes.
+   */
+  const userSuppliesInCommunity = useMemo(
+    () => userSupplies.filter((supply) => !isSupplyOutsideActiveCommunity(supply, activeCommunityId)),
+    [userSupplies, activeCommunityId],
+  );
+
   const responseFromApi = useMemo<SupplyResponse[]>(
-    () => (personId ? userSupplies : (allData?.items ?? [])),
-    [personId, userSupplies, allData?.items],
+    () => (personId ? userSuppliesInCommunity : (allData?.items ?? [])),
+    [personId, userSuppliesInCommunity, allData?.items],
   );
   const isLoading = personId ? isLoadingUser : isLoadingAll;
   const error = personId ? errorUser : errorAll;

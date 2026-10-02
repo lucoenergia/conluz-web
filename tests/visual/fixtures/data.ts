@@ -343,6 +343,27 @@ export const FIXED_SUPPLY_2: SupplyResponse = {
   capabilities: OWNER_SUPPLY_CAPABILITIES,
 };
 
+/** A community the caller is NOT working in, for the cross-community assertions. */
+export const OTHER_COMMUNITY_ID = "cccccccc-dddd-eeee-ffff-000000000002";
+
+/**
+ * A supply in another of the caller's communities.
+ *
+ * Only reachable through a user-scoped listing, which is the one endpoint that
+ * can legitimately answer with more than one community: GET
+ * /users/{userId}/supplies returns what the caller may read, and somebody
+ * administering two communities may read both. The community-scoped listing
+ * carries its communityId in the path and cannot return this row at all, so
+ * putting it there would test a response the backend cannot produce.
+ */
+export const FIXED_SUPPLY_OTHER_COMMUNITY: SupplyResponse = {
+  ...FIXED_SUPPLY,
+  id: "eeeeeeee-ffff-0000-1111-222222222222",
+  code: "ES0021000000000000ZZ",
+  name: "Casa en otra comunidad",
+  community: { id: OTHER_COMMUNITY_ID, name: "Vecinos del Sur" },
+};
+
 export const PAGED_SUPPLIES = {
   items: [FIXED_SUPPLY, FIXED_SUPPLY_2],
   size: 10000,
