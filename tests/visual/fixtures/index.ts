@@ -45,3 +45,4 @@ export * from "./data";
 export * from "./navigation";
 export * from "./routes";
 export * from "./session";
+export * from "./test";

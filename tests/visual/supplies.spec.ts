@@ -4,8 +4,9 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_MEMBER_USER,
   FIXED_SUPPLY_COEFFICIENT_HISTORY,
@@ -63,7 +64,7 @@ test.describe("Visual baselines", () => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY, FIXED_COMMUNITY_ADMIN_USER);
 
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
@@ -84,7 +85,7 @@ test.describe("Visual baselines", () => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);
-    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY, FIXED_MEMBER_USER);
 
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();

@@ -20,8 +20,10 @@
  * single number to assert.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 import {
+  test,
+  expect,
   FIXED_COEFFICIENTS_MIXED,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_MEMBER_USER,

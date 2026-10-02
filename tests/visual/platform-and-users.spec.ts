@@ -4,8 +4,10 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect, type Route } from "@playwright/test";
+import { type Route } from "@playwright/test";
 import {
+  test,
+  expect,
   DASHBOARD_COMMUNITIES,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_COMMUNITY_ID,
