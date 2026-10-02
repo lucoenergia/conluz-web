@@ -3,9 +3,6 @@ import { sxStyles } from "../../theme/sx";
 import { useState, useCallback, useEffect, type FC } from "react";
 import { Box, Typography, Paper, Snackbar, Alert, Avatar } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { useConfigureDatadis } from "../../api/consumption/consumption";
-import { useConfigureHuawei } from "../../api/production/production";
-import { useConfigureShelly } from "../../api/consumption/consumption";
 import { useGetDatadisConfig } from "../../api/consumption/consumption";
 import { useGetHuaweiConfig } from "../../api/production/production";
 import { useGetShellyConfig } from "../../api/consumption/consumption";
@@ -13,12 +10,11 @@ import { useGetAllPlants } from "../../api/plants/plants";
 import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
-import type { ConfigureDatadisBody, ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
+import type { ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
 import { colors, alphas } from "../../theme/tokens";
 import { useActiveCommunity } from "../../context/community.context";
-import { useQueryClient } from "@tanstack/react-query";
-import { getGetShellyConfigQueryKey, getGetDatadisConfigQueryKey } from "../../api/consumption/consumption";
-import { getGetHuaweiConfigQueryKey } from "../../api/production/production";
+import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { useCommunityActions, usePlantActions, type Action, type MaybeAction } from "../../hooks/actions";
 import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -26,8 +22,9 @@ import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCom
 /**
  * Integration credentials change only when someone edits them on this page, so
  * refetching on every visit bought nothing and cost a full round trip each
- * time. Five minutes keeps a return visit instant; `save()` invalidates
- * explicitly, so an edit is never served from a stale cache.
+ * time. Five minutes keeps a return visit instant; each configure action
+ * invalidates its own config key, so an edit is never served from a stale
+ * cache.
  */
 const CONFIG_STALE_TIME = 5 * 60 * 1000;
 
@@ -72,10 +69,57 @@ const PROVIDERS = [
 
 const ACCENT = colors.brand.main;
 
+const SAVE_FAILED = "Error al guardar la configuración";
+
+/**
+ * Turns one configuration action into the card's Guardar button.
+ *
+ * The actions layer hands over something that takes a body and reports success
+ * as a boolean; the card takes no arguments and has nowhere to put the result.
+ * Wrapping keeps each half where it belongs -- the body is read off the form at
+ * click time, and the wording of the outcome stays on the screen, which is what
+ * the actions layer's own doc asks for.
+ *
+ * `undefined` in, `undefined` out: an action the caller was not given produces
+ * no button, and therefore no card. `isPending` is carried through rather than
+ * recomputed, so the spinner is the mutation's own state.
+ */
+function bindSave<TBody>(
+  action: MaybeAction<[TBody], boolean>,
+  body: () => TBody,
+  okMessage: string,
+  report: (message: string) => void,
+): MaybeAction<[], void> {
+  if (!action) return undefined;
+  return {
+    isPending: action.isPending,
+    run: async () => {
+      report((await action.run(body())) ? okMessage : SAVE_FAILED);
+    },
+  };
+}
+
+/**
+ * Turns a save the caller may perform into the one the card is given: same gate,
+ * same pending flag, but clicking asks for confirmation instead of writing.
+ *
+ * Credentials are community configuration and the dialog names the community
+ * (#186), so the write cannot be aimed at the wrong one by accident. The card's
+ * contract is "decide WHEN the save happens", which is exactly this seam, so no
+ * card prop changes and `isPending` stays the mutation's own state.
+ *
+ * Only ever called with a save that exists: `cards` has already dropped the
+ * providers whose action was never handed over, so one of those renders no card
+ * and can never reach the confirmation either.
+ */
+function requestSave(save: Action<[], void>, providerId: string, ask: (id: string) => void): Action<[], void> {
+  return { isPending: save.isPending, run: async () => ask(providerId) };
+}
+
 export const IntegrationsPage: FC = () => {
   const activeCommunityId = useActiveCommunity();
+  const activeCommunity = useActiveCommunityResource();
   const communityName = useActiveCommunityName();
-  const queryClient = useQueryClient();
 
   const [state, setState] = useState<IntegrationState>({
     datadis: { enabled: false, username: "", password: "", baseUrl: "" },
@@ -85,19 +129,25 @@ export const IntegrationsPage: FC = () => {
 
   const [configLoaded, setConfigLoaded] = useState<{ [key: string]: boolean }>({});
   const [snack, setSnack] = useState<string | null>(null);
-  const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
   // Credentials are community configuration: saving them into the wrong
   // community is the silent failure #186 guards against, so every save goes
   // through a confirmation that names the community.
   const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
-  const pendingProvider = PROVIDERS.find((provider) => provider.id === pendingSaveId);
 
   const { data: plantsData, isLoading: plantsLoading } = useGetAllPlants(
     activeCommunityId ?? "",
     { size: 1 },
     { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
-  const firstPlantId = plantsData?.items?.[0]?.id ?? "";
+  // The whole plant, not just its id: Huawei's endpoint is plant-scoped, so it
+  // is this plant's own canManage that decides the card -- and the answer
+  // already rides along in the payload the page fetches anyway.
+  //
+  // Which plant this is remains arbitrary (`size: 1`, no sort, no selector);
+  // that defect is not fixed here, and gating on the plant rather than on the
+  // community is what lets the gate survive the move to a per-plant section.
+  const firstPlant = plantsData?.items?.[0];
+  const firstPlantId = firstPlant?.id ?? "";
 
   const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig(
     activeCommunityId ?? "",
@@ -112,9 +162,8 @@ export const IntegrationsPage: FC = () => {
     { query: { enabled: !!firstPlantId, staleTime: CONFIG_STALE_TIME } },
   );
 
-  const configureDatadis = useConfigureDatadis();
-  const configureHuawei = useConfigureHuawei();
-  const configureShelly = useConfigureShelly();
+  const { configureDatadis, configureShelly } = useCommunityActions().forCommunity(activeCommunity).actions;
+  const { configureHuawei } = usePlantActions().forPlant(firstPlant).actions;
 
   // Prefill state when config data arrives
   useEffect(() => {
@@ -166,60 +215,57 @@ export const IntegrationsPage: FC = () => {
     }));
   }, []);
 
-  const save = useCallback(
-    async (id: string) => {
-      setSaving((prev) => ({ ...prev, [id]: true }));
-      try {
-        if (id === "datadis") {
-          const val = state.datadis;
-          await configureDatadis.mutateAsync({
-            communityId: activeCommunityId ?? "",
-            data: {
-              enabled: val.enabled,
-              username: val.username,
-              password: val.password,
-              baseUrl: val.baseUrl,
-            } as ConfigureDatadisBody,
-          });
-          setSnack("Datadis guardado correctamente");
-        } else if (id === "huawei") {
-          const val = state.huawei;
-          await configureHuawei.mutateAsync({
-            plantId: firstPlantId,
-            data: {
-              enabled: val.enabled,
-              username: val.username,
-              password: val.password,
-              baseUrl: val.baseUrl,
-            } as ConfigureHuaweiBody,
-          });
-          setSnack("Configuración de Huawei guardada correctamente");
-        } else if (id === "shelly") {
-          const val = state.shelly;
-          await configureShelly.mutateAsync({
-            communityId: activeCommunityId ?? "",
-            data: { enabled: val.enabled } as ConfigureShellyBody,
-          });
-          setSnack("Shelly Cloud guardado correctamente");
-        }
-        // The cache is now stale by definition — without this the staleTime
-        // above would keep serving the pre-save values for up to five minutes.
-        const key =
-          id === "datadis" ? getGetDatadisConfigQueryKey(activeCommunityId ?? "")
-          : id === "shelly" ? getGetShellyConfigQueryKey(activeCommunityId ?? "")
-          : getGetHuaweiConfigQueryKey(firstPlantId);
-        await queryClient.invalidateQueries({ queryKey: key });
-      } catch (error) {
-        console.error("Error saving integration:", error);
-        setSnack("Error al guardar la configuración");
-      } finally {
-        setSaving((prev) => ({ ...prev, [id]: false }));
-      }
-    },
-    [state, activeCommunityId, firstPlantId, configureDatadis, configureHuawei, configureShelly, queryClient],
-  );
+  // One entry per provider, and a provider the caller may not configure has
+  // none. Mounting a card is therefore the same decision as having the action,
+  // rather than a check beside it that could disagree.
+  //
+  // Reading the configuration needs exactly what writing it needs -- GET and
+  // PUT on all three carry the same @PreAuthorize -- so there is no read-only
+  // card to fall back to: a card that cannot be saved cannot be filled either.
+  const saves: Record<string, MaybeAction<[], void>> = {
+    datadis: bindSave(
+      configureDatadis,
+      () => ({
+        enabled: state.datadis.enabled,
+        username: state.datadis.username,
+        password: state.datadis.password,
+        baseUrl: state.datadis.baseUrl,
+      }),
+      "Datadis guardado correctamente",
+      setSnack,
+    ),
+    huawei: bindSave(
+      configureHuawei,
+      () => ({
+        enabled: state.huawei.enabled,
+        username: state.huawei.username,
+        password: state.huawei.password,
+        baseUrl: state.huawei.baseUrl,
+      }),
+      "Configuración de Huawei guardada correctamente",
+      setSnack,
+    ),
+    shelly: bindSave(
+      configureShelly,
+      () => ({ enabled: state.shelly.enabled }),
+      "Shelly Cloud guardado correctamente",
+      setSnack,
+    ),
+  };
 
-  const activeCount = Object.values(state).filter((v) => v.enabled).length;
+  const cards = PROVIDERS.flatMap((provider) => {
+    const save = saves[provider.id];
+    return save ? [{ provider, save }] : [];
+  });
+
+  // Resolved from the cards, not from PROVIDERS: a provider whose save was
+  // never handed over has no card to click, so it must not be confirmable
+  // either.
+  const pendingCard = cards.find(({ provider }) => provider.id === pendingSaveId);
+
+  // Counted over the cards that exist, not over PROVIDERS: saying "1 de 3" to
+  // someone who is shown two of them describes a page they are not looking at.
+  const activeCount = cards.filter(({ provider }) => state[provider.id].enabled).length;
   // Per provider, not per page. The old gate was
   // `shellyLoading || datadisLoading || huaweiLoading` in front of an early
   // return, so the breadcrumb, the title and the two cards that were already
@@ -235,7 +281,13 @@ export const IntegrationsPage: FC = () => {
     shelly: shellyLoading,
     huawei: plantsLoading || huaweiLoading,
   };
-  const anyConfigLoading = Object.values(loadingByProvider).some(Boolean);
+  // The community and the plant decide which cards exist at all, so nothing can
+  // be counted until they have arrived either -- and a card the caller turns
+  // out not to have is not a config request that is still in flight.
+  const anyConfigLoading =
+    activeCommunity === undefined ||
+    plantsLoading ||
+    cards.some(({ provider }) => loadingByProvider[provider.id]);
 
   return (
     <Box
@@ -308,7 +360,7 @@ export const IntegrationsPage: FC = () => {
                   the rest arrive. Say what is actually known. */}
               {anyConfigLoading
                 ? "Comprobando integraciones…"
-                : `${activeCount} de ${PROVIDERS.length} integraciones activas`}
+                : `${activeCount} de ${cards.length} integraciones activas`}
             </Typography>
           </Box>
           <Box sx={{ flex: 1 }} />
@@ -328,25 +380,24 @@ export const IntegrationsPage: FC = () => {
           },
         ]}
       >
-        {PROVIDERS.map((p) => (
+        {cards.map(({ provider, save }) => (
           <IntegrationCard
-            key={p.id}
-            provider={p}
+            key={provider.id}
+            provider={provider}
             accent={ACCENT}
-            value={state[p.id]}
+            value={state[provider.id]}
             onChange={update}
-            onSave={setPendingSaveId}
-            isSaving={!!saving[p.id]}
-            isLoading={loadingByProvider[p.id]}
+            save={requestSave(save, provider.id, setPendingSaveId)}
+            isLoading={loadingByProvider[provider.id]}
           />
         ))}
       </Box>
 
       <ConfirmationModal
-        isOpen={pendingProvider !== undefined}
+        isOpen={pendingCard !== undefined}
         onCancel={() => setPendingSaveId(null)}
         onConfirm={() => {
-          if (pendingSaveId) save(pendingSaveId);
+          void pendingCard?.save.run();
           setPendingSaveId(null);
         }}
         confirmLabel="Guardar"
@@ -355,7 +406,7 @@ export const IntegrationsPage: FC = () => {
         scopeHeader={<CommunityScopeHeader name={communityName} />}
       >
         <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
-          La configuración de <strong>{pendingProvider?.name}</strong> se guardará en{" "}
+          La configuración de <strong>{pendingCard?.provider.name}</strong> se guardará en{" "}
           <strong>{communityLabel(communityName)}</strong> y sustituirá la que tenga ahora esta comunidad.
         </Typography>
       </ConfirmationModal>

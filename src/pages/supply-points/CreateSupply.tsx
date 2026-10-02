@@ -2,13 +2,14 @@ import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import { useCreateSupply } from "../../api/supplies/supplies";
 import type { CreateSupplyBody } from "../../api/models";
 import { useNavigate } from "react-router";
 import { SupplyForm, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
+import { useCommunityActions } from "../../hooks/actions";
+import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -20,26 +21,27 @@ export const CreateSupplyPage: FC = () => {
   const loggedUser = useLoggedUser();
   const activeCommunityId = useActiveCommunity();
   const errorDispatch = useErrorDispatch();
-  const createSupply = useCreateSupply();
+  const activeCommunity = useActiveCommunityResource();
+  const { createSupply } = useCommunityActions().forCommunity(activeCommunity).actions;
 
   const handleSubmit = async ({ name, cups, address, addressRef, personalId }: SupplyFormValues) => {
-    if (!activeCommunityId) return;
-    try {
-      const newSupply: CreateSupplyBody = {
-        name,
-        code: cups ?? "",
-        address: address ?? "",
-        personalId: personalId || loggedUser?.personalId || "",
-        addressRef: addressRef ?? "",
-        communityId: activeCommunityId,
-      };
-      const response = await createSupply.mutateAsync({ data: newSupply });
-      if (response) {
-        navigate("/supply-points");
-      } else {
-        errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
-      }
-    } catch {
+    // The route guard has already established the caller may create here, so
+    // this only covers the render before the community itself has arrived.
+    if (!activeCommunityId || !createSupply) return;
+    const newSupply: CreateSupplyBody = {
+      name,
+      code: cups ?? "",
+      address: address ?? "",
+      personalId: personalId || loggedUser?.personalId || "",
+      // Optional since the backend accepts a supply without one; sending the
+      // empty string instead would store a blank reference as if it were data.
+      addressRef: addressRef || undefined,
+      communityId: activeCommunityId,
+    };
+    const created = await createSupply.run(newSupply);
+    if (created) {
+      navigate("/supply-points");
+    } else {
       errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
     }
   };
@@ -109,7 +111,7 @@ export const CreateSupplyPage: FC = () => {
           elevation={0}
           sx={[sxStyles.softPanel, { width: { xs: "100%", sm: "auto" } }]}
         >
-          <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} disabled={!activeCommunityId} />
+          <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} disabled={!createSupply} />
         </Paper>
       </Box>
     </Box>

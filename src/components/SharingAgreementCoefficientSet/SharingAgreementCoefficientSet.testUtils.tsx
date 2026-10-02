@@ -12,7 +12,7 @@ import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildSupply } from "../../test/fixtures";
+import { buildSharingAgreement, buildSharingAgreementCapabilities, buildSupply } from "../../test/fixtures";
 import {
   getAllSupplies,
   // eslint-disable-next-line no-restricted-imports -- test helper: imported only to set the mocked hook's result, never called
@@ -21,6 +21,9 @@ import {
 } from "../../api/supplies/supplies";
 import {
   getSharingAgreementById,
+  /* eslint-disable no-restricted-imports -- test helper: these five are imported
+     only to type and set the mocked hooks' results, never called. Not numbered:
+     this file is test infrastructure and is not migrating to the actions layer. */
   useActivatePartitionCoefficients,
   useGetPlantActivePartitionCoefficients,
   type getPlantActivePartitionCoefficients,
@@ -28,6 +31,7 @@ import {
   useDeactivatePartitionCoefficients,
   useReopenPartitionCoefficients,
   useReplacePartitionCoefficients,
+  /* eslint-enable no-restricted-imports */
 } from "../../api/sharing-agreements/sharing-agreements";
 import {
   SharingAgreementCoefficientSet,
@@ -38,7 +42,10 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
+import type {
+  SharingAgreementPartitionCoefficientResponse,
+  SharingAgreementResponseStatus as StatusValue,
+} from "../../api/models";
 import {
   mockActivateMutateAsync,
   mockCloseMutateAsync,
@@ -147,15 +154,37 @@ export async function openBatchAction(user: ReturnType<typeof userEvent.setup>, 
   await user.click(screen.getByRole("menuitem", { name: new RegExp(actionLabel) }));
 }
 
-export type SetProps = Partial<SharingAgreementCoefficientSetProps> & Pick<SharingAgreementCoefficientSetProps, "coefficients">;
+export type SetProps = Partial<SharingAgreementCoefficientSetProps> &
+  Pick<SharingAgreementCoefficientSetProps, "coefficients"> & {
+    /**
+     * Shorthand for "an agreement in this status that this caller may manage".
+     * Most cases here are about a status rule, not about who the caller is; the
+     * ones that are about the caller pass `agreement` instead.
+     */
+    agreementStatus?: StatusValue;
+  };
 
-export function setTree(props: SetProps) {
+/**
+ * The agreement the set is rendered against. Every write in the set gates on
+ * its `canManage`, so the default permits them -- a spec whose subject is a
+ * caller who may not manage it passes its own `agreement`.
+ */
+export function buildSetAgreement(overrides: Parameters<typeof buildSharingAgreement>[0] = {}) {
+  return buildSharingAgreement({
+    id: AGREEMENT_ID,
+    plantId: PLANT_ID,
+    status: SharingAgreementResponseStatus.PUBLISHED,
+    capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
+    ...overrides,
+  });
+}
+
+export function setTree({ agreementStatus, ...props }: SetProps) {
   return (
     <SharingAgreementCoefficientSet
       plantId={PLANT_ID}
-      sharingAgreementId={AGREEMENT_ID}
+      agreement={buildSetAgreement(agreementStatus ? { status: agreementStatus } : {})}
       installedPowerKw={100}
-      agreementStatus={SharingAgreementResponseStatus.PUBLISHED}
       {...props}
     />
   );

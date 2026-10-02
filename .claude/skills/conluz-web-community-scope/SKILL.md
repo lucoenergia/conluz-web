@@ -17,11 +17,37 @@ assumptions still lingering in fixtures, comments, or your own priors.
 ## Read the real code first
 
 - `src/context/community.context.tsx` — active-community context/provider.
-- `src/hooks/useActiveCommunityRole.ts` — derives the role in the active community.
-- `src/components/Auth/PlatformAdminRoute.tsx`, `CommunityAdminRoute.tsx` — route guards.
+- `src/hooks/permissions/` — capability hooks, and the only place a role is read.
+- `src/components/Auth/CapabilityRoute.tsx` — the route guard.
+- `src/contracts/` — the four contracts that hold all of this: `endpointScope`, `mutationHooks`,
+  `routeAccess`, `userScopedReads`. Read these before changing a route, an action or a user-scoped
+  read; they are what will fail.
 - `src/components/ScopeContext/` (the page-scope surface and community switch),
   `src/hooks/useActiveCommunityDetails.ts`, `src/hooks/usePageScope.ts`, `CommunityStatusChip/`.
 - The generated hooks under `src/api/` (path-scoped by `communityId`).
+
+## The signed-in user is a live query
+
+`LoggedUserProvider` serves `GET /users/current` (30 s `staleTime`, gated on the token, and the one
+query that refetches on window focus). It is not a session snapshot any more — that froze the
+caller's capabilities for the whole session, and since they gate routes and the menu, a revoked
+platform admin kept being offered the administration surface until they reloaded (#203, ADR-0004).
+
+Two facts follow, and both decide where an invalidation belongs:
+
+1. **The caller's own platform flag can only change in another session.** The backend refuses
+   self-revocation (`!@communityAccessGuard.isCurrentUser(#userId)`), and `canRevokePlatformAdmin` is
+   documented false for one's own record. Granting or revoking on the users page always targets
+   somebody else, so it leaves the caller untouched — `useUserActions` deliberately does not
+   invalidate the current user, and a spec says so.
+2. **The caller's own memberships CAN change in this session.** The membership endpoints gate only on
+   `canManageMemberships(communityId)` and have no self rail, so a community admin may re-role or
+   remove themselves. `memberships` lives on the current user — it is what `ScopeContext`
+   offers, what the role label reads and what `CommunityProvider` resolves the active community from
+   — so `useMembershipActions` invalidates `getGetCurrentUserQueryKey()` alongside the roster.
+
+A capability answer of `pending` is therefore reachable mid-session, not just on first load. Never
+fold it into `denied`.
 
 ## Two independent authorization axes
 
@@ -30,7 +56,11 @@ There is **no global user `role`**. Authorization is two separate dimensions:
 1. `isPlatformAdmin: boolean` — platform privilege (manage users/communities, assign
    community admins).
 2. Role **within the active community** — `COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`,
-   read via `useActiveCommunityRole` from the `memberships` map.
+   held in the `memberships` map.
+
+Both are the *shape* of authorization, not how you read it: the backend answers
+what the caller may do, per resource, and the app asks it rather than deriving
+from either axis. See the gating recipe below.
 
 **Golden rule (mirror of the backend):** `isPlatformAdmin` never grants access to a
 community's operational data. A platform admin does not see members' consumption/
@@ -103,9 +133,9 @@ Reach them through a wrapper that applies the guard:
   plant as `isNotFound` so pages reuse the existing "Planta no encontrada" empty state.
 - `useSharingAgreementsData` / `useSharingAgreementDetailData` — same guard, folded into
   their existing `isNotFound`.
-- `useSupplyInActiveCommunity` (`src/pages/supply-points/`) — **applies no guard yet**:
-  `SupplyResponse` carries no community reference, so there is nothing to compare. It exists
-  so that when the backend adds one, the fix lands in a single place.
+- `useSupplyInActiveCommunity` (`src/pages/supply-points/`) — same guard, via
+  `isSupplyOutsideActiveCommunity` (`src/pages/supply-points/supplyCommunityScope.ts`).
+  `SupplyResponse.community` is a required reference, so there is something to compare.
 - `selectPeriodsInCommunity` (`src/pages/production/coefficientHistory.ts`) — the other
   valid shape: filter an entity-keyed *response* by community at render time.
 
@@ -116,11 +146,170 @@ Only two ids both present and different count.
 Mutations are not restricted: they take an explicit id from a screen the keyed Outlet
 already resets.
 
-## Gating recipe
+## Gating recipe — capabilities, not roles
 
-- Route level: wrap with `PlatformAdminRoute` or `CommunityAdminRoute`.
-- Menu/profile/actions: derive visibility from `isPlatformAdmin` **and**
-  `useActiveCommunityRole`, never from a global role field (it no longer exists).
+Every response carries a `capabilities` object, and `GET /users/current` carries
+`platformCapabilities`. The app reads those and never re-derives a rule locally.
+
+- **`src/hooks/permissions/` is the only module allowed to read a role or the
+  platform-admin flag.** `no-restricted-imports` and `no-restricted-syntax` in
+  `eslint.config.js` enforce it, so reaching for `useActiveCommunityRole` or
+  `useIsPlatformAdmin` elsewhere fails the build.
+- **Route level:** one guard, `CapabilityRoute`, given the capability the page
+  needs. Six scopes: `platform`; `community`, meaning the **active** one; and
+  four read from a route parameter — `plant`, `supply`, `user` (`:userId`) and
+  `communityById` (`:communityId`). The capability name is a key of the generated
+  type for its scope, so a typo — or a real capability borrowed from the wrong
+  resource — does not compile.
+- **`communityById` is not `community`.** The active community is the one the
+  caller is working in; a community they are merely administering is another
+  resource, and a platform admin has no membership of it at all. Editing one
+  gates on its own `canUpdate`, a platform-wide decision that being its admin
+  does not confer. Asking the active community would answer about the wrong
+  resource, or about none.
+- **Menu:** entries in `MENU_SECTIONS` carry the same requirement as the route
+  they lead to, which is what stops the menu offering pages the router refuses.
+  `MenuRequirement` excludes every parameter-keyed scope: a menu entry is a fixed
+  destination, so it has no `:userId` or `:communityId` to resolve.
+- **Anything else:** `useActiveCommunityCapabilities`, `usePlatformCapabilities`,
+  `usePlantCapabilities`, `useSupplyCapabilities`, `useUserCapabilities`,
+  `useCommunityCapabilities`, and `<Can>` for conditional rendering. A screen
+  that already holds the resource does not need any of them:
+  `outcomeFromResource(row.capabilities, "canX")` reads the answer the payload
+  came with, and an action hook's `forX(row)` does it for you.
+- **An answer has four states, not two.** `pending` waits, `allowed` renders,
+  `denied` redirects, and `error` means the check itself failed — that one shows
+  a retry. Never fold `error` into `denied`: a network blip would tell somebody
+  they lack access they actually have. A 403 or 404 *is* a denial, because the
+  API hides what the caller may not see.
+- **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
+  `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
+- **There are no exemptions.** Nothing under `src/` reads a role or the
+  platform-admin flag to decide what to render, and nothing carries an
+  `eslint-disable` for the permission rules. If you want one, the capability you
+  need either exists on the payload or is missing from the backend — ask for it
+  rather than approximating it with a role.
+- **Do not restate a payload answer as a prop.** A boolean threaded down from a
+  screen is a second source of truth for something each row already carries, and
+  it cannot express a list that spans several resources. The coefficient history
+  had exactly that: one `showAgreementLinks` for a timeline spanning several
+  plants, where the caller may administer one and not another. Each period now
+  reads its own `capabilities.canReadSharingAgreement`.
+- **Writes go through `src/hooks/actions/`, never a generated mutation hook.**
+  An action hook hands back only what this caller may do: a denied action is
+  `undefined`, and its `isPending` lives inside it, so there is no way to render
+  a control — or a spinner — for one you were not given. Resource-scoped hooks
+  expose `forX(resource)` rather than taking the resource, because a hook cannot
+  run once per table row. Each also returns a `CapabilityOutcome` per action for
+  the cases where `pending` must look different from `denied`. Reads are
+  unrestricted; `getGet…QueryKey()` getters too. `no-restricted-imports`
+  enforces it over every generated mutation hook, and
+  `src/contracts/mutationHooks.spec.ts` fails if a new mutation arrives with
+  nobody having decided who may perform it. No screen is exempt: the spec
+  asserts over the whole tree that nothing outside the actions layer, the
+  generated client and the specs imports one. Test helpers that name a hook they never
+  call are recorded by file and hook in `TEST_HELPER_MUTATION_IMPORTS`.
+
+## Gating a list
+
+Every row carries its own answer, so a list may legitimately mix them. Four rules,
+all of them learned by getting one wrong:
+
+1. **Ask per row, from the row.** `forX(row).actions` and
+   `outcomeFromResource(row.capabilities, …)` need no request. Destructure the
+   actions so TypeScript narrows them, and hand the card or menu what it was
+   given rather than a boolean you re-derived.
+2. **No permitted action, no menu.** `ListTable`'s `hasRowActions` predicate
+   drops that row's kebab — the button is a promise of something to do. The
+   narrow-viewport `RecordList` takes a node, not a predicate, so apply the same
+   answer by hand there or one layout becomes a way round the gate.
+3. **Store the row's id, not the row.** A write invalidates the list, so a stored
+   object answers from before the change. Resolve it from the list on every
+   render, and mount each confirmation dialog inside the same gate as the item
+   that opens it (`open={flag && !!action}`) so it cannot be left open across a
+   write that revokes it.
+4. **Never offer a choice the backend will refuse.** Filter a picker on the
+   capability of the thing being picked — `ManageAdminsDialog` leaves out a
+   member whose membership refuses a role change, and drops the whole section
+   when that empties it.
+
+**Status is not a capability, and a capability is not status.** A capability
+answers "may this caller *ever* perform this operation on this resource". It does
+**not** reflect whether the operation is legal right now: `useSharingAgreementActions`
+says so for an agreement's lifecycle, and `UserCapabilitiesResponse` says so for a
+user — the only state it folds in is whether the user *is* the caller. So gating on
+status instead of the capability reproduces a rule rather than reading it, and
+gating on the capability alone offers operations that are permitted but not
+applicable. Both, in that order, never one standing in for the other — a sharing
+agreement card needs `isDraft && canDelete`.
+
+**Two capabilities naming opposite operations are not two exclusive affordances.**
+`canEnable`/`canDisable` and `canGrantPlatformAdmin`/`canRevokePlatformAdmin` are
+*both* true for a caller who may do either, and the row's own `enabled` /
+`isPlatformAdmin` is what decides which one applies. `UsersPage` rendered them as
+two separately gated menu items and so offered Habilitar beside Deshabilitar, and
+Conceder beside Revocar; worse, its handlers picked with
+`actions.disable ?? actions.enable`, so with both present "disable" always won and
+Habilitar disabled the user it named. Resolve the pair **once** — one item labelled
+by the half that applies — so the menu item, its confirmation dialog and the handler
+that runs it cannot disagree about which operation was chosen.
+
+Reading the **row's** `enabled` or `isPlatformAdmin` to pick between them is reading
+the resource's state, not re-deriving privilege: the rule this module enforces is
+about the **caller's** flag, through `useIsPlatformAdmin`.
+
+A spec whose fixtures let status and capability agree everywhere cannot tell the two
+apart, and will pass against the pre-capability code. A fixture that grants one half
+of a pair per row is worse still: it describes a response the API never produces, and
+it is why no test caught either defect above.
+
+## A capability gates the call, not the rows
+
+`canListSupplies` predicts whether `GET /users/{userId}/supplies` is **allowed**. It says nothing
+about **what comes back**. Those are different questions, and conflating them produced two backend
+bugs (`lucoenergia/conluz#326`, `#336`) where the guard admitted a caller on one rule and the query
+picked rows by another.
+
+The endpoints are scoped now: a listing returns only what the caller may read one by one. But "may
+read" is **plural** — somebody administering two communities may read both — while the selector
+names one. So a client reading a user-scoped listing still narrows it:
+
+```tsx
+// GET /users/{userId}/supplies answers for every community the caller administers.
+const inCommunity = useMemo(
+  () => userSupplies.filter((s) => !isSupplyOutsideActiveCommunity(s, activeCommunityId)),
+  [userSupplies, activeCommunityId],
+);
+```
+
+Gate the query on the active community too. The helper treats an unresolved community as "don't
+know", which is right for a single resource and wrong for a list, where it would pass everything
+through.
+
+`src/contracts/userScopedReads.spec.ts` derives the user-scoped listings from `api-docs.json` and
+requires every call site to declare the filter it applies, freezing the file/hook/filter triple. A
+new call site fails until it declares one.
+
+Community-scoped listings need none of this: their `communityId` is in the path, so they re-key
+themselves when the selection changes.
+
+## Routes are a contract
+
+`src/contracts/routeAccess.spec.ts` parses `src/App.tsx` and requires every authenticated path to be
+classified in `ROUTE_ACCESS` — either the capability its `CapabilityRoute` requires, or
+`authenticated` with the reason any signed-in caller may see it. It also requires each
+`MENU_SECTIONS` entry to name the same requirement as the page it leads to.
+
+So adding a route is two edits, in this order: wrap it, then classify it. The suite failing in
+between is the design working, not an obstacle.
+
+Two things worth knowing before you touch it:
+
+- **`/` is deliberately unguarded.** `CapabilityRoute` sends a denied caller there, so guarding it
+  would redirect to itself.
+- **A guard on a parent route counts.** The spec looks for the nearest enclosing `CapabilityRoute`,
+  so moving one up does not silently un-guard its children — and does not make the spec demand a
+  second guard on each of them.
 
 ## Sharp edges
 
@@ -131,18 +320,30 @@ already resets.
   switch, and it is correct for community-path-scoped queries. It does nothing for an
   entity-scoped one (same key, same foreign entity back) and nothing at all for data already
   copied into `useState`. The keyed Outlet is what handles both.
-- **`CommunityProvider` sits outside `QueryClientProvider` and `BrowserRouter`** in
-  `main.tsx`, so it can neither navigate nor touch the cache. Anything reacting to a switch
-  must live inside the router.
+- **`CommunityProvider` sits outside `BrowserRouter`** in `main.tsx`, so it cannot navigate:
+  anything reacting to a switch must live inside the router. It is *inside* `QueryClientProvider`
+  as of #203, because it reads the signed-in user and the signed-in user is a query.
 - **Pre-epic artifacts:** older DTOs and hand-written test fixtures may predate the
   multi-community model and omit `isPlatformAdmin`/`memberships`. Fixtures built with
   `src/test/fixtures.ts` (`buildUser` and friends) always carry both, at least privilege by
   default. The ones that can still be stale are partial objects cast to a response type
-  (`as UserResponse`, `as unknown as …`) in specs outside the test-harness migration, and the
-  Playwright fixtures in `tests/visual/fixtures/`. If gating or a visual test misbehaves,
-  suspect a stale fixture before suspecting the code.
+  (`as UserResponse`, `as unknown as …`) in specs outside the test-harness migration. The
+  Playwright fixtures are no longer among them: `tsconfig.tests.json` puts `tests/` in
+  `tsc -b` and the response fixtures are annotated, so a missing field is a build error
+  rather than a `false` that silently hides a control. If gating misbehaves, suspect a
+  stale fixture before suspecting the code.
 - **No role selector:** user create/edit forms have no global role field, and rows show
   no role label; community role is assigned through membership, not a user field.
+- **A green visual suite is not an authorization guarantee.** The Playwright route mocks refuse what
+  the served capabilities refuse, and `tests/visual/fixtures/test.ts` fails a test on any unexpected
+  403/404 — so a green run shows the UI is consistent with the capabilities it is **served**. It
+  does not show the backend enforces them. The backend's own policy-equivalence and
+  endpoint-coverage tests are what prove that. Do not cite one for the other.
+- **Another user's `memberships` is filtered to the caller.** Since `lucoenergia/conluz#336`,
+  `GET /users` and `GET /users/{userId}` return only the memberships in communities the caller
+  administers. The caller's own, from `GET /users/current`, are still complete — which is why the
+  active-community context can rely on them. Do not read another user's `memberships` as their
+  complete set.
 
 ## API client is an input — do not regenerate
 

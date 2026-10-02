@@ -9,6 +9,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import BoltIcon from "@mui/icons-material/Bolt";
 import { useNavigate, Link } from "react-router";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
@@ -26,7 +27,18 @@ interface PlantCardProps {
   totalPower?: number;
   connectionDate?: string;
   description?: string;
-  onDelete: (id: string) => Promise<boolean>;
+  /**
+   * Whether this caller may edit and delete the plant, and whether they may
+   * open its sharing agreements. Both withheld by default, so a card rendered
+   * by a caller that forgot the prop is the restrictive one.
+   */
+  canManage?: boolean;
+  canListSharingAgreements?: boolean;
+  /**
+   * Only ever called when `canManage` is true, and only mounted then -- the
+   * card offers no way to reach it otherwise.
+   */
+  onDelete?: (id: string) => Promise<boolean>;
 }
 
 export const PlantCard: FC<PlantCardProps> = ({
@@ -37,6 +49,8 @@ export const PlantCard: FC<PlantCardProps> = ({
   totalPower = 0,
   connectionDate = "",
   description = "",
+  canManage = false,
+  canListSharingAgreements = false,
   onDelete,
 }) => {
   const theme = useTheme();
@@ -71,6 +85,7 @@ export const PlantCard: FC<PlantCardProps> = ({
 
   const handleDelete = async () => {
     setOpenDeleteConfirmation(false);
+    if (!onDelete) return;
     const deleted = await onDelete(id);
     if (deleted) {
       setOpenDeleteSuccess(true);
@@ -80,6 +95,9 @@ export const PlantCard: FC<PlantCardProps> = ({
   const handleCardClick = () => {
     navigate(`/production/${id}`);
   };
+
+  // "Ver" alone is not a menu: the card already navigates there on click.
+  const hasMenu = canManage || canListSharingAgreements;
 
   const handleMenuClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -131,6 +149,11 @@ export const PlantCard: FC<PlantCardProps> = ({
                 </Typography>
               </Box>
             </Box>
+            {/* No permitted action means no menu at all, rather than a menu with
+                nothing in it or items that would be refused. The card itself
+                still navigates, so the chevron keeps that affordance visible
+                where the menu button used to be -- "Ver" loses nothing. */}
+            {hasMenu ? (
             <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
               <IconButton
                 onClick={handleOpenMenu}
@@ -161,48 +184,57 @@ export const PlantCard: FC<PlantCardProps> = ({
                     </MenuItem>
                   </Box>
 
-                  <Box
-                    component={Link}
-                    to={`/production/${id}/edit`}
-                    sx={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    <MenuItem>
-                      <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                        Editar
+                  {canManage && (
+                    <Box
+                      component={Link}
+                      to={`/production/${id}/edit`}
+                      sx={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      <MenuItem>
+                        <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                          Editar
+                        </Typography>
+                      </MenuItem>
+                    </Box>
+                  )}
+
+                  {canListSharingAgreements && (
+                    <Box
+                      component={Link}
+                      to={`/production/${id}/sharing-agreements`}
+                      sx={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      <MenuItem>
+                        <HandshakeOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                          Acuerdos de Reparto
+                        </Typography>
+                      </MenuItem>
+                    </Box>
+                  )}
+
+                  {canManage && [
+                    <Divider key="divider" sx={{ my: 1 }} />,
+                    <MenuItem
+                      key="delete"
+                      onClick={handleDeleteClick}
+                      sx={{ "&:hover": {
+                        backgroundColor: colors.background.errorFaint,
+                      } }}
+                    >
+                      <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.main", flexShrink: 0 }} />
+                      <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
+                        Eliminar
                       </Typography>
-                    </MenuItem>
-                  </Box>
-
-                  <Box
-                    component={Link}
-                    to={`/production/${id}/sharing-agreements`}
-                    sx={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    <MenuItem>
-                      <HandshakeOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
-                        Acuerdos de Reparto
-                      </Typography>
-                    </MenuItem>
-                  </Box>
-
-                  <Divider sx={{ my: 1 }} />
-
-                  <MenuItem
-                    onClick={handleDeleteClick}
-                    sx={{ "&:hover": {
-                      backgroundColor: colors.background.errorFaint,
-                    } }}
-                  >
-                    <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.main", flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
-                      Eliminar
-                    </Typography>
-                  </MenuItem>
+                    </MenuItem>,
+                  ]}
                 </Box>
               </MenuTemplate>
             </Box>
+            ) : (
+              <ChevronRightIcon sx={{ color: "white", flexShrink: 0 }} />
+            )}
           </>
         }
       >
@@ -297,18 +329,22 @@ export const PlantCard: FC<PlantCardProps> = ({
         </CardContent>
       </AppCard>
 
-      {/* Modals */}
-      <DeleteConfirmationModal
-        isOpen={openDeleteConfirmation}
-        code={code}
-        onCancel={handleCloseDeleteConfirmation}
-        onDelete={handleDelete}
-      />
-      <DeleteSuccessModal
-        isOpen={openDeleteSuccess}
-        onClose={handleCloseDeleteSuccess}
-        code={code}
-      />
+      {/* Modals: mounted inside the same gate as the item that opens them. */}
+      {canManage && (
+        <>
+          <DeleteConfirmationModal
+            isOpen={openDeleteConfirmation}
+            code={code}
+            onCancel={handleCloseDeleteConfirmation}
+            onDelete={handleDelete}
+          />
+          <DeleteSuccessModal
+            isOpen={openDeleteSuccess}
+            onClose={handleCloseDeleteSuccess}
+            code={code}
+          />
+        </>
+      )}
     </>
   );
 };

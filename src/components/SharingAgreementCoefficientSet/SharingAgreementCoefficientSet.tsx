@@ -61,7 +61,11 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
-import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponseStatus as StatusValue } from "../../api/models";
+import type {
+  SharingAgreementPartitionCoefficientResponse,
+  SharingAgreementResponse,
+  SharingAgreementResponseStatus as StatusValue,
+} from "../../api/models";
 import {
   filterSharingAgreementCoefficients,
   type SharingAgreementCoefficientApplicationStateFilter,
@@ -96,9 +100,9 @@ import {
   type SharingAgreementCoefficientSums,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import {
-  useSharingAgreementCoefficientMutations,
+  useSharingAgreementCoefficientActions,
   type CoefficientActivationResult,
-} from "../../pages/production/useSharingAgreementCoefficientMutations";
+} from "../../hooks/actions";
 import {
   buildRowComparisonView,
   findOutgoingCoefficients,
@@ -117,10 +121,15 @@ import {
 
 export interface SharingAgreementCoefficientSetProps {
   plantId: string;
-  sharingAgreementId: string;
+  /**
+   * The agreement itself, not just its id and status: every write here is
+   * authorised by its `canManage`, and the status rules below need its status.
+   * `undefined` while it is still in flight, which withholds every control --
+   * not yet known is not "no", it is "not yet".
+   */
+  agreement: SharingAgreementResponse | undefined;
   coefficients: SharingAgreementPartitionCoefficientResponse[];
   installedPowerKw: number | undefined;
-  agreementStatus: StatusValue | undefined;
   /**
    * Bumped by the page when another surface — the next-step banner — asks to
    * start editing. A nonce rather than a controlled boolean: the rows are seeded
@@ -324,10 +333,9 @@ const ComparisonContextLine: FC<{
 
 export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetProps> = ({
   plantId,
-  sharingAgreementId,
+  agreement,
   coefficients,
   installedPowerKw,
-  agreementStatus,
   editRequestId = 0,
   onImportRequest,
   registerDatesRequestId = 0,
@@ -336,22 +344,23 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 }) => {
   const activeCommunityId = useActiveCommunity();
   const successDispatch = useSuccessDispatch();
-  const {
-    replaceCoefficients,
-    isReplacing,
-    activateCoefficients,
-    isActivating,
-    deactivateCoefficients,
-    isDeactivating,
-    closeCoefficients,
-    isClosing,
-    reopenCoefficients,
-    isReopening,
-  } = useSharingAgreementCoefficientMutations(plantId);
+  const sharingAgreementId = agreement?.id ?? "";
+  const agreementStatus: StatusValue | undefined = agreement?.status;
+  const { replace, activate, deactivate, close, reopen } =
+    useSharingAgreementCoefficientActions(plantId).forAgreement(agreement).actions;
+  // The four lifecycle writes share the agreement's one write flag, so a row
+  // menu and the batch bar are offered exactly when all four were handed over.
+  // Status still decides which of them is legal on a given row.
+  const mayRunLifecycleActions = Boolean(activate && deactivate && close && reopen);
+  const isReplacing = replace?.isPending ?? false;
+  const isActivating = activate?.isPending ?? false;
+  const isDeactivating = deactivate?.isPending ?? false;
+  const isClosing = close?.isPending ?? false;
+  const isReopening = reopen?.isPending ?? false;
 
   // One shared in-flight gate across the row-dialog and batch-bar paths.
   // Each mutation's own isPending now spans its post-success refetch (see
-  // useSharingAgreementCoefficientMutations), but a second lifecycle action
+  // useSharingAgreementCoefficientActions), but a second lifecycle action
   // fired anywhere on this page while *any* of the four is still settling
   // would still read stale applicationState/endState — the endpoints treat
   // that as a legal correction, not an error, so nothing would reject it.
@@ -491,7 +500,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // DRAFT is guaranteed all-PENDING/all-OPEN, but the activate/deactivate/
   // close/reopen endpoints reject DRAFT with 409, so offering checkboxes
   // there would just be a dead end.
-  const showSelectionColumn = !isEditing && !isDraft;
+  const showSelectionColumn = !isEditing && !isDraft && mayRunLifecycleActions;
   // The bar (and its page-clearing spacer) mount only once something is
   // selected — not merely because a PENDING coefficient exists. One shared
   // condition, computed once, so the bar and spacer can never disagree about
@@ -647,22 +656,25 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const handleConfirmActivate = async (date: Dayjs) => {
     if (!activeDialog) return;
     const dialog = activeDialog;
-    const result = await activateCoefficients(sharingAgreementId, [...dialog.targetIds], date);
+    if (!activate) return;
+    const result = await activate.run([...dialog.targetIds], date);
     handleDialogOutcome(result, dialog);
   };
 
   const handleConfirmDeactivateOrReopen = async () => {
     if (!activeDialog || (activeDialog.action !== "deactivate" && activeDialog.action !== "reopen")) return;
     const dialog = activeDialog;
-    const mutate = dialog.action === "deactivate" ? deactivateCoefficients : reopenCoefficients;
-    const result = await mutate(sharingAgreementId, [...dialog.targetIds]);
+    const run = dialog.action === "deactivate" ? deactivate : reopen;
+    if (!run) return;
+    const result = await run.run([...dialog.targetIds]);
     handleDialogOutcome(result, dialog);
   };
 
   const handleConfirmClose = async (date: Dayjs) => {
     if (!activeDialog) return;
     const dialog = activeDialog;
-    const result = await closeCoefficients(sharingAgreementId, [...dialog.targetIds], date);
+    if (!close) return;
+    const result = await close.run([...dialog.targetIds], date);
     handleDialogOutcome(result, dialog);
   };
 
@@ -725,6 +737,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // lifecycle items themselves are still gated per row, and withheld from a
   // DRAFT entirely (see the menu below).
   const showActionsColumn = !isEditing;
+  const showRowLifecycleActions = mayRunLifecycleActions;
   const showRowHistoryAction = !isEditing;
 
   // How many of the currently open dialog's targets are hidden by the
@@ -874,7 +887,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   };
 
   const handleSave = async () => {
-    const outcome = await replaceCoefficients(sharingAgreementId, rows);
+    if (!replace) return;
+    const outcome = await replace.run(rows);
     if (outcome.success) {
       setIsEditing(false);
       setRows([]);
@@ -895,7 +909,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
    * Both are DRAFT-only: `PUT .../partition-coefficients` and `POST .../file`
    * both 409 outside DRAFT.
    */
-  const authoringActions = isDraft && showAuthoringActions ? (
+  const authoringActions = isDraft && showAuthoringActions && replace ? (
     <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, mb: 2.5 }}>
       <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={handleStartEditing}>
         Editar a mano
@@ -908,7 +922,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     </Box>
   ) : null;
 
-  const supplyPicker = isDraft ? (
+  const supplyPicker = isDraft && replace ? (
     <AddSupplyDialog
       isOpen={isPickerOpen}
       communityId={activeCommunityId}
@@ -1414,7 +1428,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         transformOrigin={{ horizontal: "right", vertical: "top" }}
       >
         <CoefficientActionsMenuItems
-          items={(actionsMenuCoefficient && !isDraft
+          items={(actionsMenuCoefficient && !isDraft && showRowLifecycleActions
             ? getAvailableCoefficientActions(actionsMenuCoefficient.applicationState, actionsMenuCoefficient.endState)
             : []
           ).map((action) => ({ action }))}
@@ -1422,7 +1436,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         />
         {/* Read-only, and available in every status, so it sits below the
             actions that change state rather than among them. */}
-        {!isDraft && actionsMenuCoefficient && <Divider />}
+        {!isDraft && showRowLifecycleActions && actionsMenuCoefficient && <Divider />}
         <MenuItem onClick={handleOpenHistory}>
           <ListItemIcon>
             <HistoryIcon fontSize="small" sx={{ color: colors.text.subtle }} />

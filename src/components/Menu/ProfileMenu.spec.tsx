@@ -1,27 +1,23 @@
 import "@testing-library/jest-dom";
 import { expect, test, vi } from "vitest";
 import { ProfileMenu } from "./ProfileMenu";
-import { screen, render } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { screen } from "@testing-library/react";
+import { Route, Routes } from "react-router";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "../../context/auth.context";
-import { LoggedUserProvider } from "../../context/logged-user.context";
+import type { QueryClient } from "@tanstack/react-query";
+import { getGetCurrentUserQueryKey } from "../../api/users/users";
+import { createTestQueryClient, renderWithProviders } from "../../test/renderWithProviders";
 
-function setup(queryClient: QueryClient = new QueryClient()) {
-  render(
-    <AuthProvider>
-      <LoggedUserProvider>
-        <QueryClientProvider client={queryClient}>
-          <MemoryRouter initialEntries={["/"]}>
-            <Routes>
-              <Route path="/" element={<ProfileMenu username="Luis Mata" />} />
-              <Route path="/login" element={<div>Login page</div>} />
-            </Routes>
-          </MemoryRouter>
-        </QueryClientProvider>
-      </LoggedUserProvider>
-    </AuthProvider>,
+// Through the harness rather than a hand-built provider stack: LoggedUserProvider
+// is a query now (#203), so it has to sit under the QueryClientProvider, and the
+// harness is the one place that nesting is written down.
+function setup(queryClient: QueryClient = createTestQueryClient()) {
+  renderWithProviders(
+    <Routes>
+      <Route path="/" element={<ProfileMenu username="Luis Mata" />} />
+      <Route path="/login" element={<div>Login page</div>} />
+    </Routes>,
+    { route: "/", queryClient },
   );
 }
 
@@ -47,9 +43,10 @@ test("ProfileMenu opens menu when clicking", async () => {
 
 test("ProfileMenu clears the query cache and navigates to login on logout", async () => {
   const user = userEvent.setup();
-  const queryClient = new QueryClient();
-  // Seed the cache to emulate a previous user's cached data (e.g. getCurrentUser).
-  queryClient.setQueryData(["users", "current"], { id: "prev-user" });
+  const queryClient = createTestQueryClient();
+  // The real key, because the signed-in user is now served from it: this is a
+  // previous user's response still sitting in the cache.
+  queryClient.setQueryData(getGetCurrentUserQueryKey(), { id: "prev-user" });
   const clearSpy = vi.spyOn(queryClient, "clear");
 
   setup(queryClient);
@@ -60,7 +57,7 @@ test("ProfileMenu clears the query cache and navigates to login on logout", asyn
   // Clearing the cache is the fix: it prevents the previous user's response from
   // leaking into the next session and driving the landing redirect off stale data.
   expect(clearSpy).toHaveBeenCalledTimes(1);
-  expect(queryClient.getQueryData(["users", "current"])).toBeUndefined();
+  expect(queryClient.getQueryData(getGetCurrentUserQueryKey())).toBeUndefined();
   expect(await screen.findByText("Login page")).toBeInTheDocument();
 });
 

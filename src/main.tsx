@@ -4,21 +4,15 @@ import App from "./App.tsx";
 import { BrowserRouter } from "react-router";
 import { GlobalStyles, StyledEngineProvider } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/auth.context.tsx";
 import { LoggedUserProvider } from "./context/logged-user.context.tsx";
 import { CommunityProvider } from "./context/community.context.tsx";
 import { getFromStorage } from "./utils/getFromStorage.tsx";
 import { theme } from "./theme";
+import { createAppQueryClient } from "./queryClient";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      throwOnError: (error: unknown) => (error as { response?: { status?: number } }).response?.status === 401,
-    },
-  },
-});
+const queryClient = createAppQueryClient();
 
 /**
  * Motion distances live as custom properties so the reduced-motion rule below
@@ -91,10 +85,16 @@ body { font-family: "Inter", sans-serif; }
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    {/*
+      The query client is outermost below AuthProvider: LoggedUserProvider IS a
+      query now (GET /users/current, #203), and CommunityProvider reads the user
+      it serves. AuthProvider stays above both because the token is what gates
+      that query.
+    */}
     <AuthProvider initialState={getFromStorage("token")}>
-      <LoggedUserProvider>
-        <CommunityProvider>
-          <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <LoggedUserProvider>
+          <CommunityProvider>
             <ThemeProvider theme={theme}>
               <StyledEngineProvider enableCssLayer>
                 <GlobalStyles styles={GLOBAL_STYLES} />
@@ -103,9 +103,9 @@ createRoot(document.getElementById("root")!).render(
                 </BrowserRouter>
               </StyledEngineProvider>
             </ThemeProvider>
-          </QueryClientProvider>
-        </CommunityProvider>
-      </LoggedUserProvider>
+          </CommunityProvider>
+        </LoggedUserProvider>
+      </QueryClientProvider>
     </AuthProvider>
   </StrictMode>,
 );

@@ -8,6 +8,7 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PowerIcon from "@mui/icons-material/Power";
 import PowerOffIcon from "@mui/icons-material/PowerOff";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useNavigate } from "react-router";
 import { DisplayMenu } from "../Menu/DisplayMenu";
 import { DisableSuccessModal } from "../Modals/DisableSuccessModal";
@@ -24,8 +25,18 @@ export interface SupplyCardProps {
   enabled?: boolean;
   lastConnection?: string;
   lastMeasurement?: number;
-  onDisable: (id: string) => Promise<boolean>;
-  onEnable: (id: string) => Promise<boolean>;
+  /**
+   * Whether this caller may change the supply, from its own canEdit -- which by
+   * its own documentation covers update, enable and disable together, so one
+   * flag decides the whole menu rather than three.
+   *
+   * Defaults to false: a card rendered without being told stays read-only.
+   * The opposite default would make every new call site permissive until
+   * somebody remembered otherwise, which is the bug this epic exists to remove.
+   */
+  canEdit?: boolean;
+  onDisable?: (id: string) => Promise<boolean>;
+  onEnable?: (id: string) => Promise<boolean>;
 }
 
 export const SupplyCard: FC<SupplyCardProps> = ({
@@ -36,6 +47,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   enabled = false,
   lastConnection = "",
   lastMeasurement = 0,
+  canEdit = false,
   onDisable,
   onEnable,
 }) => {
@@ -60,6 +72,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
 
   const handleDisable = async () => {
     setOpenDisableConfirmation(false);
+    if (!onDisable) return;
     const disabled = await onDisable(id);
     if (disabled) {
       setOpenDisableSuccess(true);
@@ -80,6 +93,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
 
   const handleEnable = async () => {
     setOpenEnableConfirmation(false);
+    if (!onEnable) return;
     const enabledResult = await onEnable(id);
     if (enabledResult) {
       setOpenEnableSuccess(true);
@@ -130,14 +144,22 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                   display: { xs: "none", sm: "flex" },
                 }}
               />
-              <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
-                <DisplayMenu
-                  supplyPointId={id}
-                  disableSupplyPoint={() => setOpenDisableConfirmation(true)}
-                  enableSupplyPoint={() => setOpenEnableConfirmation(true)}
-                  enabled={enabled}
-                />
-              </Box>
+              {/* No permitted action means no menu at all, rather than a menu
+                  with nothing in it or items that would be refused. The card
+                  itself still navigates, so the chevron keeps that affordance
+                  visible where the menu button used to be. */}
+              {canEdit ? (
+                <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
+                  <DisplayMenu
+                    supplyPointId={id}
+                    disableSupplyPoint={() => setOpenDisableConfirmation(true)}
+                    enableSupplyPoint={() => setOpenEnableConfirmation(true)}
+                    enabled={enabled}
+                  />
+                </Box>
+              ) : (
+                <ChevronRightIcon sx={{ color: "white", flexShrink: 0 }} />
+              )}
             </Box>
           </>
         }
@@ -217,21 +239,27 @@ export const SupplyCard: FC<SupplyCardProps> = ({
         </CardContent>
       </AppCard>
 
-      {/* Modals */}
-      <DisableConfirmationModal
-        isOpen={openDisableConfirmation}
-        code={code}
-        onCancel={handleCloseDisableConfirmation}
-        onDisable={handleDisable}
-      />
-      <DisableSuccessModal isOpen={openDisableSuccess} onClose={handleCloseDisableSuccess} code={code} />
-      <EnableConfirmationModal
-        isOpen={openEnableConfirmation}
-        code={code}
-        onCancel={handleCloseEnableConfirmation}
-        onEnable={handleEnable}
-      />
-      <EnableSuccessModal isOpen={openEnableSuccess} onClose={handleCloseEnableSuccess} code={code} />
+      {/* Mounted with the menu, not beside it: with no menu there is nothing
+          that can open them, and a confirmation dialog for an action the caller
+          was never given has no way to be reached. */}
+      {canEdit && (
+        <>
+          <DisableConfirmationModal
+            isOpen={openDisableConfirmation}
+            code={code}
+            onCancel={handleCloseDisableConfirmation}
+            onDisable={handleDisable}
+          />
+          <DisableSuccessModal isOpen={openDisableSuccess} onClose={handleCloseDisableSuccess} code={code} />
+          <EnableConfirmationModal
+            isOpen={openEnableConfirmation}
+            code={code}
+            onCancel={handleCloseEnableConfirmation}
+            onEnable={handleEnable}
+          />
+          <EnableSuccessModal isOpen={openEnableSuccess} onClose={handleCloseEnableSuccess} code={code} />
+        </>
+      )}
     </>
   );
 };

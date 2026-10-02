@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router";
 import type { UpdateSupplyBody } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SupplyForm, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
-import { useUpdateSupply } from "../../api/supplies/supplies";
+import { useSupplyActions } from "../../hooks/actions";
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { useErrorDispatch } from "../../context/error.context";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -15,26 +15,27 @@ export const EditSupplyPage: FC = () => {
   const { supplyPointId = "" } = useParams();
   const errorDispatch = useErrorDispatch();
   const navigate = useNavigate();
-  const updateSupply = useUpdateSupply();
 
-  const { supply: supplyPoint, isLoading, error, refetch } = useSupplyInActiveCommunity(supplyPointId);
+  const { supply: supplyPoint, isLoading, isNotFound, error } = useSupplyInActiveCommunity(supplyPointId);
+  const { edit } = useSupplyActions().forSupply(supplyPoint).actions;
 
   const handleSubmit = async ({ name, cups, address, addressRef }: SupplyFormValues) => {
-    try {
-      const updatedSupply = {
-        name,
-        code: cups,
-        address,
-        addressRef,
-      } as UpdateSupplyBody;
-      const response = await updateSupply.mutateAsync({ supplyId: supplyPointId, data: updatedSupply }, {});
-      if (response) {
-        refetch();
-        navigate("/supply-points");
-      } else {
-        errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
-      }
-    } catch {
+    // The route guard has already established canEdit, so this only covers the
+    // render before the supply itself has arrived.
+    if (!edit) return;
+    const updatedSupply: UpdateSupplyBody = {
+      code: cups ?? "",
+      address: address ?? "",
+      name,
+      // Optional since the backend accepts a supply without one; sending the
+      // empty string instead would store a blank reference as if it were data.
+      addressRef: addressRef || undefined,
+    };
+    // The action invalidates the supply and the list itself, so there is no
+    // refetch to fire here.
+    if (await edit.run(updatedSupply)) {
+      navigate("/supply-points");
+    } else {
       errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
     }
   };
@@ -102,7 +103,7 @@ export const EditSupplyPage: FC = () => {
           elevation={0}
           sx={sxStyles.softPanel}
         >
-          {!isLoading && !error && (
+          {!isLoading && !error && !isNotFound && (
             <SupplyForm
               initialValues={{
                 name: supplyPoint?.name ?? undefined,
@@ -115,6 +116,7 @@ export const EditSupplyPage: FC = () => {
               showUserSelector={true}
               selectedUserId={supplyPoint?.user?.id}
               disableUserSelector={true}
+              disabled={!edit}
             />
           )}
         </Paper>

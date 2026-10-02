@@ -3,30 +3,16 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { mutation } from "../../test/queryState";
-import { useUploadSharingAgreementFile } from "../../api/sharing-agreements/sharing-agreements";
+import { getGroupedApiErrorDetails } from "../../errors/apiErrorCatalogue";
 import { SharingAgreementUploadDialog } from "./SharingAgreementUploadDialog";
 
-const mockErrorDispatch = vi.fn();
-const mockMutateAsync = vi.fn();
-
-vi.mock(import("../../context/error.context"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useErrorDispatch: () => mockErrorDispatch,
-}));
-
-vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useUploadSharingAgreementFile: vi.fn(),
-}));
+const mockRun = vi.fn();
 
 function renderDialog(regulatoryCode: string | undefined, onUploadSuccess?: () => void) {
-  vi.mocked(useUploadSharingAgreementFile).mockReturnValue(mutation.idle({ mutateAsync: mockMutateAsync }));
   return renderWithProviders(
     <SharingAgreementUploadDialog
       isOpen
-      plantId="plant-1"
-      sharingAgreementId="agreement-1"
+      uploadFile={{ run: mockRun, isPending: false }}
       regulatoryCode={regulatoryCode}
       onClose={vi.fn()}
       onUploadSuccess={onUploadSuccess}
@@ -36,8 +22,7 @@ function renderDialog(regulatoryCode: string | undefined, onUploadSuccess?: () =
 
 describe("SharingAgreementUploadDialog", () => {
   beforeEach(() => {
-    mockErrorDispatch.mockClear();
-    mockMutateAsync.mockClear();
+    mockRun.mockClear();
   });
 
   it("idle state states the expected filename with the plant's actual regulatory code, and warns of full replacement", () => {
@@ -60,17 +45,20 @@ describe("SharingAgreementUploadDialog", () => {
     expect(screen.queryByRole("button", { name: "Subir fichero" })).not.toBeInTheDocument();
   });
 
-  it("renders the rejected-lines screen on a 400, grouped into file-level and line-level errors, without importing anything", async () => {
-    mockMutateAsync.mockRejectedValue({
-      response: {
-        status: 400,
-        data: {
-          errors: [
-            { message: "raw", code: "DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID" },
-            { message: "raw", code: "DISTRIBUTOR_FILE_CUPS_UNKNOWN", params: { line: "3", cups: "ES1" } },
-          ],
+  it("renders the rejected-lines screen when the action hands back grouped errors, without importing anything", async () => {
+    mockRun.mockResolvedValue({
+      success: false,
+      groupedErrors: getGroupedApiErrorDetails({
+        response: {
+          status: 400,
+          data: {
+            errors: [
+              { message: "raw", code: "DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID" },
+              { message: "raw", code: "DISTRIBUTOR_FILE_CUPS_UNKNOWN", params: { line: "3", cups: "ES1" } },
+            ],
+          },
         },
-      },
+      }),
     });
     const user = userEvent.setup();
     renderDialog("CAU0001");
@@ -83,11 +71,10 @@ describe("SharingAgreementUploadDialog", () => {
     expect(await screen.findByText("Errores del fichero")).toBeInTheDocument();
     expect(screen.getByText("Errores por línea")).toBeInTheDocument();
     expect(screen.getByText(/no se ha modificado ningún coeficiente/i)).toBeInTheDocument();
-    expect(mockErrorDispatch).not.toHaveBeenCalled();
   });
 
   it("calls onUploadSuccess after a successful upload", async () => {
-    mockMutateAsync.mockResolvedValue(undefined);
+    mockRun.mockResolvedValue({ success: true });
     const onUploadSuccess = vi.fn();
     const user = userEvent.setup();
     renderDialog("CAU0001", onUploadSuccess);
@@ -100,8 +87,10 @@ describe("SharingAgreementUploadDialog", () => {
     await waitFor(() => expect(onUploadSuccess).toHaveBeenCalled());
   });
 
-  it("on a non-400 error, dispatches a toast and stays on the file picker", async () => {
-    mockMutateAsync.mockRejectedValue({ response: { status: 409 } });
+  // The toast for a failure with no per-line detail belongs to the actions
+  // layer, which is where it is asserted; this dialog owes the file picker back.
+  it("stays on the file picker when the action reports a failure it cannot list", async () => {
+    mockRun.mockResolvedValue({ success: false, groupedErrors: null });
     const user = userEvent.setup();
     renderDialog("CAU0001");
 
@@ -110,7 +99,8 @@ describe("SharingAgreementUploadDialog", () => {
     await user.upload(input, file);
     await user.click(screen.getByRole("button", { name: "Subir fichero" }));
 
-    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
+    await waitFor(() => expect(mockRun).toHaveBeenCalledWith(file));
     expect(screen.queryByText("Errores del fichero")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Subir fichero" })).toBeInTheDocument();
   });
 });

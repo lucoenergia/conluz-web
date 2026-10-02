@@ -3,11 +3,10 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
-import { buildSupply, buildUser } from "../test/fixtures";
+import { buildCurrentUser, buildSupply } from "../test/fixtures";
 import { useActiveCommunity } from "../context/community.context";
 import { CommunityRole } from "../api/models";
 import type { SupplyResponse } from "../api/models";
-import { useGetSuppliesByUserId } from "../api/users/users";
 import {
   useGetAllSupplies,
   useGetSupplyDailyConsumption,
@@ -28,25 +27,26 @@ const requestedSupplyIds: string[] = [];
 vi.mock("../components/Graph/GraphBar", () => ({ GraphBar: () => <div /> }));
 vi.mock("../components/Graph/MultiSeriesBar", () => ({ MultiSeriesBar: () => <div /> }));
 
-vi.mock(import("../api/users/users"), () => ({
-  useGetSuppliesByUserId: vi.fn(),
-}));
-
 vi.mock(import("../api/supplies/supplies"), () => ({
   useGetAllSupplies: vi.fn(),
   useGetSupplyDailyProduction: vi.fn(),
   useGetSupplyDailyConsumption: vi.fn(),
 }));
 
+// A plain member of both. The role is here so CommunityProvider accepts the
+// two ids as memberships, not because the screen reads it -- and a member is
+// the case that used to be untestable here: the per-user supplies endpoint
+// Home called for them is keyed by user, so its query key could not change
+// when the community did, and the switch below would have failed.
 vi.mock(import("../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: () =>
-    buildUser({
+    buildCurrentUser({
       id: "user-1",
       isPlatformAdmin: false,
       memberships: {
-        "community-a": CommunityRole.COMMUNITY_ADMIN,
-        "community-b": CommunityRole.COMMUNITY_ADMIN,
+        "community-a": CommunityRole.COMMUNITY_MEMBER,
+        "community-b": CommunityRole.COMMUNITY_MEMBER,
       },
     }),
 }));
@@ -67,8 +67,6 @@ function renderHome(communityId: string) {
 describe("HomePage across a community switch", () => {
   beforeEach(() => {
     requestedSupplyIds.length = 0;
-    // The user is a community admin, so Home disables the per-user supplies query.
-    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
     vi.mocked(useGetAllSupplies).mockImplementation((communityId) =>
       query.success<typeof getAllSupplies>({ items: SUPPLIES_BY_COMMUNITY[communityId] ?? [] }),
     );

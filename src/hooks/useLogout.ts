@@ -1,25 +1,23 @@
 import { useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuthDispatch } from "../context/auth.context";
-import { useLoggedUserDispatch } from "../context/logged-user.context";
+import { useEndSession } from "./useEndSession";
 
 /**
- * Shared logout routine used by every logout entry point.
+ * Shared logout routine used by every logout entry point that has a router.
  *
- * Clearing the React Query cache is essential: `getCurrentUser`'s query key is
- * user-independent, so without a clear the previous user's response leaks into the next
- * session and can drive the landing redirect off the wrong user's memberships.
+ * Clearing the React Query cache is what empties the signed-in user: the user
+ * IS the `getCurrentUser` query now (#203), so nothing else has to be reset --
+ * and nothing else can be. The clear is also still what stops the previous
+ * user's response, whose query key is user-independent, from leaking into the
+ * next session and driving the landing redirect off the wrong memberships.
  */
 export function useLogout() {
-  const queryClient = useQueryClient();
-  const dispatchAuth = useAuthDispatch();
-  const dispatchLoggedUser = useLoggedUserDispatch();
+  const endSession = useEndSession();
   const navigate = useNavigate();
 
   return () => {
-    queryClient.clear();
-    dispatchAuth(null);
-    dispatchLoggedUser(null);
+    // "logout", not "expired": the user asked. Claiming an expiry on the login
+    // page would be a lie on every deliberate logout.
+    endSession("logout");
     navigate("/login");
   };
 }

@@ -4,7 +4,7 @@ import { type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate } from "react-router";
 import { type CreateUserBody } from "../../api/models";
-import { useCreateUser } from "../../api/users/users";
+import { usePlatformActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { UserForm, type UserFormValues } from "../../components/UserForm/UserForm";
@@ -13,27 +13,30 @@ import PersonIcon from "@mui/icons-material/Person";
 export const CreateUserPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const createUser = useCreateUser();
+  // The platform's canCreateUsers, not a community's: this form names no
+  // community, so it creates a user attached to none -- which is the question
+  // the platform flag answers. Creating one INSIDE a community is the
+  // community's own canCreateUsers, and that is a different surface.
+  const { createUser } = usePlatformActions().actions;
 
   const handleSubmit = async ({ fullName, personalId, number, email, address, phoneNumber, password }: UserFormValues) => {
-    try {
-      const newUser: CreateUserBody = {
-        fullName,
-        personalId,
-        number: number ?? 0,
-        email,
-        address: address || undefined,
-        phoneNumber: phoneNumber || undefined,
-        password: password ?? "",
-      };
+    // The route guard has already established canCreateUsers, so this only covers
+    // the render before the current user has arrived.
+    if (!createUser) return;
 
-      const response = await createUser.mutateAsync({ data: newUser });
-      if (response) {
-        navigate("/users");
-      } else {
-        errorDispatch("Ha habido un problema al crear el usuario. Por favor, inténtalo más tarde");
-      }
-    } catch {
+    const newUser: CreateUserBody = {
+      fullName,
+      personalId,
+      number: number ?? 0,
+      email,
+      address: address || undefined,
+      phoneNumber: phoneNumber || undefined,
+      password: password ?? "",
+    };
+
+    if (await createUser.run(newUser)) {
+      navigate("/users");
+    } else {
       errorDispatch("Ha habido un problema al crear el usuario. Por favor, inténtalo más tarde");
     }
   };
@@ -96,7 +99,8 @@ export const CreateUserPage: FC = () => {
           <UserForm
             mode="create"
             handleSubmit={handleSubmit}
-            isPending={createUser.isPending}
+            isPending={createUser?.isPending ?? false}
+            disabled={!createUser}
             submitLabel="Crear usuario"
           />
         </Paper>

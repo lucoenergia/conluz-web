@@ -11,6 +11,8 @@ import type { SupplyResponseAddressRef } from './supplyResponseAddressRef';
 import type { SupplyResponseContract } from './supplyResponseContract';
 import type { SupplyResponseDistributor } from './supplyResponseDistributor';
 import type { SupplyResponseShelly } from './supplyResponseShelly';
+import type { CommunityReferenceResponse } from './communityReferenceResponse';
+import type { SupplyCapabilitiesResponse } from './supplyCapabilitiesResponse';
 
 export interface SupplyResponse {
   /** Internal unique identifier of the supply */
@@ -33,4 +35,8 @@ export interface SupplyResponse {
   distributor: SupplyResponseDistributor;
   /** Shelly device information of the supply */
   shelly: SupplyResponseShelly;
+  /** Community the supply belongs to */
+  community: CommunityReferenceResponse;
+  /** What the caller may do with this supply. */
+  capabilities: SupplyCapabilitiesResponse;
 }

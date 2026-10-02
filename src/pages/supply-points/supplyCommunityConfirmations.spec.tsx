@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildCommunity, buildUser } from "../../test/fixtures";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { useCreateSupply } from "../../api/supplies/supplies";
 import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
@@ -16,21 +16,27 @@ import { CreateSupplyPage } from "./CreateSupply";
  * of a community names that community, in its header line and in its title.
  */
 
-vi.mock(import("../../api/communities/communities"), () => ({
+// Spread the original: useActiveCommunityResource reads useGetCommunityById
+// from this module to resolve the active community's capabilities, so a bare
+// factory would leave that export undefined.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
 }));
 
-vi.mock(import("../../api/supplies/supplies"), () => ({
+vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useCreateSupply: vi.fn(),
 }));
 
-vi.mock(import("../../api/users/users"), () => ({
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
 }));
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useLoggedUser: () => buildUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN", c2: "COMMUNITY_MEMBER" } }),
+  useLoggedUser: () => buildCurrentUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN", c2: "COMMUNITY_MEMBER" } }),
 }));
 
 const COMMUNITY_NAME = "Comunidad Solar Norte";

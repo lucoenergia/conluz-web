@@ -3,7 +3,7 @@ import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
 import { colors, interactiveTransition, motion} from "../../theme/tokens";
-import { useDisableSupply, useEnableSupply, useGetAllSupplies } from "../../api/supplies/supplies";
+import { useGetAllSupplies } from "../../api/supplies/supplies";
 import { useGetSuppliesByUserId, useGetUserById } from "../../api/users/users";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -21,6 +21,9 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import { ImportSuppliesModal } from "../../components/Modals/ImportSuppliesModal";
 import { useActiveCommunity } from "../../context/community.context";
+import { isSupplyOutsideActiveCommunity } from "./supplyCommunityScope";
+import { useCommunityActions, useSupplyActions } from "../../hooks/actions";
+import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 
 export const SupplyPointsPage: FC = () => {
   const theme = useTheme();
@@ -39,51 +42,39 @@ export const SupplyPointsPage: FC = () => {
     { query: { enabled: !personId && !!activeCommunityId } },
   );
   const { data: userSupplies = [], isLoading: isLoadingUser, error: errorUser, refetch: refetchUser } =
-    useGetSuppliesByUserId(personId ?? "", { query: { enabled: !!personId } });
+    useGetSuppliesByUserId(personId ?? "", { query: { enabled: !!personId && !!activeCommunityId } });
   const { data: personData } = useGetUserById(personId ?? "", { query: { enabled: !!personId } });
 
+  /**
+   * GET /users/{userId}/supplies is scoped to what the caller may read, not to
+   * the community on screen. Since conluz#326 every row is one this caller is
+   * entitled to -- but "may read" is plural: an admin of two communities
+   * viewing a member of both receives both communities' supplies, while the
+   * selector names one. Listing them together would present another
+   * community's supplies under this one's heading, and offer actions scoped to
+   * the wrong community.
+   *
+   * The community-scoped branch needs no such filter: its communityId is in
+   * the path, so it re-keys by itself when the selection changes.
+   */
+  const userSuppliesInCommunity = useMemo(
+    () => userSupplies.filter((supply) => !isSupplyOutsideActiveCommunity(supply, activeCommunityId)),
+    [userSupplies, activeCommunityId],
+  );
+
   const responseFromApi = useMemo<SupplyResponse[]>(
-    () => (personId ? userSupplies : (allData?.items ?? [])),
-    [personId, userSupplies, allData?.items],
+    () => (personId ? userSuppliesInCommunity : (allData?.items ?? [])),
+    [personId, userSuppliesInCommunity, allData?.items],
   );
   const isLoading = personId ? isLoadingUser : isLoadingAll;
   const error = personId ? errorUser : errorAll;
   const refetch = personId ? refetchUser : refetchAll;
 
-  const disableSupply = useDisableSupply();
-  const enableSupply = useEnableSupply();
-
-  const disableSupplyPoint = async (id: string) => {
-    try {
-      const response = await disableSupply.mutateAsync({ supplyId: id });
-      if (response) {
-        refetch();
-        return true;
-      } else {
-        errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
-        return false;
-      }
-    } catch {
-      errorDispatch("Ha habido un problema al deshabilitar el punto de suministro. Por favor inténtalo más tarde");
-      return false;
-    }
-  };
-
-  const enableSupplyPoint = async (id: string) => {
-    try {
-      const response = await enableSupply.mutateAsync({ supplyId: id });
-      if (response) {
-        refetch();
-        return true;
-      } else {
-        errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
-        return false;
-      }
-    } catch {
-      errorDispatch("Ha habido un problema al habilitar el punto de suministro. Por favor inténtalo más tarde");
-      return false;
-    }
-  };
+  // What this caller may do, as the backend answers it. forSupply is a plain
+  // function rather than a hook precisely so it can be asked once per card.
+  const { forSupply } = useSupplyActions();
+  const activeCommunity = useActiveCommunityResource();
+  const { actions: communityActions } = useCommunityActions().forCommunity(activeCommunity);
 
   useEffect(() => {
     if (error) {
@@ -192,8 +183,11 @@ export const SupplyPointsPage: FC = () => {
               justifyContent: "space-between",
             }}
           >
-          {/* Action Buttons */}
+          {/* Action Buttons. Each is mounted only when the backend hands over
+              the action behind it -- never disabled, which would advertise
+              something the caller cannot do. */}
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            {communityActions.createSupply && (
             <Button
               component={Link}
               to="/supply-points/new"
@@ -213,14 +207,12 @@ export const SupplyPointsPage: FC = () => {
             >
               Nuevo Punto de Suministro
             </Button>
+            )}
+            {communityActions.importSupplies && (
             <Button
               variant="outlined"
               startIcon={<CloudUploadIcon />}
               onClick={handleOpenImportModal}
-              // Import writes into a community. With none selected there is no
-              // target, and the endpoint would fall back to one of its own choosing.
-              disabled={!activeCommunityId}
-              title={activeCommunityId ? undefined : "Selecciona una comunidad para importar"}
               sx={{
                 px: 3,
                 py: 1.5,
@@ -236,6 +228,7 @@ export const SupplyPointsPage: FC = () => {
             >
               Importar CSV
             </Button>
+            )}
           </Box>
 
           {/* Filter Chips */}
@@ -253,19 +246,25 @@ export const SupplyPointsPage: FC = () => {
           <CardGrid
             items={filteredItems}
             getKey={(item) => item.id || ""}
-            renderCard={(item) => (
-              <SupplyCard
-                id={item.id}
-                code={item.code}
-                name={item.name ?? undefined}
-                address={item.address}
-                enabled={item.enabled}
-                lastConnection="Hace 2 horas"
-                lastMeasurement={Math.floor(Math.random() * 100)}
-                onDisable={disableSupplyPoint}
-                onEnable={enableSupplyPoint}
-              />
-            )}
+            renderCard={(item) => {
+              // Destructured so TypeScript narrows them: an action the caller
+              // was not given is undefined, and the card is handed nothing.
+              const { disable, enable, edit } = forSupply(item).actions;
+              return (
+                <SupplyCard
+                  id={item.id}
+                  code={item.code}
+                  name={item.name ?? undefined}
+                  address={item.address}
+                  enabled={item.enabled}
+                  lastConnection="Hace 2 horas"
+                  lastMeasurement={Math.floor(Math.random() * 100)}
+                  canEdit={!!edit}
+                  onDisable={disable && (() => disable.run())}
+                  onEnable={enable && (() => enable.run())}
+                />
+              );
+            }}
           />
         </Box>
       )}
@@ -286,10 +285,14 @@ export const SupplyPointsPage: FC = () => {
             subtitle={
               searchText
                 ? `No hay resultados para "${searchText}"`
-                : "Comienza agregando tu primer punto de suministro"
+                : communityActions.createSupply
+                  ? "Comienza agregando tu primer punto de suministro"
+                  // A member cannot add one, so inviting them to is an
+                  // instruction they can only fail to follow.
+                  : "Todavía no hay ningún punto de suministro asociado a tu cuenta en esta comunidad."
             }
             actionButton={
-              !searchText
+              !searchText && communityActions.createSupply
                 ? {
                     label: "Crear Punto de Suministro",
                     onClick: () => navigate("/supply-points/new"),
@@ -301,12 +304,15 @@ export const SupplyPointsPage: FC = () => {
         </Box>
       )}
 
-      {/* Import Supplies Modal */}
-      <ImportSuppliesModal
-        isOpen={showImportModal}
-        onClose={handleCloseImportModal}
-        onImportComplete={handleImportComplete}
-      />
+      {/* Mounted with its button: no import action, nothing that can open it. */}
+      {communityActions.importSupplies && (
+        <ImportSuppliesModal
+          isOpen={showImportModal}
+          onClose={handleCloseImportModal}
+          onImportComplete={handleImportComplete}
+          importSupplies={communityActions.importSupplies}
+        />
+      )}
     </Box>
   );
 };

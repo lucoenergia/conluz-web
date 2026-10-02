@@ -6,11 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PlantResponseRegulatoryCode } from './plantResponseRegulatoryCode';
-import type { SupplyResponse } from './supplyResponse';
+import type { SupplyReferenceResponse } from './supplyReferenceResponse';
 import type { PlantResponseDescription } from './plantResponseDescription';
 import type { PlantResponseInverterProvider } from './plantResponseInverterProvider';
 import type { PlantResponseConnectionDate } from './plantResponseConnectionDate';
 import type { PlantCommunityResponse } from './plantCommunityResponse';
+import type { PlantCapabilitiesResponse } from './plantCapabilitiesResponse';
 
 export interface PlantResponse {
   id: string;
@@ -18,7 +19,8 @@ export interface PlantResponse {
   providerCode: string;
   /** The identifier assigned by the regulator. In Spain this is the CAU (Codigo de Autoconsumo). It is not the provider's station code (provider_code) and not a CUPS. */
   regulatoryCode: PlantResponseRegulatoryCode;
-  supply: SupplyResponse;
+  /** The supply this plant produces onto. A reference: the full supply, including its owner, is fetched from GET /supplies/{supplyId}, which not every caller who may list plants is allowed to call. */
+  supply: SupplyReferenceResponse;
   name: string;
   address: string;
   description: PlantResponseDescription;
@@ -27,4 +29,6 @@ export interface PlantResponse {
   connectionDate: PlantResponseConnectionDate;
   /** The community that owns the plant. */
   community: PlantCommunityResponse;
+  /** What the caller may do with this plant. */
+  capabilities: PlantCapabilitiesResponse;
 }

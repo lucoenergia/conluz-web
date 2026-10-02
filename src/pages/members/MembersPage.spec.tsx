@@ -5,21 +5,17 @@ import userEvent from "@testing-library/user-event";
 import type { QueryClient } from "@tanstack/react-query";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildCommunity, buildMembership, buildUser } from "../../test/fixtures";
 import {
-  getGetMembershipsQueryKey,
-  useCreateMembership,
-  useDeleteMembership,
-  useGetMemberships,
-  useUpdateMembershipRole,
-  type getMemberships,
-} from "../../api/memberships/memberships";
-import {
-  getGetAllCommunitiesQueryKey,
-  useGetAllCommunities,
-  type getAllCommunities,
-} from "../../api/communities/communities";
-import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
+  buildCommunity,
+  buildCommunityCapabilities,
+  buildCurrentUser,
+  buildMembership,
+  buildMembershipCapabilities,
+  buildUser,
+  buildUserCapabilities,
+} from "../../test/fixtures";
+import type { MembershipResponse } from "../../api/models";
+import type { CommunityCapabilitiesResponse } from "../../api/models";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
@@ -27,20 +23,43 @@ const mockCreateMutate = vi.fn().mockResolvedValue({});
 const mockDeleteMutate = vi.fn().mockResolvedValue({});
 const mockUpdateMutate = vi.fn().mockResolvedValue({});
 
+// The builders deny every capability by default, so a fixture that says nothing
+// asks for a row the caller may do nothing with. These tests are all about what
+// an administrator of the community can do, so each row names the capabilities
+// that let it: the page does not read them yet, and will.
+const ADMINISTRABLE = buildMembershipCapabilities({
+  canUpdateRole: true,
+  canDelete: true,
+  canManageInvestment: true,
+  canReadPayback: true,
+});
+
+// "Puntos de suministro" is the member's own supplies, not the membership's, so
+// it is the USER that carries its answer.
+const member = (id: string, fullName: string, email: string) =>
+  buildUser({
+    id,
+    fullName,
+    email,
+    capabilities: buildUserCapabilities({ canRead: true, canListSupplies: true }),
+  });
+
 const MOCK_MEMBERSHIPS = [
   buildMembership({
     id: "m1",
-    user: buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com" }),
+    user: member("u1", "Ana García", "ana@example.com"),
     communityId: "c1",
     role: "COMMUNITY_MEMBER",
     enabled: true,
+    capabilities: ADMINISTRABLE,
   }),
   buildMembership({
     id: "m2",
-    user: buildUser({ id: "u2", fullName: "Bruno Leal", email: "bruno@example.com" }),
+    user: member("u2", "Bruno Leal", "bruno@example.com"),
     communityId: "c1",
     role: "COMMUNITY_ADMIN",
     enabled: true,
+    capabilities: ADMINISTRABLE,
   }),
 ];
 
@@ -57,34 +76,48 @@ vi.mock(import("react-router"), async (importOriginal) => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock(import("../../api/memberships/memberships"), () => ({
+// Only the reads are replaced, plus the three mutations these tests assert the
+// arguments of. The actions layer runs for real -- which is the point: what is
+// under test is that the toolbar and each row menu follow the capabilities on
+// the payload, and stubbing the action hooks would mean restating that rule in
+// the test instead of exercising it. Everything else the layer instantiates is
+// inert until called, so leaving it real reaches no network.
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetMemberships: vi.fn(),
   useCreateMembership: vi.fn(),
   useDeleteMembership: vi.fn(),
   useUpdateMembershipRole: vi.fn(),
-  getGetMembershipsQueryKey: (id?: string) => [`/api/v1/communities/${id}/memberships`] as const,
 }));
 
-vi.mock(import("../../api/communities/communities"), () => ({
-  getGetAllCommunitiesQueryKey: () => ["/api/v1/communities"] as const,
+// useActiveCommunityResource reads this one, and it is what carries the
+// community-level answers the toolbar is built from. useGetAllCommunities is
+// what names the community in the confirming dialogs (#186).
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCommunityById: vi.fn(),
   useGetAllCommunities: vi.fn(),
 }));
 
+// The community name is resolved from the caller's own memberships, so the
+// dialogs can state which community they are about to write into.
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useLoggedUser: () => buildUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN", c2: "COMMUNITY_MEMBER" } }),
+  useLoggedUser: () =>
+    buildCurrentUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN", c2: "COMMUNITY_MEMBER" } }),
 }));
 
 const COMMUNITY_NAME = "Comunidad Solar Norte";
 
-/** AC9: the confirming dialog names the community in its header line and in its title. */
+/** The confirming dialog names the community in its header line and in its title (#186). */
 function expectNamesTheCommunity(dialog: HTMLElement, title: string) {
   expect(dialog).toHaveAccessibleName(title);
   expect(within(dialog).getByRole("heading", { name: title })).toBeInTheDocument();
   expect(within(dialog).getByText(`Comunidad · ${COMMUNITY_NAME}`)).toBeInTheDocument();
 }
 
-vi.mock(import("../../api/users/users"), () => ({
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
 }));
 
@@ -98,14 +131,34 @@ vi.mock("../../components/Modals/ImportPartnersModal", () => ({
     isOpen ? <div>Import modal</div> : null,
 }));
 
+import {
+  getAllCommunities,
+  getGetAllCommunitiesQueryKey,
+  getCommunityById,
+  useGetAllCommunities,
+  useGetCommunityById,
+} from "../../api/communities/communities";
+import {
+  getGetMembershipsQueryKey,
+  getMemberships,
+  useCreateMembership,
+  useDeleteMembership,
+  useGetMemberships,
+  useUpdateMembershipRole,
+} from "../../api/memberships/memberships";
+import { getAllUsers, getGetCurrentUserQueryKey, useGetAllUsers } from "../../api/users/users";
 import { MembersPage } from "./MembersPage";
+
+const ADMIN_COMMUNITY: Partial<CommunityCapabilitiesResponse> = {
+  canManageMemberships: true,
+  canCreateUsers: true,
+};
 
 describe("MembersPage", () => {
   let mockInvalidateQueries: MockInstance<QueryClient["invalidateQueries"]>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>(MOCK_MEMBERSHIPS));
     vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>(MOCK_ALL_USERS));
     vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutate }));
     vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutate }));
@@ -119,7 +172,27 @@ describe("MembersPage", () => {
   });
 
   // Invalidation is observed on the real QueryClient the harness creates.
-  const setup = () => {
+  const setup = (
+    options: {
+      community?: Partial<CommunityCapabilitiesResponse>;
+      memberships?: MembershipResponse[];
+      communityLoading?: boolean;
+    } = {},
+  ) => {
+    const { community = ADMIN_COMMUNITY, memberships = MOCK_MEMBERSHIPS, communityLoading = false } = options;
+
+    vi.mocked(useGetCommunityById).mockReturnValue(
+      communityLoading
+        ? query.loading()
+        : query.success<typeof getCommunityById>(
+            buildCommunity({
+              id: "c1",
+              capabilities: buildCommunityCapabilities({ canRead: true, ...community }),
+            }),
+          ),
+    );
+    vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>(memberships));
+
     const rendered = renderWithProviders(<MembersPage />, { activeCommunityId: "c1" });
     mockInvalidateQueries = vi.spyOn(rendered.queryClient, "invalidateQueries");
     return rendered;
@@ -184,18 +257,19 @@ describe("MembersPage", () => {
         data: { userId: "u3", role: "COMMUNITY_MEMBER" },
       }),
     );
-    expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
+    expect(mockInvalidateQueries).toHaveBeenCalledTimes(3);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    // The third key: the membership changed may be the caller's own, and their
+    // memberships live on the current user (#203).
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
 
   it("row menu opens confirmation dialog with member name on Eliminar", async () => {
     const user = userEvent.setup();
     setup();
 
-    // Buttons: [0] Importar miembros, [1] Añadir miembro, [2] MoreVert Ana, [3] MoreVert Bruno
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[2]);
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
 
     const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
     await user.click(eliminarMenuItem);
@@ -209,8 +283,7 @@ describe("MembersPage", () => {
     const user = userEvent.setup();
     setup();
 
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[2]);
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
 
     const eliminarMenuItem = await screen.findByRole("menuitem", { name: /Eliminar/ });
     await user.click(eliminarMenuItem);
@@ -222,18 +295,19 @@ describe("MembersPage", () => {
     await waitFor(() =>
       expect(mockDeleteMutate).toHaveBeenCalledWith({ communityId: "c1", userId: "u1" }),
     );
-    expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
+    expect(mockInvalidateQueries).toHaveBeenCalledTimes(3);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    // The third key: the membership changed may be the caller's own, and their
+    // memberships live on the current user (#203).
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
 
   it("role change modal calls updateRole with new role and invalidates queries", async () => {
     const user = userEvent.setup();
     setup();
 
-    // Open menu for Ana's row (first MoreVert button after the two header buttons)
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[2]);
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
 
     const cambiarRolItem = await screen.findByRole("menuitem", { name: /Cambiar rol/ });
     await user.click(cambiarRolItem);
@@ -257,8 +331,131 @@ describe("MembersPage", () => {
         data: { role: "COMMUNITY_ADMIN" },
       }),
     );
-    expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
+    expect(mockInvalidateQueries).toHaveBeenCalledTimes(3);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    // The third key: the membership changed may be the caller's own, and their
+    // memberships live on the current user (#203).
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
+  });
+  describe("an admin of the community", () => {
+    it("is offered both ways to bring a member in", () => {
+      setup();
+
+      expect(screen.getByRole("button", { name: "Añadir miembro" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Importar miembros" })).toBeInTheDocument();
+    });
+
+    it("gets every row action the backend granted on the row", async () => {
+      const user = userEvent.setup();
+      setup();
+
+      await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+
+      expect(await screen.findByRole("menuitem", { name: /Puntos de suministro/ })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: /Cambiar rol/ })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: /Eliminar/ })).toBeInTheDocument();
+    });
+  });
+
+  describe("a caller who may see the roster but change nothing", () => {
+    const READ_ONLY = [
+      buildMembership({
+        id: "m1",
+        user: buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com" }),
+        communityId: "c1",
+        role: "COMMUNITY_MEMBER",
+        enabled: true,
+      }),
+    ];
+
+    it("is offered no way to add or import", () => {
+      setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: READ_ONLY });
+
+      expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
+    });
+
+    it("gets a row with no menu at all, rather than a menu with nothing in it", () => {
+      setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: READ_ONLY });
+
+      expect(screen.getByText("Ana García")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Más acciones para Ana García" })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("a platform admin who is not a member of this community", () => {
+    it("gets nothing, because the flag is not a grant over a community's roster", () => {
+      // canManageMembershipInvestment's doc puts it plainly for the money; the
+      // roster is the same shape of answer. Only what the backend said is read.
+      setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: [] });
+
+      expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("decides each row from its own membership, not from the community", async () => {
+    const user = userEvent.setup();
+    setup({
+      memberships: [
+        buildMembership({
+          id: "m1",
+          user: member("u1", "Ana García", "ana@example.com"),
+          communityId: "c1",
+          role: "COMMUNITY_MEMBER",
+          enabled: true,
+          capabilities: buildMembershipCapabilities({ canDelete: true }),
+        }),
+        buildMembership({
+          id: "m2",
+          user: buildUser({ id: "u2", fullName: "Bruno Leal", email: "bruno@example.com" }),
+          communityId: "c1",
+          role: "COMMUNITY_ADMIN",
+          enabled: true,
+        }),
+      ],
+    });
+
+    // Bruno's row carries no capability at all, so it loses its menu even
+    // though the caller may administer the roster as a whole.
+    expect(screen.queryByRole("button", { name: "Más acciones para Bruno Leal" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+
+    expect(await screen.findByRole("menuitem", { name: /Eliminar/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Cambiar rol/ })).not.toBeInTheDocument();
+  });
+
+  it("reads the caller's own row like any other -- the answer is the backend's", async () => {
+    const user = userEvent.setup();
+    setup({
+      memberships: [
+        buildMembership({
+          id: "m1",
+          user: member("u1", "Ana García", "ana@example.com"),
+          communityId: "c1",
+          role: "COMMUNITY_ADMIN",
+          enabled: true,
+          // What the backend answers for an admin looking at themselves: they
+          // may still be re-roled by a peer, but not removed by themselves.
+          capabilities: buildMembershipCapabilities({ canUpdateRole: true, canDelete: false }),
+        }),
+      ],
+    });
+
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+
+    expect(await screen.findByRole("menuitem", { name: /Cambiar rol/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Eliminar/ })).not.toBeInTheDocument();
+  });
+
+  it("offers nothing while the community has not loaded -- not yet known is not 'no'", () => {
+    // The rows are deliberately permissive, so the only unresolved answer is
+    // the community's.
+    setup({ communityLoading: true });
+
+    expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
   });
 });

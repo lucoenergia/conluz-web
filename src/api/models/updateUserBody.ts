@@ -14,6 +14,7 @@ export interface UpdateUserBody {
   /** @minLength 1 */
   fullName: string;
   address?: string;
-  email?: string;
+  /** @minLength 1 */
+  email: string;
   phoneNumber?: string;
 }

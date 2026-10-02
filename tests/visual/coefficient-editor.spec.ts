@@ -4,14 +4,15 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
   DRAFT_AGREEMENT,
   FIXED_COEFFICIENTS_EMPTY,
   FIXED_COEFFICIENTS_MIXED,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
-  FIXED_SUPPLY,
+  FIXED_SUPPLY_NAME,
   hideAppBar,
   injectAuthToken,
   mockAllApiRoutes,
@@ -34,7 +35,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Editar a mano" }).click();
     await page.getByRole("button", { name: "Añadir suministro" }).click();
 
-    await expect(page.getByText(FIXED_SUPPLY.name)).toBeVisible();
+    await expect(page.getByText(FIXED_SUPPLY_NAME)).toBeVisible();
     await stabilizePage(page);
 
     await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-editor-add-supply-picker.png", await hideAppBar(page));

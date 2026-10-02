@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildCommunity, buildUser } from "../../test/fixtures";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { useCreatePlant } from "../../api/plants/plants";
 import { useGetAllSupplies, type getAllSupplies } from "../../api/supplies/supplies";
@@ -16,21 +16,27 @@ import { CreatePlantPage } from "./CreatePlantPage";
  * header line and in its title. Editing a plant already open on screen does not.
  */
 
-vi.mock(import("../../api/communities/communities"), () => ({
+// Spread the original: useActiveCommunityResource reads useGetCommunityById
+// from this module to resolve the active community's capabilities, so a bare
+// factory would leave that export undefined.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
 }));
 
-vi.mock(import("../../api/plants/plants"), () => ({
+vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useCreatePlant: vi.fn(),
 }));
 
-vi.mock(import("../../api/supplies/supplies"), () => ({
+vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllSupplies: vi.fn(),
 }));
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useLoggedUser: () => buildUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN" } }),
+  useLoggedUser: () => buildCurrentUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN" } }),
 }));
 
 const COMMUNITY_NAME = "Comunidad Solar Norte";

@@ -6,6 +6,7 @@ import {
 } from "../../api/models";
 import { SharingAgreementReferenceResponseStatus } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
+import { buildSharingAgreement } from "../../test/fixtures";
 import { COEFFICIENT_SCALE } from "./sharingAgreementCoefficientSums";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 
@@ -15,17 +16,15 @@ const { OPEN, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
 const OPEN_UNCLOSED = { validFrom: null, validTo: null, endState: OPEN, endDate: null, currentCoefficient: null };
 
 function agreement(status: SharingAgreementResponseStatus): SharingAgreementResponse {
-  return {
+  return buildSharingAgreement({
     id: "agreement-1",
     plantId: "plant-1",
     name: "Reparto de prueba",
-    notes: null,
     status,
     installedPowerKw: 45,
     createdAt: "2024-09-01T09:30:00Z",
     createdBy: "user-1",
-    file: null,
-  } as unknown as SharingAgreementResponse;
+  });
 }
 
 // A realistic multi-supply DRAFT set summing to exactly 100%.

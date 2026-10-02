@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { SharingAgreementTimeline } from "./SharingAgreementTimeline";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
+import { buildSharingAgreement } from "../../test/fixtures";
 
 function renderTimeline(agreements: SharingAgreementResponse[]) {
   return render(
@@ -15,10 +16,10 @@ function renderTimeline(agreements: SharingAgreementResponse[]) {
 }
 
 const agreements = [
-  { id: "a1", name: "Reparto 2026 H2", status: SharingAgreementResponseStatus.DRAFT },
-  { id: "a2", name: "Reparto 2025-2026", status: SharingAgreementResponseStatus.PUBLISHED },
-  { id: "a3", name: "Recálculo enero 2024", status: SharingAgreementResponseStatus.SUPERSEDED },
-] as SharingAgreementResponse[];
+  buildSharingAgreement({ id: "a1", name: "Reparto 2026 H2", status: SharingAgreementResponseStatus.DRAFT }),
+  buildSharingAgreement({ id: "a2", name: "Reparto 2025-2026", status: SharingAgreementResponseStatus.PUBLISHED }),
+  buildSharingAgreement({ id: "a3", name: "Recálculo enero 2024", status: SharingAgreementResponseStatus.SUPERSEDED }),
+];
 
 describe("SharingAgreementTimeline", () => {
   test("renders one rail dot per agreement, in order", () => {

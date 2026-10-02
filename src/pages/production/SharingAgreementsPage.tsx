@@ -18,9 +18,8 @@ import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals
 import { useErrorDispatch } from "../../context/error.context";
 import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
-import { useSharingAgreementMutations } from "./useSharingAgreementMutations";
+import { usePlantActions, useSharingAgreementActions } from "../../hooks/actions";
 import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
 import { getSharingAgreementStatusColor, getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
 
@@ -38,14 +37,20 @@ export const SharingAgreementsPage: FC = () => {
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const { agreements, plant, counts, isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
-  const { createAgreement, deleteAgreement, isCreating, isDeleting } = useSharingAgreementMutations(plantId);
+  // Creating is authorised by the plant, the rest by the agreement itself.
+  const { createSharingAgreement } = usePlantActions().forPlant(plant).actions;
+  const { forAgreement } = useSharingAgreementActions(plantId);
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<SharingAgreementStatusFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<SharingAgreementResponse | null>(null);
+  // The id, not the agreement: the list is refetched around the delete, so a
+  // stored object would be the pre-invalidation copy by the time it is used.
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const deleteTarget = agreements.find((agreement) => agreement.id === deleteTargetId);
+  const removeAgreement = forAgreement(deleteTarget).actions.remove;
 
   useEffect(() => {
     if (error) {
@@ -59,7 +64,8 @@ export const SharingAgreementsPage: FC = () => {
   );
 
   const handleCreateSubmit = async (values: SharingAgreementFormValues) => {
-    const response = await createAgreement(values);
+    if (!createSharingAgreement) return;
+    const response = await createSharingAgreement.run(values);
     if (!response) return;
     setIsCreateDialogOpen(false);
     // `id` is optional on SharingAgreementResponse — the list query is already
@@ -72,9 +78,9 @@ export const SharingAgreementsPage: FC = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteTarget?.id) return;
-    const success = await deleteAgreement(deleteTarget.id);
-    if (success) setDeleteTarget(null);
+    if (!removeAgreement) return;
+    const success = await removeAgreement.run();
+    if (success) setDeleteTargetId(null);
   };
 
   return (
@@ -137,6 +143,7 @@ export const SharingAgreementsPage: FC = () => {
                   justifyContent: "space-between",
                 }}
               >
+                {createSharingAgreement && (
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
@@ -155,6 +162,7 @@ export const SharingAgreementsPage: FC = () => {
                 >
                   Nuevo acuerdo de reparto
                 </Button>
+                )}
 
                 <Box
                   sx={{
@@ -203,7 +211,8 @@ export const SharingAgreementsPage: FC = () => {
               <SharingAgreementTimeline
                 plantId={plantId}
                 agreements={filteredAgreements}
-                onDeleteRequest={setDeleteTarget}
+                canDelete={(agreement) => !!forAgreement(agreement).actions.remove}
+                onDeleteRequest={(agreement) => setDeleteTargetId(agreement.id)}
               />
             </Box>
           )}
@@ -224,25 +233,25 @@ export const SharingAgreementsPage: FC = () => {
         </>
       )}
 
-      {isCreateDialogOpen && (
+      {isCreateDialogOpen && createSharingAgreement && (
         <SharingAgreementFormDialog
           key="create"
           isOpen
           mode="create"
           plantName={plant?.name}
           initialValues={{ installedPowerKw: plant?.totalPower }}
-          isSubmitting={isCreating}
+          isSubmitting={createSharingAgreement.isPending}
           onCancel={() => setIsCreateDialogOpen(false)}
           onSubmit={handleCreateSubmit}
         />
       )}
 
-      {deleteTarget && (
+      {deleteTarget && removeAgreement && (
         <DeleteSharingAgreementConfirmationModal
           isOpen
           agreementName={deleteTarget.name || "Acuerdo de reparto"}
-          isDeleting={isDeleting}
-          onCancel={() => setDeleteTarget(null)}
+          isDeleting={removeAgreement.isPending}
+          onCancel={() => setDeleteTargetId(null)}
           onConfirm={handleDeleteConfirm}
         />
       )}

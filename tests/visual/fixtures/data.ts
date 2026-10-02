@@ -1,3 +1,12 @@
+import type {
+  GetDatadisConfigResponse,
+  GetShellyConfigResponse,
+  MembershipResponse,
+  PartitionCoefficientResponse,
+  PlantResponse,
+  SupplyResponse,
+} from "../../../src/api/models";
+
 // ---------------------------------------------------------------------------
 // Fixed fixtures — these values NEVER change between runs
 // ---------------------------------------------------------------------------
@@ -16,6 +25,187 @@ export const FIXED_SUPPLY_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 /** Stable community UUID used in all member/community-admin fixtures. */
 export const FIXED_COMMUNITY_ID = "cccccccc-dddd-eeee-ffff-000000000001";
 
+// ---------------------------------------------------------------------------
+// Capabilities
+//
+// Every response the backend returns now carries what the caller may do with
+// it, and the app reads only that -- never a role or the platform-admin flag.
+// These fixtures therefore decide what each baseline can see, so they mirror
+// the backend's answers per role instead of granting everything: a fixture that
+// said "true" everywhere would make every gating baseline pass without proving
+// anything.
+//
+// Two rules from the backend worth keeping in view here:
+//   - a platform admin gets no community operational data by virtue of the
+//     flag, so FIXED_PLATFORM_ADMIN_USER has full platform capabilities and no
+//     membership at all;
+//   - canUpdate/canEnable/canDisable on a community are platform-wide
+//     decisions, so a community admin does not get them.
+// ---------------------------------------------------------------------------
+
+const NO_PLATFORM_CAPABILITIES = {
+  canCreateCommunity: false,
+  canListUsers: false,
+  canAdministerPlatform: false,
+  canCreateUsers: false,
+};
+
+const FULL_PLATFORM_CAPABILITIES = {
+  canCreateCommunity: true,
+  canListUsers: true,
+  canAdministerPlatform: true,
+  canCreateUsers: true,
+};
+
+/**
+ * What somebody else's user record offers a caller who administers neither the
+ * platform nor any community of theirs: nothing. FIXED_USER_2 belongs to no
+ * community, so this is every caller but a platform admin.
+ */
+export const UNMANAGEABLE_USER_CAPABILITIES = {
+  canRead: true,
+  canEdit: false,
+  canDelete: false,
+  canEnable: false,
+  canDisable: false,
+  canGrantPlatformAdmin: false,
+  canRevokePlatformAdmin: false,
+  canListSupplies: false,
+};
+
+/** What an ordinary caller may do with their own user record. */
+const OWN_USER_CAPABILITIES = {
+  canRead: true,
+  canEdit: false,
+  canDelete: false,
+  canEnable: false,
+  canDisable: false,
+  canGrantPlatformAdmin: false,
+  canRevokePlatformAdmin: false,
+  canListSupplies: true,
+};
+
+/**
+ * What a platform admin may do with somebody else's user record.
+ *
+ * Exported because the route mocks have to serve it conditionally:
+ * UserAccessPolicy.canEdit allows a platform admin, or a community admin of one
+ * of the target's communities, and nobody else -- so another user's record
+ * cannot carry one fixed answer for every caller.
+ */
+export const MANAGED_USER_CAPABILITIES = {
+  canRead: true,
+  canEdit: true,
+  canDelete: true,
+  canEnable: true,
+  canDisable: true,
+  canGrantPlatformAdmin: true,
+  canRevokePlatformAdmin: false,
+  canListSupplies: false,
+};
+
+/** Membership, without administration. */
+export const MEMBER_COMMUNITY_CAPABILITIES = {
+  canRead: true,
+  canUpdate: false,
+  canEnable: false,
+  canDisable: false,
+  canManage: false,
+  canManageMemberships: false,
+  canManageMembershipInvestment: false,
+  canListPlants: true,
+  canCreatePlants: false,
+  canCreateUsers: false,
+  canReadProduction: true,
+  canListSupplies: true,
+};
+
+/** Administration of one community, which is not platform administration. */
+export const COMMUNITY_ADMIN_CAPABILITIES = {
+  ...MEMBER_COMMUNITY_CAPABILITIES,
+  canManage: true,
+  canManageMemberships: true,
+  canManageMembershipInvestment: true,
+  canCreatePlants: true,
+  canCreateUsers: true,
+};
+
+/**
+ * A supply as its owner sees it: readable, and its coefficients with it --
+ * they describe the owner's own share -- but not editable. canEdit is the
+ * narrower flag by its own documentation, and this is the pairing that shows
+ * it: the member keeps the coefficient panel and loses the actions menu.
+ */
+export const OWNER_SUPPLY_CAPABILITIES = {
+  canRead: true,
+  canEdit: false,
+  canReadPartitionCoefficients: true,
+  canCreatePlant: false,
+};
+
+/** The same supply as an admin of its community sees it. */
+export const COMMUNITY_ADMIN_SUPPLY_CAPABILITIES = {
+  ...OWNER_SUPPLY_CAPABILITIES,
+  canEdit: true,
+  canCreatePlant: true,
+};
+
+/**
+ * A plant as a plain member of its community sees it: listing plants is open to
+ * any member, and nothing else is. canListSharingAgreements is admin-only by
+ * its own documentation, and canReadSupply says whether following the supply
+ * reference would succeed -- for a member it would not.
+ */
+export const MEMBER_PLANT_CAPABILITIES = {
+  canRead: true,
+  canManage: false,
+  canListSharingAgreements: false,
+  canManageSharingAgreements: false,
+  canReadSupply: false,
+};
+
+/** The same plant as an admin of its community sees it. */
+export const COMMUNITY_ADMIN_PLANT_CAPABILITIES = {
+  ...MEMBER_PLANT_CAPABILITIES,
+  canManage: true,
+  canListSharingAgreements: true,
+  canManageSharingAgreements: true,
+  canReadSupply: true,
+};
+
+/**
+ * Reaching an agreement at all needs the plant's canListSharingAgreements,
+ * which is admin-only, so there is no member shape here to split off: a member
+ * never gets as far as one.
+ */
+const SHARING_AGREEMENT_CAPABILITIES = { canRead: true, canManage: true };
+
+/**
+ * A community as a platform admin who is not one of its members sees it: the
+ * platform-wide decisions, and none of the membership ones. This is what makes
+ * the platform dashboard baseline honest -- listing communities is a platform
+ * right, reading their production is not.
+ *
+ * canManageMemberships is one of the platform-wide ones, despite sitting beside
+ * the membership flags. MembershipAccessPolicy.canManageMemberships allows any
+ * platform admin who can see the community, and CallerMemberships.canSeeCommunity
+ * is true for a platform admin on every community -- so a fixture that inherited
+ * `false` from the member shape was stating the opposite of the rule, and would
+ * have hidden "Gestionar administradores" from the communities row menu in every
+ * capture. Its stricter sibling canManageMembershipInvestment has no platform
+ * bypass and stays false.
+ */
+export const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
+  ...MEMBER_COMMUNITY_CAPABILITIES,
+  canUpdate: true,
+  canEnable: true,
+  canDisable: true,
+  canManageMemberships: true,
+  canListPlants: false,
+  canReadProduction: false,
+  canListSupplies: false,
+};
+
 /**
  * Member fixture — belongs to FIXED_COMMUNITY_ID as COMMUNITY_MEMBER.
  * Use for: home, supply-points, supply-detail, supply modal tests.
@@ -32,6 +222,8 @@ export const FIXED_MEMBER_USER = {
   role: "ADMIN",
   isPlatformAdmin: false,
   memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: NO_PLATFORM_CAPABILITIES,
 };
 
 /**
@@ -50,6 +242,8 @@ export const FIXED_COMMUNITY_ADMIN_USER = {
   role: "ADMIN",
   isPlatformAdmin: false,
   memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" },
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: NO_PLATFORM_CAPABILITIES,
 };
 
 /**
@@ -68,6 +262,8 @@ export const FIXED_PLATFORM_ADMIN_USER = {
   role: "ADMIN",
   isPlatformAdmin: true,
   memberships: {},
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: FULL_PLATFORM_CAPABILITIES,
 };
 
 /**
@@ -87,6 +283,8 @@ export const FIXED_NO_COMMUNITY_USER = {
   role: "PARTNER",
   isPlatformAdmin: false,
   memberships: {},
+  capabilities: OWN_USER_CAPABILITIES,
+  platformCapabilities: NO_PLATFORM_CAPABILITIES,
 };
 
 /** Secondary user shown in list responses — not the logged-in user. */
@@ -102,38 +300,71 @@ export const FIXED_USER_2 = {
   role: "PARTNER",
   isPlatformAdmin: false,
   memberships: {},
+  capabilities: MANAGED_USER_CAPABILITIES,
 };
 
-export const FIXED_SUPPLY = {
+/**
+ * Named separately because `SupplyResponse.name` is nullable, so specs that
+ * select on it cannot pass the field straight to a locator. The constant keeps
+ * one source of truth without casting the null away.
+ */
+export const FIXED_SUPPLY_NAME = "Casa Principal";
+
+export const FIXED_SUPPLY: SupplyResponse = {
   id: FIXED_SUPPLY_ID,
   code: "ES0021000000000000AA",
-  name: "Casa Principal",
+  name: FIXED_SUPPLY_NAME,
   address: "Calle Mayor, 1, 28001 Madrid",
   addressRef: "ESC D PTA 1",
-  partitionCoefficient: 0.1234,
   enabled: true,
-  datadisValidDateFrom: "2024-01-01",
-  datadisDistributor: "Iberdrola",
-  datadisDistributorCode: "2",
-  datadisPointType: 5,
-  datadisIsThirdParty: false,
+  contract: { validDateFrom: "2024-01-01" },
+  distributor: { name: "Iberdrola", code: "2", pointType: 5 },
+  shelly: null,
   user: FIXED_MEMBER_USER,
+  // The active-community guard compares this with the selected community; a
+  // supply without one is never foreign, so omitting it would quietly disable
+  // the guard in every baseline.
+  community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+  capabilities: OWNER_SUPPLY_CAPABILITIES,
 };
 
-export const FIXED_SUPPLY_2 = {
+export const FIXED_SUPPLY_2: SupplyResponse = {
   id: "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
   code: "ES0021000000000000BB",
   name: "Garaje",
   address: "Calle Mayor, 1, Sótano, 28001 Madrid",
   addressRef: "",
-  partitionCoefficient: 0.0566,
   enabled: false,
-  datadisValidDateFrom: "2024-03-15",
-  datadisDistributor: "Endesa",
-  datadisDistributorCode: "1",
-  datadisPointType: 3,
-  datadisIsThirdParty: false,
+  contract: { validDateFrom: "2024-03-15" },
+  distributor: { name: "Endesa", code: "1", pointType: 3 },
+  shelly: null,
   user: FIXED_MEMBER_USER,
+  // The active-community guard compares this with the selected community; a
+  // supply without one is never foreign, so omitting it would quietly disable
+  // the guard in every baseline.
+  community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+  capabilities: OWNER_SUPPLY_CAPABILITIES,
+};
+
+/** A community the caller is NOT working in, for the cross-community assertions. */
+export const OTHER_COMMUNITY_ID = "cccccccc-dddd-eeee-ffff-000000000002";
+
+/**
+ * A supply in another of the caller's communities.
+ *
+ * Only reachable through a user-scoped listing, which is the one endpoint that
+ * can legitimately answer with more than one community: GET
+ * /users/{userId}/supplies returns what the caller may read, and somebody
+ * administering two communities may read both. The community-scoped listing
+ * carries its communityId in the path and cannot return this row at all, so
+ * putting it there would test a response the backend cannot produce.
+ */
+export const FIXED_SUPPLY_OTHER_COMMUNITY: SupplyResponse = {
+  ...FIXED_SUPPLY,
+  id: "eeeeeeee-ffff-0000-1111-222222222222",
+  code: "ES0021000000000000ZZ",
+  name: "Casa en otra comunidad",
+  community: { id: OTHER_COMMUNITY_ID, name: "Vecinos del Sur" },
 };
 
 export const PAGED_SUPPLIES = {
@@ -163,11 +394,11 @@ export const PAGED_USERS = {
  *   - Deshabilitada (enabled false):       Río Verde
  */
 export const DASHBOARD_COMMUNITIES = [
-  { id: "c1", name: "Luco de Jiloca", code: "LDJ", enabled: true, adminNames: ["Ana Gil"], memberCount: 38, supplyPointCount: 42 },
-  { id: "c2", name: "Barrio del Sol", code: "BDS", enabled: true, adminNames: ["Luis Mora"], memberCount: 21, supplyPointCount: 24 },
-  { id: "c3", name: "Vega Baja", code: "VGB", enabled: true, adminNames: [], memberCount: 12, supplyPointCount: 8 },
-  { id: "c4", name: "Monte Alto", code: "MTA", enabled: true, adminNames: ["Sara Ruiz"], memberCount: 0, supplyPointCount: 3 },
-  { id: "c5", name: "Río Verde", code: "RVD", enabled: false, adminNames: ["Paco Díaz"], memberCount: 5, supplyPointCount: 2 },
+  { id: "c1", name: "Luco de Jiloca", code: "LDJ", enabled: true, adminNames: ["Ana Gil"], memberCount: 38, supplyPointCount: 42, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c2", name: "Barrio del Sol", code: "BDS", enabled: true, adminNames: ["Luis Mora"], memberCount: 21, supplyPointCount: 24, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c3", name: "Vega Baja", code: "VGB", enabled: true, adminNames: [], memberCount: 12, supplyPointCount: 8, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c4", name: "Monte Alto", code: "MTA", enabled: true, adminNames: ["Sara Ruiz"], memberCount: 0, supplyPointCount: 3, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
+  { id: "c5", name: "Río Verde", code: "RVD", enabled: false, adminNames: ["Paco Díaz"], memberCount: 5, supplyPointCount: 2, capabilities: PLATFORM_VIEW_COMMUNITY_CAPABILITIES },
 ];
 
 export const EMPTY_PRODUCTION: unknown[] = [];
@@ -178,7 +409,7 @@ export const FIXED_PLANT_ID = "dddddddd-eeee-ffff-0000-111111111111";
 // history needs it, so it has no PlantResponse fixture of its own.
 export const SECOND_PLANT_ID = "dddddddd-eeee-ffff-0000-222222222222";
 
-export const FIXED_PLANT = {
+export const FIXED_PLANT: PlantResponse = {
   id: FIXED_PLANT_ID,
   providerCode: "HWI-001",
   regulatoryCode: "ES1234567890123456AB1F",
@@ -188,21 +419,22 @@ export const FIXED_PLANT = {
   inverterProvider: "HUAWEI",
   totalPower: 120.5,
   connectionDate: "2023-05-10",
-};
-
-/**
- * The plant fixture plus a linked supply. Kept separate from FIXED_PLANT so the
- * sharing-agreement baselines, which share that fixture, stay byte-identical.
- * The detail header needs it: without a linked supply it would have four
- * details rather than five, and the "+5" toggle is part of what AC1 specifies.
- */
-export const FIXED_PLANT_WITH_SUPPLY = {
-  ...FIXED_PLANT,
+  // Required and non-nullable on PlantResponse: a plant always produces onto a
+  // supply, so a fixture without one described a response the backend cannot
+  // return. It is a reference, not the supply itself -- PlantDetailHeader shows
+  // the CUPS either way and links it only on canReadSupply.
   supply: {
     id: FIXED_SUPPLY_ID,
     code: "ES0031300806333002ET0F",
     name: "Casa de Luco",
   },
+  // The guard in usePlantInActiveCommunity compares this with the selected
+  // community; without it the guard is silently inert in every plant baseline.
+  community: { id: FIXED_COMMUNITY_ID },
+  // Overwritten per caller by asPlantCaller in routes.ts. The admin shape is
+  // the default so a route that forgets to re-stamp it keeps today's baseline
+  // rather than quietly emptying a screen.
+  capabilities: COMMUNITY_ADMIN_PLANT_CAPABILITIES,
 };
 
 export const PAGED_PLANTS = {
@@ -234,6 +466,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     createdAt: "2024-06-15T10:00:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
     file: { id: "file-published", filename: "ES1234567890123456AB1F_2024.txt", uploadedAt: "2024-06-20T09:15:00Z" },
+    capabilities: SHARING_AGREEMENT_CAPABILITIES,
   },
   {
     id: "ffffffff-0000-1111-2222-333333333333",
@@ -245,6 +478,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     createdAt: "2024-09-01T09:30:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
     file: { id: "file-draft", filename: "ES1234567890123456AB1F_2025.txt", uploadedAt: "2025-01-10T08:00:00Z" },
+    capabilities: SHARING_AGREEMENT_CAPABILITIES,
   },
   {
     id: "00000000-1111-2222-3333-444444444444",
@@ -256,6 +490,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     createdAt: "2022-02-01T08:00:00Z",
     createdBy: null,
     file: null,
+    capabilities: SHARING_AGREEMENT_CAPABILITIES,
   },
 ];
 
@@ -465,7 +700,7 @@ export const FIXED_COEFFICIENTS_INCOMPLETE = [
 // from FIXED_SUPPLY_ID, which identifies the standalone supply-detail fixture.
 export const HISTORY_SUPPLY_ID = "supply-1";
 
-export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
+export const FIXED_SUPPLY_COEFFICIENT_HISTORY: PartitionCoefficientResponse[] = [
   {
     id: "hist-1",
     supply: { id: HISTORY_SUPPLY_ID, code: "ES0031300000000001AA", name: "Vivienda A" },
@@ -476,6 +711,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: "2022-03-01T00:00:00Z",
     validTo: "2023-01-01T00:00:00Z",
     createdAt: "2022-02-01T08:00:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
   {
     id: "hist-2",
@@ -487,6 +726,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: "2023-01-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-06-15T10:00:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
   {
     id: "hist-3",
@@ -498,6 +741,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: "2024-04-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-03-01T10:00:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
   {
     id: "hist-pending",
@@ -509,6 +756,10 @@ export const FIXED_SUPPLY_COEFFICIENT_HISTORY = [
     validFrom: null,
     validTo: null,
     createdAt: "2024-09-01T09:30:00Z",
+    // Re-stamped per caller by asCoefficientCaller in routes.ts. Withheld by
+    // default so a route that forgets to re-stamp hides links rather than
+    // inventing an entitlement.
+    capabilities: { canReadSharingAgreement: false },
   },
 ];
 
@@ -529,3 +780,106 @@ export const PUBLISHED_AGREEMENT_EDITED = {
   updatedAt: "2026-08-01T09:00:00Z",
   updatedBy: FIXED_COMMUNITY_ADMIN_USER.id,
 };
+
+// ---------------------------------------------------------------------------
+// Community management: members and integrations
+// ---------------------------------------------------------------------------
+
+/**
+ * One community's roster: an admin, an active member and a disabled one, so the
+ * role labels, the status chips and the counters all have something to show.
+ *
+ * Every row carries its own capabilities, as the backend returns them -- the
+ * members screen reads those per row rather than asking once for the community,
+ * so a single shape would make every row's menu identical and prove nothing.
+ */
+export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
+  {
+    id: "membership-admin",
+    communityId: FIXED_COMMUNITY_ID,
+    user: {
+      id: FIXED_COMMUNITY_ADMIN_USER.id,
+      fullName: FIXED_COMMUNITY_ADMIN_USER.fullName,
+      email: FIXED_COMMUNITY_ADMIN_USER.email,
+      personalId: FIXED_COMMUNITY_ADMIN_USER.personalId,
+      number: FIXED_COMMUNITY_ADMIN_USER.number,
+      address: FIXED_COMMUNITY_ADMIN_USER.address,
+      phoneNumber: FIXED_COMMUNITY_ADMIN_USER.phoneNumber,
+      enabled: true,
+      isPlatformAdmin: false,
+      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" },
+      capabilities: OWN_USER_CAPABILITIES,
+    },
+    role: "COMMUNITY_ADMIN",
+    enabled: true,
+    // Their own membership: the backend does not offer them their own removal
+    // or demotion, which is the safety rail the row menu has to respect.
+    capabilities: {
+      canUpdateRole: false,
+      canDelete: false,
+      canManageInvestment: true,
+      canReadPayback: true,
+    },
+  },
+  {
+    id: "membership-member",
+    communityId: FIXED_COMMUNITY_ID,
+    user: {
+      id: FIXED_MEMBER_USER.id,
+      fullName: FIXED_MEMBER_USER.fullName,
+      email: FIXED_MEMBER_USER.email,
+      personalId: FIXED_MEMBER_USER.personalId,
+      number: FIXED_MEMBER_USER.number,
+      address: FIXED_MEMBER_USER.address,
+      phoneNumber: FIXED_MEMBER_USER.phoneNumber,
+      enabled: true,
+      isPlatformAdmin: false,
+      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+      capabilities: MANAGED_USER_CAPABILITIES,
+    },
+    role: "COMMUNITY_MEMBER",
+    enabled: true,
+    capabilities: {
+      canUpdateRole: true,
+      canDelete: true,
+      canManageInvestment: true,
+      canReadPayback: true,
+    },
+  },
+  {
+    id: "membership-disabled",
+    communityId: FIXED_COMMUNITY_ID,
+    user: {
+      id: FIXED_USER_2.id,
+      fullName: FIXED_USER_2.fullName,
+      email: FIXED_USER_2.email,
+      personalId: FIXED_USER_2.personalId,
+      number: FIXED_USER_2.number,
+      address: FIXED_USER_2.address,
+      phoneNumber: FIXED_USER_2.phoneNumber,
+      enabled: false,
+      isPlatformAdmin: false,
+      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+      capabilities: MANAGED_USER_CAPABILITIES,
+    },
+    role: "COMMUNITY_MEMBER",
+    enabled: false,
+    capabilities: {
+      canUpdateRole: true,
+      canDelete: true,
+      canManageInvestment: false,
+      canReadPayback: false,
+    },
+  },
+];
+
+/** Datadis configured and on, which is the state the integration card shows most. */
+export const FIXED_DATADIS_CONFIG: GetDatadisConfigResponse = {
+  username: "comunidad@conluz.test",
+  passwordSet: true,
+  baseUrl: "https://datadis.es",
+  enabled: true,
+};
+
+/** Shelly off, so the two cards do not render the same state. */
+export const FIXED_SHELLY_CONFIG: GetShellyConfigResponse = { enabled: false };

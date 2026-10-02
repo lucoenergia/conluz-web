@@ -16,12 +16,20 @@ import {
 } from "@mui/material";
 import WavingHandOutlinedIcon from "@mui/icons-material/WavingHandOutlined";
 import { Link as RouterLink, useNavigate } from "react-router";
-import { useLogin } from "../../api/authentication/authentication";
 import { PasswordInput } from "../../components/Forms/PasswordInput";
+import { useSessionActions } from "../../hooks/actions";
 import { useAuthDispatch } from "../../context/auth.context";
+import { SESSION_EXPIRED_MESSAGE, takeSessionExpired } from "../../utils/session";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState(false);
+  /**
+   * Whether the user is here because their session expired rather than because
+   * they asked to leave. Read once, during the first render, and cleared by the
+   * read: this page is also the destination of a plain logout and of a first
+   * visit, and neither should claim an expiry.
+   */
+  const [sessionExpired] = useState(takeSessionExpired);
   const [formErrors, setFormErrors] = useState<{ id: boolean; password: boolean }>({
     id: false,
     password: false,
@@ -29,7 +37,7 @@ export const Login: FC = () => {
 
   const passwordErrorMessage = "Por favor, introduce tu contraseña";
   const idErrorMessage = "Por favor, introduce tu DNI/NIF";
-  const login = useLogin();
+  const { actions } = useSessionActions();
   const dispatchAuth = useAuthDispatch();
   const navigate = useNavigate();
 
@@ -50,16 +58,15 @@ export const Login: FC = () => {
     const remember = data.get("remember") ? true : false;
 
     if (!validateInput(id, password)) return;
-    try {
-      const response = await login.mutateAsync({ data: { username: id.trim(), password: password.trim() } });
-      if (response && response.token) {
-        setLoginError(false);
-        dispatchAuth({ token: response.token, remember });
-        navigate("/");
-      } else {
-        setLoginError(true);
-      }
-    } catch {
+
+    // The action reports a rejected login as undefined rather than throwing,
+    // so a refused credential and a missing token take the same branch.
+    const response = await actions.login.run({ username: id.trim(), password: password.trim() });
+    if (response?.token) {
+      setLoginError(false);
+      dispatchAuth({ token: response.token, remember });
+      navigate("/");
+    } else {
       setLoginError(true);
     }
   };
@@ -125,6 +132,18 @@ export const Login: FC = () => {
             p: { xs: 3, sm: 4 },
           }}
         >
+          {sessionExpired && !loginError && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 3,
+                borderRadius: radii.default,
+              }}
+            >
+              {SESSION_EXPIRED_MESSAGE}
+            </Alert>
+          )}
+
           {loginError && (
             <Alert
               severity="error"

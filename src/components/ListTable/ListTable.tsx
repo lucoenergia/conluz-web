@@ -33,6 +33,15 @@ export interface ListTableProps<T> {
   /** Accessible name of the row's actions button. */
   rowActionsLabel: (row: T) => string;
   onRowActionsClick: (event: MouseEvent<HTMLElement>, row: T) => void;
+  /**
+   * Whether this row has any action to offer. Every row does, by default.
+   *
+   * A page whose menu is built from capabilities can reach a row with nothing
+   * in it. That row gets no button rather than one that opens an empty menu:
+   * the kebab is a promise of something to do, and the column stays so the
+   * table does not reflow around it.
+   */
+  hasRowActions?: (row: T) => boolean;
 }
 
 /** Header text in the list-table style, for headers that wrap it (e.g. in a sort label). */
@@ -54,6 +63,7 @@ export const ListTable = <T,>({
   emptyMessage,
   rowActionsLabel,
   onRowActionsClick,
+  hasRowActions,
 }: ListTableProps<T>) => {
   const colSpan = columns.length + 1;
 
@@ -106,6 +116,7 @@ export const ListTable = <T,>({
                   </TableCell>
                 ))}
                 <TableCell align="center">
+                  {(hasRowActions?.(row) ?? true) && (
                   <IconButton
                     size="small"
                     aria-label={rowActionsLabel(row)}
@@ -118,6 +129,7 @@ export const ListTable = <T,>({
                   >
                     <MoreVertIcon />
                   </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))

@@ -4,8 +4,10 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
+  freezeClock,
   hideAppBar,
   mainRegion,
   openPlantDetail,
@@ -18,6 +20,8 @@ test.describe("Visual baselines", () => {
   // -------------------------------------------------------------------------
 
   test("plant detail page", async ({ page }) => {
+    // The capture includes GraphFilter's date input, which defaults to today.
+    await freezeClock(page);
     await openPlantDetail(page);
 
     // Layout subject: the main region, with the app bar masked (see mainRegion).

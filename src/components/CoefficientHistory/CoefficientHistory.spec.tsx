@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { theme } from "../../theme";
 import { CoefficientHistory, type CoefficientHistoryProps } from "./CoefficientHistory";
 import type { PartitionCoefficientResponse } from "../../api/models";
+import { buildPartitionCoefficientCapabilities } from "../../test/fixtures";
 
 const ACTIVE_COMMUNITY = { id: "community-1", name: "Sol Común" };
 const PLANT_NORTE = { id: "plant-norte", name: "Planta Solar Norte" };
@@ -22,6 +23,7 @@ function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoef
     validFrom: "2024-01-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-01-01T00:00:00Z",
+    capabilities: buildPartitionCoefficientCapabilities(),
     ...overrides,
   };
 }
@@ -57,6 +59,23 @@ const TWO_PLANT_HISTORY: PartitionCoefficientResponse[] = [
     validTo: null,
   }),
 ];
+
+/**
+ * The same timeline with every agreement reference followable.
+ *
+ * Returns new objects rather than stamping the shared fixture, so one test
+ * granting access cannot change what another sees.
+ */
+function withAgreementAccess(
+  periods: PartitionCoefficientResponse[],
+  plantId?: string,
+): PartitionCoefficientResponse[] {
+  return periods.map((p) =>
+    plantId === undefined || p.plant.id === plantId
+      ? { ...p, capabilities: buildPartitionCoefficientCapabilities({ canReadSharingAgreement: true }) }
+      : p,
+  );
+}
 
 function renderHistory(props: Partial<CoefficientHistoryProps> = {}) {
   return render(
@@ -121,15 +140,15 @@ describe("CoefficientHistory", () => {
     expect(screen.getByText("20,0000 %")).toBeInTheDocument();
   });
 
-  it("renders no links at all when links are not allowed", () => {
-    renderHistory({ showAgreementLinks: false });
+  it("renders no links at all when no period may be followed", () => {
+    renderHistory();
 
     expect(screen.queryAllByRole("link")).toHaveLength(0);
     expect(screen.getByText("Reparto 2024")).toBeInTheDocument();
   });
 
-  it("links each agreement to its own plant's agreement page when links are allowed", () => {
-    renderHistory({ showAgreementLinks: true });
+  it("links each agreement to its own plant's agreement page when the period allows it", () => {
+    renderHistory({ periods: withAgreementAccess(TWO_PLANT_HISTORY) });
 
     expect(screen.getByRole("link", { name: "Reparto 2024" })).toHaveAttribute(
       "href",
@@ -142,12 +161,27 @@ describe("CoefficientHistory", () => {
   });
 
   it("marks the agreement already on screen and does not link it to itself", () => {
-    renderHistory({ showAgreementLinks: true, currentSharingAgreementId: "sa-2024" });
+    renderHistory({ periods: withAgreementAccess(TWO_PLANT_HISTORY), currentSharingAgreementId: "sa-2024" });
 
     expect(screen.queryByRole("link", { name: "Reparto 2024" })).not.toBeInTheDocument();
     expect(screen.getByText("Este acuerdo")).toBeInTheDocument();
     // The other periods keep their links.
     expect(screen.getByRole("link", { name: "Reparto 2023" })).toBeInTheDocument();
+  });
+
+  it("links only the plants whose own period allows it", () => {
+    // The answer a screen-wide boolean could not express: the caller
+    // administers Norte and not Sur, and the history spans both.
+    renderHistory({ periods: withAgreementAccess(TWO_PLANT_HISTORY, PLANT_NORTE.id) });
+
+    expect(screen.getByRole("link", { name: "Reparto 2024" })).toHaveAttribute(
+      "href",
+      "/production/plant-norte/sharing-agreements/sa-2024",
+    );
+    expect(screen.getByRole("link", { name: "Reparto 2023" })).toBeInTheDocument();
+    // Sur's name is still shown -- it identifies the agreement; only the link goes.
+    expect(screen.queryByRole("link", { name: "Reparto Sur" })).not.toBeInTheDocument();
+    expect(screen.getByText("Reparto Sur")).toBeInTheDocument();
   });
 
   it("shows the empty state when every period is pending", () => {

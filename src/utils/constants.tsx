@@ -7,25 +7,24 @@ import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
 import PeopleRoundedIcon from "@mui/icons-material/PeopleRounded";
 import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded";
 import type { SvgIconComponent } from "@mui/icons-material";
+import type { MenuRequirement } from "../hooks/permissions";
 
 export const MIN_DESKTOP_WIDTH = 768;
 export const SIDEMENU_WIDTH = 260;
-
-/**
- * Who sees a menu item:
- * - `all`: every logged user.
- * - `communityMember`: anyone with an active community.
- * - `communityAdmin`: a COMMUNITY_ADMIN of the active community.
- * - `platformAdmin`: a platform admin, whatever the active community.
- */
-export type MenuItemAccess = "all" | "communityMember" | "communityAdmin" | "platformAdmin";
 
 export interface MenuItem {
   to: string;
   id: string;
   icon: SvgIconComponent;
   label: string;
-  access: MenuItemAccess;
+  /**
+   * What the backend must allow before this entry is offered. The same
+   * vocabulary the routes use, and deliberately per item rather than per
+   * section: Miembros and Integraciones sit together but are not the same
+   * decision, and a section-wide rule is how the menu came to offer pages the
+   * router then refused.
+   */
+  requires: MenuRequirement;
 }
 
 export interface MenuSection {
@@ -38,25 +37,35 @@ export interface MenuSection {
  * Two labelled groups by scope (#186): what belongs to the active community,
  * and what administers the platform. Personal entries (profile, password)
  * live in the profile menu, and Contacto in the menu footer.
+ *
+ * `requires` is the capability the backend must grant, per item rather than
+ * per section: Miembros and Integraciones sit in the same group but are not
+ * the same decision, and a section-wide rule is how the menu came to offer
+ * pages the router then refused.
  */
+const COMMUNITY_READ: MenuRequirement = { scope: "community", capability: "canRead" };
+
 export const MENU_SECTIONS: MenuSection[] = [
   {
     id: "community",
     title: "Comunidad",
     items: [
-      { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio", access: "communityMember" },
-      { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", access: "communityMember" },
-      { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", access: "communityMember" },
-      { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", access: "communityAdmin" },
-      { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones", access: "communityAdmin" },
+      // Operational screens are about one community's own data, so they appear
+      // once the caller may read the community they are working in -- which is
+      // false when there is no active community, as before.
+      { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio", requires: COMMUNITY_READ },
+      { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", requires: COMMUNITY_READ },
+      { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", requires: COMMUNITY_READ },
+      { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", requires: { scope: "community", capability: "canManageMemberships" } },
+      { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones", requires: { scope: "community", capability: "canManage" } },
     ],
   },
   {
     id: "platform",
     title: "Plataforma",
     items: [
-      { to: "/communities", id: "communities", icon: BusinessRoundedIcon, label: "Comunidades", access: "platformAdmin" },
-      { to: "/users", id: "users", icon: ManageAccountsRoundedIcon, label: "Usuarios", access: "platformAdmin" },
+      { to: "/communities", id: "communities", icon: BusinessRoundedIcon, label: "Comunidades", requires: { scope: "platform", capability: "canAdministerPlatform" } },
+      { to: "/users", id: "users", icon: ManageAccountsRoundedIcon, label: "Usuarios", requires: { scope: "platform", capability: "canListUsers" } },
     ],
   },
 ];
@@ -66,31 +75,5 @@ export const CONTACT_ITEM: MenuItem = {
   id: "contact",
   icon: SupportAgentRoundedIcon,
   label: "Contacto",
-  access: "all",
+  requires: { scope: "always" },
 };
-
-export interface MenuAccessContext {
-  hasActiveCommunity: boolean;
-  isCommunityAdmin: boolean;
-  isPlatformAdmin: boolean;
-}
-
-function canSee(access: MenuItemAccess, context: MenuAccessContext): boolean {
-  switch (access) {
-    case "all":
-      return true;
-    case "communityMember":
-      return context.hasActiveCommunity;
-    case "communityAdmin":
-      return context.hasActiveCommunity && context.isCommunityAdmin;
-    case "platformAdmin":
-      return context.isPlatformAdmin;
-  }
-}
-
-/** The menu sections a user sees: each item filtered by its access, empty sections dropped. */
-export function visibleMenuSections(sections: MenuSection[], context: MenuAccessContext): MenuSection[] {
-  return sections
-    .map((section) => ({ ...section, items: section.items.filter((item) => canSee(item.access, context)) }))
-    .filter((section) => section.items.length > 0);
-}

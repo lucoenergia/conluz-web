@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { filterSharingAgreements, normalizeForSearch } from "./sharingAgreementFilters";
 import { SharingAgreementResponseStatus } from "../../api/models";
-import type { SharingAgreementResponse } from "../../api/models";
+import { buildSharingAgreement } from "../../test/fixtures";
 
 describe("normalizeForSearch", () => {
   test("strips accents so 'histórico' and 'historico' normalize identically", () => {
@@ -15,10 +15,25 @@ describe("normalizeForSearch", () => {
 
 describe("filterSharingAgreements", () => {
   const agreements = [
-    { id: "1", name: "Acuerdo Histórico Norte", notes: "", status: SharingAgreementResponseStatus.SUPERSEDED },
-    { id: "2", name: "Reparto vecinos", notes: "Pendiente de revisión histórica", status: SharingAgreementResponseStatus.DRAFT },
-    { id: "3", name: "Reparto activo", notes: "", status: SharingAgreementResponseStatus.PUBLISHED },
-  ] as SharingAgreementResponse[];
+    buildSharingAgreement({
+      id: "1",
+      name: "Acuerdo Histórico Norte",
+      notes: "",
+      status: SharingAgreementResponseStatus.SUPERSEDED,
+    }),
+    buildSharingAgreement({
+      id: "2",
+      name: "Reparto vecinos",
+      notes: "Pendiente de revisión histórica",
+      status: SharingAgreementResponseStatus.DRAFT,
+    }),
+    buildSharingAgreement({
+      id: "3",
+      name: "Reparto activo",
+      notes: "",
+      status: SharingAgreementResponseStatus.PUBLISHED,
+    }),
+  ];
 
   test("matches an accent-insensitive, case-insensitive query against name", () => {
     const result = filterSharingAgreements(agreements, "historico", "all");

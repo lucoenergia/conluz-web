@@ -9,6 +9,7 @@ import {
   mockPlantDetailRoutes,
 } from "./routes";
 import {
+  ROUTE_MOUNT_TIMEOUT_MS,
   freezeClock,
   injectAuthToken,
   seedActiveCommunity,
@@ -28,8 +29,14 @@ export async function navigateToSharingAgreements(page: Page) {
   // exist — reported as a bare 30s timeout rather than "no plant card".
   // (The warm-up project removes the cold-transform cost; this makes the
   // helper honest about what it is waiting for either way.)
+  // An explicit budget, not the 5 s expect default. This is not an assertion
+  // about the product -- it waits for a lazy route to mount AND its plant list
+  // to arrive, on a dev server shared with the other viewport project. Measured
+  // at 909 ms median and 980 ms worst over 69 navigations on an idle machine;
+  // the default left barely 5x headroom and was the first thing to break on a
+  // busier one, reporting "no plant card" for what was really contention.
   const plantCard = page.locator(".MuiCard-root").filter({ hasText: FIXED_PLANT.name });
-  await expect(plantCard).toBeVisible();
+  await expect(plantCard).toBeVisible({ timeout: ROUTE_MOUNT_TIMEOUT_MS });
 
   await stabilizePage(page);
 
@@ -57,13 +64,13 @@ export async function navigateToSharingAgreementDetail(page: Page, agreementName
   await stabilizePage(page);
 }
 
-export async function openPlantDetail(page: Page) {
+export async function openPlantDetail(page: Page, currentUser = FIXED_COMMUNITY_ADMIN_USER) {
   // The chart date filter defaults to today.
   await freezeClock(page);
   await injectAuthToken(page);
-  await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-  await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-  await mockPlantDetailRoutes(page);
+  await seedActiveCommunity(page, currentUser.id);
+  await mockAllApiRoutes(page, currentUser);
+  await mockPlantDetailRoutes(page, currentUser);
 
   await page.goto(`/production/${FIXED_PLANT_ID}`);
   await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();

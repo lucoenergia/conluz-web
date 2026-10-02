@@ -1,8 +1,17 @@
-import type { UserResponse } from "../api/models";
+import type { CurrentUserResponse } from "../api/models";
 
-export function resolveLandingRoute(user: UserResponse): string {
+/**
+ * Where to send somebody once they are logged in.
+ *
+ * Membership wins: an administrator who also belongs to a community lands in
+ * the community, because that is where the work is. Only somebody with no
+ * membership at all is sent to the platform, and only if they may administer
+ * it -- read from the capability rather than the platform flag, so this agrees
+ * with the guard on /platform instead of approximating it.
+ */
+export function resolveLandingRoute(user: CurrentUserResponse): string {
   if (Object.keys(user.memberships ?? {}).length > 0) return '/';
-  if (user.isPlatformAdmin) return '/platform';
+  if (user.platformCapabilities?.canAdministerPlatform === true) return '/platform';
   return '/no-community';
 }
 

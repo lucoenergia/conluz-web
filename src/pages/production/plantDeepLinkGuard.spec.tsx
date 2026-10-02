@@ -34,11 +34,16 @@ const AGREEMENTS: SharingAgreementResponse[] = [
   }),
 ];
 
-vi.mock(import("../../api/plants/plants"), () => ({
+// Spread the originals: only the reads are replaced, and the actions layer the
+// page goes through imports the mutations and the query-key getters from these
+// same modules.
+vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetPlantById: vi.fn(),
 }));
 
-vi.mock(import("../../api/sharing-agreements/sharing-agreements"), () => ({
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetSharingAgreements: vi.fn(),
   useGetSharingAgreementById: vi.fn(),
   useGetSharingAgreementPartitionCoefficients: vi.fn(),
@@ -47,21 +52,6 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), () => ({
 vi.mock(import("../../context/error.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useErrorDispatch: () => vi.fn(),
-}));
-
-vi.mock(import("./useSharingAgreementMutations"), () => ({
-  useSharingAgreementMutations: () => ({
-    createAgreement: vi.fn(),
-    updateAgreement: vi.fn(),
-    deleteAgreement: vi.fn(),
-    publishAgreement: vi.fn(),
-    revertAgreementToDraft: vi.fn(),
-    isCreating: false,
-    isUpdating: false,
-    isDeleting: false,
-    isPublishing: false,
-    isReverting: false,
-  }),
 }));
 
 import { SharingAgreementsPage } from "./SharingAgreementsPage";

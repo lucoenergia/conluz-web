@@ -9,6 +9,12 @@ import type { SharingAgreementResponse, SharingAgreementResponseStatus as Status
 export interface SharingAgreementTimelineProps {
   plantId: string;
   agreements: SharingAgreementResponse[];
+  /**
+   * Whether this caller may delete a given agreement. Withheld by default: a
+   * timeline rendered without it offers no row action at all, rather than
+   * becoming the permissive one.
+   */
+  canDelete?: (agreement: SharingAgreementResponse) => boolean;
   onDeleteRequest?: (agreement: SharingAgreementResponse) => void;
 }
 
@@ -67,6 +73,7 @@ const TimelineDot: FC<TimelineDotProps> = ({ status }) => {
 export const SharingAgreementTimeline: FC<SharingAgreementTimelineProps> = ({
   plantId,
   agreements,
+  canDelete = () => false,
   onDeleteRequest,
 }) => (
   <Fade in timeout={500}>
@@ -95,7 +102,12 @@ export const SharingAgreementTimeline: FC<SharingAgreementTimelineProps> = ({
                 )}
               </Box>
               <Box sx={{ flex: 1, minWidth: 0, pb: isLast ? 0 : 3 }}>
-                <SharingAgreementCard plantId={plantId} agreement={agreement} onDeleteRequest={onDeleteRequest} />
+                <SharingAgreementCard
+                  plantId={plantId}
+                  agreement={agreement}
+                  canDelete={canDelete(agreement)}
+                  onDeleteRequest={onDeleteRequest}
+                />
               </Box>
             </Box>
           </Grow>

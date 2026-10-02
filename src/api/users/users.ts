@@ -29,10 +29,12 @@ import type {
   CreateUsersInBulkResponse,
   CreateUsersWithFileBody,
   CreateUsersWithFileParams,
+  CurrentUserResponse,
   GetAllUsersParams,
   PagedResultUserResponse,
   RestError,
   SupplyResponse,
+  UpdateProfileBody,
   UpdateUserBody,
   UserResponse
 } from '.././models';
@@ -47,6 +49,10 @@ import type { ErrorType } from '.././custom-instance';
  * This endpoint retrieves detailed information about a specific user by their unique identifier.
 
 **Required: Platform Admin, Community Admin, or the user themselves**
+
+**What `memberships` contains:** platform admins see every membership, and a user reading
+themselves sees all of their own; otherwise only the memberships in communities the
+caller administers.
 
 Authentication is required using a Bearer token.
 
@@ -284,11 +290,93 @@ export const useDeleteUser = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * This endpoint lets the authenticated user change how the community reaches them: email
+(required), postal address and phone number. It always acts on the caller — there is no
+user identifier to supply — so it cannot be used to edit anybody else.
+
+Name, DNI and member number are not editable here: they identify the member to the
+community and to the distributor, so changing them is an administrative operation
+performed through `PUT /api/v1/users/{userId}`.
+
+Omitting `address` or `phoneNumber` clears the stored value; `email` is mandatory.
+
+**Required: any authenticated user (edits their own contact details).**
+ * @summary Updates the contact details of the current user
+ */
+export const updateProfile = (
+    updateProfileBody: UpdateProfileBody,
+ ) => {
+      
+      
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/profile`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateProfileBody
+    },
+      );
+    }
+  
+
+
+export const getUpdateProfileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext> => {
+
+const mutationKey = ['updateProfile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProfile>>, {data: UpdateProfileBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateProfile(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateProfile>>>
+    export type UpdateProfileMutationBody = UpdateProfileBody
+    export type UpdateProfileMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Updates the contact details of the current user
+ */
+export const useUpdateProfile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateProfile>>,
+        TError,
+        {data: UpdateProfileBody},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateProfileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a
 comprehensive list of user details.
 
 **Required: Platform Admin or Community Admin**
-Platform admins see all users; community admins see only users belonging to their communities.
+
+**What the listing contains:** only the users the caller may read one by one
+(`GET /api/v1/users/{userId}`). Platform admins see every user; anyone else sees themselves
+and the users with an enabled membership in a community they administer — not those of
+communities they merely belong to.
+
+**What each user's `memberships` contains:** platform admins see every membership, and
+every caller sees all of their own; otherwise only the memberships in communities the
+caller administers.
 
 Features:
 - Pagination support through page and limit parameters
@@ -845,6 +933,12 @@ export const useCreateUsersWithFile = <TError = ErrorType<unknown>,
 **Authorization Rules:**
 - Community Admins (of the target user's community) can retrieve supplies for that user
 - A user can retrieve their own supplies
+- Being a Platform Admin is **not** sufficient: these are supplies, and a Platform Admin
+  who administers none of the user's communities cannot read them one by one either
+
+**What the listing contains:** only the supplies the caller may read one by one
+(`GET /api/v1/supplies/{supplyId}`) — all of them for the user themselves, otherwise only
+those in the communities the caller administers.
 
 Authentication is required using a Bearer token.
 
@@ -949,7 +1043,7 @@ export const getCurrentUser = (
 ) => {
       
       
-      return customInstance<UserResponse>(
+      return customInstance<CurrentUserResponse>(
       {url: `/api/v1/users/current`, method: 'GET', signal
     },
       );

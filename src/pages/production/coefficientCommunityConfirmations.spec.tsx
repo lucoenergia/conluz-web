@@ -4,7 +4,7 @@ import { screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildCoefficient, buildCommunity, buildUser } from "../../test/fixtures";
+import { buildCoefficient, buildCommunity, buildCurrentUser } from "../../test/fixtures";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { useUploadSharingAgreementFile } from "../../api/sharing-agreements/sharing-agreements";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
@@ -35,7 +35,7 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useLoggedUser: () => buildUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN" } }),
+  useLoggedUser: () => buildCurrentUser({ id: "admin", memberships: { c1: "COMMUNITY_ADMIN" } }),
 }));
 
 const COMMUNITY = "Comunidad Solar Norte";
@@ -87,8 +87,9 @@ const surfaces: Array<[string, ReactElement]> = [
     `Importar un fichero que ya tengas en ${COMMUNITY}`,
     <SharingAgreementUploadDialog
       isOpen
-      plantId="plant-1"
-      sharingAgreementId="agreement-1"
+      // The upload is handed over by whoever may perform it, so the dialog
+      // takes the Action rather than the ids it used to build a call from.
+      uploadFile={{ isPending: false, run: vi.fn().mockResolvedValue({ success: true }) }}
       regulatoryCode="CAU0001"
       onClose={vi.fn()}
     />,

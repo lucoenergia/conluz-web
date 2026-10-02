@@ -3,10 +3,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { SupplyDetailHeader } from "./SupplyDetailHeader";
-import type { SupplyResponse } from "../../api/models";
+import { buildSupply, buildUser } from "../../test/fixtures";
 
 describe("SupplyDetailHeader", () => {
-  const mockSupplyPoint: SupplyResponse = {
+  const mockSupplyPoint = buildSupply({
     id: "1",
     name: "Test Supply Point",
     code: "ES0031300296192001MB0F",
@@ -26,7 +26,7 @@ describe("SupplyDetailHeader", () => {
       id: "shelly-1",
       mqttPrefix: "shellies/test",
     },
-    user: {
+    user: buildUser({
       id: "user1",
       personalId: "12345678A",
       number: 1,
@@ -34,11 +34,8 @@ describe("SupplyDetailHeader", () => {
       address: "Calle Test 1",
       email: "john.doe@example.com",
       phoneNumber: "600000000",
-      enabled: true,
-      memberships: {},
-      isPlatformAdmin: false,
-    },
-  };
+    }),
+  });
 
   it("renders supply point information", () => {
     render(<SupplyDetailHeader supplyPoint={mockSupplyPoint} />);

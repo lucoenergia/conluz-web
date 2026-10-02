@@ -1,6 +1,7 @@
 import { alpha } from "@mui/material/styles";
 import { radii, shadows, colors } from "../../theme/tokens";
 import { useState, type FC } from "react";
+import type { Action } from "../../hooks/actions";
 import {
   Box,
   Typography,
@@ -63,8 +64,18 @@ interface IntegrationCardProps {
     passwordSet?: boolean;
   };
   onChange: (id: string, patch: Record<string, unknown>) => void;
-  onSave: (id: string) => void;
-  isSaving: boolean;
+  /**
+   * The save itself, handed over by whoever may perform it.
+   *
+   * Required, not optional: the card has no way to render without it, which is
+   * what stops it being mounted for a caller the backend would refuse. Its
+   * pending flag lives inside it, so there is no separate isSaving prop that
+   * could fall out of step with the mutation it describes.
+   *
+   * It takes no arguments because the page reads the form and words the
+   * outcome; this component only decides when the save happens.
+   */
+  save: Action<[], void>;
   /** This provider's stored configuration is still in flight. */
   isLoading?: boolean;
 }
@@ -105,18 +116,14 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   accent,
   value,
   onChange,
-  onSave,
-  isSaving,
+  save,
   isLoading = false,
 }) => {
   const [showPwd, setShowPwd] = useState(false);
 
   const enabled = value.enabled;
   const hasCreds = provider.fields.includes("credentials");
-
-  const handleSave = () => {
-    onSave(provider.id);
-  };
+  const isSaving = save.isPending;
 
   return (
     <Paper
@@ -303,7 +310,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         <Button
           variant="contained"
           disabled={isSaving || isLoading}
-          onClick={handleSave}
+          onClick={() => void save.run()}
           startIcon={
             isSaving ? (
               <CircularProgress size={16} sx={{ color: "white" }} />

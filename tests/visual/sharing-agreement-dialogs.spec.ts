@@ -4,8 +4,9 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
   DRAFT_AGREEMENT,
   FIXED_COEFFICIENTS_ALL_PENDING,
   FIXED_COEFFICIENTS_MIXED,
@@ -91,7 +92,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
     await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_ALL_PENDING, 200);
-    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY, FIXED_COMMUNITY_ADMIN_USER);
 
     await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
 
@@ -127,7 +128,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
     await mockSharingAgreementDetailRoutes(page, SUPERSEDED_AGREEMENT.id, SUPERSEDED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
-    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY, FIXED_COMMUNITY_ADMIN_USER);
 
     await navigateToSharingAgreementDetail(page, SUPERSEDED_AGREEMENT.name);
 

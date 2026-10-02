@@ -33,9 +33,11 @@ function getSupplyLabel(supply: SupplyReferenceResponse | undefined): string {
 /**
  * The coefficient timeline of one supply within one plant.
  *
- * Only ever rendered inside a CommunityAdminRoute-guarded agreement page for
- * this exact plant, so the caller's entitlement to that plant's community is
- * already proven -- which is why agreement links are always shown here.
+ * Only ever rendered inside an agreement page for this exact plant, which is
+ * guarded on that plant's canListSharingAgreements, so the caller's
+ * entitlement is already proven. It passes no link flag even so: each period
+ * carries its own canReadSharingAgreement, and restating the answer here would
+ * be a second source of truth for it.
  */
 export const CoefficientHistoryDrawer: FC<CoefficientHistoryDrawerProps> = ({
   isOpen,
@@ -119,7 +121,6 @@ export const CoefficientHistoryDrawer: FC<CoefficientHistoryDrawerProps> = ({
             periods={periods}
             isLoading={isLoading}
             error={error}
-            showAgreementLinks
             currentSharingAgreementId={currentSharingAgreementId}
             emptySubtitle="Este suministro todavía no tiene periodos aplicados en esta planta."
           />

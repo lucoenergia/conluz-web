@@ -39,22 +39,33 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading
       label: "Punto de suministro vinculado",
       value: (
         <>
-          <Link
-            component={RouterLink}
-            to={`/supply-points/${supply.id}`}
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 0.5,
-              color: "primary.main",
-              fontWeight: 600,
-              textDecoration: "none",
-              "&:hover": { textDecoration: "underline" },
-            }}
-          >
-            {supply.code}
-            <OpenInNewIcon sx={{ fontSize: 14 }} />
-          </Link>
+          {/* A link only when following it would succeed. Listing plants is open
+              to any member, but GET /supplies/{id} is not, so the reference
+              carries no owner and `canReadSupply` is what answers. Denied, the
+              CUPS is still shown -- it identifies the supply, and withholding
+              it would hide the plant's own data, not someone else's. */}
+          {plant?.capabilities.canReadSupply ? (
+            <Link
+              component={RouterLink}
+              to={`/supply-points/${supply.id}`}
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+                color: "primary.main",
+                fontWeight: 600,
+                textDecoration: "none",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              {supply.code}
+              <OpenInNewIcon sx={{ fontSize: 14 }} />
+            </Link>
+          ) : (
+            <Typography component="span" sx={{ fontWeight: 600 }}>
+              {supply.code}
+            </Typography>
+          )}
           {/* The CUPS identifies the supply; the name is a nicety, and on some
               communities it still holds a UUID. Never label the link with it. */}
           {supply.name && (

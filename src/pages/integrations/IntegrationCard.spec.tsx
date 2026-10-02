@@ -16,7 +16,7 @@ const PROVIDER = {
 };
 
 const setup = (overrides: Partial<React.ComponentProps<typeof IntegrationCard>> = {}) => {
-  const onSave = vi.fn();
+  const run = vi.fn().mockResolvedValue(undefined);
   const onChange = vi.fn();
   render(
     <ThemeProvider theme={theme}>
@@ -25,13 +25,12 @@ const setup = (overrides: Partial<React.ComponentProps<typeof IntegrationCard>> 
         accent="#0078ac"
         value={{ enabled: true, username: "u", baseUrl: "https://datadis.es/api-private" }}
         onChange={onChange}
-        onSave={onSave}
-        isSaving={false}
+        save={{ run, isPending: false }}
         {...overrides}
       />
     </ThemeProvider>,
   );
-  return { onSave, onChange };
+  return { run, onChange };
 };
 
 describe("IntegrationCard loading state", () => {
@@ -54,12 +53,27 @@ describe("IntegrationCard loading state", () => {
     // stored ones. fireEvent rather than userEvent because the latter refuses
     // to click a disabled control — the guarantee under test is that the
     // handler stays unreachable even so.
-    const { onSave } = setup({ isLoading: true });
+    const { run } = setup({ isLoading: true });
 
     const save = screen.getByRole("button", { name: /Guardar/ });
     expect(save).toBeDisabled();
     fireEvent.click(save);
-    expect(onSave).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("shows the action's own pending flag, so there is no second source of truth", () => {
+    // isPending lives inside the action rather than beside it: a card cannot be
+    // left spinning for a mutation that has already settled.
+    // The mock is created here, not taken from setup(): setup's own is replaced
+    // by this override, so asserting on it would assert on something the card
+    // never received and could not fail.
+    const run = vi.fn();
+    setup({ save: { run, isPending: true } });
+
+    const save = screen.getByRole("button", { name: /Guardando/ });
+    expect(save).toBeDisabled();
+    fireEvent.click(save);
+    expect(run).not.toHaveBeenCalled();
   });
 
   it("restores the toggle and enables saving once the configuration has arrived", () => {

@@ -11,6 +11,7 @@
 import { vi } from "vitest";
 import { AxiosError } from "axios";
 import { getAllUsers, useGetAllUsers } from "../api/users/users";
+// eslint-disable-next-line no-restricted-imports -- test infrastructure: imported only to type the mutation builders against a real generated hook, never called. Not numbered: this file is not migrating to the actions layer.
 import { useCreateMembership } from "../api/memberships/memberships";
 import { buildUser } from "./fixtures";
 import { mutation, query } from "./queryState";

@@ -11,6 +11,7 @@ import type { SharingAgreementResponseCreatedBy } from './sharingAgreementRespon
 import type { SharingAgreementResponseUpdatedAt } from './sharingAgreementResponseUpdatedAt';
 import type { SharingAgreementResponseUpdatedBy } from './sharingAgreementResponseUpdatedBy';
 import type { SharingAgreementResponseFile } from './sharingAgreementResponseFile';
+import type { SharingAgreementCapabilitiesResponse } from './sharingAgreementCapabilitiesResponse';
 
 export interface SharingAgreementResponse {
   /** Internal unique identifier of the sharing agreement */
@@ -35,4 +36,6 @@ export interface SharingAgreementResponse {
   updatedBy: SharingAgreementResponseUpdatedBy;
   /** Metadata of the latest evidence file uploaded for this agreement. Null means no file has been uploaded, never that it wasn't loaded */
   file: SharingAgreementResponseFile;
+  /** What the caller may do with this sharing agreement. */
+  capabilities: SharingAgreementCapabilitiesResponse;
 }

@@ -13,9 +13,10 @@ import { GraphFilter } from "../../components/Graph/GraphFilter";
 import { SupplyDetailHeader } from "../../components/SupplyDetailHeader";
 import { SupplyCoefficientHistorySection } from "../../components/SupplyCoefficientHistorySection";
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
-// eslint no-restricted-imports allowlist (see eslint.config.js): the supply id
-// comes from the route, and until SupplyResponse carries a community there is
-// nothing to guard it against -- see useSupplyInActiveCommunity.
+// eslint no-restricted-imports allowlist (see eslint.config.js): these series
+// are keyed by the supply id from the route. The page scopes them by rendering
+// nothing at all until useSupplyInActiveCommunity has admitted the supply, so a
+// supply from another community never reaches them.
 import { useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption, useGetSupplyYearlyConsumption, useGetSupplyMonthlyProduction } from "../../api/supplies/supplies";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { useErrorDispatch } from "../../context/error.context";
@@ -24,6 +25,9 @@ import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 import EvStationIcon from "@mui/icons-material/EvStation";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PercentIcon from "@mui/icons-material/Percent";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
+import { EmptyState } from "../../components/EmptyState";
+import { Can, outcomeFromResource } from "../../hooks/permissions";
 
 export const SupplyDetailPage: FC = () => {
   const { supplyPointId = "" } = useParams();
@@ -107,8 +111,14 @@ export const SupplyDetailPage: FC = () => {
     };
   }, [startDate, endDate]);
 
-  const { supply: supplyPoint, isLoading: supplyPointLoading, error: supplyPointError } =
+  const { supply: supplyPoint, isLoading: supplyPointLoading, isNotFound: isSupplyNotFound, error: supplyPointError } =
     useSupplyInActiveCommunity(supplyPointId);
+
+  // The coefficients describe this supply's own share, so the backend opens
+  // them to its owner as well as to a community admin -- canRead, never
+  // canEdit. Asking it here also keeps the history request from firing for a
+  // supply the caller could not read in the first place.
+  const canReadSupply = outcomeFromResource(supplyPoint?.capabilities, "canRead");
 
   // Fetch hourly production data when DAY filter is selected
   const {
@@ -497,6 +507,21 @@ export const SupplyDetailPage: FC = () => {
     };
   }, [consumptionData, filterType]);
 
+  // Missing, or belonging to a community the caller is not working in: the
+  // wrapper folds both into one answer, so there is one empty state rather than
+  // a second that would say which of the two it was.
+  if (isSupplyNotFound) {
+    return (
+      <Box sx={sxStyles.pageContainer}>
+        <EmptyState
+          icon={SearchOffIcon}
+          title="Punto de suministro no encontrado"
+          subtitle="Este punto de suministro no existe o no tienes acceso a su comunidad."
+        />
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -535,7 +560,9 @@ export const SupplyDetailPage: FC = () => {
       {/* Coefficient history. Sits above the filter on purpose: it is contract
           information about the supply, not telemetry, so placing it below
           would imply the selected date range applies to it. */}
-      <SupplyCoefficientHistorySection supplyId={supplyPointId} />
+      <Can outcome={canReadSupply}>
+        <SupplyCoefficientHistorySection supplyId={supplyPointId} />
+      </Can>
 
       {/* Filter Section */}
       <Box sx={sxStyles.pageContainer}>

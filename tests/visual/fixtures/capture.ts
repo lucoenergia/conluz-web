@@ -74,6 +74,34 @@ export const COMPONENT_MAX_DIFF_PIXELS = threshold(100);
 export const LAYOUT_MAX_DIFF_PIXELS = threshold(100);
 
 /**
+ * How long a layout capture may spend reaching two consecutive stable shots.
+ *
+ * Not a tolerance -- it changes no pixel and moves no baseline. It buys the
+ * stability loop more attempts, and only a run that would otherwise have failed
+ * behaves differently.
+ *
+ * The clip below is measured once and is very nearly flush with the bottom of
+ * the page: on the mobile supply detail page, main is 2812.14 px tall and its
+ * bottom edge sits 7.86 px above a 2828 px document. If the page shrinks by
+ * more than that slack at the moment a shot is taken, the clip is truncated and
+ * Playwright receives a shorter image -- 2812 px, then 2793 px -- which can
+ * never compare equal because the two differ in size, not in content. (A mask
+ * cannot help for the same reason: it repaints pixels, it does not change an
+ * image's height.)
+ *
+ * Seen once, on a machine deliberately oversubscribed to 24 busy threads on 20
+ * cores, and not reproduced in roughly ten targeted attempts since. Ruled out
+ * as the trigger: the page settling after stabilizePage (a flat 2828 px across
+ * 40 samples in each of 4 runs under load) and the resize-driven chart remount
+ * in src/components/Graph/GraphBar.tsx (no height change at all when sampled
+ * every 25 ms straight through its 300 ms window). The trigger is still
+ * unidentified, so this is a tolerance for a transient, not a fix for a known
+ * cause: if it starts failing again, that is the signal to find the shrink
+ * rather than to raise this number.
+ */
+const LAYOUT_CAPTURE_TIMEOUT_MS = 15_000;
+
+/**
  * Screenshot options for a region (component) capture: the app bar is hidden.
  *   await expect(page.getByRole("menu")).toHaveScreenshot("x.png", await hideAppBar(page));
  */
@@ -114,6 +142,10 @@ export async function mainRegion(
     clip,
     stylePath: await hiddenAppBarStyle(page),
     maxDiffPixels: LAYOUT_MAX_DIFF_PIXELS,
+    // Layout captures only: a clipped full-page shot is the one that can be
+    // truncated by a momentary shrink. hideAppBar() takes element screenshots,
+    // which have no clip to truncate, so it keeps the default.
+    timeout: LAYOUT_CAPTURE_TIMEOUT_MS,
     ...(masks.length > 0 ? { mask: masks } : {}),
   };
 }

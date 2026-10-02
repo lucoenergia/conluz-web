@@ -5,13 +5,13 @@ import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
-import { buildCommunity, buildUser } from "../test/fixtures";
+import { buildCommunity, buildCurrentUser } from "../test/fixtures";
 import { useGetCurrentUser } from "../api/users/users";
 import { useGetAllCommunities, type getAllCommunities } from "../api/communities/communities";
-import { CommunityRole, type UserResponse } from "../api/models";
+import { CommunityRole, type CurrentUserResponse } from "../api/models";
 import { AuthenticatedLayout } from "./authenticated.layout";
 
-let loggedUser: UserResponse;
+let loggedUser: CurrentUserResponse;
 
 vi.mock(import("../context/auth.context"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -21,7 +21,6 @@ vi.mock(import("../context/auth.context"), async (importOriginal) => ({
 vi.mock(import("../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: () => loggedUser,
-  useLoggedUserDispatch: () => vi.fn(),
 }));
 
 vi.mock(import("../hooks/useLogout"), () => ({
@@ -32,7 +31,11 @@ vi.mock(import("../api/users/users"), () => ({
   useGetCurrentUser: vi.fn(),
 }));
 
-vi.mock(import("../api/communities/communities"), () => ({
+// Spread the original: useActiveCommunityResource reads useGetCommunityById
+// from this module to resolve the active community's capabilities, so a bare
+// factory would leave that export undefined.
+vi.mock(import("../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
 }));
 
@@ -62,7 +65,7 @@ function renderAt(route: string) {
 const navigation = () => screen.getByRole("navigation", { name: "Navegación principal" });
 
 beforeEach(() => {
-  loggedUser = buildUser({
+  loggedUser = buildCurrentUser({
     id: "user-1",
     fullName: "Ada",
     isPlatformAdmin: true,

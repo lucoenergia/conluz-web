@@ -4,12 +4,12 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createTestQueryClient, renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
-import { buildCommunity, buildUser } from "../../test/fixtures";
-import type { UserResponse, UserResponseMemberships } from "../../api/models";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
+import type { CurrentUserResponse, UserResponseMemberships } from "../../api/models";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import { ScopeContext } from "./ScopeContext";
 
-let loggedUser: UserResponse | null = null;
+let loggedUser: CurrentUserResponse | null = null;
 const mockDispatch = vi.fn();
 const activeCommunity = { current: null as string | null };
 
@@ -36,7 +36,7 @@ const TWO_COMMUNITIES: UserResponseMemberships = {
 };
 
 function setUp(memberships: UserResponseMemberships, active: string | null) {
-  loggedUser = buildUser({ id: "u1", memberships });
+  loggedUser = buildCurrentUser({ id: "u1", memberships });
   activeCommunity.current = active;
 }
 

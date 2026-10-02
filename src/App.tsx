@@ -2,10 +2,8 @@ import { lazy, type ComponentType } from "react";
 import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
 import { LoginLayout } from "./layouts/login.layout";
-import { DynamicLayout } from "./layouts/dynamic.layout";
-import { PlatformAdminRoute } from "./components/Auth/PlatformAdminRoute";
-import { CommunityAdminRoute } from "./components/Auth/CommunityAdminRoute";
-import { CommunityOrPlatformAdminRoute } from "./components/Auth/CommunityOrPlatformAdminRoute";
+import { PublicLayout } from "./layouts/public.layout";
+import { CapabilityRoute } from "./components/Auth/CapabilityRoute";
 
 /**
  * Route-level code splitting.
@@ -74,25 +72,37 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="supply-points">
             <Route index element={<SupplyPointsPage />}></Route>
-            <Route path="new" element={<CreateSupplyPage />} />
+            <Route
+              path="new"
+              element={<CapabilityRoute require={{ scope: "community", capability: "canManage" }}><CreateSupplyPage /></CapabilityRoute>}
+            />
             <Route path=":supplyPointId">
               <Route index element={<SupplyDetailPage />} />
-              <Route path="edit" element={<EditSupplyPage />} />
+              <Route
+                path="edit"
+                element={<CapabilityRoute require={{ scope: "supply", capability: "canEdit" }}><EditSupplyPage /></CapabilityRoute>}
+              />
             </Route>
           </Route>
           <Route path="production">
             <Route index element={<PlantsPage />}></Route>
-            <Route path="new" element={<CreatePlantPage />} />
+            <Route
+              path="new"
+              element={<CapabilityRoute require={{ scope: "community", capability: "canCreatePlants" }}><CreatePlantPage /></CapabilityRoute>}
+            />
             <Route path=":plantId">
               <Route index element={<PlantDetailPage />} />
-              <Route path="edit" element={<EditPlantPage />} />
+              <Route
+                path="edit"
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canManage" }}><EditPlantPage /></CapabilityRoute>}
+              />
               <Route
                 path="sharing-agreements"
-                element={<CommunityAdminRoute><SharingAgreementsPage /></CommunityAdminRoute>}
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementsPage /></CapabilityRoute>}
               />
               <Route
                 path="sharing-agreements/:sharingAgreementId"
-                element={<CommunityAdminRoute><SharingAgreementDetailPage /></CommunityAdminRoute>}
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementDetailPage /></CapabilityRoute>}
               />
             </Route>
           </Route>
@@ -100,38 +110,55 @@ function App() {
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route
             path="integrations"
-            element={<CommunityOrPlatformAdminRoute><IntegrationsPage /></CommunityOrPlatformAdminRoute>}
+            element={<CapabilityRoute require={{ scope: "community", capability: "canManage" }}><IntegrationsPage /></CapabilityRoute>}
           />
           <Route
             path="members"
-            element={<CommunityOrPlatformAdminRoute><MembersPage /></CommunityOrPlatformAdminRoute>}
+            element={<CapabilityRoute require={{ scope: "community", capability: "canManageMemberships" }}><MembersPage /></CapabilityRoute>}
           />
           <Route path="communities">
             <Route
               index
-              element={<PlatformAdminRoute><CommunitiesPage /></PlatformAdminRoute>}
+              element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><CommunitiesPage /></CapabilityRoute>}
             />
             <Route
               path="new"
-              element={<PlatformAdminRoute><CreateCommunityPage /></PlatformAdminRoute>}
+              element={<CapabilityRoute require={{ scope: "platform", capability: "canCreateCommunity" }}><CreateCommunityPage /></CapabilityRoute>}
             />
             <Route
               path=":communityId/edit"
-              element={<PlatformAdminRoute><EditCommunityPage /></PlatformAdminRoute>}
+              element={<CapabilityRoute require={{ scope: "communityById", capability: "canUpdate" }}><EditCommunityPage /></CapabilityRoute>}
             />
           </Route>
           <Route
             path="platform"
-            element={<PlatformAdminRoute><PlatformPage /></PlatformAdminRoute>}
+            element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><PlatformPage /></CapabilityRoute>}
           />
           <Route path="users">
-            <Route index element={<PlatformAdminRoute><UsersPage /></PlatformAdminRoute>} />
-            <Route path="new" element={<PlatformAdminRoute><CreateUserPage /></PlatformAdminRoute>} />
-            <Route path=":userId/edit" element={<PlatformAdminRoute><EditUserPage /></PlatformAdminRoute>} />
+            <Route index element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><UsersPage /></CapabilityRoute>} />
+            <Route path="new" element={<CapabilityRoute require={{ scope: "platform", capability: "canCreateUsers" }}><CreateUserPage /></CapabilityRoute>} />
+            <Route path=":userId/edit" element={<CapabilityRoute require={{ scope: "user", capability: "canEdit" }}><EditUserPage /></CapabilityRoute>} />
           </Route>
           <Route path="no-community" element={<NoCommunityPage />} />
         </Route>
-        <Route element={<DynamicLayout />}>
+        {/*
+          Public for everybody, signed in or not -- not an oversight, and not a
+          decision about chrome.
+
+          /contact is to show information per energy community, which raises
+          questions this route cannot answer on its own: what a caller with no
+          session sees, when there is no community to show; and what a caller who
+          belongs to several sees -- their active community, or all of them. Those
+          belong to the contact-screen epic, together with whether the route needs
+          a community in its URL so that it behaves the same signed in and signed
+          out.
+
+          Until then it serves one page to everyone, which is what it has always
+          done in practice: the layout it used to sit under chose its chrome from
+          the signed-in user, and nothing fetched that user outside
+          AuthenticatedLayout, so it always rendered the public one.
+        */}
+        <Route element={<PublicLayout />}>
           <Route path="contact" element={<ContactPage />} />
         </Route>
       </Routes>

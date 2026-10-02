@@ -3,27 +3,30 @@ import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { mutation, query } from "../../test/queryState";
-import { buildCommunity, buildUser } from "../../test/fixtures";
-import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
-import { useCreateSuppliesWithFile } from "../../api/supplies/supplies";
+import { query } from "../../test/queryState";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
 
-const mockMutate = vi.fn();
-
-vi.mock(import("../../api/supplies/supplies"), () => ({
-  useCreateSuppliesWithFile: vi.fn(),
-}));
-
-vi.mock(import("../../api/communities/communities"), () => ({
+// CsvImportModal names the community the rows are imported into (#186), which
+// it resolves from the caller's memberships and the community list.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
 }));
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useLoggedUser: () => buildUser({ id: "admin", memberships: { "community-a": "COMMUNITY_ADMIN" } }),
+  useLoggedUser: () => buildCurrentUser({ id: "admin", memberships: { "community-a": "COMMUNITY_ADMIN" } }),
 }));
 
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+
 import { ImportSuppliesModal } from "./ImportSuppliesModal";
+
+// The modal is handed the import by whoever may perform it, so there is no
+// generated mutation here to mock. Which community the import targets is the
+// action's business and is asserted in useCommunityActions.spec.tsx; what this
+// file owns is what the modal does with the result it gets back.
+const mockRun = vi.fn();
 
 describe("ImportSuppliesModal", () => {
   const mockOnClose = vi.fn();
@@ -31,10 +34,10 @@ describe("ImportSuppliesModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRun.mockResolvedValue({ created: [], errors: [] });
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([buildCommunity({ id: "community-a", name: "Comunidad Solar Norte" })]),
     );
-    vi.mocked(useCreateSuppliesWithFile).mockReturnValue(mutation.idle({ mutate: mockMutate }));
   });
 
   const setup = (props = {}, activeCommunityId: string | null = "community-a") => {
@@ -43,6 +46,7 @@ describe("ImportSuppliesModal", () => {
         isOpen={true}
         onClose={mockOnClose}
         onImportComplete={mockOnImportComplete}
+        importSupplies={{ run: mockRun, isPending: false }}
         {...props}
       />,
       { activeCommunityId },
@@ -123,6 +127,9 @@ describe("ImportSuppliesModal", () => {
   describe("Uploading state", () => {
     it("shows loading spinner when uploading", async () => {
       const user = userEvent.setup();
+      // Never settles: the uploading view is what is on screen between the
+      // click and the answer, so the answer must not have arrived yet.
+      mockRun.mockReturnValue(new Promise(() => {}));
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -140,9 +147,7 @@ describe("ImportSuppliesModal", () => {
   describe("Results view", () => {
     it("shows success message with created count", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["sp1", "sp2"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["sp1", "sp2"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -162,9 +167,7 @@ describe("ImportSuppliesModal", () => {
 
     it("shows singular message when one supply created", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["sp1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -181,11 +184,9 @@ describe("ImportSuppliesModal", () => {
 
     it("shows errors when import has errors", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({
-          created: ["sp1"],
-          errors: [{ item: "CUPS001", errorMessage: "Código duplicado" }],
-        });
+      mockRun.mockResolvedValue({
+        created: ["sp1"],
+        errors: [{ item: "CUPS001", errorMessage: "Código duplicado" }],
       });
       setup();
 
@@ -209,9 +210,8 @@ describe("ImportSuppliesModal", () => {
       const input = screen.getByTestId("csv-file-input");
       await user.upload(input, file);
 
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onError?.(new Error("Network error"));
-      });
+      // The action reports a failure as no value rather than by throwing.
+      mockRun.mockResolvedValue(undefined);
 
       await user.click(screen.getByRole("button", { name: /Importar/i }));
 
@@ -226,9 +226,7 @@ describe("ImportSuppliesModal", () => {
 
     it("calls onImportComplete after successful import", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["sp1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -243,9 +241,7 @@ describe("ImportSuppliesModal", () => {
 
     it("navigates back to upload view when clicking Importar otro archivo", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["sp1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -273,9 +269,7 @@ describe("ImportSuppliesModal", () => {
 
     it("calls onClose when Cerrar is clicked in results view", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["sp1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -294,9 +288,6 @@ describe("ImportSuppliesModal", () => {
     });
   });
 
-  // Bulk import is a write path: /api/v1/supplies/import takes communityId as an
-  // optional query param, and omitting it leaves the target community to a
-  // backend fallback rather than to what the user has selected.
   describe("Community scoping", () => {
     const selectAFile = async () => {
       const file = new File(["code,name"], "supplies.csv", { type: "text/csv" });
@@ -304,16 +295,15 @@ describe("ImportSuppliesModal", () => {
       await userEvent.upload(input, file);
     };
 
-    it("sends the active community as the import target", async () => {
+    it("hands the file to the import it was given", async () => {
       setup({}, "community-b");
       await selectAFile();
 
       await userEvent.click(screen.getByRole("button", { name: "Importar" }));
 
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({ params: { communityId: "community-b" } }),
-        expect.anything(),
-      );
+      // No community here: the action was built for one and carries it. The
+      // modal choosing a target again is what let the two disagree.
+      expect(mockRun).toHaveBeenCalledWith({ file: expect.any(File) });
     });
 
     it("refuses to import when no community is selected", async () => {
@@ -321,7 +311,7 @@ describe("ImportSuppliesModal", () => {
       await selectAFile();
 
       expect(screen.getByRole("button", { name: "Importar" })).toBeDisabled();
-      expect(mockMutate).not.toHaveBeenCalled();
+      expect(mockRun).not.toHaveBeenCalled();
     });
   });
 });

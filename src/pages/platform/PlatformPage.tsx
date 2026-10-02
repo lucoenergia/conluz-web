@@ -29,6 +29,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { PlatformKpiCard } from "../../components/PlatformKpiCard";
 import { CommunityStatusChip } from "../../components/CommunityStatusChip";
 import { AttentionPanel, type AttentionItem } from "../../components/AttentionPanel";
+import { usePlatformActions } from "../../hooks/actions";
 import { deriveStatus, usePlatformOverview } from "./usePlatformOverview";
 
 const COMMUNITIES_LIST_ROUTE = "/communities";
@@ -52,10 +53,15 @@ export const PlatformPage: FC = () => {
     attention,
     communities,
     usersCount,
-    usersCountUnavailable,
+    mayListUsers,
     isLoading,
     error,
   } = usePlatformOverview();
+
+  // Creating a community is the platform's own answer; the two buttons that lead
+  // to /users answer to the capability that route requires. Both are mounted
+  // only when granted -- a button that redirects home is worse than no button.
+  const { createCommunity } = usePlatformActions().actions;
 
   const kpiCards: KpiDef[] = [
     {
@@ -70,17 +76,18 @@ export const PlatformPage: FC = () => {
       value: kpis.supplyPoints,
       sublabel: "suma de todas las comunidades",
     },
-    // Usuarios is dropped when the users count could not be fetched (e.g. 403).
-    ...(usersCountUnavailable
-      ? []
-      : [
+    // Usuarios is dropped for a caller who may not list users: the number is the
+    // answer to a question they were not allowed to ask.
+    ...(mayListUsers
+      ? [
           {
             key: "users",
             label: "Usuarios",
             value: usersCount,
             sublabel: "personas distintas",
           },
-        ]),
+        ]
+      : []),
     {
       key: "members",
       label: "Socios",
@@ -137,18 +144,28 @@ export const PlatformPage: FC = () => {
       <EmptyState
         icon={DomainAddRoundedIcon}
         title="Crea tu primera comunidad energética"
-        subtitle="Aún no hay comunidades en la plataforma. Empieza creando una para comenzar a gestionarla."
-        actionButton={{
-          label: "Crear comunidad",
-          startIcon: <AddRoundedIcon />,
-          onClick: () => navigate(CREATE_COMMUNITY_ROUTE),
-        }}
+        subtitle={
+          createCommunity
+            ? "Aún no hay comunidades en la plataforma. Empieza creando una para comenzar a gestionarla."
+            : // Inviting somebody to create one they may not create is an
+              // instruction they can only fail to follow.
+              "Aún no hay comunidades en la plataforma."
+        }
+        actionButton={
+          createCommunity
+            ? {
+                label: "Crear comunidad",
+                startIcon: <AddRoundedIcon />,
+                onClick: () => navigate(CREATE_COMMUNITY_ROUTE),
+              }
+            : undefined
+        }
       />
     );
   } else {
     body = (
       <>
-        {/* KPI row — 4 (or 3 when Usuarios is unavailable) light cards */}
+        {/* KPI row — 4 light cards, or 3 without the Usuarios one */}
         <Box
           sx={{
             display: "grid",
@@ -171,33 +188,43 @@ export const PlatformPage: FC = () => {
 
         <AttentionPanel items={attentionItems} />
 
-        {/* Quick actions — one primary only */}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-          <Button
-            variant="contained"
-            component={Link}
-            to={CREATE_COMMUNITY_ROUTE}
-            startIcon={<AddRoundedIcon />}
-          >
-            Crear comunidad
-          </Button>
-          <Button
-            variant="outlined"
-            component={Link}
-            to={USERS_ROUTE}
-            startIcon={<ManageAccountsRoundedIcon />}
-          >
-            Gestionar usuarios
-          </Button>
-          <Button
-            variant="outlined"
-            component={Link}
-            to={USERS_ROUTE}
-            startIcon={<AdminPanelSettingsRoundedIcon />}
-          >
-            Otorgar admin
-          </Button>
-        </Stack>
+        {/* Quick actions — one primary only. Each leads somewhere the router
+            gates, so each is mounted on the same answer that route requires:
+            offering one that redirects home is worse than offering nothing. */}
+        {(createCommunity || mayListUsers) && (
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            {createCommunity && (
+              <Button
+                variant="contained"
+                component={Link}
+                to={CREATE_COMMUNITY_ROUTE}
+                startIcon={<AddRoundedIcon />}
+              >
+                Crear comunidad
+              </Button>
+            )}
+            {mayListUsers && (
+              <>
+                <Button
+                  variant="outlined"
+                  component={Link}
+                  to={USERS_ROUTE}
+                  startIcon={<ManageAccountsRoundedIcon />}
+                >
+                  Gestionar usuarios
+                </Button>
+                <Button
+                  variant="outlined"
+                  component={Link}
+                  to={USERS_ROUTE}
+                  startIcon={<AdminPanelSettingsRoundedIcon />}
+                >
+                  Otorgar admin
+                </Button>
+              </>
+            )}
+          </Stack>
+        )}
 
         {/* Communities preview */}
         <Paper elevation={0} sx={sxStyles.softPanel}>

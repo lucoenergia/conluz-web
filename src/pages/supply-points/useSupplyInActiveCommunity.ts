@@ -1,33 +1,44 @@
 import { useGetSupply } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
+import { useActiveCommunity } from "../../context/community.context";
+import { isSupplyOutsideActiveCommunity } from "./supplyCommunityScope";
 
 export interface SupplyInActiveCommunity {
+  /** Withheld while the supply belongs to another community. */
   supply: SupplyResponse | undefined;
   isLoading: boolean;
+  /** True for a real 404 *and* for a supply outside the selected community. */
+  isNotFound: boolean;
   error: unknown;
   refetch: () => void;
 }
 
 /**
- * useGetSupply, behind the same wrapper boundary as usePlantInActiveCommunity.
+ * useGetSupply, behind the active-community guard.
  *
- * It applies no community guard yet, and that is the point of it existing:
  * GET /supplies/{supplyId} is authorised on membership rather than on the
- * selected community, and SupplyResponse carries no community reference, so
- * there is nothing to compare an active community against. A supply from
- * another of the user's communities therefore still renders when reached by
- * bookmark, pasted URL or reload -- switching community inside the app is
- * already handled by the redirect in AuthenticatedLayout.
+ * selected community, so a supply from another of the user's communities
+ * answers 200 when reached by bookmark, pasted URL or reload. Since
+ * SupplyResponse carries the community it belongs to, that case is detectable
+ * here and folded into isNotFound, so pages reuse the empty state they already
+ * have for a supply that does not exist rather than growing a second one.
  *
- * TODO: add the guard once the backend exposes communityId on SupplyResponse
- * (tracked as a separate backend issue). The implementation is then the same
- * two lines as isPlantOutsideActiveCommunity, and this is the single place they
- * need to go -- which is why the raw hook is restricted to this module.
- *
- * SupplyCoefficientHistorySection, rendered on the detail page, already scopes
- * its own data via selectPeriodsInCommunity and is unaffected.
+ * Switching community inside the app is handled earlier, by the redirect in
+ * AuthenticatedLayout; this is the case where no switch happens at all.
  */
 export function useSupplyInActiveCommunity(supplyId: string): SupplyInActiveCommunity {
+  const activeCommunityId = useActiveCommunity();
   const { data: supply, isLoading, error, refetch } = useGetSupply(supplyId);
-  return { supply, isLoading, error, refetch };
+
+  const isForeign = isSupplyOutsideActiveCommunity(supply, activeCommunityId);
+  const isNotFound =
+    isForeign || (error as { response?: { status?: number } } | null)?.response?.status === 404;
+
+  return {
+    supply: isForeign ? undefined : supply,
+    isLoading,
+    isNotFound,
+    error: isNotFound ? null : error,
+    refetch,
+  };
 }

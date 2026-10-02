@@ -14,7 +14,7 @@ import {
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
-import { buildSharingAgreement } from "../../test/fixtures";
+import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 
 const { APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -66,6 +66,9 @@ const baseAgreement = buildSharingAgreement({
   installedPowerKw: 100,
   notes: null,
   file: null,
+  // Reopening is a write: without canManage the row menu this spec drives would
+  // not be there to click.
+  capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
 });
 
 function Harness() {
@@ -80,10 +83,9 @@ function Harness() {
       />
       <SharingAgreementCoefficientSet
         plantId={PLANT_ID}
-        sharingAgreementId={AGREEMENT_ID}
+        agreement={agreement}
         coefficients={coefficients ?? []}
         installedPowerKw={agreement?.installedPowerKw}
-        agreementStatus={agreement?.status}
       />
     </>
   );

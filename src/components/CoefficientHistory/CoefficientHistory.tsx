@@ -20,13 +20,6 @@ export interface CoefficientHistoryProps {
   isLoading?: boolean;
   error?: unknown;
   /**
-   * Whether agreement names become links. A plain boolean is safe only because
-   * callers never pass periods from outside the selected community -- the
-   * agreement route is CommunityAdminRoute-guarded, so a link to another
-   * community's agreement would redirect or 404.
-   */
-  showAgreementLinks?: boolean;
-  /**
    * The agreement already on screen. Its period is marked and deliberately not
    * linked: navigating to the page you are already on is a dead action.
    */
@@ -72,12 +65,16 @@ const PeriodDot: FC<{ active: boolean }> = ({ active }) => (
 const Period: FC<{
   period: PartitionCoefficientResponse;
   isLast: boolean;
-  showAgreementLinks: boolean;
   currentSharingAgreementId?: string;
-}> = ({ period, isLast, showAgreementLinks, currentSharingAgreementId }) => {
+}> = ({ period, isLast, currentSharingAgreementId }) => {
   const active = isActivePeriod(period);
   const isCurrentAgreement = period.sharingAgreement.id === currentSharingAgreementId;
-  const linkable = showAgreementLinks && !isCurrentAgreement;
+  // The period answers for itself: canReadSharingAgreement predicts the
+  // endpoint behind the link (GET /plants/{plantId}/sharing-agreements/{id}),
+  // so a link that is shown cannot be refused. Per period rather than per
+  // screen, because a history spanning several plants is several answers --
+  // the caller may administer one of them and not another.
+  const linkable = period.capabilities.canReadSharingAgreement && !isCurrentAgreement;
 
   return (
     <Box component="li" sx={{ display: "flex", gap: 1.5 }}>
@@ -178,7 +175,6 @@ export const CoefficientHistory: FC<CoefficientHistoryProps> = ({
   periods,
   isLoading = false,
   error = null,
-  showAgreementLinks = false,
   currentSharingAgreementId,
   emptySubtitle,
 }) => {
@@ -230,7 +226,6 @@ export const CoefficientHistory: FC<CoefficientHistoryProps> = ({
                 key={period.id}
                 period={period}
                 isLast={index === group.periods.length - 1}
-                showAgreementLinks={showAgreementLinks}
                 currentSharingAgreementId={currentSharingAgreementId}
               />
             ))}

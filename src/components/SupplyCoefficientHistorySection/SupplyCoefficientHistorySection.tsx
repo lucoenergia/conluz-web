@@ -4,8 +4,6 @@ import { sxStyles } from "../../theme/sx";
 import { SectionHeading } from "../SectionHeading";
 import { CoefficientHistory } from "../CoefficientHistory";
 import { useActiveCommunity } from "../../context/community.context";
-import { useActiveCommunityRole } from "../../hooks/useActiveCommunityRole";
-import { CommunityRole } from "../../api/models";
 // eslint no-restricted-imports allowlist (see eslint.config.js): the response is
 // scoped in this component by selectPeriodsInCommunity.
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
@@ -27,7 +25,6 @@ export interface SupplyCoefficientHistorySectionProps {
  */
 export const SupplyCoefficientHistorySection: FC<SupplyCoefficientHistorySectionProps> = ({ supplyId }) => {
   const activeCommunityId = useActiveCommunity();
-  const role = useActiveCommunityRole();
 
   const { data, isLoading, error } = useGetPartitionCoefficientHistory(
     supplyId,
@@ -41,14 +38,6 @@ export const SupplyCoefficientHistorySection: FC<SupplyCoefficientHistorySection
   // so a supply from another community opens fine from a bookmark or a reload
   // after switching. Its agreements and coefficients must not be displayed.
   const periods = selectPeriodsInCommunity(data, activeCommunityId);
-
-  /**
-   * Links point at /production/{plantId}/sharing-agreements/{id}, which is
-   * behind CommunityAdminRoute -- so this mirrors that guard exactly rather
-   * than adding isPlatformAdmin, which the guard ignores. Safe as a single
-   * boolean only because the periods above are already community-scoped.
-   */
-  const showAgreementLinks = role === CommunityRole.COMMUNITY_ADMIN;
 
   return (
     <Box sx={sxStyles.pageContainer}>
@@ -64,7 +53,6 @@ export const SupplyCoefficientHistorySection: FC<SupplyCoefficientHistorySection
           // an absence that has not been established.
           isLoading={isLoading || (!!supplyId && periods === undefined && !error)}
           error={error}
-          showAgreementLinks={showAgreementLinks}
           emptySubtitle="Este punto de suministro todavía no tiene ningún coeficiente aplicado."
         />
       </Paper>

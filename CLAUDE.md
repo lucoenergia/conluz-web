@@ -14,6 +14,9 @@ npm test                      # Vitest: watch mode in an interactive terminal, a
 npx vitest run                # Run all tests once in any terminal (same as npm test -- --run)
 npm test -- --watch           # Run tests in watch mode
 npm run generate-client       # Regenerate API client from api-docs.json
+npm run generate-mutation-hook-list  # Re-derive the mutation-hook list from the api-docs.json already present.
+                              # This does NOT regenerate the client, so the "agents never run
+                              # generate-client" rule does not cover it — agents may run this.
 npm run test:visual           # Run visual tests
 npm run test:visual:mobile    # Run visual tests for mobile screens
 npm run test:visual:desktop   # Run visual tests for desktop screens
@@ -23,15 +26,38 @@ npm run test:visual:desktop   # Run visual tests for desktop screens
 
 ### State Management Pattern
 The application uses a layered state management approach:
-- **Global State**: React Context providers (AuthContext, LoggedUserContext)
-- **Server State**: TanStack React Query for API data caching and synchronization
+- **Global State**: React Context providers — `AuthContext` holds the token; `LoggedUserContext` holds no state of its own and serves the current-user query (see below)
+- **Server State**: TanStack React Query for API data caching and synchronization, with the defaults in `src/queryClient.ts`
 - **Token Storage**: Dual storage system - localStorage for "remember me", sessionStorage for temporary
+- **Provider order** (`src/main.tsx`, mirrored by the test harness): `AuthProvider → QueryClientProvider → LoggedUserProvider → CommunityProvider → Theme → BrowserRouter`. The query client is above the user because the user *is* a query, and `CommunityProvider` reads it.
+
+### The signed-in user is live, not a session snapshot
+`LoggedUserProvider` serves `GET /users/current` directly — `staleTime` 30 s, gated on there being a
+token, and the one query in the app that opts back into `refetchOnWindowFocus` (the global default is
+`false`). It used to copy the response into `useState` once per session, which froze what the app
+believed about the caller: since capabilities gate routes, the menu and the landing route, a revoked
+platform admin kept being offered the administration surface until they reloaded (#203).
+
+Consequences worth knowing before writing a screen:
+- **Invalidating `getGetCurrentUserQueryKey()` now works.** That is how a screen makes its own change
+  to the caller's record visible — `useMembershipActions` does it, because a community admin may
+  re-role or remove their *own* membership.
+- **Platform capabilities are as live as community capabilities already were**, but they can only
+  change in *another* session: the backend refuses self-revocation, and `canRevokePlatformAdmin` is
+  false for one's own record. In-app grant/revoke always targets somebody else, so it does not touch
+  the caller — which is why `useUserActions` does not invalidate this key.
+- **`pending` is reachable mid-session.** A capability answer of "not yet known" must never be folded
+  into "no"; `src/hooks/permissions/capabilityOutcome.ts` keeps the two apart.
+- Decided in `docs/decisions/adrs/0004-make-the-signed-in-user-a-live-query-and-end-the-session-on-its-401.md`.
 
 ### Authentication Flow
 1. Token is managed by `AuthProvider` context in `src/context/auth.context.tsx`
 2. Custom Axios instance (`src/api/custom-instance.ts`) automatically injects `Authorization: Bearer ${token}` headers
 3. Protected routes use `ProtectedRoute` component that checks authentication status
-4. 401 responses trigger automatic logout via React Query's global error handler
+4. 401 responses trigger automatic logout via React Query's global error handler — except the
+   current-user query, which sits above every error boundary and so ends the session itself
+   (`useEndSession`), recording why so the login page can say "Sesión expirada"
+   (`src/utils/session.ts`)
 
 ### Multi-Community Model & Authorization
 
@@ -39,12 +65,42 @@ The app is **multi-community**. This is the single most important mental model f
 
 - **Two independent authorization axes.** There is no global user `role`. Instead:
   - `isPlatformAdmin` (boolean) — platform-level privilege.
-  - The user's role **within the active community**, derived via `src/hooks/useActiveCommunityRole.ts` from the `memberships` map (`COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`).
+  - The user's role **within the active community**, derived via `src/hooks/permissions/useActiveCommunityRole.ts` from the `memberships` map (`COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`).
 - **Golden rule (mirror of the backend):** `isPlatformAdmin` **never** grants access to a community's operational data. Platform admins manage users/communities and assign community admins; they do not get members' consumption/production data by virtue of the flag.
 - **Active community context:** `src/context/community.context.tsx` selects and persists the active community (auto-selects when the user has exactly one; restores the persisted choice otherwise). `ScopeContext` (`src/components/ScopeContext/`) states the page scope — active community, "Toda la plataforma" or "Tu cuenta", from `resolvePageScope` in `src/utils/routes.ts` — in the side-menu header while the menu is open and in a strip under the app bar while it is closed, and switches the community. The app bar has no community control.
 - **Data endpoints are path-scoped:** `/communities/{communityId}/{supplies,consumption,production,plants,config}`. Data hooks must pass `communityId` and be **gated on its presence** — no active community → no call, and controls that submit community-scoped data disable when none is selected.
-- **Route guards:** `PlatformAdminRoute` and `CommunityAdminRoute` (`src/components/Auth/`) gate pages by axis. Menu/profile gating derives from `isPlatformAdmin` + active-community role, not a global role.
+- **Capabilities decide visibility, not roles.** Every response carries a `capabilities` object and `GET /users/current` carries `platformCapabilities`; the app reads those and never re-derives a rule locally. `src/hooks/permissions/` is the only module allowed to read a role or the platform-admin flag, and `no-restricted-imports` / `no-restricted-syntax` in `eslint.config.js` enforce that. Reading `user.isPlatformAdmin` as a field to **display** stays legal — `useActiveCommunityRoleLabel()` is the sanctioned way to render a role's name.
+- **A capability says "may this caller ever", not "is this legal now".** It does not reflect the resource's current state, so pair it with that state wherever both apply (`isDraft && canDelete`). Two capabilities naming opposite operations — `canEnable`/`canDisable`, `canGrantPlatformAdmin`/`canRevokePlatformAdmin` — are **both** true for a caller who may do either, and the row's own `enabled` / `isPlatformAdmin` picks which one applies. Resolve such a pair once, so the menu item, its dialog and its handler cannot disagree. Fixtures must grant both halves, as the backend does; granting one per row hides the bug. Full rule in the **`conluz-web-community-scope`** skill.
+- **Mutations go through the actions layer.** No component imports a generated mutation hook. `src/hooks/actions/` is the only module allowed to, and its hooks hand back only the actions the backend says this caller may perform: an action they may not perform is `undefined`, and its `isPending` flag lives **inside** it, so there is no spinner left over and no `edit?.()` that looks like a call and quietly does nothing. Each hook also returns a `CapabilityOutcome` per action, so a screen can tell "not yet known" from "no". Resource-scoped hooks expose a `forX(resource)` selector rather than taking the resource, because a hook cannot be called once per table row. `no-restricted-imports` enforces this over every mutation hook the spec generates from `api-docs.json` into `src/contracts/generatedMutationHooks.json`; `src/contracts/mutationHooks.spec.ts` fails if that list goes stale **or** if any mutation lacks a recorded decision about who may perform it. No screen is exempt, and the rule is asserted over the whole tree: no file under `src/` outside the actions layer, the generated client and the specs may import a generated mutation hook. The two permanent test helpers that name one without calling it are recorded in `TEST_HELPER_MUTATION_IMPORTS`, by file **and** hook, with a reason each.
+- **Route guards:** one guard, `CapabilityRoute` (`src/components/Auth/`), taking the capability the page needs. Its requirement is a closed union of six scopes: `platform`, `community` (the **active** one), and four resolved from a route parameter — `plant`, `supply`, `user` (`:userId`) and `communityById` (`:communityId`, a community the caller may merely be administering, which is not the one they are working in). `MenuRequirement` excludes every parameter-keyed scope, because a menu entry is a fixed destination with none to resolve, and narrows the capability names to the ones the layout actually fetches — so an entry asking for one it does not fetch is a type error rather than an answer from the wrong capability. A capability answer has four states — pending, allowed, denied, error — and only `denied` redirects: a failed check renders a retry rather than pretending the user lacks access.
+- **Routes are a contract, not a convention.** `src/contracts/routeAccess.spec.ts` parses `src/App.tsx` with the TypeScript compiler API and requires every path under `AuthenticatedLayout` to appear in `ROUTE_ACCESS`, either with the capability its guard requires or as `authenticated` with the reason any signed-in caller may see it. Adding a route without classifying it fails, as does a classification naming a path that no longer exists, or a guard whose capability no longer matches the map. It reads guards on parent route elements too, so moving one does not silently un-guard its children. The same spec asserts that each `MENU_SECTIONS` entry names the same requirement as the page it leads to, with deliberate exceptions recorded and explained. `/` stays unguarded on purpose: it is where every denial redirects, so guarding it would loop.
+- **No exemptions.** No file under `src/` reads a role or the platform-admin flag to decide what to render, and none carries an `eslint-disable` for the permission rules. If you find yourself wanting one, the capability you need either exists on the payload or is missing from the backend — ask for it; do not approximate it with a role.
+- **A capability gates the call; it does not scope the rows.** `canListSupplies` predicts whether `GET /users/{userId}/supplies` is *allowed*, never what it *returns*. A listing is scoped to what the caller may read one by one, and "may read" is plural across every community they administer, while the selector names one. So a client reading a user-scoped listing still filters it to the active community — `isSupplyOutsideActiveCommunity` in `src/pages/supply-points/supplyCommunityScope.ts`, with `src/contracts/userScopedReads.spec.ts` requiring every call site to declare the filter it applies. Conflating the two questions is what produced `lucoenergia/conluz#326` and `#336`.
 - **Legacy `X-Community-Id` header removed:** the axios interceptor that injected this header was removed from `community.context.tsx`. Data endpoints carry `communityId` in the **path** — that is the sole scoping mechanism.
+
+### Recipes
+
+**Adding a screen.** Decide what the backend already answers for it, and read that. The payload for
+the resource the screen is about carries a `capabilities` object; `src/hooks/permissions/` turns one
+into a `CapabilityOutcome`, and `<Can>` renders on it. Never add a role check, and never add a
+boolean prop that restates an answer the payload already carries — if a list spans several
+resources, each row answers for itself.
+
+**Adding a route.** Wrap it in `CapabilityRoute` with the capability the page needs, then add the
+path to `ROUTE_ACCESS` in `src/contracts/routeAccess.spec.ts`. If any authenticated caller may see
+it, classify it `authenticated` and say why — the reason is the point of the entry. If the route has
+a menu entry, give the entry the same requirement; the spec compares them. The suite fails until
+both are done, which is the intended order of work, not an obstacle.
+
+**Adding an action.** Add it to the hook in `src/hooks/actions/` for its resource, gated on the
+capability the backend returns, and record the decision in `ACTION_COVERAGE`
+(`src/contracts/mutationHooks.spec.ts`) — the capability and its scope, or an `ungated` reason.
+Return `undefined` when the caller may not perform it, so the control cannot be rendered at all.
+Never import a generated mutation hook outside that layer.
+
+**Adding a read of a user-scoped listing.** Filter it to the active community and declare the
+filter in `USER_SCOPED_LISTINGS` (`src/contracts/userScopedReads.spec.ts`). See the gate-versus-scope
+rule above for why the capability does not do this for you.
 
 Deeper patterns (gating recipes, hook shapes, common pitfalls) live in the **`conluz-web-community-scope`** skill in `.claude/skills/`.
 
@@ -65,7 +121,14 @@ To update API definitions (human maintainer workflow):
 Routes are organized by authentication requirement:
 - **LoginLayout**: Unauthenticated routes (login, password recovery)
 - **AuthenticatedLayout**: Protected routes with sidebar navigation
-- **DynamicLayout**: Routes that adapt based on auth status
+- **PublicLayout**: Routes served the same to everyone, signed in or not (`/contact`)
+
+There is no auth-adaptive layout. `DynamicLayout` was one in name — it chose between the two above
+from the signed-in user — but nothing fetched that user outside `AuthenticatedLayout`, so it only
+ever rendered the public one. It was removed when the user became a live query (#203) rather than
+silently starting to work: what `/contact` should show a caller with no session, or one who belongs
+to several communities, is a question for the contact-screen epic, and the comment at that route in
+`src/App.tsx` says so.
 
 Route definitions are in `src/App.tsx` with nested structure for supply points management.
 
@@ -77,8 +140,8 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
 - **Location**: Tests are colocated with components
 - **Rendering**: render through `renderWithProviders` / `renderHookWithProviders` from `src/test/renderWithProviders.tsx`, not with hand-built wrappers. They compose the production providers (theme from `src/theme`, `MemoryRouter`, auth, logged user, community, error, success) around a real `QueryClient` with retries off, and **return that `queryClient`** so specs can spy on it. Options: `route` (render the page under a real `<Route>` to get route params instead of stubbing `useParams`), `queryClient` (inject one created with `createTestQueryClient()` when the spy must exist before render), and opt-in seeding of `token` and `activeCommunityId` (`null` means explicitly none). A seeded community can be switched mid-test with the returned `switchActiveCommunity(id)`; key the page on `useActiveCommunity()` to mirror the layout's keyed Outlet. A spec that mocks a context module must keep its Provider export: `vi.mock(import("…/error.context"), async (importOriginal) => ({ ...(await importOriginal()), useErrorDispatch: () => mockDispatch }))`.
 - **API mocking follows two tiers** (decided in `docs/decisions/adrs/0001-keep-vi-mock-for-api-mocking-reject-msw-and-sanction-a-narrow-real-cache-tier.md`):
-  - **Tier 1 (default): `vi.mock` of the generated `src/api/<tag>/<tag>` modules.** Use the typed form `vi.mock(import("…/api/users/users"), () => ({ useGetAllUsers: vi.fn() }))`; the factory result **must be typed**, never a string path with hand-written hook shapes. Set results in `beforeEach` with `vi.mocked(hook).mockReturnValue(...)` and the builders in `src/test/queryState.ts`: `query.success<typeof getAllUsers>(data)` (typed by the generated fetcher), `query.loading()`, `query.disabled()`, `query.error(err)`, `mutation.idle({ mutateAsync })`, `mutation.pending(variables)`. Build fixtures with `src/test/fixtures.ts` (`buildUser`, `buildMembership`, `buildCommunity`, `buildSupply`, `buildPlant`, `buildSharingAgreement`, `buildCoefficient`, `buildActiveCoefficient`) and never cast a partial object to a response type (`as SupplyResponse`, `as unknown as …`): the cast hides missing required fields, the way the agreement fixtures hid `updatedAt`/`updatedBy`. Builder defaults are deliberately synthetic (`TEST-…`, non-zero sentinels, nullables null), so a spec overrides every value it asserts on. A partial literal such as `{ data: undefined, isLoading: false }` does not compile; `src/test/queryState.typecheck.ts` keeps that true under `tsc -b`. Assert invalidation by spying on the returned client (`vi.spyOn(queryClient, "invalidateQueries")`) and check the keys, not just the call count. References: `src/pages/users/UsersPage.spec.tsx` (list), `src/pages/members/MembersPage.spec.tsx` (flow with invalidation).
-  - **Tier 2: a real `QueryClient` with `src/api/custom-instance.ts` mocked**, so the real generated hooks run. Use it **only when the subject of the test is cache behaviour**: invalidation, refetch, or a loading state that spans a refetch. Everything else stays in tier 1. Route requests with `routeRequests` from `src/test/requestRouter.ts`: one route per method + URL (a `RegExp` for sub-resources), and it rejects anything it does not match **and fails the test that sent it**, even when nothing awaits the rejection (TanStack Query would otherwise swallow it into query error state). A test whose subject is an unmatched request takes it with `router.takeUnmatched()`. Mock `custom-instance` by spreading the original and replacing only `customInstance`, because the harness's `AuthProvider` imports `AXIOS_INSTANCE` from it. References, all on `routeRequests`: `src/pages/production/SharingAgreementReopenInvalidation.spec.tsx`, `SupplyCoefficientHistoryInvalidation.spec.tsx`, `useSharingAgreementCoefficientMutations.staleness.spec.tsx`.
+  - **Tier 1 (default): `vi.mock` of the generated `src/api/<tag>/<tag>` modules.** Use the typed form `vi.mock(import("…/api/users/users"), () => ({ useGetAllUsers: vi.fn() }))`; the factory result **must be typed**, never a string path with hand-written hook shapes. Set results in `beforeEach` with `vi.mocked(hook).mockReturnValue(...)` and the builders in `src/test/queryState.ts`: `query.success<typeof getAllUsers>(data)` (typed by the generated fetcher), `query.loading()`, `query.disabled()`, `query.error(err)`, `mutation.idle({ mutateAsync })`, `mutation.pending(variables)`. Build fixtures with `src/test/fixtures.ts` (`buildUser`, `buildCurrentUser`, `buildMembership`, `buildCommunity`, `buildSupply`, `buildPlant`, `buildSharingAgreement`, `buildCoefficient`, `buildActiveCoefficient`, plus a `build…Capabilities` builder per resource — every capability defaults to `false`, so a spec grants exactly what it exercises and the grant appears in the test that depends on it) and never cast a partial object to a response type (`as SupplyResponse`, `as unknown as …`): the cast hides missing required fields, the way the agreement fixtures hid `updatedAt`/`updatedBy`. Builder defaults are deliberately synthetic (`TEST-…`, non-zero sentinels, nullables null), so a spec overrides every value it asserts on. A partial literal such as `{ data: undefined, isLoading: false }` does not compile; `src/test/queryState.typecheck.ts` keeps that true under `tsc -b`. Assert invalidation by spying on the returned client (`vi.spyOn(queryClient, "invalidateQueries")`) and check the keys, not just the call count. A screen's spec mocks the **reads**, and lets the actions layer run for real: what such a spec is testing is that the menus follow the capabilities on the payload, and stubbing the action hook would restate that rule instead of exercising it. Mutation hooks are inert until called, so leaving them real reaches no network; stub one only to assert its arguments, always by spreading `importOriginal()` so the query-key getters the layer invalidates with stay real. Specs are exempt from the mutation lint rule precisely so they can name a mocked hook. References: `src/pages/users/UsersPage.spec.tsx` (list, personas, mixed rows), `src/pages/members/MembersPage.spec.tsx` (flow with invalidation), `src/hooks/actions/useMembershipActions.spec.tsx` (an action hook: allowed / denied / pending).
+  - **Tier 2: a real `QueryClient` with `src/api/custom-instance.ts` mocked**, so the real generated hooks run. Use it **only when the subject of the test is cache behaviour**: invalidation, refetch, or a loading state that spans a refetch. Everything else stays in tier 1. Route requests with `routeRequests` from `src/test/requestRouter.ts`: one route per method + URL (a `RegExp` for sub-resources), and it rejects anything it does not match **and fails the test that sent it**, even when nothing awaits the rejection (TanStack Query would otherwise swallow it into query error state). A test whose subject is an unmatched request takes it with `router.takeUnmatched()`. Mock `custom-instance` by spreading the original and replacing only `customInstance`, because the harness's `AuthProvider` imports `AXIOS_INSTANCE` from it. References, all on `routeRequests`: `src/pages/production/SharingAgreementReopenInvalidation.spec.tsx`, `SupplyCoefficientHistoryInvalidation.spec.tsx`, `src/hooks/actions/useSharingAgreementCoefficientActions.staleness.spec.tsx`.
   - `vi.mock` is per test file, so a helper module shared between specs must not contain `vi.mock` calls. When several spec files mock the same modules the same way, keep each `vi.mock` call in the spec and move the factory into a mock-free module that the factory loads with `import()` (it must import nothing at runtime but `vitest`, so it cannot cycle back into a mocked module). Reference: `src/components/SharingAgreementCoefficientSet/SharingAgreementCoefficientSet.mocks.ts`.
 - **Browser storage**: storage is cleared before each render and after each test in any file that imports the harness; no spec cleans up by hand. Rendering with a single-membership user persists `activeCommunity:<userId>`, because that is what `CommunityProvider` does in production. Specs assert the active community through observable behaviour (what the UI shows, what the hook returns), never by reading the storage key. The specs that assert storage directly are the ones that own that behaviour: `src/context/community.context.spec.tsx` (persistence) and the harness's own `src/test/renderWithProviders.spec.tsx` and `src/test/storageCleanup.spec.tsx` (isolation).
 - **No real network**: a spec must never reach the backend; an unmocked query hook shows up as `ECONNREFUSED` in the run output.
@@ -93,13 +156,13 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
 - A structural locator (MUI class, DOM nesting) is a last resort, and it needs a one-line justification in the spec.
 
 **Fast iteration (agents):**
-- While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` takes file paths (source or spec) and runs the specs that import them. When it resolves to nothing it prints "No test files found" and still exits 0, so in that case run the spec directly by path: `npx vitest run <path/to/File.spec.tsx>`.
+- While iterating, run `npx tsc -b` (which covers `src`, `vite.config.ts` and, via `tsconfig.tests.json`, `tests/` and `playwright.config.ts`) plus `npx vitest related --run <changed files>`. `related` takes file paths (source or spec) and runs the specs that import them. When it resolves to nothing it prints "No test files found" and still exits 0, so in that case run the spec directly by path: `npx vitest run <path/to/File.spec.tsx>`.
 - Run the full gates `npm run lint && npm test` once, at the end.
 - Run `npm run test:visual` only at the end and only if the UI changed. If it fails, report which baselines differ; never regenerate them.
 
 **Visual regression tests (Playwright):**
 - **Framework**: Playwright (`@playwright/test`), configured in `playwright.config.ts`.
-- **Location**: Specs live in `tests/visual/`, one per feature area (`login-and-home`, `supplies`, `platform-and-users`, `sharing-agreements-list`, `sharing-agreement-detail`, `sharing-agreement-dialogs`, `coefficient-editor`, `plant-detail`, each `.spec.ts`), plus `chrome-canary.spec.ts` for the shared chrome. Auth setup, route mocks, JSON fixtures and navigation helpers are shared from `tests/visual/fixtures/` (import from `./fixtures`). Height and row budgets that capture no screenshot live in `tests/visual/layout-budgets.spec.ts`; prefer that measured-assertion pattern whenever a property can be measured. Baseline screenshots live in `tests/visual/__screenshots__/{mobile,desktop}/`.
+- **Location**: Specs live in `tests/visual/`, one per feature area (`login-and-home`, `profile`, `supplies`, `production-member`, `production-admin`, `plant-detail`, `platform-and-users`, `community-management`, `sharing-agreements-list`, `sharing-agreement-detail`, `sharing-agreement-dialogs`, `coefficient-editor`, each `.spec.ts`), plus `chrome-canary.spec.ts` for the shared chrome, `cross-community.spec.ts` and `denied-calls.spec.ts` for rules that are asserted rather than pictured. Auth setup, route mocks, JSON fixtures and navigation helpers are shared from `tests/visual/fixtures/` (import from `./fixtures`). Height and row budgets that capture no screenshot live in `tests/visual/layout-budgets.spec.ts`; prefer that measured-assertion pattern whenever a property can be measured. Baseline screenshots live in `tests/visual/__screenshots__/{mobile,desktop}/`.
 - **Screenshot names are globally unique across all visual spec files.** `snapshotPathTemplate` is `{projectName}/{arg}`, where `{arg}` is the name passed to `toHaveScreenshot()`, and it does not include the spec file. Two specs that pass the same name would silently share, and overwrite, one baseline. Check with `grep -rhoP 'toHaveScreenshot\("\K[^"]+' tests/visual | sort | uniq -d` (must print nothing). The warmup project enforces it: `screenshot names are unique across the visual specs` in `tests/visual/warmup.setup.ts` fails on a repeated name, and on any `toHaveScreenshot()` call without a string-literal name.
 - **What each baseline captures (capture the subject, not the page):**
   - **Component subject** (dialog, menu, drawer, panel, section, bar, header): capture that component's locator, chosen by the selector hierarchy above, with `await hideAppBar(page)` as the options, e.g. `await expect(page.getByRole("menu")).toHaveScreenshot("x.png", await hideAppBar(page))`.
@@ -117,11 +180,15 @@ Route definitions are in `src/App.tsx` with nested structure for supply points m
 - **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or otherwise rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails, report which screens differ and stop; regenerating baselines is a manual maintainer step documented in `CONTRIBUTE.md`.
 - **Server**: Playwright starts (or reuses locally) the dev server on `http://localhost:3001` via the `webServer` config — no need to launch it yourself. In CI it always starts fresh.
 - **No live backend**: Auth is faked by injecting a JWT into `localStorage` before load, and every `/api/v1/**` request is intercepted with fixed, hard-coded JSON fixtures. Data must be deterministic (no faker, no time-varying fields) so screenshots are byte-stable. Animations are disabled and `document.fonts.ready` is awaited before capture.
-- **Screenshot thresholds (no global value).** `playwright.config.ts` sets no screenshot threshold. Every `toHaveScreenshot()` call carries an absolute `maxDiffPixels`: through `hideAppBar()` / `mainRegion()` (`COMPONENT_MAX_DIFF_PIXELS`, `LAYOUT_MAX_DIFF_PIXELS` in `tests/visual/fixtures/capture.ts`), or stated at the call (`CANARY_MAX_DIFF_PIXELS` in `chrome-canary.spec.ts`, `login-page`). All are 100 today, and every value is wrapped in `threshold()`, so a new one must be too. The reasoning and its revisit conditions are in `docs/decisions/adrs/0003-size-screenshot-thresholds-in-absolute-pixels-per-capture.md`.
+- **Screenshot thresholds (no global value).** `playwright.config.ts` sets no screenshot threshold. Every `toHaveScreenshot()` call carries an absolute `maxDiffPixels`: through `hideAppBar()` / `mainRegion()` (`COMPONENT_MAX_DIFF_PIXELS`, `LAYOUT_MAX_DIFF_PIXELS` in `tests/visual/fixtures/capture.ts`), or stated at the call (`CANARY_MAX_DIFF_PIXELS` in `chrome-canary.spec.ts`, `login-page`). Every value is wrapped in `threshold()`, so a new one must be too, and the helpers' values are what a capture takes unless it states its own. The reasoning and its revisit conditions are in `docs/decisions/adrs/0003-size-screenshot-thresholds-in-absolute-pixels-per-capture.md`.
   - **Why absolute and per capture:** a regression has an absolute size (a changed short label measured 175 px, the header wordmark 316 px), while a ratio scales with the capture. The old global 2% was wrong at both ends: 253 px on the two-item Acciones menu, more than a relabelled item, and 57,920 px on the tallest detail page, enough for a whole table column. It also left the chrome canary blind, since a side-menu edit changed it by 175 px and passed.
   - **Choosing a value for a new capture:** use the helper's value when the capture fits its category. If it doesn't, measure before choosing, with the tolerance-0 method: (1) `VISUAL_EXACT=1 npx playwright test --reporter=json` compares every capture exactly (`threshold()` in `capture.ts` returns 0) and writes nothing (the config sets `updateSnapshots: "none"`); (2) run it twice clean, where any capture whose differing-pixel count changes between the runs is noise and must be made deterministic first (see the masking policy); (3) run it once per representative edit, made on a backed-up file and restored by copy, where the capture's differing-pixel count is the signal. For a past commit, run the same in a temporary git worktree. The threshold goes below the smallest signal worth catching and above the noise, and the comment at the value records both figures. Never size a threshold to make a failing capture pass. Measure against the current baselines, never against an image about to be regenerated.
   - **Limits of the method:** "tolerance 0" still applies Playwright's per-pixel colour threshold (0.2), so colour shifts of a few levels per channel are not counted by the measurement or by the suite. The noise figure is local, and CI is the check for cross-environment rendering.
-- **Coverage is role-based**: fixtures map users to routes by authorization axis (member → home/supplies, platform admin → `/platform` and `/users`, no-community user → `/no-community`). `CommunityAdminRoute` pages (e.g. `/members`) are **not** directly Playwright-tested because the guard defers community selection to a `useEffect` that redirects before it re-evaluates — those are covered by unit tests instead.
+- **Coverage is role-based**: every authenticated screen is captured with a persona that can actually reach it, and with only those. Do not invent a hybrid persona to fill a matrix — `/members` and `/integrations` have exactly one reachable caller, because their routes need `canManageMemberships` and `canManage` and a platform admin holds neither by virtue of the flag. Where a rule is too small to show in a capture, assert it instead: removing a row's kebab moves 12 px on desktop, under every threshold, so `platform-and-users.spec.ts` asserts the button's absence rather than relying on a screenshot.
+- **A capture whose content is not asserted can enshrine a broken fixture.** A baseline of an empty roster, or of a card still spinning, looks entirely plausible and gets regenerated into the repo instead of failing. So a capture that depends on fetched data asserts that data first — see `community-management.spec.ts`.
+- **No denied call may reach the backend.** `tests/visual/fixtures/test.ts` extends `test` with an auto fixture that collects any `403`/`404` on `/api/v1/` and asserts the list empty **after** the test body, so a denial nothing awaited still fails. Import `test` from `./fixtures`, never from `@playwright/test`. Exceptions are keyed on method, path shape and status, never a URL pattern, and each carries a reason. This works only because the route mocks refuse what the served capabilities refuse: the 403 decision is **derived** from the very capability objects the handler is about to serve, so the mock cannot contradict its own payload, and granting a capability in a fixture opens the call it predicts. Only rules about which *rows* come back are written out, each naming the backend policy it mirrors. `denied-calls.spec.ts` keeps the check honest, because a listener that reports nothing passes everything.
+- **What a green run proves**: the UI is consistent with the capabilities it is *served*. It does **not** prove the backend enforces them — that is what the backend's own policy-equivalence and endpoint-coverage tests are for. Do not cite a green visual suite as an authorization guarantee.
+- **The Playwright fixtures are typed and type-checked.** `tsconfig.tests.json` puts `tests/` and `playwright.config.ts` in `tsc -b`, and the response fixtures are annotated with their generated response types. That is deliberate: while they were untyped, a missing field read as `false` or `undefined` and silently hid a control, which is exactly how a capability left out of a fixture emptied a screen with nothing failing.
 
 ### Environment Variables
 - **Required prefix**: `CONLUZ_` for all environment variables
@@ -147,7 +214,11 @@ components/ComponentName/
 ### Critical Files to Understand
 - `src/main.tsx`: Application bootstrap with provider hierarchy
 - `src/api/custom-instance.ts`: Axios configuration with auth interceptor
-- `orval.config.js`: API client generation configuration
+- `orval.config.js`: API client generation configuration, and the `afterAllFilesWrite` hook that refreshes the mutation-hook list
+- `src/hooks/actions/action.ts`: the `Action` contract every write goes through
+- `src/contracts/generatedMutationHooks.json`: the generated inventory of mutation hooks, read by the lint rule and kept honest by `mutationHooks.spec.ts`
+- `src/contracts/routeAccess.spec.ts`: who may reach each route, and the menu entries that must agree with them
+- `src/contracts/userScopedReads.spec.ts`: every user-scoped listing declares how it narrows to the active community
 - `src/context/auth.context.tsx`: Authentication state management
 - `src/layouts/authenticated.layout.tsx`: Protected route implementation
 
@@ -156,9 +227,9 @@ components/ComponentName/
 ### API Integration Pattern
 When working with API endpoints:
 1. Never modify files in `src/api/` directly
-2. Use the auto-generated React Query hooks (e.g., `useGetSupplies`, `useCreateSupply`)
+2. **Reads:** use the auto-generated React Query hooks (e.g. `useGetSupplies`), subject to the community-scope wrappers. **Writes:** only through `src/hooks/actions/` — importing a generated mutation hook anywhere else is a lint error. `getGet…QueryKey()` getters stay importable everywhere.
 3. Handle loading/error states using React Query's built-in states
-4. Invalidation is explicit: after a mutation, call `queryClient.invalidateQueries` (or `removeQueries` after a delete) with the generated `get…QueryKey()` getters — see `src/pages/production/useSharingAgreementMutations.ts`
+4. Invalidation is explicit: after a mutation, call `queryClient.invalidateQueries` (or `removeQueries` after a delete) with the generated `get…QueryKey()` getters — see `src/hooks/actions/useSharingAgreementActions.ts`
 
 ### Table Row Actions Pattern
 
@@ -206,17 +277,26 @@ The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus
 Forms use controlled components with Material-UI inputs. Supply forms (`SupplyForm`) serve as the primary reference for complex form patterns.
 
 ### Data Fetching Pattern
-```typescript
-// Use auto-generated hooks
-const { data, isLoading, error } = useGetSupplies();
+```tsx
+// Reads: the generated hook (or its community-scope wrapper)
+const { data, isLoading, error } = useGetAllSupplies(communityId);
 
-// Mutations with automatic cache invalidation
-const mutation = useCreateSupply();
-mutation.mutate(data, {
-  onSuccess: () => {
-    // Handle success
-  }
-});
+// Writes: an action hook, which returns only what this caller may do.
+// The gate and the control are one expression -- there is no way to render a
+// button for an action that was not handed over.
+const { forSupply } = useSupplyActions();
+const { actions, outcomes } = forSupply(supply);
+
+{actions.disable && (
+  <MenuItem disabled={actions.disable.isPending} onClick={() => void actions.disable.run()}>
+    Deshabilitar
+  </MenuItem>
+)}
+
+// `undefined` covers denied, pending and error alike. When a screen needs to
+// tell them apart -- a skeleton rather than a missing row action -- it reads
+// the outcome instead:
+{outcomes.disable.state === "pending" && <Skeleton width={80} />}
 ```
 
 ### Docker Development
@@ -278,6 +358,9 @@ npx vitest run   # all tests pass
 # Language
 All code and documentation must be in english.
 
+## PR description
+Once every work finishes on a branch, generate a PR description in english and markdown format ready to be pasted in GitHub. Generate it in a file on /tmp folder and give me the full path to the file.
+
 ## Referring to work in the code
 
 Comments, `eslint-disable` justifications, `TODO`s and test names may reference **issues**, never
@@ -330,3 +413,51 @@ number resolves years later from a fresh clone.
 `gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
 invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
 is a permanent one.
+
+## Git workflow
+
+### Never create a branch
+
+**Do not run `git checkout -b`, `git branch`, `git switch -c` or `git worktree add`.** Branches are
+created by a human, usually from the right remote base and often before the work is handed over.
+
+Work on the branch that is already checked out. If the task needs a branch that is not there:
+**stop and ask for it by name**, saying which base it should come from. Do not create it "to
+unblock yourself" — that is the slowest option available, not the fastest.
+
+The same staleness rule applies to reading git facts at all: establish them from `git fetch` plus
+`git ls-remote` or `origin/<branch>`, never from a local branch ref that may not have moved in
+weeks.
+
+### Never rewrite a commit that has been pushed
+
+Before `git reset`, `git commit --amend`, `git rebase`, or anything else that replaces an existing
+commit, establish which commits are actually yours to replace:
+
+```bash
+git fetch origin
+git log --oneline @{u}..HEAD    # only these are unpublished
+```
+
+A commit reachable from `origin/<branch>` is published, and published commits are **append only**.
+Correct them with a **new commit** that states what changed and why — never by rebuilding the branch.
+This holds even when the rewrite would be tidier: a rewritten branch diverges from its remote, breaks
+`git pull` for anyone who has it, orphans review comments anchored to the old SHA, and can only be
+repaired by a force-push, which is not yours to run. "The history reads better" is not a reason; if
+the result reads oddly — one commit adding what the next removes — say so in the new commit's
+message. That is what the message is for.
+
+New instructions arriving mid-task are the trap: the work already committed may have been pushed
+while you were working. Re-check `@{u}` at that moment, not from memory of how the branch looked when
+you started.
+
+**If a branch has already diverged, do not `git pull`.** That merges the superseded commits back in
+and resurrects whatever they contained. Stop, report the divergence with the exact content difference
+(`git diff @{u} HEAD --stat`), say whether anything on the remote would be lost, and let a human
+choose between re-sequencing onto the remote tip and force-pushing.
+
+The same fetch-first rule applies to the **base**: read it from `git fetch` plus `origin/<branch>`,
+never from a local ref that may not have moved in weeks, and re-read it before quoting any "before"
+figure — test counts, baselines, timings. A long task can have its base changed underneath it, and a
+number measured against the wrong base is worse than no number.
+

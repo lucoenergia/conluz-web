@@ -5,8 +5,8 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
 import { useGetPartitionCoefficientHistory, type getPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import { SupplyCoefficientHistorySection } from "./SupplyCoefficientHistorySection";
-import { CommunityRole } from "../../api/models";
 import type { PartitionCoefficientResponse } from "../../api/models";
+import { buildPartitionCoefficientCapabilities } from "../../test/fixtures";
 
 const SUPPLY_ID = "supply-1";
 const ACTIVE_COMMUNITY = { id: "community-1", name: "Sol Común" };
@@ -19,13 +19,10 @@ const historySuccess = (data: PartitionCoefficientResponse[]) =>
   query.success<typeof getPartitionCoefficientHistory>(data);
 let historyState: ReturnType<typeof useGetPartitionCoefficientHistory> = historySuccess([]);
 let activeCommunityId: string | null = ACTIVE_COMMUNITY.id;
-let activeRole: CommunityRole | null = CommunityRole.COMMUNITY_MEMBER;
 
 vi.mock(import("../../api/supplies/supplies"), () => ({
   useGetPartitionCoefficientHistory: vi.fn(),
 }));
-
-vi.mock(import("../../hooks/useActiveCommunityRole"), () => ({ useActiveCommunityRole: () => activeRole }));
 
 function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoefficientResponse {
   return {
@@ -38,8 +35,17 @@ function period(overrides: Partial<PartitionCoefficientResponse>): PartitionCoef
     validFrom: "2024-01-01T00:00:00Z",
     validTo: null,
     createdAt: "2024-01-01T00:00:00Z",
+    capabilities: buildPartitionCoefficientCapabilities(),
     ...overrides,
   };
+}
+
+/**
+ * The same period with its agreement reference followable. A copy, not a stamp,
+ * so granting access in one test cannot change what another sees.
+ */
+function followable(p: PartitionCoefficientResponse): PartitionCoefficientResponse {
+  return { ...p, capabilities: buildPartitionCoefficientCapabilities({ canReadSharingAgreement: true }) };
 }
 
 /** A supply genuinely in two plants — a one-plant fixture validates no grouping. */
@@ -63,7 +69,6 @@ describe("SupplyCoefficientHistorySection", () => {
     historyCalls.length = 0;
     historyState = historySuccess(TWO_PLANTS);
     activeCommunityId = ACTIVE_COMMUNITY.id;
-    activeRole = CommunityRole.COMMUNITY_MEMBER;
     vi.mocked(useGetPartitionCoefficientHistory).mockImplementation((supplyId, params) => {
       historyCalls.push({ supplyId, params });
       return historyState;
@@ -83,29 +88,41 @@ describe("SupplyCoefficientHistorySection", () => {
     expect(screen.getByRole("heading", { name: "Planta Solar Sur" })).toBeInTheDocument();
   });
 
-  it("shows agreement links to a community admin", () => {
-    activeRole = CommunityRole.COMMUNITY_ADMIN;
+  it("links the agreements the periods say may be followed", () => {
+    historyState = historySuccess(TWO_PLANTS.map(followable));
     renderSection();
 
     expect(screen.getByRole("link", { name: "Reparto 2024" })).toHaveAttribute(
       "href",
       "/production/plant-norte/sharing-agreements/sa-2024",
     );
+    expect(screen.getByRole("link", { name: "Reparto Sur" })).toHaveAttribute(
+      "href",
+      "/production/plant-sur/sharing-agreements/sa-sur",
+    );
   });
 
-  it("shows no agreement links to an owner who is not an admin — the route would redirect them", () => {
-    activeRole = CommunityRole.COMMUNITY_MEMBER;
+  it("shows names rather than links when no period may be followed — the route would redirect", () => {
     renderSection();
 
     expect(screen.queryAllByRole("link")).toHaveLength(0);
     expect(screen.getByText("Reparto 2024")).toBeInTheDocument();
   });
 
-  it("does not link for a platform admin either, since CommunityAdminRoute ignores that flag", () => {
-    activeRole = null;
+  it("answers per plant, so a history spanning two plants links only the permitted one", () => {
+    // What a single screen-wide boolean could not express. The caller
+    // administers Norte and not Sur, and this supply produces onto both.
+    historyState = historySuccess([
+      followable(TWO_PLANTS[0]),
+      TWO_PLANTS[1],
+    ]);
     renderSection();
 
-    expect(screen.queryAllByRole("link")).toHaveLength(0);
+    expect(screen.getByRole("link", { name: "Reparto 2024" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Reparto Sur" })).not.toBeInTheDocument();
+    // The name stays: it identifies the agreement, and withholding it would
+    // hide the period itself rather than the route into it.
+    expect(screen.getByText("Reparto Sur")).toBeInTheDocument();
   });
 
   it("hides another community's periods rather than only their links", () => {
@@ -166,7 +183,6 @@ describe("SupplyCoefficientHistorySection", () => {
   });
 
   it("excludes pending periods, which an admin of the supply's community does receive", () => {
-    activeRole = CommunityRole.COMMUNITY_ADMIN;
     historyState = historySuccess([
       ...TWO_PLANTS,
       period({ id: "pending", validFrom: null, sharingAgreement: { id: "sa-draft", name: "Borrador 2026", status: "DRAFT" } }),

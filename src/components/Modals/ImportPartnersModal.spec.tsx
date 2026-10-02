@@ -3,27 +3,30 @@ import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { mutation, query } from "../../test/queryState";
-import { buildCommunity, buildUser } from "../../test/fixtures";
-import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
-import { useCreateUsersWithFile } from "../../api/users/users";
+import { query } from "../../test/queryState";
+import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
 
-const mockMutate = vi.fn();
-
-vi.mock(import("../../api/users/users"), () => ({
-  useCreateUsersWithFile: vi.fn(),
-}));
-
-vi.mock(import("../../api/communities/communities"), () => ({
+// CsvImportModal names the community the rows are imported into (#186), which
+// it resolves from the caller's memberships and the community list.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
 }));
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useLoggedUser: () => buildUser({ id: "admin", memberships: { "community-a": "COMMUNITY_ADMIN" } }),
+  useLoggedUser: () => buildCurrentUser({ id: "admin", memberships: { "community-a": "COMMUNITY_ADMIN" } }),
 }));
 
+import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+
 import { ImportPartnersModal } from "./ImportPartnersModal";
+
+// No API module is mocked: the modal no longer reaches one. It performs the
+// import through the action it is handed, which is the whole point of taking it
+// as a required prop -- a caller who was not given the action cannot mount this
+// component at all, so there is no "denied" case for the modal itself to have.
+const mockRun = vi.fn();
 
 describe("ImportPartnersModal", () => {
   const mockOnClose = vi.fn();
@@ -31,10 +34,10 @@ describe("ImportPartnersModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRun.mockResolvedValue({ created: [], errors: [] });
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([buildCommunity({ id: "community-a", name: "Comunidad Solar Norte" })]),
     );
-    vi.mocked(useCreateUsersWithFile).mockReturnValue(mutation.idle({ mutate: mockMutate }));
   });
 
   const setup = (props = {}, activeCommunityId: string | null = "community-a") => {
@@ -43,6 +46,7 @@ describe("ImportPartnersModal", () => {
         isOpen={true}
         onClose={mockOnClose}
         onImportComplete={mockOnImportComplete}
+        importUsers={{ run: mockRun, isPending: false }}
         {...props}
       />,
       { activeCommunityId },
@@ -125,6 +129,9 @@ describe("ImportPartnersModal", () => {
   describe("Uploading state", () => {
     it("shows loading spinner when uploading", async () => {
       const user = userEvent.setup();
+      // In flight, so it must never settle. The default stub resolves at once,
+      // which would carry the modal straight through to its results view.
+      mockRun.mockReturnValue(new Promise(() => {}));
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -140,9 +147,7 @@ describe("ImportPartnersModal", () => {
   describe("Results view", () => {
     it("shows success message with created count", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["user1", "user2"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["user1", "user2"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -160,9 +165,7 @@ describe("ImportPartnersModal", () => {
 
     it("shows singular message when one user created", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["user1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["user1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -177,16 +180,9 @@ describe("ImportPartnersModal", () => {
 
     it("shows errors when import has errors", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({
-          created: ["user1"],
-          errors: [
-            {
-              personalId: "12345678Z",
-              errorMessage: "Email duplicado",
-            },
-          ],
-        });
+      mockRun.mockResolvedValue({
+        created: ["user1"],
+        errors: [{ personalId: "12345678Z", errorMessage: "Email duplicado" }],
       });
       setup();
 
@@ -210,9 +206,8 @@ describe("ImportPartnersModal", () => {
       const input = screen.getByTestId("csv-file-input");
       await user.upload(input, file);
 
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onError?.(new Error("Network error"));
-      });
+      // The action swallows the throw and reports failure as no value.
+      mockRun.mockResolvedValue(undefined);
 
       await user.click(screen.getByRole("button", { name: /Importar/i }));
 
@@ -227,9 +222,7 @@ describe("ImportPartnersModal", () => {
 
     it("calls onImportComplete after successful import", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["user1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["user1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -244,9 +237,7 @@ describe("ImportPartnersModal", () => {
 
     it("navigates back to upload view when clicking Importar otro archivo", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["user1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["user1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -274,9 +265,7 @@ describe("ImportPartnersModal", () => {
 
     it("calls onClose when Cerrar is clicked in results view", async () => {
       const user = userEvent.setup();
-      mockMutate.mockImplementation((_args, options) => {
-        options?.onSuccess?.({ created: ["user1"], errors: [] });
-      });
+      mockRun.mockResolvedValue({ created: ["user1"], errors: [] });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -295,9 +284,10 @@ describe("ImportPartnersModal", () => {
     });
   });
 
-  // /api/v1/users/import documents communityId as "Required for community
-  // admins; optional for platform admins". Sending it unconditionally matches
-  // what the user has selected instead of relying on a backend fallback.
+  // The community is no longer this component's to choose: the action was built
+  // from a community and carries it. What is left here is that the modal hands
+  // over the file and nothing else, and that it still refuses to run before a
+  // community has been selected at all.
   describe("Community scoping", () => {
     const selectAFile = async () => {
       const file = new File(["email,name"], "members.csv", { type: "text/csv" });
@@ -305,16 +295,14 @@ describe("ImportPartnersModal", () => {
       await userEvent.upload(input, file);
     };
 
-    it("sends the active community as the import target", async () => {
+    it("hands the action the file and nothing else -- it already knows where to write", async () => {
       setup({}, "community-b");
       await selectAFile();
 
       await userEvent.click(screen.getByRole("button", { name: /^Importar$/i }));
 
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({ params: { communityId: "community-b" } }),
-        expect.anything(),
-      );
+      await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
+      expect(mockRun).toHaveBeenCalledWith({ file: expect.any(File) });
     });
 
     it("refuses to import when no community is selected", async () => {
@@ -322,7 +310,7 @@ describe("ImportPartnersModal", () => {
       await selectAFile();
 
       expect(screen.getByRole("button", { name: /^Importar$/i })).toBeDisabled();
-      expect(mockMutate).not.toHaveBeenCalled();
+      expect(mockRun).not.toHaveBeenCalled();
     });
   });
 });
