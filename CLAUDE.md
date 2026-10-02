@@ -402,6 +402,19 @@ blocker to report and stop at: the deliverable is the text, not the API call.
 `git push` is likewise not yours to run. Commit locally, and leave pushing and opening pull requests
 to a human.
 
+### Referring to issues in code
+
+When a comment, a suppression justification, a `TODO` or a test name refers to work, use an issue
+number (`#412`) or its URL — never an epic's internal ordering ("epic PR 5"), a branch name, a
+milestone or a date. Branches are deleted after merge and plans are not in the repository; an issue
+number resolves years later from a fresh clone.
+
+`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
+invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
+is a permanent one.
+
+## Git workflow
+
 ### Never create a branch
 
 **Do not run `git checkout -b`, `git branch`, `git switch -c` or `git worktree add`.** Branches are
@@ -415,13 +428,35 @@ The same staleness rule applies to reading git facts at all: establish them from
 `git ls-remote` or `origin/<branch>`, never from a local branch ref that may not have moved in
 weeks.
 
-### Referring to issues in code
+### Never rewrite a commit that has been pushed
 
-When a comment, a suppression justification, a `TODO` or a test name refers to work, use an issue
-number (`#412`) or its URL — never an epic's internal ordering ("epic PR 5"), a branch name, a
-milestone or a date. Branches are deleted after merge and plans are not in the repository; an issue
-number resolves years later from a fresh clone.
+Before `git reset`, `git commit --amend`, `git rebase`, or anything else that replaces an existing
+commit, establish which commits are actually yours to replace:
 
-`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
-invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
-is a permanent one.
+```bash
+git fetch origin
+git log --oneline @{u}..HEAD    # only these are unpublished
+```
+
+A commit reachable from `origin/<branch>` is published, and published commits are **append only**.
+Correct them with a **new commit** that states what changed and why — never by rebuilding the branch.
+This holds even when the rewrite would be tidier: a rewritten branch diverges from its remote, breaks
+`git pull` for anyone who has it, orphans review comments anchored to the old SHA, and can only be
+repaired by a force-push, which is not yours to run. "The history reads better" is not a reason; if
+the result reads oddly — one commit adding what the next removes — say so in the new commit's
+message. That is what the message is for.
+
+New instructions arriving mid-task are the trap: the work already committed may have been pushed
+while you were working. Re-check `@{u}` at that moment, not from memory of how the branch looked when
+you started.
+
+**If a branch has already diverged, do not `git pull`.** That merges the superseded commits back in
+and resurrects whatever they contained. Stop, report the divergence with the exact content difference
+(`git diff @{u} HEAD --stat`), say whether anything on the remote would be lost, and let a human
+choose between re-sequencing onto the remote tip and force-pushing.
+
+The same fetch-first rule applies to the **base**: read it from `git fetch` plus `origin/<branch>`,
+never from a local ref that may not have moved in weeks, and re-read it before quoting any "before"
+figure — test counts, baselines, timings. A long task can have its base changed underneath it, and a
+number measured against the wrong base is worse than no number.
+
