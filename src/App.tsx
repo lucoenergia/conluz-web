@@ -2,7 +2,7 @@ import { lazy, type ComponentType } from "react";
 import { Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
 import { LoginLayout } from "./layouts/login.layout";
-import { DynamicLayout } from "./layouts/dynamic.layout";
+import { PublicLayout } from "./layouts/public.layout";
 import { CapabilityRoute } from "./components/Auth/CapabilityRoute";
 
 /**
@@ -141,7 +141,24 @@ function App() {
           </Route>
           <Route path="no-community" element={<NoCommunityPage />} />
         </Route>
-        <Route element={<DynamicLayout />}>
+        {/*
+          Public for everybody, signed in or not -- not an oversight, and not a
+          decision about chrome.
+
+          /contact is to show information per energy community, which raises
+          questions this route cannot answer on its own: what a caller with no
+          session sees, when there is no community to show; and what a caller who
+          belongs to several sees -- their active community, or all of them. Those
+          belong to the contact-screen epic, together with whether the route needs
+          a community in its URL so that it behaves the same signed in and signed
+          out.
+
+          Until then it serves one page to everyone, which is what it has always
+          done in practice: the layout it used to sit under chose its chrome from
+          the signed-in user, and nothing fetched that user outside
+          AuthenticatedLayout, so it always rendered the public one.
+        */}
+        <Route element={<PublicLayout />}>
           <Route path="contact" element={<ContactPage />} />
         </Route>
       </Routes>

@@ -120,7 +120,14 @@ To update API definitions (human maintainer workflow):
 Routes are organized by authentication requirement:
 - **LoginLayout**: Unauthenticated routes (login, password recovery)
 - **AuthenticatedLayout**: Protected routes with sidebar navigation
-- **DynamicLayout**: Routes that adapt based on auth status
+- **PublicLayout**: Routes served the same to everyone, signed in or not (`/contact`)
+
+There is no auth-adaptive layout. `DynamicLayout` was one in name — it chose between the two above
+from the signed-in user — but nothing fetched that user outside `AuthenticatedLayout`, so it only
+ever rendered the public one. It was removed when the user became a live query (#203) rather than
+silently starting to work: what `/contact` should show a caller with no session, or one who belongs
+to several communities, is a question for the contact-screen epic, and the comment at that route in
+`src/App.tsx` says so.
 
 Route definitions are in `src/App.tsx` with nested structure for supply points management.
 
