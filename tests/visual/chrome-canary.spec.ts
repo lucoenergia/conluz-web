@@ -79,6 +79,35 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("chrome-canary-mobile-menu-closed.png", { fullPage: true, maxDiffPixels: CANARY_MAX_DIFF_PIXELS });
   });
 
+  /**
+   * /contact is the one route under DynamicLayout, which picks its chrome from
+   * whether there is a signed-in user. Nothing fetched that user outside
+   * AuthenticatedLayout until #203 made it a provider-level query, so this
+   * route rendered the public layout for everybody, signed in or not. It now
+   * renders the authenticated chrome for a signed-in caller -- which is what
+   * DynamicLayout is for, and a visible change with no baseline behind it.
+   *
+   * The role assertions are the ones that state the change; the capture is so
+   * that the next change to it is visible.
+   */
+  test("chrome canary: /contact signed in gets the authenticated chrome", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "One viewport is enough to say which chrome the route picks; the chrome itself is captured above.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto("/contact");
+    await expect(page.getByRole("heading", { name: "Contacto" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page.getByRole("banner")).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Navegación principal" })).toBeVisible();
+
+    // Full page on purpose: the subject is which chrome wraps the page, so the chrome has to be in frame.
+    await expect(page).toHaveScreenshot("chrome-canary-contact-signed-in-desktop.png", { fullPage: true, maxDiffPixels: CANARY_MAX_DIFF_PIXELS });
+  });
+
   test("chrome canary: side menu open", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "At 390px the side menu is a temporary drawer, closed by default.");
 

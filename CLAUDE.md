@@ -26,15 +26,38 @@ npm run test:visual:desktop   # Run visual tests for desktop screens
 
 ### State Management Pattern
 The application uses a layered state management approach:
-- **Global State**: React Context providers (AuthContext, LoggedUserContext)
-- **Server State**: TanStack React Query for API data caching and synchronization
+- **Global State**: React Context providers — `AuthContext` holds the token; `LoggedUserContext` holds no state of its own and serves the current-user query (see below)
+- **Server State**: TanStack React Query for API data caching and synchronization, with the defaults in `src/queryClient.ts`
 - **Token Storage**: Dual storage system - localStorage for "remember me", sessionStorage for temporary
+- **Provider order** (`src/main.tsx`, mirrored by the test harness): `AuthProvider → QueryClientProvider → LoggedUserProvider → CommunityProvider → Theme → BrowserRouter`. The query client is above the user because the user *is* a query, and `CommunityProvider` reads it.
+
+### The signed-in user is live, not a session snapshot
+`LoggedUserProvider` serves `GET /users/current` directly — `staleTime` 30 s, gated on there being a
+token, and the one query in the app that opts back into `refetchOnWindowFocus` (the global default is
+`false`). It used to copy the response into `useState` once per session, which froze what the app
+believed about the caller: since capabilities gate routes, the menu and the landing route, a revoked
+platform admin kept being offered the administration surface until they reloaded (#203).
+
+Consequences worth knowing before writing a screen:
+- **Invalidating `getGetCurrentUserQueryKey()` now works.** That is how a screen makes its own change
+  to the caller's record visible — `useMembershipActions` does it, because a community admin may
+  re-role or remove their *own* membership.
+- **Platform capabilities are as live as community capabilities already were**, but they can only
+  change in *another* session: the backend refuses self-revocation, and `canRevokePlatformAdmin` is
+  false for one's own record. In-app grant/revoke always targets somebody else, so it does not touch
+  the caller — which is why `useUserActions` does not invalidate this key.
+- **`pending` is reachable mid-session.** A capability answer of "not yet known" must never be folded
+  into "no"; `src/hooks/permissions/capabilityOutcome.ts` keeps the two apart.
+- Decided in `docs/decisions/adrs/0004-make-the-signed-in-user-a-live-query-and-end-the-session-on-its-401.md`.
 
 ### Authentication Flow
 1. Token is managed by `AuthProvider` context in `src/context/auth.context.tsx`
 2. Custom Axios instance (`src/api/custom-instance.ts`) automatically injects `Authorization: Bearer ${token}` headers
 3. Protected routes use `ProtectedRoute` component that checks authentication status
-4. 401 responses trigger automatic logout via React Query's global error handler
+4. 401 responses trigger automatic logout via React Query's global error handler — except the
+   current-user query, which sits above every error boundary and so ends the session itself
+   (`useEndSession`), recording why so the login page can say "Sesión expirada"
+   (`src/utils/session.ts`)
 
 ### Multi-Community Model & Authorization
 
