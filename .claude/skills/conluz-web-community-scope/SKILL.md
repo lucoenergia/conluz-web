@@ -233,12 +233,35 @@ all of them learned by getting one wrong:
    member whose membership refuses a role change, and drops the whole section
    when that empties it.
 
-**Status is not a capability.** `enabled` and a lifecycle `status` are data the
-backend has already folded into its answer; gating on them instead reproduces a
-rule rather than reading it. Where both genuinely apply, say so — a sharing
-agreement card needs `isDraft && canDelete`. A spec whose fixtures let status and
-capability agree everywhere cannot tell the two apart, and will pass against the
-pre-capability code.
+**Status is not a capability, and a capability is not status.** A capability
+answers "may this caller *ever* perform this operation on this resource". It does
+**not** reflect whether the operation is legal right now: `useSharingAgreementActions`
+says so for an agreement's lifecycle, and `UserCapabilitiesResponse` says so for a
+user — the only state it folds in is whether the user *is* the caller. So gating on
+status instead of the capability reproduces a rule rather than reading it, and
+gating on the capability alone offers operations that are permitted but not
+applicable. Both, in that order, never one standing in for the other — a sharing
+agreement card needs `isDraft && canDelete`.
+
+**Two capabilities naming opposite operations are not two exclusive affordances.**
+`canEnable`/`canDisable` and `canGrantPlatformAdmin`/`canRevokePlatformAdmin` are
+*both* true for a caller who may do either, and the row's own `enabled` /
+`isPlatformAdmin` is what decides which one applies. `UsersPage` rendered them as
+two separately gated menu items and so offered Habilitar beside Deshabilitar, and
+Conceder beside Revocar; worse, its handlers picked with
+`actions.disable ?? actions.enable`, so with both present "disable" always won and
+Habilitar disabled the user it named. Resolve the pair **once** — one item labelled
+by the half that applies — so the menu item, its confirmation dialog and the handler
+that runs it cannot disagree about which operation was chosen.
+
+Reading the **row's** `enabled` or `isPlatformAdmin` to pick between them is reading
+the resource's state, not re-deriving privilege: the rule this module enforces is
+about the **caller's** flag, through `useIsPlatformAdmin`.
+
+A spec whose fixtures let status and capability agree everywhere cannot tell the two
+apart, and will pass against the pre-capability code. A fixture that grants one half
+of a pair per row is worse still: it describes a response the API never produces, and
+it is why no test caught either defect above.
 
 ## A capability gates the call, not the rows
 

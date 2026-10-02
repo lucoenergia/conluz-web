@@ -25,8 +25,8 @@ const LOGGED_USER_ID = "u3";
 /**
  * Three rows whose capabilities differ, which is what a real list looks like:
  *
- *   Ana   -- another platform admin, fully manageable: edit, disable, revoke;
- *   Bruno -- not an admin and disabled: edit, enable, grant;
+ *   Ana   -- another platform admin, active and fully manageable;
+ *   Bruno -- not an admin, and disabled;
  *   Zoe   -- the caller's own row. canDelete, canDisable and
  *            canRevokePlatformAdmin are documented always false for the caller
  *            themselves, and canEdit is false for one's own record, so the
@@ -34,6 +34,13 @@ const LOGGED_USER_ID = "u3";
  *            menu rather than a disabled item.
  *
  * Sorted ascending by name, so the order below is the order on screen.
+ *
+ * Ana and Bruno each carry BOTH halves of both pairs, because that is what the
+ * backend returns: canEnable/canDisable and canGrantPlatformAdmin/
+ * canRevokePlatformAdmin are permission answers that fold in only whether the
+ * user is the caller. Granting one half per row would describe a response the
+ * API does not produce, and would let a screen that offers both halves at once
+ * pass -- which is exactly what happened.
  */
 const MOCK_USERS: UserResponse[] = [
   buildUser({
@@ -48,7 +55,9 @@ const MOCK_USERS: UserResponse[] = [
     capabilities: buildUserCapabilities({
       canRead: true,
       canEdit: true,
+      canEnable: true,
       canDisable: true,
+      canGrantPlatformAdmin: true,
       canRevokePlatformAdmin: true,
     }),
   }),
@@ -65,7 +74,9 @@ const MOCK_USERS: UserResponse[] = [
       canRead: true,
       canEdit: true,
       canEnable: true,
+      canDisable: true,
       canGrantPlatformAdmin: true,
+      canRevokePlatformAdmin: true,
     }),
   }),
   buildUser({
@@ -435,6 +446,39 @@ describe("UsersPage", () => {
       expect(screen.getByText(/Disable modal for Ana García/)).toBeInTheDocument();
     });
 
+    // The backend permits both halves at once, so the row's own state is what
+    // decides which one is offered. Without that, an active user was shown
+    // Habilitar beside Deshabilitar.
+    it("offers only the half of the status pair that applies to the row", async () => {
+      const user = userEvent.setup();
+      setup();
+
+      await user.click(menuFor("Ana García"));
+      expect(await screen.findByRole("menuitem", { name: /Deshabilitar/ })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: /^Habilitar/ })).not.toBeInTheDocument();
+      await user.keyboard("{Escape}");
+
+      await user.click(menuFor("Bruno Leal"));
+      expect(await screen.findByRole("menuitem", { name: /^Habilitar/ })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: /Deshabilitar/ })).not.toBeInTheDocument();
+    });
+
+    // The severe half of the same defect: the handler used to pick with `??`,
+    // so with both halves permitted "disable" always won and Habilitar disabled
+    // the user it was meant to enable.
+    it("runs the operation the chosen item names, not whichever action exists", async () => {
+      const user = userEvent.setup();
+      mockEnableMutate.mockResolvedValueOnce(undefined);
+      setup();
+
+      await user.click(menuFor("Bruno Leal"));
+      await user.click(await screen.findByRole("menuitem", { name: /^Habilitar/ }));
+      await user.click(screen.getByText("Confirmar habilitar"));
+
+      await waitFor(() => expect(mockEnableMutate).toHaveBeenCalledWith({ userId: "u2" }));
+      expect(mockDisableMutate).not.toHaveBeenCalled();
+    });
+
     // Ana is enabled and permits disabling, Bruno is disabled and permits
     // enabling, so in the list above status and capability agree and either would
     // explain the menu. These two rows are the ones where they disagree, which is
@@ -563,6 +607,20 @@ describe("UsersPage", () => {
       expect(screen.queryByRole("menuitem", { name: /Revocar admin de plataforma/ })).not.toBeInTheDocument();
     });
 
+    it("offers only the half of the platform-admin pair that applies to the row", async () => {
+      const user = userEvent.setup();
+      setup();
+
+      await user.click(menuFor("Ana García"));
+      expect(await screen.findByRole("menuitem", { name: /Revocar admin de plataforma/ })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: /Conceder admin de plataforma/ })).not.toBeInTheDocument();
+      await user.keyboard("{Escape}");
+
+      await user.click(menuFor("Bruno Leal"));
+      expect(await screen.findByRole("menuitem", { name: /Conceder admin de plataforma/ })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: /Revocar admin de plataforma/ })).not.toBeInTheDocument();
+    });
+
     it("grants platform admin and refreshes the row, not the caller", async () => {
       const user = userEvent.setup();
       mockGrantMutate.mockResolvedValueOnce(undefined);
@@ -576,6 +634,10 @@ describe("UsersPage", () => {
       await user.click(screen.getByText("Confirmar conceder"));
 
       await waitFor(() => expect(mockGrantMutate).toHaveBeenCalledWith({ userId: "u2" }));
+      // Bruno permits revoking too -- the backend answers both halves -- so this
+      // also pins that the item's own operation ran, not the first one that
+      // happened to exist.
+      expect(mockRevokeMutate).not.toHaveBeenCalled();
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetUserByIdQueryKey("u2") });
       // Not the current user: the backend refuses a platform-admin change aimed
       // at the caller, so this can only ever change somebody else's flag and

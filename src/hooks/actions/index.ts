@@ -38,4 +38,4 @@ export {
   type ReplaceCoefficientsResult,
 } from "./useSharingAgreementCoefficientActions";
 export { useSupplyActions } from "./useSupplyActions";
-export { useUserActions } from "./useUserActions";
+export { useUserActions, type UserRowActions } from "./useUserActions";

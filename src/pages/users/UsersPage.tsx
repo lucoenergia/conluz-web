@@ -44,7 +44,7 @@ import RemoveModeratorIcon from "@mui/icons-material/RemoveModerator";
 import { useGetAllUsers } from "../../api/users/users";
 import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse, UserResponse } from "../../api/models";
-import { usePlatformActions, useUserActions } from "../../hooks/actions";
+import { usePlatformActions, useUserActions, type Action, type UserRowActions } from "../../hooks/actions";
 import { useDebounce } from "../../utils/useDebounce";
 import { DisablePartnerConfirmationModal } from "../../components/Modals/DisablePartnerConfirmationModal";
 import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
@@ -104,6 +104,52 @@ function UserCommunitiesCell({
       )}
     </Box>
   );
+}
+
+/**
+ * Which half of a mutually exclusive pair applies to a row, and what it does.
+ *
+ * `canEnable`/`canDisable` and `canGrantPlatformAdmin`/`canRevokePlatformAdmin`
+ * are *permission* answers -- "may this caller ever perform this operation on
+ * this user". The only state the backend folds into them is whether the user is
+ * the caller; its schema says exactly that, and says nothing about whether the
+ * user is currently enabled or already a platform admin. So an administrator
+ * looking at an active non-admin is handed all four, and a screen that treats
+ * them as four exclusive affordances offers Habilitar beside Deshabilitar and
+ * Conceder beside Revocar.
+ *
+ * Capability answers "may this person, ever"; the screen answers "is this the
+ * legal operation right now". Both, in that order -- the rule
+ * `useSharingAgreementActions` states for status and `SharingAgreementCard`
+ * applies as `isDraft && canDelete`.
+ *
+ * Reading the row's own `enabled` and `isPlatformAdmin` here is reading the
+ * resource's state, not re-deriving privilege. The rule the permissions module
+ * enforces is about the *caller's* flag, through `useIsPlatformAdmin`, which
+ * nothing on this screen touches. The alternative would be a backend flag
+ * saying which half is applicable, and that is not a rule this API has.
+ *
+ * Resolved once so the menu item, its confirmation dialog and the handler that
+ * runs it cannot disagree about which operation was chosen.
+ */
+type StatusToggle = { action: Action<[], boolean>; isDisabling: boolean } | undefined;
+type PlatformAdminToggle = { action: Action<[], boolean>; isGranting: boolean } | undefined;
+
+function statusToggleFor(user: UserResponse | null | undefined, actions: UserRowActions["actions"]): StatusToggle {
+  if (!user) return undefined;
+  if (user.enabled) return actions.disable && { action: actions.disable, isDisabling: true };
+  return actions.enable && { action: actions.enable, isDisabling: false };
+}
+
+function platformAdminToggleFor(
+  user: UserResponse | null | undefined,
+  actions: UserRowActions["actions"],
+): PlatformAdminToggle {
+  if (!user) return undefined;
+  if (user.isPlatformAdmin) {
+    return actions.revokePlatformAdmin && { action: actions.revokePlatformAdmin, isGranting: false };
+  }
+  return actions.grantPlatformAdmin && { action: actions.grantPlatformAdmin, isGranting: true };
 }
 
 interface FilterState {
@@ -190,14 +236,19 @@ export const UsersPage: FC = () => {
     ? (data?.items?.find((user) => user.id === selectedUserId) ?? null)
     : null;
   const selectedActions = forUser(selectedUser ?? undefined).actions;
+  const selectedStatusToggle = statusToggleFor(selectedUser, selectedActions);
+  const selectedPlatformAdminToggle = platformAdminToggleFor(selectedUser, selectedActions);
   const selectedUserName = selectedUser?.fullName ?? "Sin nombre";
 
   // No permitted action means no menu at all, rather than a menu with nothing in
   // it or items the backend would refuse. Deleting an account is not offered on
   // this screen, so `remove` is deliberately not part of the answer.
   const hasRowActions = (user: UserResponse) => {
-    const { edit, enable, disable, grantPlatformAdmin, revokePlatformAdmin } = forUser(user).actions;
-    return !!edit || !!enable || !!disable || !!grantPlatformAdmin || !!revokePlatformAdmin;
+    const actions = forUser(user).actions;
+    // Resolved the same way the menu resolves it: a row is only offered the half
+    // of each pair that applies to its current state, so the kebab must count
+    // those and not both halves.
+    return !!actions.edit || !!statusToggleFor(user, actions) || !!platformAdminToggleFor(user, actions);
   };
 
   const handleSort = (property: OrderBy) => {
@@ -230,12 +281,13 @@ export const UsersPage: FC = () => {
   };
 
   const handleDisableConfirm = async () => {
-    // Whichever of the two the caller was given; the other is undefined, and the
-    // action invalidates the list itself, so there is no refetch left to do.
-    const action = selectedActions.disable ?? selectedActions.enable;
-    if (!action) return;
+    // The half that applies to this row, resolved once above. Picking with `??`
+    // here was the bug: both halves are permitted at once, so `disable` always
+    // won and "Habilitar" disabled the user. The action invalidates the list
+    // itself, so there is no refetch left to do.
+    if (!selectedStatusToggle) return;
+    const { action, isDisabling: wasDisabling } = selectedStatusToggle;
 
-    const wasDisabling = !!selectedActions.disable;
     if (await action.run()) {
       setWasEnabled(!wasDisabling);
       setShowDisableConfirmation(false);
@@ -265,13 +317,13 @@ export const UsersPage: FC = () => {
   };
 
   const handlePlatformAdminConfirm = async () => {
-    // Whichever of the two the caller was given. The action also invalidates the
-    // current user, so a caller who changed their own flag sees the menu and the
-    // route guards follow without a reload.
-    const action = selectedActions.revokePlatformAdmin ?? selectedActions.grantPlatformAdmin;
-    if (!action) return;
+    // As above: the half that applies to this row, not whichever the caller
+    // happens to hold. The action also invalidates the current user, so a caller
+    // who changed their own flag sees the menu and the route guards follow
+    // without a reload.
+    if (!selectedPlatformAdminToggle) return;
+    const { action, isGranting: wasGrantOperation } = selectedPlatformAdminToggle;
 
-    const wasGrantOperation = !selectedActions.revokePlatformAdmin;
     if (await action.run()) {
       setWasGranted(wasGrantOperation);
       setShowPlatformAdminConfirmation(false);
@@ -661,36 +713,37 @@ export const UsersPage: FC = () => {
           </MenuItem>,
           <Divider key="divider" />,
         ]}
-        {selectedActions.disable && (
+        {/* One item per pair, labelled by the operation that applies to this
+            row. Rendering the two halves as separate gated items is what put
+            Habilitar beside Deshabilitar: both are permitted at once. */}
+        {selectedStatusToggle && (
           <MenuItem onClick={handleToggleStatusClick}>
             <ListItemIcon>
-              <BlockIcon fontSize="small" sx={{ color: "error.main" }} />
+              {selectedStatusToggle.isDisabling ? (
+                <BlockIcon fontSize="small" sx={{ color: "error.main" }} />
+              ) : (
+                <CheckCircleIcon fontSize="small" sx={{ color: "success.main" }} />
+              )}
             </ListItemIcon>
-            <ListItemText sx={{ color: "error.main" }}>Deshabilitar</ListItemText>
+            <ListItemText sx={{ color: selectedStatusToggle.isDisabling ? "error.main" : "success.main" }}>
+              {selectedStatusToggle.isDisabling ? "Deshabilitar" : "Habilitar"}
+            </ListItemText>
           </MenuItem>
         )}
-        {selectedActions.enable && (
-          <MenuItem onClick={handleToggleStatusClick}>
-            <ListItemIcon>
-              <CheckCircleIcon fontSize="small" sx={{ color: "success.main" }} />
-            </ListItemIcon>
-            <ListItemText sx={{ color: "success.main" }}>Habilitar</ListItemText>
-          </MenuItem>
-        )}
-        {selectedActions.revokePlatformAdmin && (
+        {selectedPlatformAdminToggle && (
           <MenuItem onClick={handlePlatformAdminClick}>
             <ListItemIcon>
-              <RemoveModeratorIcon fontSize="small" sx={{ color: "error.main" }} />
+              {selectedPlatformAdminToggle.isGranting ? (
+                <AddModeratorIcon fontSize="small" sx={{ color: "primary.main" }} />
+              ) : (
+                <RemoveModeratorIcon fontSize="small" sx={{ color: "error.main" }} />
+              )}
             </ListItemIcon>
-            <ListItemText sx={{ color: "error.main" }}>Revocar admin de plataforma</ListItemText>
-          </MenuItem>
-        )}
-        {selectedActions.grantPlatformAdmin && (
-          <MenuItem onClick={handlePlatformAdminClick}>
-            <ListItemIcon>
-              <AddModeratorIcon fontSize="small" sx={{ color: "primary.main" }} />
-            </ListItemIcon>
-            <ListItemText sx={{ color: "primary.main" }}>Conceder admin de plataforma</ListItemText>
+            <ListItemText sx={{ color: selectedPlatformAdminToggle.isGranting ? "primary.main" : "error.main" }}>
+              {selectedPlatformAdminToggle.isGranting
+                ? "Conceder admin de plataforma"
+                : "Revocar admin de plataforma"}
+            </ListItemText>
           </MenuItem>
         )}
       </RowActionsMenu>
@@ -698,9 +751,9 @@ export const UsersPage: FC = () => {
       {/* Each confirmation is mounted inside the same gate as the item that
           opens it: a dialog for an action the caller was never given has no way
           to be reached, and no way to be left open across a write that revokes
-          it. Which of each pair appears is the action the caller holds, not the
-          row's status -- the backend has already folded status into the answer. */}
-      {selectedActions.disable && (
+          it. Which of each pair appears is the half that applies to the row:
+          the capability says only whether the caller may ever perform it. */}
+      {selectedStatusToggle?.isDisabling && (
         <DisablePartnerConfirmationModal
           isOpen={showDisableConfirmation}
           partnerName={selectedUserName}
@@ -708,7 +761,7 @@ export const UsersPage: FC = () => {
           onDisable={handleDisableConfirm}
         />
       )}
-      {selectedActions.enable && (
+      {selectedStatusToggle && !selectedStatusToggle.isDisabling && (
         <EnablePartnerConfirmationModal
           isOpen={showDisableConfirmation}
           partnerName={selectedUserName}
@@ -733,20 +786,20 @@ export const UsersPage: FC = () => {
         />
       )}
 
-      {selectedActions.revokePlatformAdmin && (
+      {selectedPlatformAdminToggle && !selectedPlatformAdminToggle.isGranting && (
         <RevokePlatformAdminConfirmationModal
           isOpen={showPlatformAdminConfirmation}
           userName={selectedUserName}
-          isPending={selectedActions.revokePlatformAdmin.isPending}
+          isPending={selectedPlatformAdminToggle.action.isPending}
           onCancel={handlePlatformAdminCancel}
           onConfirm={handlePlatformAdminConfirm}
         />
       )}
-      {selectedActions.grantPlatformAdmin && (
+      {selectedPlatformAdminToggle?.isGranting && (
         <GrantPlatformAdminConfirmationModal
           isOpen={showPlatformAdminConfirmation}
           userName={selectedUserName}
-          isPending={selectedActions.grantPlatformAdmin.isPending}
+          isPending={selectedPlatformAdminToggle.action.isPending}
           onCancel={handlePlatformAdminCancel}
           onConfirm={handlePlatformAdminConfirm}
         />

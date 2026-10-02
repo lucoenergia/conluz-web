@@ -132,6 +132,41 @@ test.describe("Visual baselines", () => {
   });
 
   /**
+   * An assertion rather than a baseline, because no capture opens this menu --
+   * which is exactly why nothing caught the defect it covers. The fixtures were
+   * already right: MANAGED_USER_CAPABILITIES grants canEnable AND canDisable,
+   * as the backend does, since both are permission answers that fold in only
+   * whether the user is the caller.
+   *
+   * The screen used to render the two halves as separately gated items, so an
+   * active user was offered Habilitar beside Deshabilitar -- and its handler
+   * picked with `??`, so Habilitar disabled the user it named. The row's own
+   * `enabled` is what decides which half applies.
+   *
+   * UsersPage.spec.tsx owns this rule against the component; this owns it
+   * against the fixtures the baselines are taken from.
+   */
+  test("a row offers only the half of each paired action that applies to it", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/users");
+    await stabilizePage(page);
+
+    await page.getByRole("button", { name: `Más acciones para ${FIXED_USER_2.fullName}` }).click();
+
+    // Enabled, so disabling is the operation that applies. `exact` matters here:
+    // Playwright matches an accessible name by substring by default, and
+    // "Habilitar" is a substring of "Deshabilitar".
+    await expect(page.getByRole("menuitem", { name: "Deshabilitar", exact: true })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Habilitar", exact: true })).toHaveCount(0);
+
+    // Not a platform admin, so granting is.
+    await expect(page.getByRole("menuitem", { name: "Conceder admin de plataforma" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Revocar admin de plataforma" })).toHaveCount(0);
+  });
+
+  /**
    * Assertions, not baselines, for the same reason as the one above: the subject
    * is which capability each route asks for, and no screenshot records that.
    *
