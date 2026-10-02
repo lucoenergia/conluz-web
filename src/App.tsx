@@ -86,10 +86,16 @@ function App() {
           </Route>
           <Route path="production">
             <Route index element={<PlantsPage />}></Route>
-            <Route path="new" element={<CreatePlantPage />} />
+            <Route
+              path="new"
+              element={<CapabilityRoute require={{ scope: "community", capability: "canCreatePlants" }}><CreatePlantPage /></CapabilityRoute>}
+            />
             <Route path=":plantId">
               <Route index element={<PlantDetailPage />} />
-              <Route path="edit" element={<EditPlantPage />} />
+              <Route
+                path="edit"
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canManage" }}><EditPlantPage /></CapabilityRoute>}
+              />
               <Route
                 path="sharing-agreements"
                 element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementsPage /></CapabilityRoute>}
