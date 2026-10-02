@@ -4,8 +4,9 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
   freezeClock,
   hideAppBar,
   mainRegion,

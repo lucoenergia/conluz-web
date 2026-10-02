@@ -4,8 +4,9 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
   injectAuthToken,
@@ -23,12 +24,16 @@ test.describe("Visual baselines", () => {
   // list and clicking through the plant card's kebab menu, the way a real user
   // would, rather than deep-linking.
   //
-  // That began as a workaround: the old guard redirected on a cold page.goto()
+  // It began as a workaround: the old guard redirected on a cold page.goto()
   // before the community context's effect had resolved. CapabilityRoute waits
-  // for that answer instead of redirecting, and a cold deep link now reaches
-  // the page — verified by running these with page.goto. Converting them is
-  // left as a follow-up because one capture differs on that path, and a
-  // baseline is not something to regenerate in passing.
+  // for that answer instead of redirecting, so a cold deep link reaches the
+  // page too -- verified by running these with page.goto.
+  //
+  // Clicking through is kept on purpose rather than pending a conversion. It
+  // covers the path a user actually takes, including the kebab entry that only
+  // appears on the plant's canListSharingAgreements, and one capture differs
+  // between the two routes -- so converting would move a baseline to test
+  // strictly less.
 
   test("sharing agreements list page (populated)", async ({ page }) => {
     await injectAuthToken(page);

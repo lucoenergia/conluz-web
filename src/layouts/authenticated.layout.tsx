@@ -17,7 +17,14 @@ import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
 import { SuccessProvider } from "../context/success.context";
 import { SuccessDisplay } from "../components/Success/SuccessDisplay";
 import { useActiveCommunity } from "../context/community.context";
-import { useActiveCommunityCapabilities, usePlatformCapabilities, type MenuRequirement } from "../hooks/permissions";
+import {
+  useActiveCommunityCapabilities,
+  usePlatformCapabilities,
+  type CapabilityOutcome,
+  type MenuCommunityCapability,
+  type MenuPlatformCapability,
+  type MenuRequirement,
+} from "../hooks/permissions";
 import { selectVisibleSections } from "../utils/menuVisibility";
 import { resolveLandingRoute } from "../utils/routes";
 import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";
@@ -45,18 +52,28 @@ export const AuthenticatedLayout: FC = () => {
     // Only "allowed" offers an entry. Pending and error both hide it: a menu is
     // not the place to report that a permission check failed, and an entry that
     // appears before the answer arrives would flicker away again.
+    // Keyed rather than a chain of comparisons. The chain ended in a
+    // fall-through on both scopes, so a menu entry naming a capability with no
+    // call of its own was answered by canListUsers or canReadCommunity -- a
+    // confident wrong answer. A Record over the menu capability unions cannot
+    // fall through: widening either union is a type error here until the
+    // matching call above exists.
+    const platformOutcomes: Record<MenuPlatformCapability, CapabilityOutcome> = {
+      canAdministerPlatform,
+      canListUsers,
+    };
+    const communityOutcomes: Record<MenuCommunityCapability, CapabilityOutcome> = {
+      canRead: canReadCommunity,
+      canManage: canManageCommunity,
+      canManageMemberships,
+    };
+
     const isAllowed = (requirement: MenuRequirement): boolean => {
       if (requirement.scope === "always") return true;
-      if (requirement.scope === "platform") {
-        return (requirement.capability === "canAdministerPlatform" ? canAdministerPlatform : canListUsers)
-          .state === "allowed";
-      }
       const outcome =
-        requirement.capability === "canManage"
-          ? canManageCommunity
-          : requirement.capability === "canManageMemberships"
-            ? canManageMemberships
-            : canReadCommunity;
+        requirement.scope === "platform"
+          ? platformOutcomes[requirement.capability]
+          : communityOutcomes[requirement.capability];
       return outcome.state === "allowed";
     };
 

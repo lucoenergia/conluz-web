@@ -4,8 +4,9 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
   FIXED_MEMBER_USER,
   FIXED_NO_COMMUNITY_USER,
   injectAuthToken,

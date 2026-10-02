@@ -18,7 +18,12 @@ export {
   DENIED,
   PENDING,
 } from "./capabilityOutcome";
-export type { CapabilityRequirement, MenuRequirement } from "./capabilityRequirement";
+export type {
+  CapabilityRequirement,
+  MenuRequirement,
+  MenuCommunityCapability,
+  MenuPlatformCapability,
+} from "./capabilityRequirement";
 export { usePlatformCapabilities } from "./usePlatformCapabilities";
 export { useActiveCommunityCapabilities } from "./useActiveCommunityCapabilities";
 export { useCommunityCapabilities } from "./useCommunityCapabilities";

@@ -27,7 +27,10 @@ import type {
 import type {
   CreateMembershipBody,
   GetMembershipEnergyMetricsParams,
+  GetMembershipMonthlyConsumptionParams,
   MembershipEnergyMetricsResponse,
+  MembershipHourlyProfileResponse,
+  MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
   MembershipResponse,
   RestError,
@@ -774,6 +777,313 @@ export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetMembershipEnergyMetricsQueryOptions(communityId,userId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * For each hour of the local day, the average energy consumed and the average
+energy assigned by **every** supply the member owns in this community, so the
+member can see at which hours assigned energy goes to waste. Supplies in the
+member's other communities are not counted.
+
+- `averageConsumptionKWh`: grid import plus self-consumed energy.
+- `averageAssignedProductionKWh`: self-consumed plus surplus energy.
+
+**Period:**
+Always the latest published month, resolved exactly as the aggregated energy
+metrics resolve `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar
+month, in the community's time zone, in which any of the member's supplies has
+stored assigned production. It **cannot be chosen**: only inside a published month
+is a stored zero a measured zero rather than a value not published yet. The
+resolved bounds are reported in `period`. When no month can be resolved -- no
+assigned production in the search window, or no supplies to search -- the response
+is still successful, with null period bounds and 24 buckets without any sample.
+
+**Buckets:**
+Always 24, ordered from hour 0 to hour 23. The hour is **local to the community**,
+not UTC: each record falls in the bucket of its hour of the day in the community's
+time zone.
+
+**Averages:**
+Every record of every supply and every day of the month counts as one sample of
+its hour, and each average **divides by the records found**: never by the days of
+the month, and never by averaging per-supply averages. Each series has its own
+sample count, `consumptionSampleCount` and `assignedProductionSampleCount`, and the
+two can differ, since a record can carry consumption without carrying assigned
+production. An average is `null` when its hour has no sample of that series, which
+is never the same as `0`: an hour whose samples are all zero, such as a night hour
+of assigned production, averages `0`.
+
+**Daylight saving:**
+The counts are sample counts, not day counts, and no hour is corrected. On the
+October transition day the repeated local hour holds two samples of that day; on
+the March transition day the skipped local hour holds none. No bucket is ever
+shifted.
+
+**Coverage:**
+`coverage` is counted exactly as in the aggregated energy metrics:
+`coverage.expectedHours` is the number of hours the month spans **times the number
+of supplies of the membership**, so missing records -- including days of a month
+published piecemeal -- show up as `hoursWithData` below `expectedHours`.
+`supplyCount` and `suppliesWithData` tell one silent supply apart from gaps spread
+across all of them.
+
+Readable by the member themself and by community admins of this community.
+Platform admins are **not** granted access on that basis alone and are answered
+404, as is every other caller who may not read it, so the membership's existence
+is not disclosed. A membership without supplies is answered successfully, not
+with 404.
+
+ * @summary Retrieves the average day of every supply of a membership over its latest published month.
+ */
+export const getMembershipHourlyProfile = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MembershipHourlyProfileResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/energy-metrics/hourly-profile`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetMembershipHourlyProfileQueryKey = (communityId?: string,
+    userId?: string,) => {
+    return [
+    `/api/v1/communities/${communityId}/memberships/${userId}/energy-metrics/hourly-profile`
+    ] as const;
+    }
+
+    
+export const getGetMembershipHourlyProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipHourlyProfileQueryKey(communityId,userId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipHourlyProfile>>> = ({ signal }) => getMembershipHourlyProfile(communityId,userId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMembershipHourlyProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipHourlyProfile>>>
+export type GetMembershipHourlyProfileQueryError = ErrorType<unknown>
+
+
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipHourlyProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipHourlyProfile>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipHourlyProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipHourlyProfile>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the average day of every supply of a membership over its latest published month.
+ */
+
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMembershipHourlyProfileQueryOptions(communityId,userId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * For each month of the requested period, the energy and the estimated savings of
+**every** supply the member owns in this community, added up: each figure is the
+sum of what the per-supply monthly series reports for that supply and month.
+Supplies in the member's other communities are not counted.
+
+**Every month is emitted:**
+A bucket is returned for every month in range, in chronological order, whether or
+not any supply stored a record in it, so the series has a regular time axis. This
+differs from the per-supply monthly series, which omits months without a stored
+record.
+
+**Time zone and month selection:**
+Months are local calendar months of the community's time zone, not UTC ones.
+`startDate` and `endDate` are both required and both inclusive, and a month is in
+range if and only if its local midnight on day 1 falls inside them -- the rule the
+per-supply monthly series selects its pre-aggregated points by. Once in range a
+month always carries its whole energy and its whole savings: bounds falling
+mid-month never trim it. Pass the bounds with the zone's offset: a bound expressed
+in UTC can select one month too few or too many.
+
+**Completeness:**
+`supplyCount` is the number of supplies the member **currently** owns in the
+community, and `suppliesWithData` how many of them stored a monthly record that
+month. A month with `suppliesWithData` below `supplyCount` is incomplete. The
+model records no date a supply joined its community, so the count is the same
+for every month, and the months before a supply started reporting show as
+incomplete. `suppliesWithData` is measured from stored monthly records, month by
+month; the aggregated energy metrics measure theirs from hourly records over the
+whole period, so the two are not comparable.
+
+**Savings:**
+`savingsEur` is an **estimate** of what the month's self-consumed energy was
+worth, pricing the **energy term before taxes** only, exactly as the per-supply
+series does. It is `null` when no supply stored a record that month, and only
+then: a month with nothing stored is a different statement from a month that
+saved nothing, which reports `0.00` -- as does a month whose stored records carry
+no self-consumption, a measured zero. This differs from the per-supply series,
+which reports `0.00` for every bucket it emits. `tariffSource` says where the
+prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
+makes the whole month an estimate; it is `null` exactly when `savingsEur` is.
+
+Readable by the member themself and by community admins of this community.
+Platform admins are **not** granted access on that basis alone and are answered
+404, as is every other caller who may not read it, so the membership's existence
+is not disclosed. A membership without supplies is answered successfully, not
+with 404: every month in range, with zero totals, null savings and a
+`supplyCount` of 0.
+
+ * @summary Retrieves the monthly consumption of every supply of a membership, added up per month.
+ */
+export const getMembershipMonthlyConsumption = (
+    communityId: string,
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MembershipMonthlyConsumptionBucketResponse[]>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/consumption/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetMembershipMonthlyConsumptionQueryKey = (communityId?: string,
+    userId?: string,
+    params?: GetMembershipMonthlyConsumptionParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/memberships/${userId}/consumption/monthly`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetMembershipMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(communityId: string,
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipMonthlyConsumptionQueryKey(communityId,userId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>> = ({ signal }) => getMembershipMonthlyConsumption(communityId,userId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMembershipMonthlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>>
+export type GetMembershipMonthlyConsumptionQueryError = ErrorType<unknown>
+
+
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the monthly consumption of every supply of a membership, added up per month.
+ */
+
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMembershipMonthlyConsumptionQueryOptions(communityId,userId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

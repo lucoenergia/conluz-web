@@ -9,6 +9,7 @@ import {
   buildCommunityCapabilities,
   buildSupply,
   buildSupplyCapabilities,
+  buildUser,
 } from "../../test/fixtures";
 import type { CommunityCapabilitiesResponse, SupplyCapabilitiesResponse } from "../../api/models";
 
@@ -173,4 +174,68 @@ describe("SupplyPointsPage", () => {
     expect(screen.queryByRole("link", { name: NEW_BUTTON })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: IMPORT_BUTTON })).not.toBeInTheDocument();
   });
+
+  /**
+   * The ?personId= branch, reached from Members. GET /users/{userId}/supplies
+   * is scoped to what the caller may READ (conluz#326), which is plural across
+   * the communities they administer -- so the active community still has to be
+   * applied here.
+   */
+  describe("one member's supplies, reached from the members screen", () => {
+    const OTHER_COMMUNITY_ID = "community-b";
+    const PERSON_ID = "person-1";
+
+    const inCommunity = (id: string, communityId: string, name: string) =>
+      buildSupply({
+        id,
+        code: `ES00210000000000${id.slice(-2)}`,
+        name,
+        community: { id: communityId, name: communityId },
+        capabilities: buildSupplyCapabilities({ canRead: true }),
+      });
+
+    function setupPerson(supplies: ReturnType<typeof inCommunity>[], activeCommunityId: string | null = COMMUNITY_ID) {
+      vi.mocked(useGetCommunityById).mockReturnValue(
+        query.success<typeof getCommunityById>(
+          buildCommunity({
+            id: COMMUNITY_ID,
+            capabilities: buildCommunityCapabilities({ canRead: true, canListSupplies: true }),
+          }),
+        ),
+      );
+      vi.mocked(useGetAllSupplies).mockReturnValue(query.disabled<Awaited<ReturnType<typeof getAllSupplies>>>());
+      vi.mocked(useGetSuppliesByUserId).mockReturnValue(
+        query.success<typeof getSuppliesByUserId>(supplies),
+      );
+      vi.mocked(useGetUserById).mockReturnValue(
+        query.success<typeof getUserById>(buildUser({ id: PERSON_ID, fullName: "Pedro Sánchez" })),
+      );
+
+      return renderWithProviders(<SupplyPointsPage />, {
+        activeCommunityId,
+        route: `/supply-points?personId=${PERSON_ID}`,
+      });
+    }
+
+    it("lists only the supplies belonging to the community on screen", () => {
+      setupPerson([
+        inCommunity("supply-a1", COMMUNITY_ID, "Casa en Sol Común"),
+        inCommunity("supply-b1", OTHER_COMMUNITY_ID, "Casa en otra comunidad"),
+      ]);
+
+      expect(screen.getByRole("heading", { name: "Casa en Sol Común" })).toBeInTheDocument();
+      // The caller may read this one -- it is theirs to administer elsewhere --
+      // but it does not belong under this community's heading.
+      expect(screen.queryByRole("heading", { name: "Casa en otra comunidad" })).not.toBeInTheDocument();
+    });
+
+    it("asks for nothing until the active community is known", () => {
+      setupPerson([], null);
+
+      expect(vi.mocked(useGetSuppliesByUserId).mock.calls.at(-1)?.[1]).toMatchObject({
+        query: { enabled: false },
+      });
+    });
+  });
+
 });

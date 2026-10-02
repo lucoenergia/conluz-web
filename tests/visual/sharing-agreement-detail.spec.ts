@@ -4,8 +4,10 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { type Page, type TestInfo } from "@playwright/test";
 import {
+  test,
+  expect,
   DRAFT_AGREEMENT,
   FIXED_COEFFICIENTS_ALL_PENDING,
   FIXED_COEFFICIENTS_EMPTY,

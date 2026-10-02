@@ -4,8 +4,9 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import { test, expect } from "@playwright/test";
 import {
+  test,
+  expect,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_MEMBER_USER,
   FIXED_SUPPLY_COEFFICIENT_HISTORY,
@@ -63,7 +64,7 @@ test.describe("Visual baselines", () => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY, FIXED_COMMUNITY_ADMIN_USER);
 
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
@@ -84,7 +85,7 @@ test.describe("Visual baselines", () => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);
-    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY);
+    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY, FIXED_MEMBER_USER);
 
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
     await expect(page.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
@@ -184,4 +185,52 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-success-modal.png", await hideAppBar(page));
   });
+
+  // The same list as a community admin. The member capture above shows the
+  // read-only shape; this one is where create, import and the row menus live,
+  // and nothing captured that layout before -- only its modals.
+  test("supplies list page (community admin)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto("/supply-points");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    // Interim mask: the kWh figure is Math.random() in SupplyPointsPage, as on
+    // the member capture above.
+    await expect(page).toHaveScreenshot(
+      "supplies-list-admin.png",
+      await mainRegion(page, [page.getByText(/^\d+ kWh$/)]),
+    );
+  });
+
+  test("create supply page", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto("/supply-points/new");
+    await expect(page.getByRole("main")).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("create-supply-page.png", await mainRegion(page));
+  });
+
+  test("edit supply page", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}/edit`);
+    await expect(page.getByRole("main")).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("edit-supply-page.png", await mainRegion(page));
+  });
+
 });

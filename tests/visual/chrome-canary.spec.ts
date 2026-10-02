@@ -11,8 +11,10 @@
  * fixtures already serve, and the role whose menu carries the most sections.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 import {
+  test,
+  expect,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_PLANT,
   FIXED_SHARING_AGREEMENTS,
