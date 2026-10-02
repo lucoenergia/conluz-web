@@ -111,24 +111,35 @@ describe("useUserActions", () => {
     expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetUserByIdQueryKey(USER_ID) });
   });
 
-  // The whole app reads its platform capabilities from the current-user
-  // response, and the target may be the signed-in account. Leaving that cached
-  // keeps offering pages the router has just started refusing.
-  it("refreshes the current user after a platform-admin change, since it may be the caller", async () => {
+  /**
+   * The current user is deliberately NOT invalidated here, and this is the test
+   * that says so, because "it used to be" is otherwise the only record.
+   *
+   * A platform-admin change can never be aimed at the caller: revoke is gated
+   * on `!@communityAccessGuard.isCurrentUser(#userId)`, and
+   * `canRevokePlatformAdmin` is documented false for one's own record. So the
+   * caller's own platform capabilities cannot change through this action, and
+   * invalidating the key that carries them refreshed nothing (#203, ADR-0004).
+   * The row and the list are what this change does affect.
+   */
+  it("refreshes the target row and the list after a platform-admin change, and not the caller", async () => {
     const { result, queryClient } = render(
       userWith({ canGrantPlatformAdmin: true, canRevokePlatformAdmin: true }),
     );
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
     await result.current.actions.grantPlatformAdmin?.run();
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetUserByIdQueryKey(USER_ID) });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllUsersQueryKey() });
+    expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
 
     invalidateQueries.mockClear();
     await result.current.actions.revokePlatformAdmin?.run();
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetUserByIdQueryKey(USER_ID) });
+    expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
 
-  it("does not refresh the current user when the platform-admin change fails", async () => {
+  it("invalidates nothing when the platform-admin change fails", async () => {
     mutateAsync.mockRejectedValue(new Error("boom"));
     const { result, queryClient } = render(userWith({ canGrantPlatformAdmin: true }));
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");

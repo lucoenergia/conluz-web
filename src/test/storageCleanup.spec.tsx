@@ -1,21 +1,21 @@
 import "@testing-library/jest-dom";
-import { useEffect } from "react";
 import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { useLoggedUserDispatch } from "../context/logged-user.context";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useGetCurrentUser, type getCurrentUser } from "../api/users/users";
 import { useActiveCommunity } from "../context/community.context";
 import { buildCurrentUser } from "./fixtures";
+import { query } from "./queryState";
 import { renderWithProviders } from "./renderWithProviders";
 
-function SingleMembershipLogin() {
-  const setLoggedUser = useLoggedUserDispatch();
+// A signed-in session is the GET /users/current query answering (#203), so the
+// user is present on the first render rather than arriving in an effect.
+vi.mock(import("../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCurrentUser: vi.fn(),
+}));
+
+function SingleMembershipUser() {
   const activeCommunityId = useActiveCommunity();
-
-  useEffect(() => {
-    setLoggedUser(buildCurrentUser({ id: "u1", memberships: { c1: "COMMUNITY_MEMBER" } }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- log in once on mount
-  }, []);
-
   return <span data-testid="community">{activeCommunityId ?? "none"}</span>;
 }
 
@@ -23,8 +23,16 @@ function SingleMembershipLogin() {
 // only the harness's module-scope afterEach can leave storage empty for it.
 // Both tests must pass in either order.
 describe("harness afterEach storage cleanup", () => {
+  beforeEach(() => {
+    vi.mocked(useGetCurrentUser).mockReturnValue(
+      query.success<typeof getCurrentUser>(
+        buildCurrentUser({ id: "u1", memberships: { c1: "COMMUNITY_MEMBER" } }),
+      ),
+    );
+  });
+
   it("a single-membership user makes the real CommunityProvider persist the selection", async () => {
-    renderWithProviders(<SingleMembershipLogin />);
+    renderWithProviders(<SingleMembershipUser />);
 
     expect(await screen.findByText("c1")).toBeInTheDocument();
     // Precondition for the next test: the render really left storage behind.

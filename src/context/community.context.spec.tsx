@@ -247,3 +247,122 @@ describe("CommunityProvider — resolution", () => {
     expect(observed.at(-1)).toBe(true);
   });
 });
+
+/**
+ * The same user's memberships changing while they are signed in.
+ *
+ * This could not happen before #203: the logged user was fetched once per
+ * session, so the auto-select effect ran once. It is a live query now, and a
+ * membership can be granted or removed -- including by the caller themselves --
+ * so these branches are reachable mid-session for the first time.
+ */
+describe("CommunityProvider — memberships changing mid-session", () => {
+  function ReadResolved() {
+    const resolved = useIsActiveCommunityResolved();
+    const id = useActiveCommunity();
+    return <span data-testid="resolved">{`${resolved}:${id ?? "none"}`}</span>;
+  }
+
+  test("keeps the active community when another membership is added", () => {
+    localStorage.setItem("activeCommunity:user1", "community-A");
+    const { rerender } = render(
+      <Wrapper user={{ id: "user1", memberships: { "community-A": "COMMUNITY_MEMBER" } }}>
+        <ReadActiveCommunity />
+      </Wrapper>,
+    );
+    expect(screen.getByTestId("active").textContent).toBe("community-A");
+
+    rerender(
+      <Wrapper
+        user={{
+          id: "user1",
+          memberships: { "community-A": "COMMUNITY_MEMBER", "community-B": "COMMUNITY_MEMBER" },
+        }}
+      >
+        <ReadActiveCommunity />
+      </Wrapper>,
+    );
+
+    // Still where they were working: the persisted selection is still valid, so
+    // gaining a second community must not drop them out of the first.
+    expect(screen.getByTestId("active").textContent).toBe("community-A");
+  });
+
+  test("moves to the remaining community when the active one is taken away", () => {
+    localStorage.setItem("activeCommunity:user1", "community-A");
+    const { rerender } = render(
+      <Wrapper
+        user={{
+          id: "user1",
+          memberships: { "community-A": "COMMUNITY_ADMIN", "community-B": "COMMUNITY_MEMBER" },
+        }}
+      >
+        <ReadActiveCommunity />
+      </Wrapper>,
+    );
+    expect(screen.getByTestId("active").textContent).toBe("community-A");
+
+    rerender(
+      <Wrapper user={{ id: "user1", memberships: { "community-B": "COMMUNITY_MEMBER" } }}>
+        <ReadActiveCommunity />
+      </Wrapper>,
+    );
+
+    expect(screen.getByTestId("active").textContent).toBe("community-B");
+  });
+
+  test("clears the selection, resolved, when the last membership goes", () => {
+    const { rerender } = render(
+      <Wrapper user={{ id: "user1", memberships: { "community-A": "COMMUNITY_ADMIN" } }}>
+        <ReadResolved />
+      </Wrapper>,
+    );
+    expect(screen.getByTestId("resolved").textContent).toBe("true:community-A");
+
+    rerender(
+      <Wrapper user={{ id: "user1", memberships: {} }}>
+        <ReadResolved />
+      </Wrapper>,
+    );
+
+    // Resolved, not pending: "none" is an answer. Anything waiting for the
+    // active community before deciding -- a capability lookup, a route guard --
+    // would wait forever otherwise.
+    expect(screen.getByTestId("resolved").textContent).toBe("true:none");
+  });
+
+  test("does not re-decide when the same memberships arrive in a different order", () => {
+    localStorage.setItem("activeCommunity:user1", "community-B");
+    const { rerender } = render(
+      <Wrapper
+        user={{
+          id: "user1",
+          memberships: { "community-A": "COMMUNITY_MEMBER", "community-B": "COMMUNITY_ADMIN" },
+        }}
+      >
+        <ReadActiveCommunity />
+      </Wrapper>,
+    );
+    expect(screen.getByTestId("active").textContent).toBe("community-B");
+
+    // A refetch that reports the same two memberships with the keys the other
+    // way round. The effect's dependency is sorted, so this is not a change.
+    act(() => {
+      localStorage.setItem("activeCommunity:user1", "community-A");
+    });
+    rerender(
+      <Wrapper
+        user={{
+          id: "user1",
+          memberships: { "community-B": "COMMUNITY_ADMIN", "community-A": "COMMUNITY_MEMBER" },
+        }}
+      >
+        <ReadActiveCommunity />
+      </Wrapper>,
+    );
+
+    // Unchanged: had the effect re-run it would have restored the newly
+    // persisted "community-A" and moved the user out from under themselves.
+    expect(screen.getByTestId("active").textContent).toBe("community-B");
+  });
+});

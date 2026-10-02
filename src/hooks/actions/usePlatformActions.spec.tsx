@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act } from "@testing-library/react";
 import {
   getGetAllCommunitiesQueryKey,
   useCreateCommunity,
 } from "../../api/communities/communities";
-import { getGetAllUsersQueryKey, useCreateUser } from "../../api/users/users";
-import { useLoggedUserDispatch } from "../../context/logged-user.context";
+import {
+  getGetAllUsersQueryKey,
+  useCreateUser,
+  useGetCurrentUser,
+  type getCurrentUser,
+} from "../../api/users/users";
 import { buildCurrentUser, buildPlatformCapabilities } from "../../test/fixtures";
-import { mutation } from "../../test/queryState";
+import { mutation, query } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { usePlatformActions } from "./usePlatformActions";
 import type { PlatformCapabilitiesResponse } from "../../api/models";
@@ -29,26 +32,22 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useCreateUser: vi.fn(),
+  useGetCurrentUser: vi.fn(),
 }));
 
 /**
- * The logged-in user lives in React state, not the query cache, so this renders
- * the real provider and dispatches into it -- the idiom usePlatformCapabilities'
- * own spec established. Passing `undefined` leaves the provider empty, which is
- * how "the answer has not arrived yet" is expressed here.
+ * The logged-in user is the GET /users/current query (#203), so this answers
+ * that query -- the idiom usePlatformCapabilities' own spec establishes. A
+ * query that has not answered is how "the capabilities have not arrived yet" is
+ * expressed here, rather than an empty provider.
  */
 function renderWith(platformCapabilities: PlatformCapabilitiesResponse | undefined) {
-  const view = renderHookWithProviders(() => ({
-    ...usePlatformActions(),
-    setLoggedUser: useLoggedUserDispatch(),
-  }));
-
-  if (platformCapabilities !== undefined) {
-    act(() => {
-      view.result.current.setLoggedUser(buildCurrentUser({ platformCapabilities }));
-    });
-  }
-  return view;
+  vi.mocked(useGetCurrentUser).mockReturnValue(
+    platformCapabilities === undefined
+      ? query.disabled()
+      : query.success<typeof getCurrentUser>(buildCurrentUser({ platformCapabilities })),
+  );
+  return renderHookWithProviders(() => usePlatformActions());
 }
 
 let mutateAsync: ReturnType<typeof vi.fn>;

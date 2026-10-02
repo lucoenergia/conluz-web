@@ -1,6 +1,6 @@
-import { Suspense, useEffect, useMemo, useState, type FC } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type FC } from "react";
 import { Header } from "../components/Header/Header";
-import { Navigate, Outlet, useNavigate } from "react-router";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
 import { CONTACT_ITEM, MENU_SECTIONS, MIN_DESKTOP_WIDTH, SIDEMENU_WIDTH } from "../utils/constants";
@@ -9,8 +9,7 @@ import { radii } from "../theme/tokens";
 import { RouteFallback } from "../components/RouteFallback";
 import { ProtectedRoute } from "../components/Auth/ProtectedRoute";
 import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
-import { useGetCurrentUser } from "../api/users/users";
-import { useLoggedUser, useLoggedUserDispatch } from "../context/logged-user.context";
+import { useLoggedUser } from "../context/logged-user.context";
 import { useLogout } from "../hooks/useLogout";
 import { ErrorProvider } from "../context/error.context";
 import { ErrorDisplay } from "../components/Errors/ErrorDisplay";
@@ -34,8 +33,8 @@ export const AuthenticatedLayout: FC = () => {
   const navigate = useNavigate();
   const logout = useLogout();
   const loggedUser = useLoggedUser();
-  const setLoggedUser = useLoggedUserDispatch();
   const activeCommunity = useActiveCommunity();
+  const { pathname } = useLocation();
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
   const communitySwitchRedirect = useCommunitySwitchRedirect();
 
@@ -84,17 +83,34 @@ export const AuthenticatedLayout: FC = () => {
     return isMenuOpened && width > MIN_DESKTOP_WIDTH ? SIDEMENU_WIDTH : 0;
   }, [isMenuOpened, width]);
 
-  const { data } = useGetCurrentUser({ query: { enabled: loggedUser === null } });
+  /**
+   * Which user has already been sent to their landing route.
+   *
+   * Landing is a once-per-session event, and the signed-in user is a live query
+   * now (#203), so this effect runs again on any refetch that changes the
+   * payload. Keyed on the id rather than latched on a boolean: a refetch for
+   * the same person must not re-navigate somebody who has since gone
+   * elsewhere, and the next person to sign in must still land.
+   */
+  const landedForUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (data) {
-      setLoggedUser(data);
-      if (window.location.pathname === '/') {
-        const landing = resolveLandingRoute(data);
-        if (landing !== '/') navigate(landing, { replace: true });
-      }
-    }
-  }, [data, navigate, setLoggedUser]);
+    if (!loggedUser || landedForUserId.current === loggedUser.id) return;
+    // The router's path, not `window.location`: the two agree in the browser,
+    // but under MemoryRouter the latter is "/" for every route, which is why
+    // this condition had no test until now.
+    //
+    // Returning WITHOUT recording anything is the point. Somebody who deep
+    // links to a page they may not see is sent here by CapabilityRoute, and
+    // they must still land afterwards -- a platform admin bounced off
+    // /integrations belongs on /platform, not on the no-community home. So the
+    // decision is deferred until they are actually on the landing route, and
+    // only then counted as made.
+    if (pathname !== '/') return;
+    landedForUserId.current = loggedUser.id;
+    const landing = resolveLandingRoute(loggedUser);
+    if (landing !== '/') navigate(landing, { replace: true });
+  }, [loggedUser, pathname, navigate]);
 
   return (
     <ProtectedRoute>

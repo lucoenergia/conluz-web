@@ -50,9 +50,13 @@ type HarnessExtras = {
 };
 
 // `CommunityProvider` only reads a persisted selection once a logged user
-// exists, and `LoggedUserProvider` takes no initial user, so a seeded
-// community is provided directly on the context the hook reads -- held in
-// state so a spec can switch it mid-test.
+// exists, and the logged user is the `getCurrentUser` query (#203), which a
+// spec answers by mocking that hook. So a seeded community is provided directly
+// on the context the hook reads -- held in state so a spec can switch it
+// mid-test. Deliberately NOT seeded through the cache: a `setQueryData` seed is
+// only fresh while the provider's `staleTime` says so, and `invalidateQueries`
+// ignores it entirely, so one tuning change would send every seeding spec to
+// the network.
 //
 // Seeding also marks the selection resolved, including when it is seeded to
 // `null`: stating which community is active -- or that none is -- is stating
@@ -137,9 +141,9 @@ function createWrapper(options: ProviderOptions, queryClient: QueryClient, contr
 
     return (
       <AuthProvider initialState={token ?? null}>
-        <LoggedUserProvider>
-          <CommunityProvider>
-            <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <LoggedUserProvider>
+            <CommunityProvider>
               <ThemeProvider theme={theme}>
                 <StyledEngineProvider enableCssLayer>
                   <MemoryRouter initialEntries={[route]}>
@@ -149,9 +153,9 @@ function createWrapper(options: ProviderOptions, queryClient: QueryClient, contr
                   </MemoryRouter>
                 </StyledEngineProvider>
               </ThemeProvider>
-            </QueryClientProvider>
-          </CommunityProvider>
-        </LoggedUserProvider>
+            </CommunityProvider>
+          </LoggedUserProvider>
+        </QueryClientProvider>
       </AuthProvider>
     );
   };

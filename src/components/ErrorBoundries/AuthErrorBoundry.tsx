@@ -1,4 +1,5 @@
 import React, { type ReactNode } from "react";
+import { SESSION_EXPIRED_MESSAGE } from "../../utils/session";
 
 type BoundaryError = Error & { status?: number };
 
@@ -30,7 +31,7 @@ export class AuthErrorBoundry extends React.Component<AuthErrorBoundryProps, Aut
 
   render() {
     if (this.state.error?.status === 401) {
-      return <div>Sesión expirada, por favor vuelve al login</div>;
+      return <div>{SESSION_EXPIRED_MESSAGE}</div>;
     }
     return this.props.children;
   }

@@ -13,7 +13,11 @@ vi.mock(import("../../api/communities/communities"), () => ({
   useGetCommunityById: vi.fn(),
 }));
 
-vi.mock(import("../../api/users/users"), () => ({
+// Spread, not replaced: the real LoggedUserProvider in the harness imports
+// useGetCurrentUser from this module (#203). No token is seeded here, so that
+// query stays disabled and reaches no network.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetUserById: vi.fn(),
 }));
 

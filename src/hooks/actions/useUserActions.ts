@@ -1,7 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetAllUsersQueryKey,
-  getGetCurrentUserQueryKey,
   getGetUserByIdQueryKey,
   useDeleteUser,
   useDisableUser,
@@ -76,18 +75,6 @@ export function useUserActions(): UserActions {
     }
   };
 
-  /**
-   * Granting or revoking platform admin can be aimed at the signed-in account,
-   * and the whole app reads its platform capabilities from the current-user
-   * response. Leaving that cached would keep offering pages the router has just
-   * started refusing.
-   */
-  const runPlatformAdminChange = async (call: () => Promise<unknown>, userId: string) => {
-    const changed = await run(call, userId);
-    if (changed) queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
-    return changed;
-  };
-
   return {
     forUser: (user) => {
       const userId = user?.id ?? "";
@@ -133,14 +120,21 @@ export function useUserActions(): UserActions {
             () => run(() => disableMutation.mutateAsync({ userId }), userId),
             disableMutation.isPending,
           ),
+          // No current-user invalidation here, deliberately. Both endpoints
+          // refuse a caller aimed at their own account -- revoke through
+          // `!@communityAccessGuard.isCurrentUser(#userId)`, and
+          // `canRevokePlatformAdmin` is documented false for one's own record
+          // -- so neither call can change the caller's own platform
+          // capabilities. The flag only ever changes for somebody else, in
+          // another session; see #203 and ADR-0004 for how that is picked up.
           grantPlatformAdmin: grant(
             grantPlatformAdmin,
-            () => runPlatformAdminChange(() => grantMutation.mutateAsync({ userId }), userId),
+            () => run(() => grantMutation.mutateAsync({ userId }), userId),
             grantMutation.isPending,
           ),
           revokePlatformAdmin: grant(
             revokePlatformAdmin,
-            () => runPlatformAdminChange(() => revokeMutation.mutateAsync({ userId }), userId),
+            () => run(() => revokeMutation.mutateAsync({ userId }), userId),
             revokeMutation.isPending,
           ),
         },

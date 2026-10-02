@@ -28,15 +28,16 @@ vi.mock(import("../context/auth.context"), async (importOriginal) => ({
 vi.mock(import("../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: () => LOGGED_USER,
-  useLoggedUserDispatch: () => vi.fn(),
 }));
 
 vi.mock(import("../hooks/useLogout"), () => ({
   useLogout: () => vi.fn(),
 }));
 
-// The layout only calls this to bootstrap the user it already has, so with a
-// logged user present the query is disabled (enabled: loggedUser === null).
+// The real LoggedUserProvider in the harness calls this now, not the layout
+// (#203), and `useAuth` is mocked to a token above -- so an unmocked hook would
+// try to reach the backend. `useLoggedUser` is mocked too, so what this returns
+// is never read; it only has to not be a request.
 vi.mock(import("../api/users/users"), () => ({
   useGetCurrentUser: vi.fn(),
 }));

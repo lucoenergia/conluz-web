@@ -30,7 +30,11 @@ export function useProfileActions(): ProfileActions {
         async (data: UpdateProfileBody) => {
           try {
             await updateProfileMutation.mutateAsync({ data });
-            // The header, the menu and every platform gate read this response.
+            // PUT /users/profile changes the caller's own record -- email,
+            // address, phone -- and the current user is the app-wide copy of
+            // that record, served live from this key (#203). Capabilities and
+            // the display name are not among those fields, so this refreshes
+            // the data, not the gating.
             queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
             return true;
           } catch {

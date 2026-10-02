@@ -124,7 +124,7 @@ import {
   useGetMemberships,
   useUpdateMembershipRole,
 } from "../../api/memberships/memberships";
-import { getAllUsers, useGetAllUsers } from "../../api/users/users";
+import { getAllUsers, getGetCurrentUserQueryKey, useGetAllUsers } from "../../api/users/users";
 import { MembersPage } from "./MembersPage";
 
 const ADMIN_COMMUNITY: Partial<CommunityCapabilitiesResponse> = {
@@ -228,9 +228,12 @@ describe("MembersPage", () => {
         data: { userId: "u3", role: "COMMUNITY_MEMBER" },
       }),
     );
-    expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
+    expect(mockInvalidateQueries).toHaveBeenCalledTimes(3);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    // The third key: the membership changed may be the caller's own, and their
+    // memberships live on the current user (#203).
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
 
   it("row menu opens confirmation dialog with member name on Eliminar", async () => {
@@ -263,9 +266,12 @@ describe("MembersPage", () => {
     await waitFor(() =>
       expect(mockDeleteMutate).toHaveBeenCalledWith({ communityId: "c1", userId: "u1" }),
     );
-    expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
+    expect(mockInvalidateQueries).toHaveBeenCalledTimes(3);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    // The third key: the membership changed may be the caller's own, and their
+    // memberships live on the current user (#203).
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
 
   it("role change modal calls updateRole with new role and invalidates queries", async () => {
@@ -295,9 +301,12 @@ describe("MembersPage", () => {
         data: { role: "COMMUNITY_ADMIN" },
       }),
     );
-    expect(mockInvalidateQueries).toHaveBeenCalledTimes(2);
+    expect(mockInvalidateQueries).toHaveBeenCalledTimes(3);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    // The third key: the membership changed may be the caller's own, and their
+    // memberships live on the current user (#203).
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
   describe("an admin of the community", () => {
     it("is offered both ways to bring a member in", () => {

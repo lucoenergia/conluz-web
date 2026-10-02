@@ -563,7 +563,7 @@ describe("UsersPage", () => {
       expect(screen.queryByRole("menuitem", { name: /Revocar admin de plataforma/ })).not.toBeInTheDocument();
     });
 
-    it("grants platform admin and invalidates the current user with it", async () => {
+    it("grants platform admin and refreshes the row, not the caller", async () => {
       const user = userEvent.setup();
       mockGrantMutate.mockResolvedValueOnce(undefined);
       const { queryClient } = setup();
@@ -576,14 +576,14 @@ describe("UsersPage", () => {
       await user.click(screen.getByText("Confirmar conceder"));
 
       await waitFor(() => expect(mockGrantMutate).toHaveBeenCalledWith({ userId: "u2" }));
-      // The whole app reads its platform capabilities off the current user, so
-      // leaving that cached would keep offering pages the router has just begun
-      // refusing. This is what makes the menu and the guards follow the change
-      // without a reload.
-      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetUserByIdQueryKey("u2") });
+      // Not the current user: the backend refuses a platform-admin change aimed
+      // at the caller, so this can only ever change somebody else's flag and
+      // the caller's own capabilities are untouched (#203, ADR-0004).
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
     });
 
-    it("revokes platform admin and invalidates the current user with it", async () => {
+    it("revokes platform admin and refreshes the row, not the caller", async () => {
       const user = userEvent.setup();
       mockRevokeMutate.mockResolvedValueOnce(undefined);
       const { queryClient } = setup();
@@ -596,7 +596,8 @@ describe("UsersPage", () => {
       await user.click(screen.getByText("Confirmar revocar"));
 
       await waitFor(() => expect(mockRevokeMutate).toHaveBeenCalledWith({ userId: "u1" }));
-      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetUserByIdQueryKey("u1") });
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
     });
 
     it("reports a failure rather than claiming the flag changed", async () => {

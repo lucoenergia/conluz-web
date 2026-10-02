@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { act } from "@testing-library/react";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { buildCurrentUser } from "../../test/fixtures";
-import { useLoggedUserDispatch } from "../../context/logged-user.context";
-import { CommunityRole, type CurrentUserResponse } from "../../api/models";
+import { query } from "../../test/queryState";
+import { useGetCurrentUser, type getCurrentUser } from "../../api/users/users";
+import { CommunityRole } from "../../api/models";
 
 const mockRole = vi.hoisted(() => ({ current: null as CommunityRole | null }));
 
@@ -12,20 +12,23 @@ vi.mock(import("./useActiveCommunityRole"), () => ({
   useIsPlatformAdmin: () => false,
 }));
 
+// The signed-in user is the GET /users/current query (#203); the label reads
+// `isPlatformAdmin` off it.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCurrentUser: vi.fn(),
+}));
+
 import { useActiveCommunityRoleLabel } from "./roleLabel";
 
 function renderWith(
   { isPlatformAdmin = false, role = null }: { isPlatformAdmin?: boolean; role?: CommunityRole | null },
 ) {
   mockRole.current = role;
-  const view = renderHookWithProviders(() => ({
-    label: useActiveCommunityRoleLabel(),
-    setLoggedUser: useLoggedUserDispatch(),
-  }));
-  act(() => {
-    view.result.current.setLoggedUser(buildCurrentUser({ isPlatformAdmin }) as CurrentUserResponse);
-  });
-  return view;
+  vi.mocked(useGetCurrentUser).mockReturnValue(
+    query.success<typeof getCurrentUser>(buildCurrentUser({ isPlatformAdmin })),
+  );
+  return renderHookWithProviders(() => ({ label: useActiveCommunityRoleLabel() }));
 }
 
 describe("useActiveCommunityRoleLabel", () => {

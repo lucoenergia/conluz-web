@@ -16,7 +16,11 @@ vi.mock(import("react-router"), async (importOriginal) => ({
 
 // The form loads the user list for its owner picker; answer with a settled,
 // empty page so no test reaches the network.
-vi.mock(import("../../api/users/users"), () => ({
+// Spread, not replaced: the real LoggedUserProvider in the harness imports
+// useGetCurrentUser from this module (#203). No token is seeded here, so that
+// query stays disabled and reaches no network.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
 }));
 
