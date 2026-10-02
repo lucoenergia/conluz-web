@@ -24,6 +24,6 @@ export interface UserCapabilitiesResponse {
   canGrantPlatformAdmin: boolean;
   /** Whether the caller may revoke this user's platform-admin flag. Always false when the user is the caller: an admin may not strip their own flag. */
   canRevokePlatformAdmin: boolean;
-  /** Whether the caller may list this user's supplies (GET /api/v1/users/{userId}/supplies). Deliberately narrower than canRead: reading a user is not reading their supply data, so a platform admin who administers none of their communities may not. */
+  /** Whether the caller may list this user's supplies (GET /api/v1/users/{userId}/supplies). Deliberately narrower than canRead: reading a user is not reading their supply data, so a platform admin who administers none of their communities may not. Predicts whether the call is allowed, not what it returns: the listing carries only the supplies the caller may read one by one — all of them for the user themselves, otherwise those in communities the caller administers. */
   canListSupplies: boolean;
 }

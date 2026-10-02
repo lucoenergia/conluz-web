@@ -50,6 +50,10 @@ import type { ErrorType } from '.././custom-instance';
 
 **Required: Platform Admin, Community Admin, or the user themselves**
 
+**What `memberships` contains:** platform admins see every membership, and a user reading
+themselves sees all of their own; otherwise only the memberships in communities the
+caller administers.
+
 Authentication is required using a Bearer token.
 
  * @summary Retrieves a single user by ID
@@ -364,7 +368,15 @@ export const useUpdateProfile = <TError = ErrorType<unknown>,
 comprehensive list of user details.
 
 **Required: Platform Admin or Community Admin**
-Platform admins see all users; community admins see only users belonging to their communities.
+
+**What the listing contains:** only the users the caller may read one by one
+(`GET /api/v1/users/{userId}`). Platform admins see every user; anyone else sees themselves
+and the users with an enabled membership in a community they administer — not those of
+communities they merely belong to.
+
+**What each user's `memberships` contains:** platform admins see every membership, and
+every caller sees all of their own; otherwise only the memberships in communities the
+caller administers.
 
 Features:
 - Pagination support through page and limit parameters
@@ -923,6 +935,10 @@ export const useCreateUsersWithFile = <TError = ErrorType<unknown>,
 - A user can retrieve their own supplies
 - Being a Platform Admin is **not** sufficient: these are supplies, and a Platform Admin
   who administers none of the user's communities cannot read them one by one either
+
+**What the listing contains:** only the supplies the caller may read one by one
+(`GET /api/v1/supplies/{supplyId}`) — all of them for the user themselves, otherwise only
+those in the communities the caller administers.
 
 Authentication is required using a Bearer token.
 
