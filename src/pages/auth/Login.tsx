@@ -19,9 +19,17 @@ import { Link as RouterLink, useNavigate } from "react-router";
 import { PasswordInput } from "../../components/Forms/PasswordInput";
 import { useSessionActions } from "../../hooks/actions";
 import { useAuthDispatch } from "../../context/auth.context";
+import { SESSION_EXPIRED_MESSAGE, takeSessionExpired } from "../../utils/session";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState(false);
+  /**
+   * Whether the user is here because their session expired rather than because
+   * they asked to leave. Read once, during the first render, and cleared by the
+   * read: this page is also the destination of a plain logout and of a first
+   * visit, and neither should claim an expiry.
+   */
+  const [sessionExpired] = useState(takeSessionExpired);
   const [formErrors, setFormErrors] = useState<{ id: boolean; password: boolean }>({
     id: false,
     password: false,
@@ -124,6 +132,18 @@ export const Login: FC = () => {
             p: { xs: 3, sm: 4 },
           }}
         >
+          {sessionExpired && !loginError && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 3,
+                borderRadius: radii.default,
+              }}
+            >
+              {SESSION_EXPIRED_MESSAGE}
+            </Alert>
+          )}
+
           {loginError && (
             <Alert
               severity="error"

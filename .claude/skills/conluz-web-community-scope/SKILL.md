@@ -25,6 +25,29 @@ assumptions still lingering in fixtures, comments, or your own priors.
 - `src/components/CommunitySelector/`, `CommunityStatusChip/`.
 - The generated hooks under `src/api/` (path-scoped by `communityId`).
 
+## The signed-in user is a live query
+
+`LoggedUserProvider` serves `GET /users/current` (30 s `staleTime`, gated on the token, and the one
+query that refetches on window focus). It is not a session snapshot any more — that froze the
+caller's capabilities for the whole session, and since they gate routes and the menu, a revoked
+platform admin kept being offered the administration surface until they reloaded (#203, ADR-0004).
+
+Two facts follow, and both decide where an invalidation belongs:
+
+1. **The caller's own platform flag can only change in another session.** The backend refuses
+   self-revocation (`!@communityAccessGuard.isCurrentUser(#userId)`), and `canRevokePlatformAdmin` is
+   documented false for one's own record. Granting or revoking on the users page always targets
+   somebody else, so it leaves the caller untouched — `useUserActions` deliberately does not
+   invalidate the current user, and a spec says so.
+2. **The caller's own memberships CAN change in this session.** The membership endpoints gate only on
+   `canManageMemberships(communityId)` and have no self rail, so a community admin may re-role or
+   remove themselves. `memberships` lives on the current user — it is what `CommunitySelector`
+   offers, what the role label reads and what `CommunityProvider` resolves the active community from
+   — so `useMembershipActions` invalidates `getGetCurrentUserQueryKey()` alongside the roster.
+
+A capability answer of `pending` is therefore reachable mid-session, not just on first load. Never
+fold it into `denied`.
+
 ## Two independent authorization axes
 
 There is **no global user `role`**. Authorization is two separate dimensions:
@@ -264,9 +287,9 @@ Two things worth knowing before you touch it:
   switch, and it is correct for community-path-scoped queries. It does nothing for an
   entity-scoped one (same key, same foreign entity back) and nothing at all for data already
   copied into `useState`. The keyed Outlet is what handles both.
-- **`CommunityProvider` sits outside `QueryClientProvider` and `BrowserRouter`** in
-  `main.tsx`, so it can neither navigate nor touch the cache. Anything reacting to a switch
-  must live inside the router.
+- **`CommunityProvider` sits outside `BrowserRouter`** in `main.tsx`, so it cannot navigate:
+  anything reacting to a switch must live inside the router. It is *inside* `QueryClientProvider`
+  as of #203, because it reads the signed-in user and the signed-in user is a query.
 - **Pre-epic artifacts:** older DTOs and hand-written test fixtures may predate the
   multi-community model and omit `isPlatformAdmin`/`memberships`. Fixtures built with
   `src/test/fixtures.ts` (`buildUser` and friends) always carry both, at least privilege by

@@ -8,6 +8,7 @@ import {
   useUpdateMembershipRole,
 } from "../../api/memberships/memberships";
 import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
+import { getGetCurrentUserQueryKey } from "../../api/users/users";
 import type {
   CommunityResponse,
   CreateMembershipBody,
@@ -72,12 +73,19 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   const setInvestmentMutation = useSetMembershipInvestment();
   const clearInvestmentMutation = useClearMembershipInvestment();
 
-  // Both keys, because a membership change moves a user between communities'
-  // member counts as well as this community's roster. Copied from MembersPage
-  // and ManageAdminsDialog, which invalidate exactly this pair.
+  // All three, because a membership change moves a user between communities'
+  // member counts as well as this community's roster -- and because the user
+  // moved may be the caller. Nothing stops a community admin re-roling or
+  // removing their OWN membership: the endpoints gate on
+  // canManageMemberships(communityId) and have no self rail, unlike the
+  // platform-admin flag. `memberships` on the current user is what the
+  // community selector offers, what the role label reads and what
+  // CommunityProvider resolves the active community from, so without the third
+  // key the caller keeps being offered a community they have just left (#203).
   const invalidateAfterWrite = () => {
     queryClient.invalidateQueries({ queryKey: getGetMembershipsQueryKey(communityId) });
     queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
   };
 
   const run = async (call: () => Promise<unknown>) => {

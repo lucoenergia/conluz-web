@@ -50,8 +50,15 @@ const CommunityProvider = ({ children }: CommunityProviderProps) => {
   const memberships: UserResponseMemberships = loggedUser?.memberships ?? {};
   const communityIds = Object.keys(memberships);
   const userId = loggedUser?.id ?? null;
+  // Sorted, because this string is the effect's dependency and the user is a
+  // live query now (#203): `Object.keys` follows the JSON's order, so the same
+  // memberships serialised differently would re-run the auto-select below and
+  // could move the active community for no reason.
+  const membershipKey = communityIds.slice().sort().join(",");
 
-  // Auto-select and restore persisted selection when the user or their communities change.
+  // Auto-select and restore persisted selection when the user or their
+  // communities change. Both can now change mid-session: an admin may add the
+  // caller to a community, or the caller may remove their own membership.
   useEffect(() => {
     if (!userId) {
       setActiveCommunityId(null);
@@ -79,7 +86,7 @@ const CommunityProvider = ({ children }: CommunityProviderProps) => {
     // Every branch above has decided, including the ones that decided "none".
     // Marked here rather than per branch so a branch added later cannot forget.
     setResolvedForUserId(userId);
-  }, [userId, communityIds.join(",")]);
+  }, [userId, membershipKey]);
 
   const dispatch: Dispatch = (communityId) => {
     setActiveCommunityId(communityId);

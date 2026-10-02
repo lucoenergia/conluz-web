@@ -1,10 +1,25 @@
 import "@testing-library/jest-dom";
 import { useEffect } from "react";
 import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuth, useAuthDispatch } from "../context/auth.context";
 import { useActiveCommunity } from "../context/community.context";
+import { useGetCurrentUser } from "../api/users/users";
+import { query } from "./queryState";
 import { renderWithProviders } from "./renderWithProviders";
+
+// This is the only spec in the repo that seeds a token through the harness, and
+// a token is what enables the real LoggedUserProvider's current-user query
+// (#203) -- so it is the only one where leaving that hook real would reach the
+// backend. Nothing here reads the user; the mock just has to not be a request.
+vi.mock(import("../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCurrentUser: vi.fn(),
+}));
+
+beforeEach(() => {
+  vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
+});
 
 function ContextProbe({ persist = false }: { persist?: boolean }) {
   const token = useAuth();

@@ -26,15 +26,38 @@ npm run test:visual:desktop   # Run visual tests for desktop screens
 
 ### State Management Pattern
 The application uses a layered state management approach:
-- **Global State**: React Context providers (AuthContext, LoggedUserContext)
-- **Server State**: TanStack React Query for API data caching and synchronization
+- **Global State**: React Context providers — `AuthContext` holds the token; `LoggedUserContext` holds no state of its own and serves the current-user query (see below)
+- **Server State**: TanStack React Query for API data caching and synchronization, with the defaults in `src/queryClient.ts`
 - **Token Storage**: Dual storage system - localStorage for "remember me", sessionStorage for temporary
+- **Provider order** (`src/main.tsx`, mirrored by the test harness): `AuthProvider → QueryClientProvider → LoggedUserProvider → CommunityProvider → Theme → BrowserRouter`. The query client is above the user because the user *is* a query, and `CommunityProvider` reads it.
+
+### The signed-in user is live, not a session snapshot
+`LoggedUserProvider` serves `GET /users/current` directly — `staleTime` 30 s, gated on there being a
+token, and the one query in the app that opts back into `refetchOnWindowFocus` (the global default is
+`false`). It used to copy the response into `useState` once per session, which froze what the app
+believed about the caller: since capabilities gate routes, the menu and the landing route, a revoked
+platform admin kept being offered the administration surface until they reloaded (#203).
+
+Consequences worth knowing before writing a screen:
+- **Invalidating `getGetCurrentUserQueryKey()` now works.** That is how a screen makes its own change
+  to the caller's record visible — `useMembershipActions` does it, because a community admin may
+  re-role or remove their *own* membership.
+- **Platform capabilities are as live as community capabilities already were**, but they can only
+  change in *another* session: the backend refuses self-revocation, and `canRevokePlatformAdmin` is
+  false for one's own record. In-app grant/revoke always targets somebody else, so it does not touch
+  the caller — which is why `useUserActions` does not invalidate this key.
+- **`pending` is reachable mid-session.** A capability answer of "not yet known" must never be folded
+  into "no"; `src/hooks/permissions/capabilityOutcome.ts` keeps the two apart.
+- Decided in `docs/decisions/adrs/0004-make-the-signed-in-user-a-live-query-and-end-the-session-on-its-401.md`.
 
 ### Authentication Flow
 1. Token is managed by `AuthProvider` context in `src/context/auth.context.tsx`
 2. Custom Axios instance (`src/api/custom-instance.ts`) automatically injects `Authorization: Bearer ${token}` headers
 3. Protected routes use `ProtectedRoute` component that checks authentication status
-4. 401 responses trigger automatic logout via React Query's global error handler
+4. 401 responses trigger automatic logout via React Query's global error handler — except the
+   current-user query, which sits above every error boundary and so ends the session itself
+   (`useEndSession`), recording why so the login page can say "Sesión expirada"
+   (`src/utils/session.ts`)
 
 ### Multi-Community Model & Authorization
 
@@ -97,7 +120,14 @@ To update API definitions (human maintainer workflow):
 Routes are organized by authentication requirement:
 - **LoginLayout**: Unauthenticated routes (login, password recovery)
 - **AuthenticatedLayout**: Protected routes with sidebar navigation
-- **DynamicLayout**: Routes that adapt based on auth status
+- **PublicLayout**: Routes served the same to everyone, signed in or not (`/contact`)
+
+There is no auth-adaptive layout. `DynamicLayout` was one in name — it chose between the two above
+from the signed-in user — but nothing fetched that user outside `AuthenticatedLayout`, so it only
+ever rendered the public one. It was removed when the user became a live query (#203) rather than
+silently starting to work: what `/contact` should show a caller with no session, or one who belongs
+to several communities, is a question for the contact-screen epic, and the comment at that route in
+`src/App.tsx` says so.
 
 Route definitions are in `src/App.tsx` with nested structure for supply points management.
 
@@ -372,6 +402,19 @@ blocker to report and stop at: the deliverable is the text, not the API call.
 `git push` is likewise not yours to run. Commit locally, and leave pushing and opening pull requests
 to a human.
 
+### Referring to issues in code
+
+When a comment, a suppression justification, a `TODO` or a test name refers to work, use an issue
+number (`#412`) or its URL — never an epic's internal ordering ("epic PR 5"), a branch name, a
+milestone or a date. Branches are deleted after merge and plans are not in the repository; an issue
+number resolves years later from a fresh clone.
+
+`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
+invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
+is a permanent one.
+
+## Git workflow
+
 ### Never create a branch
 
 **Do not run `git checkout -b`, `git branch`, `git switch -c` or `git worktree add`.** Branches are
@@ -385,13 +428,35 @@ The same staleness rule applies to reading git facts at all: establish them from
 `git ls-remote` or `origin/<branch>`, never from a local branch ref that may not have moved in
 weeks.
 
-### Referring to issues in code
+### Never rewrite a commit that has been pushed
 
-When a comment, a suppression justification, a `TODO` or a test name refers to work, use an issue
-number (`#412`) or its URL — never an epic's internal ordering ("epic PR 5"), a branch name, a
-milestone or a date. Branches are deleted after merge and plans are not in the repository; an issue
-number resolves years later from a fresh clone.
+Before `git reset`, `git commit --amend`, `git rebase`, or anything else that replaces an existing
+commit, establish which commits are actually yours to replace:
 
-`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
-invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
-is a permanent one.
+```bash
+git fetch origin
+git log --oneline @{u}..HEAD    # only these are unpublished
+```
+
+A commit reachable from `origin/<branch>` is published, and published commits are **append only**.
+Correct them with a **new commit** that states what changed and why — never by rebuilding the branch.
+This holds even when the rewrite would be tidier: a rewritten branch diverges from its remote, breaks
+`git pull` for anyone who has it, orphans review comments anchored to the old SHA, and can only be
+repaired by a force-push, which is not yours to run. "The history reads better" is not a reason; if
+the result reads oddly — one commit adding what the next removes — say so in the new commit's
+message. That is what the message is for.
+
+New instructions arriving mid-task are the trap: the work already committed may have been pushed
+while you were working. Re-check `@{u}` at that moment, not from memory of how the branch looked when
+you started.
+
+**If a branch has already diverged, do not `git pull`.** That merges the superseded commits back in
+and resurrects whatever they contained. Stop, report the divergence with the exact content difference
+(`git diff @{u} HEAD --stat`), say whether anything on the remote would be lost, and let a human
+choose between re-sequencing onto the remote tip and force-pushing.
+
+The same fetch-first rule applies to the **base**: read it from `git fetch` plus `origin/<branch>`,
+never from a local ref that may not have moved in weeks, and re-read it before quoting any "before"
+figure — test counts, baselines, timings. A long task can have its base changed underneath it, and a
+number measured against the wrong base is worse than no number.
+
