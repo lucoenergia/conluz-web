@@ -148,9 +148,9 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   API hides what the caller may not see.
 - **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
   `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
-- **Two screens have not migrated yet** and carry a numbered `eslint-disable`:
-  `Home.tsx` (#162) and `SupplyCoefficientHistorySection.tsx` (#163). Do not add
-  a third. The capability #163 was waiting for now exists:
+- **One screen has not migrated yet** and carries a numbered `eslint-disable`:
+  `SupplyCoefficientHistorySection.tsx` (#163). Do not add a second. It is
+  unblocked -- the capability it was waiting for now exists:
   `PartitionCoefficientCapabilitiesResponse.canReadSharingAgreement`.
 - **Writes go through `src/hooks/actions/`, never a generated mutation hook.**
   An action hook hands back only what this caller may do: a denied action is
@@ -162,9 +162,11 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   unrestricted; `getGet…QueryKey()` getters too. `no-restricted-imports`
   enforces it over all 52 mutation hooks, and
   `src/contracts/mutationHooks.spec.ts` fails if a new mutation arrives with
-  nobody having decided who may perform it. The two screens that predate the
-  layer are listed, with the exact hooks each may still import, in
-  `MUTATION_CALL_SITES` in `eslint.config.js`; both migrate in #162.
+  nobody having decided who may perform it. No screen is exempt: the
+  `MUTATION_CALL_SITES` list retired at zero in #162, and the spec now asserts
+  over the whole tree that nothing outside the actions layer, the generated
+  client and the specs imports one. Test helpers that name a hook they never
+  call are recorded by file and hook in `TEST_HELPER_MUTATION_IMPORTS`.
 
 ## Gating a list
 

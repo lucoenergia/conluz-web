@@ -3,7 +3,7 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation } from "../../test/queryState";
-import { useLogin } from "../../api/authentication/authentication";
+import { useLogin, useLogout } from "../../api/authentication/authentication";
 
 // Crear los mocks
 const mockNavigate = vi.fn();
@@ -11,8 +11,10 @@ const mockAuthDispatch = vi.fn();
 const mockLogin = vi.fn();
 
 // Mocks
+// useSessionActions runs for real; it calls both hooks on every render.
 vi.mock(import("../../api/authentication/authentication"), () => ({
   useLogin: vi.fn(),
+  useLogout: vi.fn(),
 }));
 
 vi.mock(import("../../context/auth.context"), async (importOriginal) => ({
@@ -37,6 +39,7 @@ describe("Login component", () => {
     mockNavigate.mockClear();
     mockLogin.mockClear();
     vi.mocked(useLogin).mockReturnValue(mutation.idle({ mutateAsync: mockLogin }));
+    vi.mocked(useLogout).mockReturnValue(mutation.idle({ mutateAsync: vi.fn() }));
   });
 
   const setup = () => {

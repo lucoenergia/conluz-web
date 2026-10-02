@@ -69,35 +69,31 @@ describe("the mutation guard rail", () => {
     expect(await restrictedImportErrors(importsQuery, "src/pages/probe/Probe.tsx")).toEqual([]);
   });
 
-  describe("the screens that predate the layer", () => {
-    it("may still import the mutation they already had", async () => {
-      // Profile.tsx and Login.tsx are the last two. Profile's own migration is
-      // not a swap: PUT /users/profile takes a narrower body than the form edits,
-      // which is why it is still here -- see #162.
+  // Every screen that once carried an exemption. The list they were on is
+  // gone, so what is left to prove is that none of them is still special: the
+  // rule fires on each, and names the action hook that replaced its mutation.
+  describe("the screens that used to predate the layer", () => {
+    it("holds the login screen to the rule now that it has migrated", async () => {
+      const errors = await restrictedImportErrors(
+        `import { useLogin } from "../../api/authentication/authentication";\nexport const x = useLogin;\n`,
+        "src/pages/auth/Login.tsx",
+      );
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("useSessionActions");
+    });
+
+    it("holds the profile screen to the rule now that it has migrated", async () => {
       const errors = await restrictedImportErrors(
         `import { useUpdateUser } from "../api/users/users";\nexport const x = useUpdateUser;\n`,
         "src/pages/Profile.tsx",
       );
 
-      expect(errors).toEqual([]);
-    });
-
-    it("are exempt from the mutation rule only, not from the community-scope one", async () => {
-      // The exemption is narrow by construction: its block re-states the other
-      // two arrays rather than switching the rule off for the file.
-      const errors = await restrictedImportErrors(
-        `import { useGetPlantById } from "../api/plants/plants";\nexport const x = useGetPlantById;\n`,
-        "src/pages/Profile.tsx",
-      );
-
       expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain("usePlantInActiveCommunity");
+      expect(errors[0]).toContain("useProfileActions");
     });
 
     it("stop being exempt once they migrate", async () => {
-      // The supply screens came off the list when they moved onto the actions
-      // layer. Deleting the entry is what makes the rule bite again, and a
-      // migration that left the entry behind would look identical without it.
       const errors = await restrictedImportErrors(
         `import { useUpdateSupply } from "../../api/supplies/supplies";\nexport const x = useUpdateSupply;\n`,
         "src/pages/supply-points/EditSupply.tsx",

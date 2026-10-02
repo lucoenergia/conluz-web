@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { MUTATION_CALL_SITES, COMMUNITY_SCOPE_WRAPPERS } from "../../eslint.config.js";
+import { COMMUNITY_SCOPE_WRAPPERS } from "../../eslint.config.js";
 
 /**
  * Every write this app can make is a decision about who may make it. This spec
@@ -222,12 +222,10 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     scope: "user",
     capability: "canEdit",
     hook: "useUserActions",
-    // RELEASE BLOCKER, not a note. Profile.tsx saves the signed-in user through
-    // this administrative endpoint, and canEdit is false for an ordinary member
-    // looking at their own record -- so once the backend enforces capabilities,
-    // no member can save their profile. The fix is to call PUT /users/profile
-    // (useProfileActions), and it has to ship before or with the backend.
-    approximates: "administrative edit of any user; NOT the profile screen's save -- see useProfileActions and the release blocker recorded in the #165 PR",
+    // canEdit is false for an ordinary member looking at their own record, by
+    // design: self-service goes to PUT /users/profile. Nothing on the profile
+    // screen reads this entry.
+    approximates: "administrative edit of any user; the profile screen saves its own caller through useProfileActions / PUT /users/profile, which asks no capability",
   },
   useDeleteUser: { scope: "user", capability: "canDelete", hook: "useUserActions" },
   useEnableUser: { scope: "user", capability: "canEnable", hook: "useUserActions" },
@@ -406,9 +404,33 @@ describe("who may perform each mutation", () => {
   });
 });
 
-describe("the screens that predate the actions layer", () => {
-  const entries = Object.entries(MUTATION_CALL_SITES) as [string, string[]][];
+/**
+ * Test infrastructure that names a generated mutation hook without being a spec.
+ *
+ * Both import the hook only to type or to set a mocked result, and neither
+ * calls it. They are not screens and are not migrating, so they carry an
+ * eslint-disable rather than an issue number -- and they are listed here, by
+ * name and by hook, so that the repo-wide assertion below stays an assertion
+ * rather than a directory carve-out. Adding one takes an edit to this list.
+ */
+const TEST_HELPER_MUTATION_IMPORTS: Record<string, { hooks: string[]; reason: string }> = {
+  "src/test/queryState.typecheck.ts": {
+    hooks: ["useCreateMembership"],
+    reason: "types the mutation builders against a real generated hook; never called",
+  },
+  "src/components/SharingAgreementCoefficientSet/SharingAgreementCoefficientSet.testUtils.tsx": {
+    hooks: [
+      "useActivatePartitionCoefficients",
+      "useClosePartitionCoefficients",
+      "useDeactivatePartitionCoefficients",
+      "useReopenPartitionCoefficients",
+      "useReplacePartitionCoefficients",
+    ],
+    reason: "sets the results of the hooks its four spec files mock; never called",
+  },
+};
 
+describe("where a generated mutation may be imported", () => {
   /** What a file actually imports from a generated tag module. */
   function mutationImportsIn(path: string): string[] {
     const source = readFileSync(path, "utf8");
@@ -417,7 +439,11 @@ describe("the screens that predate the actions layer", () => {
     for (const match of source.matchAll(
       /import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*["'][^"']*api\/[a-z-]+\/[a-z-]+["']/g,
     )) {
-      for (const raw of match[1].split(",")) {
+      // Comments first: an eslint-disable block inside the braces usually
+      // contains a comma, which would otherwise glue the name after it onto a
+      // sentence and hide that import from this scan entirely.
+      const names = match[1].replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+      for (const raw of names.split(",")) {
         const name = raw.trim().split(/\s+as\s+/)[0].trim();
         if (known.has(name)) found.add(name);
       }
@@ -425,36 +451,69 @@ describe("the screens that predate the actions layer", () => {
     return [...found].sort();
   }
 
-  it("still exist", () => {
-    expect(entries.filter(([path]) => !existsSync(path)).map(([path]) => path)).toEqual([]);
-  });
+  /** Every hand-written source file: the generated client is not one. */
+  function sourceFiles(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return path === GENERATED_CLIENT_DIR ? [] : sourceFiles(path);
+      return /\.tsx?$/.test(entry.name) ? [path] : [];
+    });
+  }
 
-  // The assertion a bare path list could not make. Exempting a FILE would exempt
-  // it for every mutation it ever grows; pinning the pair means a second import
-  // added tomorrow fails here, even though lint stays green.
-  it("import exactly the mutations recorded against them, and no others", () => {
-    const drifted = entries
-      .map(([path, recorded]) => ({ path, recorded: [...recorded].sort(), actual: mutationImportsIn(path) }))
-      .filter(({ recorded, actual }) => JSON.stringify(recorded) !== JSON.stringify(actual));
+  const importers = sourceFiles("src")
+    .filter((path) => !path.startsWith(`${ACTIONS_DIR}/`))
+    .filter((path) => !/\.spec\.tsx?$/.test(path))
+    .map((path) => ({ path, hooks: mutationImportsIn(path) }))
+    .filter(({ hooks }) => hooks.length > 0);
+
+  // What MUTATION_CALL_SITES used to assert per exempt screen, now asserted
+  // over the whole tree. The list it replaces reached zero in #162; stating it
+  // this way means re-introducing one takes an edit here, not a quiet entry in
+  // a file nobody reads.
+  it("is the actions layer, and nowhere else a screen can reach", () => {
+    const offenders = importers
+      .filter(({ path }) => !(path in TEST_HELPER_MUTATION_IMPORTS))
+      .map(({ path, hooks }) => `${path}: ${hooks.join(", ")}`);
 
     expect(
-      drifted,
-      "A file exempted from the mutation rule imports something other than what MUTATION_CALL_SITES " +
-        "records. If it gained a mutation, route that one through src/hooks/actions instead. If it " +
-        "lost one, trim the entry -- and delete the entry entirely once the file has no mutations left.",
+      offenders,
+      "Mutations are reached through src/hooks/actions, never imported directly. If this is test " +
+        "infrastructure rather than a screen, record it in TEST_HELPER_MUTATION_IMPORTS with the " +
+        "reason it names a hook it never calls.",
     ).toEqual([]);
   });
 
-  it("never grows", () => {
-    // Lowered by hand as screens migrate, so growing it takes a deliberate edit
-    // with a diff rather than a quiet addition.
-    expect(entries.length).toBeLessThanOrEqual(2);
+  // Recording a FILE would exempt it for every mutation it ever grows. The
+  // pair is what is frozen, so a sixth hook added tomorrow fails here even
+  // though its eslint-disable still covers it.
+  it("lets the test helpers name exactly the hooks recorded against them", () => {
+    const drifted = Object.entries(TEST_HELPER_MUTATION_IMPORTS)
+      .filter(([path]) => existsSync(path))
+      .map(([path, { hooks }]) => ({ path, recorded: [...hooks].sort(), actual: mutationImportsIn(path) }))
+      .filter(({ recorded, actual }) => JSON.stringify(recorded) !== JSON.stringify(actual));
+
+    expect(drifted, "A listed test helper imports something other than what is recorded for it").toEqual([]);
   });
 
-  it("does not overlap the community-scope wrapper list", () => {
+  it("keeps no entry for a test helper that is gone", () => {
+    const stale = Object.keys(TEST_HELPER_MUTATION_IMPORTS).filter((path) => !existsSync(path));
+
+    expect(stale).toEqual([]);
+  });
+
+  it("says why each test helper may name a mutation at all", () => {
+    const MIN_EXPLANATION = 20;
+    const unexplained = Object.entries(TEST_HELPER_MUTATION_IMPORTS)
+      .filter(([, { reason }]) => reason.trim().length < MIN_EXPLANATION)
+      .map(([path]) => path);
+
+    expect(unexplained).toEqual([]);
+  });
+
+  it("does not quietly exempt a community-scope wrapper as well", () => {
     // Flat config gives a file matching two blocks the later block outright, so
-    // an overlap would silently drop one list's exemptions.
+    // a wrapper listed here too would silently drop one list's exemptions.
     const wrappers = new Set(COMMUNITY_SCOPE_WRAPPERS);
-    expect(entries.map(([path]) => path).filter((path) => wrappers.has(path))).toEqual([]);
+    expect(Object.keys(TEST_HELPER_MUTATION_IMPORTS).filter((path) => wrappers.has(path))).toEqual([]);
   });
 });

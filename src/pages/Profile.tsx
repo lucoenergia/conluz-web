@@ -6,19 +6,21 @@ import PersonIcon from "@mui/icons-material/Person";
 import BadgeIcon from "@mui/icons-material/Badge";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { BreadCrumb } from "../components/Breadcrumb";
-import { useGetCurrentUser, useUpdateUser } from "../api/users/users";
+import { useGetCurrentUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
+import { useProfileActions } from "../hooks/actions";
 import { useActiveCommunityRoleLabel } from "../hooks/permissions";
 
 export const ProfilePage: FC = () => {
-  const { data: currentUser, isLoading, error, refetch } = useGetCurrentUser();
-  const updateUser = useUpdateUser();
+  const { data: currentUser, isLoading, error } = useGetCurrentUser();
+  const { actions } = useProfileActions();
   const errorDispatch = useErrorDispatch();
   const roleLabel = useActiveCommunityRoleLabel();
 
+  // Only what PUT /users/profile accepts. Name, DNI and member number identify
+  // the member to the community and to the distributor, so they are changed
+  // administratively through PUT /users/{userId} and are shown here read-only.
   const [formData, setFormData] = useState({
-    name: "",
-    dni: "",
     email: "",
     address: "",
     phone: "",
@@ -29,8 +31,6 @@ export const ProfilePage: FC = () => {
   useEffect(() => {
     if (currentUser) {
       setFormData({
-        name: currentUser.fullName || "",
-        dni: currentUser.personalId || "",
         email: currentUser.email || "",
         address: currentUser.address || "",
         phone: currentUser.phoneNumber || "",
@@ -39,8 +39,6 @@ export const ProfilePage: FC = () => {
   }, [currentUser]);
 
   const [formErrors, setFormErrors] = useState({
-    name: false,
-    dni: false,
     email: false,
     address: false,
     phone: false,
@@ -55,39 +53,31 @@ export const ProfilePage: FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors = {
-      name: !formData.name.trim(),
-      dni: !formData.dni.trim(),
       email: !formData.email.trim(),
       address: false,
       phone: false,
     };
     setFormErrors(newErrors);
-    return !newErrors.name && !newErrors.dni && !newErrors.email;
+    return !newErrors.email;
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateForm()) return;
-    if (!currentUser?.id) {
-      errorDispatch("No se pudo obtener el ID del usuario");
-      return;
-    }
-    try {
-      const updatedUserData = {
-        number: currentUser.number || 0,
-        personalId: formData.dni,
-        fullName: formData.name,
-        address: formData.address || undefined,
-        email: formData.email,
-        phoneNumber: formData.phone || undefined,
-      };
-      await updateUser.mutateAsync(
-        { userId: currentUser.id, data: updatedUserData },
-        { onSuccess: () => { setSuccessMessage(true); refetch(); } }
-      );
-    } catch (error) {
+
+    // Omitting address or phoneNumber is how the endpoint clears them, which
+    // is what an emptied field means. The action refreshes the signed-in user
+    // itself, so there is nothing to refetch here.
+    const saved = await actions.save.run({
+      email: formData.email,
+      address: formData.address || undefined,
+      phoneNumber: formData.phone || undefined,
+    });
+
+    if (saved) {
+      setSuccessMessage(true);
+    } else {
       errorDispatch("Error al actualizar el perfil. Por favor, inténtalo de nuevo.");
-      console.error("Error updating profile:", error);
     }
   };
 
@@ -187,8 +177,13 @@ export const ProfilePage: FC = () => {
                 )}
               </Box>
 
-              <TextField label="Nombre completo" error={formErrors.name} helperText={formErrors.name ? "Por favor, introduce tu nombre completo" : ""} value={formData.name} onChange={handleChange("name")} required fullWidth variant="outlined" />
-              <TextField label="DNI/NIF" error={formErrors.dni} helperText={formErrors.dni ? "Por favor, introduce tu DNI/NIF" : ""} value={formData.dni} onChange={handleChange("dni")} required fullWidth variant="outlined" />
+              <TextField label="Nombre completo" value={currentUser?.fullName ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
+              <TextField label="DNI/NIF" value={currentUser?.personalId ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
+              <Typography variant="body2" sx={{ color: colors.text.subtle, mt: -1 }}>
+                Nombre, DNI y número de socio te identifican ante la comunidad y la distribuidora.
+                Para cambiarlos, contacta con la administración de tu comunidad.
+              </Typography>
+
               <TextField label="Email" error={formErrors.email} helperText={formErrors.email ? "Por favor, introduce tu email" : ""} type="email" value={formData.email} onChange={handleChange("email")} required fullWidth variant="outlined" />
               <TextField label="Dirección" value={formData.address} onChange={handleChange("address")} fullWidth variant="outlined" />
               <TextField label="Número de teléfono" value={formData.phone} onChange={handleChange("phone")} fullWidth variant="outlined" />
@@ -197,6 +192,7 @@ export const ProfilePage: FC = () => {
                 <Button
                   type="submit"
                   variant="contained"
+                  disabled={actions.save.isPending}
                   sx={{
                     fontSize: fontSizes.lg,
                     fontWeight: 600,

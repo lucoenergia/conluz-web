@@ -218,25 +218,6 @@ const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) 
     `capability it gates on is already decided in src/contracts/mutationHooks.spec.ts.`,
 }));
 
-// ─── Mutation call sites that predate the actions layer ───────────────────────
-// Twenty screens wired a generated mutation directly, before there was anywhere
-// else to wire it. Each is migrated by giving it an action hook and deleting its
-// entry here; the capability every one will gate on is already decided in
-// src/contracts/mutationHooks.spec.ts, so migrating is wiring, not deciding.
-//
-// The PAIRS are what is frozen, not the paths. ESLint cannot express "this file
-// may import only these names" in a patterns entry, so the block below exempts
-// each file from the mutation rule wholesale and mutationHooks.spec.ts closes
-// the gap: a file's actual mutation imports must EQUAL the list recorded here,
-// so a second one added tomorrow fails even though lint stays green. One list
-// rather than twenty eslint-disable comments, so the debt is countable from one
-// place and the spec can assert it never grows.
-const MUTATION_CALL_SITES = {
-  // #162 -- home, profile and navigation leftovers
-  "src/pages/Profile.tsx": ["useUpdateUser"],
-  "src/pages/auth/Login.tsx": ["useLogin"],
-};
-
 export default tseslint.config([
   globalIgnores(["dist"]),
   {
@@ -317,17 +298,13 @@ export default tseslint.config([
       "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS] }],
     },
   },
-  {
-    // Screens that predate the layer: exempt from the mutation restriction only,
-    // and only for the hooks recorded against them in MUTATION_CALL_SITES, which
-    // src/contracts/mutationHooks.spec.ts holds them to.
-    files: Object.keys(MUTATION_CALL_SITES),
-    rules: {
-      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS] }],
-    },
-  },
 ]);
 
-// Read by src/contracts/mutationHooks.spec.ts, which is what keeps the entries
+// Read by src/contracts/mutationHooks.spec.ts, which is what keeps the list
 // above honest. Exported rather than duplicated so the two cannot disagree.
-export { MUTATION_CALL_SITES, COMMUNITY_SCOPE_WRAPPERS };
+//
+// There is no companion list of screens exempt from the mutation rule any
+// more: every screen goes through src/hooks/actions, and
+// mutationHooks.spec.ts asserts that over the whole tree rather than over a
+// list of names.
+export { COMMUNITY_SCOPE_WRAPPERS };
