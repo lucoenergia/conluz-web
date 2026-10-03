@@ -44,6 +44,16 @@ const USER_SCOPED_LISTINGS: Record<string, { hook: string; filter: string; reaso
         "under this page's heading.",
     },
   ],
+  "src/pages/home/useHomeViews.ts": [
+    {
+      hook: "useGetSuppliesByUserId",
+      filter: "isSupplyOutsideActiveCommunity",
+      reason:
+        "decides whether a community admin owns supplies in the active community, which is what " +
+        "offers them the member home view. The caller's own listing spans every community they " +
+        "belong to, so a supply in another one must not count here.",
+    },
+  ],
 };
 
 /** Hook names for every GET under /users/{userId}/ that answers with a collection. */
