@@ -4,6 +4,8 @@ import {
   COMMUNITY_ADMIN_CAPABILITIES,
   COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
   EMPTY_PRODUCTION,
+  FIXED_ADMIN_OWNED_SUPPLY,
+  FIXED_COMMUNITY_ADMIN_USER,
   FIXED_COMMUNITY_ID,
   MEMBER_COMMUNITY_CAPABILITIES,
   PLATFORM_VIEW_COMMUNITY_CAPABILITIES,
@@ -609,6 +611,25 @@ export async function mockUserSuppliesAcrossCommunities(page: Page) {
           { ...FIXED_SUPPLY, capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES },
           { ...FIXED_SUPPLY_OTHER_COMMUNITY, capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES },
         ]),
+      }),
+  );
+}
+
+/**
+ * Makes the community admin the owner of a supply in the active community, so
+ * they have both home views and the switch between them (#197).
+ *
+ * Registered AFTER mockAllApiRoutes so it wins, and only for the admin's own
+ * listing: GET /users/{userId}/supplies answers with the target's supplies.
+ */
+export async function mockCommunityAdminOwnsSupply(page: Page) {
+  await page.route(
+    (url) => url.href.includes(`/api/v1/users/${FIXED_COMMUNITY_ADMIN_USER.id}/supplies`),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([FIXED_ADMIN_OWNED_SUPPLY]),
       }),
   );
 }
