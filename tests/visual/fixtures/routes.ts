@@ -189,14 +189,18 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
       // Mirrors SupplyAccessPolicy.visibleSuppliesOwnedBy (conluz#326): the
       // target's supplies in the communities the caller administers, or all of
       // them when the caller is the target. Every fixture supply belongs to
-      // FIXED_COMMUNITY_ID, so an admin of it sees both and anyone else sees
-      // none -- which is what makes the member walkthrough meaningful.
+      // FIXED_COMMUNITY_ID, so an admin of it sees the target's and anyone else
+      // sees none -- which is what makes the member walkthrough meaningful.
+      // "The target's" is literal: a supply owned by somebody else is never in
+      // the answer, so an admin asking about themselves gets only their own.
+      const targetId = /\/users\/([^/]+)\/supplies/.exec(url)?.[1];
       const administers = role === "COMMUNITY_ADMIN";
-      const own = url.includes(`/users/${(currentUser as { id?: string }).id ?? "\u0000"}/`);
+      const own = targetId === (currentUser as { id?: string }).id;
+      const ownedByTarget = [fixedSupply, fixedSupply2].filter((supply) => supply.user?.id === targetId);
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(administers || own ? [fixedSupply, fixedSupply2] : []),
+        body: JSON.stringify(administers || own ? ownedByTarget : []),
       });
     }
     if (
