@@ -76,6 +76,9 @@ describe("resolvePageScope", () => {
 
   test.each([
     ["/", "community"],
+    ["/home", "community"],
+    ["/home/member", "community"],
+    ["/home/management", "community"],
     ["/production", "community"],
     ["/production/new", "community"],
     ["/production/p-1/sharing-agreements/a-1", "community"],

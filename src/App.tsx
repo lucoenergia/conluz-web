@@ -1,9 +1,10 @@
 import { lazy, type ComponentType } from "react";
-import { Route, Routes } from "react-router";
+import { Outlet, Route, Routes } from "react-router";
 import { AuthenticatedLayout } from "./layouts/authenticated.layout";
 import { LoginLayout } from "./layouts/login.layout";
 import { PublicLayout } from "./layouts/public.layout";
 import { CapabilityRoute } from "./components/Auth/CapabilityRoute";
+import { HomeIndexRedirect, HomeViewRoute } from "./pages/home/HomeViewRoute";
 
 /**
  * Route-level code splitting.
@@ -32,6 +33,8 @@ const HomePage = lazyPage(() => import("./pages/Home"), "HomePage");
 const ProfilePage = lazyPage(() => import("./pages/Profile"), "ProfilePage");
 const ContactPage = lazyPage(() => import("./pages/Contact.page"), "ContactPage");
 const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityPage"), "NoCommunityPage");
+const MemberHomePage = lazyPage(() => import("./pages/home/MemberHomePage"), "MemberHomePage");
+const CommunityManagementPage = lazyPage(() => import("./pages/home/CommunityManagementPage"), "CommunityManagementPage");
 
 const SupplyPointsPage = lazyPage(() => import("./pages/supply-points/SupplyPointsPage"), "SupplyPointsPage");
 const SupplyDetailPage = lazyPage(() => import("./pages/supply-points/SupplyDetailPage"), "SupplyDetailPage");
@@ -70,6 +73,19 @@ function App() {
         </Route>
         <Route element={<AuthenticatedLayout />}>
           <Route index element={<HomePage />} />
+          {/*
+            The two home views (#197). Deliberately linked from nowhere -- not
+            the menu, not the landing after login -- until the member view has
+            content; only a direct URL reaches them.
+          */}
+          <Route
+            path="home"
+            element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><Outlet /></CapabilityRoute>}
+          >
+            <Route index element={<HomeIndexRedirect />} />
+            <Route path="member" element={<HomeViewRoute view="member"><MemberHomePage /></HomeViewRoute>} />
+            <Route path="management" element={<HomeViewRoute view="management"><CommunityManagementPage /></HomeViewRoute>} />
+          </Route>
           <Route path="supply-points">
             <Route index element={<SupplyPointsPage />}></Route>
             <Route
