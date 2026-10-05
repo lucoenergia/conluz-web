@@ -233,6 +233,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useGrantPlatformAdmin: { scope: "user", capability: "canGrantPlatformAdmin", hook: "useUserActions" },
   useRevokePlatformAdmin: { scope: "user", capability: "canRevokePlatformAdmin", hook: "useUserActions" },
   useUpdateProfile: { ungated: "open to any authenticated caller: PUT /users/profile acts on the caller and takes no id" },
+  useChangePassword: { ungated: "open to any authenticated caller: PUT /users/current/password acts on the caller and takes no id" },
 };
 
 /** The two forms of ungated reason that are permanent rather than pending work. */

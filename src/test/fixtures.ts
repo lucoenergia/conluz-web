@@ -197,6 +197,8 @@ export function buildCurrentUser(overrides: Partial<CurrentUserResponse> = {}): 
   return {
     ...({
       ...buildUser(),
+      // Informational only: the backend refuses nothing because of it.
+      mustChangePassword: false,
       platformCapabilities: buildPlatformCapabilities(),
     } satisfies CurrentUserResponse),
     ...overrides,
