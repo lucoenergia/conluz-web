@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { resolveCommunityScopedTarget, resolveLandingRoute } from "./routes";
+import { resolveCommunityScopedTarget, resolveForcedPasswordChangeTarget, resolveLandingRoute } from "./routes";
 import type { CurrentUserResponse } from "../api/models";
 import { buildPlatformCapabilities, buildUserCapabilities } from "../test/fixtures";
 
@@ -138,5 +138,22 @@ describe("resolveCommunityScopedTarget", () => {
     for (const pathname of ["/", "/profile", "/members", "/integrations", "/users", "/users/user-1/edit", "/platform", "/communities/community-1/edit", "/no-community"]) {
       expect(resolveCommunityScopedTarget(pathname, "")).toBeNull();
     }
+  });
+});
+
+describe("resolveForcedPasswordChangeTarget", () => {
+  test("sends a flagged caller to /change-password from anywhere else", () => {
+    const user = { ...baseUser, mustChangePassword: true };
+    expect(resolveForcedPasswordChangeTarget(user, "/")).toBe("/change-password");
+    expect(resolveForcedPasswordChangeTarget(user, "/production/plant-1")).toBe("/change-password");
+  });
+
+  test("leaves a flagged caller on /change-password", () => {
+    expect(resolveForcedPasswordChangeTarget({ ...baseUser, mustChangePassword: true }, "/change-password")).toBeNull();
+  });
+
+  test("never redirects a caller who need not change it, or one not yet known", () => {
+    expect(resolveForcedPasswordChangeTarget(baseUser, "/")).toBeNull();
+    expect(resolveForcedPasswordChangeTarget(null, "/")).toBeNull();
   });
 });

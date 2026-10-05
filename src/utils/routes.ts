@@ -15,6 +15,25 @@ export function resolveLandingRoute(user: CurrentUserResponse): string {
   return '/no-community';
 }
 
+export const CHANGE_PASSWORD_ROUTE = "/change-password";
+
+/**
+ * Where to send a caller who must change their password first, or `null` when
+ * they may stay where they are (#196).
+ *
+ * While `mustChangePassword` is true, every authenticated route leads to the
+ * change-password page. Logging out stays possible: it lives in the header,
+ * which the redirect leaves in place. An unknown user is never redirected --
+ * "not yet known" is not "yes".
+ */
+export function resolveForcedPasswordChangeTarget(
+  user: CurrentUserResponse | null,
+  pathname: string,
+): string | null {
+  if (user?.mustChangePassword !== true) return null;
+  return pathname === CHANGE_PASSWORD_ROUTE ? null : CHANGE_PASSWORD_ROUTE;
+}
+
 /**
  * What a page reads and writes, as stated to the user by the scope context
  * surface (side-menu header or context strip).
