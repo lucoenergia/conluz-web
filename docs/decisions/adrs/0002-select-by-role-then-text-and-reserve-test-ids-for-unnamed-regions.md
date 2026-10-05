@@ -78,7 +78,7 @@ A `data-testid` in `src/` is a statement: this container has no role and no name
 
 ## References
 
-- Rule for agents: `CLAUDE.md`, "Selector hierarchy".
+- Rule for agents: `AGENTS.md`, "Selector hierarchy".
 - Test ids added by this decision:
   - `supply-coefficient-history` in `src/components/SupplyCoefficientHistorySection/SupplyCoefficientHistorySection.tsx`
   - `sharing-agreement-file-panel` in `src/components/SharingAgreementFilePanel/SharingAgreementFilePanel.tsx`

@@ -56,7 +56,7 @@ export function useSupplyActions(): SupplyActions {
 
   // The pages these replace call their own query's refetch() instead, which
   // only refreshes the list the caller happens to be looking at. Invalidating
-  // the keys is the house convention (CLAUDE.md, "Invalidation is explicit") and
+  // the keys is the house convention (AGENTS.md, "Invalidation is explicit") and
   // also refreshes the detail page and any other mounted reader.
   const invalidateSupply = (supplyId: string) => {
     queryClient.invalidateQueries({ queryKey: getGetSupplyQueryKey(supplyId) });

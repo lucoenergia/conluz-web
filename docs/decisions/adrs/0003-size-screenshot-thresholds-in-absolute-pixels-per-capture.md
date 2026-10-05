@@ -93,6 +93,6 @@ Thresholds are measured against the current baselines. Never calibrate against a
 
 - Values and `threshold()`: `tests/visual/fixtures/capture.ts`; canary value: `tests/visual/chrome-canary.spec.ts`.
 - No global threshold: `playwright.config.ts`.
-- Operational rule for agents: `CLAUDE.md`, "Screenshot thresholds (no global value)".
+- Operational rule for agents: `AGENTS.md`, "Screenshot thresholds (no global value)".
 - The work that produced the measurements: "Shrink the blast radius of the visual regression tests", PRs 2 and 3.
 - Related: ADR-0002 (selector hierarchy, which governs the locators the thresholds apply to).

@@ -35,7 +35,7 @@ async function hiddenAppBarStyle(page: Page): Promise<string> {
 /**
  * A capture's pixel threshold, or 0 when VISUAL_EXACT=1.
  *
- * Measuring noise and signal (how thresholds are chosen, see CLAUDE.md)
+ * Measuring noise and signal (how thresholds are chosen, see AGENTS.md)
  * needs every capture compared exactly. Per-call thresholds take precedence
  * over anything the config sets, so the switch has to live where the values
  * do. With the config's updateSnapshots: "none", the measurement is just:
@@ -68,7 +68,7 @@ export function threshold(maxDiffPixels: number): number {
  *   capture.
  * Both are 100: 43% below the smallest measured signal, with 100 px left for
  * rendering differences between environments (checked by CI). Choosing a value
- * for a new capture, and how to measure it: CLAUDE.md, "Screenshot thresholds".
+ * for a new capture, and how to measure it: AGENTS.md, "Screenshot thresholds".
  */
 export const COMPONENT_MAX_DIFF_PIXELS = threshold(100);
 export const LAYOUT_MAX_DIFF_PIXELS = threshold(100);
