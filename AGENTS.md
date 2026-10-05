@@ -4,356 +4,89 @@ This file provides guidance to AI coding agents (Claude Code, Codex, Cursor, Cop
 any other tool that reads `AGENTS.md`) when working with code in this repository. It is the single
 source of truth for agent rules; tool-specific entry points such as `CLAUDE.md` only point here.
 
-## Essential Commands
+## Where the detail lives
 
-```bash
-# Development
-npm run dev                   # Start development server on port 3001
-npm run build                 # TypeScript compile + Vite production build
-npm run preview               # Preview production build locally
-npm run lint                  # Run ESLint
-npm test                      # Vitest: watch mode in an interactive terminal, a single run in CI or non-interactive shells
-npx vitest run                # Run all tests once in any terminal (same as npm test -- --run)
-npm test -- --watch           # Run tests in watch mode
-npm run generate-client       # Regenerate API client from api-docs.json
-npm run generate-mutation-hook-list  # Re-derive the mutation-hook list from the api-docs.json already present.
-                              # This does NOT regenerate the client, so the "agents never run
-                              # generate-client" rule does not cover it — agents may run this.
-npm run test:visual           # Run visual tests
-npm run test:visual:mobile    # Run visual tests for mobile screens
-npm run test:visual:desktop   # Run visual tests for desktop screens
-```
+This file holds the rules that apply to every task. Task-specific depth lives in skills — plain
+Markdown under `.claude/skills/<name>/SKILL.md`; an agent with no skill mechanism reads the file
+directly. **Read the matching one before starting:**
 
-## Architecture Overview
+- **`conluz-web-community-scope`** — before any data-fetching, role-gating, route, action, or
+  user-scoped-read work. Holds the full authorization model, the recipes for adding a screen, route,
+  action or user-scoped read, and the data-fetching pattern.
+- **`conluz-web-testing`** — before writing, changing or running any spec or visual test: the
+  rendering harness, the two API-mocking tiers, fixtures, the selector hierarchy, and the Playwright
+  suite (captures, masking, thresholds, coverage).
+- **`conluz-web-list-tables`** — before building a list table, a row menu or a row-action dialog.
+- Styling: `references/styling-conventions.md`, `references/theme-tokens.md`, `references/fonts.md`.
+- Decisions and their revisit conditions: `docs/decisions/adrs/`.
 
-### State Management Pattern
-The application uses a layered state management approach:
-- **Global State**: React Context providers — `AuthContext` holds the token; `LoggedUserContext` holds no state of its own and serves the current-user query (see below)
-- **Server State**: TanStack React Query for API data caching and synchronization, with the defaults in `src/queryClient.ts`
-- **Token Storage**: Dual storage system - localStorage for "remember me", sessionStorage for temporary
+## Commands
+
+Scripts are in `package.json`. What they do not tell you:
+
+- `npm test` runs Vitest in watch mode in an interactive terminal and once in CI or non-interactive
+  shells; `npx vitest run` runs once anywhere.
+- `npm run generate-mutation-hook-list` re-derives the mutation-hook list from the `api-docs.json`
+  already present. It does NOT regenerate the client, so the "agents never run `generate-client`"
+  rule does not cover it — agents may run this.
+- Never run the dev server after completing changes.
+
+## Architecture rules
+
+### Providers and the signed-in user
 - **Provider order** (`src/main.tsx`, mirrored by the test harness): `AuthProvider → QueryClientProvider → LoggedUserProvider → CommunityProvider → Theme → BrowserRouter`. The query client is above the user because the user *is* a query, and `CommunityProvider` reads it.
+- **The signed-in user is live, not a session snapshot.** `LoggedUserProvider` serves `GET /users/current` (`staleTime` 30 s, gated on a token, the one query that refetches on window focus). Invalidating `getGetCurrentUserQueryKey()` is how a screen makes its own change to the caller's record visible. `pending` is reachable mid-session: never fold "not yet known" into "no" (`src/hooks/permissions/capabilityOutcome.ts`). Decided in ADR 0004; details in the community-scope skill.
+- **401 handling:** a 401 triggers logout via React Query's global error handler — except the current-user query, which sits above every error boundary and ends the session itself (`useEndSession`), recording why so the login page can say "Sesión expirada" (`src/utils/session.ts`).
 
-### The signed-in user is live, not a session snapshot
-`LoggedUserProvider` serves `GET /users/current` directly — `staleTime` 30 s, gated on there being a
-token, and the one query in the app that opts back into `refetchOnWindowFocus` (the global default is
-`false`). It used to copy the response into `useState` once per session, which froze what the app
-believed about the caller: since capabilities gate routes, the menu and the landing route, a revoked
-platform admin kept being offered the administration surface until they reloaded (#203).
+### Multi-community authorization
+The app is **multi-community**. This supersedes any older single-community assumption.
 
-Consequences worth knowing before writing a screen:
-- **Invalidating `getGetCurrentUserQueryKey()` now works.** That is how a screen makes its own change
-  to the caller's record visible — `useMembershipActions` does it, because a community admin may
-  re-role or remove their *own* membership.
-- **Platform capabilities are as live as community capabilities already were**, but they can only
-  change in *another* session: the backend refuses self-revocation, and `canRevokePlatformAdmin` is
-  false for one's own record. In-app grant/revoke always targets somebody else, so it does not touch
-  the caller — which is why `useUserActions` does not invalidate this key.
-- **`pending` is reachable mid-session.** A capability answer of "not yet known" must never be folded
-  into "no"; `src/hooks/permissions/capabilityOutcome.ts` keeps the two apart.
-- Decided in `docs/decisions/adrs/0004-make-the-signed-in-user-a-live-query-and-end-the-session-on-its-401.md`.
+- **No global user `role`.** Two independent axes: `isPlatformAdmin`, and the role within the active community (`COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`, from `memberships`).
+- **Golden rule (mirror of the backend):** `isPlatformAdmin` **never** grants access to a community's operational data.
+- **Data endpoints are path-scoped** (`/communities/{communityId}/…`). Data hooks pass `communityId` and are **gated on its presence**; controls that submit community-scoped data disable when none is selected. The legacy `X-Community-Id` header is gone — the path is the sole scoping mechanism.
+- **Capabilities decide visibility, not roles.** Every response carries `capabilities`; `GET /users/current` carries `platformCapabilities`. Never re-derive a rule locally. `src/hooks/permissions/` is the only module allowed to read a role or the platform-admin flag (lint-enforced); reading `user.isPlatformAdmin` to **display** it is fine.
+- **No exemptions.** No file under `src/` reads a role or the platform-admin flag to decide what to render, and none carries an `eslint-disable` for the permission rules. If you want one, the capability either exists on the payload or is missing from the backend — ask for it; do not approximate it with a role.
+- **A capability says "may this caller ever", not "is this legal now".** Pair it with the resource's state (`isDraft && canDelete`). Opposite pairs (`canEnable`/`canDisable`, `canGrantPlatformAdmin`/`canRevokePlatformAdmin`) are **both** true for a caller who may do either; the row's own state picks one — resolve the pair once. Fixtures grant both halves.
+- **Mutations go through `src/hooks/actions/` only.** No component imports a generated mutation hook (lint- and spec-enforced over the whole tree). Action hooks return `undefined` for an action the caller may not perform; record each decision in `ACTION_COVERAGE` (`src/contracts/mutationHooks.spec.ts`).
+- **Routes are a contract.** Wrap every route in `CapabilityRoute` and classify it in `ROUTE_ACCESS` (`src/contracts/routeAccess.spec.ts`); a menu entry names the same requirement as its page. `/` stays unguarded on purpose — every denial redirects there. Only `denied` redirects; a failed check renders a retry.
+- **A capability gates the call; it does not scope the rows.** A user-scoped listing still gets filtered to the active community, and the filter is declared in `USER_SCOPED_LISTINGS` (`src/contracts/userScopedReads.spec.ts`). Conflating the two produced `lucoenergia/conluz#326` and `#336`.
 
-### Authentication Flow
-1. Token is managed by `AuthProvider` context in `src/context/auth.context.tsx`
-2. Custom Axios instance (`src/api/custom-instance.ts`) automatically injects `Authorization: Bearer ${token}` headers
-3. Protected routes use `ProtectedRoute` component that checks authentication status
-4. 401 responses trigger automatic logout via React Query's global error handler — except the
-   current-user query, which sits above every error boundary and so ends the session itself
-   (`useEndSession`), recording why so the login page can say "Sesión expirada"
-   (`src/utils/session.ts`)
+### API client
+- `src/api/` is **generated** by Orval from `api-docs.json`. **Never edit it.**
+- **For AI-agent tasks:** the updated `api-docs.json` and regenerated client are **always provided before implementation** — treat `src/api/` as current. Do **not** fetch `api-docs.json` or run `npm run generate-client`, and do not list either as a task step. If `src/api/` looks out of sync, stop and report it.
+- Reads use the generated hooks (or their community-scope wrappers); `getGet…QueryKey()` getters are importable everywhere. Invalidation is explicit after every mutation (`removeQueries` after a delete) — see `src/hooks/actions/useSharingAgreementActions.ts`.
 
-### Multi-Community Model & Authorization
+### Routing
+`LoginLayout` (unauthenticated), `AuthenticatedLayout` (protected, sidebar), `PublicLayout` (same for everyone, `/contact`). There is deliberately no auth-adaptive layout; the comment at `/contact` in `src/App.tsx` says why.
 
-The app is **multi-community**. This is the single most important mental model for any data or gating work, and it supersedes any older single-community assumptions.
+## Testing — rules that always apply
+Full guide: the `conluz-web-testing` skill.
 
-- **Two independent authorization axes.** There is no global user `role`. Instead:
-  - `isPlatformAdmin` (boolean) — platform-level privilege.
-  - The user's role **within the active community**, derived via `src/hooks/permissions/useActiveCommunityRole.ts` from the `memberships` map (`COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`).
-- **Golden rule (mirror of the backend):** `isPlatformAdmin` **never** grants access to a community's operational data. Platform admins manage users/communities and assign community admins; they do not get members' consumption/production data by virtue of the flag.
-- **Active community context:** `src/context/community.context.tsx` selects and persists the active community (auto-selects when the user has exactly one; restores the persisted choice otherwise). `ScopeContext` (`src/components/ScopeContext/`) states the page scope — active community, "Toda la plataforma" or "Tu cuenta", from `resolvePageScope` in `src/utils/routes.ts` — in the side-menu header while the menu is open and in a strip under the app bar while it is closed, and switches the community. The app bar has no community control.
-- **Data endpoints are path-scoped:** `/communities/{communityId}/{supplies,consumption,production,plants,config}`. Data hooks must pass `communityId` and be **gated on its presence** — no active community → no call, and controls that submit community-scoped data disable when none is selected.
-- **Capabilities decide visibility, not roles.** Every response carries a `capabilities` object and `GET /users/current` carries `platformCapabilities`; the app reads those and never re-derives a rule locally. `src/hooks/permissions/` is the only module allowed to read a role or the platform-admin flag, and `no-restricted-imports` / `no-restricted-syntax` in `eslint.config.js` enforce that. Reading `user.isPlatformAdmin` as a field to **display** stays legal — `useActiveCommunityRoleLabel()` is the sanctioned way to render a role's name.
-- **A capability says "may this caller ever", not "is this legal now".** It does not reflect the resource's current state, so pair it with that state wherever both apply (`isDraft && canDelete`). Two capabilities naming opposite operations — `canEnable`/`canDisable`, `canGrantPlatformAdmin`/`canRevokePlatformAdmin` — are **both** true for a caller who may do either, and the row's own `enabled` / `isPlatformAdmin` picks which one applies. Resolve such a pair once, so the menu item, its dialog and its handler cannot disagree. Fixtures must grant both halves, as the backend does; granting one per row hides the bug. Full rule in the **`conluz-web-community-scope`** skill (`.claude/skills/conluz-web-community-scope/SKILL.md`).
-- **Mutations go through the actions layer.** No component imports a generated mutation hook. `src/hooks/actions/` is the only module allowed to, and its hooks hand back only the actions the backend says this caller may perform: an action they may not perform is `undefined`, and its `isPending` flag lives **inside** it, so there is no spinner left over and no `edit?.()` that looks like a call and quietly does nothing. Each hook also returns a `CapabilityOutcome` per action, so a screen can tell "not yet known" from "no". Resource-scoped hooks expose a `forX(resource)` selector rather than taking the resource, because a hook cannot be called once per table row. `no-restricted-imports` enforces this over every mutation hook the spec generates from `api-docs.json` into `src/contracts/generatedMutationHooks.json`; `src/contracts/mutationHooks.spec.ts` fails if that list goes stale **or** if any mutation lacks a recorded decision about who may perform it. No screen is exempt, and the rule is asserted over the whole tree: no file under `src/` outside the actions layer, the generated client and the specs may import a generated mutation hook. The two permanent test helpers that name one without calling it are recorded in `TEST_HELPER_MUTATION_IMPORTS`, by file **and** hook, with a reason each.
-- **Route guards:** one guard, `CapabilityRoute` (`src/components/Auth/`), taking the capability the page needs. Its requirement is a closed union of six scopes: `platform`, `community` (the **active** one), and four resolved from a route parameter — `plant`, `supply`, `user` (`:userId`) and `communityById` (`:communityId`, a community the caller may merely be administering, which is not the one they are working in). `MenuRequirement` excludes every parameter-keyed scope, because a menu entry is a fixed destination with none to resolve, and narrows the capability names to the ones the layout actually fetches — so an entry asking for one it does not fetch is a type error rather than an answer from the wrong capability. A capability answer has four states — pending, allowed, denied, error — and only `denied` redirects: a failed check renders a retry rather than pretending the user lacks access.
-- **Routes are a contract, not a convention.** `src/contracts/routeAccess.spec.ts` parses `src/App.tsx` with the TypeScript compiler API and requires every path under `AuthenticatedLayout` to appear in `ROUTE_ACCESS`, either with the capability its guard requires or as `authenticated` with the reason any signed-in caller may see it. Adding a route without classifying it fails, as does a classification naming a path that no longer exists, or a guard whose capability no longer matches the map. It reads guards on parent route elements too, so moving one does not silently un-guard its children. The same spec asserts that each `MENU_SECTIONS` entry names the same requirement as the page it leads to, with deliberate exceptions recorded and explained. `/` stays unguarded on purpose: it is where every denial redirects, so guarding it would loop.
-- **No exemptions.** No file under `src/` reads a role or the platform-admin flag to decide what to render, and none carries an `eslint-disable` for the permission rules. If you find yourself wanting one, the capability you need either exists on the payload or is missing from the backend — ask for it; do not approximate it with a role.
-- **A capability gates the call; it does not scope the rows.** `canListSupplies` predicts whether `GET /users/{userId}/supplies` is *allowed*, never what it *returns*. A listing is scoped to what the caller may read one by one, and "may read" is plural across every community they administer, while the selector names one. So a client reading a user-scoped listing still filters it to the active community — `isSupplyOutsideActiveCommunity` in `src/pages/supply-points/supplyCommunityScope.ts`, with `src/contracts/userScopedReads.spec.ts` requiring every call site to declare the filter it applies. Conflating the two questions is what produced `lucoenergia/conluz#326` and `#336`.
-- **Legacy `X-Community-Id` header removed:** the axios interceptor that injected this header was removed from `community.context.tsx`. Data endpoints carry `communityId` in the **path** — that is the sole scoping mechanism.
+- Specs use `.spec.tsx` (not `.test.tsx`), colocated, rendered through `renderWithProviders` / `renderHookWithProviders` (`src/test/renderWithProviders.tsx`), never a hand-built wrapper.
+- **No real network**: a spec must never reach the backend (an unmocked hook shows up as `ECONNREFUSED`).
+- While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` prints "No test files found" and still exits 0 when it resolves nothing — then run the spec by path. Run `npm run lint && npm test` once at the end, and `npm run test:visual` only at the end and only if the UI changed.
+- **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If it can only be found by test id, it is missing an accessible name or role: report the defect, don't route around it.
+- **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails or a baseline is missing, report which screens differ and stop.
+- Screenshot names are globally unique across all visual specs (`grep -rhoP 'toHaveScreenshot\("\K[^"]+' tests/visual | sort | uniq -d` must print nothing).
+- A green visual suite proves the UI is consistent with the capabilities it is *served*, not that the backend enforces them. Never cite it as an authorization guarantee.
 
-### Recipes
+## UI conventions
 
-**Adding a screen.** Decide what the backend already answers for it, and read that. The payload for
-the resource the screen is about carries a `capabilities` object; `src/hooks/permissions/` turns one
-into a `CapabilityOutcome`, and `<Can>` renders on it. Never add a role check, and never add a
-boolean prop that restates an answer the payload already carries — if a list spans several
-resources, each row answers for itself.
-
-**Adding a route.** Wrap it in `CapabilityRoute` with the capability the page needs, then add the
-path to `ROUTE_ACCESS` in `src/contracts/routeAccess.spec.ts`. If any authenticated caller may see
-it, classify it `authenticated` and say why — the reason is the point of the entry. If the route has
-a menu entry, give the entry the same requirement; the spec compares them. The suite fails until
-both are done, which is the intended order of work, not an obstacle.
-
-**Adding an action.** Add it to the hook in `src/hooks/actions/` for its resource, gated on the
-capability the backend returns, and record the decision in `ACTION_COVERAGE`
-(`src/contracts/mutationHooks.spec.ts`) — the capability and its scope, or an `ungated` reason.
-Return `undefined` when the caller may not perform it, so the control cannot be rendered at all.
-Never import a generated mutation hook outside that layer.
-
-**Adding a read of a user-scoped listing.** Filter it to the active community and declare the
-filter in `USER_SCOPED_LISTINGS` (`src/contracts/userScopedReads.spec.ts`). See the gate-versus-scope
-rule above for why the capability does not do this for you.
-
-Deeper patterns (gating recipes, hook shapes, common pitfalls) live in the **`conluz-web-community-scope`** skill, `.claude/skills/conluz-web-community-scope/SKILL.md`.
-
-### API Client Architecture
-The API layer is **completely auto-generated** from OpenAPI specification using Orval:
-- **Input**: `api-docs.json` (OpenAPI spec from backend)
-- **Output**: `src/api/` directory organized by OpenAPI tags
-- **Generated artifacts**: TypeScript models and React Query hooks (Orval runs with `mock: false`)
-- **Never manually edit** files in `src/api/` - they will be overwritten
-
-To update API definitions (human maintainer workflow):
-1. Get latest `api-docs.json` from backend Swagger UI
-2. Run `npm run generate-client`
-
-**For AI-agent tasks:** the updated `api-docs.json` and the regenerated Orval client under `src/api/` are **always provided as an input before implementation** — treat `src/api/` as already current. Do **not** include fetching `api-docs.json` or running `npm run generate-client` as a task step, and do not regenerate the client yourself. If `src/api/` appears out of sync with the task, stop and report it rather than regenerating.
-
-### Routing and Layout System
-Routes are organized by authentication requirement:
-- **LoginLayout**: Unauthenticated routes (login, password recovery)
-- **AuthenticatedLayout**: Protected routes with sidebar navigation
-- **PublicLayout**: Routes served the same to everyone, signed in or not (`/contact`)
-
-There is no auth-adaptive layout. `DynamicLayout` was one in name — it chose between the two above
-from the signed-in user — but nothing fetched that user outside `AuthenticatedLayout`, so it only
-ever rendered the public one. It was removed when the user became a live query (#203) rather than
-silently starting to work: what `/contact` should show a caller with no session, or one who belongs
-to several communities, is a question for the contact-screen epic, and the comment at that route in
-`src/App.tsx` says so.
-
-Route definitions are in `src/App.tsx` with nested structure for supply points management.
-
-### Testing Strategy
-
-**Unit / component tests (Vitest):**
-- **Framework**: Vitest with jsdom environment
-- **Convention**: Test files use `.spec.tsx` extension (not `.test.tsx`)
-- **Location**: Tests are colocated with components
-- **Rendering**: render through `renderWithProviders` / `renderHookWithProviders` from `src/test/renderWithProviders.tsx`, not with hand-built wrappers. They compose the production providers (theme from `src/theme`, `MemoryRouter`, auth, logged user, community, error, success) around a real `QueryClient` with retries off, and **return that `queryClient`** so specs can spy on it. Options: `route` (render the page under a real `<Route>` to get route params instead of stubbing `useParams`), `queryClient` (inject one created with `createTestQueryClient()` when the spy must exist before render), and opt-in seeding of `token` and `activeCommunityId` (`null` means explicitly none). A seeded community can be switched mid-test with the returned `switchActiveCommunity(id)`; key the page on `useActiveCommunity()` to mirror the layout's keyed Outlet. A spec that mocks a context module must keep its Provider export: `vi.mock(import("…/error.context"), async (importOriginal) => ({ ...(await importOriginal()), useErrorDispatch: () => mockDispatch }))`.
-- **API mocking follows two tiers** (decided in `docs/decisions/adrs/0001-keep-vi-mock-for-api-mocking-reject-msw-and-sanction-a-narrow-real-cache-tier.md`):
-  - **Tier 1 (default): `vi.mock` of the generated `src/api/<tag>/<tag>` modules.** Use the typed form `vi.mock(import("…/api/users/users"), () => ({ useGetAllUsers: vi.fn() }))`; the factory result **must be typed**, never a string path with hand-written hook shapes. Set results in `beforeEach` with `vi.mocked(hook).mockReturnValue(...)` and the builders in `src/test/queryState.ts`: `query.success<typeof getAllUsers>(data)` (typed by the generated fetcher), `query.loading()`, `query.disabled()`, `query.error(err)`, `mutation.idle({ mutateAsync })`, `mutation.pending(variables)`. Build fixtures with `src/test/fixtures.ts` (`buildUser`, `buildCurrentUser`, `buildMembership`, `buildCommunity`, `buildSupply`, `buildPlant`, `buildSharingAgreement`, `buildCoefficient`, `buildActiveCoefficient`, plus a `build…Capabilities` builder per resource — every capability defaults to `false`, so a spec grants exactly what it exercises and the grant appears in the test that depends on it) and never cast a partial object to a response type (`as SupplyResponse`, `as unknown as …`): the cast hides missing required fields, the way the agreement fixtures hid `updatedAt`/`updatedBy`. Builder defaults are deliberately synthetic (`TEST-…`, non-zero sentinels, nullables null), so a spec overrides every value it asserts on. A partial literal such as `{ data: undefined, isLoading: false }` does not compile; `src/test/queryState.typecheck.ts` keeps that true under `tsc -b`. Assert invalidation by spying on the returned client (`vi.spyOn(queryClient, "invalidateQueries")`) and check the keys, not just the call count. A screen's spec mocks the **reads**, and lets the actions layer run for real: what such a spec is testing is that the menus follow the capabilities on the payload, and stubbing the action hook would restate that rule instead of exercising it. Mutation hooks are inert until called, so leaving them real reaches no network; stub one only to assert its arguments, always by spreading `importOriginal()` so the query-key getters the layer invalidates with stay real. Specs are exempt from the mutation lint rule precisely so they can name a mocked hook. References: `src/pages/users/UsersPage.spec.tsx` (list, personas, mixed rows), `src/pages/members/MembersPage.spec.tsx` (flow with invalidation), `src/hooks/actions/useMembershipActions.spec.tsx` (an action hook: allowed / denied / pending).
-  - **Tier 2: a real `QueryClient` with `src/api/custom-instance.ts` mocked**, so the real generated hooks run. Use it **only when the subject of the test is cache behaviour**: invalidation, refetch, or a loading state that spans a refetch. Everything else stays in tier 1. Route requests with `routeRequests` from `src/test/requestRouter.ts`: one route per method + URL (a `RegExp` for sub-resources), and it rejects anything it does not match **and fails the test that sent it**, even when nothing awaits the rejection (TanStack Query would otherwise swallow it into query error state). A test whose subject is an unmatched request takes it with `router.takeUnmatched()`. Mock `custom-instance` by spreading the original and replacing only `customInstance`, because the harness's `AuthProvider` imports `AXIOS_INSTANCE` from it. References, all on `routeRequests`: `src/pages/production/SharingAgreementReopenInvalidation.spec.tsx`, `SupplyCoefficientHistoryInvalidation.spec.tsx`, `src/hooks/actions/useSharingAgreementCoefficientActions.staleness.spec.tsx`.
-  - `vi.mock` is per test file, so a helper module shared between specs must not contain `vi.mock` calls. When several spec files mock the same modules the same way, keep each `vi.mock` call in the spec and move the factory into a mock-free module that the factory loads with `import()` (it must import nothing at runtime but `vitest`, so it cannot cycle back into a mocked module). Reference: `src/components/SharingAgreementCoefficientSet/SharingAgreementCoefficientSet.mocks.ts`.
-- **Browser storage**: storage is cleared before each render and after each test in any file that imports the harness; no spec cleans up by hand. Rendering with a single-membership user persists `activeCommunity:<userId>`, because that is what `CommunityProvider` does in production. Specs assert the active community through observable behaviour (what the UI shows, what the hook returns), never by reading the storage key. The specs that assert storage directly are the ones that own that behaviour: `src/context/community.context.spec.tsx` (persistence) and the harness's own `src/test/renderWithProviders.spec.tsx` and `src/test/storageCleanup.spec.tsx` (isolation).
-- **No real network**: a spec must never reach the backend; an unmocked query hook shows up as `ECONNREFUSED` in the run output.
-- **Pattern**: Use React Testing Library with `@testing-library/jest-dom` matchers
-
-**Selector hierarchy (all specs, Vitest and Playwright):** pick the first level that works, in strict order. The reasoning, and the conditions for revisiting it, are in `docs/decisions/adrs/0002-select-by-role-then-text-and-reserve-test-ids-for-unnamed-regions.md`.
-1. **Accessible role, with its name when it has one**, e.g. `page.getByRole("heading", { name: "Histórico de coeficientes" })` in `tests/visual/supplies.spec.ts`. Landmarks count as roles, so a page's content region is `getByRole("main")`. A role selector also checks what assistive technology perceives, for free.
-2. **Visible text, when no role fits**, e.g. `page.getByText("Sin periodos aplicados")` in `tests/visual/supplies.spec.ts`.
-3. **`data-testid`, only on a region container with neither a role nor an accessible name** (a card section, panel or bar whose only job is grouping), e.g. `page.getByTestId("coefficient-history-drawer")` in `tests/visual/sharing-agreement-dialogs.spec.ts`. A test id checks nothing a user perceives. It marks the region as lacking semantics, not as convenient.
-- **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If an interactive element can only be found by test id, it is missing an accessible name or role. That is a production defect: report it, don't route around it. `csv-file-input` and `drop-zone` in the import modals predate this rule and are grandfathered, not examples.
-- A test id that stands in for a missing role is marked **interim** by a comment at the attribute, naming the issue that removes it (`modal-panel` in `BasicModal`, pending a real `role="dialog"`).
-- A structural locator (MUI class, DOM nesting) is a last resort, and it needs a one-line justification in the spec.
-
-**Fast iteration (agents):**
-- While iterating, run `npx tsc -b` (which covers `src`, `vite.config.ts` and, via `tsconfig.tests.json`, `tests/` and `playwright.config.ts`) plus `npx vitest related --run <changed files>`. `related` takes file paths (source or spec) and runs the specs that import them. When it resolves to nothing it prints "No test files found" and still exits 0, so in that case run the spec directly by path: `npx vitest run <path/to/File.spec.tsx>`.
-- Run the full gates `npm run lint && npm test` once, at the end.
-- Run `npm run test:visual` only at the end and only if the UI changed. If it fails, report which baselines differ; never regenerate them.
-
-**Visual regression tests (Playwright):**
-- **Framework**: Playwright (`@playwright/test`), configured in `playwright.config.ts`.
-- **Location**: Specs live in `tests/visual/`, one per feature area (`login-and-home`, `profile`, `supplies`, `production-member`, `production-admin`, `plant-detail`, `platform-and-users`, `community-management`, `sharing-agreements-list`, `sharing-agreement-detail`, `sharing-agreement-dialogs`, `coefficient-editor`, `home-views`, each `.spec.ts`), plus `chrome-canary.spec.ts` for the shared chrome, `cross-community.spec.ts` and `denied-calls.spec.ts` for rules that are asserted rather than pictured. Auth setup, route mocks, JSON fixtures and navigation helpers are shared from `tests/visual/fixtures/` (import from `./fixtures`). Height and row budgets that capture no screenshot live in `tests/visual/layout-budgets.spec.ts`; prefer that measured-assertion pattern whenever a property can be measured. Baseline screenshots live in `tests/visual/__screenshots__/{mobile,desktop}/`.
-- **Screenshot names are globally unique across all visual spec files.** `snapshotPathTemplate` is `{projectName}/{arg}`, where `{arg}` is the name passed to `toHaveScreenshot()`, and it does not include the spec file. Two specs that pass the same name would silently share, and overwrite, one baseline. Check with `grep -rhoP 'toHaveScreenshot\("\K[^"]+' tests/visual | sort | uniq -d` (must print nothing). The warmup project enforces it: `screenshot names are unique across the visual specs` in `tests/visual/warmup.setup.ts` fails on a repeated name, and on any `toHaveScreenshot()` call without a string-literal name.
-- **What each baseline captures (capture the subject, not the page):**
-  - **Component subject** (dialog, menu, drawer, panel, section, bar, header): capture that component's locator, chosen by the selector hierarchy above, with `await hideAppBar(page)` as the options, e.g. `await expect(page.getByRole("menu")).toHaveScreenshot("x.png", await hideAppBar(page))`.
-  - **Page-layout subject**: `await expect(page).toHaveScreenshot("x.png", await mainRegion(page))` (`tests/visual/fixtures/capture.ts`). It captures `main` found by role, hides the fixed app bar that overlaps its top, and clips a full-page capture rather than taking an element screenshot, because the scroll an element screenshot does collapses the mobile detail header and never stabilises.
-  - **Full page** only with a one-line reason at the call: `/login` (no `main`, no app bar) and the chrome canaries.
-  - **The chrome (app bar, side menu) belongs to `tests/visual/chrome-canary.spec.ts` alone.** A header or menu change should fail the canaries, not every page baseline. Every other capture hides the app bar through `hideAppBar()` / `mainRegion()` (`visibility: hidden` from `tests/visual/fixtures/hide-app-bar.css` as the screenshot `stylePath`), never by masking it: a mask follows the bar's box, so a taller bar grows it, and an element capture scrolls its target under the fixed bar. The helpers assert the page has exactly one `<header>`, the banner, so the CSS cannot hide anything else silently.
-  - **Masking policy.** Mask only content that cannot be made deterministic through fixtures (route mocks, fixture data, seeded storage). First fix the fixture if it can be fixed. When the variation comes from production code, the mask is an **interim**: the comment at the mask site states the reason and names the change request that removes it, and it is never accepted silently. The only one today is the kWh figure on supply cards (`Math.random()` in `SupplyPointsPage`), masked in `supplies.spec.ts` pending "Supply cards show members an invented consumption figure". Never rely on the tolerance to absorb non-determinism.
-- **Baselines are only written by an explicit flag.** `playwright.config.ts` sets `updateSnapshots: "none"`: Playwright's default (`missing`) would write a PNG for any new screenshot name on a plain run, which is baseline generation. A new name therefore fails as missing until the maintainer regenerates with `npm run test:visual -- --update-snapshots=changed`, and the CLI flag overrides the config. Report the missing name; never pass the flag.
-- **Workers**: `playwright.config.ts` pins `workers: 2`. With `fullyParallel: false`, Playwright runs one worker per spec file × project, so the default would put many specs against the single Vite dev server at once.
-- **Projects**: Two viewports — `mobile` (iPhone 13: 390×844, DPR 3) and `desktop` (1440×900). Both run in **Chromium** on purpose: WebKit's text rendering couples to the host OS fonts and drifts between local and CI, while Chromium bundles its own renderer and produces identical screenshots across environments.
-- **Commands**:
-  - `npm run test:visual` — run all visual tests (both viewports)
-  - `npm run test:visual:mobile` — mobile viewport only (`--project=mobile`)
-  - `npm run test:visual:desktop` — desktop viewport only (`--project=desktop`)
-- **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or otherwise rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails, report which screens differ and stop; regenerating baselines is a manual maintainer step documented in `CONTRIBUTE.md`.
-- **Server**: Playwright starts (or reuses locally) the dev server on `http://localhost:3001` via the `webServer` config — no need to launch it yourself. In CI it always starts fresh.
-- **No live backend**: Auth is faked by injecting a JWT into `localStorage` before load, and every `/api/v1/**` request is intercepted with fixed, hard-coded JSON fixtures. Data must be deterministic (no faker, no time-varying fields) so screenshots are byte-stable. Animations are disabled and `document.fonts.ready` is awaited before capture.
-- **Screenshot thresholds (no global value).** `playwright.config.ts` sets no screenshot threshold. Every `toHaveScreenshot()` call carries an absolute `maxDiffPixels`: through `hideAppBar()` / `mainRegion()` (`COMPONENT_MAX_DIFF_PIXELS`, `LAYOUT_MAX_DIFF_PIXELS` in `tests/visual/fixtures/capture.ts`), or stated at the call (`CANARY_MAX_DIFF_PIXELS` in `chrome-canary.spec.ts`, `login-page`). Every value is wrapped in `threshold()`, so a new one must be too, and the helpers' values are what a capture takes unless it states its own. The reasoning and its revisit conditions are in `docs/decisions/adrs/0003-size-screenshot-thresholds-in-absolute-pixels-per-capture.md`.
-  - **Why absolute and per capture:** a regression has an absolute size (a changed short label measured 175 px, the header wordmark 316 px), while a ratio scales with the capture. The old global 2% was wrong at both ends: 253 px on the two-item Acciones menu, more than a relabelled item, and 57,920 px on the tallest detail page, enough for a whole table column. It also left the chrome canary blind, since a side-menu edit changed it by 175 px and passed.
-  - **Choosing a value for a new capture:** use the helper's value when the capture fits its category. If it doesn't, measure before choosing, with the tolerance-0 method: (1) `VISUAL_EXACT=1 npx playwright test --reporter=json` compares every capture exactly (`threshold()` in `capture.ts` returns 0) and writes nothing (the config sets `updateSnapshots: "none"`); (2) run it twice clean, where any capture whose differing-pixel count changes between the runs is noise and must be made deterministic first (see the masking policy); (3) run it once per representative edit, made on a backed-up file and restored by copy, where the capture's differing-pixel count is the signal. For a past commit, run the same in a temporary git worktree. The threshold goes below the smallest signal worth catching and above the noise, and the comment at the value records both figures. Never size a threshold to make a failing capture pass. Measure against the current baselines, never against an image about to be regenerated.
-  - **Limits of the method:** "tolerance 0" still applies Playwright's per-pixel colour threshold (0.2), so colour shifts of a few levels per channel are not counted by the measurement or by the suite. The noise figure is local, and CI is the check for cross-environment rendering.
-- **Coverage is role-based**: every authenticated screen is captured with a persona that can actually reach it, and with only those. Do not invent a hybrid persona to fill a matrix — `/members` and `/integrations` have exactly one reachable caller, because their routes need `canManageMemberships` and `canManage` and a platform admin holds neither by virtue of the flag. Where a rule is too small to show in a capture, assert it instead: removing a row's kebab moves 12 px on desktop, under every threshold, so `platform-and-users.spec.ts` asserts the button's absence rather than relying on a screenshot.
-- **A capture whose content is not asserted can enshrine a broken fixture.** A baseline of an empty roster, or of a card still spinning, looks entirely plausible and gets regenerated into the repo instead of failing. So a capture that depends on fetched data asserts that data first — see `community-management.spec.ts`.
-- **No denied call may reach the backend.** `tests/visual/fixtures/test.ts` extends `test` with an auto fixture that collects any `403`/`404` on `/api/v1/` and asserts the list empty **after** the test body, so a denial nothing awaited still fails. Import `test` from `./fixtures`, never from `@playwright/test`. Exceptions are keyed on method, path shape and status, never a URL pattern, and each carries a reason. This works only because the route mocks refuse what the served capabilities refuse: the 403 decision is **derived** from the very capability objects the handler is about to serve, so the mock cannot contradict its own payload, and granting a capability in a fixture opens the call it predicts. Only rules about which *rows* come back are written out, each naming the backend policy it mirrors. `denied-calls.spec.ts` keeps the check honest, because a listener that reports nothing passes everything.
-- **What a green run proves**: the UI is consistent with the capabilities it is *served*. It does **not** prove the backend enforces them — that is what the backend's own policy-equivalence and endpoint-coverage tests are for. Do not cite a green visual suite as an authorization guarantee.
-- **The Playwright fixtures are typed and type-checked.** `tsconfig.tests.json` puts `tests/` and `playwright.config.ts` in `tsc -b`, and the response fixtures are annotated with their generated response types. That is deliberate: while they were untyped, a missing field read as `false` or `undefined` and silently hid a control, which is exactly how a capability left out of a fixture emptied a screen with nothing failing.
-
-### Environment Variables
-- **Required prefix**: `CONLUZ_` for all environment variables
-- **Main variable**: `CONLUZ_API_URL` (backend API endpoint)
-- **Docker support**: Variables are hot-swappable at container startup via `docker/env.sh`
-
-### Component Organization
-Each component follows this structure:
-```
-components/ComponentName/
-├── ComponentName.tsx       # Main component
-├── ComponentName.spec.tsx  # Tests
-└── index.tsx              # Re-export
-```
-
-### Key Development Patterns
-1. **TypeScript-first**: Full type coverage with auto-generated API types
-2. **Styling**: Material-UI components
-3. **Mobile-responsive**: MIN_DESKTOP_WIDTH = 768px breakpoint
-4. **Error boundaries**: Global error handling with automatic 401 processing
-5. **Code splitting**: Rollup's automatic chunking — `vite.config.ts` deliberately sets no `manualChunks` (its comment records the measurements behind that)
-
-### Critical Files to Understand
-- `src/main.tsx`: Application bootstrap with provider hierarchy
-- `src/api/custom-instance.ts`: Axios configuration with auth interceptor
-- `orval.config.js`: API client generation configuration, and the `afterAllFilesWrite` hook that refreshes the mutation-hook list
-- `src/hooks/actions/action.ts`: the `Action` contract every write goes through
-- `src/contracts/generatedMutationHooks.json`: the generated inventory of mutation hooks, read by the lint rule and kept honest by `mutationHooks.spec.ts`
-- `src/contracts/routeAccess.spec.ts`: who may reach each route, and the menu entries that must agree with them
-- `src/contracts/userScopedReads.spec.ts`: every user-scoped listing declares how it narrows to the active community
-- `src/context/auth.context.tsx`: Authentication state management
-- `src/layouts/authenticated.layout.tsx`: Protected route implementation
-
-## Project-Specific Conventions
-
-### API Integration Pattern
-When working with API endpoints:
-1. Never modify files in `src/api/` directly
-2. **Reads:** use the auto-generated React Query hooks (e.g. `useGetSupplies`), subject to the community-scope wrappers. **Writes:** only through `src/hooks/actions/` — importing a generated mutation hook anywhere else is a lint error. `getGet…QueryKey()` getters stay importable everywhere.
-3. Handle loading/error states using React Query's built-in states
-4. Invalidation is explicit: after a mutation, call `queryClient.invalidateQueries` (or `removeQueries` after a delete) with the generated `get…QueryKey()` getters — see `src/hooks/actions/useSharingAgreementActions.ts`
-
-### Table Row Actions Pattern
-
-**All data tables must use a three-dot kebab menu for row actions.** Never place action buttons or interactive controls (selects, toggles) inline in table rows.
-
-Build list tables with `ListTable` and `RowActionsMenu` from `src/components/ListTable`; do not copy a page's table markup. `ListTable` renders the header row, the loading and empty rows, row hover, and a trailing "Acciones" column whose kebab `IconButton` (`MoreVertIcon`, no visible label) calls `onRowActionsClick`. `RowActionsMenu` is the `<Menu>` that button opens, with the arrow styling and right anchoring. Real usage, from `src/pages/members/MembersPage.tsx`:
-
-```tsx
-const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-const [selectedMembership, setSelectedMembership] = useState<MembershipResponse | null>(null);
-const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, membership: MembershipResponse) => { /* set both */ };
-const handleMenuClose = () => setAnchorEl(null);
-
-<ListTable
-  rows={memberships}
-  getRowKey={(membership) => membership.id}
-  isLoading={isLoading}
-  emptyMessage="No hay miembros en esta comunidad"
-  rowActionsLabel={(membership) => `Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
-  onRowActionsClick={handleMenuOpen}
-  columns={[
-    { key: "role", header: "Rol", render: (membership) => <Typography variant="body2">{ROLE_LABELS[…]}</Typography> },
-    // header: a string gets the standard header style; a node (TableSortLabel, icon + ListTableHeaderText) renders as is
-  ]}
-/>
-
-<RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
-  <MenuItem onClick={handleChangeRoleClick}>…</MenuItem>
-  <Divider />
-  <MenuItem onClick={…}><ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText></MenuItem>
-</RowActionsMenu>
-```
-
-The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus`, the narrow-viewport `RecordList`, pagination (`UsersPage`), the menu items, and the menu state (`anchorEl` + the selected row). Destructive items (delete) go last, below a `<Divider>`, with `color: "error.main"`.
-
-**For actions that change server state** (role change, status toggle, etc.) the menu item must open a confirmation `<Dialog>` that:
-- Names the affected entity.
-- Shows the new value via a controlled select or clear text.
-- Includes an `<Alert severity="info">` explaining consequences.
-- Disables the confirm button while the mutation is pending or when the new value equals the current value.
-
-**Never** show a `<Select>` or any mutable control directly inside a table row — it bypasses the confirmation step and is visually inconsistent.
-
-### Form Handling
-Forms use controlled components with Material-UI inputs. Supply forms (`SupplyForm`) serve as the primary reference for complex form patterns.
-
-### Data Fetching Pattern
-```tsx
-// Reads: the generated hook (or its community-scope wrapper)
-const { data, isLoading, error } = useGetAllSupplies(communityId);
-
-// Writes: an action hook, which returns only what this caller may do.
-// The gate and the control are one expression -- there is no way to render a
-// button for an action that was not handed over.
-const { forSupply } = useSupplyActions();
-const { actions, outcomes } = forSupply(supply);
-
-{actions.disable && (
-  <MenuItem disabled={actions.disable.isPending} onClick={() => void actions.disable.run()}>
-    Deshabilitar
-  </MenuItem>
-)}
-
-// `undefined` covers denied, pending and error alike. When a screen needs to
-// tell them apart -- a skeleton rather than a missing row action -- it reads
-// the outcome instead:
-{outcomes.disable.state === "pending" && <Skeleton width={80} />}
-```
-
-### Docker Development
-For containerized development:
-```bash
-cd docker
-docker compose up -d  # Runs on port 3001
-```
-
-The Docker setup includes nginx configuration for proper SPA routing and dynamic environment variable injection.
-- never run the server after completing changes
+- **Tables:** build with `ListTable` + `RowActionsMenu` (`src/components/ListTable`). Row actions live **only** in the kebab menu; never place a button, `<Select>` or toggle inline in a row. An action that changes server state opens a confirmation dialog. Details: the `conluz-web-list-tables` skill.
+- **Forms:** controlled MUI inputs; `SupplyForm` is the reference for complex forms.
+- **Environment variables** use the `CONLUZ_` prefix (`CONLUZ_API_URL`); `docker/env.sh` swaps them at container startup.
 
 ### Styling Contract
 
 **Never** write raw hex colors, rgba strings, hand-written shadow strings, rem/em font-size literals, or Tailwind `className` in component code. ESLint enforces this with `no-restricted-syntax` rules, which match a colour **anywhere inside a string** — composite values like `1px solid #e5e7eb`, gradient stops, and template literals all count.
 
-Token files (read these before touching any sx prop):
-- `src/theme/tokens.ts` — `colors`, `alphas`, `shadows`, `radii`, `fontSizes`
-- `src/theme/index.ts` — MUI theme (palette maps tokens; use `theme.palette.*` shorthands in sx)
-- `src/theme/sx.ts` — shared `sxStyles` helpers (`pageContainer`, `flexRowCenter`, `softPanel`, …)
+Use the tokens: `src/theme/tokens.ts` (`colors`, `alphas`, `shadows`, `radii`, `fontSizes`), the MUI theme in `src/theme/index.ts` (`"primary.main"` shorthands in `sx`), and `src/theme/sx.ts` (`sxStyles`). For a genuine one-off: `// eslint-disable-next-line no-restricted-syntax -- <reason>`.
 
-**Colour roles.** Every hue is a set of roles, not one value, and `main` is the
-safe one: it clears 4.5:1 both as type on white and behind white text, so it
-works as type, as an icon, and as a fill. `vivid` is decorative only (~3:1 —
-chart marks and large fills, never type). `onBrand` is for type on
-`colors.brand.panel`; `surface` is the explicit tint behind `main` type. Full
-table in `references/theme-tokens.md`. Two traps worth naming:
-`colors.brand.light` (`#667eea`) is decorative only — it is 3.66:1 and cannot
-carry white text — and `colors.text.disabled` is for disabled controls only.
-Never express a tint as an alpha overlay when type will sit on it: alpha makes
-the effective contrast depend on whatever happens to be behind.
-
-Key rules:
-- Use `theme.palette.primary.main` / `"primary.main"` shorthand, **not** `"#667eea"`
-- Use `colors.text.subtle` / `colors.error.dark` etc., **not** raw hex
-- Use `alphas.white.soft` etc., **not** `rgba(255,255,255,0.2)`
-- Use `shadows.soft` / `shadows.dataCard` etc., **not** hand-written shadow strings
-- Use `fontSizes.md` etc., **not** `"0.875rem"`
-- For genuine one-offs: `// eslint-disable-next-line no-restricted-syntax -- <reason>`
-
-Full guide: `references/styling-conventions.md`
-Full token catalogue: `references/theme-tokens.md`
-Fonts (self-hosted Inter — do not move back to a CDN): `references/fonts.md`
-
-Verification for styling changes follows the Fast iteration loop (see Testing Strategy):
-while iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`; run the
-full gates once, at the end:
-```bash
-npm run lint     # 0 no-restricted-syntax errors
-npx vitest run   # all tests pass
-```
+**Colour roles.** A hue's `main` is the safe role (≥ 4.5:1 as type and behind white text). `vivid` is decorative only, never type. Two traps: `colors.brand.light` (`#667eea`) is decorative only, and `colors.text.disabled` is for disabled controls only. Never express a tint as an alpha overlay when type sits on it. Full table: `references/theme-tokens.md`. Fonts are self-hosted Inter — do not move them back to a CDN (`references/fonts.md`).
 
 ## Skills & documentation maintenance
 
-- Task-specific procedural knowledge lives in `.claude/skills/`, one directory per skill with its instructions in `SKILL.md`. The directory name comes from Claude Code, but the files are plain Markdown: an agent with no skill mechanism reads the `SKILL.md` directly. Read **`conluz-web-community-scope`** (`.claude/skills/conluz-web-community-scope/SKILL.md`) before any data-fetching or role-gating work. Styling depth lives in `references/styling-conventions.md` and `references/theme-tokens.md`.
+- Which skill to read for which task is listed under **Where the detail lives** at the top of this file. When a section moves out of this file into a skill, leave the rules that must hold even when the skill is not loaded behind in this file.
 - **Author skills, this file, and the reference docs against the real, merged code — never against a plan.** A convention describing code that has since changed misleads with authority and is worse than none.
 - **Epic-closeout rule:** closing any epic includes updating `AGENTS.md`, the affected skills, and the reference docs to match the code that actually landed. This is part of "done," not a follow-up. This file drifted before — it described a single-community model long after multi-community shipped — precisely because that step was skipped.
 
@@ -381,6 +114,10 @@ Never use:
 The test: someone reading this line in two years, with no access to the plan that produced it, must
 be able to find what it refers to. "Migrates in epic PR 6" fails. "Migrates in #418" passes.
 
+`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
+invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
+is a permanent one.
+
 ## GitHub CLI
 
 `gh` is authenticated with a **read-only** credential and is available for reading. Use it whenever
@@ -393,8 +130,9 @@ workflows; changing repository or organisation settings; and any `gh api` call w
 than GET, GraphQL mutations included. `gh auth login`, `gh auth refresh`, `gh alias set` and
 `gh extension install` are equally off limits — they are ways to change what the tool can do.
 
-Writes fail twice over: the credential has no write permission, and `permissions.deny` blocks the
-commands. Do not work around either. If a command is refused, report it; do not look for a spelling
+Writes fail twice over for Claude Code: the credential has no write permission, and
+`permissions.deny` in `.claude/settings.json` blocks the commands. Other agents are stopped by the
+credential alone. Do not work around either. If a command is refused, report it; do not look for a spelling
 that gets through, and never propose changing the deny rules or the credential.
 
 When a task appears to need a write — "open an issue for this", "comment on that PR", "merge it" —
@@ -404,17 +142,6 @@ blocker to report and stop at: the deliverable is the text, not the API call.
 
 `git push` is likewise not yours to run. Commit locally, and leave pushing and opening pull requests
 to a human.
-
-### Referring to issues in code
-
-When a comment, a suppression justification, a `TODO` or a test name refers to work, use an issue
-number (`#412`) or its URL — never an epic's internal ordering ("epic PR 5"), a branch name, a
-milestone or a date. Branches are deleted after merge and plans are not in the repository; an issue
-number resolves years later from a fresh clone.
-
-`gh issue list` and `gh issue view` are there precisely so the number can be checked rather than
-invented. If the issue does not exist yet, ask for it: a temporary exemption with no issue behind it
-is a permanent one.
 
 ## Git workflow
 
