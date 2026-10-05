@@ -130,8 +130,9 @@ workflows; changing repository or organisation settings; and any `gh api` call w
 than GET, GraphQL mutations included. `gh auth login`, `gh auth refresh`, `gh alias set` and
 `gh extension install` are equally off limits — they are ways to change what the tool can do.
 
-Writes fail twice over: the credential has no write permission, and `permissions.deny` blocks the
-commands. Do not work around either. If a command is refused, report it; do not look for a spelling
+Writes fail twice over for Claude Code: the credential has no write permission, and
+`permissions.deny` in `.claude/settings.json` blocks the commands. Other agents are stopped by the
+credential alone. Do not work around either. If a command is refused, report it; do not look for a spelling
 that gets through, and never propose changing the deny rules or the credential.
 
 When a task appears to need a write — "open an issue for this", "comment on that PR", "merge it" —
