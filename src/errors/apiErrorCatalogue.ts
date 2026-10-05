@@ -1,4 +1,6 @@
 import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/models";
+import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
+import { throttledMessage } from "./authErrors";
 
 /**
  * code -> Spanish message template. Templates may reference `{paramName}`
@@ -122,6 +124,21 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   ),
   SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT:
     "No se ha podido guardar: el cambio haría que se solapen dos periodos de un mismo suministro. Recarga la página y revisa las fechas.",
+
+  // Password change and login throttling (#196). Function templates, like the
+  // coefficient codes above, so an absent or unknown param degrades to a
+  // generic sentence instead of a literal placeholder. The wait in the 429 is
+  // only the body's here; src/errors/authErrors.ts also falls back to the
+  // Retry-After header, which a screen handling the 429 itself should use.
+  USER_CURRENT_PASSWORD_INCORRECT: "La contraseña actual no es correcta.",
+  USER_PASSWORD_POLICY_VIOLATION: (params) => {
+    const rule = params?.rule;
+    return isPasswordRule(rule) ? PASSWORD_RULE_MESSAGES[rule] : "La contraseña no cumple los requisitos.";
+  },
+  AUTH_TOO_MANY_FAILED_ATTEMPTS: (params) => {
+    const seconds = Number(params?.retryAfterSeconds);
+    return throttledMessage(Number.isFinite(seconds) && seconds > 0 ? seconds : null);
+  },
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

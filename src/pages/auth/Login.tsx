@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useState, type FC, type FormEvent } from "react";
 import { alpha } from "@mui/material/styles";
 import { radii, shadows, alphas, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
@@ -19,10 +19,16 @@ import { Link as RouterLink, useNavigate } from "react-router";
 import { PasswordInput } from "../../components/Forms/PasswordInput";
 import { useSessionActions } from "../../hooks/actions";
 import { useAuthDispatch } from "../../context/auth.context";
-import { SESSION_EXPIRED_MESSAGE, takeSessionExpired } from "../../utils/session";
+import {
+  PASSWORD_CHANGED_MESSAGE,
+  SESSION_EXPIRED_MESSAGE,
+  takePasswordChanged,
+  takeSessionExpired,
+} from "../../utils/session";
+import { throttledMessage } from "../../errors/authErrors";
 
 export const Login: FC = () => {
-  const [loginError, setLoginError] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   /**
    * Whether the user is here because their session expired rather than because
    * they asked to leave. Read once, during the first render, and cleared by the
@@ -30,10 +36,16 @@ export const Login: FC = () => {
    * visit, and neither should claim an expiry.
    */
   const [sessionExpired] = useState(takeSessionExpired);
+  /** Same, for a session ended by a successful password change (#196). */
+  const [passwordChanged] = useState(takePasswordChanged);
   const [formErrors, setFormErrors] = useState<{ id: boolean; password: boolean }>({
     id: false,
     password: false,
   });
+  // Controlled, so a refused login can keep the username and clear only the
+  // password. The password is sent exactly as typed: never trimmed (#196).
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
 
   const passwordErrorMessage = "Por favor, introduce tu contraseña";
   const idErrorMessage = "Por favor, introduce tu DNI/NIF";
@@ -41,7 +53,7 @@ export const Login: FC = () => {
   const dispatchAuth = useAuthDispatch();
   const navigate = useNavigate();
 
-  const validateInput = (username?: string, password?: string): boolean => {
+  const validateInput = (username: string, password: string): boolean => {
     const newErrors = {
       id: !username,
       password: !password,
@@ -52,23 +64,28 @@ export const Login: FC = () => {
     return !newErrors.id && !newErrors.password;
   };
 
-  const handleSubmit = async (data: FormData) => {
-    const id = data.get("id") as string;
-    const password = data.get("password") as string;
-    const remember = data.get("remember") ? true : false;
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const remember = new FormData(event.currentTarget).get("remember") ? true : false;
 
     if (!validateInput(id, password)) return;
 
-    // The action reports a rejected login as undefined rather than throwing,
-    // so a refused credential and a missing token take the same branch.
-    const response = await actions.login.run({ username: id.trim(), password: password.trim() });
-    if (response?.token) {
-      setLoginError(false);
-      dispatchAuth({ token: response.token, remember });
+    // The username may be trimmed: the backend normalises the identity
+    // document anyway. The password may not.
+    const result = await actions.login.run({ username: id.trim(), password });
+    if ("token" in result) {
+      setLoginError(null);
+      dispatchAuth({ token: result.token, remember });
       navigate("/");
-    } else {
-      setLoginError(true);
+      return;
     }
+
+    setPassword("");
+    setLoginError(
+      result.failure.kind === "throttled"
+        ? throttledMessage(result.failure.retryAfterSeconds)
+        : "DNI/NIF o contraseña incorrectos",
+    );
   };
 
   return (
@@ -127,7 +144,7 @@ export const Login: FC = () => {
 
         <Box
           component="form"
-          action={handleSubmit}
+          onSubmit={handleSubmit}
           sx={{
             p: { xs: 3, sm: 4 },
           }}
@@ -144,6 +161,18 @@ export const Login: FC = () => {
             </Alert>
           )}
 
+          {passwordChanged && !loginError && (
+            <Alert
+              severity="success"
+              sx={{
+                mb: 3,
+                borderRadius: radii.default,
+              }}
+            >
+              {PASSWORD_CHANGED_MESSAGE}
+            </Alert>
+          )}
+
           {loginError && (
             <Alert
               severity="error"
@@ -152,7 +181,7 @@ export const Login: FC = () => {
                 borderRadius: radii.default,
               }}
             >
-              DNI/NIF o contraseña incorrectos
+              {loginError}
             </Alert>
           )}
 
@@ -175,6 +204,9 @@ export const Login: FC = () => {
                 type="text"
                 name="id"
                 placeholder="Escribe aquí tu DNI/NIF"
+                autoComplete="username"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
                 autoFocus
                 required
                 fullWidth
@@ -198,10 +230,11 @@ export const Login: FC = () => {
                 error={formErrors.password}
                 helperText={formErrors.password ? passwordErrorMessage : ""}
                 id="password"
-                type="password"
                 name="password"
                 placeholder="Escribe aquí tu contraseña"
-                autoComplete="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 fullWidth
                 variant="outlined"

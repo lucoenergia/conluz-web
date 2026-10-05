@@ -1,6 +1,14 @@
 import { useLogin, useLogout } from "../../api/authentication/authentication";
-import type { LoginRequest, Token } from "../../api/models";
+import type { LoginRequest } from "../../api/models";
+import { type AuthFailure, classifyAuthError } from "../../errors/authErrors";
 import { type Action, ungated } from "./action";
+
+/**
+ * A login either yields a token or says why it did not. The reason matters
+ * since #196: a throttled caller (429) must be told to wait, and for how long,
+ * rather than that their credentials are wrong.
+ */
+export type LoginResult = { token: string } | { failure: AuthFailure };
 
 /**
  * The operations that exist before a session does.
@@ -21,7 +29,7 @@ import { type Action, ungated } from "./action";
  */
 export interface SessionActions {
   actions: {
-    login: Action<[LoginRequest], Token | undefined>;
+    login: Action<[LoginRequest], LoginResult>;
     logout: Action<[], boolean>;
   };
 }
@@ -34,11 +42,13 @@ export function useSessionActions(): SessionActions {
     actions: {
       login: ungated(
         "no session: a capability rides on a resource fetched with a token, so none can precede the request that obtains one",
-        async (data: LoginRequest) => {
+        async (data: LoginRequest): Promise<LoginResult> => {
           try {
-            return await loginMutation.mutateAsync({ data });
-          } catch {
-            return undefined;
+            const response = await loginMutation.mutateAsync({ data });
+            // A 200 without a token is still a refused login.
+            return response?.token ? { token: response.token } : { failure: { kind: "other", error: undefined } };
+          } catch (error) {
+            return { failure: classifyAuthError(error) };
           }
         },
         loginMutation.isPending,

@@ -7,6 +7,10 @@ import {
   TextField,
 } from "@mui/material";
 import { colors, fontSizes } from "../../theme/tokens";
+import { PasswordInput } from "../Forms/PasswordInput";
+import { PasswordPolicyHint } from "../Forms/PasswordPolicyHint";
+
+const POLICY_HINT_ID = "user-password-policy";
 
 export interface UserFormValues {
   fullName: string;
@@ -135,25 +139,30 @@ export const UserForm: FC<UserFormProps> = ({
 
         {mode === "create" && (
           <>
-            <TextField
-              label="Contraseña"
-              variant="outlined"
-              fullWidth
-              required
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (passwordError) setPasswordError("");
-              }}
-                />
+            {/* Sent exactly as typed: never trimmed or transformed (#196). */}
+            <Box>
+              <PasswordInput
+                label="Contraseña"
+                variant="outlined"
+                fullWidth
+                required
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) setPasswordError("");
+                }}
+                slotProps={{ htmlInput: { "aria-describedby": POLICY_HINT_ID } }}
+              />
+              <PasswordPolicyHint id={POLICY_HINT_ID} />
+            </Box>
 
-            <TextField
+            <PasswordInput
               label="Confirmar contraseña"
               variant="outlined"
               fullWidth
               required
-              type="password"
+              autoComplete="new-password"
               value={passwordConfirm}
               error={!!passwordError}
               helperText={passwordError}
@@ -161,7 +170,7 @@ export const UserForm: FC<UserFormProps> = ({
                 setPasswordConfirm(e.target.value);
                 if (passwordError) setPasswordError("");
               }}
-                />
+            />
           </>
         )}
 

@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { expectPasswordFieldContract } from "../../test/passwordField";
 import { UserForm } from "./UserForm";
 
 const mockHandleSubmit = vi.fn();
@@ -121,12 +122,51 @@ describe("UserForm", () => {
       expect(confirmInput).not.toHaveAttribute("aria-invalid", "true");
     });
 
+    describe("the password fields (#196)", () => {
+      it("give both a toggle, autocomplete=new-password and no keyboard rewriting", async () => {
+        const user = userEvent.setup();
+        render(<UserForm {...defaultCreateProps} />);
+
+        await expectPasswordFieldContract(user, screen.getByLabelText(/^Contraseña/), "new-password");
+        await expectPasswordFieldContract(user, screen.getByLabelText(/^Confirmar contraseña/), "new-password");
+      });
+
+      it("show the policy with a passphrase example, tied to the password", () => {
+        render(<UserForm {...defaultCreateProps} />);
+
+        const hint = screen.getByText(/Usa entre 15 y 64 caracteres/);
+        expect(hint).toHaveTextContent("«el gato duerme junto a la ventana»");
+        expect(screen.getByLabelText(/^Contraseña/)).toHaveAttribute("aria-describedby", hint.id);
+      });
+
+      it("submit the password exactly as typed", async () => {
+        const user = userEvent.setup();
+        render(<UserForm {...defaultCreateProps} />);
+
+        await user.type(screen.getByRole("textbox", { name: /nombre completo/i }), "Juan García");
+        await user.type(screen.getByRole("textbox", { name: /dni\/nif/i }), "12345678Z");
+        await user.type(screen.getByRole("spinbutton", { name: /número de socio/i }), "42");
+        await user.type(screen.getByRole("textbox", { name: /email/i }), "juan@example.com");
+        await user.click(screen.getByLabelText(/^Contraseña/));
+        await user.paste("  frase con espacios larga  ");
+        await user.click(screen.getByLabelText(/^Confirmar contraseña/));
+        await user.paste("  frase con espacios larga  ");
+        await user.click(screen.getByRole("button", { name: "Crear socio" }));
+
+        expect(mockHandleSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({ password: "  frase con espacios larga  " }),
+        );
+      });
+    });
+
     it("shows spinner and disables button when isPending is true", () => {
       render(<UserForm {...defaultCreateProps} isPending={true} />);
 
       expect(screen.queryByText("Crear socio")).not.toBeInTheDocument();
       expect(screen.getByRole("progressbar")).toBeInTheDocument();
-      expect(screen.getByRole("button")).toBeDisabled();
+      // The password toggles are buttons too, and they have names; the submit
+      // button loses its name to the spinner while pending.
+      expect(screen.getByRole("button", { name: "" })).toBeDisabled();
     });
   });
 
@@ -200,12 +240,51 @@ describe("UserForm", () => {
       );
     });
 
+    describe("the password fields (#196)", () => {
+      it("give both a toggle, autocomplete=new-password and no keyboard rewriting", async () => {
+        const user = userEvent.setup();
+        render(<UserForm {...defaultCreateProps} />);
+
+        await expectPasswordFieldContract(user, screen.getByLabelText(/^Contraseña/), "new-password");
+        await expectPasswordFieldContract(user, screen.getByLabelText(/^Confirmar contraseña/), "new-password");
+      });
+
+      it("show the policy with a passphrase example, tied to the password", () => {
+        render(<UserForm {...defaultCreateProps} />);
+
+        const hint = screen.getByText(/Usa entre 15 y 64 caracteres/);
+        expect(hint).toHaveTextContent("«el gato duerme junto a la ventana»");
+        expect(screen.getByLabelText(/^Contraseña/)).toHaveAttribute("aria-describedby", hint.id);
+      });
+
+      it("submit the password exactly as typed", async () => {
+        const user = userEvent.setup();
+        render(<UserForm {...defaultCreateProps} />);
+
+        await user.type(screen.getByRole("textbox", { name: /nombre completo/i }), "Juan García");
+        await user.type(screen.getByRole("textbox", { name: /dni\/nif/i }), "12345678Z");
+        await user.type(screen.getByRole("spinbutton", { name: /número de socio/i }), "42");
+        await user.type(screen.getByRole("textbox", { name: /email/i }), "juan@example.com");
+        await user.click(screen.getByLabelText(/^Contraseña/));
+        await user.paste("  frase con espacios larga  ");
+        await user.click(screen.getByLabelText(/^Confirmar contraseña/));
+        await user.paste("  frase con espacios larga  ");
+        await user.click(screen.getByRole("button", { name: "Crear socio" }));
+
+        expect(mockHandleSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({ password: "  frase con espacios larga  " }),
+        );
+      });
+    });
+
     it("shows spinner and disables button when isPending is true", () => {
       render(<UserForm {...defaultEditProps} isPending={true} />);
 
       expect(screen.queryByText("Guardar cambios")).not.toBeInTheDocument();
       expect(screen.getByRole("progressbar")).toBeInTheDocument();
-      expect(screen.getByRole("button")).toBeDisabled();
+      // The password toggles are buttons too, and they have names; the submit
+      // button loses its name to the spinner while pending.
+      expect(screen.getByRole("button", { name: "" })).toBeDisabled();
     });
   });
 });

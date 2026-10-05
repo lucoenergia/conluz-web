@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useLogin, useLogout } from "../../api/authentication/authentication";
-import { getGetCurrentUserQueryKey, useUpdateProfile } from "../../api/users/users";
+import { getGetCurrentUserQueryKey, useChangePassword, useUpdateProfile } from "../../api/users/users";
 import { mutation } from "../../test/queryState";
+import { apiError } from "../../test/apiError";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { useProfileActions } from "./useProfileActions";
 import { useSessionActions } from "./useSessionActions";
@@ -9,6 +10,7 @@ import { useSessionActions } from "./useSessionActions";
 /** Complete bodies: a cast would hide a field the screen must supply. */
 const CREDENTIALS = { username: "TEST-USERNAME", password: "TEST-PASSWORD" };
 const PROFILE_BODY = { email: "test@example.invalid" };
+const PASSWORD_BODY = { currentPassword: "TEST-CURRENT-PASSWORD", newPassword: "TEST-NEW-PASSWORD-LONG-ENOUGH" };
 
 /**
  * The two hooks with no capability behind them.
@@ -27,6 +29,7 @@ vi.mock(import("../../api/authentication/authentication"), async (importOriginal
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useUpdateProfile: vi.fn(),
+  useChangePassword: vi.fn(),
 }));
 
 let mutateAsync: ReturnType<typeof vi.fn>;
@@ -36,6 +39,7 @@ beforeEach(() => {
   vi.mocked(useLogin).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useLogout).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useUpdateProfile).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useChangePassword).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
 describe("useSessionActions", () => {
@@ -59,13 +63,25 @@ describe("useSessionActions", () => {
     expect(mutateAsync).toHaveBeenCalledWith({ data: CREDENTIALS });
   });
 
-  it("reports a rejected login as undefined rather than throwing at the form", async () => {
-    mutateAsync.mockRejectedValue(new Error("401"));
+  it("reports a rejected login as a failure rather than throwing at the form", async () => {
+    mutateAsync.mockRejectedValue(apiError(400));
     const { result } = renderHookWithProviders(() => useSessionActions());
 
-    await expect(
-      result.current.actions.login.run(CREDENTIALS),
-    ).resolves.toBeUndefined();
+    await expect(result.current.actions.login.run(CREDENTIALS)).resolves.toEqual({
+      failure: { kind: "other", error: expect.anything() },
+    });
+  });
+
+  // #196: a throttled caller must be told to wait, not that they mistyped.
+  it("says a login was throttled, and for how long", async () => {
+    mutateAsync.mockRejectedValue(
+      apiError(429, { code: "AUTH_TOO_MANY_FAILED_ATTEMPTS", params: { retryAfterSeconds: "840" } }),
+    );
+    const { result } = renderHookWithProviders(() => useSessionActions());
+
+    await expect(result.current.actions.login.run(CREDENTIALS)).resolves.toEqual({
+      failure: { kind: "throttled", retryAfterSeconds: 840 },
+    });
   });
 
   it("logs out without arguments", async () => {
@@ -113,5 +129,32 @@ describe("useProfileActions", () => {
       false,
     );
     expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+});
+
+describe("useProfileActions -- changing the password (#196)", () => {
+  it("hands back the change for a caller with no capabilities", () => {
+    const { result } = renderHookWithProviders(() => useProfileActions());
+
+    expect(result.current.actions.changePassword).toBeDefined();
+  });
+
+  it("sends the body as given and touches no cache, since the session is about to end", async () => {
+    const { result, queryClient } = renderHookWithProviders(() => useProfileActions());
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.changePassword.run(PASSWORD_BODY)).resolves.toEqual({ ok: true });
+    expect(mutateAsync).toHaveBeenCalledWith({ data: PASSWORD_BODY });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("reports why it was refused", async () => {
+    mutateAsync.mockRejectedValue(apiError(400, { code: "USER_CURRENT_PASSWORD_INCORRECT" }));
+    const { result } = renderHookWithProviders(() => useProfileActions());
+
+    await expect(result.current.actions.changePassword.run(PASSWORD_BODY)).resolves.toEqual({
+      ok: false,
+      failure: { kind: "currentPasswordIncorrect" },
+    });
   });
 });
