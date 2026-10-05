@@ -345,6 +345,57 @@ Two things worth knowing before you touch it:
   active-community context can rely on them. Do not read another user's `memberships` as their
   complete set.
 
+## Recipes
+
+
+**Adding a screen.** Decide what the backend already answers for it, and read that. The payload for
+the resource the screen is about carries a `capabilities` object; `src/hooks/permissions/` turns one
+into a `CapabilityOutcome`, and `<Can>` renders on it. Never add a role check, and never add a
+boolean prop that restates an answer the payload already carries — if a list spans several
+resources, each row answers for itself.
+
+**Adding a route.** Wrap it in `CapabilityRoute` with the capability the page needs, then add the
+path to `ROUTE_ACCESS` in `src/contracts/routeAccess.spec.ts`. If any authenticated caller may see
+it, classify it `authenticated` and say why — the reason is the point of the entry. If the route has
+a menu entry, give the entry the same requirement; the spec compares them. The suite fails until
+both are done, which is the intended order of work, not an obstacle.
+
+**Adding an action.** Add it to the hook in `src/hooks/actions/` for its resource, gated on the
+capability the backend returns, and record the decision in `ACTION_COVERAGE`
+(`src/contracts/mutationHooks.spec.ts`) — the capability and its scope, or an `ungated` reason.
+Return `undefined` when the caller may not perform it, so the control cannot be rendered at all.
+Never import a generated mutation hook outside that layer.
+
+**Adding a read of a user-scoped listing.** Filter it to the active community and declare the
+filter in `USER_SCOPED_LISTINGS` (`src/contracts/userScopedReads.spec.ts`). See the gate-versus-scope
+rule above for why the capability does not do this for you.
+
+Deeper patterns (gating recipes, hook shapes, common pitfalls) live in the **`conluz-web-community-scope`** skill, `.claude/skills/conluz-web-community-scope/SKILL.md`.
+
+## Data fetching pattern
+
+```tsx
+// Reads: the generated hook (or its community-scope wrapper)
+const { data, isLoading, error } = useGetAllSupplies(communityId);
+
+// Writes: an action hook, which returns only what this caller may do.
+// The gate and the control are one expression -- there is no way to render a
+// button for an action that was not handed over.
+const { forSupply } = useSupplyActions();
+const { actions, outcomes } = forSupply(supply);
+
+{actions.disable && (
+  <MenuItem disabled={actions.disable.isPending} onClick={() => void actions.disable.run()}>
+    Deshabilitar
+  </MenuItem>
+)}
+
+// `undefined` covers denied, pending and error alike. When a screen needs to
+// tell them apart -- a skeleton rather than a missing row action -- it reads
+// the outcome instead:
+{outcomes.disable.state === "pending" && <Skeleton width={80} />}
+```
+
 ## API client is an input — do not regenerate
 
 The updated `api-docs.json` and regenerated Orval client under `src/api/` are provided
