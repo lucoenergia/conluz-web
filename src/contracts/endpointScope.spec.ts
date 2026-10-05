@@ -59,6 +59,8 @@ const REVIEWED: Record<string, Scope> = {
   // reason /api/v1/users/current is -- but a fixed literal rather than a shape,
   // so it is decided here rather than in structuralScope.
   "/api/v1/users/profile": "user",
+  // Same reasoning as /api/v1/users/profile: acts on the caller, takes no id.
+  "/api/v1/users/current/password": "user",
 };
 
 function structuralScope(path: string): Scope | null {

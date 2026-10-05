@@ -195,6 +195,7 @@ export function buildCurrentUser(overrides: Partial<CurrentUserResponse> = {}): 
   return {
     ...({
       ...buildUser(),
+      mustChangePassword: false,
       platformCapabilities: buildPlatformCapabilities(),
     } satisfies CurrentUserResponse),
     ...overrides,

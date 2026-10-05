@@ -12,6 +12,7 @@ const baseUser: CurrentUserResponse = {
   email: "test@example.com",
   phoneNumber: "600000000",
   enabled: true,
+  mustChangePassword: false,
   memberships: {},
   isPlatformAdmin: false,
   capabilities: buildUserCapabilities(),
