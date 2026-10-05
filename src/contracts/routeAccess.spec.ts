@@ -73,7 +73,7 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/integrations": { require: { scope: "community", capability: "canManage" } },
   "/members": { require: { scope: "community", capability: "canManageMemberships" } },
   // Which of the two views is a further decision, made by HomeViewRoute, and a
-  // caller who lacks one is sent elsewhere rather than refused.
+  // caller who lacks one is sent to the other rather than refused.
   "/home": { require: { scope: "community", capability: "canRead" } },
   "/home/member": { require: { scope: "community", capability: "canRead" } },
   "/home/management": { require: { scope: "community", capability: "canRead" } },

@@ -5,6 +5,7 @@ import { LoadErrorAlert } from "../../components/LoadErrorAlert";
 import { formatMonth } from "../../utils/formatEnergyFigures";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
+import { HomeViewSwitch } from "./HomeViewSwitch";
 import { EnergyJourney } from "./member/EnergyJourney";
 import { HomeCard } from "./member/HomeCard";
 import { chooseMemberHomeMessage } from "./member/memberHomeMessage";
@@ -22,15 +23,13 @@ import { useMemberPayback } from "./member/useMemberPayback";
  *
  * The two reads are independent: either can fail, and the other half still
  * renders.
- *
- * No view switch here until the management view has content (#198): its tab
- * would lead an admin to a placeholder.
  */
 export const MemberHomePage: FC = () => (
   <Box sx={{ ...sxStyles.pageContainer, p: { xs: 2, sm: 4 }, maxWidth: 960, display: "flex", flexDirection: "column", gap: 3 }}>
     <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
       Tu energía
     </Typography>
+    <HomeViewSwitch current="member" />
     <EnergyHalf />
     <PaybackHalf />
   </Box>

@@ -14,11 +14,17 @@ import { buildCurrentUser, buildMembershipEnergyMetrics, buildMembershipPayback 
 import { query } from "../../test/queryState";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
+import { answerCommunities } from "./homeViews.mocks";
 
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
   useGetMembershipPayback: vi.fn(),
+}));
+// The view switch asks the active community what the caller may do there.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCommunityById: vi.fn(),
 }));
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -100,6 +106,8 @@ describe("MemberHomePage (#199)", () => {
     vi.mocked(useLoggedUser).mockReturnValue(
       buildCurrentUser({ id: USER_ID, memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_MEMBER } }),
     );
+    // A plain member: the community grants no management, so no switch.
+    answerCommunities({ adminOf: [] });
     answer();
   });
 
