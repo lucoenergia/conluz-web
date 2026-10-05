@@ -23,6 +23,8 @@ export interface CurrentUserResponse {
   email: string;
   phoneNumber: CurrentUserResponsePhoneNumber;
   enabled: boolean;
+  /** Whether the caller's password was chosen by someone else and should be changed through PUT /api/v1/users/current/password. Informational: no request is refused because of it. */
+  mustChangePassword: boolean;
   memberships: CurrentUserResponseMemberships;
   /** What the caller may do with their own user record. */
   capabilities: UserCapabilitiesResponse;

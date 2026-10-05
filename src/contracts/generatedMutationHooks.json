@@ -102,6 +102,7 @@
       "tag": "Users",
       "module": "src/api/users/users",
       "hooks": [
+        "useChangePassword",
         "useCreateUser",
         "useCreateUsersWithFile",
         "useDeleteUser",

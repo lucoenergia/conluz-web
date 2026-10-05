@@ -9,7 +9,10 @@
 export interface UpdateUserBody {
   /** @minimum 0 */
   number: number;
-  /** @minLength 1 */
+  /**
+   * The user's DNI/NIE/NIF, unique among users. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same identifier.
+   * @minLength 1
+   */
   personalId: string;
   /** @minLength 1 */
   fullName: string;

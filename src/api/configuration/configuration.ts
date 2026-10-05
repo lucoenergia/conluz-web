@@ -27,6 +27,10 @@ import type { ErrorType } from '.././custom-instance';
 
 /**
  * This endpoint serves as a crucial initiation step for the application, allowing the configuration of foundational settings. This endpoint facilitates the establishment of the default admin user credentials, pivotal for initiating subsequent configurations. By executing this endpoint, users can set the groundwork for the app, enabling the seamless configuration of users, supplies, and other application settings. No authorization is required to execute this endpoint, and the response provides confirmation of successful initialization or relevant error messages.
+
+The body is validated: `defaultAdminUser` and its `personalId`, `fullName`, `email` and `password` are required, and a missing or invalid field is answered 400. The `password` must satisfy the password policy: between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded; any character is accepted, including spaces and non-ASCII letters, and there are no composition rules. A password that breaks the policy is answered 400 with the `USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed: `TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`.
+
+The application can only be initialised once: any later call is answered 403.
  * @summary Sets up the initial configuration for the app.
  */
 export const init = (

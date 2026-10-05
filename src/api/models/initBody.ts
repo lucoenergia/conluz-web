@@ -8,5 +8,5 @@
 import type { CreateDefaultAdminUserBody } from './createDefaultAdminUserBody';
 
 export interface InitBody {
-  defaultAdminUser?: CreateDefaultAdminUserBody;
+  defaultAdminUser: CreateDefaultAdminUserBody;
 }
