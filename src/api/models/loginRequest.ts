@@ -7,6 +7,7 @@
  */
 
 export interface LoginRequest {
+  /** The user's DNI/NIE/NIF (personalId). It is normalised before the user is looked up: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same identifier. */
   username?: string;
   password?: string;
 }

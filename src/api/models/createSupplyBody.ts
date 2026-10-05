@@ -9,7 +9,10 @@
 export interface CreateSupplyBody {
   /** @minLength 1 */
   code: string;
-  /** @minLength 1 */
+  /**
+   * The DNI/NIE/NIF of the existing user who owns the supply. It is normalised before the owner is looked up: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same identifier.
+   * @minLength 1
+   */
   personalId: string;
   /** @minLength 1 */
   address: string;

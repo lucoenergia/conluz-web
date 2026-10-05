@@ -8,7 +8,10 @@
 import type { CreateUserBodyCommunityRole } from './createUserBodyCommunityRole';
 
 export interface CreateUserBody {
-  /** @minLength 1 */
+  /**
+   * The user's DNI/NIE/NIF, unique among users. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same identifier.
+   * @minLength 1
+   */
   personalId: string;
   /** @minimum 0 */
   number: number;
@@ -18,7 +21,10 @@ export interface CreateUserBody {
   /** @minLength 1 */
   email: string;
   phoneNumber?: string;
-  /** @minLength 1 */
+  /**
+   * The initial password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. The new user is flagged as having to change it.
+   * @minLength 15
+   */
   password: string;
   communityId?: string;
   communityRole?: CreateUserBodyCommunityRole;

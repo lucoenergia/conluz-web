@@ -17,6 +17,7 @@ import type {
 
 import type {
   LoginRequest,
+  RestError,
   Token
 } from '.././models';
 
@@ -102,7 +103,7 @@ export const useLogout = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint is dedicated to user authentication, requiring clients to provide a valid username and password in the request body. Upon successful authentication, the server generates and returns an authentication token, utilizing JSON Web Tokens (JWT). This token serves as a secure means for subsequent authorized access to protected resources within the system. The server responds with an HTTP status code of 200, along with the generated token. In case of authentication failure or invalid credentials, the server issues an appropriate error status code, accompanied by a descriptive error message.
+ * This endpoint is dedicated to user authentication, requiring clients to provide a valid username and password in the request body. Upon successful authentication, the server generates and returns an authentication token, utilizing JSON Web Tokens (JWT). This token serves as a secure means for subsequent authorized access to protected resources within the system. The server responds with an HTTP status code of 200, along with the generated token. In case of authentication failure or invalid credentials, the server issues an appropriate error status code, accompanied by a descriptive error message. After 5 failed attempts on the same account, or 20 from the same client address, within 15 minutes, further attempts are answered 429 with a Retry-After header, without checking the password, until the 15 minutes that started with the first failure have passed.
  * @summary User authentication
  */
 export const login = (
@@ -121,7 +122,7 @@ export const login = (
   
 
 
-export const getLoginMutationOptions = <TError = ErrorType<unknown>,
+export const getLoginMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext> => {
 
@@ -148,12 +149,12 @@ const {mutation: mutationOptions} = options ?
 
     export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
     export type LoginMutationBody = LoginRequest
-    export type LoginMutationError = ErrorType<unknown>
+    export type LoginMutationError = ErrorType<RestError>
 
     /**
  * @summary User authentication
  */
-export const useLogin = <TError = ErrorType<unknown>,
+export const useLogin = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof login>>,

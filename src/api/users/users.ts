@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ChangePasswordBody,
   CreateUserBody,
   CreateUsersInBulkResponse,
   CreateUsersWithFileBody,
@@ -155,6 +156,8 @@ Clients send a request containing the updated user details, and authentication, 
 
 A successful update results in an HTTP status code of 200, indicating that the user information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
 
+The `personalId` is normalised before it is stored or compared: surrounding and inner whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased. If another user already has the same normalised `personalId`, the server responds 409 with the `USER_ALREADY_EXISTS` code; the error does not repeat the value.
+
 If you don't provide some of the optional parameters, they will be considered as null value so their values will be updated with a null value.
  * @summary Updates user information
  */
@@ -174,7 +177,7 @@ export const updateUser = (
   
 
 
-export const getUpdateUserMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateUserMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext> => {
 
@@ -201,12 +204,12 @@ const {mutation: mutationOptions} = options ?
 
     export type UpdateUserMutationResult = NonNullable<Awaited<ReturnType<typeof updateUser>>>
     export type UpdateUserMutationBody = UpdateUserBody
-    export type UpdateUserMutationError = ErrorType<unknown>
+    export type UpdateUserMutationError = ErrorType<RestError>
 
     /**
  * @summary Updates user information
  */
-export const useUpdateUser = <TError = ErrorType<unknown>,
+export const useUpdateUser = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateUser>>,
@@ -364,6 +367,95 @@ export const useUpdateProfile = <TError = ErrorType<unknown>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * This endpoint lets the authenticated user replace their own password. It always acts on the
+caller, so it cannot be used to change anybody else's password.
+
+The current password must be supplied and must match. The new password must be between 15 and
+64 characters long, counting each Unicode code point as one, and no more than 72 bytes once
+UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no
+composition rules, and the value is never trimmed or transformed. The new password may be equal
+to the current one.
+
+On success the server answers 204, clears the "must change password" flag and ends every
+session opened with the previous password: every token issued before the change, including the
+one used for this request, is rejected with 401 from then on, and the access cookie is removed.
+The client must log in again with the new password.
+
+A wrong current password is answered 400 with the `USER_CURRENT_PASSWORD_INCORRECT` code, never
+401, and changes nothing. A new password that breaks the policy is answered 400 with the
+`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:
+`TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`.
+
+Wrong current passwords count together with failed logins on the same account. After 5 failures
+on the account, or 20 from the same client address, within 15 minutes, further changes are
+answered 429 with a Retry-After header, without checking the current password and without
+affecting the caller's token, until the 15 minutes that started with the first failure have
+passed.
+
+**Required: any authenticated user (changes their own password).**
+ * @summary Changes the password of the current user
+ */
+export const changePassword = (
+    changePasswordBody: ChangePasswordBody,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/current/password`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: changePasswordBody
+    },
+      );
+    }
+  
+
+
+export const getChangePasswordMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext> => {
+
+const mutationKey = ['changePassword'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePassword>>, {data: ChangePasswordBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changePassword(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changePassword>>>
+    export type ChangePasswordMutationBody = ChangePasswordBody
+    export type ChangePasswordMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Changes the password of the current user
+ */
+export const useChangePassword = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changePassword>>,
+        TError,
+        {data: ChangePasswordBody},
+        TContext
+      > => {
+
+      const mutationOptions = getChangePasswordMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a
 comprehensive list of user details.
 
@@ -489,6 +581,20 @@ COMMUNITY_ADMIN, the community is derived from the caller's active context. If t
 PLATFORM_ADMIN and communityId is not provided, a user with no memberships is created
 (they can be attached later).
 
+The `personalId` is normalised before it is stored or compared: surrounding and inner whitespace
+(including the no-break space), dots and hyphens are removed and letters are upper-cased, so
+`x1234567-l` is stored as `X1234567L`. If a user with the same normalised `personalId` already
+exists, the server responds 409 with the `USER_ALREADY_EXISTS` code; the error does not repeat
+the value.
+
+The `password` must satisfy the password policy: between 15 and 64 characters, counting each
+Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is
+accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is
+never trimmed or transformed. A password that breaks the policy is answered 400 with the
+`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:
+`TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`. Because the password is chosen by the creator, the new
+user is flagged as having to change it (`mustChangePassword` on `GET /api/v1/users/current`).
+
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
 **Required: Platform Admin, or Community Admin of the target community**
 
@@ -514,7 +620,7 @@ export const createUser = (
   
 
 
-export const getCreateUserMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateUserMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext> => {
 
@@ -541,12 +647,12 @@ const {mutation: mutationOptions} = options ?
 
     export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>
     export type CreateUserMutationBody = CreateUserBody
-    export type CreateUserMutationError = ErrorType<unknown>
+    export type CreateUserMutationError = ErrorType<RestError>
 
     /**
  * @summary Creates a new user within the system.
  */
-export const useCreateUser = <TError = ErrorType<unknown>,
+export const useCreateUser = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUser>>,
@@ -852,6 +958,12 @@ export const useDisableUser = <TError = ErrorType<unknown>,
  * This endpoint facilitates the creation of a set of users within the system by importing a CSV file.
 
 This endpoint requires clients to send a request containing a file with essential details for each user, including username, password, and any additional relevant information.
+
+The `personalId` of every row is normalised before it is stored or compared: surrounding and inner whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so `12.345.678-a` is stored as `12345678A`. A row whose normalised `personalId` already belongs to a user is not created and is reported in `errors`; the error message does not repeat the value.
+
+Every row is applied only to the community given by the `communityId` query parameter. A row whose `communityId` column is present and differs from the query parameter, or is not a valid UUID, is rejected and reported in `errors`; no user and no membership are created for it.
+
+The `password` of every row must satisfy the password policy: between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters, and there are no composition rules. A row whose password breaks the policy is not created and is reported in `errors` with a message naming the rule that failed; the other rows are still processed. Every user created by an import is flagged as having to change their password.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
 **Required: Platform Admin or Community Admin**
