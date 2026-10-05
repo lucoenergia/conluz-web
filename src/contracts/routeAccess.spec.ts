@@ -73,7 +73,7 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/integrations": { require: { scope: "community", capability: "canManage" } },
   "/members": { require: { scope: "community", capability: "canManageMemberships" } },
   // Which of the two views is a further decision, made by HomeViewRoute, and a
-  // caller who lacks one is sent to the other rather than refused.
+  // caller who lacks one is sent elsewhere rather than refused.
   "/home": { require: { scope: "community", capability: "canRead" } },
   "/home/member": { require: { scope: "community", capability: "canRead" } },
   "/home/management": { require: { scope: "community", capability: "canRead" } },
@@ -96,9 +96,8 @@ const ROUTE_ACCESS: Record<string, Access> = {
  * entry and its destination cannot drift apart.
  */
 const STRICTER_THAN_ROUTE: Record<string, string> = {
-  "/": "the operational entries need a community to be about; the page itself is the no-community landing spot",
-  "/production": "as /",
-  "/supply-points": "as /",
+  "/production": "an operational entry needs a community to be about; the page itself renders without one",
+  "/supply-points": "as /production",
 };
 
 // ---------------------------------------------------------------------------

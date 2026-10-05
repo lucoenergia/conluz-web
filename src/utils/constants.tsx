@@ -53,7 +53,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       // Operational screens are about one community's own data, so they appear
       // once the caller may read the community they are working in -- which is
       // false when there is no active community, as before.
-      { to: "/", id: "home", icon: HomeRoundedIcon, label: "Inicio", requires: COMMUNITY_READ },
+      { to: "/home", id: "home", icon: HomeRoundedIcon, label: "Inicio", requires: COMMUNITY_READ },
       { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", requires: COMMUNITY_READ },
       { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", requires: COMMUNITY_READ },
       { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", requires: { scope: "community", capability: "canManageMemberships" } },

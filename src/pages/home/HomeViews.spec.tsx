@@ -15,8 +15,6 @@ import { useLoggedUser } from "../../context/logged-user.context";
 import { buildCommunity } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { CONTACT_ITEM, MENU_SECTIONS } from "../../utils/constants";
-import { resolveLandingRoute } from "../../utils/routes";
 import {
   COMMUNITY_A,
   COMMUNITY_B,
@@ -171,13 +169,23 @@ describe("home views (#197)", () => {
   });
 
   describe("AC2 -- a community admin known to own no supplies here", () => {
-    it.each(["/home/member", "/home/management"])("opening %s gets the management view and no switch", async (route) => {
+    it("opening the management route gets the management view and no switch", async () => {
       as(ADMIN_WITHOUT_SUPPLIES);
-      openApp(route);
+      openApp("/home/management");
 
       expect(await managementView()).toBeInTheDocument();
       expect(currentPath()).toBe("/home/management");
       expect(viewSwitch()).not.toBeInTheDocument();
+    });
+
+    // Not to the management view while it is a placeholder (#198): only its
+    // own URL reaches it.
+    it("opening the member route is taken to /", async () => {
+      as(ADMIN_WITHOUT_SUPPLIES);
+      openApp("/home/member");
+
+      expect(await screen.findByText("Página de inicio actual")).toBeInTheDocument();
+      expect(currentPath()).toBe("/");
     });
 
     it("sees no affordance leading to the member view anywhere in the layout", async () => {
@@ -206,12 +214,13 @@ describe("home views (#197)", () => {
       expect(document.querySelector('[href="/home/management"]')).toBeNull();
     });
 
-    it("lands on the management view from /home", async () => {
+    // The member view, not management, while management is a placeholder (#198).
+    it("lands on the member view from /home", async () => {
       as(ADMIN_WITH_SUPPLIES);
       openApp("/home");
 
-      expect(await managementView()).toBeInTheDocument();
-      expect(currentPath()).toBe("/home/management");
+      expect(await memberView()).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
     });
   });
 
@@ -282,16 +291,17 @@ describe("home views (#197)", () => {
   });
 
   describe("AC6 -- switching community on a view the new community does not grant", () => {
-    it("member view in A, switched to B where they administer and own nothing, goes to management", async () => {
+    // To "/", not to the management placeholder, until #198.
+    it("member view in A, switched to B where they administer and own nothing, goes to /", async () => {
       as(MEMBER_HERE_ADMIN_THERE);
       const { switchActiveCommunity } = openApp("/home/member", COMMUNITY_A);
       await memberView();
 
       switchActiveCommunity(COMMUNITY_B);
 
-      expect(await managementView()).toBeInTheDocument();
-      expect(currentPath()).toBe("/home/management");
-      expect(viewSwitch()).not.toBeInTheDocument();
+      expect(await screen.findByText("Página de inicio actual")).toBeInTheDocument();
+      expect(currentPath()).toBe("/");
+      expect(screen.queryByRole("heading", MANAGEMENT_HEADING)).not.toBeInTheDocument();
     });
 
     it("management view in B, switched to A where they are a plain member, goes to the member view", async () => {
@@ -307,20 +317,21 @@ describe("home views (#197)", () => {
 
     it("goes there and back without an error or an empty screen", async () => {
       as(MEMBER_HERE_ADMIN_THERE);
-      const { switchActiveCommunity } = openApp("/home/member", COMMUNITY_A);
-      await memberView();
-
-      switchActiveCommunity(COMMUNITY_B);
+      const { switchActiveCommunity } = openApp("/home/management", COMMUNITY_B);
       await managementView();
-      switchActiveCommunity(COMMUNITY_A);
 
-      expect(await memberView()).toBeInTheDocument();
+      switchActiveCommunity(COMMUNITY_A);
+      await memberView();
+      switchActiveCommunity(COMMUNITY_B);
+
+      // Back in B from the member view: "/" rather than the placeholder (#198).
+      expect(await screen.findByText("Página de inicio actual")).toBeInTheDocument();
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
 
   describe("AC7 -- no view flashes before the right one", () => {
-    it("renders neither view while the community's capabilities load, then the right one", async () => {
+    it("renders neither view while the community's capabilities load, then goes where the caller belongs", async () => {
       as(ADMIN_WITHOUT_SUPPLIES);
       communitiesPending();
       const { rerender } = openApp("/home/member");
@@ -336,8 +347,8 @@ describe("home views (#197)", () => {
         </>,
       );
 
-      expect(await managementView()).toBeInTheDocument();
-      expect(currentPath()).toBe("/home/management");
+      expect(await screen.findByText("Página de inicio actual")).toBeInTheDocument();
+      expect(currentPath()).toBe("/");
     });
 
     // The member view must not render for this admin and then give way to
@@ -353,42 +364,87 @@ describe("home views (#197)", () => {
     });
   });
 
-  describe("AC8 -- reachable only by a direct URL", () => {
-    it("no menu entry leads to either view", () => {
-      const destinations = [...MENU_SECTIONS.flatMap((section) => section.items), CONTACT_ITEM].map((item) => item.to);
+});
 
-      expect(destinations.filter((to) => to === "/home" || to.startsWith("/home/"))).toEqual([]);
-    });
+/**
+ * The criteria of #199 that link the home in: the landing after login and the
+ * menu's Inicio, for each kind of caller. Until the management view has
+ * content (#198) no link leads to it, so an admin is never shown a placeholder.
+ */
+describe("linking the home in (#199)", () => {
+  // Login navigates to "/" (pinned in Login.spec.tsx); the layout's landing
+  // effect sends the caller on from there.
+  const signIn = (profile: Profile) => {
+    as(profile);
+    return openApp("/");
+  };
+  const inicio = () => screen.findByRole("link", { name: "Inicio" });
 
-    it.each([
-      ["a plain member", MEMBER],
-      ["an admin known to own no supplies", ADMIN_WITHOUT_SUPPLIES],
-      ["an admin who owns supplies", ADMIN_WITH_SUPPLIES],
-    ])("signing in as %s still lands on /, and the rendered app links to neither view", async (_label, profile) => {
-      as(profile);
-      // Login navigates to "/" (pinned in Login.spec.tsx); the layout decides
-      // the rest.
-      expect(resolveLandingRoute(profile.user)).toBe("/");
-      openApp("/");
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
+    vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
+    vi.mocked(useGetAllCommunities).mockReturnValue(
+      query.success<typeof getAllCommunities>([buildCommunity({ id: COMMUNITY_A, name: "Comunidad A" })]),
+    );
+  });
+
+  it("AC12 -- a member lands on the member view, and Inicio leads to the home", async () => {
+    signIn(MEMBER);
+
+    expect(await memberView()).toBeInTheDocument();
+    expect(currentPath()).toBe("/home/member");
+    expect(await inicio()).toHaveAttribute("href", "/home");
+  });
+
+  it("AC12 -- Inicio takes a member who went elsewhere back to the member view", async () => {
+    const user = userEvent.setup();
+    as(MEMBER);
+    openApp("/profile");
+
+    await user.click(await inicio());
+
+    expect(await memberView()).toBeInTheDocument();
+    expect(currentPath()).toBe("/home/member");
+  });
+
+  describe("AC13 -- a community admin is never shown the management placeholder", () => {
+    it("one who owns no supplies lands on /, and Inicio leads there too", async () => {
+      const user = userEvent.setup();
+      signIn(ADMIN_WITHOUT_SUPPLIES);
 
       expect(await screen.findByText("Página de inicio actual")).toBeInTheDocument();
       expect(currentPath()).toBe("/");
-      // The side menu is rendered and has resolved its community entries, so
-      // the absence below is about the entries and not about an empty menu.
+
+      await user.click(await inicio());
+
+      expect(await screen.findByText("Página de inicio actual")).toBeInTheDocument();
+      expect(currentPath()).toBe("/");
+      expect(screen.queryByRole("heading", MANAGEMENT_HEADING)).not.toBeInTheDocument();
+    });
+
+    it("one who owns supplies lands on their member view, with no way into the placeholder", async () => {
+      signIn(ADMIN_WITH_SUPPLIES);
+
+      expect(await memberView()).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+      // The menu has resolved its community entries, so the absence below is
+      // about the links and not about an empty menu.
       expect(await screen.findByRole("link", { name: "Producción" })).toHaveAttribute("href", "/production");
-      expect(document.querySelector('a[href^="/home"]')).toBeNull();
+      expect(document.querySelector('a[href="/home/management"]')).toBeNull();
+      expect(viewSwitch()).not.toBeInTheDocument();
     });
+  });
 
-    // The route table declares them and PAGE_SCOPES classifies the prefix;
-    // neither is a link. Anything else naming the paths would be one.
-    it("nothing outside the views themselves and the route table names their paths", () => {
-      const declaring = [join("src", "App.tsx"), join("src", "utils", "routes.ts")];
-      const offenders = sourceFiles("src")
-        .filter((file) => !file.startsWith(join("src", "pages", "home")) && !declaring.includes(file))
-        .filter((file) => /["'`]\/home(\/|["'`])/.test(readFileSync(file, "utf8")));
+  // Until #198, only the management view's own URL reaches it. Anything else
+  // naming its path would be a way in.
+  it("nothing outside the home views names the management view's path", () => {
+    const offenders = sourceFiles("src")
+      .filter((file) => !file.startsWith(join("src", "pages", "home")))
+      .filter((file) => /["'`]\/home\/management["'`]/.test(readFileSync(file, "utf8")));
 
-      expect(offenders).toEqual([]);
-    });
+    expect(offenders).toEqual([]);
   });
 });
 
