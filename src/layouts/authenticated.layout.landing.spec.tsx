@@ -63,7 +63,7 @@ const Probe: FC<{ label: string }> = ({ label }) => {
   );
 };
 
-/** A member of a community lands on "/", so nothing redirects them. */
+/** A member of a community lands on the community's home, /home. */
 const MEMBER = buildCurrentUser({
   id: "user-2",
   memberships: { "community-a": CommunityRole.COMMUNITY_MEMBER },
@@ -76,7 +76,8 @@ function serve(user: CurrentUserResponse) {
 const routedLayout = (
   <Routes>
     <Route element={<AuthenticatedLayout />}>
-      <Route index element={<Probe label="home" />} />
+      <Route index element={<Probe label="landing" />} />
+      <Route path="home" element={<Probe label="home" />} />
       <Route path="platform" element={<Probe label="platform" />} />
       <Route path="profile" element={<Probe label="profile" />} />
     </Route>
@@ -136,12 +137,15 @@ describe("the landing redirect", () => {
    * that a signed-in identity changing under a mounted layout still lands --
    * and so that the guard cannot be read as "once per mount, whoever it is".
    *
-   * Starts as a member, whose landing route IS "/", so the ref is set without
-   * anything having navigated.
+   * Starts as a member who lands and then goes back to "/", where their own
+   * landing is already recorded, so only a different id can move them on.
    */
-  it("lands a different user, so the guard is not a permanent latch", () => {
+  it("lands a different user, so the guard is not a permanent latch", async () => {
+    const user = userEvent.setup();
     serve(MEMBER);
     const { rerender } = renderAt("/");
+    expect(currentPath()).toBe("/home");
+    await user.click(screen.getByRole("link", { name: "Inicio" }));
     expect(currentPath()).toBe("/");
 
     serve(ADMIN_NO_COMMUNITY);

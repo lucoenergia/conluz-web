@@ -107,10 +107,11 @@ describe("removing one's own membership", () => {
     renderWithProviders(
       <Routes>
         <Route element={<AuthenticatedLayout />}>
-          <Route index element={<LeaveButton />} />
+          {/* Not "/": that is the landing route, which moves a member on to /home. */}
+          <Route path="members" element={<LeaveButton />} />
         </Route>
       </Routes>,
-      { route: "/", activeCommunityId: COMMUNITY_ID, token: "a-token" },
+      { route: "/members", activeCommunityId: COMMUNITY_ID, token: "a-token" },
     );
 
     // The header's community selector names the one community they belong to.

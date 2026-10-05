@@ -7,6 +7,6 @@
  */
 
 export type CreateUsersWithFileBody = {
-  /** CSV file format: number(Integer), fullName(String), personalId(String), address(String), email(String), phoneNumber(String), role(String), password(String), communityId(UUID, optional), communityRole(COMMUNITY_MEMBER|COMMUNITY_ADMIN, optional). */
+  /** CSV file format: number(Integer), fullName(String), personalId(String; normalised: whitespace, dots and hyphens removed, letters upper-cased), address(String), email(String), phoneNumber(String), role(String), password(String; 15 to 64 characters counted as Unicode code points and at most 72 bytes in UTF-8, any character accepted, no composition rules; a row that breaks this is rejected and reported in errors), communityId(UUID, optional; if present it must equal the communityId query parameter, otherwise the row is rejected), communityRole(COMMUNITY_MEMBER|COMMUNITY_ADMIN, optional). */
   file: Blob;
 };

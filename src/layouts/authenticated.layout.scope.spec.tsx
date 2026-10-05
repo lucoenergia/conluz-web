@@ -52,6 +52,8 @@ function renderAt(route: string) {
     <Routes>
       <Route element={<AuthenticatedLayout />}>
         <Route index element={<p>Página de inicio</p>} />
+        {/* Where a community member lands from "/", as in App.tsx. */}
+        <Route path="home" element={<p>Inicio de la comunidad</p>} />
         <Route path="production" element={<p>Página de producción</p>} />
         <Route path="users" element={<p>Página de usuarios</p>} />
         <Route path="profile" element={<p>Página de perfil</p>} />

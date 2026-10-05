@@ -1,6 +1,4 @@
 import "@testing-library/jest-dom";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import type { FC } from "react";
 import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,13 +7,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
 import { CommunityRole, type CurrentUserResponse, type SupplyResponse } from "../../api/models";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import { useGetMembershipEnergyMetrics, useGetMembershipPayback } from "../../api/memberships/memberships";
 import { useGetCurrentUser, useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { buildCommunity } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { CONTACT_ITEM, MENU_SECTIONS } from "../../utils/constants";
-import { resolveLandingRoute } from "../../utils/routes";
 import {
   COMMUNITY_A,
   COMMUNITY_B,
@@ -41,6 +38,13 @@ vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCurrentUser: vi.fn(),
   useGetSuppliesByUserId: vi.fn(),
+}));
+// The member view reads the caller's energy and payback (#199); which view
+// renders is what is under test here, not those figures, so both stay in flight.
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetMembershipEnergyMetrics: vi.fn(),
+  useGetMembershipPayback: vi.fn(),
 }));
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -124,6 +128,8 @@ describe("home views (#197)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
+    vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([
         buildCommunity({ id: COMMUNITY_A, name: "Comunidad A" }),
@@ -329,51 +335,66 @@ describe("home views (#197)", () => {
       expect(currentPath()).toBe("/home/member");
     });
   });
+});
 
-  describe("AC8 -- reachable only by a direct URL", () => {
-    it("no menu entry leads to either view", () => {
-      const destinations = [...MENU_SECTIONS.flatMap((section) => section.items), CONTACT_ITEM].map((item) => item.to);
+/**
+ * The criteria of #199 that link the home in: the landing after login and the
+ * menu's Inicio. /home then picks the caller's view by the rules above.
+ */
+describe("linking the home in (#199)", () => {
+  // Login navigates to "/" (pinned in Login.spec.tsx); the layout's landing
+  // effect sends the caller on from there.
+  const signIn = (profile: Profile) => {
+    as(profile);
+    return openApp("/");
+  };
+  const inicio = () => screen.findByRole("link", { name: "Inicio" });
 
-      expect(destinations.filter((to) => to === "/home" || to.startsWith("/home/"))).toEqual([]);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
+    vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
+    vi.mocked(useGetAllCommunities).mockReturnValue(
+      query.success<typeof getAllCommunities>([buildCommunity({ id: COMMUNITY_A, name: "Comunidad A" })]),
+    );
+  });
+
+  it("AC12 -- a member lands on the member view, and Inicio leads to the home", async () => {
+    signIn(MEMBER);
+
+    expect(await memberView()).toBeInTheDocument();
+    expect(currentPath()).toBe("/home/member");
+    expect(await inicio()).toHaveAttribute("href", "/home");
+  });
+
+  it("AC12 -- Inicio takes a member who went elsewhere back to the member view", async () => {
+    const user = userEvent.setup();
+    as(MEMBER);
+    openApp("/profile");
+
+    await user.click(await inicio());
+
+    expect(await memberView()).toBeInTheDocument();
+    expect(currentPath()).toBe("/home/member");
+  });
+
+  describe("AC13 -- a community admin lands on the management view", () => {
+    it("one who owns no supplies, with no switch", async () => {
+      signIn(ADMIN_WITHOUT_SUPPLIES);
+
+      expect(await managementView()).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/management");
+      expect(viewSwitch()).not.toBeInTheDocument();
+      expect(await inicio()).toHaveAttribute("href", "/home");
     });
 
-    it.each([
-      ["a plain member", MEMBER],
-      ["an admin known to own no supplies", ADMIN_WITHOUT_SUPPLIES],
-      ["an admin who owns supplies", ADMIN_WITH_SUPPLIES],
-    ])("signing in as %s still lands on /, and the rendered app links to neither view", async (_label, profile) => {
-      as(profile);
-      // Login navigates to "/" (pinned in Login.spec.tsx); the layout decides
-      // the rest.
-      expect(resolveLandingRoute(profile.user)).toBe("/");
-      openApp("/");
+    it("one who owns supplies, with the switch to their member view", async () => {
+      signIn(ADMIN_WITH_SUPPLIES);
 
-      expect(await screen.findByText("Página de inicio actual")).toBeInTheDocument();
-      expect(currentPath()).toBe("/");
-      // The side menu is rendered and has resolved its community entries, so
-      // the absence below is about the entries and not about an empty menu.
-      expect(await screen.findByRole("link", { name: "Producción" })).toHaveAttribute("href", "/production");
-      expect(document.querySelector('a[href^="/home"]')).toBeNull();
-    });
-
-    // The route table declares them and PAGE_SCOPES classifies the prefix;
-    // neither is a link. Anything else naming the paths would be one.
-    it("nothing outside the views themselves and the route table names their paths", () => {
-      const declaring = [join("src", "App.tsx"), join("src", "utils", "routes.ts")];
-      const offenders = sourceFiles("src")
-        .filter((file) => !file.startsWith(join("src", "pages", "home")) && !declaring.includes(file))
-        .filter((file) => /["'`]\/home(\/|["'`])/.test(readFileSync(file, "utf8")));
-
-      expect(offenders).toEqual([]);
+      expect(await managementView()).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/management");
+      expect(await screen.findByRole("tab", { name: "Tu energía" })).toHaveAttribute("href", "/home/member");
     });
   });
 });
-
-/** Production sources: specs may name the paths, since they test them. */
-function sourceFiles(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return sourceFiles(path);
-    return /\.tsx?$/.test(entry.name) && !/\.spec\.tsx?$/.test(entry.name) ? [path] : [];
-  });
-}

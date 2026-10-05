@@ -8,6 +8,8 @@ import {
   type CommunityResponse,
   type CurrentUserResponse,
   type MembershipCapabilitiesResponse,
+  type MembershipEnergyMetricsResponse,
+  type MembershipPaybackResponse,
   type MembershipResponse,
   type PartitionCoefficientResponse,
   type PlantCapabilitiesResponse,
@@ -195,6 +197,8 @@ export function buildCurrentUser(overrides: Partial<CurrentUserResponse> = {}): 
   return {
     ...({
       ...buildUser(),
+      // Informational only: the backend refuses nothing because of it.
+      mustChangePassword: false,
       platformCapabilities: buildPlatformCapabilities(),
     } satisfies CurrentUserResponse),
     ...overrides,
@@ -365,6 +369,59 @@ export function buildActiveCoefficient(overrides: Partial<PartitionCoefficientRe
       // exercises.
       capabilities: buildPartitionCoefficientCapabilities(),
     } satisfies PartitionCoefficientResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * A membership's aggregated energy metrics. The default is the shape the
+ * backend answers when no period resolves -- no month with assigned
+ * production yet: null bounds, zero totals, null ratios and a null amount.
+ * It is the only shape that is valid without saying which month it is, as a
+ * DRAFT agreement is the only valid agreement on its own. A spec describing a
+ * resolved month sets the period, the totals and the ratios it asserts on.
+ */
+export function buildMembershipEnergyMetrics(
+  overrides: Partial<MembershipEnergyMetricsResponse> = {},
+): MembershipEnergyMetricsResponse {
+  return {
+    ...({
+      period: { startDate: null, endDate: null },
+      coverage: { hoursWithData: 0, expectedHours: 0, supplyCount: 1, suppliesWithData: 0 },
+      energy: {
+        totalConsumptionKWh: 0,
+        gridImportKWh: 0,
+        selfConsumptionKWh: 0,
+        surplusKWh: 0,
+        assignedProductionKWh: 0,
+      },
+      // ESTIMATE even here, where nothing was priced: the backend reports it
+      // whenever no contracted tariff was consulted.
+      savings: { amountEur: null, tariffSource: "ESTIMATE", estimatedPrice: null },
+      selfSufficiencyRatio: null,
+      selfConsumptionRatio: null,
+    } satisfies MembershipEnergyMetricsResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * A membership's payback progress. The default is the community that has
+ * never shared energy and the member with no investment recorded: every
+ * amount null and `tariffSource` ESTIMATE, as the backend answers it.
+ */
+export function buildMembershipPayback(overrides: Partial<MembershipPaybackResponse> = {}): MembershipPaybackResponse {
+  return {
+    ...({
+      investmentEur: null,
+      savedEur: null,
+      remainingEur: null,
+      progressRatio: null,
+      startDate: null,
+      estimatedRemainingMonths: null,
+      tariffSource: "ESTIMATE",
+      estimatedPrice: null,
+    } satisfies MembershipPaybackResponse),
     ...overrides,
   };
 }

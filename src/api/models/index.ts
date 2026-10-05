@@ -9,6 +9,7 @@
 export * from './activateCoefficientsBody';
 export * from './bulkErrorObject';
 export * from './bulkErrorString';
+export * from './changePasswordBody';
 export * from './closeCoefficientsBody';
 export * from './coefficientActivationResponse';
 export * from './coefficientAtTimestampResponse';

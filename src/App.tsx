@@ -74,9 +74,8 @@ function App() {
         <Route element={<AuthenticatedLayout />}>
           <Route index element={<HomePage />} />
           {/*
-            The two home views (#197). Deliberately linked from nowhere -- not
-            the menu, not the landing after login -- until the member view has
-            content; only a direct URL reaches them.
+            The two home views (#197). /home is the landing after login and
+            the menu's Inicio (#199); HomeIndexRedirect picks the view.
           */}
           <Route
             path="home"
