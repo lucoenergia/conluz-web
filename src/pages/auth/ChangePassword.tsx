@@ -165,7 +165,11 @@ export const ChangePasswordPage: FC = () => {
       <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
-          sx={[sxStyles.softPanel, { width: "100%", maxWidth: 600, margin: "0 auto" }]}
+          // border-box: the panel's padding sits inside its 100% width.
+          // Without it the panel overflowed its container by the padding,
+          // and the page's overflow:hidden cut the fields and the submit
+          // button off at mobile width (#196, AC12).
+          sx={[sxStyles.softPanel, { width: "100%", maxWidth: 600, margin: "0 auto", boxSizing: "border-box" }]}
         >
           <Box component="form" onSubmit={handleSubmit} noValidate sx={sxStyles.flexColumnGap3}>
             {isForced && (
