@@ -96,8 +96,10 @@ const ROUTE_ACCESS: Record<string, Access> = {
  * entry and its destination cannot drift apart.
  */
 const STRICTER_THAN_ROUTE: Record<string, string> = {
-  "/production": "an operational entry needs a community to be about; the page itself renders without one",
-  "/supply-points": "as /production",
+  "/production":
+    "the page is open to any signed-in caller and scopes its own data, but the entry is offered only with an active community the caller may read: without one there are no plants to list",
+  "/supply-points":
+    "the page is open to any signed-in caller and scopes its own data, but the entry is offered only with an active community the caller may read: without one there are no supplies to list",
 };
 
 // ---------------------------------------------------------------------------
