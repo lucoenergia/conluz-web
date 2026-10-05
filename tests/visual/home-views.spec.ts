@@ -4,9 +4,9 @@
  * The member view is captured in every state it defines (#199), each with its
  * figures asserted before the capture, so a broken fixture fails rather than
  * becoming a plausible baseline. The management view still carries its
- * placeholder (#198) and is reached only by a direct URL. Each view is captured
- * with the persona that has it, and the switch with the one caller who gets it:
- * a community admin who owns a supply here.
+ * placeholder until #198 fills it. Each view is captured with the persona that
+ * has it, and the switch, on both views, with the one caller who gets it: a
+ * community admin who owns a supply here.
  *
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
@@ -126,6 +126,27 @@ test.describe("Visual baselines", () => {
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("home-member-partial-coverage.png", await mainRegion(page));
+  });
+
+  // The one caller who sees the member view with the switch: a community
+  // admin who owns a supply here. Served the normal state, as the admin's own
+  // membership.
+  test("member home view with the switch (admin owning a supply)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockCommunityAdminOwnsSupply(page);
+
+    await page.goto("/home/member");
+    await expect(page.getByRole("heading", { name: "Tu energía", level: 1 })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Tu energía", selected: true })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Gestión" })).toBeVisible();
+    await expect(page.getByText("de 268 kWh asignados")).toBeVisible();
+    await expect(paybackCard(page)).toContainText("212,40");
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("home-member-with-switch.png", await mainRegion(page));
   });
 
   test("management home view (admin owning no supplies)", async ({ page }) => {
