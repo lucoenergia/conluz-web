@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
 import { CommunityRole, type CurrentUserResponse, type SupplyResponse } from "../../api/models";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import { useGetMembershipEnergyMetrics, useGetMembershipPayback } from "../../api/memberships/memberships";
 import { useGetCurrentUser, useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { buildCommunity } from "../../test/fixtures";
@@ -41,6 +42,13 @@ vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCurrentUser: vi.fn(),
   useGetSuppliesByUserId: vi.fn(),
+}));
+// The member view reads the caller's energy and payback; which view renders is
+// what is under test here, not those figures, so both reads stay in flight.
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetMembershipEnergyMetrics: vi.fn(),
+  useGetMembershipPayback: vi.fn(),
 }));
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -124,6 +132,8 @@ describe("home views (#197)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
+    vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([
         buildCommunity({ id: COMMUNITY_A, name: "Comunidad A" }),
@@ -181,7 +191,9 @@ describe("home views (#197)", () => {
   });
 
   describe("AC3 -- a community admin who owns supplies here", () => {
-    it("moves from the management view to the member view, and back", async () => {
+    // The member view offers no way back while the management view is a
+    // placeholder (#198): its tab would lead there.
+    it("moves from the management view to the member view, which offers no switch back", async () => {
       const user = userEvent.setup();
       as(ADMIN_WITH_SUPPLIES);
       openApp("/home/management");
@@ -190,10 +202,8 @@ describe("home views (#197)", () => {
       await user.click(screen.getByRole("tab", { name: "Tu energía" }));
       expect(await memberView()).toBeInTheDocument();
       expect(currentPath()).toBe("/home/member");
-
-      await user.click(screen.getByRole("tab", { name: "Gestión" }));
-      expect(await managementView()).toBeInTheDocument();
-      expect(currentPath()).toBe("/home/management");
+      expect(viewSwitch()).not.toBeInTheDocument();
+      expect(document.querySelector('[href="/home/management"]')).toBeNull();
     });
 
     it("lands on the management view from /home", async () => {
@@ -220,41 +230,54 @@ describe("home views (#197)", () => {
   });
 
   describe("AC4 -- a reload restores the same view", () => {
-    it.each([
-      ["/home/member", MEMBER_HEADING],
-      ["/home/management", MANAGEMENT_HEADING],
-    ] as const)("%s, reloaded, shows the same view", async (route, heading) => {
+    it("/home/member, reached through the switch and reloaded, shows the same view", async () => {
       const user = userEvent.setup();
       as(ADMIN_WITH_SUPPLIES);
       // Arrive through the switch, so what is restored cannot be a default.
-      const first = openApp(route === "/home/member" ? "/home/management" : "/home/member");
-      await screen.findByRole("heading");
-      const tab = route === "/home/member" ? "Tu energía" : "Gestión";
-      if (screen.getByRole("tab", { selected: true }).textContent !== tab) {
-        await user.click(screen.getByRole("tab", { name: tab }));
-      }
-      await screen.findByRole("heading", heading);
+      const first = openApp("/home/management");
+      await managementView();
+      await user.click(screen.getByRole("tab", { name: "Tu energía" }));
+      await memberView();
       const urlBeforeReload = currentPath();
-      expect(urlBeforeReload).toBe(route);
+      expect(urlBeforeReload).toBe("/home/member");
       first.unmount();
 
       openApp(urlBeforeReload!);
 
-      expect(await screen.findByRole("heading", heading)).toBeInTheDocument();
-      expect(currentPath()).toBe(route);
+      expect(await memberView()).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+    });
+
+    // The member view has no switch while the management view is a
+    // placeholder (#198), so this one is reached by its URL.
+    it("/home/management, reloaded, shows the same view", async () => {
+      as(ADMIN_WITH_SUPPLIES);
+      const first = openApp("/home/management");
+      await managementView();
+      first.unmount();
+
+      openApp("/home/management");
+
+      expect(await managementView()).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/management");
     });
   });
 
   describe("AC5 -- each view's URL, opened again, shows that view", () => {
-    it.each([
-      ["/home/member", MEMBER_HEADING],
-      ["/home/management", MANAGEMENT_HEADING],
-    ] as const)("%s opens that view, not a default", async (route, heading) => {
+    it("/home/member opens that view, not a default", async () => {
       as(ADMIN_WITH_SUPPLIES);
-      openApp(route);
+      openApp("/home/member");
 
-      expect(await screen.findByRole("heading", heading)).toBeInTheDocument();
-      expect(screen.getByRole("tab", { selected: true })).toHaveAttribute("href", route);
+      expect(await memberView()).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+    });
+
+    it("/home/management opens that view, not a default", async () => {
+      as(ADMIN_WITH_SUPPLIES);
+      openApp("/home/management");
+
+      expect(await managementView()).toBeInTheDocument();
+      expect(screen.getByRole("tab", { selected: true })).toHaveAttribute("href", "/home/management");
     });
   });
 
