@@ -346,6 +346,26 @@ export const FIXED_SUPPLY_2: SupplyResponse = {
   capabilities: OWNER_SUPPLY_CAPABILITIES,
 };
 
+/**
+ * A supply the community admin owns in FIXED_COMMUNITY_ID: the caller who has
+ * both home views (#197). Served only by mockCommunityAdminOwnsSupply, so the
+ * admin persona owns nothing everywhere else.
+ */
+export const FIXED_ADMIN_OWNED_SUPPLY: SupplyResponse = {
+  id: "cccccccc-dddd-eeee-ffff-000000000000",
+  code: "ES0021000000000000CC",
+  name: "Casa de Pedro",
+  address: "Avenida del Parque, 42, 28002 Madrid",
+  addressRef: "",
+  enabled: true,
+  contract: { validDateFrom: "2024-02-01" },
+  distributor: { name: "Iberdrola", code: "2", pointType: 5 },
+  shelly: null,
+  user: FIXED_COMMUNITY_ADMIN_USER,
+  community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
+  capabilities: OWNER_SUPPLY_CAPABILITIES,
+};
+
 /** A community the caller is NOT working in, for the cross-community assertions. */
 export const OTHER_COMMUNITY_ID = "cccccccc-dddd-eeee-ffff-000000000002";
 

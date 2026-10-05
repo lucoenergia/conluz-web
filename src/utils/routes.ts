@@ -29,6 +29,7 @@ export function resolveLandingRoute(user: CurrentUserResponse): string {
 export type PageScope = "community" | "platform" | "personal" | "none" | "unknown";
 
 const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "unknown"> }> = [
+  { prefix: "/home", scope: "community" },
   { prefix: "/production", scope: "community" },
   { prefix: "/supply-points", scope: "community" },
   { prefix: "/members", scope: "community" },
