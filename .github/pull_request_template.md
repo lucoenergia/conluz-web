@@ -1,18 +1,36 @@
-## What this changes
+# [conluzweb-000] Short imperative title
 
-<!-- The behaviour that is different after this PR, in a sentence or two. Not a list of files. -->
+<!-- Title: the issue code in brackets, then what the PR does in the imperative mood, under ~70
+     characters. Use the code of the issue this PR closes: `[conluzweb-197]` for an issue in this
+     repository, `[conluz-292]` for one in lucoenergia/conluz. Use the same line as the PR title,
+     so the squash commit on main carries the code too. -->
 
-## Why
+Closes #000
 
-<!-- The problem this solves. Link the issue: #123 -->
+<!-- Closes: the issue(s) this PR resolves, one GitHub closing keyword per line, so merging closes
+     them: `Closes #123`, or `Closes lucoenergia/conluz#326` for an issue in another repository.
+     If the PR only contributes to an issue without finishing it, write `Part of #123` instead,
+     which links it without closing it. -->
+
+## Summary
+
+<!-- Summary: the behaviour that is different after this PR, and the problem it solves, in two or
+     three sentences. Written for someone who has not read the issue. Not a list of files. -->
+
+## Changes
+
+<!-- Changes: what was done, grouped by concern rather than by file (e.g. "Actions layer",
+     "Routes", "Tests", "Docs"). One bullet per meaningful change, saying what and why. Call out
+     anything that is a pure refactor, so reviewers know which part carries behaviour. -->
+
+-
 
 ## Visibility
 
-**Mandatory. Delete no heading — write "none" and why, if that is the answer.**
-
-Authorization in this app is the backend's answer, carried on the resource it concerns. Nothing in
-`src/` may read a role or the platform-admin flag to decide what to render. If this PR adds or
-changes a screen, a route, an action or a read, say so here.
+<!-- Visibility: mandatory. Delete no row — write "none" and why, if that is the answer.
+     Authorization in this app is the backend's answer, carried on the resource it concerns.
+     Nothing in `src/` may read a role or the platform-admin flag to decide what to render. If
+     this PR adds or changes a screen, a route, an action or a read, say so here. -->
 
 | Question | Answer |
 | --- | --- |
@@ -29,7 +47,21 @@ changes a screen, a route, an action or a read, say so here.
       endpoint answers for more than one.
 - [ ] Routes and their menu entries name the same requirement.
 
-## Verification
+## Findings
+
+<!-- Findings: anything discovered while doing the work that is not the change itself — a bug
+     found elsewhere, a backend behaviour that differs from api-docs.json, a stale doc, a wrong
+     assumption in the issue. Say what was found and whether it was fixed here. A finding that
+     is not fixed here gets a ready-to-file issue text (title + body) in this section, or the
+     number of the issue already opened for it. Write "none" if there were none. -->
+
+## Tests
+
+<!-- Tests: which specs were added or changed and what each one proves, and the exact commands
+     that were run with their result (pass counts, failures). If a check was skipped, say which
+     and why. For visual tests, list which captures changed and which screenshot names are new:
+     new names fail as missing until a maintainer regenerates them, which is expected, not a
+     broken build. Baselines are never regenerated in the PR by an agent. -->
 
 ```bash
 npx tsc -b
@@ -38,13 +70,20 @@ npx vitest run
 npm run test:visual   # only if the UI changed
 ```
 
-<!-- Paste what you ran and what it said. If a check was skipped, say which and why. -->
+## Risks & follow-ups
 
-## Baselines
+<!-- Risks & follow-ups: what could break or behave differently in production (other screens
+     sharing the touched code, cache invalidation, a dependency on a backend release, data
+     migrations), and how likely it is. Then the work deliberately left out of this PR, each with
+     an issue number or a ready-to-file issue text — never "later" or "in the next PR". Also the
+     assumptions and trade-offs the reviewer should push back on. -->
 
-<!-- Which captures changed, which names are new, or "none". New names fail as missing until a
-     maintainer regenerates them: that is expected, not a broken build. -->
+## How to verify
 
-## Anything the reviewer should push back on
+<!-- How to verify: numbered, reproducible steps a reviewer can follow in the running app to see
+     the change — which persona to sign in as (member, community admin, platform admin), which
+     community to select, which route to open, what to click, and what they should see. Include
+     at least one step that shows what must NOT happen (e.g. a caller without the capability does
+     not see the action). -->
 
-<!-- Assumptions, trade-offs, things left undone and why. -->
+1.
