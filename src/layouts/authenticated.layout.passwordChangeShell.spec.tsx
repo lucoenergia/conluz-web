@@ -128,6 +128,18 @@ function unauthorized() {
   return Object.assign(new Error("HTTP 401"), { status: 401, response: { status: 401, data: { errors: [] } } });
 }
 
+/** The token the backend hands out on the second login, so each logout can be told apart. */
+const SECOND_TOKEN = "a-second-token";
+
+/** Signs in again from the login page, in the same app instance, and waits for the shell. */
+async function logInAgain(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByPlaceholderText(/DNI\/NIF/i), "1234567Z");
+  await user.click(screen.getByPlaceholderText(/contraseña/i));
+  await user.paste("el gato duerme junto a la ventana");
+  await user.click(screen.getByRole("button", { name: /entrar/i }));
+  await findForm();
+}
+
 beforeEach(() => {
   mockCustomInstance.mockReset();
 });
@@ -244,12 +256,49 @@ describe("a caller who must change their password (#213)", () => {
       expect(currentToken()).toBe("none");
     });
 
+    // One logout at a time is shared by every trigger (#213); once it has ended
+    // the session, the next session's logout must send a request of its own.
+    it("sends a new request for the logout of a later session, with that session's token", async () => {
+      const user = userEvent.setup();
+      const tokensWhenSent: (string | null)[] = [];
+      const router = routeRequests([
+        ...allowedRoutes({
+          logout: () => {
+            tokensWhenSent.push(currentToken());
+            return undefined;
+          },
+        }),
+        { method: "POST", url: LOGIN, respond: () => ({ token: SECOND_TOKEN }) },
+      ]);
+      mockCustomInstance.mockImplementation(router.handle);
+
+      renderAt("/change-password");
+      await findForm();
+      await user.click(screen.getByRole("button", { name: "Salir" }));
+      await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
+
+      await logInAgain(user);
+      expect(currentToken()).toBe(SECOND_TOKEN);
+      await user.click(screen.getByRole("button", { name: "Salir" }));
+
+      // Sent on the click, before the session ends: a logout still marked in
+      // flight would send nothing here.
+      expect(countOf(router, `POST ${LOGOUT}`)).toBe(2);
+      expect(tokensWhenSent).toEqual(["a-token", SECOND_TOKEN]);
+      await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
+      expect(currentToken()).toBe("none");
+    });
+
     describe("when the backend never answers", () => {
       beforeEach(() => {
         vi.useFakeTimers({ shouldAdvanceTime: true });
       });
 
-      afterEach(() => {
+      // A logout left waiting by a failed test would stay in flight for the next
+      // one, since it is shared at module scope. Firing the pending timeout
+      // ends it, whatever the test did.
+      afterEach(async () => {
+        await act(() => vi.runOnlyPendingTimersAsync());
         vi.useRealTimers();
       });
 
@@ -301,6 +350,41 @@ describe("a caller who must change their password (#213)", () => {
         });
         expect(await screen.findByRole("heading", { name: "Bienvenide a ConLuz" })).toBeInTheDocument();
         expect(countOf(router, `POST ${LOGOUT}`)).toBe(1);
+      });
+
+      it("sends a new request for the next logout after one that timed out", async () => {
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+        const tokensWhenSent: (string | null)[] = [];
+        const router = routeRequests([
+          ...allowedRoutes({
+            logout: () => {
+              tokensWhenSent.push(currentToken());
+              // The first never answers; the second does.
+              return tokensWhenSent.length === 1 ? new Promise(() => {}) : undefined;
+            },
+          }),
+          { method: "POST", url: LOGIN, respond: () => ({ token: SECOND_TOKEN }) },
+        ]);
+        mockCustomInstance.mockImplementation(router.handle);
+
+        renderAt("/change-password");
+        await findForm();
+        await user.click(screen.getByRole("button", { name: "Salir" }));
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(LOGOUT_TIMEOUT_MS);
+        });
+        await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
+
+        await logInAgain(user);
+        expect(currentToken()).toBe(SECOND_TOKEN);
+        await user.click(screen.getByRole("button", { name: "Salir" }));
+
+        // Sent on the click, before the session ends: a logout still marked in
+        // flight would send nothing here.
+        expect(countOf(router, `POST ${LOGOUT}`)).toBe(2);
+        expect(tokensWhenSent).toEqual(["a-token", SECOND_TOKEN]);
+        await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
+        expect(currentToken()).toBe("none");
       });
     });
   });
