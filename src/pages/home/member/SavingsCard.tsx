@@ -4,7 +4,7 @@ import type { MembershipEnergyMetricsResponse } from "../../../api/models";
 import { formatEuros, formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
 import { EstimatedPriceLabel } from "./EstimatedPriceLabel";
-import { HomeCard } from "./HomeCard";
+import { HomeCard } from "../HomeCard";
 
 /** What the community energy the member used in the reference month was worth. */
 export const SavingsCard: FC<{ metrics: MembershipEnergyMetricsResponse; month: string }> = ({ metrics, month }) => {
