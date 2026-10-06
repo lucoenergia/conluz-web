@@ -56,8 +56,8 @@ describe("UserForm", () => {
       await user.type(screen.getByRole("textbox", { name: /email/i }), "juan@example.com");
       await user.type(screen.getByRole("textbox", { name: /dirección/i }), "Calle Mayor 1");
       await user.type(screen.getByRole("textbox", { name: /número de teléfono/i }), "600123456");
-      await user.type(passwordInput, "secreto123");
-      await user.type(confirmInput, "secreto123");
+      await user.type(passwordInput, "secreto de prueba largo");
+      await user.type(confirmInput, "secreto de prueba largo");
       await user.click(screen.getByRole("button", { name: "Crear socio" }));
 
       expect(mockHandleSubmit).toHaveBeenCalledWith({
@@ -67,7 +67,7 @@ describe("UserForm", () => {
         email: "juan@example.com",
         address: "Calle Mayor 1",
         phoneNumber: "600123456",
-        password: "secreto123",
+        password: "secreto de prueba largo",
       });
       expect(mockHandleSubmit).not.toHaveBeenCalledWith(
         expect.objectContaining({ role: expect.anything() }),
@@ -86,8 +86,8 @@ describe("UserForm", () => {
       const { container } = render(<UserForm {...defaultCreateProps} />);
       const [passwordInput, confirmInput] = container.querySelectorAll('input[type="password"]');
 
-      await user.type(passwordInput, "password1");
-      await user.type(confirmInput, "password2");
+      await user.type(passwordInput, "frase de prueba uno");
+      await user.type(confirmInput, "frase de prueba dos");
       await user.click(screen.getByRole("button", { name: "Crear socio" }));
 
       expect(mockHandleSubmit).not.toHaveBeenCalled();
@@ -99,8 +99,8 @@ describe("UserForm", () => {
       const { container } = render(<UserForm {...defaultCreateProps} />);
       const [passwordInput, confirmInput] = container.querySelectorAll('input[type="password"]');
 
-      await user.type(passwordInput, "password1");
-      await user.type(confirmInput, "password2");
+      await user.type(passwordInput, "frase de prueba uno");
+      await user.type(confirmInput, "frase de prueba dos");
       await user.click(screen.getByRole("button", { name: "Crear socio" }));
       expect(confirmInput).toHaveAttribute("aria-invalid", "true");
 
@@ -113,8 +113,8 @@ describe("UserForm", () => {
       const { container } = render(<UserForm {...defaultCreateProps} />);
       const [passwordInput, confirmInput] = container.querySelectorAll('input[type="password"]');
 
-      await user.type(passwordInput, "password1");
-      await user.type(confirmInput, "password2");
+      await user.type(passwordInput, "frase de prueba uno");
+      await user.type(confirmInput, "frase de prueba dos");
       await user.click(screen.getByRole("button", { name: "Crear socio" }));
       expect(confirmInput).toHaveAttribute("aria-invalid", "true");
 
@@ -137,6 +137,40 @@ describe("UserForm", () => {
         const hint = screen.getByText(/Usa entre 15 y 64 caracteres/);
         expect(hint).toHaveTextContent("«el gato duerme junto a la ventana»");
         expect(screen.getByLabelText(/^Contraseña/)).toHaveAttribute("aria-describedby", hint.id);
+      });
+
+      it.each([
+        ["fewer than 15 characters", "corta", "La contraseña debe tener al menos 15 caracteres."],
+        ["more than 64 characters", "a".repeat(65), "La contraseña no puede tener más de 64 caracteres."],
+        // 19 emoji: 19 characters, 76 bytes.
+        ["more than 72 bytes", "😀".repeat(19), "La contraseña es demasiado larga"],
+      ])("refuse a password with %s, saying why, before anything is sent", async (_label, value, message) => {
+        const user = userEvent.setup();
+        render(<UserForm {...defaultCreateProps} />);
+
+        await user.click(screen.getByLabelText(/^Contraseña/));
+        await user.paste(value);
+        await user.click(screen.getByLabelText(/^Confirmar contraseña/));
+        await user.paste(value);
+        await user.click(screen.getByRole("button", { name: "Crear socio" }));
+
+        const field = screen.getByLabelText(/^Contraseña/);
+        expect(field).toHaveAttribute("aria-invalid", "true");
+        expect(field).toHaveAccessibleDescription(expect.stringContaining(message));
+        expect(mockHandleSubmit).not.toHaveBeenCalled();
+      });
+
+      it("clear the policy error once the password is edited", async () => {
+        const user = userEvent.setup();
+        render(<UserForm {...defaultCreateProps} />);
+
+        await user.type(screen.getByLabelText(/^Contraseña/), "corta");
+        await user.click(screen.getByRole("button", { name: "Crear socio" }));
+        expect(screen.getByText("La contraseña debe tener al menos 15 caracteres.")).toBeInTheDocument();
+
+        await user.type(screen.getByLabelText(/^Contraseña/), "x");
+        expect(screen.queryByText("La contraseña debe tener al menos 15 caracteres.")).not.toBeInTheDocument();
+        expect(screen.getByLabelText(/^Contraseña/)).not.toHaveAttribute("aria-invalid", "true");
       });
 
       it("submit the password exactly as typed", async () => {
@@ -240,51 +274,12 @@ describe("UserForm", () => {
       );
     });
 
-    describe("the password fields (#196)", () => {
-      it("give both a toggle, autocomplete=new-password and no keyboard rewriting", async () => {
-        const user = userEvent.setup();
-        render(<UserForm {...defaultCreateProps} />);
-
-        await expectPasswordFieldContract(user, screen.getByLabelText(/^Contraseña/), "new-password");
-        await expectPasswordFieldContract(user, screen.getByLabelText(/^Confirmar contraseña/), "new-password");
-      });
-
-      it("show the policy with a passphrase example, tied to the password", () => {
-        render(<UserForm {...defaultCreateProps} />);
-
-        const hint = screen.getByText(/Usa entre 15 y 64 caracteres/);
-        expect(hint).toHaveTextContent("«el gato duerme junto a la ventana»");
-        expect(screen.getByLabelText(/^Contraseña/)).toHaveAttribute("aria-describedby", hint.id);
-      });
-
-      it("submit the password exactly as typed", async () => {
-        const user = userEvent.setup();
-        render(<UserForm {...defaultCreateProps} />);
-
-        await user.type(screen.getByRole("textbox", { name: /nombre completo/i }), "Juan García");
-        await user.type(screen.getByRole("textbox", { name: /dni\/nif/i }), "12345678Z");
-        await user.type(screen.getByRole("spinbutton", { name: /número de socio/i }), "42");
-        await user.type(screen.getByRole("textbox", { name: /email/i }), "juan@example.com");
-        await user.click(screen.getByLabelText(/^Contraseña/));
-        await user.paste("  frase con espacios larga  ");
-        await user.click(screen.getByLabelText(/^Confirmar contraseña/));
-        await user.paste("  frase con espacios larga  ");
-        await user.click(screen.getByRole("button", { name: "Crear socio" }));
-
-        expect(mockHandleSubmit).toHaveBeenCalledWith(
-          expect.objectContaining({ password: "  frase con espacios larga  " }),
-        );
-      });
-    });
-
     it("shows spinner and disables button when isPending is true", () => {
       render(<UserForm {...defaultEditProps} isPending={true} />);
 
       expect(screen.queryByText("Guardar cambios")).not.toBeInTheDocument();
       expect(screen.getByRole("progressbar")).toBeInTheDocument();
-      // The password toggles are buttons too, and they have names; the submit
-      // button loses its name to the spinner while pending.
-      expect(screen.getByRole("button", { name: "" })).toBeDisabled();
+      expect(screen.getByRole("button")).toBeDisabled();
     });
   });
 });
