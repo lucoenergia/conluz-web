@@ -379,7 +379,7 @@ describe("MemberHomePage (#199)", () => {
     const ZERO = /(^|[^\d,])0(,0+)? ?(€|kWh|%)/;
 
     it("for the empty shapes of both responses", () => {
-      answer({ metrics: buildMembershipEnergyMetrics(), payback: buildMembershipPayback() });
+      answer({ metrics: buildMembershipEnergyMetrics(), payback: buildMembershipPayback(), hourly: buildMembershipHourlyProfile() });
       openHome();
 
       expect(page()).not.toMatch(ZERO);
