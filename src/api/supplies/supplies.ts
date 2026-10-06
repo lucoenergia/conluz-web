@@ -46,6 +46,7 @@ import type {
   PagedResultSupplyResponse,
   PartitionCoefficientResponse,
   ProductionByTime,
+  RestError,
   SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
   SupplyResponse,
@@ -86,7 +87,7 @@ export const getGetSupplyQueryKey = (supplyId?: string,) => {
     }
 
     
-export const getGetSupplyQueryOptions = <TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<unknown>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupply>>, TError, TData>>, }
+export const getGetSupplyQueryOptions = <TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<RestError>>(supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupply>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -105,10 +106,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyQueryResult = NonNullable<Awaited<ReturnType<typeof getSupply>>>
-export type GetSupplyQueryError = ErrorType<unknown>
+export type GetSupplyQueryError = ErrorType<RestError>
 
 
-export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<unknown>>(
+export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<RestError>>(
  supplyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupply>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSupply>>,
@@ -118,7 +119,7 @@ export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TErr
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<unknown>>(
+export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<RestError>>(
  supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupply>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSupply>>,
@@ -128,7 +129,7 @@ export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TErr
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<unknown>>(
+export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<RestError>>(
  supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupply>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -136,7 +137,7 @@ export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TErr
  * @summary Gets a supply by ID
  */
 
-export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<unknown>>(
+export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TError = ErrorType<RestError>>(
  supplyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupply>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -180,7 +181,7 @@ export const updateSupply = (
   
 
 
-export const getUpdateSupplyMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateSupplyMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{supplyId: string;data: UpdateSupplyBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{supplyId: string;data: UpdateSupplyBody}, TContext> => {
 
@@ -207,12 +208,12 @@ const {mutation: mutationOptions} = options ?
 
     export type UpdateSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof updateSupply>>>
     export type UpdateSupplyMutationBody = UpdateSupplyBody
-    export type UpdateSupplyMutationError = ErrorType<unknown>
+    export type UpdateSupplyMutationError = ErrorType<RestError>
 
     /**
  * @summary Updates supply information
  */
-export const useUpdateSupply = <TError = ErrorType<unknown>,
+export const useUpdateSupply = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupply>>, TError,{supplyId: string;data: UpdateSupplyBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateSupply>>,
@@ -262,7 +263,7 @@ export const createSupply = (
   
 
 
-export const getCreateSupplyMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateSupplyMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext> => {
 
@@ -289,12 +290,12 @@ const {mutation: mutationOptions} = options ?
 
     export type CreateSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof createSupply>>>
     export type CreateSupplyMutationBody = CreateSupplyBody
-    export type CreateSupplyMutationError = ErrorType<unknown>
+    export type CreateSupplyMutationError = ErrorType<RestError>
 
     /**
  * @summary Creates a new supply within the system.
  */
-export const useCreateSupply = <TError = ErrorType<unknown>,
+export const useCreateSupply = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSupply>>,
@@ -331,7 +332,7 @@ export const enableSupply = (
   
 
 
-export const getEnableSupplyMutationOptions = <TError = ErrorType<unknown>,
+export const getEnableSupplyMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext> => {
 
@@ -358,12 +359,12 @@ const {mutation: mutationOptions} = options ?
 
     export type EnableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof enableSupply>>>
     
-    export type EnableSupplyMutationError = ErrorType<unknown>
+    export type EnableSupplyMutationError = ErrorType<RestError>
 
     /**
  * @summary Enables a supply by ID
  */
-export const useEnableSupply = <TError = ErrorType<unknown>,
+export const useEnableSupply = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof enableSupply>>,
@@ -400,7 +401,7 @@ export const disableSupply = (
   
 
 
-export const getDisableSupplyMutationOptions = <TError = ErrorType<unknown>,
+export const getDisableSupplyMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext> => {
 
@@ -427,12 +428,12 @@ const {mutation: mutationOptions} = options ?
 
     export type DisableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof disableSupply>>>
     
-    export type DisableSupplyMutationError = ErrorType<unknown>
+    export type DisableSupplyMutationError = ErrorType<RestError>
 
     /**
  * @summary Disables a supply by ID
  */
-export const useDisableSupply = <TError = ErrorType<unknown>,
+export const useDisableSupply = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof disableSupply>>,
@@ -483,7 +484,7 @@ formData.append(`file`, createSuppliesWithFileBody.file)
   
 
 
-export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext> => {
 
@@ -510,12 +511,12 @@ const {mutation: mutationOptions} = options ?
 
     export type CreateSuppliesWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createSuppliesWithFile>>>
     export type CreateSuppliesWithFileMutationBody = CreateSuppliesWithFileBody
-    export type CreateSuppliesWithFileMutationError = ErrorType<unknown>
+    export type CreateSuppliesWithFileMutationError = ErrorType<RestError>
 
     /**
  * @summary Creates supplies in bulk importing a CSV file.
  */
-export const useCreateSuppliesWithFile = <TError = ErrorType<unknown>,
+export const useCreateSuppliesWithFile = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSuppliesWithFile>>,
@@ -558,7 +559,7 @@ export const syncDatadisSupplies = (
   
 
 
-export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext> => {
 
@@ -585,12 +586,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncDatadisSuppliesMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisSupplies>>>
     
-    export type SyncDatadisSuppliesMutationError = ErrorType<unknown>
+    export type SyncDatadisSuppliesMutationError = ErrorType<RestError>
 
     /**
  * @summary Synchronize supplies retrieving the information from datadis.
  */
-export const useSyncDatadisSupplies = <TError = ErrorType<unknown>,
+export const useSyncDatadisSupplies = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncDatadisSupplies>>,
@@ -632,7 +633,7 @@ export const getGetSupplyMonthlyProductionQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -652,10 +653,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>>
-export type GetSupplyMonthlyProductionQueryError = ErrorType<unknown>
+export type GetSupplyMonthlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -666,7 +667,7 @@ export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -677,7 +678,7 @@ export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -686,7 +687,7 @@ export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof 
  * @summary Retrieves monthly production data assigned to a specific supply
  */
 
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -733,7 +734,7 @@ export const getGetSupplyHourlyProductionQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -753,10 +754,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyProduction>>>
-export type GetSupplyHourlyProductionQueryError = ErrorType<unknown>
+export type GetSupplyHourlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -767,7 +768,7 @@ export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof g
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -778,7 +779,7 @@ export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof g
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -787,7 +788,7 @@ export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof g
  * @summary Retrieves hourly production data assigned to a specific supply
  */
 
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -834,7 +835,7 @@ export const getGetSupplyDailyProductionQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
 ) => {
 
@@ -854,10 +855,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyProduction>>>
-export type GetSupplyDailyProductionQueryError = ErrorType<unknown>
+export type GetSupplyDailyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -868,7 +869,7 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -879,7 +880,7 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -888,7 +889,7 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
  * @summary Retrieves daily production data assigned to a specific supply
  */
 
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -948,7 +949,7 @@ export const getGetPartitionCoefficientHistoryQueryKey = (supplyId?: string,
     }
 
     
-export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(supplyId: string,
     params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
 ) => {
 
@@ -968,10 +969,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetPartitionCoefficientHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>>
-export type GetPartitionCoefficientHistoryQueryError = ErrorType<unknown>
+export type GetPartitionCoefficientHistoryQueryError = ErrorType<RestError>
 
 
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: undefined |  GetPartitionCoefficientHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -982,7 +983,7 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -993,7 +994,7 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1002,7 +1003,7 @@ export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typ
  * @summary Returns the partition coefficient history for a supply.
  */
 
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1060,7 +1061,7 @@ export const getGetPartitionCoefficientAtTimestampQueryKey = (supplyId?: string,
     }
 
     
-export const getGetPartitionCoefficientAtTimestampQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetPartitionCoefficientAtTimestampQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
 ) => {
 
@@ -1080,10 +1081,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetPartitionCoefficientAtTimestampQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>>
-export type GetPartitionCoefficientAtTimestampQueryError = ErrorType<unknown>
+export type GetPartitionCoefficientAtTimestampQueryError = ErrorType<RestError>
 
 
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetPartitionCoefficientAtTimestampParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1094,7 +1095,7 @@ export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1105,7 +1106,7 @@ export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1114,7 +1115,7 @@ export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType
  * @summary Returns the coefficients that were active at the given point in time, one per plant.
  */
 
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<unknown>>(
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1170,7 +1171,7 @@ export const getGetActivePartitionCoefficientQueryKey = (supplyId?: string,
     }
 
     
-export const getGetActivePartitionCoefficientQueryOptions = <TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetActivePartitionCoefficientQueryOptions = <TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(supplyId: string,
     params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
 ) => {
 
@@ -1190,10 +1191,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetActivePartitionCoefficientQueryResult = NonNullable<Awaited<ReturnType<typeof getActivePartitionCoefficient>>>
-export type GetActivePartitionCoefficientQueryError = ErrorType<unknown>
+export type GetActivePartitionCoefficientQueryError = ErrorType<RestError>
 
 
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: undefined |  GetActivePartitionCoefficientParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1204,7 +1205,7 @@ export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<type
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1215,7 +1216,7 @@ export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<type
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1224,7 +1225,7 @@ export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<type
  * @summary Returns the active partition coefficients of a supply, one per plant.
  */
 
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<unknown>>(
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1317,7 +1318,7 @@ export const getGetSupplyEnergyMetricsQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(supplyId: string,
     params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
 ) => {
 
@@ -1337,10 +1338,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>>
-export type GetSupplyEnergyMetricsQueryError = ErrorType<unknown>
+export type GetSupplyEnergyMetricsQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: undefined |  GetSupplyEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1351,7 +1352,7 @@ export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getS
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1362,7 +1363,7 @@ export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getS
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1371,7 +1372,7 @@ export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getS
  * @summary Retrieves aggregated energy metrics for a specific supply
  */
 
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1442,7 +1443,7 @@ export const getGetSupplyYearlyConsumptionQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyYearlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyYearlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
 ) => {
 
@@ -1462,10 +1463,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyYearlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>>
-export type GetSupplyYearlyConsumptionQueryError = ErrorType<unknown>
+export type GetSupplyYearlyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyYearlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1476,7 +1477,7 @@ export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1487,7 +1488,7 @@ export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1496,7 +1497,7 @@ export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof 
  * @summary Retrieves yearly consumption data for a specific supply
  */
 
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1586,7 +1587,7 @@ export const getGetSupplyMonthlyConsumptionQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>>, }
 ) => {
 
@@ -1606,10 +1607,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyMonthlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>>
-export type GetSupplyMonthlyConsumptionQueryError = ErrorType<unknown>
+export type GetSupplyMonthlyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1620,7 +1621,7 @@ export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1631,7 +1632,7 @@ export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1640,7 +1641,7 @@ export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof
  * @summary Retrieves monthly consumption data for a specific supply
  */
 
-export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1700,7 +1701,7 @@ export const getGetSupplyHourlyConsumptionQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyHourlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyHourlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
 ) => {
 
@@ -1720,10 +1721,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyHourlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>>
-export type GetSupplyHourlyConsumptionQueryError = ErrorType<unknown>
+export type GetSupplyHourlyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1734,7 +1735,7 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1745,7 +1746,7 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1754,7 +1755,7 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
  * @summary Retrieves hourly consumption data for a specific supply
  */
 
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1842,7 +1843,7 @@ export const getGetSupplyDailyConsumptionQueryKey = (supplyId?: string,
     }
 
     
-export const getGetSupplyDailyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(supplyId: string,
+export const getGetSupplyDailyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
     params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
 ) => {
 
@@ -1862,10 +1863,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSupplyDailyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyConsumption>>>
-export type GetSupplyDailyConsumptionQueryError = ErrorType<unknown>
+export type GetSupplyDailyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1876,7 +1877,7 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1887,7 +1888,7 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1896,7 +1897,7 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
  * @summary Retrieves daily consumption data for a specific supply
  */
 
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
     params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1949,7 +1950,7 @@ export const getGetAllSuppliesQueryKey = (communityId?: string,
     }
 
     
-export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(communityId: string,
     params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
 ) => {
 
@@ -1969,10 +1970,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetAllSuppliesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllSupplies>>>
-export type GetAllSuppliesQueryError = ErrorType<unknown>
+export type GetAllSuppliesQueryError = ErrorType<RestError>
 
 
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: undefined |  GetAllSuppliesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1983,7 +1984,7 @@ export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSuppli
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1994,7 +1995,7 @@ export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSuppli
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -2003,7 +2004,7 @@ export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSuppli
  * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
  */
 
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<unknown>>(
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
  , queryClient?: QueryClient 

@@ -67,7 +67,7 @@ export const getGetCommunityByIdQueryKey = (communityId?: string,) => {
     }
 
     
-export const getGetCommunityByIdQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<unknown>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityById>>, TError, TData>>, }
+export const getGetCommunityByIdQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityById>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -86,10 +86,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetCommunityByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityById>>>
-export type GetCommunityByIdQueryError = ErrorType<unknown>
+export type GetCommunityByIdQueryError = ErrorType<RestError>
 
 
-export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<unknown>>(
+export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<RestError>>(
  communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCommunityById>>,
@@ -99,7 +99,7 @@ export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommuni
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<unknown>>(
+export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCommunityById>>,
@@ -109,7 +109,7 @@ export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommuni
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<unknown>>(
+export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityById>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -117,7 +117,7 @@ export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommuni
  * @summary Retrieves a community by its ID.
  */
 
-export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<unknown>>(
+export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommunityById>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityById>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -234,7 +234,7 @@ export const getGetAllCommunitiesQueryKey = () => {
     }
 
     
-export const getGetAllCommunitiesQueryOptions = <TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
+export const getGetAllCommunitiesQueryOptions = <TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -253,10 +253,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetAllCommunitiesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllCommunities>>>
-export type GetAllCommunitiesQueryError = ErrorType<unknown>
+export type GetAllCommunitiesQueryError = ErrorType<RestError>
 
 
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<unknown>>(
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllCommunities>>,
@@ -266,7 +266,7 @@ export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCom
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<unknown>>(
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllCommunities>>,
@@ -276,7 +276,7 @@ export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCom
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<unknown>>(
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -284,7 +284,7 @@ export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCom
  * @summary Retrieves all communities visible to the current user.
  */
 
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<unknown>>(
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -391,7 +391,7 @@ export const enableCommunity = (
   
 
 
-export const getEnableCommunityMutationOptions = <TError = ErrorType<unknown>,
+export const getEnableCommunityMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableCommunity>>, TError,{communityId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof enableCommunity>>, TError,{communityId: string}, TContext> => {
 
@@ -418,12 +418,12 @@ const {mutation: mutationOptions} = options ?
 
     export type EnableCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof enableCommunity>>>
     
-    export type EnableCommunityMutationError = ErrorType<unknown>
+    export type EnableCommunityMutationError = ErrorType<RestError>
 
     /**
  * @summary Enables a community.
  */
-export const useEnableCommunity = <TError = ErrorType<unknown>,
+export const useEnableCommunity = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableCommunity>>, TError,{communityId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof enableCommunity>>,
@@ -454,7 +454,7 @@ export const disableCommunity = (
   
 
 
-export const getDisableCommunityMutationOptions = <TError = ErrorType<unknown>,
+export const getDisableCommunityMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext> => {
 
@@ -481,12 +481,12 @@ const {mutation: mutationOptions} = options ?
 
     export type DisableCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof disableCommunity>>>
     
-    export type DisableCommunityMutationError = ErrorType<unknown>
+    export type DisableCommunityMutationError = ErrorType<RestError>
 
     /**
  * @summary Disables a community.
  */
-export const useDisableCommunity = <TError = ErrorType<unknown>,
+export const useDisableCommunity = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof disableCommunity>>,

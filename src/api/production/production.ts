@@ -38,6 +38,7 @@ import type {
   GetYearlyProductionParams,
   InstantProduction,
   ProductionByTime,
+  RestError,
   SyncMonthlyDatadisProductionBody,
   SyncMonthlyHuaweiProductionBody,
   SyncYearlyDatadisProductionBody,
@@ -86,7 +87,7 @@ export const getGetHuaweiConfigQueryKey = (plantId?: string,) => {
     }
 
     
-export const getGetHuaweiConfigQueryOptions = <TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
+export const getGetHuaweiConfigQueryOptions = <TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<RestError>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -105,10 +106,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetHuaweiConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getHuaweiConfig>>>
-export type GetHuaweiConfigQueryError = ErrorType<unknown>
+export type GetHuaweiConfigQueryError = ErrorType<RestError>
 
 
-export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<RestError>>(
  plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHuaweiConfig>>,
@@ -118,7 +119,7 @@ export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiCo
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHuaweiConfig>>,
@@ -128,7 +129,7 @@ export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiCo
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -136,7 +137,7 @@ export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiCo
  * @summary Returns the current Huawei configuration for a plant.
  */
 
-export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<unknown>>(
+export function useGetHuaweiConfig<TData = Awaited<ReturnType<typeof getHuaweiConfig>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHuaweiConfig>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -199,7 +200,7 @@ export const configureHuawei = (
   
 
 
-export const getConfigureHuaweiMutationOptions = <TError = ErrorType<unknown>,
+export const getConfigureHuaweiMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{plantId: string;data: ConfigureHuaweiBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{plantId: string;data: ConfigureHuaweiBody}, TContext> => {
 
@@ -226,12 +227,12 @@ const {mutation: mutationOptions} = options ?
 
     export type ConfigureHuaweiMutationResult = NonNullable<Awaited<ReturnType<typeof configureHuawei>>>
     export type ConfigureHuaweiMutationBody = ConfigureHuaweiBody
-    export type ConfigureHuaweiMutationError = ErrorType<unknown>
+    export type ConfigureHuaweiMutationError = ErrorType<RestError>
 
     /**
  * @summary Sets up the configuration to be able to connect with Huawei.
  */
-export const useConfigureHuawei = <TError = ErrorType<unknown>,
+export const useConfigureHuawei = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureHuawei>>, TError,{plantId: string;data: ConfigureHuaweiBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureHuawei>>,
@@ -285,7 +286,7 @@ export const syncYearlyHuaweiProduction = (
   
 
 
-export const getSyncYearlyHuaweiProductionMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncYearlyHuaweiProductionMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>, TError,{communityId: string;data: SyncYearlyHuaweiProductionBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>, TError,{communityId: string;data: SyncYearlyHuaweiProductionBody}, TContext> => {
 
@@ -312,12 +313,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncYearlyHuaweiProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>>
     export type SyncYearlyHuaweiProductionMutationBody = SyncYearlyHuaweiProductionBody
-    export type SyncYearlyHuaweiProductionMutationError = ErrorType<unknown>
+    export type SyncYearlyHuaweiProductionMutationError = ErrorType<RestError>
 
     /**
  * @summary Aggregate monthly Huawei production data into yearly totals
  */
-export const useSyncYearlyHuaweiProduction = <TError = ErrorType<unknown>,
+export const useSyncYearlyHuaweiProduction = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>, TError,{communityId: string;data: SyncYearlyHuaweiProductionBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncYearlyHuaweiProduction>>,
@@ -371,7 +372,7 @@ export const syncMonthlyHuaweiProduction = (
   
 
 
-export const getSyncMonthlyHuaweiProductionMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncMonthlyHuaweiProductionMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>, TError,{communityId: string;data: SyncMonthlyHuaweiProductionBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>, TError,{communityId: string;data: SyncMonthlyHuaweiProductionBody}, TContext> => {
 
@@ -398,12 +399,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncMonthlyHuaweiProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>>
     export type SyncMonthlyHuaweiProductionMutationBody = SyncMonthlyHuaweiProductionBody
-    export type SyncMonthlyHuaweiProductionMutationError = ErrorType<unknown>
+    export type SyncMonthlyHuaweiProductionMutationError = ErrorType<RestError>
 
     /**
  * @summary Aggregate hourly Huawei production data into monthly totals
  */
-export const useSyncMonthlyHuaweiProduction = <TError = ErrorType<unknown>,
+export const useSyncMonthlyHuaweiProduction = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>, TError,{communityId: string;data: SyncMonthlyHuaweiProductionBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncMonthlyHuaweiProduction>>,
@@ -457,7 +458,7 @@ export const syncYearlyDatadisProduction = (
   
 
 
-export const getSyncYearlyDatadisProductionMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncYearlyDatadisProductionMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>, TError,{communityId: string;data: SyncYearlyDatadisProductionBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>, TError,{communityId: string;data: SyncYearlyDatadisProductionBody}, TContext> => {
 
@@ -484,12 +485,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncYearlyDatadisProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>>
     export type SyncYearlyDatadisProductionMutationBody = SyncYearlyDatadisProductionBody
-    export type SyncYearlyDatadisProductionMutationError = ErrorType<unknown>
+    export type SyncYearlyDatadisProductionMutationError = ErrorType<RestError>
 
     /**
  * @summary Sync monthly Datadis production data into yearly totals
  */
-export const useSyncYearlyDatadisProduction = <TError = ErrorType<unknown>,
+export const useSyncYearlyDatadisProduction = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisProduction>>, TError,{communityId: string;data: SyncYearlyDatadisProductionBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncYearlyDatadisProduction>>,
@@ -543,7 +544,7 @@ export const syncMonthlyDatadisProduction = (
   
 
 
-export const getSyncMonthlyDatadisProductionMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncMonthlyDatadisProductionMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>, TError,{communityId: string;data: SyncMonthlyDatadisProductionBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>, TError,{communityId: string;data: SyncMonthlyDatadisProductionBody}, TContext> => {
 
@@ -570,12 +571,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncMonthlyDatadisProductionMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>>
     export type SyncMonthlyDatadisProductionMutationBody = SyncMonthlyDatadisProductionBody
-    export type SyncMonthlyDatadisProductionMutationError = ErrorType<unknown>
+    export type SyncMonthlyDatadisProductionMutationError = ErrorType<RestError>
 
     /**
  * @summary Aggregate hourly Datadis production data into monthly totals
  */
-export const useSyncMonthlyDatadisProduction = <TError = ErrorType<unknown>,
+export const useSyncMonthlyDatadisProduction = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>, TError,{communityId: string;data: SyncMonthlyDatadisProductionBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncMonthlyDatadisProduction>>,
@@ -617,7 +618,7 @@ export const getGetInstantProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetInstantProductionQueryOptions = <TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetInstantProductionQueryOptions = <TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, }
 ) => {
 
@@ -637,10 +638,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetInstantProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getInstantProduction>>>
-export type GetInstantProductionQueryError = ErrorType<unknown>
+export type GetInstantProductionQueryError = ErrorType<RestError>
 
 
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: undefined |  GetInstantProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -651,7 +652,7 @@ export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getIns
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -662,7 +663,7 @@ export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getIns
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -671,7 +672,7 @@ export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getIns
  * @summary Delivers real-time energy production details of a community.
  */
 
-export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<unknown>>(
+export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getInstantProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetInstantProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInstantProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -718,7 +719,7 @@ export const getGetYearlyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetYearlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetYearlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -738,10 +739,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetYearlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getYearlyProduction>>>
-export type GetYearlyProductionQueryError = ErrorType<unknown>
+export type GetYearlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetYearlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -752,7 +753,7 @@ export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYear
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -763,7 +764,7 @@ export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYear
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -772,7 +773,7 @@ export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYear
  * @summary Retrieves yearly energy production data of a community within a given date interval.
  */
 
-export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getYearlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -819,7 +820,7 @@ export const getGetMonthlyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -839,10 +840,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getMonthlyProduction>>>
-export type GetMonthlyProductionQueryError = ErrorType<unknown>
+export type GetMonthlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -853,7 +854,7 @@ export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMon
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -864,7 +865,7 @@ export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMon
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -873,7 +874,7 @@ export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMon
  * @summary Retrieves monthly energy production data of a community within a given date interval.
  */
 
-export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -920,7 +921,7 @@ export const getGetHourlyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -940,10 +941,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getHourlyProduction>>>
-export type GetHourlyProductionQueryError = ErrorType<unknown>
+export type GetHourlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -954,7 +955,7 @@ export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHour
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -965,7 +966,7 @@ export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHour
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -974,7 +975,7 @@ export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHour
  * @summary Retrieves hourly energy production data of a community within a given date interval.
  */
 
-export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1029,7 +1030,7 @@ export const getGetDatadisYearlyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetDatadisYearlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetDatadisYearlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -1049,10 +1050,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetDatadisYearlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisYearlyProduction>>>
-export type GetDatadisYearlyProductionQueryError = ErrorType<unknown>
+export type GetDatadisYearlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisYearlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1063,7 +1064,7 @@ export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1074,7 +1075,7 @@ export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1083,7 +1084,7 @@ export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof 
  * @summary Retrieves yearly Datadis production data of a community within a given date interval.
  */
 
-export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisYearlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisYearlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1138,7 +1139,7 @@ export const getGetDatadisMonthlyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetDatadisMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetDatadisMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -1158,10 +1159,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetDatadisMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>>
-export type GetDatadisMonthlyProductionQueryError = ErrorType<unknown>
+export type GetDatadisMonthlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1172,7 +1173,7 @@ export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1183,7 +1184,7 @@ export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1192,7 +1193,7 @@ export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof
  * @summary Retrieves monthly Datadis production data of a community within a given date interval.
  */
 
-export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisMonthlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1247,7 +1248,7 @@ export const getGetDatadisHourlyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetDatadisHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetDatadisHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>>, }
 ) => {
 
@@ -1267,10 +1268,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetDatadisHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisHourlyProduction>>>
-export type GetDatadisHourlyProductionQueryError = ErrorType<unknown>
+export type GetDatadisHourlyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1281,7 +1282,7 @@ export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1292,7 +1293,7 @@ export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1301,7 +1302,7 @@ export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof 
  * @summary Retrieves hourly Datadis production data of a community within a given date interval.
  */
 
-export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisHourlyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1356,7 +1357,7 @@ export const getGetDatadisDailyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetDatadisDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetDatadisDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>>, }
 ) => {
 
@@ -1376,10 +1377,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetDatadisDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisDailyProduction>>>
-export type GetDatadisDailyProductionQueryError = ErrorType<unknown>
+export type GetDatadisDailyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1390,7 +1391,7 @@ export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof g
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1401,7 +1402,7 @@ export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof g
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1410,7 +1411,7 @@ export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof g
  * @summary Retrieves daily Datadis production data of a community within a given date interval.
  */
 
-export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1457,7 +1458,7 @@ export const getGetDailyProductionQueryKey = (communityId?: string,
     }
 
     
-export const getGetDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, }
 ) => {
 
@@ -1477,10 +1478,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getDailyProduction>>>
-export type GetDailyProductionQueryError = ErrorType<unknown>
+export type GetDailyProductionQueryError = ErrorType<RestError>
 
 
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1491,7 +1492,7 @@ export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDaily
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1502,7 +1503,7 @@ export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDaily
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1511,7 +1512,7 @@ export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDaily
  * @summary Retrieves daily energy production data of a community within a given date interval.
  */
 
-export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<unknown>>(
+export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDailyProduction>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDailyProduction>>, TError, TData>>, }
  , queryClient?: QueryClient 
