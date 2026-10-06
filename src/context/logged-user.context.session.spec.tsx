@@ -223,7 +223,11 @@ describe("the login page after a session ends", () => {
   // every deliberate exit.
   it("says nothing of the sort after a deliberate logout", async () => {
     const user = userEvent.setup();
-    const router = routeRequests([{ method: "GET", url: CURRENT_USER_URL, respond: () => USER }]);
+    const router = routeRequests([
+      { method: "GET", url: CURRENT_USER_URL, respond: () => USER },
+      // Logging out revokes the token on the backend first (#213).
+      { method: "POST", url: "/api/v1/logout", respond: () => undefined },
+    ]);
     mockCustomInstance.mockImplementation(router.handle);
 
     renderWithProviders(

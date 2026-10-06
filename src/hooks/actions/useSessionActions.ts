@@ -23,9 +23,9 @@ export type LoginResult = { token: string } | { failure: AuthFailure };
  * say so out loud. src/contracts/mutationHooks.spec.ts reads these
  * reasons and holds them to a shape.
  *
- * Note this is NOT the app's logout. `src/hooks/useLogout.ts` is hand-written,
- * clears the cache and navigates, and never calls POST /logout -- it only shares
- * the name. The generated hook below has no caller today.
+ * `logout` here is only the request that revokes the token. The app's logout is
+ * `src/hooks/useLogout.ts`, which calls it, bounds the wait, and then ends the
+ * session and navigates whatever the answer (#213).
  */
 export interface SessionActions {
   actions: {

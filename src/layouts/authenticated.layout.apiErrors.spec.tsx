@@ -235,6 +235,13 @@ describe("a 401 on an authenticated call (AC7)", () => {
         url: PROBE_URL,
         respond: () => Promise.reject(Object.assign(new Error("HTTP 401"), { status: 401, response: { status: 401 } })),
       },
+      // Logging out asks the backend to revoke the token first (#213). It is
+      // already invalid, so the backend refuses, and the session ends anyway.
+      {
+        method: "POST",
+        url: "/api/v1/logout",
+        respond: () => Promise.reject(Object.assign(new Error("HTTP 401"), { status: 401, response: { status: 401 } })),
+      },
     ]);
     mockCustomInstance.mockImplementation(router.handle);
 
