@@ -30,7 +30,10 @@ import {
   FIXED_PLATFORM_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
   injectAuthToken,
+  MEMBER_HOURLY_PROFILE_GAPS,
+  MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
   mockAllApiRoutes,
+  mockMemberHome,
   mockSharingAgreementDetailRoutes,
   mockSharingAgreementsPlantRoutes,
   navigateToSharingAgreementDetail,
@@ -210,5 +213,48 @@ test.describe("Visual baselines", () => {
     testInfo.annotations.push({ type: "production list header height", description: `${box?.height}px` });
     console.log(`AC2 /production list header height: ${box?.height}px`);
     expect(box?.height).toBeLessThanOrEqual(140);
+  });
+
+  /**
+   * #201 AC10. The member home's two charts need more width than a phone has.
+   * They must scroll inside their own containers: the page must not scroll
+   * sideways, and the axis must not be squeezed to fit. A screenshot of either
+   * block cannot show this -- it captures the block, not the page's width --
+   * and a hidden table once widened the whole page to 615 px with every
+   * capture still looking plausible.
+   */
+  test("#201 AC10: the member home's charts scroll inside their containers at 390px, never the page", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "AC10 is specified against a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await mockMemberHome(page, FIXED_MEMBER_USER, {
+      monthly: MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
+      hourly: MEMBER_HOURLY_PROFILE_GAPS,
+    });
+    await page.goto("/home/member");
+    // Structural: ApexCharts' SVG has no role or name of its own.
+    await expect(page.locator("svg.apexcharts-svg")).toHaveCount(3);
+    await stabilizePage(page);
+
+    const widths = await page.evaluate(() => ({
+      viewport: window.innerWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(widths).toEqual({ viewport: 390, document: 390 });
+
+    for (const name of ["Tus últimos 12 meses", "Tus mejores horas"]) {
+      // Structural: the scroll container is the chart canvas's nearest scrolling ancestor.
+      const scroller = await page.getByRole("region", { name }).evaluate((region) => {
+        let el = region.querySelector(".apexcharts-canvas")?.parentElement ?? null;
+        while (el && getComputedStyle(el).overflowX !== "auto") el = el.parentElement;
+        return el && { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, regionWidth: region.clientWidth };
+      });
+      expect(scroller, `${name} has a scroll container`).not.toBeNull();
+      // The chart keeps its width and scrolls, inside a block no wider than the page.
+      expect(scroller!.scrollWidth, `${name} keeps its chart wider than the screen`).toBeGreaterThan(scroller!.clientWidth);
+      expect(scroller!.regionWidth, `${name} fits the page`).toBeLessThanOrEqual(390);
+    }
   });
 });

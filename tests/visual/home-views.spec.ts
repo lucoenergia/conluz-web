@@ -1,8 +1,9 @@
 /**
  * Visual baselines — the member and management home views (#197, #199).
  *
- * The member view is captured in every state it defines (#199), and its
- * comparison with the previous month in each of its states (#200), each with
+ * The member view is captured in every state it defines (#199), its
+ * comparison with the previous month in each of its states (#200), and its
+ * twelve-month series and best hours in each of theirs (#201), each with
  * its figures asserted before the capture, so a broken fixture fails rather than
  * becoming a plausible baseline. The management view (#198) is captured with
  * plants in different stages, with no plant, and with a plant that has no
@@ -16,6 +17,8 @@
 import type { Page } from "@playwright/test";
 import type {
   MembershipEnergyMetricsResponse,
+  MembershipHourlyProfileResponse,
+  MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
   PlantResponse,
   SharingAgreementResponse,
@@ -36,12 +39,18 @@ import {
   MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA,
   MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL,
   MEMBER_ENERGY_METRICS_REAL_TARIFF,
+  MEMBER_HOURLY_PROFILE_EMPTY,
+  MEMBER_HOURLY_PROFILE_GAPS,
+  MEMBER_MONTHLY_SERIES_EMPTY,
+  MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
+  MEMBER_MONTHLY_SERIES_ONE_MONTH,
   MEMBER_PAYBACK_NEW_MEMBER,
   MEMBER_PAYBACK_NO_INVESTMENT,
   MEMBER_PAYBACK_NOTHING_SHARED,
   MEMBER_PAYBACK_REAL_TARIFF,
   MEMBER_PAYBACK_RECOVERED,
   injectAuthToken,
+  hideAppBar,
   mainRegion,
   mockAllApiRoutes,
   mockCommunityAdminOwnsSupply,
@@ -58,6 +67,8 @@ async function openMemberHome(
     metrics?: MembershipEnergyMetricsResponse;
     previousMetrics?: MembershipEnergyMetricsResponse;
     payback?: MembershipPaybackResponse;
+    monthly?: MembershipMonthlyConsumptionBucketResponse[];
+    hourly?: MembershipHourlyProfileResponse;
   } = {},
 ) {
   await injectAuthToken(page);
@@ -106,6 +117,12 @@ const paybackCard = (page: Page) => page.getByRole("region", { name: "Recuperaci
 const savingsCard = (page: Page) => page.getByRole("region", { name: "Tu ahorro en agosto de 2026" });
 const estimateLabel = (page: Page) => page.getByText(/Estimado con un precio de/);
 const comparisonCard = (page: Page) => page.getByRole("region", { name: "Comparado con julio de 2026" });
+const twelveMonthsCard = (page: Page) => page.getByRole("region", { name: "Tus últimos 12 meses" });
+const bestHoursCard = (page: Page) => page.getByRole("region", { name: "Tus mejores horas" });
+const chartTable = (card: ReturnType<Page["getByRole"]>) => card.getByRole("table", { name: /Datos del gráfico/ });
+// Structural: ApexCharts' SVG has no role or name of its own. Waiting for it
+// keeps a capture from catching the card before the chart has drawn.
+const drawnCharts = (card: ReturnType<Page["getByRole"]>) => card.locator("svg.apexcharts-svg");
 
 test.describe("Visual baselines", () => {
   test("member home view, priced with the estimate", async ({ page }) => {
@@ -152,7 +169,11 @@ test.describe("Visual baselines", () => {
   });
 
   test("member home view, community that has never shared energy", async ({ page }) => {
-    await openMemberHome(page, { metrics: MEMBER_ENERGY_METRICS_NO_MONTH, payback: MEMBER_PAYBACK_NOTHING_SHARED });
+    await openMemberHome(page, {
+      metrics: MEMBER_ENERGY_METRICS_NO_MONTH,
+      payback: MEMBER_PAYBACK_NOTHING_SHARED,
+      hourly: MEMBER_HOURLY_PROFILE_EMPTY,
+    });
     await expect(page.getByText("Todavía no hay datos de tu energía")).toBeVisible();
     await expect(paybackCard(page)).toContainText("todavía no ha empezado a compartir energía");
     await stabilizePage(page);
@@ -162,7 +183,11 @@ test.describe("Visual baselines", () => {
   });
 
   test("member home view, new member with no month yet", async ({ page }) => {
-    await openMemberHome(page, { metrics: MEMBER_ENERGY_METRICS_NO_MONTH, payback: MEMBER_PAYBACK_NEW_MEMBER });
+    await openMemberHome(page, {
+      metrics: MEMBER_ENERGY_METRICS_NO_MONTH,
+      payback: MEMBER_PAYBACK_NEW_MEMBER,
+      hourly: MEMBER_HOURLY_PROFILE_EMPTY,
+    });
     await expect(page.getByText("Todavía no hay datos de tu energía")).toBeVisible();
     await expect(paybackCard(page)).toContainText("Has recuperado el 0");
     await stabilizePage(page);
@@ -222,6 +247,89 @@ test.describe("Visual baselines", () => {
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("home-member-comparison-affected-by-coverage.png", await mainRegion(page));
+  });
+
+  test("member home view, twelve months with data", async ({ page }) => {
+    await openMemberHome(page);
+    await expect(twelveMonthsCard(page)).toContainText("De septiembre de 2025 a agosto de 2026: 12 de 12 meses con datos.");
+    await expect(chartTable(twelveMonthsCard(page))).toContainText("18,15 €");
+    await expect(drawnCharts(twelveMonthsCard(page))).toHaveCount(2);
+    await stabilizePage(page);
+
+    // Component subject: the twelve-month block alone, with the app bar hidden.
+    await expect(twelveMonthsCard(page)).toHaveScreenshot("home-member-twelve-months-data.png", await hideAppBar(page));
+  });
+
+  test("member home view, twelve months with a gap, a measured zero and an incomplete month", async ({ page }) => {
+    await openMemberHome(page, { monthly: MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE });
+    await expect(twelveMonthsCard(page)).toContainText("11 de 12 meses con datos.");
+    await expect(chartTable(twelveMonthsCard(page)).getByRole("row", { name: /diciembre de 2025/ })).toContainText("Sin datos");
+    await expect(chartTable(twelveMonthsCard(page)).getByRole("row", { name: /noviembre de 2025/ })).toContainText("0,00 €");
+    await expect(chartTable(twelveMonthsCard(page)).getByRole("row", { name: /febrero de 2026/ })).toContainText(
+      "Incompleto: 1 de 2 suministros",
+    );
+    await expect(drawnCharts(twelveMonthsCard(page))).toHaveCount(2);
+    await stabilizePage(page);
+
+    // Component subject: the twelve-month block alone, with the app bar hidden.
+    const options = await hideAppBar(page);
+    await expect(twelveMonthsCard(page)).toHaveScreenshot("home-member-twelve-months-gap-incomplete.png", options);
+  });
+
+  test("member home view, twelve months with only the reference month", async ({ page }) => {
+    await openMemberHome(page, { monthly: MEMBER_MONTHLY_SERIES_ONE_MONTH });
+    await expect(twelveMonthsCard(page)).toContainText("1 de 12 meses con datos.");
+    await expect(drawnCharts(twelveMonthsCard(page))).toHaveCount(2);
+    await stabilizePage(page);
+
+    // Component subject: the twelve-month block alone, with the app bar hidden.
+    await expect(twelveMonthsCard(page)).toHaveScreenshot("home-member-twelve-months-one-month.png", await hideAppBar(page));
+  });
+
+  test("member home view, twelve months with nothing stored", async ({ page }) => {
+    await openMemberHome(page, { monthly: MEMBER_MONTHLY_SERIES_EMPTY });
+    const notice = page.getByRole("note").filter({ hasText: "Todavía no hay meses que mostrar" });
+    await expect(notice).toBeVisible();
+    await expect(twelveMonthsCard(page)).toHaveCount(0);
+    await stabilizePage(page);
+
+    // Component subject: the block's neutral notice, with the app bar hidden.
+    await expect(notice).toHaveScreenshot("home-member-twelve-months-empty.png", await hideAppBar(page));
+  });
+
+  test("member home view, best hours with data", async ({ page }) => {
+    await openMemberHome(page);
+    await expect(bestHoursCard(page)).toContainText("Media de cada hora en agosto de 2026, el último mes que ha publicado la distribuidora.");
+    await expect(chartTable(bestHoursCard(page)).getByRole("row", { name: /^12 h/ })).toContainText("0,58 kWh (media de 62 registros)");
+    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await stabilizePage(page);
+
+    // Component subject: the best-hours block alone, with the app bar hidden.
+    await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-data.png", await hideAppBar(page));
+  });
+
+  test("member home view, best hours with hours without samples", async ({ page }) => {
+    await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_GAPS });
+    await expect(chartTable(bestHoursCard(page)).getByRole("row", { name: /^3 h/ })).toContainText("Sin registrosSin registros");
+    await expect(chartTable(bestHoursCard(page)).getByRole("row", { name: /^20 h/ })).toContainText(
+      "0,55 kWh (media de 62 registros)Sin registros",
+    );
+    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await stabilizePage(page);
+
+    // Component subject: the best-hours block alone, with the app bar hidden.
+    await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-gaps.png", await hideAppBar(page));
+  });
+
+  test("member home view, best hours with no month yet", async ({ page }) => {
+    await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_EMPTY });
+    const notice = page.getByRole("note").filter({ hasText: "Todavía no hay horas que mostrar" });
+    await expect(notice).toBeVisible();
+    await expect(bestHoursCard(page)).toHaveCount(0);
+    await stabilizePage(page);
+
+    // Component subject: the block's neutral notice, with the app bar hidden.
+    await expect(notice).toHaveScreenshot("home-member-best-hours-empty.png", await hideAppBar(page));
   });
 
   // The one caller who sees the member view with the switch: a community

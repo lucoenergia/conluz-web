@@ -2,6 +2,8 @@ import type {
   GetDatadisConfigResponse,
   GetShellyConfigResponse,
   MembershipEnergyMetricsResponse,
+  MembershipHourlyProfileResponse,
+  MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
   MembershipResponse,
   PartitionCoefficientResponse,
@@ -1028,6 +1030,146 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL: MembershipEnergyMetricsResp
   savings: { amountEur: 9, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
   selfConsumptionRatio: 0.4615,
   selfSufficiencyRatio: 0.3,
+};
+
+/** A stored month of the member's two supplies (#201), both reporting unless stated. */
+function storedMonth(
+  date: string,
+  selfConsumptionEnergyKWh: number,
+  consumptionKWh: number,
+  savingsEur: number,
+  suppliesWithData = 2,
+): MembershipMonthlyConsumptionBucketResponse {
+  return {
+    date,
+    time: "00:00:00",
+    consumptionKWh,
+    surplusEnergyKWh: 0,
+    generationEnergyKWh: selfConsumptionEnergyKWh,
+    selfConsumptionEnergyKWh,
+    savingsEur,
+    tariffSource: "ESTIMATE",
+    supplyCount: 2,
+    suppliesWithData,
+  };
+}
+
+/** A month in which neither supply stored a record: zero energy, null savings, as the backend answers it. */
+function nothingStoredMonth(date: string): MembershipMonthlyConsumptionBucketResponse {
+  return {
+    date,
+    time: "00:00:00",
+    consumptionKWh: 0,
+    surplusEnergyKWh: 0,
+    generationEnergyKWh: 0,
+    selfConsumptionEnergyKWh: 0,
+    savingsEur: null,
+    tariffSource: null,
+    supplyCount: 2,
+    suppliesWithData: 0,
+  };
+}
+
+/** September 2025 to August 2026: the twelve months ending at the reference month. */
+const SERIES_MONTHS = [
+  "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01",
+  "2026-03-01", "2026-04-01", "2026-05-01", "2026-06-01", "2026-07-01", "2026-08-01",
+];
+
+/** Twelve stored, complete months, sunnier in summer; August matches the reference month. */
+export const MEMBER_MONTHLY_SERIES: MembershipMonthlyConsumptionBucketResponse[] = [
+  storedMonth("2025-09-01", 112, 268, 16.8),
+  storedMonth("2025-10-01", 84, 301, 12.6),
+  storedMonth("2025-11-01", 52, 342, 7.8),
+  storedMonth("2025-12-01", 38, 371, 5.7),
+  storedMonth("2026-01-01", 41, 365, 6.15),
+  storedMonth("2026-02-01", 63, 322, 9.45),
+  storedMonth("2026-03-01", 89, 290, 13.35),
+  storedMonth("2026-04-01", 104, 262, 15.6),
+  storedMonth("2026-05-01", 126, 238, 18.9),
+  storedMonth("2026-06-01", 131, 251, 19.65),
+  storedMonth("2026-07-01", 128, 284, 19.2),
+  storedMonth("2026-08-01", 121, 291, 18.15),
+];
+
+/**
+ * Every state in one series: November is a measured zero (both supplies
+ * reported, all zero), December has nothing stored, and February is
+ * incomplete -- one of the two supplies reported.
+ */
+export const MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE: MembershipMonthlyConsumptionBucketResponse[] = MEMBER_MONTHLY_SERIES.map(
+  (month) => {
+    if (month.date === "2025-11-01") return storedMonth(month.date, 0, 0, 0);
+    if (month.date === "2025-12-01") return nothingStoredMonth(month.date);
+    if (month.date === "2026-02-01") return storedMonth(month.date, 31, 158, 4.65, 1);
+    return month;
+  },
+);
+
+/** A new member: only the reference month has anything stored. */
+export const MEMBER_MONTHLY_SERIES_ONE_MONTH: MembershipMonthlyConsumptionBucketResponse[] = SERIES_MONTHS.map((date) =>
+  date === "2026-08-01" ? storedMonth(date, 121, 291, 18.15) : nothingStoredMonth(date),
+);
+
+/** No month in the range has anything stored. */
+export const MEMBER_MONTHLY_SERIES_EMPTY: MembershipMonthlyConsumptionBucketResponse[] = SERIES_MONTHS.map(nothingStoredMonth);
+
+/**
+ * August's average day: consumption every hour, peaking in the evening;
+ * assigned production from 7 h to 20 h, peaking at midday, and a measured zero
+ * through the night -- the records are there, the sun is not. 62 samples per
+ * series and hour: two supplies over 31 days.
+ */
+const HOURLY_CONSUMPTION = [
+  0.21, 0.18, 0.16, 0.15, 0.15, 0.17, 0.24, 0.33, 0.31, 0.27, 0.25, 0.26,
+  0.3, 0.32, 0.29, 0.26, 0.28, 0.35, 0.44, 0.52, 0.55, 0.49, 0.37, 0.27,
+];
+const HOURLY_ASSIGNED_PRODUCTION = [
+  0, 0, 0, 0, 0, 0, 0, 0.04, 0.16, 0.31, 0.44, 0.53,
+  0.58, 0.57, 0.52, 0.43, 0.31, 0.18, 0.08, 0.02, 0.005, 0, 0, 0,
+];
+
+export const MEMBER_HOURLY_PROFILE: MembershipHourlyProfileResponse = {
+  period: REFERENCE_AUGUST_2026,
+  coverage: { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 },
+  buckets: HOURLY_CONSUMPTION.map((averageConsumptionKWh, hour) => ({
+    hour,
+    averageConsumptionKWh,
+    consumptionSampleCount: 62,
+    averageAssignedProductionKWh: HOURLY_ASSIGNED_PRODUCTION[hour],
+    assignedProductionSampleCount: 62,
+  })),
+};
+
+/**
+ * Hours without samples: 3 h has none in either series, and 6 h, 7 h and 20 h
+ * have consumption but no assigned production -- each series rests on its own
+ * count.
+ */
+export const MEMBER_HOURLY_PROFILE_GAPS: MembershipHourlyProfileResponse = {
+  ...MEMBER_HOURLY_PROFILE,
+  buckets: MEMBER_HOURLY_PROFILE.buckets.map((bucket) => {
+    if (bucket.hour === 3) {
+      return { ...bucket, averageConsumptionKWh: null, consumptionSampleCount: 0, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 };
+    }
+    if ([6, 7, 20].includes(bucket.hour)) {
+      return { ...bucket, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 };
+    }
+    return bucket;
+  }),
+};
+
+/** No month resolves yet: null bounds, and the 24 hours without a sample. */
+export const MEMBER_HOURLY_PROFILE_EMPTY: MembershipHourlyProfileResponse = {
+  period: { startDate: null, endDate: null },
+  coverage: { hoursWithData: 0, expectedHours: 0, supplyCount: 2, suppliesWithData: 0 },
+  buckets: Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    averageConsumptionKWh: null,
+    consumptionSampleCount: 0,
+    averageAssignedProductionKWh: null,
+    assignedProductionSampleCount: 0,
+  })),
 };
 
 /** 42 % of a 500 € investment recovered, priced with the estimate. */
