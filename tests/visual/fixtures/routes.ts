@@ -1,5 +1,10 @@
 import type { Page, Route } from "@playwright/test";
-import type { CommunityCapabilitiesResponse, PartitionCoefficientResponse } from "../../../src/api/models";
+import type {
+  CommunityCapabilitiesResponse,
+  MembershipEnergyMetricsResponse,
+  MembershipPaybackResponse,
+  PartitionCoefficientResponse,
+} from "../../../src/api/models";
 import {
   COMMUNITY_ADMIN_CAPABILITIES,
   COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
@@ -8,6 +13,8 @@ import {
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_COMMUNITY_ID,
   MEMBER_COMMUNITY_CAPABILITIES,
+  MEMBER_ENERGY_METRICS,
+  MEMBER_PAYBACK,
   PLATFORM_VIEW_COMMUNITY_CAPABILITIES,
   COMMUNITY_ADMIN_PLANT_CAPABILITIES,
   FIXED_PLANT,
@@ -56,10 +63,10 @@ type CurrentUserFixture = { memberships?: Record<string, string>; isPlatformAdmi
 // mock at all. Granting a capability in a fixture therefore opens the call that
 // capability predicts, automatically.
 //
-// Two rules cannot be derived, because they are about which ROWS come back
+// Three rules cannot be derived, because they are about which ROWS come back
 // rather than whether the call is allowed, so no capability on the wire
-// expresses them. They are listed in ROW_SCOPING below, each naming the backend
-// policy it mirrors.
+// expresses them. Each is marked ROW SCOPING at its handler below, naming the
+// backend policy it mirrors.
 //
 // What a green run proves: the UI is consistent with the capabilities it is
 // served. It does NOT prove the backend enforces them -- that is what the
@@ -105,6 +112,49 @@ async function refuse(route: Route, capability: string) {
   });
 }
 
+
+const MEMBERSHIP_PRIVATE_DATA = /\/api\/v1\/communities\/([^/]+)\/memberships\/([^/]+)\/(energy-metrics|payback)$/;
+
+/**
+ * A membership's energy metrics and payback (#199), the member home's two
+ * reads. Defaults to the normal state; a test passes another state's fixtures,
+ * and wins over the default by registering later.
+ *
+ * ROW SCOPING, not a gate: whose membership may be read is not on any served
+ * capability. Mirrors CommunityAccessGuard.canReadMembershipPrivateData: the
+ * member themself, or an admin of that community. Anyone else, platform admins
+ * included, is answered 404 so the membership's existence is not disclosed.
+ */
+export async function mockMemberHome(
+  page: Page,
+  currentUser: object,
+  {
+    metrics = MEMBER_ENERGY_METRICS,
+    payback = MEMBER_PAYBACK,
+  }: { metrics?: MembershipEnergyMetricsResponse; payback?: MembershipPaybackResponse } = {},
+) {
+  const caller = currentUser as CurrentUserFixture & { id?: string };
+  await page.route(
+    (url) => MEMBERSHIP_PRIVATE_DATA.test(url.pathname),
+    (route: Route) => {
+      const [, communityId, userId, resource] = MEMBERSHIP_PRIVATE_DATA.exec(new URL(route.request().url()).pathname)!;
+      const role = caller.memberships?.[communityId];
+      const mayRead = (userId === caller.id && role !== undefined) || role === "COMMUNITY_ADMIN";
+      if (!mayRead) {
+        return route.fulfill({
+          status: 404,
+          contentType: "application/json",
+          body: JSON.stringify({ status: 404, message: "not found" }),
+        });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(resource === "payback" ? payback : metrics),
+      });
+    },
+  );
+}
 
 export async function mockAllApiRoutes(page: Page, currentUser: object) {
   // The app reads what it may do from the community itself, so the fixture has
@@ -186,7 +236,7 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
     // User-scoped supplies endpoint (e.g. GET /api/v1/users/{id}/supplies)
     // returns a raw array, not a paged envelope.
     if (url.includes("/api/v1/users/")) {
-      // ROW SCOPING, not a gate -- one of the two rules that cannot be derived
+      // ROW SCOPING, not a gate -- one of the three rules that cannot be derived
       // from a served capability, because it is about which rows come back.
       // Mirrors SupplyAccessPolicy.visibleSuppliesOwnedBy (conluz#326): the
       // target's supplies in the communities the caller administers, or all of
@@ -310,6 +360,9 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
       });
     },
   );
+
+  // Registered after the communities handler so it wins for these two paths.
+  await mockMemberHome(page, currentUser);
 
   // Plants — return empty to avoid loading spinners
   await page.route(

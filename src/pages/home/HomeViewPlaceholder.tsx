@@ -5,10 +5,7 @@ import { colors } from "../../theme/tokens";
 import { HomeViewSwitch } from "./HomeViewSwitch";
 import type { HomeView } from "./useHomeViews";
 
-/**
- * Placeholder body shared by both home views until each gets its content
- * (#197). Neither view is linked from anywhere yet.
- */
+/** Placeholder body of the management view until it gets its content (#198). */
 export const HomeViewPlaceholder: FC<{ view: HomeView; title: string; description: string }> = ({
   view,
   title,

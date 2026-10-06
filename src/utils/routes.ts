@@ -3,14 +3,15 @@ import type { CurrentUserResponse } from "../api/models";
 /**
  * Where to send somebody once they are logged in.
  *
- * Membership wins: an administrator who also belongs to a community lands in
- * the community, because that is where the work is. Only somebody with no
+ * Membership wins: an administrator who also belongs to a community lands on
+ * the community's home, because that is where the work is; /home then picks
+ * the caller's view (#199). Only somebody with no
  * membership at all is sent to the platform, and only if they may administer
  * it -- read from the capability rather than the platform flag, so this agrees
  * with the guard on /platform instead of approximating it.
  */
 export function resolveLandingRoute(user: CurrentUserResponse): string {
-  if (Object.keys(user.memberships ?? {}).length > 0) return '/';
+  if (Object.keys(user.memberships ?? {}).length > 0) return '/home';
   if (user.platformCapabilities?.canAdministerPlatform === true) return '/platform';
   return '/no-community';
 }

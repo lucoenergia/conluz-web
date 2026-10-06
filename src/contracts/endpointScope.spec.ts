@@ -59,7 +59,8 @@ const REVIEWED: Record<string, Scope> = {
   // reason /api/v1/users/current is -- but a fixed literal rather than a shape,
   // so it is decided here rather than in structuralScope.
   "/api/v1/users/profile": "user",
-  // Same reasoning as /api/v1/users/profile: acts on the caller, takes no id.
+  // Changes the caller's own password: user-scoped like /api/v1/users/current,
+  // decided here for the same reason as /api/v1/users/profile.
   "/api/v1/users/current/password": "user",
 };
 

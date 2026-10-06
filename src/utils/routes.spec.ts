@@ -20,23 +20,23 @@ const baseUser: CurrentUserResponse = {
 };
 
 describe("resolveLandingRoute", () => {
-  test("user with community memberships lands on /", () => {
+  test("user with community memberships lands on /home", () => {
     const user: CurrentUserResponse = {
       ...baseUser,
       isPlatformAdmin: false,
       memberships: { "community-1": "COMMUNITY_MEMBER" },
     };
-    expect(resolveLandingRoute(user)).toBe("/");
+    expect(resolveLandingRoute(user)).toBe("/home");
   });
 
-  test("platform admin with memberships still lands on /", () => {
+  test("platform admin with memberships still lands on /home", () => {
     const user: CurrentUserResponse = {
       ...baseUser,
       isPlatformAdmin: true,
       platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true }),
       memberships: { "community-1": "COMMUNITY_ADMIN" },
     };
-    expect(resolveLandingRoute(user)).toBe("/");
+    expect(resolveLandingRoute(user)).toBe("/home");
   });
 
   test("platform admin with no memberships lands on /platform", () => {

@@ -1,6 +1,8 @@
 import type {
   GetDatadisConfigResponse,
   GetShellyConfigResponse,
+  MembershipEnergyMetricsResponse,
+  MembershipPaybackResponse,
   MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
@@ -907,3 +909,116 @@ export const FIXED_DATADIS_CONFIG: GetDatadisConfigResponse = {
 
 /** Shelly off, so the two cards do not render the same state. */
 export const FIXED_SHELLY_CONFIG: GetShellyConfigResponse = { enabled: false };
+
+// ---------------------------------------------------------------------------
+// Member home (#199): the caller's energy in the reference month and their
+// payback. One fixture per state the view defines; the default is the normal
+// state, priced with the estimate.
+// ---------------------------------------------------------------------------
+
+/** August 2026 in Europe/Madrid, as the backend bounds it: before FIXED_NOW, never the current month. */
+const REFERENCE_AUGUST_2026 = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T21:00:00Z" };
+
+const ESTIMATED_PRICE = { eurPerKWh: 0.15 };
+
+/** A complete month with 45 % of the assigned energy used: the middle message. */
+export const MEMBER_ENERGY_METRICS: MembershipEnergyMetricsResponse = {
+  period: REFERENCE_AUGUST_2026,
+  coverage: { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 },
+  energy: {
+    assignedProductionKWh: 268,
+    selfConsumptionKWh: 121,
+    surplusKWh: 147,
+    totalConsumptionKWh: 412,
+    gridImportKWh: 291,
+  },
+  savings: { amountEur: 18.15, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
+  selfConsumptionRatio: 0.4515,
+  selfSufficiencyRatio: 0.2937,
+};
+
+/** The same month priced with every supply's contracted tariff: no estimate label. */
+export const MEMBER_ENERGY_METRICS_REAL_TARIFF: MembershipEnergyMetricsResponse = {
+  ...MEMBER_ENERGY_METRICS,
+  savings: { amountEur: 21.42, tariffSource: "REAL_TARIFF", estimatedPrice: null },
+};
+
+/** One of the two supplies sent nothing this month. */
+export const MEMBER_ENERGY_METRICS_PARTIAL: MembershipEnergyMetricsResponse = {
+  ...MEMBER_ENERGY_METRICS,
+  coverage: { hoursWithData: 744, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 },
+};
+
+/**
+ * No month resolves: the backend's answer for a community that has never
+ * shared energy, and for a member with nothing assigned yet.
+ */
+export const MEMBER_ENERGY_METRICS_NO_MONTH: MembershipEnergyMetricsResponse = {
+  period: { startDate: null, endDate: null },
+  coverage: { hoursWithData: 0, expectedHours: 0, supplyCount: 1, suppliesWithData: 0 },
+  energy: { assignedProductionKWh: 0, selfConsumptionKWh: 0, surplusKWh: 0, totalConsumptionKWh: 0, gridImportKWh: 0 },
+  // ESTIMATE although nothing was priced: what the label must not key on.
+  savings: { amountEur: null, tariffSource: "ESTIMATE", estimatedPrice: null },
+  selfConsumptionRatio: null,
+  selfSufficiencyRatio: null,
+};
+
+/** 42 % of a 500 € investment recovered, priced with the estimate. */
+export const MEMBER_PAYBACK: MembershipPaybackResponse = {
+  investmentEur: 500,
+  savedEur: 212.4,
+  remainingEur: 287.6,
+  progressRatio: 0.4248,
+  startDate: "2025-03-01",
+  estimatedRemainingMonths: 19,
+  tariffSource: "ESTIMATE",
+  estimatedPrice: ESTIMATED_PRICE,
+};
+
+export const MEMBER_PAYBACK_REAL_TARIFF: MembershipPaybackResponse = {
+  ...MEMBER_PAYBACK,
+  savedEur: 250.1,
+  remainingEur: 249.9,
+  progressRatio: 0.5002,
+  estimatedRemainingMonths: 15,
+  tariffSource: "REAL_TARIFF",
+  estimatedPrice: null,
+};
+
+export const MEMBER_PAYBACK_NO_INVESTMENT: MembershipPaybackResponse = {
+  ...MEMBER_PAYBACK,
+  investmentEur: null,
+  remainingEur: null,
+  progressRatio: null,
+  estimatedRemainingMonths: null,
+};
+
+/** 640 € saved on a 500 € investment. */
+export const MEMBER_PAYBACK_RECOVERED: MembershipPaybackResponse = {
+  ...MEMBER_PAYBACK,
+  savedEur: 640,
+  remainingEur: 0,
+  progressRatio: 1.28,
+  estimatedRemainingMonths: 0,
+};
+
+/** The community has never activated a partition coefficient. */
+export const MEMBER_PAYBACK_NOTHING_SHARED: MembershipPaybackResponse = {
+  investmentEur: 500,
+  savedEur: null,
+  remainingEur: null,
+  progressRatio: null,
+  startDate: null,
+  estimatedRemainingMonths: null,
+  tariffSource: "ESTIMATE",
+  estimatedPrice: null,
+};
+
+/** The community shares energy, but nothing has been saved by this member yet. */
+export const MEMBER_PAYBACK_NEW_MEMBER: MembershipPaybackResponse = {
+  ...MEMBER_PAYBACK,
+  savedEur: 0,
+  remainingEur: 500,
+  progressRatio: 0,
+  estimatedRemainingMonths: null,
+};
