@@ -3,21 +3,32 @@
  *
  * The member view is captured in every state it defines (#199), each with its
  * figures asserted before the capture, so a broken fixture fails rather than
- * becoming a plausible baseline. The management view still carries its
- * placeholder until #198 fills it. Each view is captured with the persona that
- * has it, and the switch, on both views, with the one caller who gets it: a
- * community admin who owns a supply here.
+ * becoming a plausible baseline. The management view (#198) is captured with
+ * plants in different stages, with no plant, and with a plant that has no
+ * agreement yet. Each view is captured with the persona that has it, and the
+ * switch, on both views, with the one caller who gets it: a community admin
+ * who owns a supply here.
  *
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
 import type { Page } from "@playwright/test";
-import type { MembershipEnergyMetricsResponse, MembershipPaybackResponse } from "../../src/api/models";
+import type {
+  MembershipEnergyMetricsResponse,
+  MembershipPaybackResponse,
+  PlantResponse,
+  SharingAgreementResponse,
+} from "../../src/api/models";
 import {
   test,
   expect,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_MEMBER_USER,
+  FIXED_PLANT,
+  MANAGEMENT_DRAFT_AGREEMENT,
+  MANAGEMENT_PUBLISHED_AGREEMENT,
+  MANAGEMENT_SECOND_PLANT,
+  MANAGEMENT_SUPERSEDED_AGREEMENT,
   MEMBER_ENERGY_METRICS_NO_MONTH,
   MEMBER_ENERGY_METRICS_PARTIAL,
   MEMBER_ENERGY_METRICS_REAL_TARIFF,
@@ -30,6 +41,7 @@ import {
   mainRegion,
   mockAllApiRoutes,
   mockCommunityAdminOwnsSupply,
+  mockManagementHome,
   mockMemberHome,
   seedActiveCommunity,
   stabilizePage,
@@ -49,6 +61,38 @@ async function openMemberHome(
   await expect(page.getByRole("heading", { name: "Tu energía", level: 1 })).toBeVisible();
   await expect(page.getByRole("tablist", { name: "Vistas de inicio" })).toHaveCount(0);
 }
+
+/**
+ * Opens the management home as the community admin, serving the given plants.
+ * The default is the normal state: one plant with an agreement in force (and
+ * an older one it superseded), and one whose first agreement is a draft.
+ */
+async function openManagementHome(
+  page: Page,
+  {
+    plants = [FIXED_PLANT, MANAGEMENT_SECOND_PLANT],
+    agreementsByPlant = {
+      [FIXED_PLANT.id]: [MANAGEMENT_SUPERSEDED_AGREEMENT, MANAGEMENT_PUBLISHED_AGREEMENT],
+      [MANAGEMENT_SECOND_PLANT.id]: [MANAGEMENT_DRAFT_AGREEMENT],
+    },
+    ownsSupply = false,
+  }: { plants?: PlantResponse[]; agreementsByPlant?: Record<string, SharingAgreementResponse[]>; ownsSupply?: boolean } = {},
+) {
+  await injectAuthToken(page);
+  await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+  await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+  await mockManagementHome(page, FIXED_COMMUNITY_ADMIN_USER, { plants, agreementsByPlant });
+  if (ownsSupply) await mockCommunityAdminOwnsSupply(page);
+
+  await page.goto("/home/management");
+  await expect(page.getByRole("heading", { name: "Gestión de la comunidad", level: 1 })).toBeVisible();
+  // Two enabled memberships of three, and the two supply points of the community.
+  await expect(page.getByRole("region", { name: "Miembros" })).toContainText("2");
+  await expect(page.getByRole("region", { name: "Puntos de suministro" })).toContainText("2");
+}
+
+const agreementsCard = (page: Page) => page.getByRole("region", { name: "Acuerdos de reparto" });
+const plantRow = (page: Page, name: string) => agreementsCard(page).getByRole("listitem", { name });
 
 const paybackCard = (page: Page) => page.getByRole("region", { name: "Recuperación de tu inversión" });
 const savingsCard = (page: Page) => page.getByRole("region", { name: "Tu ahorro en agosto de 2026" });
@@ -150,32 +194,48 @@ test.describe("Visual baselines", () => {
   });
 
   test("management home view (admin owning no supplies)", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-
-    await page.goto("/home/management");
-    await expect(page.getByRole("heading", { name: "Gestión de la comunidad", level: 1 })).toBeVisible();
+    await openManagementHome(page);
     await expect(page.getByRole("tablist", { name: "Vistas de inicio" })).toHaveCount(0);
+    await expect(plantRow(page, "Planta Solar Norte")).toContainText("Vigente");
+    await expect(plantRow(page, "Planta Solar Norte")).toContainText("Reparto vecinos bloque A");
+    await expect(plantRow(page, "Planta Solar Norte")).not.toContainText("Reparto original 2022");
+    await expect(plantRow(page, "Cubierta del polideportivo")).toContainText("está en preparación");
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-view-management.png", await mainRegion(page));
+    await expect(page).toHaveScreenshot("home-management-normal.png", await mainRegion(page));
+  });
+
+  test("management home view, community with no plant", async ({ page }) => {
+    await openManagementHome(page, { plants: [], agreementsByPlant: {} });
+    await expect(agreementsCard(page).getByRole("note")).toContainText("La comunidad todavía no tiene plantas");
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("home-management-no-plant.png", await mainRegion(page));
+  });
+
+  test("management home view, plant without an agreement yet", async ({ page }) => {
+    await openManagementHome(page, { plants: [FIXED_PLANT], agreementsByPlant: {} });
+    await expect(plantRow(page, "Planta Solar Norte").getByRole("note")).toContainText(
+      "Todavía no tiene acuerdo de reparto.",
+    );
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("home-management-plant-without-agreement.png", await mainRegion(page));
   });
 
   test("management home view with the switch (admin owning a supply)", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockCommunityAdminOwnsSupply(page);
-
-    await page.goto("/home/management");
-    await expect(page.getByRole("heading", { name: "Gestión de la comunidad", level: 1 })).toBeVisible();
+    await openManagementHome(page, { ownsSupply: true });
     await expect(page.getByRole("tab", { name: "Tu energía" })).toBeVisible();
     await expect(page.getByRole("tab", { name: "Gestión", selected: true })).toBeVisible();
+    await expect(plantRow(page, "Planta Solar Norte")).toContainText("Vigente");
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-view-management-with-switch.png", await mainRegion(page));
+    await expect(page).toHaveScreenshot("home-management-with-switch.png", await mainRegion(page));
   });
 });

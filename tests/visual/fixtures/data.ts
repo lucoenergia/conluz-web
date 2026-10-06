@@ -6,6 +6,7 @@ import type {
   MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
+  SharingAgreementResponse,
   SupplyResponse,
 } from "../../../src/api/models";
 
@@ -1017,4 +1018,62 @@ export const MEMBER_PAYBACK_NEW_MEMBER: MembershipPaybackResponse = {
   remainingEur: 500,
   progressRatio: 0,
   estimatedRemainingMonths: null,
+};
+
+// ---------------------------------------------------------------------------
+// The community admin's management home (#198)
+// ---------------------------------------------------------------------------
+
+/**
+ * A second plant of the community, so the management home shows plants in
+ * different stages side by side. Its own id: SECOND_PLANT_ID belongs to the
+ * coefficient history, which must not start resolving a plant for it.
+ */
+export const MANAGEMENT_SECOND_PLANT: PlantResponse = {
+  ...FIXED_PLANT,
+  id: "dddddddd-eeee-ffff-0000-333333333333",
+  providerCode: "HWI-002",
+  regulatoryCode: "ES1234567890123456AB2F",
+  name: "Cubierta del polideportivo",
+  address: "Calle del Deporte 4",
+  description: null,
+  totalPower: 35,
+};
+
+/** The agreement in force of FIXED_PLANT, as the management home reads it. */
+export const MANAGEMENT_PUBLISHED_AGREEMENT: SharingAgreementResponse = {
+  id: "22222222-3333-4444-5555-666666666666",
+  plantId: FIXED_PLANT_ID,
+  name: "Reparto vecinos bloque A",
+  notes: null,
+  status: "PUBLISHED",
+  installedPowerKw: 120.5,
+  createdAt: "2024-06-15T10:00:00Z",
+  createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
+  updatedAt: null,
+  updatedBy: null,
+  file: null,
+  capabilities: SHARING_AGREEMENT_CAPABILITIES,
+};
+
+/** An agreement of FIXED_PLANT that a newer one superseded: it must not be named as in force. */
+export const MANAGEMENT_SUPERSEDED_AGREEMENT: SharingAgreementResponse = {
+  ...MANAGEMENT_PUBLISHED_AGREEMENT,
+  id: "33333333-4444-5555-6666-777777777777",
+  name: "Reparto original 2022",
+  status: "SUPERSEDED",
+  installedPowerKw: 80,
+  createdAt: "2022-02-01T08:00:00Z",
+  createdBy: null,
+};
+
+/** MANAGEMENT_SECOND_PLANT's first agreement, still a draft. */
+export const MANAGEMENT_DRAFT_AGREEMENT: SharingAgreementResponse = {
+  ...MANAGEMENT_PUBLISHED_AGREEMENT,
+  id: "44444444-5555-6666-7777-888888888888",
+  plantId: MANAGEMENT_SECOND_PLANT.id,
+  name: "Reparto de la cubierta",
+  status: "DRAFT",
+  installedPowerKw: 35,
+  createdAt: "2026-07-01T09:00:00Z",
 };

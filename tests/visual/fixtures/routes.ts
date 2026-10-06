@@ -4,6 +4,8 @@ import type {
   MembershipEnergyMetricsResponse,
   MembershipPaybackResponse,
   PartitionCoefficientResponse,
+  PlantResponse,
+  SharingAgreementResponse,
 } from "../../../src/api/models";
 import {
   COMMUNITY_ADMIN_CAPABILITIES,
@@ -724,5 +726,58 @@ export async function mockCommunityManagementRoutes(page: Page) {
         contentType: "application/json",
         body: JSON.stringify(FIXED_SHELLY_CONFIG),
       }),
+  );
+}
+
+/**
+ * The community admin's management home (#198): the roster, the plants, and
+ * each plant's agreements. The supply count comes from mockAllApiRoutes's
+ * paged supplies (two). The roster is FIXED_MEMBERSHIPS: three memberships,
+ * two of them enabled.
+ *
+ * Registered AFTER mockAllApiRoutes so these win: its broad communities
+ * predicate would answer the roster and the plants with a list of
+ * communities. Each plant is stamped with the caller's capabilities, like
+ * every plant fixture. A plant with no entry in `agreementsByPlant` has none.
+ */
+export async function mockManagementHome(
+  page: Page,
+  currentUser: { memberships?: Record<string, string> },
+  {
+    plants,
+    agreementsByPlant,
+  }: { plants: PlantResponse[]; agreementsByPlant: Record<string, SharingAgreementResponse[]> },
+) {
+  await page.route(
+    (url) => /\/api\/v1\/communities\/[^/]+\/memberships(\?|$)/.test(url.href),
+    (route: Route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FIXED_MEMBERSHIPS) }),
+  );
+
+  await page.route(
+    (url) => url.href.includes(`/api/v1/communities/${FIXED_COMMUNITY_ID}/plants`),
+    (route: Route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...PAGED_PLANTS,
+          items: plants.map((plant) => asPlantCaller(plant, currentUser)),
+          totalElements: plants.length,
+        }),
+      }),
+  );
+
+  const AGREEMENT_LIST = /\/api\/v1\/plants\/([^/]+)\/sharing-agreements$/;
+  await page.route(
+    (url) => AGREEMENT_LIST.test(url.pathname),
+    (route: Route) => {
+      const plantId = AGREEMENT_LIST.exec(new URL(route.request().url()).pathname)![1];
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(agreementsByPlant[plantId] ?? []),
+      });
+    },
   );
 }
