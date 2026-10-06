@@ -9,6 +9,9 @@ import {
   type CurrentUserResponse,
   type MembershipCapabilitiesResponse,
   type MembershipEnergyMetricsResponse,
+  type MembershipHourlyProfileBucketResponse,
+  type MembershipHourlyProfileResponse,
+  type MembershipMonthlyConsumptionBucketResponse,
   type MembershipPaybackResponse,
   type MembershipResponse,
   type PartitionCoefficientResponse,
@@ -400,6 +403,63 @@ export function buildMembershipEnergyMetrics(
       selfSufficiencyRatio: null,
       selfConsumptionRatio: null,
     } satisfies MembershipEnergyMetricsResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * One month of a membership's monthly series. The default is a month with
+ * nothing stored, as the backend answers it: zero energy, null savings and a
+ * null tariff source, no supply reporting. A spec describing a stored month
+ * sets the energy, the savings and the counters it asserts on.
+ */
+export function buildMembershipMonthlyConsumptionBucket(
+  overrides: Partial<MembershipMonthlyConsumptionBucketResponse> = {},
+): MembershipMonthlyConsumptionBucketResponse {
+  return {
+    date: "2026-01-01",
+    time: "00:00:00",
+    consumptionKWh: 0,
+    surplusEnergyKWh: 0,
+    generationEnergyKWh: 0,
+    selfConsumptionEnergyKWh: 0,
+    savingsEur: null,
+    tariffSource: null,
+    supplyCount: 1,
+    suppliesWithData: 0,
+    ...overrides,
+  };
+}
+
+/**
+ * One hour of a membership's hourly profile. The default is an hour without a
+ * sample in either series: null averages and zero counts.
+ */
+export function buildMembershipHourlyProfileBucket(
+  overrides: Partial<MembershipHourlyProfileBucketResponse> = {},
+): MembershipHourlyProfileBucketResponse {
+  return {
+    hour: 0,
+    averageConsumptionKWh: null,
+    consumptionSampleCount: 0,
+    averageAssignedProductionKWh: null,
+    assignedProductionSampleCount: 0,
+    ...overrides,
+  };
+}
+
+/**
+ * A membership's hourly profile. The default is the shape the backend answers
+ * when no month resolves: null bounds, no coverage, and the 24 hours without a
+ * sample.
+ */
+export function buildMembershipHourlyProfile(
+  overrides: Partial<MembershipHourlyProfileResponse> = {},
+): MembershipHourlyProfileResponse {
+  return {
+    period: { startDate: null, endDate: null },
+    coverage: { hoursWithData: 0, expectedHours: 0, supplyCount: 1, suppliesWithData: 0 },
+    buckets: Array.from({ length: 24 }, (_, hour) => buildMembershipHourlyProfileBucket({ hour })),
     ...overrides,
   };
 }
