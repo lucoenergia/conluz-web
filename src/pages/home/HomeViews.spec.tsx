@@ -7,7 +7,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
 import { CommunityRole, type CurrentUserResponse, type SupplyResponse } from "../../api/models";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
-import { useGetMembershipEnergyMetrics, useGetMembershipPayback } from "../../api/memberships/memberships";
+import {
+  useGetMembershipEnergyMetrics,
+  useGetMembershipPayback,
+  useGetMemberships,
+} from "../../api/memberships/memberships";
+import { useGetAllPlants } from "../../api/plants/plants";
+import { useGetAllSupplies } from "../../api/supplies/supplies";
 import { useGetCurrentUser, useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { buildCommunity } from "../../test/fixtures";
@@ -45,6 +51,18 @@ vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => (
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
   useGetMembershipPayback: vi.fn(),
+  useGetMemberships: vi.fn(),
+}));
+// The management view reads the community's roster, supplies and plants
+// (#198); as with the member view, which view renders is what is under test,
+// so these stay in flight too.
+vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetAllSupplies: vi.fn(),
+}));
+vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetAllPlants: vi.fn(),
 }));
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -130,6 +148,9 @@ describe("home views (#197)", () => {
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
     vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
     vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
+    vi.mocked(useGetMemberships).mockReturnValue(query.loading());
+    vi.mocked(useGetAllSupplies).mockReturnValue(query.loading());
+    vi.mocked(useGetAllPlants).mockReturnValue(query.loading());
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([
         buildCommunity({ id: COMMUNITY_A, name: "Comunidad A" }),
@@ -234,7 +255,7 @@ describe("home views (#197)", () => {
       as(ADMIN_WITH_SUPPLIES);
       // Arrive through the switch, so what is restored cannot be a default.
       const first = openApp(route === "/home/member" ? "/home/management" : "/home/member");
-      await screen.findByRole("heading");
+      await screen.findByRole("heading", { level: 1 });
       const tab = route === "/home/member" ? "Tu energía" : "Gestión";
       if (screen.getByRole("tab", { selected: true }).textContent !== tab) {
         await user.click(screen.getByRole("tab", { name: tab }));
@@ -355,6 +376,9 @@ describe("linking the home in (#199)", () => {
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
     vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
     vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
+    vi.mocked(useGetMemberships).mockReturnValue(query.loading());
+    vi.mocked(useGetAllSupplies).mockReturnValue(query.loading());
+    vi.mocked(useGetAllPlants).mockReturnValue(query.loading());
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([buildCommunity({ id: COMMUNITY_A, name: "Comunidad A" })]),
     );
