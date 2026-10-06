@@ -1,8 +1,9 @@
 /**
  * Visual baselines — the member and management home views (#197, #199).
  *
- * The member view is captured in every state it defines (#199), each with its
- * figures asserted before the capture, so a broken fixture fails rather than
+ * The member view is captured in every state it defines (#199), and its
+ * comparison with the previous month in each of its states (#200), each with
+ * its figures asserted before the capture, so a broken fixture fails rather than
  * becoming a plausible baseline. The management view (#198) is captured with
  * plants in different stages, with no plant, and with a plant that has no
  * agreement yet. Each view is captured with the persona that has it, and the
@@ -31,6 +32,9 @@ import {
   MANAGEMENT_SUPERSEDED_AGREEMENT,
   MEMBER_ENERGY_METRICS_NO_MONTH,
   MEMBER_ENERGY_METRICS_PARTIAL,
+  MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER,
+  MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA,
+  MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL,
   MEMBER_ENERGY_METRICS_REAL_TARIFF,
   MEMBER_PAYBACK_NEW_MEMBER,
   MEMBER_PAYBACK_NO_INVESTMENT,
@@ -50,7 +54,11 @@ import {
 /** Opens the member home as the member, serving the given state. */
 async function openMemberHome(
   page: Page,
-  state: { metrics?: MembershipEnergyMetricsResponse; payback?: MembershipPaybackResponse } = {},
+  state: {
+    metrics?: MembershipEnergyMetricsResponse;
+    previousMetrics?: MembershipEnergyMetricsResponse;
+    payback?: MembershipPaybackResponse;
+  } = {},
 ) {
   await injectAuthToken(page);
   await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
@@ -97,6 +105,7 @@ const plantRow = (page: Page, name: string) => agreementsCard(page).getByRole("l
 const paybackCard = (page: Page) => page.getByRole("region", { name: "Recuperación de tu inversión" });
 const savingsCard = (page: Page) => page.getByRole("region", { name: "Tu ahorro en agosto de 2026" });
 const estimateLabel = (page: Page) => page.getByText(/Estimado con un precio de/);
+const comparisonCard = (page: Page) => page.getByRole("region", { name: "Comparado con julio de 2026" });
 
 test.describe("Visual baselines", () => {
   test("member home view, priced with the estimate", async ({ page }) => {
@@ -170,6 +179,49 @@ test.describe("Visual baselines", () => {
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("home-member-partial-coverage.png", await mainRegion(page));
+  });
+
+  test("member home view, comparison with a rise", async ({ page }) => {
+    await openMemberHome(page);
+    await expect(comparisonCard(page)).toContainText("6,45 € más");
+    await expect(comparisonCard(page)).toContainText("14 puntos porcentuales más");
+    await expect(comparisonCard(page)).toContainText("9 puntos porcentuales más");
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("home-member-comparison-rise.png", await mainRegion(page));
+  });
+
+  test("member home view, comparison with a fall", async ({ page }) => {
+    await openMemberHome(page, { previousMetrics: MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER });
+    await expect(comparisonCard(page)).toContainText("5,85 € menos");
+    await expect(comparisonCard(page)).toContainText("10 puntos porcentuales menos");
+    await expect(comparisonCard(page)).toContainText("8 puntos porcentuales menos");
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("home-member-comparison-fall.png", await mainRegion(page));
+  });
+
+  test("member home view, comparison not available yet", async ({ page }) => {
+    await openMemberHome(page, { previousMetrics: MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA });
+    await expect(page.getByRole("note")).toContainText("Todavía no se puede comparar con el mes anterior");
+    await expect(comparisonCard(page)).toHaveCount(0);
+    await expect(savingsCard(page)).toContainText("18,15");
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("home-member-comparison-unavailable.png", await mainRegion(page));
+  });
+
+  test("member home view, comparison affected by coverage", async ({ page }) => {
+    await openMemberHome(page, { previousMetrics: MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL });
+    await expect(comparisonCard(page)).toContainText("La comparación está afectada: faltan datos de julio de 2026");
+    await expect(comparisonCard(page)).toContainText("9,15 € más");
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("home-member-comparison-affected-by-coverage.png", await mainRegion(page));
   });
 
   // The one caller who sees the member view with the switch: a community
