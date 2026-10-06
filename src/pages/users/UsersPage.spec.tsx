@@ -165,16 +165,6 @@ vi.mock("../../components/Modals/DisablePartnerSuccessModal", () => ({
   DisablePartnerSuccessModal: () => null,
 }));
 
-vi.mock("../../components/Modals/ResetPasswordConfirmationModal", () => ({
-  ResetPasswordConfirmationModal: ({ isOpen, onCancel }: { isOpen: boolean; onCancel: () => void }) =>
-    isOpen ? (
-      <div>
-        <span>Reset password modal</span>
-        <button onClick={onCancel}>Cancelar</button>
-      </div>
-    ) : null,
-}));
-
 vi.mock("../../components/Modals/GrantPlatformAdminConfirmationModal", () => ({
   GrantPlatformAdminConfirmationModal: ({ isOpen, onConfirm, userName }: {
     isOpen: boolean; onConfirm: () => void; userName: string;
@@ -402,7 +392,7 @@ describe("UsersPage", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/users/u1/edit");
     });
 
-    it("offers neither Editar datos nor Reestablecer contraseña without canEdit", async () => {
+    it("offers no Editar datos without canEdit", async () => {
       const user = userEvent.setup();
       setup({
         users: [
@@ -417,19 +407,18 @@ describe("UsersPage", () => {
 
       expect(await screen.findByRole("menuitem", { name: /Deshabilitar/ })).toBeInTheDocument();
       expect(screen.queryByRole("menuitem", { name: /Editar datos/ })).not.toBeInTheDocument();
-      // A password reset is an administrative change to the account, so it rides
-      // on the same answer rather than on nothing.
-      expect(screen.queryByRole("menuitem", { name: /Reestablecer contraseña/ })).not.toBeInTheDocument();
     });
 
-    it("opens reset password modal when reset action is chosen", async () => {
+    // The reset had no endpoint and silently did nothing, so it is gone
+    // rather than gated (#196), even for a row the caller may edit.
+    it("offers no password reset, even on a row the caller may edit", async () => {
       const user = userEvent.setup();
       setup();
 
       await user.click(menuFor("Ana García"));
-      await user.click(await screen.findByRole("menuitem", { name: /Reestablecer contraseña/ }));
 
-      expect(screen.getByText("Reset password modal")).toBeInTheDocument();
+      expect(await screen.findByRole("menuitem", { name: /Editar datos/ })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: /contraseña/i })).not.toBeInTheDocument();
     });
   });
 

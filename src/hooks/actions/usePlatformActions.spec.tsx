@@ -103,9 +103,24 @@ describe("usePlatformActions", () => {
     const { result, queryClient } = renderWith(buildPlatformCapabilities({ canCreateUsers: true }));
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-    await result.current.actions.createUser?.run(CREATE_USER_BODY);
+    mutateAsync.mockResolvedValue({ id: "TEST-USER-ID" });
 
+    await expect(result.current.actions.createUser?.run(CREATE_USER_BODY)).resolves.toEqual({
+      user: { id: "TEST-USER-ID" },
+    });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllUsersQueryKey() });
+  });
+
+  // #196: the screen needs the API's reason -- a password that breaks the
+  // policy says which rule -- so a refused creation hands the error back.
+  it("hands back the error of a refused user creation and leaves the cache alone", async () => {
+    const error = new Error("refused");
+    mutateAsync.mockRejectedValue(error);
+    const { result, queryClient } = renderWith(buildPlatformCapabilities({ canCreateUsers: true }));
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.createUser?.run(CREATE_USER_BODY)).resolves.toEqual({ error });
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("reports failure as undefined and leaves the cache alone", async () => {

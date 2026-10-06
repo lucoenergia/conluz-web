@@ -1,13 +1,14 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthDispatch } from "../context/auth.context";
-import { markSessionExpired } from "../utils/session";
+import { markPasswordChanged, markSessionExpired } from "../utils/session";
 
 /**
  * Why the session is ending. "expired" is the backend refusing a token the app
- * still held; "logout" is the user asking.
+ * still held; "logout" is the user asking; "passwordChanged" is a successful
+ * password change, which revokes the token (#196).
  */
-export type SessionEndReason = "expired" | "logout";
+export type SessionEndReason = "expired" | "logout" | "passwordChanged";
 
 /**
  * Ends the session without navigating.
@@ -30,6 +31,7 @@ export function useEndSession(): (reason: SessionEndReason) => void {
   return useCallback(
     (reason: SessionEndReason) => {
       if (reason === "expired") markSessionExpired();
+      if (reason === "passwordChanged") markPasswordChanged();
       dispatchAuth(null);
       queryClient.clear();
     },

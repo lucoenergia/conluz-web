@@ -25,7 +25,7 @@ import {
   type MenuRequirement,
 } from "../hooks/permissions";
 import { selectVisibleSections } from "../utils/menuVisibility";
-import { resolveLandingRoute } from "../utils/routes";
+import { resolveForcedPasswordChangeTarget, resolveLandingRoute } from "../utils/routes";
 import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";
 import { ScopeContext } from "../components/ScopeContext";
 
@@ -38,6 +38,10 @@ export const AuthenticatedLayout: FC = () => {
   const { pathname } = useLocation();
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
   const communitySwitchRedirect = useCommunitySwitchRedirect();
+  // Decided during render, like the community-switch redirect, so the page the
+  // caller may not use yet is never mounted, not even for one frame (#196).
+  // Checked first: it applies whatever the community.
+  const forcedPasswordChangeRedirect = resolveForcedPasswordChangeTarget(loggedUser, pathname);
 
   // One lookup per capability the menu asks about. Fixed calls rather than a
   // loop, because the set of questions is known and hooks cannot be called per
@@ -97,6 +101,10 @@ export const AuthenticatedLayout: FC = () => {
 
   useEffect(() => {
     if (!loggedUser || landedForUserId.current === loggedUser.id) return;
+    // Landing waits until the password has been changed: the forced redirect
+    // owns navigation until then, and recording nothing here means nothing is
+    // skipped later.
+    if (loggedUser.mustChangePassword) return;
     // The router's path, not `window.location`: the two agree in the browser,
     // but under MemoryRouter the latter is "/" for every route, which is why
     // this condition had no test until now.
@@ -175,7 +183,9 @@ export const AuthenticatedLayout: FC = () => {
                 </Box>
               ) : (
                 <Suspense fallback={<RouteFallback />}>
-                  {communitySwitchRedirect ? (
+                  {forcedPasswordChangeRedirect ? (
+                    <Navigate to={forcedPasswordChangeRedirect} replace />
+                  ) : communitySwitchRedirect ? (
                     <Navigate to={communitySwitchRedirect} replace />
                   ) : (
                     /*

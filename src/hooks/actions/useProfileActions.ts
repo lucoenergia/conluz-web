@@ -1,7 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetCurrentUserQueryKey, useUpdateProfile } from "../../api/users/users";
-import type { UpdateProfileBody } from "../../api/models";
+import { getGetCurrentUserQueryKey, useChangePassword, useUpdateProfile } from "../../api/users/users";
+import type { ChangePasswordBody, UpdateProfileBody } from "../../api/models";
+import { type AuthFailure, classifyAuthError } from "../../errors/authErrors";
 import { type Action, ungated } from "./action";
+
+export type ChangePasswordResult = { ok: true } | { ok: false; failure: AuthFailure };
 
 /**
  * Saving your own profile.
@@ -14,14 +17,22 @@ import { type Action, ungated } from "./action";
  * administrative PUT /users/{userId}, answers canEdit false for an ordinary
  * member looking at their own record, so a profile page built on it has no
  * save button for the people who use it most.
+ *
+ * Changing your own password is the same kind of operation (#196): PUT
+ * /users/current/password acts on the caller, so it is ungated for the same
+ * reason.
  */
 export interface ProfileActions {
-  actions: { save: Action<[UpdateProfileBody], boolean> };
+  actions: {
+    save: Action<[UpdateProfileBody], boolean>;
+    changePassword: Action<[ChangePasswordBody], ChangePasswordResult>;
+  };
 }
 
 export function useProfileActions(): ProfileActions {
   const queryClient = useQueryClient();
   const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
 
   return {
     actions: {
@@ -42,6 +53,20 @@ export function useProfileActions(): ProfileActions {
           }
         },
         updateProfileMutation.isPending,
+      ),
+      changePassword: ungated(
+        "open to any authenticated caller: PUT /users/current/password acts on the caller and takes no id",
+        async (data: ChangePasswordBody): Promise<ChangePasswordResult> => {
+          try {
+            await changePasswordMutation.mutateAsync({ data });
+            // Nothing to invalidate: a 204 revokes every token issued before
+            // it, so the caller's session ends here and the screen clears it.
+            return { ok: true };
+          } catch (error) {
+            return { ok: false, failure: classifyAuthError(error) };
+          }
+        },
+        changePasswordMutation.isPending,
       ),
     },
   };

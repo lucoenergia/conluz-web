@@ -33,7 +33,6 @@ import type { FC } from "react";
 import PeopleIcon from "@mui/icons-material/People";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
-import LockResetIcon from "@mui/icons-material/LockReset";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -49,7 +48,6 @@ import { useDebounce } from "../../utils/useDebounce";
 import { DisablePartnerConfirmationModal } from "../../components/Modals/DisablePartnerConfirmationModal";
 import { EnablePartnerConfirmationModal } from "../../components/Modals/EnablePartnerConfirmationModal";
 import { DisablePartnerSuccessModal } from "../../components/Modals/DisablePartnerSuccessModal";
-import { ResetPasswordConfirmationModal } from "../../components/Modals/ResetPasswordConfirmationModal";
 import { GrantPlatformAdminConfirmationModal } from "../../components/Modals/GrantPlatformAdminConfirmationModal";
 import { RevokePlatformAdminConfirmationModal } from "../../components/Modals/RevokePlatformAdminConfirmationModal";
 import { PlatformAdminSuccessModal } from "../../components/Modals/PlatformAdminSuccessModal";
@@ -179,7 +177,6 @@ export const UsersPage: FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showDisableConfirmation, setShowDisableConfirmation] = useState(false);
   const [showDisableSuccess, setShowDisableSuccess] = useState(false);
-  const [showResetPasswordConfirmation, setShowResetPasswordConfirmation] = useState(false);
   const [wasEnabled, setWasEnabled] = useState(false);
   const [showPlatformAdminConfirmation, setShowPlatformAdminConfirmation] = useState(false);
   const [showPlatformAdminSuccess, setShowPlatformAdminSuccess] = useState(false);
@@ -341,20 +338,6 @@ export const UsersPage: FC = () => {
   const handlePlatformAdminSuccessClose = () => {
     setShowPlatformAdminSuccess(false);
     setSelectedUserId(null);
-  };
-
-  const handleResetPasswordClick = () => {
-    handleMenuClose();
-    setShowResetPasswordConfirmation(true);
-  };
-
-  const handleResetPasswordConfirm = async () => {
-    // TODO: Call reset password API endpoint when available
-    setShowResetPasswordConfirmation(false);
-  };
-
-  const handleResetPasswordCancel = () => {
-    setShowResetPasswordConfirmation(false);
   };
 
   const handleEditClick = () => {
@@ -701,16 +684,6 @@ export const UsersPage: FC = () => {
             </ListItemIcon>
             <ListItemText>Editar datos</ListItemText>
           </MenuItem>,
-          // A password reset has no endpoint of its own yet (#161 leaves the TODO
-          // in place), so it gates on canEdit: resetting somebody's password is
-          // an administrative change to their account, which is what canEdit
-          // answers.
-          <MenuItem key="reset-password" onClick={handleResetPasswordClick}>
-            <ListItemIcon>
-              <LockResetIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
-            </ListItemIcon>
-            <ListItemText>Reestablecer contraseña</ListItemText>
-          </MenuItem>,
           <Divider key="divider" />,
         ]}
         {/* One item per pair, labelled by the operation that applies to this
@@ -776,15 +749,6 @@ export const UsersPage: FC = () => {
         wasEnabled={wasEnabled}
         onClose={handleDisableSuccessClose}
       />
-
-      {selectedActions.edit && (
-        <ResetPasswordConfirmationModal
-          isOpen={showResetPasswordConfirmation}
-          partnerName={selectedUserName}
-          onCancel={handleResetPasswordCancel}
-          onReset={handleResetPasswordConfirm}
-        />
-      )}
 
       {selectedPlatformAdminToggle && !selectedPlatformAdminToggle.isGranting && (
         <RevokePlatformAdminConfirmationModal

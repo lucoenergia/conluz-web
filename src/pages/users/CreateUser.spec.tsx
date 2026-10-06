@@ -6,6 +6,7 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation } from "../../test/queryState";
 import { buildCurrentUser, buildPlatformCapabilities, buildUser } from "../../test/fixtures";
 import type { PlatformCapabilitiesResponse } from "../../api/models";
+import { apiError } from "../../test/apiError";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
@@ -155,6 +156,24 @@ describe("CreateUserPage", () => {
           "Ha habido un problema al crear el usuario. Por favor, inténtalo más tarde",
         );
       });
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    // #196: the server is the authority on the password policy. When it
+    // refuses one, the admin is told which rule, not to try again later.
+    it.each([
+      ["TOO_SHORT", "La contraseña debe tener al menos 15 caracteres."],
+      ["TOO_LONG", "La contraseña no puede tener más de 64 caracteres."],
+    ])("says which policy rule (%s) the server refused the password for", async (rule, message) => {
+      const user = userEvent.setup();
+      mockMutateAsync.mockRejectedValueOnce(
+        apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule } }),
+      );
+      setup();
+
+      await user.click(screen.getByRole("button", { name: SUBMIT }));
+
+      await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(message));
       expect(mockNavigate).not.toHaveBeenCalled();
     });
   });

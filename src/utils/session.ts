@@ -29,3 +29,24 @@ export function takeSessionExpired(): boolean {
   window.sessionStorage.removeItem(EXPIRED_FLAG_KEY);
   return expired;
 }
+
+/**
+ * The other reason a session ends without the user asking to log out: they
+ * changed their password (#196). The backend revokes every token issued before
+ * the change, so the app ends the session and the login page says why, and
+ * that the new password is the one to use. Same mechanics as the expiry flag:
+ * a flag in `sessionStorage`, read once.
+ */
+export const PASSWORD_CHANGED_MESSAGE = "Contraseña cambiada. Inicia sesión con tu nueva contraseña.";
+
+const PASSWORD_CHANGED_FLAG_KEY = "passwordChanged";
+
+export function markPasswordChanged(): void {
+  window.sessionStorage.setItem(PASSWORD_CHANGED_FLAG_KEY, "true");
+}
+
+export function takePasswordChanged(): boolean {
+  const changed = window.sessionStorage.getItem(PASSWORD_CHANGED_FLAG_KEY) === "true";
+  window.sessionStorage.removeItem(PASSWORD_CHANGED_FLAG_KEY);
+  return changed;
+}

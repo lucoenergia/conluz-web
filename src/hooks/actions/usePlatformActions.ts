@@ -23,10 +23,18 @@ import { grant, type MaybeAction } from "./action";
  * member creation are two surfaces the backend authorises separately, and the
  * gate belongs to the surface.
  */
+/**
+ * A user creation either yields the user or the error the API answered with.
+ * The screen needs the error, not just "it failed": the backend refuses a
+ * password that breaks the policy (USER_PASSWORD_POLICY_VIOLATION, #196) and
+ * the admin must be told which rule, not to try again later.
+ */
+export type CreateUserResult = { user: UserResponse } | { error: unknown };
+
 export interface PlatformActions {
   actions: {
     createCommunity: MaybeAction<[CreateCommunityBody], CommunityResponse | undefined>;
-    createUser: MaybeAction<[CreateUserBody], UserResponse | undefined>;
+    createUser: MaybeAction<[CreateUserBody], CreateUserResult>;
   };
   outcomes: {
     createCommunity: CapabilityOutcome;
@@ -65,11 +73,16 @@ export function usePlatformActions(): PlatformActions {
       ),
       createUser: grant(
         createUser,
-        (data: CreateUserBody) =>
-          runCreating(() => createUserMutation.mutateAsync({ data }), () =>
+        async (data: CreateUserBody): Promise<CreateUserResult> => {
+          try {
+            const user = await createUserMutation.mutateAsync({ data });
             // No params: a prefix key, so every page and search variant matches.
-            queryClient.invalidateQueries({ queryKey: getGetAllUsersQueryKey() }),
-          ),
+            queryClient.invalidateQueries({ queryKey: getGetAllUsersQueryKey() });
+            return { user };
+          } catch (error) {
+            return { error };
+          }
+        },
         createUserMutation.isPending,
       ),
     },

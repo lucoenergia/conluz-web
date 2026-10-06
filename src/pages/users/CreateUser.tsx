@@ -6,6 +6,7 @@ import { useNavigate } from "react-router";
 import { type CreateUserBody } from "../../api/models";
 import { usePlatformActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
+import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { UserForm, type UserFormValues } from "../../components/UserForm/UserForm";
 import PersonIcon from "@mui/icons-material/Person";
@@ -34,10 +35,18 @@ export const CreateUserPage: FC = () => {
       password: password ?? "",
     };
 
-    if (await createUser.run(newUser)) {
+    const result = await createUser.run(newUser);
+    if ("user" in result) {
       navigate("/users");
     } else {
-      errorDispatch("Ha habido un problema al crear el usuario. Por favor, inténtalo más tarde");
+      // The API's own reason when it gives one -- a password that breaks the
+      // policy names the rule (#196) -- and the generic sentence otherwise.
+      errorDispatch(
+        getFirstApiErrorMessage(
+          result.error,
+          "Ha habido un problema al crear el usuario. Por favor, inténtalo más tarde",
+        ),
+      );
     }
   };
 
