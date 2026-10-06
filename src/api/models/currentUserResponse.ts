@@ -23,7 +23,7 @@ export interface CurrentUserResponse {
   email: string;
   phoneNumber: CurrentUserResponsePhoneNumber;
   enabled: boolean;
-  /** Whether the caller's password was chosen by someone else and should be changed through PUT /api/v1/users/current/password. Informational: no request is refused because of it. */
+  /** Whether the caller's password was chosen by someone else and must be changed through PUT /api/v1/users/current/password. While it is true, every request other than reading the current user (GET /api/v1/users/current), changing the password and logging out (POST /api/v1/logout) is refused with 403 and the `USER_PASSWORD_CHANGE_REQUIRED` code. */
   mustChangePassword: boolean;
   memberships: CurrentUserResponseMemberships;
   /** What the caller may do with their own user record. */

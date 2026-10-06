@@ -30,6 +30,7 @@ import type {
   GetDatadisConfigResponse,
   GetDatadisConsumptionHourlyCsvReportParams,
   GetShellyConfigResponse,
+  RestError,
   SyncDatadisConsumptionsBody,
   SyncMonthlyDatadisConsumptionsBody,
   SyncYearlyDatadisConsumptionsBody
@@ -74,7 +75,7 @@ export const getGetShellyConfigQueryKey = (communityId?: string,) => {
     }
 
     
-export const getGetShellyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+export const getGetShellyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -93,10 +94,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetShellyConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getShellyConfig>>>
-export type GetShellyConfigQueryError = ErrorType<unknown>
+export type GetShellyConfigQueryError = ErrorType<RestError>
 
 
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getShellyConfig>>,
@@ -106,7 +107,7 @@ export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyCo
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getShellyConfig>>,
@@ -116,7 +117,7 @@ export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyCo
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -124,7 +125,7 @@ export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyCo
  * @summary Returns the Shelly configuration for the specified community.
  */
 
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<unknown>>(
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -179,7 +180,7 @@ export const configureShelly = (
   
 
 
-export const getConfigureShellyMutationOptions = <TError = ErrorType<unknown>,
+export const getConfigureShellyMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext> => {
 
@@ -206,12 +207,12 @@ const {mutation: mutationOptions} = options ?
 
     export type ConfigureShellyMutationResult = NonNullable<Awaited<ReturnType<typeof configureShelly>>>
     export type ConfigureShellyMutationBody = ConfigureShellyBody
-    export type ConfigureShellyMutationError = ErrorType<unknown>
+    export type ConfigureShellyMutationError = ErrorType<RestError>
 
     /**
  * @summary Sets up the Shelly configuration for the specified community.
  */
-export const useConfigureShelly = <TError = ErrorType<unknown>,
+export const useConfigureShelly = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureShelly>>,
@@ -260,7 +261,7 @@ export const getGetDatadisConfigQueryKey = (communityId?: string,) => {
     }
 
     
-export const getGetDatadisConfigQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
+export const getGetDatadisConfigQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -279,10 +280,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetDatadisConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisConfig>>>
-export type GetDatadisConfigQueryError = ErrorType<unknown>
+export type GetDatadisConfigQueryError = ErrorType<RestError>
 
 
-export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDatadisConfig>>,
@@ -292,7 +293,7 @@ export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadis
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDatadisConfig>>,
@@ -302,7 +303,7 @@ export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadis
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -310,7 +311,7 @@ export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadis
  * @summary Returns the Datadis configuration for the specified community.
  */
 
-export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConfig<TData = Awaited<ReturnType<typeof getDatadisConfig>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConfig>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -360,7 +361,7 @@ export const configureDatadis = (
   
 
 
-export const getConfigureDatadisMutationOptions = <TError = ErrorType<unknown>,
+export const getConfigureDatadisMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{communityId: string;data: ConfigureDatadisBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{communityId: string;data: ConfigureDatadisBody}, TContext> => {
 
@@ -387,12 +388,12 @@ const {mutation: mutationOptions} = options ?
 
     export type ConfigureDatadisMutationResult = NonNullable<Awaited<ReturnType<typeof configureDatadis>>>
     export type ConfigureDatadisMutationBody = ConfigureDatadisBody
-    export type ConfigureDatadisMutationError = ErrorType<unknown>
+    export type ConfigureDatadisMutationError = ErrorType<RestError>
 
     /**
  * @summary Sets up the Datadis configuration for the specified community.
  */
-export const useConfigureDatadis = <TError = ErrorType<unknown>,
+export const useConfigureDatadis = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureDatadis>>, TError,{communityId: string;data: ConfigureDatadisBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof configureDatadis>>,
@@ -449,7 +450,7 @@ export const syncDatadisConsumptions = (
   
 
 
-export const getSyncDatadisConsumptionsMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext> => {
 
@@ -476,12 +477,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisConsumptions>>>
     export type SyncDatadisConsumptionsMutationBody = SyncDatadisConsumptionsBody
-    export type SyncDatadisConsumptionsMutationError = ErrorType<unknown>
+    export type SyncDatadisConsumptionsMutationError = ErrorType<RestError>
 
     /**
  * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
  */
-export const useSyncDatadisConsumptions = <TError = ErrorType<unknown>,
+export const useSyncDatadisConsumptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncDatadisConsumptions>>,
@@ -537,7 +538,7 @@ export const syncYearlyDatadisConsumptions = (
   
 
 
-export const getSyncYearlyDatadisConsumptionsMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncYearlyDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext> => {
 
@@ -564,12 +565,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncYearlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>>
     export type SyncYearlyDatadisConsumptionsMutationBody = SyncYearlyDatadisConsumptionsBody
-    export type SyncYearlyDatadisConsumptionsMutationError = ErrorType<unknown>
+    export type SyncYearlyDatadisConsumptionsMutationError = ErrorType<RestError>
 
     /**
  * @summary Sync monthly Datadis consumption data into yearly totals
  */
-export const useSyncYearlyDatadisConsumptions = <TError = ErrorType<unknown>,
+export const useSyncYearlyDatadisConsumptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>,
@@ -625,7 +626,7 @@ export const syncMonthlyDatadisConsumptions = (
   
 
 
-export const getSyncMonthlyDatadisConsumptionsMutationOptions = <TError = ErrorType<unknown>,
+export const getSyncMonthlyDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext> => {
 
@@ -652,12 +653,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SyncMonthlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>>
     export type SyncMonthlyDatadisConsumptionsMutationBody = SyncMonthlyDatadisConsumptionsBody
-    export type SyncMonthlyDatadisConsumptionsMutationError = ErrorType<unknown>
+    export type SyncMonthlyDatadisConsumptionsMutationError = ErrorType<RestError>
 
     /**
  * @summary Aggregate hourly Datadis consumption data into monthly totals
  */
-export const useSyncMonthlyDatadisConsumptions = <TError = ErrorType<unknown>,
+export const useSyncMonthlyDatadisConsumptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>,
@@ -716,7 +717,7 @@ export const getGetDatadisConsumptionHourlyCsvReportQueryKey = (communityId?: st
     }
 
     
-export const getGetDatadisConsumptionHourlyCsvReportQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetDatadisConsumptionHourlyCsvReportQueryOptions = <TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<RestError>>(communityId: string,
     params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>>, }
 ) => {
 
@@ -736,10 +737,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetDatadisConsumptionHourlyCsvReportQueryResult = NonNullable<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>>
-export type GetDatadisConsumptionHourlyCsvReportQueryError = ErrorType<unknown>
+export type GetDatadisConsumptionHourlyCsvReportQueryError = ErrorType<RestError>
 
 
-export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisConsumptionHourlyCsvReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -750,7 +751,7 @@ export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnTy
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -761,7 +762,7 @@ export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnTy
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -770,7 +771,7 @@ export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnTy
  * @summary Exports hourly consumption data of a community's supplies as a CSV file
  */
 
-export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<unknown>>(
+export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: GetDatadisConsumptionHourlyCsvReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDatadisConsumptionHourlyCsvReport>>, TError, TData>>, }
  , queryClient?: QueryClient 

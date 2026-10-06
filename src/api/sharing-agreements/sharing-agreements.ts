@@ -89,7 +89,7 @@ export const getGetSharingAgreementByIdQueryKey = (plantId?: string,
     }
 
     
-export const getGetSharingAgreementByIdQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(plantId: string,
+export const getGetSharingAgreementByIdQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<RestError>>(plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
 ) => {
 
@@ -109,10 +109,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSharingAgreementByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementById>>>
-export type GetSharingAgreementByIdQueryError = ErrorType<unknown>
+export type GetSharingAgreementByIdQueryError = ErrorType<RestError>
 
 
-export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -123,7 +123,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -134,7 +134,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -143,7 +143,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
  * @summary Retrieves a single sharing agreement by ID
  */
 
-export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof getSharingAgreementById>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementById>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -195,7 +195,7 @@ export const updateSharingAgreement = (
   
 
 
-export const getUpdateSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateSharingAgreementMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext> => {
 
@@ -222,12 +222,12 @@ const {mutation: mutationOptions} = options ?
 
     export type UpdateSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof updateSharingAgreement>>>
     export type UpdateSharingAgreementMutationBody = UpdateSharingAgreementBody
-    export type UpdateSharingAgreementMutationError = ErrorType<unknown>
+    export type UpdateSharingAgreementMutationError = ErrorType<RestError>
 
     /**
  * @summary Replaces a sharing agreement's name, notes and installed power
  */
-export const useUpdateSharingAgreement = <TError = ErrorType<unknown>,
+export const useUpdateSharingAgreement = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,{plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateSharingAgreement>>,
@@ -356,7 +356,7 @@ export const getGetSharingAgreementPartitionCoefficientsQueryKey = (plantId?: st
     }
 
     
-export const getGetSharingAgreementPartitionCoefficientsQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(plantId: string,
+export const getGetSharingAgreementPartitionCoefficientsQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<RestError>>(plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>>, }
 ) => {
 
@@ -376,10 +376,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSharingAgreementPartitionCoefficientsQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>>
-export type GetSharingAgreementPartitionCoefficientsQueryError = ErrorType<unknown>
+export type GetSharingAgreementPartitionCoefficientsQueryError = ErrorType<RestError>
 
 
-export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -390,7 +390,7 @@ export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<Retu
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -401,7 +401,7 @@ export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<Retu
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -410,7 +410,7 @@ export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<Retu
  * @summary Retrieves the full partition-coefficient set of a sharing agreement
  */
 
-export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementPartitionCoefficients<TData = Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementPartitionCoefficients>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -547,7 +547,7 @@ export const getGetSharingAgreementsQueryKey = (plantId?: string,
     }
 
     
-export const getGetSharingAgreementsQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<unknown>>(plantId: string,
+export const getGetSharingAgreementsQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<RestError>>(plantId: string,
     params?: GetSharingAgreementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreements>>, TError, TData>>, }
 ) => {
 
@@ -567,10 +567,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSharingAgreementsQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreements>>>
-export type GetSharingAgreementsQueryError = ErrorType<unknown>
+export type GetSharingAgreementsQueryError = ErrorType<RestError>
 
 
-export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<RestError>>(
  plantId: string,
     params: undefined |  GetSharingAgreementsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreements>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -581,7 +581,7 @@ export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSha
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<RestError>>(
  plantId: string,
     params?: GetSharingAgreementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreements>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -592,7 +592,7 @@ export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSha
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<RestError>>(
  plantId: string,
     params?: GetSharingAgreementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreements>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -601,7 +601,7 @@ export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSha
  * @summary Lists the sharing agreements of a plant
  */
 
-export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSharingAgreements>>, TError = ErrorType<RestError>>(
  plantId: string,
     params?: GetSharingAgreementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreements>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -651,7 +651,7 @@ export const createSharingAgreement = (
   
 
 
-export const getCreateSharingAgreementMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateSharingAgreementMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{plantId: string;data: CreateSharingAgreementBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{plantId: string;data: CreateSharingAgreementBody}, TContext> => {
 
@@ -678,12 +678,12 @@ const {mutation: mutationOptions} = options ?
 
     export type CreateSharingAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof createSharingAgreement>>>
     export type CreateSharingAgreementMutationBody = CreateSharingAgreementBody
-    export type CreateSharingAgreementMutationError = ErrorType<unknown>
+    export type CreateSharingAgreementMutationError = ErrorType<RestError>
 
     /**
  * @summary Creates a new sharing agreement under a plant
  */
-export const useCreateSharingAgreement = <TError = ErrorType<unknown>,
+export const useCreateSharingAgreement = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSharingAgreement>>, TError,{plantId: string;data: CreateSharingAgreementBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSharingAgreement>>,
@@ -1318,7 +1318,7 @@ export const getGetSharingAgreementFileQueryKey = (plantId?: string,
     }
 
     
-export const getGetSharingAgreementFileQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(plantId: string,
+export const getGetSharingAgreementFileQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<RestError>>(plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
 ) => {
 
@@ -1338,10 +1338,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetSharingAgreementFileQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementFile>>>
-export type GetSharingAgreementFileQueryError = ErrorType<unknown>
+export type GetSharingAgreementFileQueryError = ErrorType<RestError>
 
 
-export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1352,7 +1352,7 @@ export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof get
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1363,7 +1363,7 @@ export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof get
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -1372,7 +1372,7 @@ export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof get
  * @summary Downloads the original distributor file of a sharing agreement
  */
 
-export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<unknown>>(
+export function useGetSharingAgreementFile<TData = Awaited<ReturnType<typeof getSharingAgreementFile>>, TError = ErrorType<RestError>>(
  plantId: string,
     sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementFile>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1523,7 +1523,7 @@ export const getGetPlantActivePartitionCoefficientsQueryKey = (plantId?: string,
     }
 
     
-export const getGetPlantActivePartitionCoefficientsQueryOptions = <TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>>, }
+export const getGetPlantActivePartitionCoefficientsQueryOptions = <TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<RestError>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -1542,10 +1542,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetPlantActivePartitionCoefficientsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>>
-export type GetPlantActivePartitionCoefficientsQueryError = ErrorType<unknown>
+export type GetPlantActivePartitionCoefficientsQueryError = ErrorType<RestError>
 
 
-export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>,
@@ -1555,7 +1555,7 @@ export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnTyp
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>,
@@ -1565,7 +1565,7 @@ export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnTyp
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1573,7 +1573,7 @@ export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnTyp
  * @summary Retrieves the partition coefficients currently in force in a plant
  */
 
-export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<unknown>>(
+export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantActivePartitionCoefficients>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

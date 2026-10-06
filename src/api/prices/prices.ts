@@ -22,7 +22,8 @@ import type {
 
 import type {
   GetPriceByRangeOfDatesParams,
-  PriceByHour
+  PriceByHour,
+  RestError
 } from '.././models';
 
 import { customInstance } from '.././custom-instance';
@@ -58,7 +59,7 @@ export const getGetPriceByRangeOfDatesQueryKey = (params?: GetPriceByRangeOfDate
     }
 
     
-export const getGetPriceByRangeOfDatesQueryOptions = <TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, }
+export const getGetPriceByRangeOfDatesQueryOptions = <TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<RestError>>(params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -77,10 +78,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetPriceByRangeOfDatesQueryResult = NonNullable<Awaited<ReturnType<typeof getPriceByRangeOfDates>>>
-export type GetPriceByRangeOfDatesQueryError = ErrorType<unknown>
+export type GetPriceByRangeOfDatesQueryError = ErrorType<RestError>
 
 
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<RestError>>(
  params: GetPriceByRangeOfDatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPriceByRangeOfDates>>,
@@ -90,7 +91,7 @@ export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getP
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<RestError>>(
  params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPriceByRangeOfDates>>,
@@ -100,7 +101,7 @@ export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getP
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<RestError>>(
  params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -108,7 +109,7 @@ export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getP
  * @summary Retrieve hourly energy prices within a specified date interval.
  */
 
-export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<unknown>>(
+export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError = ErrorType<RestError>>(
  params: GetPriceByRangeOfDatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPriceByRangeOfDates>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

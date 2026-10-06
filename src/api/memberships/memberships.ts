@@ -76,7 +76,7 @@ export const setMembershipInvestment = (
   
 
 
-export const getSetMembershipInvestmentMutationOptions = <TError = ErrorType<unknown>,
+export const getSetMembershipInvestmentMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext> => {
 
@@ -103,12 +103,12 @@ const {mutation: mutationOptions} = options ?
 
     export type SetMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof setMembershipInvestment>>>
     export type SetMembershipInvestmentMutationBody = SetMembershipInvestmentBody
-    export type SetMembershipInvestmentMutationError = ErrorType<unknown>
+    export type SetMembershipInvestmentMutationError = ErrorType<RestError>
 
     /**
  * @summary Records a membership's initial investment.
  */
-export const useSetMembershipInvestment = <TError = ErrorType<unknown>,
+export const useSetMembershipInvestment = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setMembershipInvestment>>,
@@ -146,7 +146,7 @@ export const clearMembershipInvestment = (
   
 
 
-export const getClearMembershipInvestmentMutationOptions = <TError = ErrorType<unknown>,
+export const getClearMembershipInvestmentMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext> => {
 
@@ -173,12 +173,12 @@ const {mutation: mutationOptions} = options ?
 
     export type ClearMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof clearMembershipInvestment>>>
     
-    export type ClearMembershipInvestmentMutationError = ErrorType<unknown>
+    export type ClearMembershipInvestmentMutationError = ErrorType<RestError>
 
     /**
  * @summary Removes a membership's initial investment.
  */
-export const useClearMembershipInvestment = <TError = ErrorType<unknown>,
+export const useClearMembershipInvestment = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof clearMembershipInvestment>>,
@@ -217,7 +217,7 @@ export const getGetMembershipsQueryKey = (communityId?: string,) => {
     }
 
     
-export const getGetMembershipsQueryOptions = <TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
+export const getGetMembershipsQueryOptions = <TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -236,10 +236,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetMembershipsQueryResult = NonNullable<Awaited<ReturnType<typeof getMemberships>>>
-export type GetMembershipsQueryError = ErrorType<unknown>
+export type GetMembershipsQueryError = ErrorType<RestError>
 
 
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
  communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMemberships>>,
@@ -249,7 +249,7 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMemberships>>,
@@ -259,7 +259,7 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -267,7 +267,7 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
  * @summary Lists all memberships of a community.
  */
 
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<unknown>>(
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
  communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -374,7 +374,7 @@ export const deleteMembership = (
   
 
 
-export const getDeleteMembershipMutationOptions = <TError = ErrorType<unknown>,
+export const getDeleteMembershipMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{communityId: string;userId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{communityId: string;userId: string}, TContext> => {
 
@@ -401,12 +401,12 @@ const {mutation: mutationOptions} = options ?
 
     export type DeleteMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMembership>>>
     
-    export type DeleteMembershipMutationError = ErrorType<unknown>
+    export type DeleteMembershipMutationError = ErrorType<RestError>
 
     /**
  * @summary Removes a user from a community.
  */
-export const useDeleteMembership = <TError = ErrorType<unknown>,
+export const useDeleteMembership = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMembership>>, TError,{communityId: string;userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteMembership>>,
@@ -440,7 +440,7 @@ export const updateMembershipRole = (
   
 
 
-export const getUpdateMembershipRoleMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateMembershipRoleMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{communityId: string;userId: string;data: UpdateMembershipRoleBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{communityId: string;userId: string;data: UpdateMembershipRoleBody}, TContext> => {
 
@@ -467,12 +467,12 @@ const {mutation: mutationOptions} = options ?
 
     export type UpdateMembershipRoleMutationResult = NonNullable<Awaited<ReturnType<typeof updateMembershipRole>>>
     export type UpdateMembershipRoleMutationBody = UpdateMembershipRoleBody
-    export type UpdateMembershipRoleMutationError = ErrorType<unknown>
+    export type UpdateMembershipRoleMutationError = ErrorType<RestError>
 
     /**
  * @summary Updates the role of a membership.
  */
-export const useUpdateMembershipRole = <TError = ErrorType<unknown>,
+export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMembershipRole>>, TError,{communityId: string;userId: string;data: UpdateMembershipRoleBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateMembershipRole>>,
@@ -546,7 +546,7 @@ export const getGetMembershipPaybackQueryKey = (communityId?: string,
     }
 
     
-export const getGetMembershipPaybackQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetMembershipPaybackQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
 ) => {
 
@@ -566,10 +566,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetMembershipPaybackQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipPayback>>>
-export type GetMembershipPaybackQueryError = ErrorType<unknown>
+export type GetMembershipPaybackQueryError = ErrorType<RestError>
 
 
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -580,7 +580,7 @@ export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMem
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -591,7 +591,7 @@ export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMem
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -600,7 +600,7 @@ export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMem
  * @summary Retrieves a membership's payback progress.
  */
 
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<unknown>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -711,7 +711,7 @@ export const getGetMembershipEnergyMetricsQueryKey = (communityId?: string,
     }
 
     
-export const getGetMembershipEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetMembershipEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<RestError>>(communityId: string,
     userId: string,
     params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>>, }
 ) => {
@@ -732,10 +732,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetMembershipEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>>
-export type GetMembershipEnergyMetricsQueryError = ErrorType<unknown>
+export type GetMembershipEnergyMetricsQueryError = ErrorType<RestError>
 
 
-export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params: undefined |  GetMembershipEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>> & Pick<
@@ -747,7 +747,7 @@ export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>> & Pick<
@@ -759,7 +759,7 @@ export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>>, }
@@ -769,7 +769,7 @@ export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof 
  * @summary Retrieves the energy metrics of every supply of a membership, added up.
  */
 
-export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<unknown>>(
+export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params?: GetMembershipEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipEnergyMetrics>>, TError, TData>>, }
@@ -868,7 +868,7 @@ export const getGetMembershipHourlyProfileQueryKey = (communityId?: string,
     }
 
     
-export const getGetMembershipHourlyProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetMembershipHourlyProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<RestError>>(communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>>, }
 ) => {
 
@@ -888,10 +888,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetMembershipHourlyProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipHourlyProfile>>>
-export type GetMembershipHourlyProfileQueryError = ErrorType<unknown>
+export type GetMembershipHourlyProfileQueryError = ErrorType<RestError>
 
 
-export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -902,7 +902,7 @@ export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -913,7 +913,7 @@ export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof 
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -922,7 +922,7 @@ export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof 
  * @summary Retrieves the average day of every supply of a membership over its latest published month.
  */
 
-export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<unknown>>(
+export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyProfile>>, TError, TData>>, }
  , queryClient?: QueryClient 
@@ -1018,7 +1018,7 @@ export const getGetMembershipMonthlyConsumptionQueryKey = (communityId?: string,
     }
 
     
-export const getGetMembershipMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetMembershipMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(communityId: string,
     userId: string,
     params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
 ) => {
@@ -1039,10 +1039,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetMembershipMonthlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>>
-export type GetMembershipMonthlyConsumptionQueryError = ErrorType<unknown>
+export type GetMembershipMonthlyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params: GetMembershipMonthlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
@@ -1054,7 +1054,7 @@ export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<ty
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
@@ -1066,7 +1066,7 @@ export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<ty
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
@@ -1076,7 +1076,7 @@ export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<ty
  * @summary Retrieves the monthly consumption of every supply of a membership, added up per month.
  */
 
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<unknown>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
     userId: string,
     params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
