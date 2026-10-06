@@ -7,7 +7,7 @@ import { formatPercentage } from "../../../utils/formatPercentage";
 import { pluralize } from "../../../utils/pluralize";
 import { colors } from "../../../theme/tokens";
 import { EstimatedPriceLabel } from "./EstimatedPriceLabel";
-import { HomeCard } from "./HomeCard";
+import { HomeCard } from "../HomeCard";
 
 const TITLE = "Recuperación de tu inversión";
 

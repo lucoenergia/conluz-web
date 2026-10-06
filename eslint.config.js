@@ -119,7 +119,7 @@ const COMMUNITY_IMPLICIT_HOOKS = [
       "useGetSharingAgreementFile",
     ],
     message:
-      "Read sharing agreements through useSharingAgreementsData / useSharingAgreementDetailData: those apply the active-community guard, these hooks are keyed by a plant id alone.",
+      "Read sharing agreements through useSharingAgreementsData / useSharingAgreementDetailData / usePlantSharingAgreements: those apply the active-community guard, these hooks are keyed by a plant id alone.",
   },
   {
     group: ["**/api/supplies/supplies"],
@@ -158,6 +158,8 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   // keyed Outlet when the community changes.
   "src/pages/Home.tsx",
   "src/pages/supply-points/SupplyDetailPage.tsx",
+  // Driven by a plant from the active community's plant listing.
+  "src/pages/home/management/usePlantSharingAgreements.ts",
 ];
 
 // ─── Mutation guard rail ──────────────────────────────────────────────────────
@@ -271,7 +273,7 @@ export default tseslint.config([
     //
     // MUTATION_HOOKS has to be re-stated here too. No file in this list imports
     // a mutation today, which is exactly why leaving it out would go unnoticed:
-    // the hole would open the first time one of these eight files grew a write.
+    // the hole would open the first time one of these files grew a write.
     files: COMMUNITY_SCOPE_WRAPPERS,
     rules: {
       "no-restricted-imports": ["error", { patterns: [...PERMISSION_HOOKS, ...MUTATION_HOOKS] }],

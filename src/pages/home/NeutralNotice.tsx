@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { colors, radii } from "../../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 
 /**
  * A neutral explanation: an ordinary state of the data, such as an incomplete
