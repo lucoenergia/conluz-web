@@ -9,6 +9,8 @@ import { CommunityRole, type CurrentUserResponse, type SupplyResponse } from "..
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
 import {
   useGetMembershipEnergyMetrics,
+  useGetMembershipHourlyProfile,
+  useGetMembershipMonthlyConsumption,
   useGetMembershipPayback,
   useGetMemberships,
 } from "../../api/memberships/memberships";
@@ -45,11 +47,14 @@ vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   useGetCurrentUser: vi.fn(),
   useGetSuppliesByUserId: vi.fn(),
 }));
-// The member view reads the caller's energy and payback (#199); which view
-// renders is what is under test here, not those figures, so both stay in flight.
+// The member view reads the caller's energy and payback (#199), its monthly
+// series and hourly profile (#201); which view renders is what is under test
+// here, not those figures, so all of them stay in flight.
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
+  useGetMembershipHourlyProfile: vi.fn(),
+  useGetMembershipMonthlyConsumption: vi.fn(),
   useGetMembershipPayback: vi.fn(),
   useGetMemberships: vi.fn(),
 }));
@@ -147,6 +152,8 @@ describe("home views (#197)", () => {
     vi.clearAllMocks();
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
     vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipMonthlyConsumption).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipHourlyProfile).mockReturnValue(query.loading());
     vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
     vi.mocked(useGetMemberships).mockReturnValue(query.loading());
     vi.mocked(useGetAllSupplies).mockReturnValue(query.loading());
@@ -375,6 +382,8 @@ describe("linking the home in (#199)", () => {
     vi.clearAllMocks();
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
     vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipMonthlyConsumption).mockReturnValue(query.loading());
+    vi.mocked(useGetMembershipHourlyProfile).mockReturnValue(query.loading());
     vi.mocked(useGetMembershipPayback).mockReturnValue(query.loading());
     vi.mocked(useGetMemberships).mockReturnValue(query.loading());
     vi.mocked(useGetAllSupplies).mockReturnValue(query.loading());

@@ -6,6 +6,7 @@ import { formatMonth } from "../../utils/formatEnergyFigures";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { HomeViewSwitch } from "./HomeViewSwitch";
+import { BestHours } from "./member/BestHours";
 import { EnergyJourney } from "./member/EnergyJourney";
 import { HomeCard } from "./HomeCard";
 import { chooseMemberHomeMessage } from "./member/memberHomeMessage";
@@ -20,9 +21,10 @@ import { useMemberPayback } from "./member/useMemberPayback";
 /**
  * The member's home (#199): the journey of their energy in the latest month
  * the distributor has published, what it saved them, and how far they are from
- * recovering their investment, how the month compares with the one before
- * it (#200), and the twelve months leading up to it (#201). Their total in the active community -- no supply is
- * singled out, and no period is chosen.
+ * recovering their investment; how the month compares with the one before it
+ * (#200); and the twelve months leading up to it and the hours of the day when
+ * community energy is there to use (#201). Their total in the active
+ * community -- no supply is singled out, and no period is chosen.
  *
  * The reads are independent: any of them can fail, and the rest still
  * renders.
@@ -36,6 +38,7 @@ export const MemberHomePage: FC = () => (
     <EnergyHalf />
     <PreviousMonthComparison />
     <TwelveMonthSeries />
+    <BestHours />
     <PaybackHalf />
   </Box>
 );

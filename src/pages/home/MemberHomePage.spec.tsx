@@ -4,15 +4,18 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import {
   useGetMembershipEnergyMetrics,
+  useGetMembershipHourlyProfile,
   useGetMembershipMonthlyConsumption,
   useGetMembershipPayback,
   type getMembershipEnergyMetrics,
+  type getMembershipHourlyProfile,
   type getMembershipMonthlyConsumption,
   type getMembershipPayback,
 } from "../../api/memberships/memberships";
 import {
   CommunityRole,
   type MembershipEnergyMetricsResponse,
+  type MembershipHourlyProfileResponse,
   type MembershipMonthlyConsumptionBucketResponse,
   type MembershipPaybackResponse,
 } from "../../api/models";
@@ -20,6 +23,8 @@ import { useLoggedUser } from "../../context/logged-user.context";
 import {
   buildCurrentUser,
   buildMembershipEnergyMetrics,
+  buildMembershipHourlyProfile,
+  buildMembershipHourlyProfileBucket,
   buildMembershipMonthlyConsumptionBucket,
   buildMembershipPayback,
 } from "../../test/fixtures";
@@ -31,11 +36,12 @@ import { answerCommunities } from "./homeViews.mocks";
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
+  useGetMembershipHourlyProfile: vi.fn(),
   useGetMembershipMonthlyConsumption: vi.fn(),
   useGetMembershipPayback: vi.fn(),
 }));
-// ApexCharts cannot lay out in jsdom; what the twelve-month chart is told to
-// draw is asserted in TwelveMonthSeries.spec.tsx.
+// ApexCharts cannot lay out in jsdom; what the charts are told to draw is
+// asserted in TwelveMonthSeries.spec.tsx and BestHours.spec.tsx.
 vi.mock("react-apexcharts", () => ({ default: () => null }));
 // The view switch asks the active community what the caller may do there.
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
@@ -128,6 +134,22 @@ function twelveMonths(): MembershipMonthlyConsumptionBucketResponse[] {
   });
 }
 
+/** AUGUST's average day (#201): every hour with consumption, the daylight hours with assigned production. */
+function augustProfile(): MembershipHourlyProfileResponse {
+  return buildMembershipHourlyProfile({
+    period: AUGUST,
+    coverage: { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 },
+    buckets: Array.from({ length: 24 }, (_, hour) =>
+      buildMembershipHourlyProfileBucket({
+        hour,
+        averageConsumptionKWh: 0.3,
+        consumptionSampleCount: 62,
+        ...(hour >= 8 && hour <= 19 ? { averageAssignedProductionKWh: 0.5, assignedProductionSampleCount: 62 } : {}),
+      }),
+    ),
+  });
+}
+
 type EnergyAnswer = MembershipEnergyMetricsResponse | "error" | "loading";
 
 function energyQuery(answer: EnergyAnswer, failure: string) {
@@ -147,11 +169,13 @@ function answer({
   previous = previousMonthWith(),
   payback = paybackWith(),
   monthly = twelveMonths(),
+  hourly = augustProfile(),
 }: {
   metrics?: MembershipEnergyMetricsResponse | "error";
   previous?: EnergyAnswer;
   payback?: MembershipPaybackResponse | "error";
   monthly?: MembershipMonthlyConsumptionBucketResponse[] | "error" | "loading";
+  hourly?: MembershipHourlyProfileResponse | "error" | "loading";
 } = {}) {
   const referenceMonth = energyQuery(metrics, "energy-metrics failed");
   const previousMonth = energyQuery(previous, "previous month failed");
@@ -164,6 +188,13 @@ function answer({
       : monthly === "loading"
         ? query.loading()
         : query.success<typeof getMembershipMonthlyConsumption>(monthly),
+  );
+  vi.mocked(useGetMembershipHourlyProfile).mockReturnValue(
+    hourly === "error"
+      ? query.error(new Error("hourly profile failed"))
+      : hourly === "loading"
+        ? query.loading()
+        : query.success<typeof getMembershipHourlyProfile>(hourly),
   );
   vi.mocked(useGetMembershipPayback).mockReturnValue(
     payback === "error" ? query.error(new Error("payback failed")) : query.success<typeof getMembershipPayback>(payback),
@@ -653,6 +684,60 @@ describe("MemberHomePage (#199)", () => {
         openHome();
 
         expect(screen.getByRole("alert")).toHaveTextContent("No se pudo cargar la recuperación de tu inversión.");
+        expect(twelveMonths()).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("the best hours (#201)", () => {
+    const bestHours = () => card("Tus mejores horas");
+    const twelveMonths = () => card("Tus últimos 12 meses");
+
+    it("asks for the profile with no period of its own, and renders without waiting for the reference month", () => {
+      answer({ metrics: "error" });
+      openHome();
+
+      expect(vi.mocked(useGetMembershipHourlyProfile)).toHaveBeenCalledWith(COMMUNITY_ID, USER_ID, expect.anything());
+      expect(bestHours()).toBeInTheDocument();
+    });
+
+    describe("AC9 -- either new block failing leaves the rest of the view, the other block included", () => {
+      it("when the profile fails, the month, the comparison, the twelve months and the payback still render, and the profile offers a retry", async () => {
+        answer({ hourly: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudieron cargar tus mejores horas.");
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
+        expect(card("Comparado con julio de 2026")).toBeInTheDocument();
+        expect(twelveMonths()).toBeInTheDocument();
+        expect(text(paybackCard())).toContain("Llevas ahorrados 200,00 €");
+
+        await userEvent.setup().click(screen.getByRole("button", { name: "Reintentar" }));
+        expect(vi.mocked(useGetMembershipHourlyProfile).mock.results.at(-1)?.value.refetch).toHaveBeenCalled();
+      });
+
+      it("when the twelve months fail, the profile still renders", () => {
+        answer({ monthly: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudieron cargar tus últimos 12 meses.");
+        expect(bestHours()).toBeInTheDocument();
+      });
+
+      it("when the payback fails, the profile still renders", () => {
+        answer({ payback: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudo cargar la recuperación de tu inversión.");
+        expect(bestHours()).toBeInTheDocument();
+      });
+
+      it("when the profile is still loading, the rest of the view is not held up", () => {
+        answer({ hourly: "loading" });
+        openHome();
+
+        expect(screen.getByLabelText("Cargando tus mejores horas")).toBeInTheDocument();
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
         expect(twelveMonths()).toBeInTheDocument();
       });
     });
