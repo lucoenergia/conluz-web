@@ -12,6 +12,7 @@ import { apiError } from "../../test/apiError";
 import { expectPasswordFieldContract } from "../../test/passwordField";
 import { ChangePasswordPage } from "./ChangePassword";
 import { Login } from "./Login";
+import type { RestErrorDetailCode } from "../../api/models";
 
 /**
  * Tier 1: the generated hooks are mocked, and everything between them and the
@@ -191,6 +192,72 @@ describe("ChangePasswordPage", () => {
 
       expect(helperTextOf(confirmField())).toBe("Las contraseñas no coinciden");
       expect(mockChangePassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("a new password equal to the current one (#196)", () => {
+    const SAME = "la misma frase de siempre";
+
+    it("is refused on the new password, before anything is sent", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await submit(user, { current: SAME, next: SAME, confirm: SAME });
+
+      expect(helperTextOf(newField())).toBe("La nueva contraseña debe ser distinta de la actual.");
+      expect(mockChangePassword).not.toHaveBeenCalled();
+      expect(token()).toHaveTextContent("a-token");
+    });
+
+    it.each([
+      ["leading and trailing spaces", `  ${SAME}  `],
+      ["case", SAME.toUpperCase()],
+    ])("is compared exactly, so a value differing only by %s is sent", async (_difference, next) => {
+      mockChangePassword.mockResolvedValueOnce(undefined);
+      const user = userEvent.setup();
+      renderPage();
+
+      await submit(user, { current: SAME, next, confirm: next });
+
+      await waitFor(() =>
+        expect(mockChangePassword).toHaveBeenCalledWith({ data: { currentPassword: SAME, newPassword: next } }),
+      );
+    });
+
+    it("shows the policy error first when the value is also too short", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await submit(user, { current: "corta", next: "corta", confirm: "corta" });
+
+      expect(helperTextOf(newField())).toBe("La contraseña debe tener al menos 15 caracteres.");
+      expect(mockChangePassword).not.toHaveBeenCalled();
+    });
+
+    // The backend refuses the same with USER_PASSWORD_UNCHANGED
+    // (lucoenergia/conluz#342), a code the generated client does not know yet,
+    // hence the cast. Until the catalogue learns it, the server's message is
+    // what the user reads.
+    it("shows the server's message when the backend refuses it, keeping the session and the fields", async () => {
+      mockChangePassword.mockRejectedValueOnce(
+        apiError(400, {
+          code: "USER_PASSWORD_UNCHANGED" as RestErrorDetailCode,
+          message: "La nueva contraseña debe ser distinta de la actual (servidor).",
+        }),
+      );
+      const user = userEvent.setup();
+      renderPage();
+
+      await submit(user);
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "La nueva contraseña debe ser distinta de la actual (servidor).",
+      );
+      expect(token()).toHaveTextContent("a-token");
+      expect(path()).toHaveTextContent("/change-password");
+      expect(currentField()).toHaveValue("la actual de siempre");
+      expect(newField()).toHaveValue(VALID_NEW_PASSWORD);
+      expect(confirmField()).toHaveValue(VALID_NEW_PASSWORD);
     });
   });
 

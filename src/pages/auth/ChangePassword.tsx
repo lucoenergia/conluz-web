@@ -53,7 +53,14 @@ export const ChangePasswordPage: FC = () => {
       errors.newPassword = "Por favor, introduce tu nueva contraseña";
     } else {
       const rule = checkPasswordPolicy(newPassword);
-      if (rule) errors.newPassword = PASSWORD_RULE_MESSAGES[rule];
+      if (rule) {
+        errors.newPassword = PASSWORD_RULE_MESSAGES[rule];
+      } else if (newPassword === currentPassword) {
+        // Refused on every change, voluntary or forced (#196), as the backend
+        // does (lucoenergia/conluz#342). Compared exactly: no trimming, case
+        // folding or normalisation, so the two sides agree.
+        errors.newPassword = "La nueva contraseña debe ser distinta de la actual.";
+      }
     }
     if (!confirmPassword) {
       errors.confirmPassword = "Por favor, confirma tu nueva contraseña";
