@@ -26,6 +26,16 @@ export const LOW_SELF_CONSUMPTION_RATIO = 0.3;
 /** Above this share, the message only acknowledges how well it went. */
 export const HIGH_SELF_CONSUMPTION_RATIO = 0.6;
 
+/**
+ * The least share of a month's expected hours with data for the month to be
+ * compared with another (#200). Below half, a month's totals measure the
+ * missing data more than what the member did, so any change would mislead;
+ * from here up to a complete month the comparison is shown, but said to be
+ * affected. A month with every hour recorded is compared even when nothing was
+ * consumed: an empty house is data, not missing data.
+ */
+export const MIN_COMPARABLE_COVERAGE = 0.5;
+
 export type MemberHomeMessage =
   /** The month has gaps: no advice, only a neutral notice. */
   | { kind: "partial-month"; text: string }
@@ -46,6 +56,11 @@ export interface MemberHomeMessageInput {
  */
 export function isPartialMonth(coverage: MembershipEnergyMetricsCoverageResponse): boolean {
   return coverage.hoursWithData < coverage.expectedHours || coverage.suppliesWithData < coverage.supplyCount;
+}
+
+/** Whether a month has enough of its hours recorded to be compared with another. */
+export function isComparableMonth({ hoursWithData, expectedHours }: MembershipEnergyMetricsCoverageResponse): boolean {
+  return hoursWithData >= MIN_COMPARABLE_COVERAGE * expectedHours;
 }
 
 function partialMonthText({ supplyCount, suppliesWithData }: MembershipEnergyMetricsCoverageResponse): string {

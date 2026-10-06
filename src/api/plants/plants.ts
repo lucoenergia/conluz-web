@@ -29,6 +29,7 @@ import type {
   GetAllPlantsParams,
   PagedResultPlantResponse,
   PlantResponse,
+  RestError,
   UpdatePlantBody
 } from '.././models';
 
@@ -72,7 +73,7 @@ export const getGetPlantByIdQueryKey = (plantId?: string,) => {
     }
 
     
-export const getGetPlantByIdQueryOptions = <TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
+export const getGetPlantByIdQueryOptions = <TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<RestError>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
@@ -91,10 +92,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetPlantByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantById>>>
-export type GetPlantByIdQueryError = ErrorType<unknown>
+export type GetPlantByIdQueryError = ErrorType<RestError>
 
 
-export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<RestError>>(
  plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlantById>>,
@@ -104,7 +105,7 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlantById>>,
@@ -114,7 +115,7 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -122,7 +123,7 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
  * @summary Retrieves a single plant by ID
  */
 
-export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<unknown>>(
+export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>, TError = ErrorType<RestError>>(
  plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantById>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -171,7 +172,7 @@ export const updatePlant = (
   
 
 
-export const getUpdatePlantMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdatePlantMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{plantId: string;data: UpdatePlantBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{plantId: string;data: UpdatePlantBody}, TContext> => {
 
@@ -198,12 +199,12 @@ const {mutation: mutationOptions} = options ?
 
     export type UpdatePlantMutationResult = NonNullable<Awaited<ReturnType<typeof updatePlant>>>
     export type UpdatePlantMutationBody = UpdatePlantBody
-    export type UpdatePlantMutationError = ErrorType<unknown>
+    export type UpdatePlantMutationError = ErrorType<RestError>
 
     /**
  * @summary Updates plant information
  */
-export const useUpdatePlant = <TError = ErrorType<unknown>,
+export const useUpdatePlant = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlant>>, TError,{plantId: string;data: UpdatePlantBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updatePlant>>,
@@ -246,7 +247,7 @@ export const deletePlant = (
   
 
 
-export const getDeletePlantMutationOptions = <TError = ErrorType<unknown>,
+export const getDeletePlantMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext> => {
 
@@ -273,12 +274,12 @@ const {mutation: mutationOptions} = options ?
 
     export type DeletePlantMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlant>>>
     
-    export type DeletePlantMutationError = ErrorType<unknown>
+    export type DeletePlantMutationError = ErrorType<RestError>
 
     /**
  * @summary Removes a plant by ID
  */
-export const useDeletePlant = <TError = ErrorType<unknown>,
+export const useDeletePlant = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePlant>>,
@@ -324,7 +325,7 @@ export const createPlant = (
   
 
 
-export const getCreatePlantMutationOptions = <TError = ErrorType<unknown>,
+export const getCreatePlantMutationOptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext> => {
 
@@ -351,12 +352,12 @@ const {mutation: mutationOptions} = options ?
 
     export type CreatePlantMutationResult = NonNullable<Awaited<ReturnType<typeof createPlant>>>
     export type CreatePlantMutationBody = CreatePlantBody
-    export type CreatePlantMutationError = ErrorType<unknown>
+    export type CreatePlantMutationError = ErrorType<RestError>
 
     /**
  * @summary Creates a new plant within the system.
  */
-export const useCreatePlant = <TError = ErrorType<unknown>,
+export const useCreatePlant = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createPlant>>,
@@ -401,7 +402,7 @@ export const getGetAllPlantsQueryKey = (communityId?: string,
     }
 
     
-export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(communityId: string,
+export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(communityId: string,
     params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
 ) => {
 
@@ -421,10 +422,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetAllPlantsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllPlants>>>
-export type GetAllPlantsQueryError = ErrorType<unknown>
+export type GetAllPlantsQueryError = ErrorType<RestError>
 
 
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
  communityId: string,
     params: undefined |  GetAllPlantsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -435,7 +436,7 @@ export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -446,7 +447,7 @@ export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -455,7 +456,7 @@ export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>
  * @summary Retrieves the plants of a community with support for pagination, filtering, and sorting.
  */
 
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<unknown>>(
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
  communityId: string,
     params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
  , queryClient?: QueryClient 

@@ -11,6 +11,7 @@ import { HomeCard } from "./HomeCard";
 import { chooseMemberHomeMessage } from "./member/memberHomeMessage";
 import { NeutralNotice } from "./NeutralNotice";
 import { PaybackCard } from "./member/PaybackCard";
+import { PreviousMonthComparison } from "./member/PreviousMonthComparison";
 import { SavingsCard } from "./member/SavingsCard";
 import { useMemberEnergyMetrics, type ReferencePeriod } from "./member/useMemberEnergyMetrics";
 import { useMemberPayback } from "./member/useMemberPayback";
@@ -18,10 +19,11 @@ import { useMemberPayback } from "./member/useMemberPayback";
 /**
  * The member's home (#199): the journey of their energy in the latest month
  * the distributor has published, what it saved them, and how far they are from
- * recovering their investment. Their total in the active community -- no
- * supply is singled out, and no period is chosen.
+ * recovering their investment, and how the month compares with the one
+ * before it (#200). Their total in the active community -- no supply is
+ * singled out, and no period is chosen.
  *
- * The two reads are independent: either can fail, and the other half still
+ * The reads are independent: any of them can fail, and the rest still
  * renders.
  */
 export const MemberHomePage: FC = () => (
@@ -31,6 +33,7 @@ export const MemberHomePage: FC = () => (
     </Typography>
     <HomeViewSwitch current="member" />
     <EnergyHalf />
+    <PreviousMonthComparison />
     <PaybackHalf />
   </Box>
 );

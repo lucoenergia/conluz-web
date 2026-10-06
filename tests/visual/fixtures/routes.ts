@@ -16,6 +16,7 @@ import {
   FIXED_COMMUNITY_ID,
   MEMBER_COMMUNITY_CAPABILITIES,
   MEMBER_ENERGY_METRICS,
+  MEMBER_ENERGY_METRICS_PREVIOUS,
   MEMBER_PAYBACK,
   PLATFORM_VIEW_COMMUNITY_CAPABILITIES,
   COMMUNITY_ADMIN_PLANT_CAPABILITIES,
@@ -118,9 +119,12 @@ async function refuse(route: Route, capability: string) {
 const MEMBERSHIP_PRIVATE_DATA = /\/api\/v1\/communities\/([^/]+)\/memberships\/([^/]+)\/(energy-metrics|payback)$/;
 
 /**
- * A membership's energy metrics and payback (#199), the member home's two
- * reads. Defaults to the normal state; a test passes another state's fixtures,
- * and wins over the default by registering later.
+ * A membership's energy metrics and payback (#199), and the energy metrics of
+ * the month before (#200): the member home's reads. The reference month is
+ * asked for by period, the month before by explicit dates, so the query string
+ * tells them apart. Defaults to the normal state, with a lower month before;
+ * a test passes another state's fixtures, and wins over the default by
+ * registering later.
  *
  * ROW SCOPING, not a gate: whose membership may be read is not on any served
  * capability. Mirrors CommunityAccessGuard.canReadMembershipPrivateData: the
@@ -132,14 +136,20 @@ export async function mockMemberHome(
   currentUser: object,
   {
     metrics = MEMBER_ENERGY_METRICS,
+    previousMetrics = MEMBER_ENERGY_METRICS_PREVIOUS,
     payback = MEMBER_PAYBACK,
-  }: { metrics?: MembershipEnergyMetricsResponse; payback?: MembershipPaybackResponse } = {},
+  }: {
+    metrics?: MembershipEnergyMetricsResponse;
+    previousMetrics?: MembershipEnergyMetricsResponse;
+    payback?: MembershipPaybackResponse;
+  } = {},
 ) {
   const caller = currentUser as CurrentUserFixture & { id?: string };
   await page.route(
     (url) => MEMBERSHIP_PRIVATE_DATA.test(url.pathname),
     (route: Route) => {
-      const [, communityId, userId, resource] = MEMBERSHIP_PRIVATE_DATA.exec(new URL(route.request().url()).pathname)!;
+      const url = new URL(route.request().url());
+      const [, communityId, userId, resource] = MEMBERSHIP_PRIVATE_DATA.exec(url.pathname)!;
       const role = caller.memberships?.[communityId];
       const mayRead = (userId === caller.id && role !== undefined) || role === "COMMUNITY_ADMIN";
       if (!mayRead) {
@@ -152,7 +162,9 @@ export async function mockMemberHome(
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(resource === "payback" ? payback : metrics),
+        body: JSON.stringify(
+          resource === "payback" ? payback : url.searchParams.has("startDate") ? previousMetrics : metrics,
+        ),
       });
     },
   );

@@ -7,7 +7,7 @@
 // the wire. Trusting the raw YYYY-MM-DD prefix (the previous approach here)
 // silently reads that as the 9th. Reinterpreting the instant in
 // Europe/Madrid recovers the calendar day the backend actually meant.
-const APP_TIME_ZONE = "Europe/Madrid";
+export const APP_TIME_ZONE = "Europe/Madrid";
 
 /**
  * Formats an ISO date-time string as a calendar date in the app's timezone

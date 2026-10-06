@@ -74,14 +74,54 @@ function paybackWith(overrides: Partial<MembershipPaybackResponse> = {}): Member
   });
 }
 
+/** July 2026, the month before AUGUST, as the comparison requests it. */
+const JULY: MembershipEnergyMetricsResponse["period"] = {
+  startDate: "2026-07-01T00:00:00+02:00",
+  endDate: "2026-07-31T23:00:00+02:00",
+};
+
+/**
+ * The month before (#200), complete: 22,50 € saved, 52 % of the assigned
+ * energy used and 49 % of the consumption from the community -- against
+ * monthWith(), a rise, a rise and a fall.
+ */
+function previousMonthWith(overrides: Partial<MembershipEnergyMetricsResponse> = {}): MembershipEnergyMetricsResponse {
+  return monthWith({
+    period: JULY,
+    savings: { amountEur: 22.5, tariffSource: "REAL_TARIFF", estimatedPrice: null },
+    selfConsumptionRatio: 0.5216,
+    selfSufficiencyRatio: 0.4869,
+    ...overrides,
+  });
+}
+
+type EnergyAnswer = MembershipEnergyMetricsResponse | "error" | "loading";
+
+function energyQuery(answer: EnergyAnswer, failure: string) {
+  if (answer === "error") return query.error(new Error(failure));
+  if (answer === "loading") return query.loading();
+  return query.success<typeof getMembershipEnergyMetrics>(answer);
+}
+
+/**
+ * Serves the page's reads. The energy-metrics hook is called twice -- for the
+ * reference month, by period, and for the month before, by explicit dates --
+ * so it answers by the params it is asked with. Each result is built once, so
+ * every call for the same month returns the same refetch.
+ */
 function answer({
   metrics = monthWith(),
+  previous = previousMonthWith(),
   payback = paybackWith(),
-}: { metrics?: MembershipEnergyMetricsResponse | "error"; payback?: MembershipPaybackResponse | "error" } = {}) {
-  vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(
-    metrics === "error"
-      ? query.error(new Error("energy-metrics failed"))
-      : query.success<typeof getMembershipEnergyMetrics>(metrics),
+}: {
+  metrics?: MembershipEnergyMetricsResponse | "error";
+  previous?: EnergyAnswer;
+  payback?: MembershipPaybackResponse | "error";
+} = {}) {
+  const referenceMonth = energyQuery(metrics, "energy-metrics failed");
+  const previousMonth = energyQuery(previous, "previous month failed");
+  vi.mocked(useGetMembershipEnergyMetrics).mockImplementation((_communityId, _userId, params) =>
+    params?.period ? referenceMonth : previousMonth,
   );
   vi.mocked(useGetMembershipPayback).mockReturnValue(
     payback === "error" ? query.error(new Error("payback failed")) : query.success<typeof getMembershipPayback>(payback),
@@ -345,6 +385,164 @@ describe("MemberHomePage (#199)", () => {
 
       await userEvent.setup().click(screen.getByRole("button", { name: "Reintentar" }));
       expect(vi.mocked(useGetMembershipPayback).mock.results.at(-1)?.value.refetch).toHaveBeenCalled();
+    });
+  });
+
+  describe("the comparison with the previous month (#200)", () => {
+    const comparison = () => card("Comparado con julio de 2026");
+    const row = (label: string) => text(within(comparison()).getByRole("heading", { name: label }).closest("li")!);
+    const energyCalls = () => vi.mocked(useGetMembershipEnergyMetrics).mock.calls.map(([, , params]) => params);
+
+    it("asks for the month before the resolved one, by explicit bounds, and leaves the first read as it was", () => {
+      openHome();
+
+      expect(energyCalls()).toContainEqual({ startDate: JULY.startDate, endDate: JULY.endDate });
+      const referenceCalls = energyCalls().filter((params) => params?.period);
+      expect(referenceCalls.length).toBeGreaterThan(0);
+      expect(referenceCalls).toEqual(referenceCalls.map(() => ({ period: "LATEST_PUBLISHED_MONTH" })));
+    });
+
+    describe("AC1 -- both months have data: each change is shown with its direction", () => {
+      it("a rise in savings, in euros", () => {
+        openHome();
+
+        expect(row("Tu ahorro")).toContain("4,50 € más");
+        expect(row("Tu ahorro")).toContain("27,00 € en agosto de 2026, frente a 22,50 € en julio de 2026.");
+      });
+
+      it("a rise and a fall in the two shares, in percentage points", () => {
+        openHome();
+
+        expect(row("Energía asignada que usaste")).toContain("15 puntos porcentuales más");
+        expect(row("Energía asignada que usaste")).toContain("67 % en agosto de 2026, frente a 52 % en julio de 2026.");
+        expect(row("Consumo cubierto por la comunidad")).toContain("5 puntos porcentuales menos");
+      });
+
+      it("a share going from 20 % to 30 % is ten points, not a 50 % rise", () => {
+        answer({ metrics: monthWith({ selfSufficiencyRatio: 0.3 }), previous: previousMonthWith({ selfSufficiencyRatio: 0.2 }) });
+        openHome();
+
+        expect(row("Consumo cubierto por la comunidad")).toContain("10 puntos porcentuales más");
+        expect(row("Consumo cubierto por la comunidad")).not.toContain("50");
+      });
+
+      it("a fall in savings", () => {
+        answer({ previous: previousMonthWith({ savings: { amountEur: 31.2, tariffSource: "REAL_TARIFF", estimatedPrice: null } }) });
+        openHome();
+
+        expect(row("Tu ahorro")).toContain("4,20 € menos");
+      });
+    });
+
+    describe("AC2 -- no previous month to compare with", () => {
+      it.each([
+        [
+          "the month before has no published data",
+          previousMonthWith({ coverage: { hoursWithData: 0, expectedHours: 1488, supplyCount: 2, suppliesWithData: 0 } }),
+        ],
+        // A member whose supplies did not exist yet: the backend answers the same shape.
+        [
+          "the member has no earlier month at all",
+          buildMembershipEnergyMetrics({
+            period: JULY,
+            coverage: { hoursWithData: 0, expectedHours: 744, supplyCount: 1, suppliesWithData: 0 },
+            savings: { amountEur: 0, tariffSource: "REAL_TARIFF", estimatedPrice: null },
+          }),
+        ],
+        [
+          "the month before has too few hours to compare",
+          previousMonthWith({ coverage: { hoursWithData: 3, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 } }),
+        ],
+      ])("%s: says so neutrally, and the current month is unaffected", (_label, previous) => {
+        answer({ previous });
+        openHome();
+
+        const notice = text(screen.getByRole("note"));
+        expect(notice).toContain("Todavía no se puede comparar con el mes anterior");
+        expect(notice).toContain("No hay datos suficientes de julio de 2026.");
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        expect(screen.queryByRole("region", { name: "Comparado con julio de 2026" })).not.toBeInTheDocument();
+        expect(text(savingsCard())).toContain("27,00 €");
+        expect(text(card("El recorrido de tu energía"))).toContain("La usaste tú: 180 kWh (67 %)");
+      });
+    });
+
+    describe("AC3 -- partial coverage in either month: the comparison says it is affected", () => {
+      it("the reference month", () => {
+        answer({ metrics: monthWith({ coverage: { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 } }) });
+        openHome();
+
+        expect(text(comparison())).toContain(
+          "La comparación está afectada: faltan datos de agosto de 2026, así que parte del cambio puede deberse a esos datos que faltan y no a tu consumo.",
+        );
+      });
+
+      it("the month before", () => {
+        answer({ previous: previousMonthWith({ coverage: { hoursWithData: 744, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 } }) });
+        openHome();
+
+        expect(text(comparison())).toContain("La comparación está afectada: faltan datos de julio de 2026,");
+      });
+
+      it("neither: no such statement", () => {
+        openHome();
+
+        expect(text(comparison())).not.toContain("afectada");
+      });
+    });
+
+    describe("AC4 -- the second request does not hold up the rest of the view", () => {
+      it("when it fails, the rest still renders, and the comparison offers a retry of its own request", async () => {
+        answer({ previous: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudo cargar la comparación con el mes anterior.");
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
+        expect(text(savingsCard())).toContain("27,00 €");
+        expect(text(paybackCard())).toContain("Llevas ahorrados 200,00 €");
+
+        await userEvent.setup().click(screen.getByRole("button", { name: "Reintentar" }));
+        const { calls, results } = vi.mocked(useGetMembershipEnergyMetrics).mock;
+        const previousMonthCall = calls.findIndex(([, , params]) => !params?.period);
+        expect(results[previousMonthCall].value.refetch).toHaveBeenCalled();
+      });
+
+      it("while it loads, the rest is already there", () => {
+        answer({ previous: "loading" });
+        openHome();
+
+        expect(screen.getByLabelText("Cargando la comparación con el mes anterior")).toBeInTheDocument();
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
+        expect(text(savingsCard())).toContain("27,00 €");
+        expect(text(paybackCard())).toContain("Llevas ahorrados 200,00 €");
+      });
+
+      it("when the first read fails, there is nothing to compare and only the energy half reports it", () => {
+        answer({ metrics: "error" });
+        openHome();
+
+        expect(screen.getAllByRole("alert")).toHaveLength(1);
+        expect(screen.queryByLabelText("Cargando la comparación con el mes anterior")).not.toBeInTheDocument();
+      });
+    });
+
+    describe("AC5 -- a figure null in either month gets no change", () => {
+      it("null in the month before", () => {
+        answer({ previous: previousMonthWith({ selfConsumptionRatio: null }) });
+        openHome();
+
+        expect(row("Energía asignada que usaste")).toBe("Energía asignada que usasteSin comparación: no hay dato de julio de 2026.");
+        expect(row("Tu ahorro")).toContain("4,50 € más");
+      });
+
+      it("null in the reference month", () => {
+        answer({ metrics: monthWith({ selfSufficiencyRatio: null }) });
+        openHome();
+
+        expect(row("Consumo cubierto por la comunidad")).toBe(
+          "Consumo cubierto por la comunidadSin comparación: no hay dato de agosto de 2026.",
+        );
+      });
     });
   });
 });

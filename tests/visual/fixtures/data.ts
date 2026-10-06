@@ -964,6 +964,72 @@ export const MEMBER_ENERGY_METRICS_NO_MONTH: MembershipEnergyMetricsResponse = {
   selfSufficiencyRatio: null,
 };
 
+// The month before the reference month (#200), as the comparison requests
+// it: July 2026, bounded by explicit dates, which the backend echoes back.
+const PREVIOUS_JULY_2026 = { startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-07-31T23:00:00+02:00" };
+
+/**
+ * A complete July below August on every compared figure: 11,70 € saved, 31 %
+ * of the assigned energy used, 20 % of the consumption from the community.
+ * The default, so the member home shows a comparison with a rise.
+ */
+export const MEMBER_ENERGY_METRICS_PREVIOUS: MembershipEnergyMetricsResponse = {
+  period: PREVIOUS_JULY_2026,
+  coverage: { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 },
+  energy: {
+    assignedProductionKWh: 251,
+    selfConsumptionKWh: 78,
+    surplusKWh: 173,
+    totalConsumptionKWh: 382,
+    gridImportKWh: 304,
+  },
+  savings: { amountEur: 11.7, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
+  selfConsumptionRatio: 0.3108,
+  selfSufficiencyRatio: 0.2042,
+};
+
+/** A complete July above August on every compared figure: 24,00 € saved, 55 % used, 37 % from the community. */
+export const MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER: MembershipEnergyMetricsResponse = {
+  ...MEMBER_ENERGY_METRICS_PREVIOUS,
+  energy: {
+    assignedProductionKWh: 290,
+    selfConsumptionKWh: 160,
+    surplusKWh: 130,
+    totalConsumptionKWh: 430,
+    gridImportKWh: 270,
+  },
+  savings: { amountEur: 24, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
+  selfConsumptionRatio: 0.5517,
+  selfSufficiencyRatio: 0.3721,
+};
+
+/** July with nothing recorded: not yet published, or before the member's supplies existed. */
+export const MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA: MembershipEnergyMetricsResponse = {
+  period: PREVIOUS_JULY_2026,
+  coverage: { hoursWithData: 0, expectedHours: 1488, supplyCount: 2, suppliesWithData: 0 },
+  energy: { assignedProductionKWh: 0, selfConsumptionKWh: 0, surplusKWh: 0, totalConsumptionKWh: 0, gridImportKWh: 0 },
+  // An explicit period always yields an amount, 0.00 when nothing was priced.
+  savings: { amountEur: 0, tariffSource: "ESTIMATE", estimatedPrice: null },
+  selfConsumptionRatio: null,
+  selfSufficiencyRatio: null,
+};
+
+/** July with one of the two supplies silent: enough to compare, but the comparison is affected. */
+export const MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL: MembershipEnergyMetricsResponse = {
+  ...MEMBER_ENERGY_METRICS_PREVIOUS,
+  coverage: { hoursWithData: 744, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 },
+  energy: {
+    assignedProductionKWh: 130,
+    selfConsumptionKWh: 60,
+    surplusKWh: 70,
+    totalConsumptionKWh: 200,
+    gridImportKWh: 140,
+  },
+  savings: { amountEur: 9, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
+  selfConsumptionRatio: 0.4615,
+  selfSufficiencyRatio: 0.3,
+};
+
 /** 42 % of a 500 € investment recovered, priced with the estimate. */
 export const MEMBER_PAYBACK: MembershipPaybackResponse = {
   investmentEur: 500,
