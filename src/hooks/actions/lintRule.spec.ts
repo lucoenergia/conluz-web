@@ -7,7 +7,7 @@ import { ESLint } from "eslint";
  * `lintText` takes the path it should pretend the source lives at, so every
  * config block can be exercised without committing a probe file. That matters
  * most for the COMMUNITY_SCOPE_WRAPPERS block: it re-states a narrower patterns
- * array, so anything left out of it is silently switched off for those eight
+ * array, so anything left out of it is silently switched off for those
  * files -- and none of them imports a mutation today, so the hole would have
  * stayed invisible until one of them grew a write. There is no real file to
  * point at, and this is the only way to prove the re-statement is load-bearing.
