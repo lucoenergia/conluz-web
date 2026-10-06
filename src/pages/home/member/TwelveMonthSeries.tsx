@@ -24,28 +24,32 @@ const TITLE = "Tus últimos 12 meses";
  * the same view the chart draws, and nothing else.
  */
 const SeriesTable: FC<{ view: MonthlySeriesView }> = ({ view }) => (
-  <Box component="table" sx={visuallyHidden}>
-    <caption>Datos del gráfico: {TITLE.toLowerCase()}</caption>
-    <thead>
-      <tr>
-        <th scope="col">Mes</th>
-        <th scope="col">{SELF_CONSUMPTION_SERIES}</th>
-        <th scope="col">{GRID_IMPORT_SERIES}</th>
-        <th scope="col">{SAVINGS_SERIES}</th>
-        <th scope="col">Datos del mes</th>
-      </tr>
-    </thead>
-    <tbody>
-      {view.months.map((month) => (
-        <tr key={month.date}>
-          <th scope="row">{month.name}</th>
-          <td>{month.selfConsumptionText}</td>
-          <td>{month.gridImportText}</td>
-          <td>{month.savingsText}</td>
-          <td>{month.state.kind === "nothing-stored" ? NOTHING_STORED_TEXT : (month.incompleteText ?? "Completos")}</td>
+  // Hidden on a wrapping block, not on the table: overflow does not clip a
+  // table box, so a hidden table still widens the page to its full width.
+  <Box sx={visuallyHidden}>
+    <table>
+      <caption>Datos del gráfico: {TITLE.toLowerCase()}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Mes</th>
+          <th scope="col">{SELF_CONSUMPTION_SERIES}</th>
+          <th scope="col">{GRID_IMPORT_SERIES}</th>
+          <th scope="col">{SAVINGS_SERIES}</th>
+          <th scope="col">Datos del mes</th>
         </tr>
-      ))}
-    </tbody>
+      </thead>
+      <tbody>
+        {view.months.map((month) => (
+          <tr key={month.date}>
+            <th scope="row">{month.name}</th>
+            <td>{month.selfConsumptionText}</td>
+            <td>{month.gridImportText}</td>
+            <td>{month.savingsText}</td>
+            <td>{month.state.kind === "nothing-stored" ? NOTHING_STORED_TEXT : (month.incompleteText ?? "Completos")}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </Box>
 );
 

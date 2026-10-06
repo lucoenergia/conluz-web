@@ -18,24 +18,28 @@ type Profile = Extract<HourlyProfileView, { kind: "profile" }>;
  * the same view the chart draws, and nothing else.
  */
 const ProfileTable: FC<{ view: Profile }> = ({ view }) => (
-  <Box component="table" sx={visuallyHidden}>
-    <caption>Datos del gráfico: {TITLE.toLowerCase()}</caption>
-    <thead>
-      <tr>
-        <th scope="col">Hora</th>
-        <th scope="col">{CONSUMPTION_SERIES}</th>
-        <th scope="col">{PRODUCTION_SERIES}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {view.hours.map((hour) => (
-        <tr key={hour.hour}>
-          <th scope="row">{hour.label}</th>
-          <td>{hour.consumptionText}</td>
-          <td>{hour.productionText}</td>
+  // Hidden on a wrapping block, not on the table: overflow does not clip a
+  // table box, so a hidden table still widens the page to its full width.
+  <Box sx={visuallyHidden}>
+    <table>
+      <caption>Datos del gráfico: {TITLE.toLowerCase()}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Hora</th>
+          <th scope="col">{CONSUMPTION_SERIES}</th>
+          <th scope="col">{PRODUCTION_SERIES}</th>
         </tr>
-      ))}
-    </tbody>
+      </thead>
+      <tbody>
+        {view.hours.map((hour) => (
+          <tr key={hour.hour}>
+            <th scope="row">{hour.label}</th>
+            <td>{hour.consumptionText}</td>
+            <td>{hour.productionText}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </Box>
 );
 

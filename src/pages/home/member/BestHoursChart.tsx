@@ -1,9 +1,9 @@
 import type { FC } from "react";
 import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
-import { Box } from "@mui/material";
 import { formatAverageKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors, shadows } from "../../../theme/tokens";
+import { ChartScrollArea } from "./ChartScrollArea";
 import type { HourlyProfileView } from "./hourlyProfile";
 
 /** Wide enough for 24 labelled pairs of bars: narrower screens scroll the chart, never squeeze its axis. */
@@ -48,10 +48,8 @@ export const BestHoursChart: FC<{ view: Profile }> = ({ view }) => {
   };
 
   return (
-    <Box sx={{ overflowX: "auto" }}>
-      <Box sx={{ minWidth: MIN_CHART_WIDTH }}>
-        <Chart type="bar" height={260} width="100%" options={options} series={view.series} />
-      </Box>
-    </Box>
+    <ChartScrollArea minWidth={MIN_CHART_WIDTH}>
+      <Chart type="bar" height={260} width="100%" options={options} series={view.series} />
+    </ChartScrollArea>
   );
 };

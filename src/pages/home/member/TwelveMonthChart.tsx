@@ -1,9 +1,9 @@
 import type { FC } from "react";
 import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
-import { Box } from "@mui/material";
 import { formatEuros, formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors, shadows } from "../../../theme/tokens";
+import { ChartScrollArea } from "./ChartScrollArea";
 import type { MonthlySeriesView, MonthView } from "./monthlySeries";
 
 /** Wide enough for twelve labelled columns: narrower screens scroll the chart, never squeeze its axis. */
@@ -76,11 +76,9 @@ export const TwelveMonthChart: FC<{ view: MonthlySeriesView }> = ({ view }) => {
   };
 
   return (
-    <Box sx={{ overflowX: "auto" }}>
-      <Box sx={{ minWidth: MIN_CHART_WIDTH }}>
-        <Chart type="bar" height={260} width="100%" options={energyOptions} series={view.energySeries} />
-        <Chart type="bar" height={180} width="100%" options={savingsOptions} series={view.savingsSeries} />
-      </Box>
-    </Box>
+    <ChartScrollArea minWidth={MIN_CHART_WIDTH}>
+      <Chart type="bar" height={260} width="100%" options={energyOptions} series={view.energySeries} />
+      <Chart type="bar" height={180} width="100%" options={savingsOptions} series={view.savingsSeries} />
+    </ChartScrollArea>
   );
 };
