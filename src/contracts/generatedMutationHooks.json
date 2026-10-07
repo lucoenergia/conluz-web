@@ -6,7 +6,9 @@
       "module": "src/api/authentication/authentication",
       "hooks": [
         "useLogin",
-        "useLogout"
+        "useLogout",
+        "useRequestPasswordReset",
+        "useResetPassword"
       ]
     },
     {

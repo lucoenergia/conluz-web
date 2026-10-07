@@ -131,6 +131,8 @@ export * from './partitionCoefficientCapabilitiesResponse';
 export * from './partitionCoefficientResponse';
 export * from './partitionCoefficientResponseValidFrom';
 export * from './partitionCoefficientResponseValidTo';
+export * from './passwordResetBody';
+export * from './passwordResetRequestBody';
 export * from './plantCapabilitiesResponse';
 export * from './plantCommunityResponse';
 export * from './plantReferenceResponse';
