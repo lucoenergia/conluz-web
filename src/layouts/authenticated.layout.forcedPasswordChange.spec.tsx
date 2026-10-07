@@ -126,12 +126,22 @@ describe("the forced password change (AC5)", () => {
     expect(screen.queryByText("supply points")).not.toBeInTheDocument();
   });
 
-  it("keeps the header, and with it the logout", () => {
+  // The full header reads nothing itself, but the layout around it does, so a
+  // flagged caller gets a minimal one that still offers logging out (#213).
+  it("swaps the full header for one that still offers logging out", () => {
     serve({ ...MEMBER, mustChangePassword: true });
     renderAt("/supply-points");
 
+    expect(mockHeader).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Salir" })).toBeInTheDocument();
+  });
+
+  it("keeps the full header for a caller who need not change it", () => {
+    serve({ ...MEMBER, mustChangePassword: false });
+    renderAt("/supply-points");
+
     expect(mockHeader).toHaveBeenCalled();
-    expect(screen.getByText("header")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Salir" })).not.toBeInTheDocument();
   });
 
   it("leaves a caller who need not change it where they are", () => {

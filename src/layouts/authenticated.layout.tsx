@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState, type FC } from "react";
 import { Header } from "../components/Header/Header";
+import { PasswordChangeHeader } from "../components/Header/PasswordChangeHeader";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { SideMenu } from "../components/Menu/SideMenu";
 import useWindowDimensions from "../utils/useWindowDimensions";
@@ -29,7 +30,98 @@ import { resolveForcedPasswordChangeTarget, resolveLandingRoute } from "../utils
 import { useCommunitySwitchRedirect } from "../hooks/useCommunitySwitchRedirect";
 import { ScopeContext } from "../components/ScopeContext";
 
+/**
+ * The authenticated chrome, chosen by one question asked before anything else
+ * mounts: must the caller change their password first (#213)?
+ *
+ * While they must, the backend refuses everything but reading the current
+ * user, changing the password and logging out (lucoenergia/conluz#342). The
+ * full layout cannot live with that: its capability lookups and the scope
+ * context's community list fetch on mount, every one of them would answer 403,
+ * and each 403 asks for the current user again. Mounting it and disabling its
+ * queries would leave every component that fetches on its own to be found and
+ * gated one by one, so it is not mounted at all -- the minimal shell is.
+ *
+ * Only the logged user is read here, and it is already loaded by the provider
+ * above. While it is still loading the full layout renders as it always has:
+ * without a user there are no memberships and no active community, so nothing
+ * in it fetches yet.
+ */
 export const AuthenticatedLayout: FC = () => {
+  const loggedUser = useLoggedUser();
+
+  return (
+    <ProtectedRoute>
+      {loggedUser?.mustChangePassword === true ? <PasswordChangeShell /> : <FullLayout />}
+    </ProtectedRoute>
+  );
+};
+
+const SkipLink: FC = () => (
+  <Box
+    component="a"
+    href="#main-content"
+    sx={{
+      position: "absolute",
+      left: 8,
+      top: -64,
+      zIndex: (theme) => theme.zIndex.tooltip + 1,
+      px: 2,
+      py: 1,
+      borderRadius: radii.default,
+      bgcolor: "primary.main",
+      color: "primary.contrastText",
+      textDecoration: "none",
+      fontWeight: 600,
+      "&:focus": { top: 8 },
+    }}
+  >
+    Saltar al contenido
+  </Box>
+);
+
+/**
+ * What a caller who must change their password sees: a header with the logo and
+ * a logout, and the change-password page. Nothing here reads the API; the page
+ * itself only writes the new password.
+ *
+ * Every other route still leads to /change-password, decided during render so
+ * the page asked for never mounts, not even for one frame (#196).
+ */
+const PasswordChangeShell: FC = () => {
+  const logout = useLogout();
+  const loggedUser = useLoggedUser();
+  const { pathname } = useLocation();
+  const forcedPasswordChangeRedirect = resolveForcedPasswordChangeTarget(loggedUser, pathname);
+
+  return (
+    <>
+      <SkipLink />
+      <PasswordChangeHeader />
+      <Box component="main" id="main-content" tabIndex={-1}>
+        <Toolbar />
+        <AuthErrorBoundry onError={() => void logout()}>
+          <ErrorProvider>
+            <SuccessProvider>
+              <Suspense fallback={<RouteFallback />}>
+                {forcedPasswordChangeRedirect ? (
+                  <Navigate to={forcedPasswordChangeRedirect} replace />
+                ) : (
+                  <Outlet />
+                )}
+              </Suspense>
+              <SuccessDisplay />
+            </SuccessProvider>
+            <ErrorDisplay />
+          </ErrorProvider>
+        </AuthErrorBoundry>
+      </Box>
+    </>
+  );
+};
+
+/** The layout of a caller who may use the app: header, side menu, scope context and the routed page. */
+const FullLayout: FC = () => {
   const { width } = useWindowDimensions();
   const navigate = useNavigate();
   const logout = useLogout();
@@ -38,10 +130,6 @@ export const AuthenticatedLayout: FC = () => {
   const { pathname } = useLocation();
   const [isMenuOpened, setIsMenuOpened] = useState(width > MIN_DESKTOP_WIDTH);
   const communitySwitchRedirect = useCommunitySwitchRedirect();
-  // Decided during render, like the community-switch redirect, so the page the
-  // caller may not use yet is never mounted, not even for one frame (#196).
-  // Checked first: it applies whatever the community.
-  const forcedPasswordChangeRedirect = resolveForcedPasswordChangeTarget(loggedUser, pathname);
 
   // One lookup per capability the menu asks about. Fixed calls rather than a
   // loop, because the set of questions is known and hooks cannot be called per
@@ -122,27 +210,8 @@ export const AuthenticatedLayout: FC = () => {
   }, [loggedUser, pathname, navigate]);
 
   return (
-    <ProtectedRoute>
-      <Box
-        component="a"
-        href="#main-content"
-        sx={{
-          position: "absolute",
-          left: 8,
-          top: -64,
-          zIndex: (theme) => theme.zIndex.tooltip + 1,
-          px: 2,
-          py: 1,
-          borderRadius: radii.default,
-          bgcolor: "primary.main",
-          color: "primary.contrastText",
-          textDecoration: "none",
-          fontWeight: 600,
-          "&:focus": { top: 8 },
-        }}
-      >
-        Saltar al contenido
-      </Box>
+    <>
+      <SkipLink />
       <Header
         onMenuClick={() => setIsMenuOpened(!isMenuOpened)}
         username={loggedUser?.fullName}
@@ -174,7 +243,7 @@ export const AuthenticatedLayout: FC = () => {
       >
         <Toolbar />
         {!isMenuOpened && <ScopeContext variant="strip" />}
-        <AuthErrorBoundry onError={logout}>
+        <AuthErrorBoundry onError={() => void logout()}>
           <ErrorProvider>
             <SuccessProvider>
               {loggedUser === null ? (
@@ -183,9 +252,7 @@ export const AuthenticatedLayout: FC = () => {
                 </Box>
               ) : (
                 <Suspense fallback={<RouteFallback />}>
-                  {forcedPasswordChangeRedirect ? (
-                    <Navigate to={forcedPasswordChangeRedirect} replace />
-                  ) : communitySwitchRedirect ? (
+                  {communitySwitchRedirect ? (
                     <Navigate to={communitySwitchRedirect} replace />
                   ) : (
                     /*
@@ -216,6 +283,6 @@ export const AuthenticatedLayout: FC = () => {
           </ErrorProvider>
         </AuthErrorBoundry>
       </Box>
-    </ProtectedRoute>
+    </>
   );
 };

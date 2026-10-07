@@ -23,8 +23,8 @@ export const CHANGE_PASSWORD_ROUTE = "/change-password";
  * they may stay where they are (#196).
  *
  * While `mustChangePassword` is true, every authenticated route leads to the
- * change-password page. Logging out stays possible: it lives in the header,
- * which the redirect leaves in place. An unknown user is never redirected --
+ * change-password page. Logging out stays possible: the minimal shell the
+ * layout renders meanwhile has a header that offers it (#213). An unknown user is never redirected --
  * "not yet known" is not "yes".
  */
 export function resolveForcedPasswordChangeTarget(

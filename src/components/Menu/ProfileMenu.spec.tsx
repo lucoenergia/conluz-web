@@ -1,12 +1,28 @@
 import "@testing-library/jest-dom";
-import { expect, test, vi } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { ProfileMenu } from "./ProfileMenu";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { Route, Routes } from "react-router";
 import userEvent from "@testing-library/user-event";
 import type { QueryClient } from "@tanstack/react-query";
 import { getGetCurrentUserQueryKey } from "../../api/users/users";
+import { useLogout } from "../../api/authentication/authentication";
 import { createTestQueryClient, renderWithProviders } from "../../test/renderWithProviders";
+import { mutation } from "../../test/queryState";
+
+// Logging out asks the backend to revoke the token first (#213). Stubbed by
+// spreading the original, so nothing else in the module changes.
+vi.mock(import("../../api/authentication/authentication"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLogout: vi.fn(),
+}));
+
+const revokeToken = vi.fn();
+
+beforeEach(() => {
+  revokeToken.mockReset().mockResolvedValue(undefined);
+  vi.mocked(useLogout).mockReturnValue(mutation.idle({ mutateAsync: revokeToken }));
+});
 
 // Through the harness rather than a hand-built provider stack: LoggedUserProvider
 // is a query now (#203), so it has to sit under the QueryClientProvider, and the
@@ -54,9 +70,10 @@ test("ProfileMenu clears the query cache and navigates to login on logout", asyn
   await user.click(screen.getByRole("button"));
   await user.click(screen.getByText("Salir"));
 
+  expect(revokeToken).toHaveBeenCalledTimes(1);
   // Clearing the cache is the fix: it prevents the previous user's response from
   // leaking into the next session and driving the landing redirect off stale data.
-  expect(clearSpy).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(clearSpy).toHaveBeenCalledTimes(1));
   expect(queryClient.getQueryData(getGetCurrentUserQueryKey())).toBeUndefined();
   expect(await screen.findByText("Login page")).toBeInTheDocument();
 });
