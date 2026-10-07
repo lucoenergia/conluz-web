@@ -82,13 +82,13 @@ describe("calendar months (#201)", () => {
   });
 
   it("labels the month of a local calendar date, whatever the device's time zone", () => {
-    expect(formatShortMonth("2026-08-01")).toBe("ago");
-    expect(formatShortMonth("2027-01-01")).toBe("ene");
+    expect(formatShortMonth("2026/08/01")).toBe("ago");
+    expect(formatShortMonth("2027/01/01")).toBe("ene");
   });
 
   it("names the month and year of a local calendar date", () => {
-    expect(formatCalendarMonth("2026-08-01")).toBe("agosto de 2026");
-    expect(formatCalendarMonth("2027-01-01")).toBe("enero de 2027");
+    expect(formatCalendarMonth("2026/08/01")).toBe("agosto de 2026");
+    expect(formatCalendarMonth("2027/01/01")).toBe("enero de 2027");
   });
 });
 

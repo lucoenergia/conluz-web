@@ -123,7 +123,7 @@ function twelveMonths(): MembershipMonthlyConsumptionBucketResponse[] {
     const month = ((8 + index) % 12) + 1;
     const year = month >= 9 ? 2025 : 2026;
     return buildMembershipMonthlyConsumptionBucket({
-      date: `${year}-${String(month).padStart(2, "0")}-01`,
+      date: `${year}/${String(month).padStart(2, "0")}/01`,
       consumptionKWh: 200 + index,
       selfConsumptionEnergyKWh: 150 + index,
       savingsEur: 20 + index,

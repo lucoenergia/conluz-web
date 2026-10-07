@@ -1072,24 +1072,24 @@ function nothingStoredMonth(date: string): MembershipMonthlyConsumptionBucketRes
 
 /** September 2025 to August 2026: the twelve months ending at the reference month. */
 const SERIES_MONTHS = [
-  "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01",
-  "2026-03-01", "2026-04-01", "2026-05-01", "2026-06-01", "2026-07-01", "2026-08-01",
+  "2025/09/01", "2025/10/01", "2025/11/01", "2025/12/01", "2026/01/01", "2026/02/01",
+  "2026/03/01", "2026/04/01", "2026/05/01", "2026/06/01", "2026/07/01", "2026/08/01",
 ];
 
 /** Twelve stored, complete months, sunnier in summer; August matches the reference month. */
 export const MEMBER_MONTHLY_SERIES: MembershipMonthlyConsumptionBucketResponse[] = [
-  storedMonth("2025-09-01", 112, 268, 16.8),
-  storedMonth("2025-10-01", 84, 301, 12.6),
-  storedMonth("2025-11-01", 52, 342, 7.8),
-  storedMonth("2025-12-01", 38, 371, 5.7),
-  storedMonth("2026-01-01", 41, 365, 6.15),
-  storedMonth("2026-02-01", 63, 322, 9.45),
-  storedMonth("2026-03-01", 89, 290, 13.35),
-  storedMonth("2026-04-01", 104, 262, 15.6),
-  storedMonth("2026-05-01", 126, 238, 18.9),
-  storedMonth("2026-06-01", 131, 251, 19.65),
-  storedMonth("2026-07-01", 128, 284, 19.2),
-  storedMonth("2026-08-01", 121, 291, 18.15),
+  storedMonth("2025/09/01", 112, 268, 16.8),
+  storedMonth("2025/10/01", 84, 301, 12.6),
+  storedMonth("2025/11/01", 52, 342, 7.8),
+  storedMonth("2025/12/01", 38, 371, 5.7),
+  storedMonth("2026/01/01", 41, 365, 6.15),
+  storedMonth("2026/02/01", 63, 322, 9.45),
+  storedMonth("2026/03/01", 89, 290, 13.35),
+  storedMonth("2026/04/01", 104, 262, 15.6),
+  storedMonth("2026/05/01", 126, 238, 18.9),
+  storedMonth("2026/06/01", 131, 251, 19.65),
+  storedMonth("2026/07/01", 128, 284, 19.2),
+  storedMonth("2026/08/01", 121, 291, 18.15),
 ];
 
 /**
@@ -1099,16 +1099,16 @@ export const MEMBER_MONTHLY_SERIES: MembershipMonthlyConsumptionBucketResponse[]
  */
 export const MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE: MembershipMonthlyConsumptionBucketResponse[] = MEMBER_MONTHLY_SERIES.map(
   (month) => {
-    if (month.date === "2025-11-01") return storedMonth(month.date, 0, 0, 0);
-    if (month.date === "2025-12-01") return nothingStoredMonth(month.date);
-    if (month.date === "2026-02-01") return storedMonth(month.date, 31, 158, 4.65, 1);
+    if (month.date === "2025/11/01") return storedMonth(month.date, 0, 0, 0);
+    if (month.date === "2025/12/01") return nothingStoredMonth(month.date);
+    if (month.date === "2026/02/01") return storedMonth(month.date, 31, 158, 4.65, 1);
     return month;
   },
 );
 
 /** A new member: only the reference month has anything stored. */
 export const MEMBER_MONTHLY_SERIES_ONE_MONTH: MembershipMonthlyConsumptionBucketResponse[] = SERIES_MONTHS.map((date) =>
-  date === "2026-08-01" ? storedMonth(date, 121, 291, 18.15) : nothingStoredMonth(date),
+  date === "2026/08/01" ? storedMonth(date, 121, 291, 18.15) : nothingStoredMonth(date),
 );
 
 /** No month in the range has anything stored. */
