@@ -1042,7 +1042,7 @@ function storedMonth(
 ): MembershipMonthlyConsumptionBucketResponse {
   return {
     date,
-    time: "00:00:00",
+    time: "00:00",
     consumptionKWh,
     surplusEnergyKWh: 0,
     generationEnergyKWh: selfConsumptionEnergyKWh,
@@ -1058,7 +1058,7 @@ function storedMonth(
 function nothingStoredMonth(date: string): MembershipMonthlyConsumptionBucketResponse {
   return {
     date,
-    time: "00:00:00",
+    time: "00:00",
     consumptionKWh: 0,
     surplusEnergyKWh: 0,
     generationEnergyKWh: 0,
