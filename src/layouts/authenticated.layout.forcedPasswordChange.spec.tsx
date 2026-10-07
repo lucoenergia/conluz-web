@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Link, Route, Routes, useLocation } from "react-router";
 import { useGetCurrentUser, type getCurrentUser } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
+import { LandingRoute } from "../pages/landing/LandingRoute";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
 import { buildCurrentUser, buildPlatformCapabilities } from "../test/fixtures";
@@ -73,7 +74,7 @@ function renderAt(route: string) {
   return renderWithProviders(
     <Routes>
       <Route element={<AuthenticatedLayout />}>
-        <Route index element={<Probe label="home" />} />
+        <Route index element={<LandingRoute />} />
         <Route path="platform" element={<Probe label="platform" />} />
         <Route path="profile" element={<Probe label="profile" />} />
         <Route path="supply-points" element={<Probe label="supply points" />} />

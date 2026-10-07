@@ -213,7 +213,7 @@ export const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
 
 /**
  * Member fixture — belongs to FIXED_COMMUNITY_ID as COMMUNITY_MEMBER.
- * Use for: home, supply-points, supply-detail, supply modal tests.
+ * Use for: the member home view, supply-points, supply-detail, supply modal tests.
  */
 export const FIXED_MEMBER_USER = {
   id: "11111111-2222-3333-4444-555555555555",

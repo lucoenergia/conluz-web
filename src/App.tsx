@@ -29,7 +29,7 @@ const ForgotPassword = lazyPage(() => import("./pages/auth/ForgotPassword"), "Fo
 const NewPassword = lazyPage(() => import("./pages/auth/NewPassword"), "NewPassword");
 const ChangePasswordPage = lazyPage(() => import("./pages/auth/ChangePassword"), "ChangePasswordPage");
 
-const HomePage = lazyPage(() => import("./pages/Home"), "HomePage");
+const LandingRoute = lazyPage(() => import("./pages/landing/LandingRoute"), "LandingRoute");
 const ProfilePage = lazyPage(() => import("./pages/Profile"), "ProfilePage");
 const ContactPage = lazyPage(() => import("./pages/Contact.page"), "ContactPage");
 const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityPage"), "NoCommunityPage");
@@ -72,7 +72,11 @@ function App() {
           </Route>
         </Route>
         <Route element={<AuthenticatedLayout />}>
-          <Route index element={<HomePage />} />
+          {/*
+            "/" has no screen of its own (#221): it sends each caller where they
+            belong, and it is where every denial redirects, so it is unguarded.
+          */}
+          <Route index element={<LandingRoute />} />
           {/*
             The two home views (#197). /home is the landing after login and
             the menu's Inicio (#199); HomeIndexRedirect picks the view.

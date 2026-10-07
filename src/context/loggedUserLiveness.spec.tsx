@@ -6,6 +6,7 @@ import { Route, Routes, useLocation } from "react-router";
 import { getGetCurrentUserQueryKey } from "../api/users/users";
 import { AuthenticatedLayout } from "../layouts/authenticated.layout";
 import { CapabilityRoute } from "../components/Auth/CapabilityRoute";
+import { LandingRoute } from "../pages/landing/LandingRoute";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { routeRequests } from "../test/requestRouter";
 import { buildCurrentUser, buildPlatformCapabilities } from "../test/fixtures";
@@ -73,14 +74,6 @@ const CommunitiesPage: FC = () => {
   return <div data-testid="communities-page">Comunidades page</div>;
 };
 
-const HomePage: FC = () => {
-  const { pathname } = useLocation();
-  useEffect(() => {
-    paths.push(pathname);
-  }, [pathname]);
-  return <div data-testid="home-page">Inicio</div>;
-};
-
 /**
  * Where a caller with no membership and no platform capability belongs, per
  * `resolveLandingRoute`. The fixtures here hold no memberships -- so that the
@@ -94,7 +87,7 @@ function renderApp() {
   return renderWithProviders(
     <Routes>
       <Route element={<AuthenticatedLayout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<LandingRoute />} />
         <Route path="no-community" element={<NoCommunityPage />} />
         <Route
           path="communities"

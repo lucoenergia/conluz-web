@@ -62,6 +62,11 @@ const REVIEWED: Record<string, Scope> = {
   // Changes the caller's own password: user-scoped like /api/v1/users/current,
   // decided here for the same reason as /api/v1/users/profile.
   "/api/v1/users/current/password": "user",
+  // The forgotten-password flow: no session, and the user is named by the body
+  // -- a personal ID, or the token from the emailed link -- never by a path or a
+  // caller. Global like /api/v1/login, which also precedes any session.
+  "/api/v1/users/password/recover": "global",
+  "/api/v1/users/password/reset": "global",
 };
 
 function structuralScope(path: string): Scope | null {

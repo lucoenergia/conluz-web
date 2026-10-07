@@ -9,6 +9,8 @@ import type { CurrentUserResponse } from "../api/models";
  * membership at all is sent to the platform, and only if they may administer
  * it -- read from the capability rather than the platform flag, so this agrees
  * with the guard on /platform instead of approximating it.
+ *
+ * Read by LandingRoute, which serves "/" (#221).
  */
 export function resolveLandingRoute(user: CurrentUserResponse): string {
   if (Object.keys(user.memberships ?? {}).length > 0) return '/home';

@@ -43,9 +43,10 @@ type Access =
  */
 const ROUTE_ACCESS: Record<string, Access> = {
   // Guarding "/" would loop: CapabilityRoute sends a denied caller here, so a
-  // denial on this route would redirect to itself. It is also where a caller
-  // with no community lands, and the page renders its own empty state.
-  "/": { authenticated: "the redirect target of every denial; guarding it would loop" },
+  // denial on this route would redirect to itself. It has no screen of its own
+  // (#221): it sends each caller where they belong, or asks one with several
+  // communities and none selected to choose.
+  "/": { authenticated: "the landing and the redirect target of every denial; guarding it would loop" },
   "/no-community": { authenticated: "the landing page for a caller with no membership" },
   "/profile": { authenticated: "acts on the caller and takes no id" },
   "/change-password": { authenticated: "acts on the caller and takes no id" },

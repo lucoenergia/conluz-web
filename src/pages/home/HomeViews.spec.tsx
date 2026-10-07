@@ -73,10 +73,6 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   ...(await importOriginal()),
   useLoggedUser: vi.fn(),
 }));
-// The page at "/" is not under test, only that nobody is moved off it.
-vi.mock(import("../Home"), () => ({
-  HomePage: () => <p>Página de inicio actual</p>,
-}));
 
 const MEMBER_HEADING = { name: "Tu energía", level: 1 } as const;
 const MANAGEMENT_HEADING = { name: "Gestión de la comunidad", level: 1 } as const;
@@ -370,8 +366,8 @@ describe("home views (#197)", () => {
  * menu's Inicio. /home then picks the caller's view by the rules above.
  */
 describe("linking the home in (#199)", () => {
-  // Login navigates to "/" (pinned in Login.spec.tsx); the layout's landing
-  // effect sends the caller on from there.
+  // Login navigates to "/" (pinned in Login.spec.tsx); the landing there
+  // sends the caller on (#221).
   const signIn = (profile: Profile) => {
     as(profile);
     return openApp("/");

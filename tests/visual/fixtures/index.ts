@@ -26,7 +26,7 @@
  * Role fixture mapping. Each screen is captured with the personas that can
  * actually reach it, and with no others — there is no hybrid persona here, and
  * adding one would capture a caller the backend cannot produce.
- *   FIXED_MEMBER_USER          → home, the member home view, profile, change-password,
+ *   FIXED_MEMBER_USER          → the member home view, profile, change-password,
  *                                supply-points, supply-detail, production list and plant detail
  *   FIXED_COMMUNITY_ADMIN_USER → supply-points and production as an admin, the supply and plant
  *                                forms, members, integrations, the whole
