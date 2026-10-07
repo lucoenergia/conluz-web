@@ -1,4 +1,31 @@
+import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "@playwright/test";
+
+/**
+ * The port the visual suite serves the app on, one per checkout.
+ *
+ * Locally, Playwright reuses whatever already answers on its port. With one
+ * fixed port for every checkout, a dev server left running in another checkout
+ * of this repo answered for this one: the suite captured that checkout's app
+ * with this one's fixtures, and baselines regenerated that way showed UI this
+ * branch does not have. Deriving the port from the checkout's own path means a
+ * reused server can only be this checkout's.
+ *
+ * 20000-29999 stays clear of Linux's ephemeral range (32768+) and of the dev
+ * server's 3001, which stays fixed because the backend's CORS allows that
+ * origin only. VISUAL_PORT overrides it, e.g. if the derived port is taken.
+ */
+function checkoutPort(): number {
+  const override = process.env.VISUAL_PORT;
+  if (override) return Number(override);
+  const checkoutRoot = fileURLToPath(new URL(".", import.meta.url));
+  const digest = createHash("sha256").update(checkoutRoot).digest();
+  return 20000 + (digest.readUInt32BE(0) % 10000);
+}
+
+const PORT = checkoutPort();
+const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests/visual",
@@ -23,7 +50,7 @@ export default defineConfig({
   updateSnapshots: "none",
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: BASE_URL,
     // No reducedMotion here. `use` has no such option (Playwright only honours
     // it under contextOptions), so the value set here and in both projects was
     // ignored: prefers-reduced-motion never matched in these runs. Animations
@@ -71,9 +98,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3001",
-    // In CI always start a fresh server; locally reuse if already running.
+    // --strictPort: if the port is taken, fail instead of letting Vite move to
+    // the next one, which the suite would never find.
+    command: `npm run dev -- --port ${PORT} --strictPort`,
+    url: BASE_URL,
+    // In CI always start a fresh server; locally reuse if already running. The
+    // port is this checkout's own (see checkoutPort), so what is reused is
+    // this checkout's server, never another's.
     // This only waits for the port to answer — it says nothing about Vite
     // having transformed the app's module graph, which is what the "warmup"
     // project above exists to guarantee.
