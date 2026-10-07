@@ -257,8 +257,8 @@ export const ScopeContext: FC<ScopeContextProps> = ({ variant }) => {
 
   let content: ReactNode;
   if (scope === "community") {
-    // No membership, no community to state. The layout's landing redirect
-    // moves such a user off community pages; render nothing meanwhile.
+    // No membership, no community to state. The landing at "/" moves such a
+    // user off community pages; render nothing meanwhile.
     if (communityDetails.membershipCount === 0) return null;
     content = <CommunitySwitch details={communityDetails} />;
   } else if (scope === "platform") {
