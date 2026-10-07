@@ -182,6 +182,7 @@ Every push to `main` creates a new version automatically:
    - `ghcr.io/lucoenergia/conluz-web:1.0.12` (exact version, recommended for deployments)
    - `ghcr.io/lucoenergia/conluz-web:1.0` and `:1` (moving major/minor tags)
    - `ghcr.io/lucoenergia/conluz-web:latest`
+3. The same run publishes a GitHub Release for the tag, with notes generated from the pull requests merged since the previous tag and grouped by PR label (see [Release notes](CONTRIBUTE.md#release-notes)).
 
 The version is also baked into the app (shown at the bottom of the side menu) and into the image's `org.opencontainers.image.version` / `org.opencontainers.image.revision` labels, so a running container can always be traced back to its tag and commit. Local builds show `dev`.
 

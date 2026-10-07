@@ -12,6 +12,7 @@ Thank you for your interest in contributing to **ConLuz**! This document provide
 - [Branch Naming Convention](#branch-naming-convention)
 - [Commit Message Format](#commit-message-format)
 - [Pull Requests](#pull-requests)
+- [Release notes](#release-notes)
 - [Maintainer Notes](#maintainer-notes)
 - [Code of Conduct](#code-of-conduct)
 - [Contact](#contact)
@@ -88,6 +89,42 @@ All commits must follow this format:
 - Ensure your PR references the related issue (e.g., "Closes #123").
 - Provide a clear description of the changes made.
 - Ensure all CI checks pass and the code is properly tested.
+
+---
+
+## Release notes
+
+Every merge to `main` produces one release. `.github/workflows/version-update.yml` pushes the next
+version tag and then publishes a GitHub Release for it. GitHub generates the notes from the pull
+requests merged since the previous tag, and groups them by PR label according to
+`.github/release.yml`. Releases are created by CI only: never create or edit one by hand.
+
+Each PR goes in the first category whose labels it carries:
+
+| Label | Release notes category |
+| --- | --- |
+| `breaking` | ⚠️ Breaking / manual action on upgrade |
+| `security` | Security |
+| `enhancement` | Features |
+| `bug` | Fixes |
+| `refactor`, `tech-debt`, `testing`, `documentation` | Maintenance |
+| anything else, or no label | Other |
+
+Label every PR with exactly one type label. Take it from the Type of the issue the PR closes:
+
+| Issue Type | PR label |
+| --- | --- |
+| Feature, Domain gap | `enhancement` |
+| Bug | `bug` |
+| Refactor | `refactor` |
+| Chore | `tech-debt` |
+
+Topic labels (e.g. `styles`, `production`) may be added too, but they do not decide the category.
+
+Add `security` to a PR that fixes a security issue. Add `breaking` when upgrading to that version
+needs manual action, such as a configuration or environment change, or a coordinated change in the
+other repository, such as a minimum backend version. `breaking` always wins, so the PR lands in the
+breaking section whatever its other labels.
 
 ---
 
