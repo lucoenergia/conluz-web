@@ -61,6 +61,8 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   // ── Authentication ────────────────────────────────────────────────────────
   useLogin: { ungated: "no session: a capability rides on a resource fetched with a token, so none can precede the request that obtains one" },
   useLogout: { ungated: "no session: refusing to end a session on a capability would strand the caller in it" },
+  useRequestPasswordReset: { ungated: "no session: a forgotten password is recovered by somebody who cannot sign in" },
+  useResetPassword: { ungated: "no session: the emailed token is the only credential, and it is checked by the backend" },
 
   // ── Configuration ─────────────────────────────────────────────────────────
   useInit: { ungated: "no session: first-run bootstrap, called before any account exists" },
