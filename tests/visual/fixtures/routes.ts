@@ -2,6 +2,8 @@ import type { Page, Route } from "@playwright/test";
 import type {
   CommunityCapabilitiesResponse,
   MembershipEnergyMetricsResponse,
+  MembershipHourlyProfileResponse,
+  MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
   PartitionCoefficientResponse,
   PlantResponse,
@@ -17,6 +19,8 @@ import {
   MEMBER_COMMUNITY_CAPABILITIES,
   MEMBER_ENERGY_METRICS,
   MEMBER_ENERGY_METRICS_PREVIOUS,
+  MEMBER_HOURLY_PROFILE,
+  MEMBER_MONTHLY_SERIES,
   MEMBER_PAYBACK,
   PLATFORM_VIEW_COMMUNITY_CAPABILITIES,
   COMMUNITY_ADMIN_PLANT_CAPABILITIES,
@@ -116,15 +120,17 @@ async function refuse(route: Route, capability: string) {
 }
 
 
-const MEMBERSHIP_PRIVATE_DATA = /\/api\/v1\/communities\/([^/]+)\/memberships\/([^/]+)\/(energy-metrics|payback)$/;
+const MEMBERSHIP_PRIVATE_DATA =
+  /\/api\/v1\/communities\/([^/]+)\/memberships\/([^/]+)\/(energy-metrics|energy-metrics\/hourly-profile|consumption\/monthly|payback)$/;
 
 /**
- * A membership's energy metrics and payback (#199), and the energy metrics of
- * the month before (#200): the member home's reads. The reference month is
- * asked for by period, the month before by explicit dates, so the query string
- * tells them apart. Defaults to the normal state, with a lower month before;
- * a test passes another state's fixtures, and wins over the default by
- * registering later.
+ * A membership's energy metrics and payback (#199), the energy metrics of the
+ * month before (#200), and its monthly series and hourly profile (#201): the
+ * member home's reads. The reference month is asked for by period, the month
+ * before by explicit dates, so the query string tells them apart; the series
+ * and the profile have paths of their own. Defaults to the normal state, with
+ * a lower month before and twelve complete months; a test passes another
+ * state's fixtures, and wins over the default by registering later.
  *
  * ROW SCOPING, not a gate: whose membership may be read is not on any served
  * capability. Mirrors CommunityAccessGuard.canReadMembershipPrivateData: the
@@ -138,10 +144,14 @@ export async function mockMemberHome(
     metrics = MEMBER_ENERGY_METRICS,
     previousMetrics = MEMBER_ENERGY_METRICS_PREVIOUS,
     payback = MEMBER_PAYBACK,
+    monthly = MEMBER_MONTHLY_SERIES,
+    hourly = MEMBER_HOURLY_PROFILE,
   }: {
     metrics?: MembershipEnergyMetricsResponse;
     previousMetrics?: MembershipEnergyMetricsResponse;
     payback?: MembershipPaybackResponse;
+    monthly?: MembershipMonthlyConsumptionBucketResponse[];
+    hourly?: MembershipHourlyProfileResponse;
   } = {},
 ) {
   const caller = currentUser as CurrentUserFixture & { id?: string };
@@ -159,13 +169,17 @@ export async function mockMemberHome(
           body: JSON.stringify({ status: 404, message: "not found" }),
         });
       }
-      return route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(
-          resource === "payback" ? payback : url.searchParams.has("startDate") ? previousMetrics : metrics,
-        ),
-      });
+      const body =
+        resource === "payback"
+          ? payback
+          : resource === "consumption/monthly"
+            ? monthly
+            : resource === "energy-metrics/hourly-profile"
+              ? hourly
+              : url.searchParams.has("startDate")
+                ? previousMetrics
+                : metrics;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
     },
   );
 }

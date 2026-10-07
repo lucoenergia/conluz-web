@@ -4,13 +4,30 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import {
   useGetMembershipEnergyMetrics,
+  useGetMembershipHourlyProfile,
+  useGetMembershipMonthlyConsumption,
   useGetMembershipPayback,
   type getMembershipEnergyMetrics,
+  type getMembershipHourlyProfile,
+  type getMembershipMonthlyConsumption,
   type getMembershipPayback,
 } from "../../api/memberships/memberships";
-import { CommunityRole, type MembershipEnergyMetricsResponse, type MembershipPaybackResponse } from "../../api/models";
+import {
+  CommunityRole,
+  type MembershipEnergyMetricsResponse,
+  type MembershipHourlyProfileResponse,
+  type MembershipMonthlyConsumptionBucketResponse,
+  type MembershipPaybackResponse,
+} from "../../api/models";
 import { useLoggedUser } from "../../context/logged-user.context";
-import { buildCurrentUser, buildMembershipEnergyMetrics, buildMembershipPayback } from "../../test/fixtures";
+import {
+  buildCurrentUser,
+  buildMembershipEnergyMetrics,
+  buildMembershipHourlyProfile,
+  buildMembershipHourlyProfileBucket,
+  buildMembershipMonthlyConsumptionBucket,
+  buildMembershipPayback,
+} from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
@@ -19,8 +36,13 @@ import { answerCommunities } from "./homeViews.mocks";
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
+  useGetMembershipHourlyProfile: vi.fn(),
+  useGetMembershipMonthlyConsumption: vi.fn(),
   useGetMembershipPayback: vi.fn(),
 }));
+// ApexCharts cannot lay out in jsdom; what the charts are told to draw is
+// asserted in TwelveMonthSeries.spec.tsx and BestHours.spec.tsx.
+vi.mock("react-apexcharts", () => ({ default: () => null }));
 // The view switch asks the active community what the caller may do there.
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -95,6 +117,39 @@ function previousMonthWith(overrides: Partial<MembershipEnergyMetricsResponse> =
   });
 }
 
+/** The twelve months ending at AUGUST (#201), every one stored and complete. */
+function twelveMonths(): MembershipMonthlyConsumptionBucketResponse[] {
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = ((8 + index) % 12) + 1;
+    const year = month >= 9 ? 2025 : 2026;
+    return buildMembershipMonthlyConsumptionBucket({
+      date: `${year}-${String(month).padStart(2, "0")}-01`,
+      consumptionKWh: 200 + index,
+      selfConsumptionEnergyKWh: 150 + index,
+      savingsEur: 20 + index,
+      tariffSource: "REAL_TARIFF",
+      supplyCount: 2,
+      suppliesWithData: 2,
+    });
+  });
+}
+
+/** AUGUST's average day (#201): every hour with consumption, the daylight hours with assigned production. */
+function augustProfile(): MembershipHourlyProfileResponse {
+  return buildMembershipHourlyProfile({
+    period: AUGUST,
+    coverage: { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 },
+    buckets: Array.from({ length: 24 }, (_, hour) =>
+      buildMembershipHourlyProfileBucket({
+        hour,
+        averageConsumptionKWh: 0.3,
+        consumptionSampleCount: 62,
+        ...(hour >= 8 && hour <= 19 ? { averageAssignedProductionKWh: 0.5, assignedProductionSampleCount: 62 } : {}),
+      }),
+    ),
+  });
+}
+
 type EnergyAnswer = MembershipEnergyMetricsResponse | "error" | "loading";
 
 function energyQuery(answer: EnergyAnswer, failure: string) {
@@ -113,15 +168,33 @@ function answer({
   metrics = monthWith(),
   previous = previousMonthWith(),
   payback = paybackWith(),
+  monthly = twelveMonths(),
+  hourly = augustProfile(),
 }: {
   metrics?: MembershipEnergyMetricsResponse | "error";
   previous?: EnergyAnswer;
   payback?: MembershipPaybackResponse | "error";
+  monthly?: MembershipMonthlyConsumptionBucketResponse[] | "error" | "loading";
+  hourly?: MembershipHourlyProfileResponse | "error" | "loading";
 } = {}) {
   const referenceMonth = energyQuery(metrics, "energy-metrics failed");
   const previousMonth = energyQuery(previous, "previous month failed");
   vi.mocked(useGetMembershipEnergyMetrics).mockImplementation((_communityId, _userId, params) =>
     params?.period ? referenceMonth : previousMonth,
+  );
+  vi.mocked(useGetMembershipMonthlyConsumption).mockReturnValue(
+    monthly === "error"
+      ? query.error(new Error("monthly series failed"))
+      : monthly === "loading"
+        ? query.loading()
+        : query.success<typeof getMembershipMonthlyConsumption>(monthly),
+  );
+  vi.mocked(useGetMembershipHourlyProfile).mockReturnValue(
+    hourly === "error"
+      ? query.error(new Error("hourly profile failed"))
+      : hourly === "loading"
+        ? query.loading()
+        : query.success<typeof getMembershipHourlyProfile>(hourly),
   );
   vi.mocked(useGetMembershipPayback).mockReturnValue(
     payback === "error" ? query.error(new Error("payback failed")) : query.success<typeof getMembershipPayback>(payback),
@@ -306,7 +379,7 @@ describe("MemberHomePage (#199)", () => {
     const ZERO = /(^|[^\d,])0(,0+)? ?(€|kWh|%)/;
 
     it("for the empty shapes of both responses", () => {
-      answer({ metrics: buildMembershipEnergyMetrics(), payback: buildMembershipPayback() });
+      answer({ metrics: buildMembershipEnergyMetrics(), payback: buildMembershipPayback(), hourly: buildMembershipHourlyProfile() });
       openHome();
 
       expect(page()).not.toMatch(ZERO);
@@ -542,6 +615,130 @@ describe("MemberHomePage (#199)", () => {
         expect(row("Consumo cubierto por la comunidad")).toBe(
           "Consumo cubierto por la comunidadSin comparación: no hay dato de agosto de 2026.",
         );
+      });
+    });
+  });
+
+  describe("the twelve-month series (#201)", () => {
+    const twelveMonths = () => card("Tus últimos 12 meses");
+    const monthlyCalls = () => vi.mocked(useGetMembershipMonthlyConsumption).mock.calls.map(([, , params]) => params);
+    const energyCalls = () => vi.mocked(useGetMembershipEnergyMetrics).mock.calls.map(([, , params]) => params);
+
+    it("asks for the twelve months ending at the resolved one, by explicit bounds, and leaves the other reads as they were", () => {
+      openHome();
+
+      expect(vi.mocked(useGetMembershipMonthlyConsumption)).toHaveBeenCalledWith(
+        COMMUNITY_ID,
+        USER_ID,
+        { startDate: "2025-09-01T00:00:00+02:00", endDate: AUGUST.endDate },
+        expect.anything(),
+      );
+      expect(new Set(monthlyCalls().map((params) => JSON.stringify(params))).size).toBe(1);
+      expect(new Set(energyCalls().map((params) => JSON.stringify(params)))).toEqual(
+        new Set([JSON.stringify({ period: "LATEST_PUBLISHED_MONTH" }), JSON.stringify({ startDate: JULY.startDate, endDate: JULY.endDate })]),
+      );
+    });
+
+    it("waits for the reference month: with none resolved, it neither asks nor shows anything of its own", () => {
+      answer({ metrics: monthWith({ period: { startDate: null, endDate: null } }) });
+      openHome();
+
+      expect(vi.mocked(useGetMembershipMonthlyConsumption)).not.toHaveBeenCalled();
+      expect(screen.queryByRole("region", { name: "Tus últimos 12 meses" })).not.toBeInTheDocument();
+      expect(screen.queryByText(/meses que mostrar/)).not.toBeInTheDocument();
+    });
+
+    describe("AC9 -- its read failing leaves the rest of the view, and the rest failing leaves it", () => {
+      it("when the series fails, the month, the comparison and the payback still render, and the series offers a retry", async () => {
+        answer({ monthly: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudieron cargar tus últimos 12 meses.");
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
+        expect(card("Comparado con julio de 2026")).toBeInTheDocument();
+        expect(text(paybackCard())).toContain("Llevas ahorrados 200,00 €");
+
+        await userEvent.setup().click(screen.getByRole("button", { name: "Reintentar" }));
+        expect(vi.mocked(useGetMembershipMonthlyConsumption).mock.results.at(-1)?.value.refetch).toHaveBeenCalled();
+      });
+
+      it("when the series is still loading, the rest of the view is not held up", () => {
+        answer({ monthly: "loading" });
+        openHome();
+
+        expect(screen.getByLabelText("Cargando tus últimos 12 meses")).toBeInTheDocument();
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
+        expect(paybackCard()).toBeInTheDocument();
+      });
+
+      it("when the comparison fails, the series still renders", () => {
+        answer({ previous: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudo cargar la comparación con el mes anterior.");
+        expect(twelveMonths()).toBeInTheDocument();
+      });
+
+      it("when the payback fails, the series still renders", () => {
+        answer({ payback: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudo cargar la recuperación de tu inversión.");
+        expect(twelveMonths()).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("the best hours (#201)", () => {
+    const bestHours = () => card("Tus mejores horas");
+    const twelveMonths = () => card("Tus últimos 12 meses");
+
+    it("asks for the profile with no period of its own, and renders without waiting for the reference month", () => {
+      answer({ metrics: "error" });
+      openHome();
+
+      expect(vi.mocked(useGetMembershipHourlyProfile)).toHaveBeenCalledWith(COMMUNITY_ID, USER_ID, expect.anything());
+      expect(bestHours()).toBeInTheDocument();
+    });
+
+    describe("AC9 -- either new block failing leaves the rest of the view, the other block included", () => {
+      it("when the profile fails, the month, the comparison, the twelve months and the payback still render, and the profile offers a retry", async () => {
+        answer({ hourly: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudieron cargar tus mejores horas.");
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
+        expect(card("Comparado con julio de 2026")).toBeInTheDocument();
+        expect(twelveMonths()).toBeInTheDocument();
+        expect(text(paybackCard())).toContain("Llevas ahorrados 200,00 €");
+
+        await userEvent.setup().click(screen.getByRole("button", { name: "Reintentar" }));
+        expect(vi.mocked(useGetMembershipHourlyProfile).mock.results.at(-1)?.value.refetch).toHaveBeenCalled();
+      });
+
+      it("when the twelve months fail, the profile still renders", () => {
+        answer({ monthly: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudieron cargar tus últimos 12 meses.");
+        expect(bestHours()).toBeInTheDocument();
+      });
+
+      it("when the payback fails, the profile still renders", () => {
+        answer({ payback: "error" });
+        openHome();
+
+        expect(screen.getByRole("alert")).toHaveTextContent("No se pudo cargar la recuperación de tu inversión.");
+        expect(bestHours()).toBeInTheDocument();
+      });
+
+      it("when the profile is still loading, the rest of the view is not held up", () => {
+        answer({ hourly: "loading" });
+        openHome();
+
+        expect(screen.getByLabelText("Cargando tus mejores horas")).toBeInTheDocument();
+        expect(card("El recorrido de tu energía")).toBeInTheDocument();
+        expect(twelveMonths()).toBeInTheDocument();
       });
     });
   });
