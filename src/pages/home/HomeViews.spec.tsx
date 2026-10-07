@@ -366,8 +366,8 @@ describe("home views (#197)", () => {
  * menu's Inicio. /home then picks the caller's view by the rules above.
  */
 describe("linking the home in (#199)", () => {
-  // Login navigates to "/" (pinned in Login.spec.tsx); the layout's landing
-  // effect sends the caller on from there.
+  // Login navigates to "/" (pinned in Login.spec.tsx); the landing there
+  // sends the caller on (#221).
   const signIn = (profile: Profile) => {
     as(profile);
     return openApp("/");
