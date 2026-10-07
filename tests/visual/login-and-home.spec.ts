@@ -1,5 +1,6 @@
 /**
- * Visual baselines — Unauthenticated login, the member home and the no-community landing screen.
+ * Visual baselines — Unauthenticated login and the no-community landing screen. The home views
+ * have their own captures in home-views.spec.ts.
  *
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
@@ -7,13 +8,11 @@
 import {
   test,
   expect,
-  FIXED_MEMBER_USER,
   FIXED_NO_COMMUNITY_USER,
   injectAuthToken,
   LAYOUT_MAX_DIFF_PIXELS,
   mainRegion,
   mockAllApiRoutes,
-  seedActiveCommunity,
   stabilizePage,
 } from "./fixtures";
 
@@ -27,22 +26,6 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("login-page.png", { fullPage: true, maxDiffPixels: LAYOUT_MAX_DIFF_PIXELS });
   });
 
-  // Member-fixture tests: home, supply-points, supply-detail, supply modals
-  // Active community is seeded in localStorage so operational UI is visible
-  // after the community useEffect auto-selects it.
-
-  test("home page", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
-    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
-
-    await page.goto("/");
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar masked (see mainRegion).
-    await expect(page).toHaveScreenshot("home-page.png", await mainRegion(page));
-  });
-
   // No-community fixture test: asserts that a user with no memberships and
   // isPlatformAdmin=false sees the /no-community screen (the correct expected behaviour).
 
@@ -51,8 +34,8 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_NO_COMMUNITY_USER);
 
     // Navigate directly — NoCommunityPage has no route guard, so it always renders.
-    // AuthenticatedLayout's landing-redirect only fires when pathname === '/',
-    // so navigating here directly does not trigger a redirect to /no-community.
+    // The landing at "/" would send this caller here as well; opening the page
+    // directly captures it without depending on that step.
     await page.goto("/no-community");
     await stabilizePage(page);
 

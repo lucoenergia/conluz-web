@@ -156,7 +156,6 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/components/CoefficientHistoryDrawer/CoefficientHistoryDrawer.tsx",
   // Drives these from a community-scoped supply list, and is remounted by the
   // keyed Outlet when the community changes.
-  "src/pages/Home.tsx",
   "src/pages/supply-points/SupplyDetailPage.tsx",
   // Driven by a plant from the active community's plant listing.
   "src/pages/home/management/usePlantSharingAgreements.ts",
@@ -268,8 +267,9 @@ export default tseslint.config([
   {
     // The wrappers, and the call sites that scope their own data. They are
     // exempt from the community-implicit restriction only -- re-stated rather
-    // than turned off, because this list includes src/pages/Home.tsx, which is
-    // one of the files the capability rule exists to catch.
+    // than turned off, because this list includes
+    // src/pages/supply-points/SupplyDetailPage.tsx, a screen and so one of the
+    // files the capability rule exists to catch.
     //
     // MUTATION_HOOKS has to be re-stated here too. No file in this list imports
     // a mutation today, which is exactly why leaving it out would go unnoticed:

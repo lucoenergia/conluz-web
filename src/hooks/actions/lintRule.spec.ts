@@ -38,10 +38,10 @@ describe("the mutation guard rail", () => {
   });
 
   it("still refuses one inside a community-scope wrapper", async () => {
-    // src/pages/Home.tsx is in COMMUNITY_SCOPE_WRAPPERS, whose block re-states
-    // the patterns it keeps. Drop MUTATION_HOOKS from that re-statement and this
-    // is the only assertion in the suite that notices.
-    const errors = await restrictedImportErrors(importsMutation, "src/pages/Home.tsx");
+    // src/pages/supply-points/SupplyDetailPage.tsx is in COMMUNITY_SCOPE_WRAPPERS,
+    // whose block re-states the patterns it keeps. Drop MUTATION_HOOKS from that
+    // re-statement and this is the only assertion in the suite that notices.
+    const errors = await restrictedImportErrors(importsMutation, "src/pages/supply-points/SupplyDetailPage.tsx");
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain("src/hooks/actions");

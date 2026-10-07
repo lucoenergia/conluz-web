@@ -1,9 +1,11 @@
 import "@testing-library/jest-dom";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { FC } from "react";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
 import { CommunityRole, type CurrentUserResponse } from "../../api/models";
 import {
@@ -150,10 +152,13 @@ async function settle(): Promise<void> {
 }
 
 /**
- * While the landing cannot yet decide, nothing it could decide on renders:
- * no screen, no heading, and not the route chunk's spinner either -- which
- * would mean the landing itself had not mounted, and that nothing was being
- * tested.
+ * While the landing cannot yet decide, nothing it could decide on renders.
+ *
+ * Every screen reachable from "/" -- either home view, the prompt to choose,
+ * the no-community screen -- opens with an h1, so no h1 at all in the content
+ * means none of them, and no screen standing in for them either. Not the route
+ * chunk's spinner, which would mean the landing had not mounted and nothing
+ * was being tested. And the caller has not been moved.
  */
 function expectNothingDecided(): void {
   expect(currentPath()).toBe("/");
@@ -161,13 +166,23 @@ function expectNothingDecided(): void {
   expect(within(main).queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
   expect(within(main).queryByRole("progressbar")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Elegir comunidad" })).not.toBeInTheDocument();
-  // The screen "/" served before #221. It is checked by its copy while its
-  // module still exists.
-  expect(screen.queryByText("Resumen de energía")).not.toBeInTheDocument();
-  expect(screen.queryByText("Producción Asignada")).not.toBeInTheDocument();
 }
 
 describe("landing at / (#221)", () => {
+  // App.tsx loads every page on demand. Loading the ones these callers reach
+  // up front keeps the first test from paying their transform inside a
+  // `findBy` timeout, which under a full parallel run it can exceed.
+  beforeAll(async () => {
+    await Promise.all([
+      import("./LandingRoute"),
+      import("../home/MemberHomePage"),
+      import("../home/CommunityManagementPage"),
+      import("../no-community/NoCommunityPage"),
+      import("../platform/PlatformPage"),
+      import("../Profile"),
+    ]);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
@@ -316,3 +331,29 @@ describe("landing at / (#221)", () => {
     expect(inicio[0]).toHaveAttribute("href", "/home");
   });
 });
+
+/**
+ * AC5 and AC6 over the source. "/" itself stays -- it is the landing, and every
+ * breadcrumb's Inicio and every denial leads there -- so what must not survive
+ * is the screen it used to serve. What "/" serves instead is pinned by the
+ * landing tests above.
+ */
+describe("the old home screen is gone (#221)", () => {
+  it("nothing in the app imports it or names it", () => {
+    const offenders = sourceFiles("src").filter((file) =>
+      /\bHomePage\b|["'](?:\.{1,2}\/)+(?:pages\/)?Home["']/.test(readFileSync(file, "utf8")),
+    );
+
+    expect(offenders).toEqual([]);
+    expect(existsSync(join("src", "pages", "Home.tsx"))).toBe(false);
+  });
+});
+
+/** Production sources: specs may name what they test. */
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return sourceFiles(path);
+    return /\.tsx?$/.test(entry.name) && !/\.spec\.tsx?$/.test(entry.name) ? [path] : [];
+  });
+}

@@ -73,10 +73,6 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   ...(await importOriginal()),
   useLoggedUser: vi.fn(),
 }));
-// The page at "/" is not under test, only that nobody is moved off it.
-vi.mock(import("../Home"), () => ({
-  HomePage: () => <p>Página de inicio actual</p>,
-}));
 
 const MEMBER_HEADING = { name: "Tu energía", level: 1 } as const;
 const MANAGEMENT_HEADING = { name: "Gestión de la comunidad", level: 1 } as const;
