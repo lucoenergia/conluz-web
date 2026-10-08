@@ -204,6 +204,11 @@ export const UserForm: FC<UserFormProps> = ({
           variant="contained"
           fullWidth
           disabled={isPending || disabled}
+          // loading keeps the label in the DOM, hidden behind the spinner, so the
+          // button keeps its name while it saves; aria-busy says it is saving (#211).
+          loading={isPending}
+          loadingIndicator={<CircularProgress size={24} color="inherit" />}
+          aria-busy={isPending}
           sx={{
             mt: 2,
             py: 1.5,
@@ -214,7 +219,7 @@ export const UserForm: FC<UserFormProps> = ({
             },
           }}
         >
-          {isPending ? <CircularProgress size={24} color="inherit" /> : submitLabel}
+          {submitLabel}
         </Button>
       </Box>
     </Box>
