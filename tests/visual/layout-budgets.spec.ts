@@ -334,6 +334,11 @@ test.describe("Visual baselines", () => {
    * keeps the document at 390px while cutting the right edge of every section
    * off, so the page's root box is measured too: its scroll width counts what
    * it clips.
+   *
+   * Measured as Playwright launches Chromium: with --hide-scrollbars, so a
+   * scrollbar takes no width. That matches a phone, whose scrollbars overlay
+   * the content; it is why this is a mobile-only check and says nothing about
+   * a desktop scrollbar's width.
    */
   for (const containerPage of CONTAINER_PAGES) {
     test(`#211 AC1: ${containerPage.name} stays within a 390px viewport`, async ({ page }, testInfo) => {
