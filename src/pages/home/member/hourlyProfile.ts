@@ -2,6 +2,7 @@ import type { ApexOptions } from "apexcharts";
 import type { MembershipHourlyProfileBucketResponse, MembershipHourlyProfileResponse } from "../../../api/models";
 import { formatAverageKilowattHours, formatHourOfDay, formatMonth } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
+import { ENERGY_COLORS } from "./energyColors";
 
 /** One series at one hour: no sample at all, or an average over its own samples. */
 export type HourlyValue = { kind: "no-sample" } | { kind: "average"; kWh: number; samples: number };
@@ -34,8 +35,8 @@ export const CONSUMPTION_SERIES = "Tu consumo";
 export const PRODUCTION_SERIES = "Energía asignada";
 export const NO_SAMPLE_TEXT = "Sin registros";
 
-const CONSUMPTION_COLOR = colors.accent.blue;
-const PRODUCTION_COLOR = colors.success.vivid;
+const CONSUMPTION_COLOR = ENERGY_COLORS.consumption;
+const PRODUCTION_COLOR = ENERGY_COLORS.assigned;
 
 /**
  * A series' value at one hour, from that series' own average and own count.

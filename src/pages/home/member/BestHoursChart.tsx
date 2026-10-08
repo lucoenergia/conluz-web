@@ -18,16 +18,19 @@ function tooltipRow(label: string, value: string): string {
 /**
  * Draws the hourly view exactly as given: its two series (null is a gap), its
  * baseline markers and its words. Computes nothing, so what it is told to draw
- * is what the table beside it says.
+ * is what the table beside it says. Consumption is drawn hollow, in its own
+ * colour, and assigned energy solid; the legend is the block's, not the chart's.
  */
 export const BestHoursChart: FC<{ view: Profile }> = ({ view }) => {
+  const [consumptionColor, assignedColor] = view.colors;
   const options: ApexOptions = {
     chart: { toolbar: { show: false }, animations: { enabled: false }, background: "transparent", zoom: { enabled: false } },
     annotations: view.annotations,
     colors: view.colors,
+    fill: { colors: [colors.background.paper, assignedColor], opacity: 1 },
     dataLabels: { enabled: false },
     plotOptions: { bar: { columnWidth: "70%", borderRadius: 3, borderRadiusApplication: "end" } },
-    stroke: { show: true, width: 2, colors: [colors.background.paper] },
+    stroke: { show: true, width: 2, colors: [consumptionColor, colors.background.paper] },
     grid: { borderColor: colors.border.light, strokeDashArray: 4, xaxis: { lines: { show: false } } },
     xaxis: {
       categories: view.categories,
@@ -36,7 +39,7 @@ export const BestHoursChart: FC<{ view: Profile }> = ({ view }) => {
       axisTicks: { show: false },
     },
     yaxis: { labels: { style: { colors: colors.text.secondary }, formatter: formatAverageKilowattHours } },
-    legend: { position: "top", horizontalAlign: "left", fontSize: "12px", labels: { colors: colors.text.body } },
+    legend: { show: false },
     tooltip: {
       shared: true,
       intersect: false,

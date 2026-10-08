@@ -4,22 +4,22 @@ import type { MembershipEnergyMetricsResponse } from "../../../api/models";
 import { formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { formatPercentage } from "../../../utils/formatPercentage";
 import { colors, radii } from "../../../theme/tokens";
+import { ENERGY_COLORS, swatch, type SwatchStyle } from "./energyColors";
 import { HomeCard } from "../HomeCard";
 
 const wholePercent = (ratio: number) => formatPercentage(ratio, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-const SHARED = colors.success.vivid;
-const REST = colors.border.inactive;
+const SHARED = swatch.solid(ENERGY_COLORS.community);
 
 interface Segment {
   label: string;
   kWh: number;
-  color: string;
+  swatch: SwatchStyle;
 }
 
 /**
- * One bar of the journey. Both bars share the green segment -- the community
- * energy the member used -- but each is a share of a different total, so each
+ * One bar of the journey. Both bars share the community segment -- the energy
+ * the member used -- but each is a share of a different total, so each
  * states its own base beside its title. Without it the two green lengths
  * invite a comparison that means nothing.
  *
@@ -41,8 +41,15 @@ const JourneyBar: FC<{ title: string; base: string; ratio: number; shared: Segme
         {base}
       </Typography>
     </Box>
-    <Box aria-hidden sx={{ display: "flex", height: 16, borderRadius: radii.small, overflow: "hidden", bgcolor: REST }}>
-      <Box sx={{ width: `${ratio * 100}%`, bgcolor: SHARED }} />
+    <Box aria-hidden sx={{ display: "flex", height: 20, borderRadius: radii.small, overflow: "hidden", ...rest.swatch }}>
+      <Box
+        sx={{
+          width: `${ratio * 100}%`,
+          ...shared.swatch,
+          // A white edge where the two segments meet, so neither relies on its neighbour's colour.
+          ...(ratio > 0 && ratio < 1 && { borderRight: `2px solid ${colors.background.paper}` }),
+        }}
+      />
     </Box>
     <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0, mt: 1, display: "flex", flexWrap: "wrap", columnGap: 3, rowGap: 0.5 }}>
       {[
@@ -50,7 +57,7 @@ const JourneyBar: FC<{ title: string; base: string; ratio: number; shared: Segme
         { ...rest, share: 1 - ratio },
       ].map((segment) => (
         <Box component="li" key={segment.label} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box aria-hidden sx={{ width: 10, height: 10, borderRadius: radii.small, bgcolor: segment.color, flexShrink: 0 }} />
+          <Box aria-hidden sx={{ width: 12, height: 12, borderRadius: radii.small, flexShrink: 0, boxSizing: "border-box", ...segment.swatch }} />
           <Typography variant="body2" sx={{ color: colors.text.body }}>
             {segment.label}: <strong>{formatKilowattHours(segment.kWh)}</strong> ({wholePercent(segment.share)})
           </Typography>
@@ -84,8 +91,8 @@ export const EnergyJourney: FC<{ metrics: MembershipEnergyMetricsResponse }> = (
             title="La energía que se te asignó"
             base={`de ${formatKilowattHours(energy.assignedProductionKWh)} asignados`}
             ratio={selfConsumptionRatio}
-            shared={{ label: "La usaste tú", kWh: energy.selfConsumptionKWh, color: SHARED }}
-            rest={{ label: "Se fue a la red", kWh: energy.surplusKWh, color: REST }}
+            shared={{ label: "La usaste tú", kWh: energy.selfConsumptionKWh, swatch: SHARED }}
+            rest={{ label: "Se fue a la red", kWh: energy.surplusKWh, swatch: swatch.exported }}
           />
         )}
         {selfSufficiencyRatio === null ? (
@@ -95,8 +102,8 @@ export const EnergyJourney: FC<{ metrics: MembershipEnergyMetricsResponse }> = (
             title="Tu consumo"
             base={`de ${formatKilowattHours(energy.totalConsumptionKWh)} consumidos`}
             ratio={selfSufficiencyRatio}
-            shared={{ label: "De la comunidad", kWh: energy.selfConsumptionKWh, color: SHARED }}
-            rest={{ label: "De la red", kWh: energy.gridImportKWh, color: REST }}
+            shared={{ label: "De la comunidad", kWh: energy.selfConsumptionKWh, swatch: SHARED }}
+            rest={{ label: "De la red", kWh: energy.gridImportKWh, swatch: swatch.solid(ENERGY_COLORS.grid) }}
           />
         )}
       </Box>

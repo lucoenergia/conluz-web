@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { ApexOptions } from "apexcharts";
@@ -8,6 +8,7 @@ import {
   type MembershipHourlyProfileBucketResponse,
   type MembershipHourlyProfileResponse,
 } from "../../../api/models";
+import { customInstance } from "../../../api/custom-instance";
 import { useLoggedUser } from "../../../context/logged-user.context";
 import {
   buildCurrentUser,
@@ -18,6 +19,7 @@ import { query } from "../../../test/queryState";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import { colors } from "../../../theme/tokens";
 import { BestHours } from "./BestHours";
+import { ENERGY_COLORS } from "./energyColors";
 
 /**
  * The acceptance criteria of #201 for the best-hours block.
@@ -32,6 +34,10 @@ const { Chart } = vi.hoisted(() => ({
 }));
 vi.mock("react-apexcharts", () => ({ default: Chart }));
 
+vi.mock(import("../../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: vi.fn(),
+}));
 vi.mock(import("../../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipHourlyProfile: vi.fn(),
@@ -111,6 +117,10 @@ describe("BestHours (#201)", () => {
       buildCurrentUser({ id: USER_ID, memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_MEMBER } }),
     );
     answer();
+  });
+
+  afterEach(() => {
+    expect(customInstance).not.toHaveBeenCalled();
   });
 
   it("asks the active community for the caller's own profile", () => {
@@ -238,5 +248,32 @@ describe("BestHours (#201)", () => {
     open();
 
     expect(screen.getByLabelText("Cargando tus mejores horas")).toBeInTheDocument();
+  });
+
+  describe("#231 AC4 -- consumption and assigned energy each keep their own colour", () => {
+    it("draws consumption hollow in its colour, and assigned energy solid in its own", () => {
+      open();
+      const { options } = chart();
+
+      expect(options.colors).toEqual([ENERGY_COLORS.consumption, ENERGY_COLORS.assigned]);
+      expect(options.fill?.colors).toEqual([colors.background.paper, ENERGY_COLORS.assigned]);
+      expect(options.stroke?.colors?.[0]).toBe(ENERGY_COLORS.consumption);
+    });
+
+    it("leaves the legend to the block, where it reads without scrolling the chart", () => {
+      open();
+      const legend = within(screen.getByRole("region", { name: "Tus mejores horas" })).getByRole("list");
+
+      expect(chart().options.legend?.show).toBe(false);
+      expect(within(legend).getAllByRole("listitem").map(text)).toEqual(["Tu consumo", "Energía asignada"]);
+    });
+
+    it("marks a gap and a measured zero in the series' own colour", () => {
+      answer(profileWith({ 2: { averageAssignedProductionKWh: 0, assignedProductionSampleCount: 62 } }));
+      open();
+      const [zero] = markersAt(2, 1);
+
+      expect(zero.marker?.strokeColor).toBe(ENERGY_COLORS.assigned);
+    });
   });
 });

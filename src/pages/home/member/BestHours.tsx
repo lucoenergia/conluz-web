@@ -6,7 +6,9 @@ import { colors } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
 import { NeutralNotice } from "../NeutralNotice";
 import { BestHoursChart } from "./BestHoursChart";
+import { ENERGY_COLORS, swatch } from "./energyColors";
 import { CONSUMPTION_SERIES, PRODUCTION_SERIES, toHourlyProfileView, type HourlyProfileView } from "./hourlyProfile";
+import { SeriesLegend } from "./SeriesLegend";
 import { useHourlyProfile } from "./useHourlyProfile";
 
 const TITLE = "Tus mejores horas";
@@ -72,6 +74,12 @@ export const BestHours: FC = () => {
         asignada supera tu consumo son las mejores para usar electricidad. Un círculo vacío marca una hora sin registros, y
         uno relleno, una media de cero.
       </Typography>
+      <SeriesLegend
+        items={[
+          { label: CONSUMPTION_SERIES, swatch: swatch.hollow(ENERGY_COLORS.consumption) },
+          { label: PRODUCTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.assigned) },
+        ]}
+      />
       <BestHoursChart view={view} />
       <ProfileTable view={view} />
     </HomeCard>

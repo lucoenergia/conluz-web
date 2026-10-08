@@ -4,6 +4,7 @@ import type { ApexOptions } from "apexcharts";
 import { formatEuros, formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors, shadows } from "../../../theme/tokens";
 import { ChartScrollArea } from "./ChartScrollArea";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "./energyColors";
 import type { MonthlySeriesView, MonthView } from "./monthlySeries";
 
 /** Wide enough for twelve labelled columns: narrower screens scroll the chart, never squeeze its axis. */
@@ -34,7 +35,7 @@ function baseOptions(view: MonthlySeriesView, annotations: ApexOptions["annotati
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
-    legend: { position: "top", horizontalAlign: "left", fontSize: "12px", labels: { colors: colors.text.body } },
+    legend: { show: false },
     states: { hover: { filter: { type: "darken" } } },
   };
 }
@@ -42,13 +43,13 @@ function baseOptions(view: MonthlySeriesView, annotations: ApexOptions["annotati
 /**
  * Draws the twelve-month view exactly as given: its series (null is a gap),
  * its annotations and its words. Computes nothing, so what it is told to draw
- * is what the table beside it says.
+ * is what the table beside it says. The legend is the block's, not the chart's.
  */
 export const TwelveMonthChart: FC<{ view: MonthlySeriesView }> = ({ view }) => {
   const energyOptions: ApexOptions = {
     ...baseOptions(view, view.energyAnnotations),
     chart: { ...baseOptions(view, view.energyAnnotations).chart, stacked: true },
-    colors: [colors.success.vivid, colors.accent.blue],
+    colors: [ENERGY_COLORS.community, ENERGY_COLORS.grid],
     plotOptions: { bar: { columnWidth: "60%", borderRadius: 4, borderRadiusApplication: "end", borderRadiusWhenStacked: "last" } },
     stroke: { show: true, width: 2, colors: [colors.background.paper] },
     yaxis: { labels: { style: { colors: colors.text.secondary }, formatter: formatKilowattHours } },
@@ -64,7 +65,7 @@ export const TwelveMonthChart: FC<{ view: MonthlySeriesView }> = ({ view }) => {
   };
   const savingsOptions: ApexOptions = {
     ...baseOptions(view, view.savingsAnnotations),
-    colors: [colors.success.main],
+    colors: [SAVINGS_COLOR],
     plotOptions: { bar: { columnWidth: "40%", borderRadius: 4, borderRadiusApplication: "end" } },
     yaxis: { labels: { style: { colors: colors.text.secondary }, formatter: formatEuros } },
     tooltip: {

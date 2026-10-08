@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ApexOptions } from "apexcharts";
 import "@testing-library/jest-dom";
 import {
   useGetMembershipEnergyMetrics,
@@ -31,8 +32,10 @@ import {
   buildMembershipPayback,
 } from "../../test/fixtures";
 import { query } from "../../test/queryState";
+import { declaredStyle } from "../../test/declaredStyle";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
+import { ENERGY_COLORS, EXPORTED_FILL } from "./member/energyColors";
 import { answerCommunities } from "./homeViews.mocks";
 
 vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
@@ -46,9 +49,13 @@ vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => (
   useGetMembershipMonthlyConsumption: vi.fn(),
   useGetMembershipPayback: vi.fn(),
 }));
-// ApexCharts cannot lay out in jsdom; what the charts are told to draw is
-// asserted in TwelveMonthSeries.spec.tsx and BestHours.spec.tsx.
-vi.mock("react-apexcharts", () => ({ default: () => null }));
+// ApexCharts cannot lay out in jsdom, so the stub records what each chart is
+// told to draw; its content is asserted in TwelveMonthSeries.spec.tsx and
+// BestHours.spec.tsx, and its colours against the rest of the page here.
+const { Chart } = vi.hoisted(() => ({
+  Chart: vi.fn<(props: { options: ApexOptions; series: { name: string }[] }) => null>(() => null),
+}));
+vi.mock("react-apexcharts", () => ({ default: Chart }));
 // The view switch asks the active community what the caller may do there.
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -758,6 +765,54 @@ describe("MemberHomePage (#199)", () => {
         expect(card("El recorrido de tu energía")).toBeInTheDocument();
         expect(twelveMonths()).toBeInTheDocument();
       });
+    });
+  });
+  describe("#231 AC4 -- each concept keeps one colour across the screen", () => {
+    const background = (element: Element) => declaredStyle(element)["background-color"];
+    // A legend swatch is an unnamed decorative box: the first child of the item that names it.
+    const swatchOf = (region: HTMLElement, label: RegExp) => within(region).getByText(label).closest("li")!.firstElementChild!;
+    // A journey bar is decorative too: the box after its title row, whose first child is the community segment.
+    const barOf = (title: string) => screen.getByRole("heading", { name: title }).parentElement!.nextElementSibling!;
+    const chartColors = (seriesName: string) =>
+      Chart.mock.calls
+        .map(([props]) => props)
+        .filter((props) => props.series.some((series) => series.name === seriesName))
+        .at(-1)!.options.colors;
+
+    beforeEach(() => openHome());
+
+    it("community energy is one colour in both journey bars, the twelve months and every legend", () => {
+      const journey = card("El recorrido de tu energía");
+
+      expect(background(barOf("La energía que se te asignó").firstElementChild!)).toBe(ENERGY_COLORS.community);
+      expect(background(barOf("Tu consumo").firstElementChild!)).toBe(ENERGY_COLORS.community);
+      expect(background(swatchOf(journey, /^La usaste tú/))).toBe(ENERGY_COLORS.community);
+      expect(background(swatchOf(journey, /^De la comunidad/))).toBe(ENERGY_COLORS.community);
+      expect(background(swatchOf(within(card("Tus últimos 12 meses")).getByRole("list"), /^De la comunidad$/))).toBe(ENERGY_COLORS.community);
+      expect(chartColors("De la comunidad")?.[0]).toBe(ENERGY_COLORS.community);
+    });
+
+    it("grid energy is one colour in the journey, the twelve months and every legend", () => {
+      expect(background(barOf("Tu consumo"))).toBe(ENERGY_COLORS.grid);
+      expect(background(swatchOf(card("El recorrido de tu energía"), /^De la red/))).toBe(ENERGY_COLORS.grid);
+      expect(background(swatchOf(within(card("Tus últimos 12 meses")).getByRole("list"), /^De la red$/))).toBe(ENERGY_COLORS.grid);
+      expect(chartColors("De la red")?.[1]).toBe(ENERGY_COLORS.grid);
+    });
+
+    it("the exported part of the assigned energy is the assigned colour in stripes, never the grid's", () => {
+      const exported = declaredStyle(barOf("La energía que se te asignó"));
+
+      expect(exported["background-image"]).toBe(EXPORTED_FILL);
+      expect(exported["background-color"]).not.toBe(ENERGY_COLORS.grid);
+      expect(declaredStyle(swatchOf(card("El recorrido de tu energía"), /^Se fue a la red/))["background-image"]).toBe(EXPORTED_FILL);
+    });
+
+    it("assigned energy and consumption in the hourly chart keep the colours their legend shows", () => {
+      const legend = within(card("Tus mejores horas")).getByRole("list");
+
+      expect(chartColors("Energía asignada")).toEqual([ENERGY_COLORS.consumption, ENERGY_COLORS.assigned]);
+      expect(background(swatchOf(legend, /^Energía asignada$/))).toBe(ENERGY_COLORS.assigned);
+      expect(declaredStyle(swatchOf(legend, /^Tu consumo$/)).border).toBe(`2px solid ${ENERGY_COLORS.consumption}`);
     });
   });
 });

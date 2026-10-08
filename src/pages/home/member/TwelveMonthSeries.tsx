@@ -13,6 +13,8 @@ import {
   toMonthlySeriesView,
   type MonthlySeriesView,
 } from "./monthlySeries";
+import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "./energyColors";
+import { SeriesLegend } from "./SeriesLegend";
 import { TwelveMonthChart } from "./TwelveMonthChart";
 import { useMemberEnergyMetrics, type ReferencePeriod } from "./useMemberEnergyMetrics";
 import { useTwelveMonthSeries } from "./useTwelveMonthSeries";
@@ -77,6 +79,13 @@ const Series: FC<{ referencePeriod: ReferencePeriod }> = ({ referencePeriod }) =
         {view.hasIncompleteMonth &&
           " Un mes marcado con dos cifras, como «1 de 2», solo suma los suministros que enviaron datos: una barra más baja no significa que consumieras menos."}
       </Typography>
+      <SeriesLegend
+        items={[
+          { label: SELF_CONSUMPTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.community) },
+          { label: GRID_IMPORT_SERIES, swatch: swatch.solid(ENERGY_COLORS.grid) },
+          { label: SAVINGS_SERIES, swatch: swatch.solid(SAVINGS_COLOR) },
+        ]}
+      />
       <TwelveMonthChart view={view} />
       <SeriesTable view={view} />
     </HomeCard>
