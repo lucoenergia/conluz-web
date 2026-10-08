@@ -118,10 +118,27 @@ call-site opt-in. `.light` is the vivid tone — never put small text on it.
 | `colors.accent.blue` | `#286cdb` | Consumption figures — 4.93:1 |
 | `colors.accent.cyan` | `#0078ac` | Integration provider marks — 4.90:1 |
 
-Named `accent`, not `chart`: no chart series uses them — series take the `vivid`
-tones of the semantic hues. Unlike `vivid`, each accent is safe in every
-direction (≥ 4.5:1 as type on white, behind white text, and on its own 8% tint),
-so it can carry a figure or a glyph without a second check.
+Named `accent`, not `chart`, because most uses are not charts. Unlike `vivid`,
+each accent is safe in every direction (≥ 4.5:1 as type on white, behind white
+text, and on its own 8% tint), so it can carry a figure or a glyph without a
+second check.
+
+### Energy series on the member home
+
+The member home gives each energy concept one colour across the whole screen —
+the journey bars, both charts and every legend — and no colour two concepts
+(#231). The mapping lives in `src/pages/home/member/energyColors.ts`, the only
+place a series colour is chosen; `energyColors.spec.ts` pins it.
+
+| Concept | Token | On white |
+|---|---|---|
+| Community energy | `success.vivid` | 3.03:1 — at the graphic-object bar, with no margin |
+| Grid energy | `secondary.main` | 7.58:1; 2.50:1 against the community green beside it |
+| Assigned energy | `accent.violet` | 4.96:1 |
+| Its exported part | `accent.violet` stripes over white | 4.96:1 is the stripe's, not the fill's |
+| Consumption | `accent.blue`, drawn hollow | 4.93:1; told from the violet beside it by its fill, not its hue |
+| Best hours | `success.surface` band | 1.10:1 — a tint that repeats the block's lead in words |
+| Savings | `success.main` | 4.97:1 |
 
 ---
 

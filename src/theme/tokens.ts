@@ -116,7 +116,8 @@ export const colors = {
     inactive: "#f9fafb", // inactive dropzone / input background
     errorFaint: "#fef2f2", // very-light error tint
   },
-  // Accent hues: stat figures, provider marks, and the production chart series.
+  // Accent hues: stat figures, provider marks, and the member home's assigned
+  // energy and consumption series (src/pages/home/member/energyColors.ts).
   // Named `accent` rather than `chart` because most uses are not charts — the
   // old name sent people looking for series colours and hid the fact that these
   // carry TYPE on the member's home screen.
