@@ -9,7 +9,7 @@ import { HomeViewSwitch } from "./HomeViewSwitch";
 import { BestHours } from "./member/BestHours";
 import { EnergyJourney } from "./member/EnergyJourney";
 import { HomeCard } from "./HomeCard";
-import { chooseMemberHomeMessage } from "./member/memberHomeMessage";
+import { chooseMemberHomeMessage, type MemberHomeMessage } from "./member/memberHomeMessage";
 import { NeutralNotice } from "./NeutralNotice";
 import { PaybackCard } from "./member/PaybackCard";
 import { PreviousMonthComparison } from "./member/PreviousMonthComparison";
@@ -35,7 +35,10 @@ export const MemberHomePage: FC = () => (
       Tu energía
     </Typography>
     <HomeViewSwitch current="member" />
-    <EnergyHalf />
+    <ReferenceMonthHeader />
+    <Journey />
+    <Savings />
+    <Advice />
     <PreviousMonthComparison />
     <TwelveMonthSeries />
     <BestHours />
@@ -43,27 +46,21 @@ export const MemberHomePage: FC = () => (
   </Box>
 );
 
-const EnergyHalf: FC = () => {
-  const { metrics, referencePeriod, isLoading, isError, retry } = useMemberEnergyMetrics();
+interface ResolvedMonth {
+  metrics: MembershipEnergyMetricsResponse;
+  referencePeriod: ReferencePeriod;
+  month: string;
+  message: MemberHomeMessage | null;
+}
 
-  if (isError) return <LoadErrorAlert message="No se pudieron cargar los datos de tu energía." onRetry={retry} />;
-  if (isLoading || !metrics) return <Skeleton variant="rounded" height={320} aria-label="Cargando los datos de tu energía" />;
-  if (!referencePeriod) {
-    return (
-      <NeutralNotice title="Todavía no hay datos de tu energía">
-        Aparecerán cuando la distribuidora publique el primer mes en que se te haya asignado energía de la comunidad. Los
-        datos de cada mes se publican hacia el día 10 del mes siguiente.
-      </NeutralNotice>
-    );
-  }
-  return <ReferenceMonth metrics={metrics} referencePeriod={referencePeriod} />;
-};
-
-const ReferenceMonth: FC<{ metrics: MembershipEnergyMetricsResponse; referencePeriod: ReferencePeriod }> = ({
-  metrics,
-  referencePeriod,
-}) => {
-  const month = formatMonth(referencePeriod.startDate);
+/**
+ * The reference month once it has resolved, or null. The blocks built from it
+ * render nothing until then: its loading, failure and absence are the header's
+ * to explain, once.
+ */
+function useResolvedMonth(): ResolvedMonth | null {
+  const { metrics, referencePeriod } = useMemberEnergyMetrics();
+  if (!metrics || !referencePeriod) return null;
   const message =
     metrics.selfConsumptionRatio === null
       ? null
@@ -72,29 +69,60 @@ const ReferenceMonth: FC<{ metrics: MembershipEnergyMetricsResponse; referencePe
           selfConsumptionRatio: metrics.selfConsumptionRatio,
           surplusKWh: metrics.energy.surplusKWh,
         });
+  return { metrics, referencePeriod, month: formatMonth(referencePeriod.startDate), message };
+}
+
+/** Which month the figures belong to, and the one place the energy read's loading, failure and absence are explained. */
+const ReferenceMonthHeader: FC = () => {
+  const { metrics, isLoading, isError, retry } = useMemberEnergyMetrics();
+  const resolved = useResolvedMonth();
+
+  if (isError) return <LoadErrorAlert message="No se pudieron cargar los datos de tu energía." onRetry={retry} />;
+  if (isLoading || !metrics) return <Skeleton variant="rounded" height={320} aria-label="Cargando los datos de tu energía" />;
+  if (!resolved) {
+    return (
+      <NeutralNotice title="Todavía no hay datos de tu energía">
+        Aparecerán cuando la distribuidora publique el primer mes en que se te haya asignado energía de la comunidad. Los
+        datos de cada mes se publican hacia el día 10 del mes siguiente.
+      </NeutralNotice>
+    );
+  }
 
   return (
     <>
       <Box>
         <Typography variant="h6" component="p" sx={{ color: colors.text.primary }}>
-          Datos de {month}
+          Datos de {resolved.month}
         </Typography>
         <Typography variant="body2" sx={{ color: colors.text.subtle }}>
           Es el último mes completo que ha publicado la distribuidora: los datos de cada mes se publican hacia el día 10
           del mes siguiente.
         </Typography>
       </Box>
-      {message?.kind === "partial-month" && <NeutralNotice>{message.text}</NeutralNotice>}
-      <EnergyJourney metrics={metrics} />
-      <SavingsCard metrics={metrics} month={month} />
-      {message?.kind === "advice" && (
-        <HomeCard title="Qué puedes hacer">
-          <Typography variant="body1" sx={{ color: colors.text.body }}>
-            {message.text}
-          </Typography>
-        </HomeCard>
-      )}
+      {resolved.message?.kind === "partial-month" && <NeutralNotice>{resolved.message.text}</NeutralNotice>}
     </>
+  );
+};
+
+const Journey: FC = () => {
+  const resolved = useResolvedMonth();
+  return resolved && <EnergyJourney metrics={resolved.metrics} />;
+};
+
+const Savings: FC = () => {
+  const resolved = useResolvedMonth();
+  return resolved && <SavingsCard metrics={resolved.metrics} month={resolved.month} />;
+};
+
+const Advice: FC = () => {
+  const message = useResolvedMonth()?.message;
+  if (message?.kind !== "advice") return null;
+  return (
+    <HomeCard title="Qué puedes hacer">
+      <Typography variant="body1" sx={{ color: colors.text.body }}>
+        {message.text}
+      </Typography>
+    </HomeCard>
   );
 };
 
