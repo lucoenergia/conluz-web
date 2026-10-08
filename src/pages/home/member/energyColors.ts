@@ -29,7 +29,7 @@ export const ENERGY_COLORS = {
   exported: colors.accent.violetDeep,
   /** The member's consumption. Not a slate: slate means the grid. */
   consumption: colors.accent.navy,
-  /** The hours when assigned energy exceeds consumption. */
+  /** The best hours: those when the most assigned energy arrives. */
   bestHours: colors.success.surface,
 } as const;
 
