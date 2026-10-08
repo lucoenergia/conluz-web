@@ -381,6 +381,33 @@ describe("BestHours (#201)", () => {
       );
     });
 
+    describe("names the shading in the legend only when something is shaded", () => {
+      const legendItems = () =>
+        within(within(screen.getByRole("region", { name: /^Tus mejores horas/ })).getByRole("list"))
+          .getAllByRole("listitem")
+          .map(text);
+
+      it("present when at least one hour is best", () => {
+        open();
+
+        expect(legendItems()).toEqual(["Tu consumo", "Energía asignada", "Mejores horas"]);
+      });
+
+      it.each([
+        ["no hour received assigned energy", () => answer(onlyAt({}))],
+        [
+          "the month has gaps",
+          () => answer({ ...profileWith(), coverage: { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 } }),
+        ],
+      ])("absent when %s, since no column is shaded", (_, serve) => {
+        serve();
+        open();
+
+        expect(legendItems()).toEqual(["Tu consumo", "Energía asignada"]);
+        expect(chart().options.grid?.column?.colors).toEqual(Array(24).fill("transparent"));
+      });
+    });
+
     it("shades exactly the best hours' columns, in the colour the legend names", () => {
       answer(profileWith({ 12: assigned(0.9) }));
       open();

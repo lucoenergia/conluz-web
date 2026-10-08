@@ -99,7 +99,8 @@ export const BestHours: FC = () => {
         items={[
           { label: CONSUMPTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.consumption) },
           { label: PRODUCTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.assigned) },
-          { label: BEST_HOURS_LABEL, swatch: swatch.band },
+          // A legend entry with nothing shaded would point at nothing.
+          ...(view.hasBestHours ? [{ label: BEST_HOURS_LABEL, swatch: swatch.band }] : []),
         ]}
       />
       <BestHoursChart view={view} />

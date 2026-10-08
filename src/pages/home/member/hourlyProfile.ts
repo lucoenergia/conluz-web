@@ -33,6 +33,8 @@ export type HourlyProfileView =
       hours: HourView[];
       /** Which hours are best, in words: "Mejores horas: de 9 h a 14 h y de 15 h a 18 h". */
       bestHoursText: string;
+      /** Whether any hour is marked as best, so the shading has anything to stand for. */
+      hasBestHours: boolean;
       /** The background of each hour's column: the best hours stand out, the rest stay clear. */
       columnColors: string[];
       categories: string[];
@@ -168,6 +170,7 @@ export function toHourlyProfileView(response: MembershipHourlyProfileResponse): 
     month: formatMonth(response.period.startDate),
     hours,
     bestHoursText: bestHoursTextOf(hours, complete),
+    hasBestHours: best.size > 0,
     columnColors: hours.map((hour) => (hour.best ? ENERGY_COLORS.bestHours : "transparent")),
     categories: hours.map((hour) => hour.label),
     series: [
