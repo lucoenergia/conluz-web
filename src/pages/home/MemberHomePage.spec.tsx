@@ -33,6 +33,7 @@ import {
 } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { declaredStyle } from "../../test/declaredStyle";
+import { colors } from "../../theme/tokens";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
 import { ENERGY_COLORS, EXPORTED_FILL } from "./member/energyColors";
@@ -873,6 +874,67 @@ describe("MemberHomePage (#199)", () => {
         expect(found[0], block).toHaveAttribute("data-testid", icon);
       }
       expect(new Set([...Object.values(icons), "CalendarMonthRoundedIcon"]).size).toBe(8);
+    });
+  });
+  describe("#231 -- the payback carries its own figure", () => {
+    it("states the share recovered as a figure, with its bar and the bar's ends", () => {
+      openHome();
+      const payback = paybackCard();
+
+      expect(text(payback)).toContain("40 %recuperado");
+      expect(within(payback).getByRole("progressbar", { name: "Parte recuperada de tu inversión" })).toHaveAttribute("aria-valuenow", "40");
+      expect(text(payback)).toContain("0,00 €500,00 €");
+    });
+
+    it("shows a recovered investment as recovered, with no progress left to report", () => {
+      answer({ payback: paybackWith({ savedEur: 650, remainingEur: 0, progressRatio: 1.3, estimatedRemainingMonths: null }) });
+      openHome();
+      const payback = paybackCard();
+
+      expect(text(payback)).toContain("130 %recuperado");
+      expect(within(payback).getByTestId("CheckCircleRoundedIcon")).toBeInTheDocument();
+      expect(within(payback).queryByRole("progressbar")).not.toBeInTheDocument();
+    });
+
+    it("draws no figure and no bar when no investment is recorded, and adds no notice to the page", () => {
+      answer({ payback: paybackWith({ investmentEur: null, remainingEur: null, progressRatio: null, estimatedRemainingMonths: null }) });
+      openHome();
+
+      expect(text(paybackCard())).not.toMatch(/%recuperado/);
+      expect(within(paybackCard()).getByTestId("RemoveCircleOutlineRoundedIcon")).toBeInTheDocument();
+      expect(screen.queryAllByRole("note")).toHaveLength(0);
+    });
+  });
+
+  describe("#231 AC6 -- a neutral state is never coloured as an alert", () => {
+    // MUI writes the colours it derives from the palette as rgb(), sx keeps the token's hex: match both.
+    const rgbOf = (hex: string) => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(", ")})`;
+    const ALERT_COLOURS = [...Object.values(colors.error), ...Object.values(colors.warning)].flatMap((hex) => [hex, rgbOf(hex)]);
+    const alertColoured = () =>
+      [...document.body.querySelectorAll("*")].filter((element) =>
+        Object.values(declaredStyle(element)).some((value) => ALERT_COLOURS.some((colour) => value.includes(colour))),
+      );
+
+    it.each([
+      ["an incomplete month", () => answer({ metrics: monthWith({ coverage: { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 } }) })],
+      ["no investment recorded", () => answer({ payback: paybackWith({ investmentEur: null, remainingEur: null, progressRatio: null, estimatedRemainingMonths: null }) })],
+      ["a community that has never shared", () => answer({ metrics: buildMembershipEnergyMetrics(), payback: buildMembershipPayback({ investmentEur: 500 }), hourly: buildMembershipHourlyProfile() })],
+      ["a new member", () => answer({ metrics: buildMembershipEnergyMetrics(), payback: paybackWith({ savedEur: 0, remainingEur: 500, progressRatio: 0 }) })],
+      ["a comparison not available yet", () => answer({ previous: previousMonthWith({ coverage: { hoursWithData: 0, expectedHours: 1488, supplyCount: 2, suppliesWithData: 0 } }) })],
+      ["no hour among the best", () => answer({ hourly: buildMembershipHourlyProfile({ ...augustProfile(), buckets: augustProfile().buckets.map((bucket) => ({ ...bucket, averageAssignedProductionKWh: 0.1, assignedProductionSampleCount: 62 })) }) })],
+    ])("%s", (_, serve) => {
+      serve();
+      openHome();
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(alertColoured()).toEqual([]);
+    });
+
+    it("sees alert colouring where there is some: a failed read", () => {
+      answer({ metrics: "error" });
+      openHome();
+
+      expect(alertColoured()).not.toEqual([]);
     });
   });
 });
