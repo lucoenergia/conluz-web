@@ -395,6 +395,13 @@ describe("TwelveMonthSeries (#201)", () => {
       expect(chartWith("Ahorro").options.colors).toEqual([SAVINGS_COLOR]);
     });
 
+    it("draws every bar at full opacity, so it shows its token and not a lighter tint of it", () => {
+      open();
+
+      expect(chartWith("De la comunidad").options.fill?.opacity).toBe(1);
+      expect(chartWith("Ahorro").options.fill?.opacity).toBe(1);
+    });
+
     it("leaves the legend to the block, naming the series the charts draw", () => {
       open();
       const legend = within(screen.getByRole("region", { name: "Tus últimos 12 meses" })).getByRole("list");

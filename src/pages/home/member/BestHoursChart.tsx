@@ -25,6 +25,9 @@ export const BestHoursChart: FC<{ view: Profile }> = ({ view }) => {
     chart: { toolbar: { show: false }, animations: { enabled: false }, background: "transparent", zoom: { enabled: false } },
     annotations: view.annotations,
     colors: view.colors,
+    // Full opacity, so each bar is drawn in its token and at its measured
+    // contrast; ApexCharts' default of 85 % would lighten them.
+    fill: { opacity: 1 },
     dataLabels: { enabled: false },
     plotOptions: { bar: { columnWidth: "70%", borderRadius: 3, borderRadiusApplication: "end" } },
     stroke: { show: true, width: 2, colors: [colors.background.paper] },

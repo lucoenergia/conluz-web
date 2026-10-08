@@ -28,6 +28,10 @@ function baseOptions(view: MonthlySeriesView, annotations: ApexOptions["annotati
     chart: { toolbar: { show: false }, animations: { enabled: false }, background: "transparent", zoom: { enabled: false } },
     annotations,
     dataLabels: { enabled: false },
+    // ApexCharts draws bar fills at 85 % opacity by default, which lightens
+    // every series off its token and below its measured contrast: the
+    // community green would draw at 2.58:1 instead of 3.03:1.
+    fill: { opacity: 1 },
     grid: { borderColor: colors.border.light, strokeDashArray: 4, xaxis: { lines: { show: false } } },
     xaxis: {
       categories: view.categories,
