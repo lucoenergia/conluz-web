@@ -23,6 +23,7 @@ import type {
   PlantResponse,
   SharingAgreementResponse,
 } from "../../src/api/models";
+import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../src/test/capturedResponses";
 import {
   test,
   expect,
@@ -34,6 +35,7 @@ import {
   MANAGEMENT_SECOND_PLANT,
   MANAGEMENT_SUPERSEDED_AGREEMENT,
   MEMBER_ENERGY_METRICS_NO_MONTH,
+  MEMBER_MONTHLY_SERIES,
   MEMBER_ENERGY_METRICS_PARTIAL,
   MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER,
   MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA,
@@ -247,6 +249,23 @@ test.describe("Visual baselines", () => {
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("home-member-comparison-affected-by-coverage.png", await mainRegion(page));
+  });
+
+  // #219: these fixtures once wrote the date as "2026-08-01" while the API
+  // writes "2026/08/01", so every capture showed labels the real page never did.
+  test("the twelve-month fixtures carry every field, and the date and time, as the API returns them", () => {
+    const [captured] = CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION;
+    const series = [
+      MEMBER_MONTHLY_SERIES,
+      MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
+      MEMBER_MONTHLY_SERIES_ONE_MONTH,
+      MEMBER_MONTHLY_SERIES_EMPTY,
+    ];
+    for (const bucket of series.flat()) {
+      expect(Object.keys(bucket).sort()).toEqual(Object.keys(captured).sort());
+      expect(bucket.date).toMatch(wireShapeOf(captured.date));
+      expect(bucket.time).toMatch(wireShapeOf(captured.time));
+    }
   });
 
   test("member home view, twelve months with data", async ({ page }) => {

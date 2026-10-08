@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { ApexOptions } from "apexcharts";
@@ -9,7 +9,9 @@ import {
   type getMembershipMonthlyConsumption,
 } from "../../../api/memberships/memberships";
 import { CommunityRole, type MembershipMonthlyConsumptionBucketResponse } from "../../../api/models";
+import { customInstance } from "../../../api/custom-instance";
 import { useLoggedUser } from "../../../context/logged-user.context";
+import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../../test/capturedResponses";
 import {
   buildCurrentUser,
   buildMembershipEnergyMetrics,
@@ -32,6 +34,10 @@ const { Chart } = vi.hoisted(() => ({
 }));
 vi.mock("react-apexcharts", () => ({ default: Chart }));
 
+vi.mock(import("../../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: vi.fn(),
+}));
 vi.mock(import("../../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
@@ -50,8 +56,8 @@ const AUGUST = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T21:00:0
 
 /** September 2025 to August 2026, in order: the twelve months ending at AUGUST. */
 const MONTHS = [
-  "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01",
-  "2026-03-01", "2026-04-01", "2026-05-01", "2026-06-01", "2026-07-01", "2026-08-01",
+  "2025/09/01", "2025/10/01", "2025/11/01", "2025/12/01", "2026/01/01", "2026/02/01",
+  "2026/03/01", "2026/04/01", "2026/05/01", "2026/06/01", "2026/07/01", "2026/08/01",
 ];
 const LABELS = ["sept", "oct", "nov", "dic", "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago"];
 const MARCH = 6;
@@ -141,6 +147,10 @@ describe("TwelveMonthSeries (#201)", () => {
       buildCurrentUser({ id: USER_ID, memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_MEMBER } }),
     );
     answer();
+  });
+
+  afterEach(() => {
+    expect(customInstance).not.toHaveBeenCalled();
   });
 
   it("asks for the twelve months ending at the resolved month, by bounds derived from it", () => {
@@ -306,5 +316,73 @@ describe("TwelveMonthSeries (#201)", () => {
     open();
 
     expect(screen.getByLabelText("Cargando tus últimos 12 meses")).toBeInTheDocument();
+  });
+
+  describe("#219 -- the months of the response the API actually returns", () => {
+    // October 2022 to September 2023, captured from the running backend: a
+    // bucket's date reads "2022/10/01", and the first seven months have
+    // nothing stored.
+    const CAPTURED_LABELS = ["oct", "nov", "dic", "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept"];
+    const CAPTURED_NAMES = [
+      "octubre de 2022", "noviembre de 2022", "diciembre de 2022", "enero de 2023",
+      "febrero de 2023", "marzo de 2023", "abril de 2023", "mayo de 2023",
+      "junio de 2023", "julio de 2023", "agosto de 2023", "septiembre de 2023",
+    ];
+    const CAPTURED_CAPTION = "De octubre de 2022 a septiembre de 2023: 5 de 12 meses con datos.";
+    const block = () => screen.getByRole("region", { name: "Tus últimos 12 meses" });
+
+    beforeEach(() => answer(CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION));
+
+    it("AC2 -- this spec's own months carry the date and time as the API writes them", () => {
+      const [captured] = CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION;
+      for (const bucket of [...twelveMonthsWith(), buildMembershipMonthlyConsumptionBucket({ ...NOTHING_STORED })]) {
+        expect(bucket.date).toMatch(wireShapeOf(captured.date));
+        expect(bucket.time).toMatch(wireShapeOf(captured.time));
+      }
+    });
+
+    it("AC1 -- every column carries its month name and the caption states the range", () => {
+      open();
+
+      expect(energyChart().options.xaxis?.categories).toEqual(CAPTURED_LABELS);
+      expect(savingsChart().options.xaxis?.categories).toEqual(CAPTURED_LABELS);
+      expect(within(table()).getAllByRole("rowheader").map((cell) => cell.textContent)).toEqual(CAPTURED_NAMES);
+      expect(text(block())).toContain(CAPTURED_CAPTION);
+      expect(text(block())).not.toContain("Invalid Date");
+    });
+
+    it("AC3 -- labels a month with nothing stored by its name too", () => {
+      open();
+
+      expect(xAnnotationsAt(energyChart(), "oct")).toEqual(["Sin datos"]);
+      expect(xAnnotationsAt(savingsChart(), "oct")).toEqual(["Sin datos"]);
+      expect(tableRow("octubre de 2022")).toContain("Sin datos");
+    });
+
+    describe.each(["Pacific/Kiritimati", "America/Los_Angeles"])(
+      "AC4 -- on a device in %s, on the first day of a month",
+      (deviceTimeZone) => {
+        const originalTz = process.env.TZ;
+        beforeEach(() => {
+          process.env.TZ = deviceTimeZone;
+          // Midnight on 1 October on the device: the hour at which an offset
+          // reading the date as an instant would swallow the whole month.
+          vi.useFakeTimers({ toFake: ["Date"] });
+          vi.setSystemTime(new Date(2023, 9, 1, 0, 0, 0));
+        });
+        afterEach(() => {
+          vi.useRealTimers();
+          process.env.TZ = originalTz;
+        });
+
+        it("names each bucket's own month, never the one before", () => {
+          open();
+
+          expect(energyChart().options.xaxis?.categories).toEqual(CAPTURED_LABELS);
+          expect(within(table()).getAllByRole("rowheader").map((cell) => cell.textContent)).toEqual(CAPTURED_NAMES);
+          expect(text(block())).toContain(CAPTURED_CAPTION);
+        });
+      },
+    );
   });
 });

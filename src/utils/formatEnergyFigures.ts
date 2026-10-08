@@ -1,4 +1,4 @@
-import { formatCalendarDate } from "./formatCalendarDate";
+import { APP_TIME_ZONE, formatCalendarDate } from "./formatCalendarDate";
 
 /**
  * Spanish-locale energy in kWh: no decimals for whole amounts, at most one
@@ -45,22 +45,27 @@ export function formatAverageKilowattHours(value: number): string {
 }
 
 /**
- * The month of a local calendar date ("2026-08-01"), read from the date itself
- * rather than as an instant: it names a day in the community's calendar, so no
- * time zone may move it to the day before.
+ * The month of a local calendar date as the API writes it ("2026/08/01"), read
+ * from the date itself rather than as an instant: it names a day in the
+ * community's calendar, so no time zone may move it to the day before (#219).
+ *
+ * Only that shape is read, on purpose. Any other ("2026-08-01") renders
+ * "Invalid Date", so a fixture that drifts from what the server sends fails
+ * loudly in its specs instead of passing; a parser lenient enough to accept it
+ * is how this label once shipped broken while every test was green.
  */
 function calendarMonthOf(localDate: string, options: Intl.DateTimeFormatOptions): string {
-  const [year, month] = localDate.split("-").map(Number);
-  // Mid-month noon in UTC, formatted in UTC: no offset can reach another month.
-  return new Date(Date.UTC(year, month - 1, 15, 12)).toLocaleDateString("es-ES", { timeZone: "UTC", ...options });
+  const [year, month] = localDate.split("/").map(Number);
+  // Mid-month noon, named in the app's time zone: no offset can reach another month.
+  return new Date(Date.UTC(year, month - 1, 15, 12)).toLocaleDateString("es-ES", { timeZone: APP_TIME_ZONE, ...options });
 }
 
-/** A chart's month label, from a local calendar date: "ago". */
+/** A chart's month label, from a local calendar date: "2026/08/01" reads "ago". */
 export function formatShortMonth(localDate: string): string {
   return calendarMonthOf(localDate, { month: "short" });
 }
 
-/** The full name of a local calendar date's month: "agosto de 2026". */
+/** The full name of a local calendar date's month: "2026/08/01" reads "agosto de 2026". */
 export function formatCalendarMonth(localDate: string): string {
   return calendarMonthOf(localDate, { month: "long", year: "numeric" });
 }

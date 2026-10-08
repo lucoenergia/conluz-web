@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -19,7 +19,9 @@ import {
   type MembershipMonthlyConsumptionBucketResponse,
   type MembershipPaybackResponse,
 } from "../../api/models";
+import { customInstance } from "../../api/custom-instance";
 import { useLoggedUser } from "../../context/logged-user.context";
+import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../test/capturedResponses";
 import {
   buildCurrentUser,
   buildMembershipEnergyMetrics,
@@ -33,6 +35,10 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
 import { answerCommunities } from "./homeViews.mocks";
 
+vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: vi.fn(),
+}));
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
@@ -123,7 +129,7 @@ function twelveMonths(): MembershipMonthlyConsumptionBucketResponse[] {
     const month = ((8 + index) % 12) + 1;
     const year = month >= 9 ? 2025 : 2026;
     return buildMembershipMonthlyConsumptionBucket({
-      date: `${year}-${String(month).padStart(2, "0")}-01`,
+      date: `${year}/${String(month).padStart(2, "0")}/01`,
       consumptionKWh: 200 + index,
       selfConsumptionEnergyKWh: 150 + index,
       savingsEur: 20 + index,
@@ -222,6 +228,10 @@ describe("MemberHomePage (#199)", () => {
     // A plain member: the community grants no management, so no switch.
     answerCommunities({ adminOf: [] });
     answer();
+  });
+
+  afterEach(() => {
+    expect(customInstance).not.toHaveBeenCalled();
   });
 
   it("reads the caller's own membership in the active community", () => {
@@ -617,6 +627,14 @@ describe("MemberHomePage (#199)", () => {
         );
       });
     });
+  });
+
+  it("#219 AC2 -- its monthly buckets carry the date and time as the API writes them", () => {
+    const [captured] = CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION;
+    for (const bucket of twelveMonths()) {
+      expect(bucket.date).toMatch(wireShapeOf(captured.date));
+      expect(bucket.time).toMatch(wireShapeOf(captured.time));
+    }
   });
 
   describe("the twelve-month series (#201)", () => {

@@ -417,8 +417,8 @@ export function buildMembershipMonthlyConsumptionBucket(
   overrides: Partial<MembershipMonthlyConsumptionBucketResponse> = {},
 ): MembershipMonthlyConsumptionBucketResponse {
   return {
-    date: "2026-01-01",
-    time: "00:00:00",
+    date: "2026/01/01",
+    time: "00:00",
     consumptionKWh: 0,
     surplusEnergyKWh: 0,
     generationEnergyKWh: 0,
