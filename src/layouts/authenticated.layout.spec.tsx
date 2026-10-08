@@ -8,7 +8,8 @@ import { query } from "../test/queryState";
 import { useGetCurrentUser } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
 import { CommunityRole } from "../api/models";
-import { buildCurrentUser } from "../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../test/fixtures";
+import { useGetCommunityById, type getCommunityById } from "../api/communities/communities";
 
 const LOGGED_USER = buildCurrentUser({
   id: "user-1",
@@ -40,6 +41,14 @@ vi.mock(import("../hooks/useLogout"), () => ({
 // is never read; it only has to not be a request.
 vi.mock(import("../api/users/users"), () => ({
   useGetCurrentUser: vi.fn(),
+}));
+
+// The layout reads the active community's capabilities from
+// useGetCommunityById; left real, it reached the network on every render and
+// switch (#211). The spread keeps the rest of the module real.
+vi.mock(import("../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCommunityById: vi.fn(),
 }));
 
 vi.mock("../components/Header/Header", () => ({
@@ -102,6 +111,15 @@ describe("AuthenticatedLayout community switching", () => {
     renders.length = 0;
     mounts.length = 0;
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());
+    // Each community answers its admin, whichever one is active.
+    vi.mocked(useGetCommunityById).mockImplementation((communityId) =>
+      query.success<typeof getCommunityById>(
+        buildCommunity({
+          id: communityId,
+          capabilities: buildCommunityCapabilities({ canRead: true, canManage: true, canManageMemberships: true }),
+        }),
+      ),
+    );
   });
 
   it("never mounts the foreign entity page after a switch", () => {
