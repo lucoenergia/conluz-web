@@ -48,6 +48,11 @@ export function formatAverageKilowattHours(value: number): string {
  * The month of a local calendar date as the API writes it ("2026/08/01"), read
  * from the date itself rather than as an instant: it names a day in the
  * community's calendar, so no time zone may move it to the day before (#219).
+ *
+ * Only that shape is read, on purpose. Any other ("2026-08-01") renders
+ * "Invalid Date", so a fixture that drifts from what the server sends fails
+ * loudly in its specs instead of passing; a parser lenient enough to accept it
+ * is how this label once shipped broken while every test was green.
  */
 function calendarMonthOf(localDate: string, options: Intl.DateTimeFormatOptions): string {
   const [year, month] = localDate.split("/").map(Number);
