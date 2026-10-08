@@ -951,7 +951,8 @@ describe("MemberHomePage (#199)", () => {
       ["a community that has never shared", () => answer({ metrics: buildMembershipEnergyMetrics(), payback: buildMembershipPayback({ investmentEur: 500 }), hourly: buildMembershipHourlyProfile() })],
       ["a new member", () => answer({ metrics: buildMembershipEnergyMetrics(), payback: paybackWith({ savedEur: 0, remainingEur: 500, progressRatio: 0 }) })],
       ["a comparison not available yet", () => answer({ previous: previousMonthWith({ coverage: { hoursWithData: 0, expectedHours: 1488, supplyCount: 2, suppliesWithData: 0 } }) })],
-      ["no hour among the best", () => answer({ hourly: buildMembershipHourlyProfile({ ...augustProfile(), buckets: augustProfile().buckets.map((bucket) => ({ ...bucket, averageAssignedProductionKWh: 0.1, assignedProductionSampleCount: 62 })) }) })],
+      ["no assigned energy in any hour", () => answer({ hourly: buildMembershipHourlyProfile({ ...augustProfile(), buckets: augustProfile().buckets.map((bucket) => ({ ...bucket, averageAssignedProductionKWh: 0, assignedProductionSampleCount: 62 })) }) })],
+      ["best hours that cannot be worked out", () => answer({ hourly: { ...augustProfile(), coverage: { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 } } })],
     ])("%s", (_, serve) => {
       serve();
       openHome();

@@ -91,9 +91,9 @@ export const BestHours: FC = () => {
         </Typography>
       </Box>
       <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-        Media de cada hora en {view.month}, el último mes que ha publicado la distribuidora. Las horas en que la energía
-        asignada supera tu consumo son las mejores para usar electricidad. Un círculo vacío marca una hora sin registros, y
-        uno relleno, una media de cero.
+        Media de cada hora en {view.month}, el último mes que ha publicado la distribuidora. Tus mejores horas son las que
+        más energía asignada recibes: usar la electricidad en ellas es la mejor forma de aprovecharla. Un círculo vacío
+        marca una hora sin registros, y uno relleno, una media de cero.
       </Typography>
       <SeriesLegend
         items={[

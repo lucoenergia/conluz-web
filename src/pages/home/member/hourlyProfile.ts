@@ -18,7 +18,7 @@ export interface HourView {
   consumptionText: string;
   productionText: string;
   /**
-   * Whether the assigned energy exceeds the consumption at this hour: one of
+   * Whether this is one of the hours when the most assigned energy arrives:
    * the best hours to use electricity. Never set in a month with gaps.
    */
   best: boolean;
@@ -46,6 +46,9 @@ export const PRODUCTION_SERIES = "Energía asignada";
 export const NO_SAMPLE_TEXT = "Sin registros";
 export const BEST_HOURS_LABEL = "Mejores horas";
 
+/** How many hours the best-hours lead names: those with the most assigned energy. */
+export const BEST_HOURS_COUNT = 4;
+
 const CONSUMPTION_COLOR = ENERGY_COLORS.consumption;
 const PRODUCTION_COLOR = ENERGY_COLORS.assigned;
 
@@ -64,15 +67,23 @@ function textOf(value: HourlyValue): string {
 }
 
 /**
- * The rule the block's caption states: an hour is one of the best when its
- * assigned energy exceeds its consumption. Only two averages can be compared,
- * so an hour missing either series is never best, and a tie is not.
+ * The rule the block's caption states: the best hours to use electricity are
+ * the ones when the most assigned energy arrives, whatever was consumed in
+ * them, since that is when the community's energy is there to use. The
+ * BEST_HOURS_COUNT hours with the highest average, among those that received
+ * any; at equal averages the earlier hour is taken, so the lead never depends
+ * on the order the response happens to list them in. An hour with no sample
+ * or no assigned energy is never best.
  */
-function isBestHour(consumption: HourlyValue, production: HourlyValue): boolean {
-  return consumption.kind === "average" && production.kind === "average" && production.kWh > consumption.kWh;
+function bestHoursOf(hours: Omit<HourView, "best">[]): Set<number> {
+  const received = hours.flatMap((hour) =>
+    hour.production.kind === "average" && hour.production.kWh > 0 ? [{ hour: hour.hour, kWh: hour.production.kWh }] : [],
+  );
+  received.sort((a, b) => b.kWh - a.kWh || a.hour - b.hour);
+  return new Set(received.slice(0, BEST_HOURS_COUNT).map(({ hour }) => hour));
 }
 
-function hourOf(bucket: MembershipHourlyProfileBucketResponse, complete: boolean): HourView {
+function hourOf(bucket: MembershipHourlyProfileBucketResponse): Omit<HourView, "best"> {
   const consumption = valueOf(bucket.averageConsumptionKWh, bucket.consumptionSampleCount);
   const production = valueOf(bucket.averageAssignedProductionKWh, bucket.assignedProductionSampleCount);
   return {
@@ -82,7 +93,6 @@ function hourOf(bucket: MembershipHourlyProfileBucketResponse, complete: boolean
     production,
     consumptionText: textOf(consumption),
     productionText: textOf(production),
-    best: complete && isBestHour(consumption, production),
   };
 }
 
@@ -104,7 +114,7 @@ function bestHoursTextOf(hours: HourView[], complete: boolean): string {
     if (last && last.to === hour.hour) last.to = hour.hour + 1;
     else runs.push({ from: hour.hour, to: hour.hour + 1 });
   }
-  if (runs.length === 0) return `${BEST_HOURS_LABEL}: ninguna este mes`;
+  if (runs.length === 0) return `${BEST_HOURS_LABEL}: este mes no te llegó energía de la comunidad en ninguna hora.`;
   const ranges = runs.map(({ from, to }) => `de ${formatHourOfDay(from)} a ${formatHourOfDay(to)}`);
   const listed = ranges.length === 1 ? ranges[0] : `${ranges.slice(0, -1).join(", ")} y ${ranges.at(-1)}`;
   return `${BEST_HOURS_LABEL}: ${listed}`;
@@ -147,7 +157,9 @@ function baselineMarker(hour: HourView, value: HourlyValue, seriesIndex: number,
  */
 export function toHourlyProfileView(response: MembershipHourlyProfileResponse): HourlyProfileView {
   const complete = !isPartialMonth(response.coverage);
-  const hours = response.buckets.map((bucket) => hourOf(bucket, complete));
+  const measured = response.buckets.map(hourOf);
+  const best = complete ? bestHoursOf(measured) : new Set<number>();
+  const hours: HourView[] = measured.map((hour) => ({ ...hour, best: best.has(hour.hour) }));
   const anySample = hours.some((hour) => hour.consumption.kind === "average" || hour.production.kind === "average");
   if (!response.period.startDate || !anySample) return { kind: "nothing-yet" };
 

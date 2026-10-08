@@ -19,6 +19,7 @@ import { query } from "../../../test/queryState";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import { colors } from "../../../theme/tokens";
 import { BestHours } from "./BestHours";
+import { BEST_HOURS_COUNT } from "./hourlyProfile";
 import { ENERGY_COLORS } from "./energyColors";
 import { isPartialMonth } from "./memberHomeMessage";
 
@@ -280,12 +281,19 @@ describe("BestHours (#201)", () => {
 
   describe("#231 -- leads with which hours are best", () => {
     const lead = () => screen.getByText(/^Mejores horas:/);
-    const low = { averageAssignedProductionKWh: 0.1, assignedProductionSampleCount: 62 };
+    const assigned = (kWh: number | null) => ({
+      averageAssignedProductionKWh: kWh,
+      assignedProductionSampleCount: kWh === null ? 0 : 62,
+    });
+    /** A day with assigned energy only where given; fullDay() peaks at 19 h, then 18 h, 17 h and 16 h. */
+    const onlyAt = (hours: Record<number, number>) =>
+      profileWith(Object.fromEntries(Array.from({ length: 24 }, (_, hour) => [hour, assigned(hours[hour] ?? 0)])));
 
-    it("names the hours when assigned energy exceeds consumption, from the first to the end of the last", () => {
+    it(`names the ${BEST_HOURS_COUNT} hours when the most assigned energy arrives, from the first to the end of the last`, () => {
       open();
 
-      expect(text(lead())).toBe("Mejores horas: de 8 h a 20 h");
+      expect(BEST_HOURS_COUNT).toBe(4);
+      expect(text(lead())).toBe("Mejores horas: de 16 h a 20 h");
     });
 
     it("states it before the caption and the chart: the block answers first", () => {
@@ -295,29 +303,46 @@ describe("BestHours (#201)", () => {
       expect(lead().compareDocumentPosition(caption) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
-    it("lists each run of consecutive best hours", () => {
-      answer(profileWith({ 12: low }));
+    it("ranks by assigned energy alone, whatever was consumed in that hour", () => {
+      answer(profileWith({ 19: { averageConsumptionKWh: 3 }, 9: { averageConsumptionKWh: 0 } }));
       open();
 
-      expect(text(lead())).toBe("Mejores horas: de 8 h a 12 h y de 13 h a 20 h");
+      expect(text(lead())).toBe("Mejores horas: de 16 h a 20 h");
+    });
+
+    it("lists each run of consecutive best hours", () => {
+      answer(profileWith({ 12: assigned(0.9) }));
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: de 12 h a 13 h y de 17 h a 20 h");
     });
 
     it("joins three runs or more as a list", () => {
-      answer(profileWith({ 10: low, 14: low }));
+      answer(profileWith({ 10: assigned(0.95), 13: assigned(0.9) }));
       open();
 
-      expect(text(lead())).toBe("Mejores horas: de 8 h a 10 h, de 11 h a 14 h y de 15 h a 20 h");
+      expect(text(lead())).toBe("Mejores horas: de 10 h a 11 h, de 13 h a 14 h y de 18 h a 20 h");
     });
 
-    it.each([
-      ["no consumption sample", { averageConsumptionKWh: null, consumptionSampleCount: 0 }],
-      ["no assigned production sample", { averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 }],
-      ["assigned energy equal to consumption", { averageConsumptionKWh: 0.52, averageAssignedProductionKWh: 0.52 }],
-    ])("never counts an hour with %s as best", (_, hour) => {
-      answer(profileWith({ 12: hour }));
+    it("never counts an hour without an assigned-energy sample", () => {
+      answer(profileWith({ 19: assigned(null) }));
       open();
 
-      expect(text(lead())).toBe("Mejores horas: de 8 h a 12 h y de 13 h a 20 h");
+      expect(text(lead())).toBe("Mejores horas: de 15 h a 19 h");
+    });
+
+    it("names fewer hours when fewer received any assigned energy, and never one that received none", () => {
+      answer(onlyAt({ 12: 0.3, 13: 0.2 }));
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: de 12 h a 14 h");
+    });
+
+    it("takes the earlier hour at equal averages, so the lead does not depend on the response's order", () => {
+      answer(profileWith({ 10: assigned(0.56) }));
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: de 10 h a 11 h y de 17 h a 20 h");
     });
 
     it.each([
@@ -337,26 +362,34 @@ describe("BestHours (#201)", () => {
       open();
 
       expect(isPartialMonth(coverage)).toBe(false);
-      expect(text(lead())).toBe("Mejores horas: de 8 h a 20 h");
+      expect(text(lead())).toBe("Mejores horas: de 16 h a 20 h");
     });
 
-    it("says so in words when no hour qualifies", () => {
-      answer(profileWith(Object.fromEntries(Array.from({ length: 24 }, (_, hour) => [hour, low]))));
+    it("with complete coverage and no assigned energy in any hour, says so as a fact about the energy", () => {
+      answer(onlyAt({}));
       open();
 
-      expect(text(lead())).toBe("Mejores horas: ninguna este mes");
+      expect(text(lead())).toBe("Mejores horas: este mes no te llegó energía de la comunidad en ninguna hora.");
       expect(chart().options.grid?.column?.colors).toEqual(Array(24).fill("transparent"));
     });
 
+    it("explains in the caption that these are the hours to use electricity", () => {
+      open();
+
+      expect(text(screen.getByText(/^Media de cada hora en/))).toContain(
+        "Tus mejores horas son las que más energía asignada recibes: usar la electricidad en ellas es la mejor forma de aprovecharla.",
+      );
+    });
+
     it("shades exactly the best hours' columns, in the colour the legend names", () => {
-      answer(profileWith({ 12: low }));
+      answer(profileWith({ 12: assigned(0.9) }));
       open();
       const shaded = (chart().options.grid?.column?.colors as string[]).flatMap((color, hour) =>
         color === ENERGY_COLORS.bestHours ? [hour] : [],
       );
       const legend = within(screen.getByRole("region", { name: "Tus mejores horas" })).getByRole("list");
 
-      expect(shaded).toEqual([8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19]);
+      expect(shaded).toEqual([12, 17, 18, 19]);
       expect(within(legend).getByText("Mejores horas")).toBeInTheDocument();
     });
 

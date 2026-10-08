@@ -342,9 +342,11 @@ test.describe("Visual baselines", () => {
     await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-gaps.png", await hideAppBar(page));
   });
 
-  test("member home view, best hours when no hour is among the best", async ({ page }) => {
+  test("member home view, best hours when no hour received assigned energy", async ({ page }) => {
     await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_NO_BEST_HOUR });
-    await expect(bestHoursCard(page).getByText("Mejores horas: ninguna este mes")).toBeVisible();
+    await expect(
+      bestHoursCard(page).getByText("Mejores horas: este mes no te llegó energía de la comunidad en ninguna hora."),
+    ).toBeVisible();
     await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
     await stabilizePage(page);
 
