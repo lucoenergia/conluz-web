@@ -40,7 +40,7 @@ export const MemberHomePage: FC = () => (
     <HomeViewSwitch current="member" />
     <ReferenceMonthHeader />
     {/* The figure the page leads with, beside the one block that asks something of the reader, which keeps its own height. */}
-    <Box sx={{ ...ROW, alignItems: "flex-start", "& > *": { ...ROW["& > *"], flex: "2 1 300px", minWidth: 0 }, "& > :first-child": { flex: "3 1 480px" } }}>
+    <Box sx={{ ...ROW, alignItems: "flex-start", "& > *": { ...ROW["& > *"], flex: "2 1 300px", minWidth: 0 }, "& > :first-of-type": { flex: "3 1 480px" } }}>
       <Journey />
       <Advice />
     </Box>
