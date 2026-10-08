@@ -12,7 +12,7 @@ import { useProfileActions } from "../../hooks/actions";
 import { useEndSession } from "../../hooks/useEndSession";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { checkPasswordPolicy, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
-import { throttledMessage } from "../../errors/authErrors";
+import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "../../errors/authErrors";
 import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 
 type Field = "currentPassword" | "newPassword" | "confirmPassword";
@@ -59,7 +59,7 @@ export const ChangePasswordPage: FC = () => {
         // Refused on every change, voluntary or forced (#196), as the backend
         // does (lucoenergia/conluz#342). Compared exactly: no trimming, case
         // folding or normalisation, so the two sides agree.
-        errors.newPassword = "La nueva contraseña debe ser distinta de la actual.";
+        errors.newPassword = PASSWORD_UNCHANGED_MESSAGE;
       }
     }
     if (!confirmPassword) {
@@ -97,6 +97,11 @@ export const ChangePasswordPage: FC = () => {
         setFieldErrors({
           newPassword: failure.rule ? PASSWORD_RULE_MESSAGES[failure.rule] : "La contraseña no cumple los requisitos.",
         });
+        break;
+      case "passwordUnchanged":
+        // The backend's own refusal of the same password (#211), shown where
+        // the check before sending shows it.
+        setFieldErrors({ newPassword: PASSWORD_UNCHANGED_MESSAGE });
         break;
       case "throttled":
         setCurrentPassword("");

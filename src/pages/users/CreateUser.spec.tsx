@@ -176,6 +176,23 @@ describe("CreateUserPage", () => {
       await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(message));
       expect(mockNavigate).not.toHaveBeenCalled();
     });
+
+    // #211 AC6: a caller whose own password must change first is refused with
+    // 403 USER_PASSWORD_CHANGE_REQUIRED; the toast reads the catalogue's
+    // sentence, not the server's.
+    it("explains a refusal because the caller must change their own password first", async () => {
+      const user = userEvent.setup();
+      mockMutateAsync.mockRejectedValueOnce(apiError(403, { code: "USER_PASSWORD_CHANGE_REQUIRED" }));
+      setup();
+
+      await user.click(screen.getByRole("button", { name: SUBMIT }));
+
+      await waitFor(() =>
+        expect(mockErrorDispatch).toHaveBeenCalledWith("Por seguridad, debes cambiar tu contraseña antes de continuar."),
+      );
+      expect(mockErrorDispatch).not.toHaveBeenCalledWith("raw backend message");
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
   });
 
   // The route guard already refuses this, so it is the second line rather than

@@ -12,6 +12,7 @@ import { pluralize } from "../utils/pluralize";
 export type AuthFailure =
   | { kind: "currentPasswordIncorrect" }
   | { kind: "policyViolation"; rule: PasswordRule | null }
+  | { kind: "passwordUnchanged" }
   | { kind: "throttled"; retryAfterSeconds: number | null }
   | { kind: "unauthorized" }
   | { kind: "other"; error: unknown };
@@ -51,6 +52,13 @@ export function getRetryAfterSeconds(error: unknown): number | null {
   return toPositiveSeconds(fromHeader);
 }
 
+/**
+ * A new password equal to the current one, refused by the change-password
+ * form before sending and by the backend with USER_PASSWORD_UNCHANGED
+ * (lucoenergia/conluz#342). One sentence for both, so they read the same.
+ */
+export const PASSWORD_UNCHANGED_MESSAGE = "La nueva contraseña debe ser distinta de la actual.";
+
 /** The wait in whole minutes, rounded up: 840 s is 14 minutes, 841 s is 15. */
 export function retryAfterMinutes(seconds: number): number {
   return Math.ceil(seconds / 60);
@@ -73,6 +81,7 @@ export function classifyAuthError(error: unknown): AuthFailure {
     return { kind: "throttled", retryAfterSeconds: getRetryAfterSeconds(error) };
   }
   if (detail?.code === "USER_CURRENT_PASSWORD_INCORRECT") return { kind: "currentPasswordIncorrect" };
+  if (detail?.code === "USER_PASSWORD_UNCHANGED") return { kind: "passwordUnchanged" };
   if (detail?.code === "USER_PASSWORD_POLICY_VIOLATION") {
     const rule = detail.params?.rule;
     return { kind: "policyViolation", rule: isPasswordRule(rule) ? rule : null };
