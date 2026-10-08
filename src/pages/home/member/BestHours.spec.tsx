@@ -20,6 +20,7 @@ import { renderWithProviders } from "../../../test/renderWithProviders";
 import { colors } from "../../../theme/tokens";
 import { BestHours } from "./BestHours";
 import { ENERGY_COLORS } from "./energyColors";
+import { isPartialMonth } from "./memberHomeMessage";
 
 /**
  * The acceptance criteria of #201 for the best-hours block.
@@ -317,6 +318,26 @@ describe("BestHours (#201)", () => {
       open();
 
       expect(text(lead())).toBe("Mejores horas: de 8 h a 12 h y de 13 h a 20 h");
+    });
+
+    it.each([
+      ["fewer hours with data than the month has", { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 }],
+      ["fewer supplies with data than the member has", { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 }],
+    ])("with %s, says the best hours cannot be worked out, and names and shades none", (_, coverage) => {
+      answer({ ...profileWith(), coverage });
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: no se pueden calcular, porque faltan datos de este mes.");
+      expect(chart().options.grid?.column?.colors).toEqual(Array(24).fill("transparent"));
+    });
+
+    it("keys the gap on the advice's own rule: a month the advice speaks for names its hours", () => {
+      const coverage = { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 };
+      answer({ ...profileWith(), coverage });
+      open();
+
+      expect(isPartialMonth(coverage)).toBe(false);
+      expect(text(lead())).toBe("Mejores horas: de 8 h a 20 h");
     });
 
     it("says so in words when no hour qualifies", () => {

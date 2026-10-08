@@ -1172,6 +1172,16 @@ export const MEMBER_HOURLY_PROFILE_NO_BEST_HOUR: MembershipHourlyProfileResponse
   })),
 };
 
+/**
+ * The same month with one of the two supplies missing, so its coverage
+ * reports a gap: the best hours cannot be worked out (#231), though some hours
+ * would otherwise qualify.
+ */
+export const MEMBER_HOURLY_PROFILE_PARTIAL: MembershipHourlyProfileResponse = {
+  ...MEMBER_HOURLY_PROFILE,
+  coverage: { ...MEMBER_HOURLY_PROFILE.coverage, suppliesWithData: 1 },
+};
+
 /** No month resolves yet: null bounds, and the 24 hours without a sample. */
 export const MEMBER_HOURLY_PROFILE_EMPTY: MembershipHourlyProfileResponse = {
   period: { startDate: null, endDate: null },

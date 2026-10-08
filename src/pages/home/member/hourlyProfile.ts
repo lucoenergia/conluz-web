@@ -3,6 +3,7 @@ import type { MembershipHourlyProfileBucketResponse, MembershipHourlyProfileResp
 import { formatAverageKilowattHours, formatHourOfDay, formatMonth } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
 import { ENERGY_COLORS } from "./energyColors";
+import { isPartialMonth } from "./memberHomeMessage";
 
 /** One series at one hour: no sample at all, or an average over its own samples. */
 export type HourlyValue = { kind: "no-sample" } | { kind: "average"; kWh: number; samples: number };
@@ -16,7 +17,10 @@ export interface HourView {
   /** Each series in words, with its own sample count, for the tooltip and the table. */
   consumptionText: string;
   productionText: string;
-  /** Whether the assigned energy exceeds the consumption at this hour: one of the best hours to use electricity. */
+  /**
+   * Whether the assigned energy exceeds the consumption at this hour: one of
+   * the best hours to use electricity. Never set in a month with gaps.
+   */
   best: boolean;
 }
 
@@ -68,7 +72,7 @@ function isBestHour(consumption: HourlyValue, production: HourlyValue): boolean 
   return consumption.kind === "average" && production.kind === "average" && production.kWh > consumption.kWh;
 }
 
-function hourOf(bucket: MembershipHourlyProfileBucketResponse): HourView {
+function hourOf(bucket: MembershipHourlyProfileBucketResponse, complete: boolean): HourView {
   const consumption = valueOf(bucket.averageConsumptionKWh, bucket.consumptionSampleCount);
   const production = valueOf(bucket.averageAssignedProductionKWh, bucket.assignedProductionSampleCount);
   return {
@@ -78,15 +82,21 @@ function hourOf(bucket: MembershipHourlyProfileBucketResponse): HourView {
     production,
     consumptionText: textOf(consumption),
     productionText: textOf(production),
-    best: isBestHour(consumption, production),
+    best: complete && isBestHour(consumption, production),
   };
 }
 
 /**
  * The best hours as consecutive runs, each from its first hour to the end of
  * its last: hours 9 to 17 read "de 9 h a 18 h".
+ *
+ * A month with gaps names no hours. Its averages rest on part of the month,
+ * so which hours came out best would be an artefact of what is missing. This
+ * is the same rule that keeps the advice silent on such a month, so the screen
+ * holds one rule, not a second threshold.
  */
-function bestHoursTextOf(hours: HourView[]): string {
+function bestHoursTextOf(hours: HourView[], complete: boolean): string {
+  if (!complete) return `${BEST_HOURS_LABEL}: no se pueden calcular, porque faltan datos de este mes.`;
   const runs: { from: number; to: number }[] = [];
   for (const hour of hours) {
     if (!hour.best) continue;
@@ -131,11 +141,13 @@ function baselineMarker(hour: HourView, value: HourlyValue, seriesIndex: number,
 /**
  * The hourly profile (#201), every decision about what is drawn made here:
  * which hours are gaps and which are measured zeros, series by series, which
- * hours are the best ones (#231), and the words for each. The chart and its table both render this view and compute
- * nothing of their own, so the table proves what the chart is told to draw.
+ * hours are the best ones (#231), and the words for each. The chart and its
+ * table both render this view and compute nothing of their own, so the table
+ * proves what the chart is told to draw.
  */
 export function toHourlyProfileView(response: MembershipHourlyProfileResponse): HourlyProfileView {
-  const hours = response.buckets.map(hourOf);
+  const complete = !isPartialMonth(response.coverage);
+  const hours = response.buckets.map((bucket) => hourOf(bucket, complete));
   const anySample = hours.some((hour) => hour.consumption.kind === "average" || hour.production.kind === "average");
   if (!response.period.startDate || !anySample) return { kind: "nothing-yet" };
 
@@ -143,7 +155,7 @@ export function toHourlyProfileView(response: MembershipHourlyProfileResponse): 
     kind: "profile",
     month: formatMonth(response.period.startDate),
     hours,
-    bestHoursText: bestHoursTextOf(hours),
+    bestHoursText: bestHoursTextOf(hours, complete),
     columnColors: hours.map((hour) => (hour.best ? ENERGY_COLORS.bestHours : "transparent")),
     categories: hours.map((hour) => hour.label),
     series: [

@@ -38,6 +38,7 @@ import {
   MEMBER_MONTHLY_SERIES,
   MEMBER_ENERGY_METRICS_PARTIAL,
   MEMBER_HOURLY_PROFILE_NO_BEST_HOUR,
+  MEMBER_HOURLY_PROFILE_PARTIAL,
   MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER,
   MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA,
   MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL,
@@ -349,6 +350,16 @@ test.describe("Visual baselines", () => {
 
     // Component subject: the best-hours block alone, with the app bar hidden.
     await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-none.png", await hideAppBar(page));
+  });
+
+  test("member home view, best hours in a month with gaps", async ({ page }) => {
+    await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_PARTIAL });
+    await expect(bestHoursCard(page).getByText("Mejores horas: no se pueden calcular, porque faltan datos de este mes.")).toBeVisible();
+    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await stabilizePage(page);
+
+    // Component subject: the best-hours block alone, with the app bar hidden.
+    await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-partial.png", await hideAppBar(page));
   });
 
   test("member home view, best hours with no month yet", async ({ page }) => {
