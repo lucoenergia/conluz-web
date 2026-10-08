@@ -10,6 +10,10 @@ import {
   useGetPartitionCoefficientHistory,
   type getPartitionCoefficientHistory,
 } from "../../api/supplies/supplies";
+import {
+  useGetPlantActivePartitionCoefficients,
+  type getPlantActivePartitionCoefficients,
+} from "../../api/sharing-agreements/sharing-agreements";
 import { SharingAgreementCoefficientSet } from "../SharingAgreementCoefficientSet";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -32,9 +36,21 @@ vi.mock(import("../../api/supplies/supplies"), () => ({
   useGetPartitionCoefficientHistory: vi.fn(),
 }));
 
+// A DRAFT set compares itself with what is in force in the plant; left real,
+// that read reached the network (#211). The spread keeps the mutation hooks and
+// query keys real.
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetPlantActivePartitionCoefficients: vi.fn(),
+}));
+
 // The drawer's history query is enabled only while the drawer is open; closed,
 // it is disabled and returns no data.
 beforeEach(() => {
+  // Nothing in force elsewhere in the plant; read only for a DRAFT.
+  vi.mocked(useGetPlantActivePartitionCoefficients).mockImplementation((_plantId, options) =>
+    options?.query?.enabled ? query.success<typeof getPlantActivePartitionCoefficients>([]) : query.disabled(),
+  );
   vi.mocked(getAllSupplies).mockResolvedValue({ items: [], number: 0, totalPages: 1 });
   vi.mocked(useGetPartitionCoefficientHistory).mockImplementation((supplyId, params, options) => {
     if (options?.query?.enabled) historyCalls.push({ supplyId, params });

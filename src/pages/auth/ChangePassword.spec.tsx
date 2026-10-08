@@ -12,7 +12,6 @@ import { apiError } from "../../test/apiError";
 import { expectPasswordFieldContract } from "../../test/passwordField";
 import { ChangePasswordPage } from "./ChangePassword";
 import { Login } from "./Login";
-import type { RestErrorDetailCode } from "../../api/models";
 
 /**
  * Tier 1: the generated hooks are mocked, and everything between them and the
@@ -235,13 +234,12 @@ describe("ChangePasswordPage", () => {
     });
 
     // The backend refuses the same with USER_PASSWORD_UNCHANGED
-    // (lucoenergia/conluz#342), a code the generated client does not know yet,
-    // hence the cast. Until the catalogue learns it, the server's message is
-    // what the user reads.
-    it("shows the server's message when the backend refuses it, keeping the session and the fields", async () => {
+    // (lucoenergia/conluz#342). The catalogue's sentence replaces the server's,
+    // on the field the user has to change (#211 AC5).
+    it("marks the new password with the catalogue's text when the backend refuses it, keeping the session and the fields", async () => {
       mockChangePassword.mockRejectedValueOnce(
         apiError(400, {
-          code: "USER_PASSWORD_UNCHANGED" as RestErrorDetailCode,
+          code: "USER_PASSWORD_UNCHANGED",
           message: "La nueva contraseña debe ser distinta de la actual (servidor).",
         }),
       );
@@ -250,9 +248,11 @@ describe("ChangePasswordPage", () => {
 
       await submit(user);
 
-      expect(await screen.findByRole("alert")).toHaveTextContent(
-        "La nueva contraseña debe ser distinta de la actual (servidor).",
+      await waitFor(() =>
+        expect(helperTextOf(newField())).toBe("La nueva contraseña debe ser distinta de la actual."),
       );
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.queryByText(/\(servidor\)/)).not.toBeInTheDocument();
       expect(token()).toHaveTextContent("a-token");
       expect(path()).toHaveTextContent("/change-password");
       expect(currentField()).toHaveValue("la actual de siempre");

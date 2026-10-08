@@ -1,6 +1,6 @@
 import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/models";
 import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
-import { throttledMessage } from "./authErrors";
+import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 
 /**
  * code -> Spanish message template. Templates may reference `{paramName}`
@@ -139,6 +139,12 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     const seconds = Number(params?.retryAfterSeconds);
     return throttledMessage(Number.isFinite(seconds) && seconds > 0 ? seconds : null);
   },
+
+  // lucoenergia/conluz#342 (#211). The forced-change redirect never reads
+  // USER_PASSWORD_CHANGE_REQUIRED: it follows mustChangePassword on the current
+  // user. This is only the sentence a screen shows if a request is refused.
+  USER_PASSWORD_UNCHANGED: PASSWORD_UNCHANGED_MESSAGE,
+  USER_PASSWORD_CHANGE_REQUIRED: "Por seguridad, debes cambiar tu contraseña antes de continuar.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

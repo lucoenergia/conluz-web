@@ -114,6 +114,8 @@ export const ProfilePage: FC = () => {
           color: "white",
           mx: { xs: 0, sm: 0 },
           width: { xs: "100%", sm: "auto" },
+          // Padding inside the phone width; at sm the width is auto (#211).
+          boxSizing: "border-box",
         })}
       >
         <Box sx={sxStyles.flexRowCenter}>
@@ -130,7 +132,12 @@ export const ProfilePage: FC = () => {
       <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
-          sx={[sxStyles.softPanel, { width: "100%", maxWidth: 800, margin: "0 auto" }]}
+          // The padding sits inside the phone width; from sm the panel keeps its
+          // desktop size (#211).
+          sx={[
+            sxStyles.softPanel,
+            { width: "100%", maxWidth: 800, margin: "0 auto", boxSizing: { xs: "border-box", sm: "content-box" } },
+          ]}
         >
           {isLoading && (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
