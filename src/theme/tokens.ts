@@ -136,6 +136,12 @@ export const colors = {
     navy:       "#113c93", // 10.04:1; 8.72:1 on its own 8% tint
     raspberry:  "#b32385", // 6.01:1; 5.28:1 on its own 8% tint
   },
+  // Mark-only tones: chart bars and legend swatches that must clear the 3:1
+  // graphic-object bar and nothing more. Like `vivid`, never type and never
+  // behind text.
+  marks: {
+    gold: "#bc7f04", // 3.40:1 on white, 3.09:1 on success.surface
+  },
 } as const;
 
 // ─── Alpha surfaces ───────────────────────────────────────────────────────────

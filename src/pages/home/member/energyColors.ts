@@ -11,7 +11,9 @@ import { colors } from "../../../theme/tokens";
  * apart still can:
  * - community | exported, in the first journey bar: 2.98:1
  * - community | grid, in the second bar and the twelve months: 2.50:1
- * - consumption | assigned, in the hourly chart: 2.02:1
+ * - consumption | assigned, in the hourly chart: 2.95:1, and on opposite ends
+ *   of the blue-yellow axis, which colour-blind readers keep: 2.31-3.22:1
+ *   under protanopia, deuteranopia and tritanopia
  * - community energy above savings, in the twelve-month block: 1.98:1, and
  *   opposite hues
  *
@@ -23,9 +25,9 @@ export const ENERGY_COLORS = {
   community: colors.success.vivid,
   /** Energy bought from the grid. */
   grid: colors.secondary.main,
-  /** Energy assigned to the member. */
-  assigned: colors.accent.violet,
-  /** The part of the assigned energy that went to the grid unused: the assigned hue, deeper. */
+  /** Energy assigned to the member: sunlight gold, drawn only as marks. */
+  assigned: colors.marks.gold,
+  /** The part of the assigned energy that went to the grid unused. */
   exported: colors.accent.violetDeep,
   /** The member's consumption. Not a slate: slate means the grid. */
   consumption: colors.accent.navy,
