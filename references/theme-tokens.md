@@ -117,6 +117,9 @@ call-site opt-in. `.light` is the vivid tone — never put small text on it.
 | `colors.accent.violet` | `#8050e8` | Production figures — 4.96:1 |
 | `colors.accent.blue` | `#286cdb` | Consumption figures — 4.93:1 |
 | `colors.accent.cyan` | `#0078ac` | Integration provider marks — 4.90:1 |
+| `colors.accent.violetDeep` | `#5826b1` | Dark tone for a mark beside a lighter one — 9.02:1, 7.90:1 on its own tint |
+| `colors.accent.navy` | `#113c93` | Dark tone for a mark beside a lighter one — 10.04:1, 8.72:1 on its own tint |
+| `colors.accent.raspberry` | `#b32385` | 6.01:1, 5.28:1 on its own tint |
 
 Named `accent`, not `chart`, because most uses are not charts. Unlike `vivid`,
 each accent is safe in every direction (≥ 4.5:1 as type on white, behind white
@@ -130,15 +133,19 @@ the journey bars, both charts and every legend — and no colour two concepts
 (#231). The mapping lives in `src/pages/home/member/energyColors.ts`, the only
 place a series colour is chosen; `energyColors.spec.ts` pins it.
 
-| Concept | Token | On white |
-|---|---|---|
-| Community energy | `success.vivid` | 3.03:1 — at the graphic-object bar, with no margin |
-| Grid energy | `secondary.main` | 7.58:1; 2.50:1 against the community green beside it |
-| Assigned energy | `accent.violet` | 4.96:1 |
-| Its exported part | `accent.violet` stripes over white | 4.96:1 is the stripe's, not the fill's |
-| Consumption | `accent.blue`, drawn hollow | 4.93:1; told from the violet beside it by its fill, not its hue |
-| Best hours | `success.surface` band | 1.10:1 — a tint that repeats the block's lead in words |
-| Savings | `success.main` | 4.97:1 |
+Every mark clears 3:1 on the white card, and community energy sits at that floor, so every other
+mark is darker than it. Marks drawn side by side differ in lightness, not only in hue, so a reader
+who cannot tell hues apart still tells them apart; `energyColors.spec.ts` holds each pair to 1.9:1.
+
+| Concept | Token | On white | Beside |
+|---|---|---|---|
+| Community energy | `success.vivid` | 3.03:1 — at the graphic-object bar, with no margin | — |
+| Grid energy | `secondary.main` | 7.58:1 | community 2.50:1 |
+| Assigned energy | `accent.violet` | 4.96:1 | consumption 2.02:1 |
+| Its exported part | `accent.violetDeep` | 9.02:1 | community 2.98:1 |
+| Consumption | `accent.navy` | 10.04:1 | assigned 2.02:1 |
+| Best hours | `success.surface` band | 1.10:1 — a tint that repeats the block's lead in words | — |
+| Savings | `accent.raspberry` | 6.01:1 | community, the chart above it, 1.98:1 and the opposite hue |
 
 ---
 

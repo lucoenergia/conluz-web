@@ -251,13 +251,13 @@ describe("BestHours (#201)", () => {
   });
 
   describe("#231 AC4 -- consumption and assigned energy each keep their own colour", () => {
-    it("draws consumption hollow in its colour, and assigned energy solid in its own", () => {
+    it("draws both series solid, each in its own colour", () => {
       open();
       const { options } = chart();
 
       expect(options.colors).toEqual([ENERGY_COLORS.consumption, ENERGY_COLORS.assigned]);
-      expect(options.fill?.colors).toEqual([colors.background.paper, ENERGY_COLORS.assigned]);
-      expect(options.stroke?.colors?.[0]).toBe(ENERGY_COLORS.consumption);
+      expect(options.fill?.colors).toBeUndefined();
+      expect(options.stroke?.colors).toEqual([colors.background.paper]);
     });
 
     it("leaves the legend to the block, where it reads without scrolling the chart", () => {

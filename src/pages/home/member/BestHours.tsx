@@ -97,7 +97,7 @@ export const BestHours: FC = () => {
       </Typography>
       <SeriesLegend
         items={[
-          { label: CONSUMPTION_SERIES, swatch: swatch.hollow(ENERGY_COLORS.consumption) },
+          { label: CONSUMPTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.consumption) },
           { label: PRODUCTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.assigned) },
           { label: BEST_HOURS_LABEL, swatch: swatch.band },
         ]}

@@ -4,6 +4,7 @@ import SavingsRoundedIcon from "@mui/icons-material/SavingsRounded";
 import type { MembershipEnergyMetricsResponse } from "../../../api/models";
 import { formatEuros, formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
+import { SAVINGS_COLOR } from "./energyColors";
 import { EstimatedPriceLabel } from "./EstimatedPriceLabel";
 import { HomeCard } from "../HomeCard";
 
@@ -18,7 +19,7 @@ export const SavingsCard: FC<{ metrics: MembershipEnergyMetricsResponse; month: 
         </Typography>
       ) : (
         <>
-          <Typography variant="h4" component="p" sx={{ fontWeight: 700, color: colors.success.main }}>
+          <Typography variant="h4" component="p" sx={{ fontWeight: 700, color: SAVINGS_COLOR }}>
             {formatEuros(amountEur)}
           </Typography>
           <Typography variant="body2" sx={{ color: colors.text.body }}>

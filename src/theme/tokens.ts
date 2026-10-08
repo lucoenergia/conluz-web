@@ -130,6 +130,11 @@ export const colors = {
     violet: "#8050e8", // production figures — 4.96:1
     blue:   "#286cdb", // consumption figures — 4.93:1
     cyan:   "#0078ac", // integration provider marks — 4.90:1
+    // Dark tones for marks that sit beside a lighter mark and must differ from
+    // it in lightness, not only in hue (#231). Same guarantees as above.
+    violetDeep: "#5826b1", // 9.02:1; 7.90:1 on its own 8% tint
+    navy:       "#113c93", // 10.04:1; 8.72:1 on its own 8% tint
+    raspberry:  "#b32385", // 6.01:1; 5.28:1 on its own 8% tint
   },
 } as const;
 

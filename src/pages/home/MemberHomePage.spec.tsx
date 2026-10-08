@@ -36,7 +36,7 @@ import { declaredStyle } from "../../test/declaredStyle";
 import { colors } from "../../theme/tokens";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
-import { ENERGY_COLORS, EXPORTED_FILL } from "./member/energyColors";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "./member/energyColors";
 import { answerCommunities } from "./homeViews.mocks";
 
 vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
@@ -800,12 +800,22 @@ describe("MemberHomePage (#199)", () => {
       expect(chartColors("De la red")?.[1]).toBe(ENERGY_COLORS.grid);
     });
 
-    it("the exported part of the assigned energy is the assigned colour in stripes, never the grid's", () => {
-      const exported = declaredStyle(barOf("La energía que se te asignó"));
+    it("the exported part of the assigned energy is a solid colour of its own, in its bar and its legend", () => {
+      const exported = barOf("La energía que se te asignó");
 
-      expect(exported["background-image"]).toBe(EXPORTED_FILL);
-      expect(exported["background-color"]).not.toBe(ENERGY_COLORS.grid);
-      expect(declaredStyle(swatchOf(card("El recorrido de tu energía"), /^Se fue a la red/))["background-image"]).toBe(EXPORTED_FILL);
+      expect(background(exported)).toBe(ENERGY_COLORS.exported);
+      expect(declaredStyle(exported)["background-image"]).toBeUndefined();
+      expect(background(swatchOf(card("El recorrido de tu energía"), /^Se fue a la red/))).toBe(ENERGY_COLORS.exported);
+    });
+
+    it("savings is one colour wherever it appears: the month's amount, the monthly bars, the payback", () => {
+      const amount = within(savingsCard()).getByText("27,00 €");
+      const share = within(paybackCard()).getByText("40 %");
+
+      expect(declaredStyle(amount).color).toBe(SAVINGS_COLOR);
+      expect(declaredStyle(share).color).toBe(SAVINGS_COLOR);
+      expect(chartColors("Ahorro")).toEqual([SAVINGS_COLOR]);
+      expect(background(swatchOf(within(card("Tus últimos 12 meses")).getByRole("list"), /^Ahorro$/))).toBe(SAVINGS_COLOR);
     });
 
     it("assigned energy and consumption in the hourly chart keep the colours their legend shows", () => {
@@ -813,7 +823,7 @@ describe("MemberHomePage (#199)", () => {
 
       expect(chartColors("Energía asignada")).toEqual([ENERGY_COLORS.consumption, ENERGY_COLORS.assigned]);
       expect(background(swatchOf(legend, /^Energía asignada$/))).toBe(ENERGY_COLORS.assigned);
-      expect(declaredStyle(swatchOf(legend, /^Tu consumo$/)).border).toBe(`2px solid ${ENERGY_COLORS.consumption}`);
+      expect(background(swatchOf(legend, /^Tu consumo$/))).toBe(ENERGY_COLORS.consumption);
     });
   });
   describe("#231 -- the share of the assigned energy used leads the page", () => {

@@ -132,7 +132,7 @@ export const EnergyJourney: FC<{ metrics: MembershipEnergyMetricsResponse }> = (
             base={`de ${formatKilowattHours(energy.assignedProductionKWh)} asignados`}
             ratio={selfConsumptionRatio}
             shared={{ label: "La usaste tú", kWh: energy.selfConsumptionKWh, swatch: SHARED }}
-            rest={{ label: "Se fue a la red", kWh: energy.surplusKWh, swatch: swatch.exported }}
+            rest={{ label: "Se fue a la red", kWh: energy.surplusKWh, swatch: swatch.solid(ENERGY_COLORS.exported) }}
           />
         )}
         {selfSufficiencyRatio === null ? (
