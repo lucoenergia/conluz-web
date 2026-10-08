@@ -31,7 +31,12 @@ export const BestHoursChart: FC<{ view: Profile }> = ({ view }) => {
     dataLabels: { enabled: false },
     plotOptions: { bar: { columnWidth: "70%", borderRadius: 3, borderRadiusApplication: "end" } },
     stroke: { show: true, width: 2, colors: [consumptionColor, colors.background.paper] },
-    grid: { borderColor: colors.border.light, strokeDashArray: 4, xaxis: { lines: { show: false } } },
+    grid: {
+      borderColor: colors.border.light,
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+      column: { colors: view.columnColors, opacity: 1 },
+    },
     xaxis: {
       categories: view.categories,
       labels: { style: { colors: colors.text.secondary, fontSize: "11px" }, rotate: 0, hideOverlappingLabels: false },

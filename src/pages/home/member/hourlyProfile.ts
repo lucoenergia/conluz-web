@@ -16,6 +16,8 @@ export interface HourView {
   /** Each series in words, with its own sample count, for the tooltip and the table. */
   consumptionText: string;
   productionText: string;
+  /** Whether the assigned energy exceeds the consumption at this hour: one of the best hours to use electricity. */
+  best: boolean;
 }
 
 export type HourlyProfileView =
@@ -25,6 +27,10 @@ export type HourlyProfileView =
       /** The month the profile covers, as the response states it: "agosto de 2026". */
       month: string;
       hours: HourView[];
+      /** Which hours are best, in words: "Mejores horas: de 9 h a 14 h y de 15 h a 18 h". */
+      bestHoursText: string;
+      /** The background of each hour's column: the best hours stand out, the rest stay clear. */
+      columnColors: string[];
       categories: string[];
       series: { name: string; data: (number | null)[] }[];
       colors: string[];
@@ -34,6 +40,7 @@ export type HourlyProfileView =
 export const CONSUMPTION_SERIES = "Tu consumo";
 export const PRODUCTION_SERIES = "Energía asignada";
 export const NO_SAMPLE_TEXT = "Sin registros";
+export const BEST_HOURS_LABEL = "Mejores horas";
 
 const CONSUMPTION_COLOR = ENERGY_COLORS.consumption;
 const PRODUCTION_COLOR = ENERGY_COLORS.assigned;
@@ -52,6 +59,15 @@ function textOf(value: HourlyValue): string {
   return `${formatAverageKilowattHours(value.kWh)} (media de ${value.samples} ${value.samples === 1 ? "registro" : "registros"})`;
 }
 
+/**
+ * The rule the block's caption states: an hour is one of the best when its
+ * assigned energy exceeds its consumption. Only two averages can be compared,
+ * so an hour missing either series is never best, and a tie is not.
+ */
+function isBestHour(consumption: HourlyValue, production: HourlyValue): boolean {
+  return consumption.kind === "average" && production.kind === "average" && production.kWh > consumption.kWh;
+}
+
 function hourOf(bucket: MembershipHourlyProfileBucketResponse): HourView {
   const consumption = valueOf(bucket.averageConsumptionKWh, bucket.consumptionSampleCount);
   const production = valueOf(bucket.averageAssignedProductionKWh, bucket.assignedProductionSampleCount);
@@ -62,7 +78,26 @@ function hourOf(bucket: MembershipHourlyProfileBucketResponse): HourView {
     production,
     consumptionText: textOf(consumption),
     productionText: textOf(production),
+    best: isBestHour(consumption, production),
   };
+}
+
+/**
+ * The best hours as consecutive runs, each from its first hour to the end of
+ * its last: hours 9 to 17 read "de 9 h a 18 h".
+ */
+function bestHoursTextOf(hours: HourView[]): string {
+  const runs: { from: number; to: number }[] = [];
+  for (const hour of hours) {
+    if (!hour.best) continue;
+    const last = runs.at(-1);
+    if (last && last.to === hour.hour) last.to = hour.hour + 1;
+    else runs.push({ from: hour.hour, to: hour.hour + 1 });
+  }
+  if (runs.length === 0) return `${BEST_HOURS_LABEL}: ninguna este mes`;
+  const ranges = runs.map(({ from, to }) => `de ${formatHourOfDay(from)} a ${formatHourOfDay(to)}`);
+  const listed = ranges.length === 1 ? ranges[0] : `${ranges.slice(0, -1).join(", ")} y ${ranges.at(-1)}`;
+  return `${BEST_HOURS_LABEL}: ${listed}`;
 }
 
 const plotted = (value: HourlyValue) => (value.kind === "average" ? value.kWh : null);
@@ -95,8 +130,8 @@ function baselineMarker(hour: HourView, value: HourlyValue, seriesIndex: number,
 
 /**
  * The hourly profile (#201), every decision about what is drawn made here:
- * which hours are gaps and which are measured zeros, series by series, and the
- * words for each. The chart and its table both render this view and compute
+ * which hours are gaps and which are measured zeros, series by series, which
+ * hours are the best ones (#231), and the words for each. The chart and its table both render this view and compute
  * nothing of their own, so the table proves what the chart is told to draw.
  */
 export function toHourlyProfileView(response: MembershipHourlyProfileResponse): HourlyProfileView {
@@ -108,6 +143,8 @@ export function toHourlyProfileView(response: MembershipHourlyProfileResponse): 
     kind: "profile",
     month: formatMonth(response.period.startDate),
     hours,
+    bestHoursText: bestHoursTextOf(hours),
+    columnColors: hours.map((hour) => (hour.best ? ENERGY_COLORS.bestHours : "transparent")),
     categories: hours.map((hour) => hour.label),
     series: [
       { name: CONSUMPTION_SERIES, data: hours.map((hour) => plotted(hour.consumption)) },

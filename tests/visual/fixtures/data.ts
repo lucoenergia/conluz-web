@@ -1159,6 +1159,19 @@ export const MEMBER_HOURLY_PROFILE_GAPS: MembershipHourlyProfileResponse = {
   }),
 };
 
+/**
+ * A month when the assigned energy never exceeds consumption -- every hour's
+ * assigned production is a third of what was consumed -- so no hour is among
+ * the best (#231).
+ */
+export const MEMBER_HOURLY_PROFILE_NO_BEST_HOUR: MembershipHourlyProfileResponse = {
+  ...MEMBER_HOURLY_PROFILE,
+  buckets: MEMBER_HOURLY_PROFILE.buckets.map((bucket) => ({
+    ...bucket,
+    averageAssignedProductionKWh: Math.round(((bucket.averageConsumptionKWh ?? 0) / 3) * 100) / 100,
+  })),
+};
+
 /** No month resolves yet: null bounds, and the 24 hours without a sample. */
 export const MEMBER_HOURLY_PROFILE_EMPTY: MembershipHourlyProfileResponse = {
   period: { startDate: null, endDate: null },

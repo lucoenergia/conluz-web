@@ -265,7 +265,7 @@ describe("BestHours (#201)", () => {
       const legend = within(screen.getByRole("region", { name: "Tus mejores horas" })).getByRole("list");
 
       expect(chart().options.legend?.show).toBe(false);
-      expect(within(legend).getAllByRole("listitem").map(text)).toEqual(["Tu consumo", "Energía asignada"]);
+      expect(within(legend).getAllByRole("listitem").map(text)).toEqual(["Tu consumo", "Energía asignada", "Mejores horas"]);
     });
 
     it("marks a gap and a measured zero in the series' own colour", () => {
@@ -274,6 +274,75 @@ describe("BestHours (#201)", () => {
       const [zero] = markersAt(2, 1);
 
       expect(zero.marker?.strokeColor).toBe(ENERGY_COLORS.assigned);
+    });
+  });
+
+  describe("#231 -- leads with which hours are best", () => {
+    const lead = () => screen.getByText(/^Mejores horas:/);
+    const low = { averageAssignedProductionKWh: 0.1, assignedProductionSampleCount: 62 };
+
+    it("names the hours when assigned energy exceeds consumption, from the first to the end of the last", () => {
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: de 8 h a 20 h");
+    });
+
+    it("states it before the caption and the chart: the block answers first", () => {
+      open();
+      const caption = screen.getByText(/^Media de cada hora en/);
+
+      expect(lead().compareDocumentPosition(caption) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("lists each run of consecutive best hours", () => {
+      answer(profileWith({ 12: low }));
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: de 8 h a 12 h y de 13 h a 20 h");
+    });
+
+    it("joins three runs or more as a list", () => {
+      answer(profileWith({ 10: low, 14: low }));
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: de 8 h a 10 h, de 11 h a 14 h y de 15 h a 20 h");
+    });
+
+    it.each([
+      ["no consumption sample", { averageConsumptionKWh: null, consumptionSampleCount: 0 }],
+      ["no assigned production sample", { averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 }],
+      ["assigned energy equal to consumption", { averageConsumptionKWh: 0.52, averageAssignedProductionKWh: 0.52 }],
+    ])("never counts an hour with %s as best", (_, hour) => {
+      answer(profileWith({ 12: hour }));
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: de 8 h a 12 h y de 13 h a 20 h");
+    });
+
+    it("says so in words when no hour qualifies", () => {
+      answer(profileWith(Object.fromEntries(Array.from({ length: 24 }, (_, hour) => [hour, low]))));
+      open();
+
+      expect(text(lead())).toBe("Mejores horas: ninguna este mes");
+      expect(chart().options.grid?.column?.colors).toEqual(Array(24).fill("transparent"));
+    });
+
+    it("shades exactly the best hours' columns, in the colour the legend names", () => {
+      answer(profileWith({ 12: low }));
+      open();
+      const shaded = (chart().options.grid?.column?.colors as string[]).flatMap((color, hour) =>
+        color === ENERGY_COLORS.bestHours ? [hour] : [],
+      );
+      const legend = within(screen.getByRole("region", { name: "Tus mejores horas" })).getByRole("list");
+
+      expect(shaded).toEqual([8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19]);
+      expect(within(legend).getByText("Mejores horas")).toBeInTheDocument();
+    });
+
+    it("leaves the table as the chart's data, series by series", () => {
+      open();
+
+      expect(within(table()).getAllByRole("columnheader").map(text)).toEqual(["Hora", "Tu consumo", "Energía asignada"]);
     });
   });
 });
