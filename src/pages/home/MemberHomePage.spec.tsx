@@ -896,6 +896,26 @@ describe("MemberHomePage (#199)", () => {
       expect(within(payback).queryByRole("progressbar")).not.toBeInTheDocument();
     });
 
+    it.each([
+      ["a new member who has recovered nothing", 0],
+      ["a member whose share still rounds to nothing", 0.004],
+    ])("leaves %s without a large figure, and says the share in its sentence", (_, progressRatio) => {
+      answer({ payback: paybackWith({ savedEur: progressRatio * 500, remainingEur: 500, progressRatio, estimatedRemainingMonths: null }) });
+      openHome();
+      const payback = paybackCard();
+
+      expect(text(payback)).not.toMatch(/%recuperado/);
+      expect(text(payback)).toContain("Has recuperado el 0 % de tu inversión de 500,00 €");
+      expect(within(payback).getByRole("progressbar", { name: "Parte recuperada de tu inversión" })).toBeInTheDocument();
+    });
+
+    it("draws the figure as soon as the share reads 1 %", () => {
+      answer({ payback: paybackWith({ savedEur: 5, remainingEur: 495, progressRatio: 0.01 }) });
+      openHome();
+
+      expect(text(paybackCard())).toContain("1 %recuperado");
+    });
+
     it("draws no figure and no bar when no investment is recorded, and adds no notice to the page", () => {
       answer({ payback: paybackWith({ investmentEur: null, remainingEur: null, progressRatio: null, estimatedRemainingMonths: null }) });
       openHome();

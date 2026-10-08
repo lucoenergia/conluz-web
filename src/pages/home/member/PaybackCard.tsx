@@ -83,16 +83,24 @@ export const PaybackCard: FC<{ payback: MembershipPaybackResponse }> = ({ paybac
   }
 
   const recovered = progressRatio >= 1;
+  // The share is the block's figure only once there is something to show. A
+  // share that reads "0 %" stays in its sentence at body size: drawn large and
+  // green on a member's first months, it would only underline that nothing is
+  // recovered yet. Keyed on what would be displayed, so a sliver that rounds
+  // to 0 % is treated the same.
+  const showsFigure = Math.round(progressRatio * 100) > 0;
   return (
     <HomeCard title={TITLE} icon={AccountBalanceWalletRoundedIcon}>
-      <Box sx={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", columnGap: 1 }}>
-        <Typography variant="h4" component="p" sx={{ fontWeight: 700, color: SAVINGS_COLOR }}>
-          {wholePercent(progressRatio)}
-        </Typography>
-        <Typography variant="body1" sx={{ color: colors.text.body }}>
-          recuperado
-        </Typography>
-      </Box>
+      {showsFigure && (
+        <Box sx={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", columnGap: 1 }}>
+          <Typography variant="h4" component="p" sx={{ fontWeight: 700, color: SAVINGS_COLOR }}>
+            {wholePercent(progressRatio)}
+          </Typography>
+          <Typography variant="body1" sx={{ color: colors.text.body }}>
+            recuperado
+          </Typography>
+        </Box>
+      )}
       <Box>
         {recovered ? (
           // Full, and drawn only: there is no progress left to report, and the sentence below says so.
