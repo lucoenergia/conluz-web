@@ -1,8 +1,9 @@
 import type { FC } from "react";
-import { Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { EstimatedPriceResponse } from "../../../api/models";
 import { formatEurosPerKilowattHour } from "../../../utils/formatEnergyFigures";
-import { colors } from "../../../theme/tokens";
+import { colors, radii } from "../../../theme/tokens";
 
 /**
  * States the estimated price a euro figure was computed with, as visible text.
@@ -15,8 +16,23 @@ import { colors } from "../../../theme/tokens";
 export const EstimatedPriceLabel: FC<{ estimatedPrice: EstimatedPriceResponse | null }> = ({ estimatedPrice }) => {
   if (estimatedPrice === null) return null;
   return (
-    <Typography variant="caption" component="p" sx={{ color: colors.text.subtle }}>
-      Estimado con un precio de {formatEurosPerKilowattHour(estimatedPrice.eurPerKWh)} para la energía, sin impuestos.
-    </Typography>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 0.75,
+        alignSelf: "flex-start",
+        px: 1.25,
+        py: 0.75,
+        borderRadius: radii.default,
+        bgcolor: colors.background.surface,
+        color: colors.text.body,
+      }}
+    >
+      <InfoOutlinedIcon aria-hidden sx={{ fontSize: 16, mt: 0.25 }} />
+      <Typography variant="caption" component="p" sx={{ color: colors.text.body }}>
+        Estimado con un precio de {formatEurosPerKilowattHour(estimatedPrice.eurPerKWh)} para la energía, sin impuestos.
+      </Typography>
+    </Box>
   );
 };

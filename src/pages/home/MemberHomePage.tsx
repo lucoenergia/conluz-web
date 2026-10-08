@@ -1,10 +1,12 @@
 import type { FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
+import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
 import type { MembershipEnergyMetricsResponse } from "../../api/models";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert";
 import { formatMonth } from "../../utils/formatEnergyFigures";
 import { sxStyles } from "../../theme/sx";
-import { colors } from "../../theme/tokens";
+import { colors, fontSizes } from "../../theme/tokens";
 import { HomeViewSwitch } from "./HomeViewSwitch";
 import { BestHours } from "./member/BestHours";
 import { EnergyJourney } from "./member/EnergyJourney";
@@ -19,7 +21,8 @@ import { useMemberEnergyMetrics, type ReferencePeriod } from "./member/useMember
 import { useMemberPayback } from "./member/useMemberPayback";
 
 /**
- * The member's home (#199): the journey of their energy in the latest month
+ * The member's home (#199), led since #231 by the share of the assigned energy
+ * the member used: the journey of their energy in the latest month
  * the distributor has published, what it saved them, and how far they are from
  * recovering their investment; how the month compares with the one before it
  * (#200); and the twelve months leading up to it and the hours of the day when
@@ -36,15 +39,36 @@ export const MemberHomePage: FC = () => (
     </Typography>
     <HomeViewSwitch current="member" />
     <ReferenceMonthHeader />
-    <Journey />
-    <Savings />
-    <Advice />
-    <PreviousMonthComparison />
-    <TwelveMonthSeries />
+    {/* The figure the page leads with, beside the one block that asks something of the reader, which keeps its own height. */}
+    <Box sx={{ ...ROW, alignItems: "flex-start", "& > *": { ...ROW["& > *"], flex: "2 1 300px", minWidth: 0 }, "& > :first-child": { flex: "3 1 480px" } }}>
+      <Journey />
+      <Advice />
+    </Box>
     <BestHours />
-    <PaybackHalf />
+    {/* The comparison stays below the journey's consumption bar, whose change it reports. */}
+    <Box sx={{ ...ROW, "& > *": { ...ROW["& > *"], flex: "1 1 260px", minWidth: 0 } }}>
+      <Savings />
+      <PreviousMonthComparison />
+      <PaybackHalf />
+    </Box>
+    <TwelveMonthSeries />
   </Box>
 );
+
+/**
+ * Blocks side by side where the width allows, stacked where it does not; one
+ * scrolling page at any width. A row whose blocks are all waiting on their
+ * reads takes no room.
+ */
+const ROW = {
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "stretch",
+  gap: 3,
+  "&:empty": { display: "none" },
+  // Each block's basis is its whole width, padding included.
+  "& > *": { boxSizing: "border-box" },
+} as const;
 
 interface ResolvedMonth {
   metrics: MembershipEnergyMetricsResponse;
@@ -91,9 +115,12 @@ const ReferenceMonthHeader: FC = () => {
   return (
     <>
       <Box>
-        <Typography variant="h6" component="p" sx={{ color: colors.text.primary }}>
-          Datos de {resolved.month}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <CalendarMonthRoundedIcon aria-hidden sx={{ color: colors.brand.main }} />
+          <Typography variant="h6" component="p" sx={{ color: colors.text.primary }}>
+            Datos de {resolved.month}
+          </Typography>
+        </Box>
         <Typography variant="body2" sx={{ color: colors.text.subtle }}>
           Es el último mes completo que ha publicado la distribuidora: los datos de cada mes se publican hacia el día 10
           del mes siguiente.
@@ -118,8 +145,8 @@ const Advice: FC = () => {
   const message = useResolvedMonth()?.message;
   if (message?.kind !== "advice") return null;
   return (
-    <HomeCard title="Qué puedes hacer">
-      <Typography variant="body1" sx={{ color: colors.text.body }}>
+    <HomeCard title="Qué puedes hacer" icon={LightbulbRoundedIcon} variant="action">
+      <Typography variant="body1" sx={{ fontSize: fontSizes["2xl"], color: colors.brand.contrastText }}>
         {message.text}
       </Typography>
     </HomeCard>

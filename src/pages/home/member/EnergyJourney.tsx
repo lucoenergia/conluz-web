@@ -1,5 +1,6 @@
-import type { FC } from "react";
+import { useId, type FC } from "react";
 import { Box, Typography } from "@mui/material";
+import RouteRoundedIcon from "@mui/icons-material/RouteRounded";
 import type { MembershipEnergyMetricsResponse } from "../../../api/models";
 import { formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { formatPercentage } from "../../../utils/formatPercentage";
@@ -78,12 +79,51 @@ const Unavailable: FC<{ title: string; reason: string }> = ({ title, reason }) =
   </Box>
 );
 
+/**
+ * The figure the page leads with (#231): the share of the assigned energy the
+ * member used, and the kWh it stands for. Nothing else belongs here -- no
+ * reading of the figure, no direction, no promise that it can rise. Whether
+ * there is anything to do is the advice's to say, under its own rules.
+ */
+const PrimaryFigure: FC<{ ratio: number; usedKWh: number; assignedKWh: number }> = ({ ratio, usedKWh, assignedKWh }) => {
+  const labelId = useId();
+  return (
+    <Box role="group" aria-labelledby={labelId} sx={{ pb: 2, borderBottom: `1px solid ${colors.border.light}` }}>
+      <Typography id={labelId} variant="h6" component="p" sx={{ color: colors.text.primary }}>
+        Energía asignada que usaste
+      </Typography>
+      <Typography
+        variant="h2"
+        component="p"
+        sx={(theme) => ({
+          [theme.breakpoints.up("sm")]: { fontSize: theme.typography.h1.fontSize },
+          fontWeight: 700,
+          lineHeight: 1.1,
+          color: colors.success.main,
+        })}
+      >
+        {wholePercent(ratio)}
+      </Typography>
+      <Typography variant="h6" component="p" sx={{ fontWeight: 400, color: colors.text.body }}>
+        {formatKilowattHours(usedKWh)} de {formatKilowattHours(assignedKWh)}
+      </Typography>
+    </Box>
+  );
+};
+
 /** The two-bar story: where the energy assigned to the member went, and where their consumption came from. */
 export const EnergyJourney: FC<{ metrics: MembershipEnergyMetricsResponse }> = ({ metrics }) => {
   const { energy, selfConsumptionRatio, selfSufficiencyRatio } = metrics;
   return (
-    <HomeCard title="El recorrido de tu energía">
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <HomeCard title="El recorrido de tu energía" icon={RouteRoundedIcon} variant="primary">
+      {selfConsumptionRatio !== null && (
+        <PrimaryFigure
+          ratio={selfConsumptionRatio}
+          usedKWh={energy.selfConsumptionKWh}
+          assignedKWh={energy.assignedProductionKWh}
+        />
+      )}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3, pt: 1 }}>
         {selfConsumptionRatio === null ? (
           <Unavailable title="La energía que se te asignó" reason="Este mes no se te asignó energía de la comunidad." />
         ) : (

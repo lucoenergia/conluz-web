@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from "react";
 import { Box, LinearProgress, Typography } from "@mui/material";
+import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import type { MembershipPaybackResponse } from "../../../api/models";
 import { formatCalendarDate } from "../../../utils/formatCalendarDate";
 import { formatEuros } from "../../../utils/formatEnergyFigures";
@@ -31,7 +32,7 @@ export const PaybackCard: FC<{ payback: MembershipPaybackResponse }> = ({ paybac
   // savedEur is null exactly when the community has never shared energy.
   if (savedEur === null) {
     return (
-      <HomeCard title={TITLE}>
+      <HomeCard title={TITLE} icon={AccountBalanceWalletRoundedIcon}>
         <Body>
           Tu comunidad todavía no ha empezado a compartir energía, así que aún no hay ahorro acumulado.
           {investmentEur !== null && <> Tu inversión registrada es de {formatEuros(investmentEur)}.</>}
@@ -48,7 +49,7 @@ export const PaybackCard: FC<{ payback: MembershipPaybackResponse }> = ({ paybac
   );
 
   return (
-    <HomeCard title={TITLE}>
+    <HomeCard title={TITLE} icon={AccountBalanceWalletRoundedIcon}>
       {saved}
       {investmentEur === null || progressRatio === null ? (
         <Body>No consta ninguna inversión tuya registrada en esta comunidad, así que no se puede calcular cuánto llevas recuperado.</Body>

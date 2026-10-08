@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
+import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { colors } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
@@ -73,7 +74,7 @@ const Series: FC<{ referencePeriod: ReferencePeriod }> = ({ referencePeriod }) =
   const first = view.months[0];
   const last = view.months[view.months.length - 1];
   return (
-    <HomeCard title={TITLE}>
+    <HomeCard title={TITLE} icon={BarChartRoundedIcon}>
       <Typography variant="body2" sx={{ color: colors.text.subtle }}>
         De {first.name} a {last.name}: {view.monthsWithData} de {view.months.length} meses con datos.
         {view.hasIncompleteMonth &&

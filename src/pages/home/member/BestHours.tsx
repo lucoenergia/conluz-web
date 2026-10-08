@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { colors } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
@@ -68,7 +69,7 @@ export const BestHours: FC = () => {
   }
 
   return (
-    <HomeCard title={TITLE}>
+    <HomeCard title={TITLE} icon={ScheduleRoundedIcon}>
       <Typography variant="body2" sx={{ color: colors.text.subtle }}>
         Media de cada hora en {view.month}, el último mes que ha publicado la distribuidora. Las horas en que la energía
         asignada supera tu consumo son las mejores para usar electricidad. Un círculo vacío marca una hora sin registros, y

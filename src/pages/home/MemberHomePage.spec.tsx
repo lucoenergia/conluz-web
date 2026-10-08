@@ -815,4 +815,64 @@ describe("MemberHomePage (#199)", () => {
       expect(declaredStyle(swatchOf(legend, /^Tu consumo$/)).border).toBe(`2px solid ${ENERGY_COLORS.consumption}`);
     });
   });
+  describe("#231 -- the share of the assigned energy used leads the page", () => {
+    const primaryFigure = () => screen.queryByRole("group", { name: "Energía asignada que usaste" });
+
+    it("AC1 -- states the share, with the kWh it stands for beneath it, and nothing else", () => {
+      openHome();
+
+      expect(text(primaryFigure()!)).toBe("Energía asignada que usaste67 %180 kWh de 268 kWh");
+      expect(primaryFigure()!.querySelector("svg")).toBeNull();
+      expect(within(card("El recorrido de tu energía")).getByRole("group", { name: "Energía asignada que usaste" })).toBe(
+        primaryFigure(),
+      );
+    });
+
+    it("AC1 -- shows no figure when nothing was assigned, and keeps saying why", () => {
+      answer({ metrics: monthWith({ selfConsumptionRatio: null }) });
+      openHome();
+
+      expect(primaryFigure()).not.toBeInTheDocument();
+      expect(text(card("El recorrido de tu energía"))).toContain("Este mes no se te asignó energía de la comunidad.");
+    });
+
+    it("AC2 -- says the share can rise only inside the advice, under its own rules", () => {
+      answer({ metrics: monthWith({ selfConsumptionRatio: 0.45 }) });
+      openHome();
+      const outsideAdvice = document.body.cloneNode(true) as HTMLElement;
+      outsideAdvice.querySelector('section[aria-label="Qué puedes hacer"]')!.remove();
+
+      expect(text(advice()[0])).toContain("sube ese porcentaje");
+      expect(text(outsideAdvice)).not.toMatch(/sube|subir|aumenta|mejora/i);
+    });
+  });
+
+  describe("#231 AC9 -- each block carries one icon as a label for its concept", () => {
+    // The label icon is decorative and unnamed: it sits just before the block's title.
+    const labelIcon = (region: HTMLElement) =>
+      within(region).getByRole("heading", { level: 2 }).previousElementSibling?.querySelectorAll("svg") ?? [];
+
+    it("gives every block its own icon, and no two blocks the same", () => {
+      answer({ previous: previousMonthWith() });
+      openHome();
+      const monthIcon = screen.getByText("Datos de agosto de 2026").previousElementSibling!;
+      const icons = {
+        "El recorrido de tu energía": "RouteRoundedIcon",
+        "Qué puedes hacer": "LightbulbRoundedIcon",
+        "Tus mejores horas": "ScheduleRoundedIcon",
+        "Tu ahorro en agosto de 2026": "SavingsRoundedIcon",
+        "Comparado con julio de 2026": "CompareArrowsRoundedIcon",
+        "Recuperación de tu inversión": "AccountBalanceWalletRoundedIcon",
+        "Tus últimos 12 meses": "BarChartRoundedIcon",
+      };
+
+      expect(monthIcon).toHaveAttribute("data-testid", "CalendarMonthRoundedIcon");
+      for (const [block, icon] of Object.entries(icons)) {
+        const found = labelIcon(card(block));
+        expect(found, block).toHaveLength(1);
+        expect(found[0], block).toHaveAttribute("data-testid", icon);
+      }
+      expect(new Set([...Object.values(icons), "CalendarMonthRoundedIcon"]).size).toBe(8);
+    });
+  });
 });
