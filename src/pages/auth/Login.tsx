@@ -1,4 +1,4 @@
-import { useState, type FC, type FormEvent } from "react";
+import { useEffect, useState, type FC, type FormEvent } from "react";
 import { alpha } from "@mui/material/styles";
 import { radii, shadows, alphas, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
@@ -21,7 +21,10 @@ import { useSessionActions } from "../../hooks/actions";
 import { useAuthDispatch } from "../../context/auth.context";
 import {
   PASSWORD_CHANGED_MESSAGE,
+  PASSWORD_RESET_MESSAGE,
   SESSION_EXPIRED_MESSAGE,
+  clearPasswordReset,
+  hasPasswordReset,
   takePasswordChanged,
   takeSessionExpired,
 } from "../../utils/session";
@@ -38,6 +41,12 @@ export const Login: FC = () => {
   const [sessionExpired] = useState(takeSessionExpired);
   /** Same, for a session ended by a successful password change (#196). */
   const [passwordChanged] = useState(takePasswordChanged);
+  /**
+   * Same, for a password reset from an emailed link (#233), but cleared only
+   * once this page has committed: see `hasPasswordReset`.
+   */
+  const [passwordReset] = useState(hasPasswordReset);
+  useEffect(clearPasswordReset, []);
   const [formErrors, setFormErrors] = useState<{ id: boolean; password: boolean }>({
     id: false,
     password: false,
@@ -170,6 +179,18 @@ export const Login: FC = () => {
               }}
             >
               {PASSWORD_CHANGED_MESSAGE}
+            </Alert>
+          )}
+
+          {passwordReset && !loginError && (
+            <Alert
+              severity="success"
+              sx={{
+                mb: 3,
+                borderRadius: radii.default,
+              }}
+            >
+              {PASSWORD_RESET_MESSAGE}
             </Alert>
           )}
 

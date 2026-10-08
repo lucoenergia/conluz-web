@@ -24,6 +24,16 @@ export function markSessionExpired(): void {
   window.sessionStorage.setItem(EXPIRED_FLAG_KEY, "true");
 }
 
+/**
+ * Drops a pending expiry note without showing it. A password reset ends the
+ * session for a reason of its own (#233), and the login page should say that
+ * one thing -- not also that a session which the reset revoked anyway had
+ * expired.
+ */
+export function clearSessionExpired(): void {
+  window.sessionStorage.removeItem(EXPIRED_FLAG_KEY);
+}
+
 export function takeSessionExpired(): boolean {
   const expired = window.sessionStorage.getItem(EXPIRED_FLAG_KEY) === "true";
   window.sessionStorage.removeItem(EXPIRED_FLAG_KEY);
@@ -49,4 +59,29 @@ export function takePasswordChanged(): boolean {
   const changed = window.sessionStorage.getItem(PASSWORD_CHANGED_FLAG_KEY) === "true";
   window.sessionStorage.removeItem(PASSWORD_CHANGED_FLAG_KEY);
   return changed;
+}
+
+/**
+ * A password reset from an emailed link (#233). The backend ends every session
+ * of that user, and creates none, so the app ends any session it still holds
+ * and the login page says the reset worked. A flag in `sessionStorage`, as
+ * above, but read in two steps: `hasPasswordReset` while rendering, and
+ * `clearPasswordReset` once the page has committed. Arriving from the reset,
+ * the login page is first rendered and then discarded before it mounts for
+ * good, and a render that both read and cleared the flag would lose it.
+ */
+export const PASSWORD_RESET_MESSAGE = "Contraseña restablecida. Inicia sesión con tu nueva contraseña.";
+
+const PASSWORD_RESET_FLAG_KEY = "passwordReset";
+
+export function markPasswordReset(): void {
+  window.sessionStorage.setItem(PASSWORD_RESET_FLAG_KEY, "true");
+}
+
+export function hasPasswordReset(): boolean {
+  return window.sessionStorage.getItem(PASSWORD_RESET_FLAG_KEY) === "true";
+}
+
+export function clearPasswordReset(): void {
+  window.sessionStorage.removeItem(PASSWORD_RESET_FLAG_KEY);
 }

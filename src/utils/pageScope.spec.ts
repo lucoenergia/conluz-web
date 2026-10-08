@@ -7,7 +7,8 @@ import { resolvePageScope } from "./routes";
  * src/App.tsx rather than restated here, so a route added there without a
  * scope fails this spec instead of rendering no scope surface in silence.
  *
- * Routes under LoginLayout are skipped: that layout renders no scope surface.
+ * Routes under LoginLayout, with or without props, are skipped: that layout
+ * renders no scope surface.
  */
 function authenticatedPaths(): string[] {
   const source = readFileSync("src/App.tsx", "utf8");
@@ -50,7 +51,7 @@ function authenticatedPaths(): string[] {
     const path = segment
       ? `${parent.path}/${segment.replace(/:\w+/g, "sample-id")}`
       : parent.path;
-    const skipped = parent.skipped || /element=\{<LoginLayout\s*\/>\}/.test(tag);
+    const skipped = parent.skipped || /element=\{<LoginLayout\b[^}]*\/>\}/.test(tag);
 
     if (!skipped && (segment || isIndex)) paths.push(path === "" ? "/" : path);
     if (!selfClosing) stack.push({ path, skipped });

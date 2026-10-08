@@ -16,7 +16,8 @@ const mockLogin = vi.fn();
 
 // Mocks
 // useSessionActions runs for real; it calls both hooks on every render.
-vi.mock(import("../../api/authentication/authentication"), () => ({
+vi.mock(import("../../api/authentication/authentication"), async (importOriginal) => ({
+  ...(await importOriginal()),
   useLogin: vi.fn(),
   useLogout: vi.fn(),
 }));

@@ -3,8 +3,8 @@ import { isPasswordRule, type PasswordRule } from "../utils/passwordPolicy";
 import { pluralize } from "../utils/pluralize";
 
 /**
- * Why a login or a password change was refused, in the terms the screens act
- * on (#196). Only the status and the error code are read: never the request,
+ * Why a login, a password change or a password reset was refused, in the terms
+ * the screens act on (#196, #233). Only the status and the error code are read: never the request,
  * so no password can travel through here.
  *
  * A 400 or a 429 is never a session problem. Only `unauthorized` is.
@@ -13,6 +13,7 @@ export type AuthFailure =
   | { kind: "currentPasswordIncorrect" }
   | { kind: "policyViolation"; rule: PasswordRule | null }
   | { kind: "passwordUnchanged" }
+  | { kind: "resetTokenInvalid" }
   | { kind: "throttled"; retryAfterSeconds: number | null }
   | { kind: "unauthorized" }
   | { kind: "other"; error: unknown };
@@ -82,6 +83,9 @@ export function classifyAuthError(error: unknown): AuthFailure {
   }
   if (detail?.code === "USER_CURRENT_PASSWORD_INCORRECT") return { kind: "currentPasswordIncorrect" };
   if (detail?.code === "USER_PASSWORD_UNCHANGED") return { kind: "passwordUnchanged" };
+  // One code for every unusable reset link -- unknown, expired, used, replaced
+  // or its user disabled -- so the screen cannot tell them apart either.
+  if (detail?.code === "USER_PASSWORD_RESET_TOKEN_INVALID") return { kind: "resetTokenInvalid" };
   if (detail?.code === "USER_PASSWORD_POLICY_VIOLATION") {
     const rule = detail.params?.rule;
     return { kind: "policyViolation", rule: isPasswordRule(rule) ? rule : null };
