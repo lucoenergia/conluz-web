@@ -3,7 +3,7 @@ import { act, render, renderHook, type RenderOptions, type RenderResult, type Re
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StyledEngineProvider } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import { MemoryRouter } from "react-router";
+import { BrowserRouter, MemoryRouter } from "react-router";
 import { AuthProvider } from "../context/auth.context";
 import { LoggedUserProvider } from "../context/logged-user.context";
 import { ActiveCommunityContext, ActiveCommunityResolvedContext, CommunityProvider } from "../context/community.context";
@@ -26,8 +26,16 @@ export function createTestQueryClient(): QueryClient {
 }
 
 export type ProviderOptions = {
-  /** Initial router location. Defaults to "/". */
+  /** Initial router location. Defaults to "/". Ignored with `browserHistory`. */
   route?: string;
+  /**
+   * `BrowserRouter`, as in `main.tsx`, instead of `MemoryRouter`: for a spec
+   * whose subject is the address bar itself, such as the reset link's token
+   * being removed from it (#233). The spec sets the starting URL with
+   * `window.history.replaceState` before rendering; the harness puts it back
+   * to "/" after every test.
+   */
+  browserHistory?: boolean;
   /** Inject a client, e.g. one whose cache the spec has seeded. A fresh one is created otherwise. */
   queryClient?: QueryClient;
   /** Seeds the auth token, as `getFromStorage("token")` does in `main.tsx`. None by default. */
@@ -117,17 +125,23 @@ function resetBrowserStorage(): void {
 // are unaffected. Deliberately not a global setup file for the same reason.
 afterEach(resetBrowserStorage);
 
+// jsdom keeps the URL for the file's lifetime too, and a `browserHistory`
+// render reads and changes it.
+afterEach(() => window.history.replaceState(null, "", "/"));
+
 /**
  * Mirrors the provider nesting in `src/main.tsx`, plus the Error and Success
  * providers that `authenticated.layout.tsx` adds, with `MemoryRouter` in place
- * of `BrowserRouter`.
+ * of `BrowserRouter` unless `browserHistory` asks for the real one.
  *
  * `StrictMode` is intentionally left out: it double-invokes effects in
  * development, which would change how often mocked hooks and callbacks are
- * called and make call-count assertions depend on it.
+ * called and make call-count assertions depend on it. A spec whose subject is
+ * StrictMode passes RTL's `reactStrictMode: true`, which renders it as the root
+ * element, as `main.tsx` does: only there does it run each effect twice.
  */
 function createWrapper(options: ProviderOptions, queryClient: QueryClient, control: CommunityControl) {
-  const { route = "/", token, activeCommunityId } = options;
+  const { route = "/", browserHistory = false, token, activeCommunityId } = options;
 
   return function Providers({ children }: { children: ReactNode }) {
     const community =
@@ -138,6 +152,11 @@ function createWrapper(options: ProviderOptions, queryClient: QueryClient, contr
           {children}
         </SeededActiveCommunity>
       );
+    const routed = (
+      <ErrorProvider>
+        <SuccessProvider>{community}</SuccessProvider>
+      </ErrorProvider>
+    );
 
     return (
       <AuthProvider initialState={token ?? null}>
@@ -146,11 +165,11 @@ function createWrapper(options: ProviderOptions, queryClient: QueryClient, contr
             <CommunityProvider>
               <ThemeProvider theme={theme}>
                 <StyledEngineProvider enableCssLayer>
-                  <MemoryRouter initialEntries={[route]}>
-                    <ErrorProvider>
-                      <SuccessProvider>{community}</SuccessProvider>
-                    </ErrorProvider>
-                  </MemoryRouter>
+                  {browserHistory ? (
+                    <BrowserRouter>{routed}</BrowserRouter>
+                  ) : (
+                    <MemoryRouter initialEntries={[route]}>{routed}</MemoryRouter>
+                  )}
                 </StyledEngineProvider>
               </ThemeProvider>
             </CommunityProvider>
@@ -173,10 +192,11 @@ export function renderWithProviders(
   ui: ReactElement,
   options: ProviderOptions & Omit<RenderOptions, "wrapper"> = {},
 ): RenderResult & HarnessExtras {
-  const { route, queryClient = createTestQueryClient(), token, activeCommunityId, ...renderOptions } = options;
+  const { route, browserHistory, queryClient = createTestQueryClient(), token, activeCommunityId, ...renderOptions } =
+    options;
   resetBrowserStorage();
   const control: CommunityControl = { set: null };
-  const wrapper = createWrapper({ route, token, activeCommunityId }, queryClient, control);
+  const wrapper = createWrapper({ route, browserHistory, token, activeCommunityId }, queryClient, control);
   return { ...render(ui, { wrapper, ...renderOptions }), queryClient, switchActiveCommunity: switcher(control) };
 }
 
@@ -185,10 +205,11 @@ export function renderHookWithProviders<Result, Props>(
   hook: (props: Props) => Result,
   options: ProviderOptions & { initialProps?: Props } = {},
 ): RenderHookResult<Result, Props> & HarnessExtras {
-  const { route, queryClient = createTestQueryClient(), token, activeCommunityId, initialProps } = options;
+  const { route, browserHistory, queryClient = createTestQueryClient(), token, activeCommunityId, initialProps } =
+    options;
   resetBrowserStorage();
   const control: CommunityControl = { set: null };
-  const wrapper = createWrapper({ route, token, activeCommunityId }, queryClient, control);
+  const wrapper = createWrapper({ route, browserHistory, token, activeCommunityId }, queryClient, control);
   return {
     ...renderHook(hook, { wrapper, initialProps }),
     queryClient,
