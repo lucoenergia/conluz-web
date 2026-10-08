@@ -67,7 +67,11 @@ Full guide: the `conluz-web-testing` skill.
 - While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` prints "No test files found" and still exits 0 when it resolves nothing — then run the spec by path. Run `npm run lint && npm test` once at the end, and `npm run test:visual` only at the end and only if the UI changed.
 - **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If it can only be found by test id, it is missing an accessible name or role: report the defect, don't route around it.
 - **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails or a baseline is missing, report which screens differ and stop.
-- Screenshot names are globally unique across all visual specs (`grep -rhoP 'toHaveScreenshot\("\K[^"]+' tests/visual | sort | uniq -d` must print nothing).
+- Screenshot names are globally unique across all visual specs. The warmup test `screenshot names are unique across the visual specs` (`tests/visual/warmup.setup.ts`) enforces it; to check locally, this must print nothing (it reads spec files only, skips comments, and sees calls split over several lines):
+
+  ```bash
+  perl -0777 -ne 's{/\*.*?\*/}{}gs; s{^\s*//.*}{}gm; print "$1\n" while /\.toHaveScreenshot\(\s*"([^"]+)"/g' $(find tests/visual -name '*.spec.ts') | sort | uniq -d
+  ```
 - A green visual suite proves the UI is consistent with the capabilities it is *served*, not that the backend enforces them. Never cite it as an authorization guarantee.
 
 ## UI conventions
