@@ -7,6 +7,16 @@ import { Box } from "@mui/material";
  */
 export const ChartScrollArea: FC<{ minWidth: number; children: ReactNode }> = ({ minWidth, children }) => (
   <Box sx={{ overflowX: "auto" }}>
-    <Box sx={{ minWidth }}>{children}</Box>
+    <Box
+      sx={{
+        minWidth,
+        // An inline SVG sits on a text baseline, and the gap below it pushes the
+        // chart's hidden hover chrome one pixel past the room ApexCharts keeps
+        // under the chart: enough to give this area a vertical scrollbar (#220).
+        "& .apexcharts-svg": { display: "block" },
+      }}
+    >
+      {children}
+    </Box>
   </Box>
 );
