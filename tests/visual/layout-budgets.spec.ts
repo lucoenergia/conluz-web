@@ -26,14 +26,20 @@ import {
   expect,
   FIXED_COEFFICIENTS_MIXED,
   FIXED_COMMUNITY_ADMIN_USER,
+  FIXED_COMMUNITY_ID,
   FIXED_MEMBER_USER,
+  FIXED_PLANT_ID,
   FIXED_PLATFORM_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
+  FIXED_SUPPLY_ID,
+  FIXED_USER_2,
   injectAuthToken,
   MEMBER_HOURLY_PROFILE_GAPS,
   MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
   mockAllApiRoutes,
+  mockCommunityManagementRoutes,
   mockMemberHome,
+  mockPlantDetailRoutes,
   mockSharingAgreementDetailRoutes,
   mockSharingAgreementsPlantRoutes,
   navigateToSharingAgreementDetail,
@@ -257,4 +263,101 @@ test.describe("Visual baselines", () => {
       expect(scroller!.regionWidth, `${name} fits the page`).toBeLessThanOrEqual(390);
     }
   });
+
+  // -------------------------------------------------------------------------
+  // Page containers
+  // -------------------------------------------------------------------------
+
+  /**
+   * Every page that lays its sections out with sxStyles.pageContainerFull, each
+   * opened with the persona and mocks of its own capture. /communities/new has
+   * no capture; it is opened as the platform admin who creates communities.
+   */
+  const CONTAINER_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
+    ...[
+      ["/profile", "/profile"],
+      ["/change-password", "/change-password"],
+    ].map(([name, path]) => ({
+      name,
+      open: async (page: Page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+        await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+        await page.goto(path);
+      },
+    })),
+    ...[
+      ["/users", "/users"],
+      ["/users/new", "/users/new"],
+      ["/users/:userId/edit", `/users/${FIXED_USER_2.id}/edit`],
+      ["/communities", "/communities"],
+      ["/communities/new", "/communities/new"],
+      ["/communities/:communityId/edit", `/communities/${FIXED_COMMUNITY_ID}/edit`],
+    ].map(([name, path]) => ({
+      name,
+      open: async (page: Page) => {
+        await injectAuthToken(page);
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await page.goto(path);
+      },
+    })),
+    ...(
+      [
+        ["/members", "/members", mockCommunityManagementRoutes],
+        ["/integrations", "/integrations", mockCommunityManagementRoutes],
+        ["/supply-points/new", "/supply-points/new"],
+        ["/supply-points/:supplyPointId/edit", `/supply-points/${FIXED_SUPPLY_ID}/edit`],
+        ["/production/new", "/production/new"],
+        [
+          "/production/:plantId/edit",
+          `/production/${FIXED_PLANT_ID}/edit`,
+          (page: Page) => mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER),
+        ],
+      ] as [string, string, ((page: Page) => Promise<void>)?][]
+    ).map(([name, path, mockPageRoutes]) => ({
+      name,
+      open: async (page: Page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockPageRoutes?.(page);
+        await page.goto(path);
+      },
+    })),
+  ];
+
+  /**
+   * #211 AC1. pageContainerFull pads its sections at phone width, and so do the
+   * hero and form panels around and inside it. The padding must sit inside the
+   * 100% width, not on top of it. Two places can show the overflow. The document's scroll width catches a page that scrolls
+   * sideways. Half of these pages clip their root with overflow:hidden, which
+   * keeps the document at 390px while cutting the right edge of every section
+   * off, so the page's root box is measured too: its scroll width counts what
+   * it clips.
+   */
+  for (const containerPage of CONTAINER_PAGES) {
+    test(`#211 AC1: ${containerPage.name} stays within a 390px viewport`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "mobile", "AC1 is specified against a 390px viewport.");
+
+      await containerPage.open(page);
+      const heading = page.getByRole("main").getByRole("heading", { level: 1 });
+      await expect(heading).toBeVisible();
+      await stabilizePage(page);
+
+      const widths = await heading.evaluate((h1) => {
+        // Structural: the page's root box is the main region's child that holds
+        // the page's heading; it has no role or name of its own.
+        let root: HTMLElement = h1 as HTMLElement;
+        while (root.parentElement && root.parentElement.id !== "main-content") root = root.parentElement;
+        return {
+          viewport: document.documentElement.clientWidth,
+          document: document.documentElement.scrollWidth,
+          rootScroll: root.scrollWidth,
+          rootClient: root.clientWidth,
+        };
+      });
+      expect(widths.document, `${containerPage.name} scrolls sideways`).toBeLessThanOrEqual(widths.viewport);
+      expect(widths.rootScroll, `${containerPage.name} overflows its root box`).toBeLessThanOrEqual(widths.rootClient);
+    });
+  }
 });

@@ -81,6 +81,8 @@ export const CreateSupplyPage: FC = () => {
           color: "white",
           mx: { xs: 0, sm: 0 },
           width: { xs: "100%", sm: "auto" },
+          // Padding inside the phone width; at sm the width is auto (#211).
+          boxSizing: "border-box",
         }}
       >
         <Box sx={sxStyles.flexRowCenter}>
@@ -109,7 +111,7 @@ export const CreateSupplyPage: FC = () => {
       <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
-          sx={[sxStyles.softPanel, { width: { xs: "100%", sm: "auto" } }]}
+          sx={[sxStyles.softPanel, { width: { xs: "100%", sm: "auto" }, boxSizing: "border-box" }]}
         >
           <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} disabled={!createSupply} />
         </Paper>

@@ -6,9 +6,11 @@ export const sxStyles = {
     px: { xs: 2, sm: 0 },
   },
   // Same + full width — standard breadcrumb / form-section wrapper.
+  // border-box keeps the mobile padding inside the 100% width (#211).
   pageContainerFull: {
     px: { xs: 2, sm: 0 },
     width: "100%",
+    boxSizing: "border-box",
   },
   // Horizontal flex row: centre-aligned items, standard gap.
   flexRowCenter: {

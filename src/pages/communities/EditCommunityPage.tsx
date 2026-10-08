@@ -128,6 +128,8 @@ export const EditCommunityPage: FC = () => {
           background: (theme) => theme.palette.primary.main,
           color: "white",
           width: { xs: "100%", sm: "auto" },
+          // Padding inside the phone width; at sm the width is auto (#211).
+          boxSizing: "border-box",
         }}
       >
         <Box sx={sxStyles.flexRowCenter}>
