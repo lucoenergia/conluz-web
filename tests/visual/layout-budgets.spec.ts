@@ -44,6 +44,13 @@ import {
   stabilizePage,
 } from "./fixtures";
 
+// Real scrollbars, so a vertical scrollbar takes width as it does for a desktop
+// user: Playwright passes --hide-scrollbars to headless Chromium, which made the
+// #220 resize loop impossible to reproduce here. File-wide because a launch
+// option cannot be set per group. The mobile project emulates overlay
+// scrollbars, which take no width, so the 390px budgets measure what they did.
+test.use({ launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] } });
+
 test.describe("Visual baselines", () => {
   /**
    * AC1. The redesign exists because the old header pushed the page's content
@@ -256,5 +263,209 @@ test.describe("Visual baselines", () => {
       expect(scroller!.scrollWidth, `${name} keeps its chart wider than the screen`).toBeGreaterThan(scroller!.clientWidth);
       expect(scroller!.regionWidth, `${name} fits the page`).toBeLessThanOrEqual(390);
     }
+  });
+
+  /**
+   * #220. The same two charts, measured over time rather than at one instant.
+   *
+   * The scroll area once let its content's height decide its width: one pixel
+   * of hidden hover chrome below the chart gave it a vertical scrollbar, the
+   * scrollbar narrowed it, ApexCharts redrew at the new width, and the redraw
+   * removed the scrollbar again -- a loop for as long as the pointer stayed on
+   * the chart. None of it shows in a capture: a screenshot is one frame taken
+   * with the pointer elsewhere, and headless Chromium hides scrollbars unless
+   * told not to. So these tests run with real scrollbars, move the pointer, and
+   * measure (see the file-level test.use); the hidden-table defect on this
+   * screen (#201 AC10, above) was likewise invisible to every capture and only
+   * surfaced through a number.
+   */
+  test.describe("#220: the member home's charts hold still", () => {
+    // The assertions below are soft: every chart is measured even after one
+    // fails, so a failure says whether one chart regressed or both, and whether
+    // the loop runs as well as the overflow that starts it.
+    const CHARTS = ["Tus últimos 12 meses", "Tus mejores horas"];
+
+    // ApexCharts debounces a parent resize by 150 ms before redrawing; a redraw
+    // the pointer set off has landed well inside this.
+    const REDRAW_SETTLE_MS = 600;
+
+    // Long enough for a wheel's scroll to land, where it lands at all.
+    const WHEEL_SETTLE_MS = 300;
+
+    const openMemberHome = async (page: Page) => {
+      await injectAuthToken(page);
+      await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+      await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+      await mockMemberHome(page, FIXED_MEMBER_USER, {
+        monthly: MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
+        hourly: MEMBER_HOURLY_PROFILE_GAPS,
+      });
+      await page.goto("/home/member");
+      // Structural: ApexCharts' SVG has no role or name of its own.
+      await expect(page.locator("svg.apexcharts-svg")).toHaveCount(3);
+      await stabilizePage(page);
+    };
+
+    /**
+     * Structural: the scroll container is the chart canvas's nearest
+     * horizontally scrolling ancestor, found as #201 AC10 finds it. Tagged so
+     * the measurements below can address it.
+     */
+    const tagScroller = (page: Page, name: string) =>
+      page.getByRole("region", { name }).evaluate((region) => {
+        let el = region.querySelector(".apexcharts-canvas")?.parentElement ?? null;
+        while (el && getComputedStyle(el).overflowX !== "auto") el = el.parentElement;
+        el?.setAttribute("data-chart-scroller", "");
+        return el !== null;
+      });
+
+    /** What a reader would see change: the area's size, each chart's size, and any vertical overflow. */
+    const measure = (page: Page, name: string) =>
+      page
+        .getByRole("region", { name })
+        .locator("[data-chart-scroller]")
+        .evaluate((scroller: HTMLElement) => ({
+          width: scroller.offsetWidth,
+          height: scroller.offsetHeight,
+          verticalScrollbar: scroller.offsetWidth - scroller.clientWidth,
+          verticalOverflow: scroller.scrollHeight - scroller.clientHeight,
+          charts: [...scroller.querySelectorAll(".apexcharts-canvas")].map((canvas) => {
+            const box = canvas.getBoundingClientRect();
+            return { width: box.width, height: box.height };
+          }),
+        }));
+
+    test("#220 AC1, AC2, AC4: moving the pointer across either chart redraws nothing and resizes nothing", async ({
+      page,
+    }) => {
+      await openMemberHome(page);
+
+      for (const name of CHARTS) {
+        expect(await tagScroller(page, name), `${name} has a scroll container`).toBe(true);
+        const region = page.getByRole("region", { name });
+        await region.scrollIntoViewIfNeeded();
+
+        // Soft, so that a failure here still lets the sweep below report whether the loop runs.
+        const settled = await measure(page, name);
+        expect.soft(settled.verticalOverflow, `${name}: vertical overflow once settled`).toBe(0);
+        expect.soft(settled.verticalScrollbar, `${name}: vertical scrollbar once settled`).toBe(0);
+
+        // Count every size change of the area, the box the charts measure, and
+        // each chart; mark each SVG so a redraw, which replaces it, shows.
+        await region.locator("[data-chart-scroller]").evaluate(async (scroller) => {
+          const watched = [scroller, scroller.firstElementChild!, ...scroller.querySelectorAll(".apexcharts-canvas")];
+          const state = { resizes: 0, ready: false };
+          (scroller as unknown as { resizeLog: typeof state }).resizeLog = state;
+          // A ResizeObserver reports every observed element once on observe;
+          // only what follows is a change.
+          new ResizeObserver(() => {
+            if (state.ready) state.resizes += 1;
+          }).observe(watched[0]);
+          watched.slice(1).forEach((el) =>
+            new ResizeObserver(() => {
+              if (state.ready) state.resizes += 1;
+            }).observe(el),
+          );
+          scroller.querySelectorAll("svg.apexcharts-svg").forEach((svg) => svg.setAttribute("data-drawn-before-sweep", ""));
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          state.ready = true;
+        });
+
+        // Sweep every chart in the area along three rows, measuring at every
+        // step: hover chrome only exists while the pointer is on the chart.
+        const whileHovering = { verticalOverflow: 0, verticalScrollbar: 0 };
+        const canvases = region.locator(".apexcharts-canvas");
+        for (let c = 0; c < (await canvases.count()); c++) {
+          const box = (await canvases.nth(c).boundingBox())!;
+          for (const row of [0.2, 0.6, 0.95]) {
+            for (let step = 1; step < 24; step++) {
+              await page.mouse.move(box.x + (box.width * step) / 24, box.y + box.height * row);
+              const during = await measure(page, name);
+              whileHovering.verticalOverflow = Math.max(whileHovering.verticalOverflow, during.verticalOverflow);
+              whileHovering.verticalScrollbar = Math.max(whileHovering.verticalScrollbar, during.verticalScrollbar);
+            }
+          }
+        }
+        await page.waitForTimeout(REDRAW_SETTLE_MS);
+
+        expect
+          .soft(whileHovering, `${name}: the most vertical overflow and scrollbar seen while hovering`)
+          .toEqual({ verticalOverflow: 0, verticalScrollbar: 0 });
+        expect.soft(await measure(page, name), `${name}: dimensions after the sweep`).toEqual(settled);
+        const after = await region.locator("[data-chart-scroller]").evaluate((scroller) => ({
+          resizes: (scroller as unknown as { resizeLog: { resizes: number } }).resizeLog.resizes,
+          redrawn: scroller.querySelectorAll("svg.apexcharts-svg:not([data-drawn-before-sweep])").length,
+        }));
+        expect.soft(after, `${name}: size changes and redraws during the sweep`).toEqual({ resizes: 0, redrawn: 0 });
+
+        await page.mouse.move(0, 0);
+      }
+    });
+
+    test("#220 AC1: the chart containers cannot scroll vertically, even when something reaches below them", async ({ page }) => {
+      await openMemberHome(page);
+
+      for (const name of CHARTS) {
+        expect(await tagScroller(page, name), `${name} has a scroll container`).toBe(true);
+        const scroller = page.getByRole("region", { name }).locator("[data-chart-scroller]");
+        await scroller.scrollIntoViewIfNeeded();
+        await page.mouse.move(0, 0);
+        const widthBefore = await scroller.evaluate((el) => el.clientWidth);
+
+        // Overflow it on purpose, the way the hover chrome did: something
+        // positioned inside a chart that reaches below the area. What the area
+        // does with that decides whether a future overflow can start the loop.
+        await scroller.evaluate((el) => {
+          const probe = document.createElement("div");
+          probe.setAttribute("data-overflow-probe", "");
+          Object.assign(probe.style, { position: "absolute", left: "0", top: "100%", width: "1px", height: `${el.clientHeight}px` });
+          el.querySelector(".apexcharts-canvas")!.appendChild(probe);
+        });
+        const box = (await scroller.boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.wheel(0, 200);
+        // The wheel resolves before the scroll it causes is applied.
+        await page.waitForTimeout(WHEEL_SETTLE_MS);
+
+        const overflowed = await scroller.evaluate((el: HTMLElement) => ({
+          scrollTop: el.scrollTop,
+          verticalScrollbar: el.offsetWidth - el.clientWidth,
+          clientWidth: el.clientWidth,
+        }));
+        expect.soft(overflowed, `${name} with content reaching below it`).toEqual({
+          scrollTop: 0,
+          verticalScrollbar: 0,
+          clientWidth: widthBefore,
+        });
+
+        await scroller.evaluate((el) => el.querySelector("[data-overflow-probe]")!.remove());
+      }
+    });
+
+    test("#220 AC3: at 390px the charts still scroll sideways inside their containers, and the page does not", async ({
+      page,
+    }, testInfo) => {
+      test.skip(testInfo.project.name !== "mobile", "AC3 is specified against a 390px viewport.");
+
+      await openMemberHome(page);
+
+      for (const name of CHARTS) {
+        expect(await tagScroller(page, name), `${name} has a scroll container`).toBe(true);
+        const scroller = page.getByRole("region", { name }).locator("[data-chart-scroller]");
+        await scroller.scrollIntoViewIfNeeded();
+
+        const box = (await scroller.boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.wheel(200, 0);
+
+        await expect
+          .poll(() => scroller.evaluate((el) => el.scrollLeft), { message: `${name} scrolls sideways` })
+          .toBeGreaterThan(0);
+        expect(
+          await page.evaluate(() => ({ scrollX: window.scrollX, document: document.documentElement.scrollWidth })),
+          `the page beside ${name}`,
+        ).toEqual({ scrollX: 0, document: 390 });
+      }
+    });
   });
 });
