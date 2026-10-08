@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useLogin, useLogout } from "../../api/authentication/authentication";
+import {
+  useLogin,
+  useLogout,
+  useRequestPasswordReset,
+  useResetPassword,
+} from "../../api/authentication/authentication";
 import { getGetCurrentUserQueryKey, useChangePassword, useUpdateProfile } from "../../api/users/users";
 import { mutation } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
@@ -10,6 +15,8 @@ import { useSessionActions } from "./useSessionActions";
 /** Complete bodies: a cast would hide a field the screen must supply. */
 const CREDENTIALS = { username: "TEST-USERNAME", password: "TEST-PASSWORD" };
 const PROFILE_BODY = { email: "test@example.invalid" };
+const RECOVER_BODY = { personalId: "TEST-PERSONAL-ID" };
+const RESET_BODY = { token: "TEST-RESET-TOKEN", newPassword: "TEST-NEW-PASSWORD-LONG-ENOUGH" };
 const PASSWORD_BODY = { currentPassword: "TEST-CURRENT-PASSWORD", newPassword: "TEST-NEW-PASSWORD-LONG-ENOUGH" };
 
 /**
@@ -25,6 +32,8 @@ vi.mock(import("../../api/authentication/authentication"), async (importOriginal
   ...(await importOriginal()),
   useLogin: vi.fn(),
   useLogout: vi.fn(),
+  useRequestPasswordReset: vi.fn(),
+  useResetPassword: vi.fn(),
 }));
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -38,12 +47,14 @@ beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);
   vi.mocked(useLogin).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useLogout).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useRequestPasswordReset).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useResetPassword).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useUpdateProfile).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useChangePassword).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
 describe("useSessionActions", () => {
-  it("hands back both actions with no session and no capabilities at all", () => {
+  it("hands back every action with no session and no capabilities at all", () => {
     const { result } = renderHookWithProviders(() => useSessionActions(), {
       token: undefined,
       activeCommunityId: null,
@@ -51,6 +62,8 @@ describe("useSessionActions", () => {
 
     expect(result.current.actions.login).toBeDefined();
     expect(result.current.actions.logout).toBeDefined();
+    expect(result.current.actions.requestPasswordReset).toBeDefined();
+    expect(result.current.actions.resetPassword).toBeDefined();
   });
 
   it("logs in with the credentials the form supplies and returns the token", async () => {
@@ -89,6 +102,46 @@ describe("useSessionActions", () => {
 
     await expect(result.current.actions.logout.run()).resolves.toBe(true);
     expect(mutateAsync).toHaveBeenCalledWith();
+  });
+});
+
+describe("useSessionActions -- recovering a forgotten password (#233)", () => {
+  it("requests a link with the body as given and touches no cache", async () => {
+    const { result, queryClient } = renderHookWithProviders(() => useSessionActions());
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.requestPasswordReset.run(RECOVER_BODY)).resolves.toEqual({ ok: true });
+    expect(mutateAsync).toHaveBeenCalledWith({ data: RECOVER_BODY });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("resets with the body as given and touches no cache", async () => {
+    const { result, queryClient } = renderHookWithProviders(() => useSessionActions());
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.resetPassword.run(RESET_BODY)).resolves.toEqual({ ok: true });
+    expect(mutateAsync).toHaveBeenCalledWith({ data: RESET_BODY });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("reports why a reset was refused", async () => {
+    mutateAsync.mockRejectedValue(apiError(400, { code: "USER_PASSWORD_RESET_TOKEN_INVALID" }));
+    const { result } = renderHookWithProviders(() => useSessionActions());
+
+    await expect(result.current.actions.resetPassword.run(RESET_BODY)).resolves.toEqual({
+      ok: false,
+      failure: { kind: "resetTokenInvalid" },
+    });
+  });
+
+  it("says a recovery request was throttled, and for how long", async () => {
+    mutateAsync.mockRejectedValue(apiError(429, { code: "AUTH_TOO_MANY_FAILED_ATTEMPTS" }, { "retry-after": "840" }));
+    const { result } = renderHookWithProviders(() => useSessionActions());
+
+    await expect(result.current.actions.requestPasswordReset.run(RECOVER_BODY)).resolves.toEqual({
+      ok: false,
+      failure: { kind: "throttled", retryAfterSeconds: 840 },
+    });
   });
 });
 

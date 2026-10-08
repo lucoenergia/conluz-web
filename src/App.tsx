@@ -26,7 +26,7 @@ function lazyPage<M, K extends keyof M>(loader: () => Promise<M>, name: K) {
 
 const Login = lazyPage(() => import("./pages/auth/Login"), "Login");
 const ForgotPassword = lazyPage(() => import("./pages/auth/ForgotPassword"), "ForgotPassword");
-const NewPassword = lazyPage(() => import("./pages/auth/NewPassword"), "NewPassword");
+const ResetPassword = lazyPage(() => import("./pages/auth/ResetPassword"), "ResetPassword");
 const ChangePasswordPage = lazyPage(() => import("./pages/auth/ChangePassword"), "ChangePasswordPage");
 
 const LandingRoute = lazyPage(() => import("./pages/landing/LandingRoute"), "LandingRoute");
@@ -66,10 +66,15 @@ function App() {
       <Routes>
         <Route element={<LoginLayout />}>
           <Route path="login" element={<Login />}></Route>
-          <Route path="forgot-password">
-            <Route index element={<ForgotPassword />}></Route>
-            <Route path=":token" element={<NewPassword />}></Route>
-          </Route>
+        </Route>
+        {/*
+          Recovering a password works with or without a session (#233): the
+          reset link carries its token in the URL fragment, and the redirect a
+          signed-in caller gets from the login page would lose it.
+        */}
+        <Route element={<LoginLayout allowSignedIn />}>
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="reset-password" element={<ResetPassword />} />
         </Route>
         <Route element={<AuthenticatedLayout />}>
           {/*

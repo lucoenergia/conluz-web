@@ -77,6 +77,12 @@ describe("classifyAuthError", () => {
     });
   });
 
+  it("classifies an unusable password reset link (#233)", () => {
+    expect(classifyAuthError(apiError(400, { code: "USER_PASSWORD_RESET_TOKEN_INVALID" }))).toEqual({
+      kind: "resetTokenInvalid",
+    });
+  });
+
   // The forced change is decided by mustChangePassword on the current user,
   // never by this code (#211 AC7): it gets no kind of its own.
   it("leaves a required password change as other", () => {
