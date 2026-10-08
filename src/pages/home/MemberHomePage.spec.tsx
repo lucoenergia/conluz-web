@@ -716,7 +716,7 @@ describe("MemberHomePage (#199)", () => {
   });
 
   describe("the best hours (#201)", () => {
-    const bestHours = () => card("Tus mejores horas");
+    const bestHours = () => card("Tus mejores horas para autoconsumir");
     const twelveMonths = () => card("Tus últimos 12 meses");
 
     it("asks for the profile with no period of its own, and renders without waiting for the reference month", () => {
@@ -819,7 +819,7 @@ describe("MemberHomePage (#199)", () => {
     });
 
     it("assigned energy and consumption in the hourly chart keep the colours their legend shows", () => {
-      const legend = within(card("Tus mejores horas")).getByRole("list");
+      const legend = within(card("Tus mejores horas para autoconsumir")).getByRole("list");
 
       expect(chartColors("Energía asignada")).toEqual([ENERGY_COLORS.consumption, ENERGY_COLORS.assigned]);
       expect(background(swatchOf(legend, /^Energía asignada$/))).toBe(ENERGY_COLORS.assigned);
@@ -870,7 +870,7 @@ describe("MemberHomePage (#199)", () => {
       const icons = {
         "El recorrido de tu energía": "RouteRoundedIcon",
         "Qué puedes hacer": "LightbulbRoundedIcon",
-        "Tus mejores horas": "ScheduleRoundedIcon",
+        "Tus mejores horas para autoconsumir": "ScheduleRoundedIcon",
         "Tu ahorro en agosto de 2026": "SavingsRoundedIcon",
         "Comparado con julio de 2026": "CompareArrowsRoundedIcon",
         "Recuperación de tu inversión": "AccountBalanceWalletRoundedIcon",

@@ -134,7 +134,7 @@ describe("BestHours (#201)", () => {
   it("names the month it covers as the latest published one, without implying the member chose it", () => {
     open();
 
-    const caption = text(screen.getByRole("region", { name: "Tus mejores horas" }));
+    const caption = text(screen.getByRole("region", { name: "Tus mejores horas para autoconsumir" }));
     expect(caption).toContain("Media de cada hora en agosto de 2026, el último mes que ha publicado la distribuidora.");
     expect(caption).not.toMatch(/elegid|seleccion|escog/i);
   });
@@ -264,7 +264,7 @@ describe("BestHours (#201)", () => {
 
     it("leaves the legend to the block, where it reads without scrolling the chart", () => {
       open();
-      const legend = within(screen.getByRole("region", { name: "Tus mejores horas" })).getByRole("list");
+      const legend = within(screen.getByRole("region", { name: "Tus mejores horas para autoconsumir" })).getByRole("list");
 
       expect(chart().options.legend?.show).toBe(false);
       expect(within(legend).getAllByRole("listitem").map(text)).toEqual(["Tu consumo", "Energía asignada", "Mejores horas"]);
@@ -294,6 +294,14 @@ describe("BestHours (#201)", () => {
 
       expect(BEST_HOURS_COUNT).toBe(4);
       expect(text(lead())).toBe("Mejores horas: de 16 h a 20 h");
+    });
+
+    it("is headed by what the hours are best for, and its chart's table keeps its caption", () => {
+      open();
+
+      expect(screen.getByRole("heading", { level: 2, name: "Tus mejores horas para autoconsumir" })).toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "Tus mejores horas para autoconsumir" })).toBeInTheDocument();
+      expect(screen.getByRole("table", { name: "Datos del gráfico: tus mejores horas" })).toBeInTheDocument();
     });
 
     it("states it before the caption and the chart: the block answers first", () => {
@@ -414,7 +422,7 @@ describe("BestHours (#201)", () => {
       const shaded = (chart().options.grid?.column?.colors as string[]).flatMap((color, hour) =>
         color === ENERGY_COLORS.bestHours ? [hour] : [],
       );
-      const legend = within(screen.getByRole("region", { name: "Tus mejores horas" })).getByRole("list");
+      const legend = within(screen.getByRole("region", { name: "Tus mejores horas para autoconsumir" })).getByRole("list");
 
       expect(shaded).toEqual([12, 17, 18, 19]);
       expect(within(legend).getByText("Mejores horas")).toBeInTheDocument();

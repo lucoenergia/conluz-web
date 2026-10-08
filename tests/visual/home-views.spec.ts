@@ -122,7 +122,7 @@ const savingsCard = (page: Page) => page.getByRole("region", { name: "Tu ahorro 
 const estimateLabel = (page: Page) => page.getByText(/Estimado con un precio de/);
 const comparisonCard = (page: Page) => page.getByRole("region", { name: "Comparado con julio de 2026" });
 const twelveMonthsCard = (page: Page) => page.getByRole("region", { name: "Tus últimos 12 meses" });
-const bestHoursCard = (page: Page) => page.getByRole("region", { name: "Tus mejores horas" });
+const bestHoursCard = (page: Page) => page.getByRole("region", { name: "Tus mejores horas para autoconsumir" });
 const chartTable = (card: ReturnType<Page["getByRole"]>) => card.getByRole("table", { name: /Datos del gráfico/ });
 // Structural: ApexCharts' SVG has no role or name of its own. Waiting for it
 // keeps a capture from catching the card before the chart has drawn.

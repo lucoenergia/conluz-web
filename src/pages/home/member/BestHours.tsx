@@ -13,7 +13,8 @@ import { BEST_HOURS_LABEL, CONSUMPTION_SERIES, PRODUCTION_SERIES, toHourlyProfil
 import { SeriesLegend } from "./SeriesLegend";
 import { useHourlyProfile } from "./useHourlyProfile";
 
-const TITLE = "Tus mejores horas";
+/** The heading says what the hours are best for; it also names the block's region. */
+const TITLE = "Tus mejores horas para autoconsumir";
 
 type Profile = Extract<HourlyProfileView, { kind: "profile" }>;
 
@@ -26,7 +27,7 @@ const ProfileTable: FC<{ view: Profile }> = ({ view }) => (
   // table box, so a hidden table still widens the page to its full width.
   <Box sx={visuallyHidden}>
     <table>
-      <caption>Datos del gráfico: {TITLE.toLowerCase()}</caption>
+      <caption>Datos del gráfico: tus mejores horas</caption>
       <thead>
         <tr>
           <th scope="col">Hora</th>

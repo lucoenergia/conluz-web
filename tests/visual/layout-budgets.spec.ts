@@ -257,7 +257,7 @@ test.describe("Visual baselines", () => {
     }));
     expect(widths).toEqual({ viewport: 390, document: 390 });
 
-    for (const name of ["Tus últimos 12 meses", "Tus mejores horas"]) {
+    for (const name of ["Tus últimos 12 meses", "Tus mejores horas para autoconsumir"]) {
       // Structural: the scroll container is the chart canvas's nearest scrolling ancestor.
       const scroller = await page.getByRole("region", { name }).evaluate((region) => {
         let el = region.querySelector(".apexcharts-canvas")?.parentElement ?? null;
@@ -289,7 +289,7 @@ test.describe("Visual baselines", () => {
     // The assertions below are soft: every chart is measured even after one
     // fails, so a failure says whether one chart regressed or both, and whether
     // the loop runs as well as the overflow that starts it.
-    const CHARTS = ["Tus últimos 12 meses", "Tus mejores horas"];
+    const CHARTS = ["Tus últimos 12 meses", "Tus mejores horas para autoconsumir"];
 
     // ApexCharts debounces a parent resize by 150 ms before redrawing; a redraw
     // the pointer set off has landed well inside this.
