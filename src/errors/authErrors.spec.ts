@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { apiError } from "../test/apiError";
-import { classifyAuthError, getRetryAfterSeconds, throttledMessage } from "./authErrors";
+import { classifyAuthError, getRetryAfterSeconds, PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 import { getFirstApiErrorMessage } from "./apiErrorCatalogue";
 
 describe("getRetryAfterSeconds", () => {
@@ -71,6 +71,19 @@ describe("classifyAuthError", () => {
     });
   });
 
+  it("classifies a new password equal to the current one (#211)", () => {
+    expect(classifyAuthError(apiError(400, { code: "USER_PASSWORD_UNCHANGED" }))).toEqual({
+      kind: "passwordUnchanged",
+    });
+  });
+
+  // The forced change is decided by mustChangePassword on the current user,
+  // never by this code (#211 AC7): it gets no kind of its own.
+  it("leaves a required password change as other", () => {
+    const error = apiError(403, { code: "USER_PASSWORD_CHANGE_REQUIRED" });
+    expect(classifyAuthError(error)).toEqual({ kind: "other", error });
+  });
+
   it.each(["TOO_SHORT", "TOO_LONG", "TOO_MANY_BYTES"] as const)("classifies a %s policy violation", (rule) => {
     const error = apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule } });
     expect(classifyAuthError(error)).toEqual({ kind: "policyViolation", rule });
@@ -117,6 +130,23 @@ describe("the catalogue entries for #196", () => {
     );
     expect(getFirstApiErrorMessage(apiError(429, { code: "AUTH_TOO_MANY_FAILED_ATTEMPTS" }), "x")).toBe(
       "Demasiados intentos fallidos. Vuelve a intentarlo más tarde.",
+    );
+  });
+});
+
+describe("the catalogue entries for lucoenergia/conluz#342 (#211)", () => {
+  it("replaces the server's message with the app's own, in the informal register", () => {
+    expect(
+      getFirstApiErrorMessage(apiError(400, { code: "USER_PASSWORD_UNCHANGED", message: "server text" }), "x"),
+    ).toBe("La nueva contraseña debe ser distinta de la actual.");
+    expect(
+      getFirstApiErrorMessage(apiError(403, { code: "USER_PASSWORD_CHANGE_REQUIRED", message: "server text" }), "x"),
+    ).toBe("Por seguridad, debes cambiar tu contraseña antes de continuar.");
+  });
+
+  it("says the same as the form's own check before sending", () => {
+    expect(getFirstApiErrorMessage(apiError(400, { code: "USER_PASSWORD_UNCHANGED" }), "x")).toBe(
+      PASSWORD_UNCHANGED_MESSAGE,
     );
   });
 });

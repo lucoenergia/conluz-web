@@ -5,9 +5,14 @@ import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
-import { buildCommunity, buildCurrentUser } from "../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../test/fixtures";
 import { useGetCurrentUser } from "../api/users/users";
-import { useGetAllCommunities, type getAllCommunities } from "../api/communities/communities";
+import {
+  useGetAllCommunities,
+  useGetCommunityById,
+  type getAllCommunities,
+  type getCommunityById,
+} from "../api/communities/communities";
 import { CommunityRole, type CurrentUserResponse } from "../api/models";
 import { AuthenticatedLayout } from "./authenticated.layout";
 
@@ -31,12 +36,13 @@ vi.mock(import("../api/users/users"), () => ({
   useGetCurrentUser: vi.fn(),
 }));
 
-// Spread the original: useActiveCommunityResource reads useGetCommunityById
-// from this module to resolve the active community's capabilities, so a bare
-// factory would leave that export undefined.
+// The layout reads the active community's capabilities from
+// useGetCommunityById, so it is mocked too: left real, it reached the network
+// (#211). The spread keeps the rest of the module real.
 vi.mock(import("../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
+  useGetCommunityById: vi.fn(),
 }));
 
 const COMMUNITY_NAME = "Comunidad Alpha";
@@ -79,6 +85,16 @@ beforeEach(() => {
       buildCommunity({ id: "community-a", name: COMMUNITY_NAME }),
       buildCommunity({ id: "community-b", name: "Comunidad Beta" }),
     ]),
+  );
+  // What community-a answers its admin.
+  vi.mocked(useGetCommunityById).mockReturnValue(
+    query.success<typeof getCommunityById>(
+      buildCommunity({
+        id: "community-a",
+        name: COMMUNITY_NAME,
+        capabilities: buildCommunityCapabilities({ canRead: true, canManage: true, canManageMemberships: true }),
+      }),
+    ),
   );
 });
 

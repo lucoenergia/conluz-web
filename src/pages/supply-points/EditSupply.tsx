@@ -74,6 +74,8 @@ export const EditSupplyPage: FC = () => {
           color: "white",
           mx: { xs: 0, sm: 0 },
           width: { xs: "100%", sm: "auto" },
+          // Padding inside the phone width; at sm the width is auto (#211).
+          boxSizing: "border-box",
         }}
       >
         <Box sx={sxStyles.flexRowCenter}>

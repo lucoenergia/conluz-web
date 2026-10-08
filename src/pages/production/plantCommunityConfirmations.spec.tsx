@@ -3,8 +3,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
-import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
-import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
+import {
+  useGetAllCommunities,
+  useGetCommunityById,
+  type getAllCommunities,
+  type getCommunityById,
+} from "../../api/communities/communities";
 import { useCreatePlant } from "../../api/plants/plants";
 import { useGetAllSupplies, type getAllSupplies } from "../../api/supplies/supplies";
 import { DeleteConfirmationModal } from "../../components/Modals/DeleteConfirmationModal";
@@ -16,12 +21,13 @@ import { CreatePlantPage } from "./CreatePlantPage";
  * header line and in its title. Editing a plant already open on screen does not.
  */
 
-// Spread the original: useActiveCommunityResource reads useGetCommunityById
-// from this module to resolve the active community's capabilities, so a bare
-// factory would leave that export undefined.
+// useActiveCommunityResource reads the active community from
+// useGetCommunityById, so it is mocked too: left real, it reached the network
+// (#211). The spread keeps the query-key getters the actions layer uses.
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
+  useGetCommunityById: vi.fn(),
 }));
 
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
@@ -43,6 +49,12 @@ const COMMUNITY_NAME = "Comunidad Solar Norte";
 const HEADER_LINE = `Comunidad · ${COMMUNITY_NAME}`;
 
 beforeEach(() => {
+  // The admin reaching the create page may create plants there.
+  vi.mocked(useGetCommunityById).mockReturnValue(
+    query.success<typeof getCommunityById>(
+      buildCommunity({ id: "c1", name: COMMUNITY_NAME, capabilities: buildCommunityCapabilities({ canCreatePlants: true }) }),
+    ),
+  );
   vi.mocked(useGetAllCommunities).mockReturnValue(
     query.success<typeof getAllCommunities>([buildCommunity({ id: "c1", name: COMMUNITY_NAME })]),
   );

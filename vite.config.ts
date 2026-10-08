@@ -9,6 +9,8 @@ export default defineConfig({
     globals: true,
     // Scope to src/ only so Playwright specs in tests/visual/ are not picked up by vitest
     include: ["src/**/*.spec.{ts,tsx}"],
+    // Fails any test that makes a real network request (#211).
+    setupFiles: ["src/test/networkGuard.setup.ts"],
   },
   envPrefix: "CONLUZ_",
   server: {

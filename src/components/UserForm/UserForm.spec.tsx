@@ -196,11 +196,8 @@ describe("UserForm", () => {
     it("shows spinner and disables button when isPending is true", () => {
       render(<UserForm {...defaultCreateProps} isPending={true} />);
 
-      expect(screen.queryByText("Crear socio")).not.toBeInTheDocument();
       expect(screen.getByRole("progressbar")).toBeInTheDocument();
-      // The password toggles are buttons too, and they have names; the submit
-      // button loses its name to the spinner while pending.
-      expect(screen.getByRole("button", { name: "" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Crear socio" })).toBeDisabled();
     });
   });
 
@@ -277,9 +274,31 @@ describe("UserForm", () => {
     it("shows spinner and disables button when isPending is true", () => {
       render(<UserForm {...defaultEditProps} isPending={true} />);
 
-      expect(screen.queryByText("Guardar cambios")).not.toBeInTheDocument();
       expect(screen.getByRole("progressbar")).toBeInTheDocument();
-      expect(screen.getByRole("button")).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeDisabled();
+    });
+  });
+
+  // #211 AC2. A screen reader must hear the same button while it saves: the
+  // spinner must not replace its name, and its busy state must be exposed.
+  describe.each([
+    ["create", defaultCreateProps],
+    ["edit", defaultEditProps],
+  ])("the submit button in %s mode", (_mode, props) => {
+    it("keeps the submit label as its name while pending, and says it is busy", () => {
+      const label = props.submitLabel;
+      const { rerender } = render(<UserForm {...props} isPending={false} />);
+
+      const idle = screen.getByRole("button", { name: label });
+      expect(idle).not.toHaveAttribute("aria-busy", "true");
+      expect(idle).toBeEnabled();
+
+      rerender(<UserForm {...props} isPending={true} />);
+
+      const pending = screen.getByRole("button", { name: label });
+      expect(pending).toBe(idle);
+      expect(pending).toHaveAttribute("aria-busy", "true");
+      expect(pending).toBeDisabled();
     });
   });
 });
