@@ -1103,7 +1103,9 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             mb: 2,
           }}
         >
-          <Tooltip title={activeCommunityId ? "" : "Selecciona una comunidad activa para añadir suministros"}>
+          {/* No active community only while it is being worked out: a deep link renders
+              before the community resolves, and nothing asks the caller to choose one. */}
+          <Tooltip title={activeCommunityId ? "" : "Cargando comunidad…"}>
             <span>
               <Button
                 variant="outlined"

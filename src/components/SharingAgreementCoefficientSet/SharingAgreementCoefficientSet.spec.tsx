@@ -10,10 +10,12 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../api/mod
 import {
   OPEN_UNCLOSED,
   renderWithTheme,
+  setTree,
   coefficients,
   mockMutateAsync,
   mockSuccessDispatch,
 } from "./SharingAgreementCoefficientSet.testUtils";
+import { renderWithProviders } from "../../test/renderWithProviders";
 
 const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
 
@@ -165,6 +167,21 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     fireEvent.click(screen.getByRole("button", { name: /Editar a mano/ }));
 
     expect(screen.getByRole("button", { name: "Añadir suministro" })).toBeInTheDocument();
+  });
+
+  it("UI-ENT-005 while the active community is being worked out, adding a supply waits and says so", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderWithProviders(setTree({ coefficients: [], agreementStatus: SharingAgreementResponseStatus.DRAFT }), {
+      activeCommunityId: null,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Editar a mano/ }));
+    const add = screen.getByRole("button", { name: "Añadir suministro" });
+    expect(add).toBeDisabled();
+
+    // A disabled button takes no pointer events; the tooltip listens on the span wrapping it.
+    await user.hover(add.parentElement!);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Cargando comunidad…");
   });
 
   it("adding a supply via the picker appends it with an empty coefficient, not zero", async () => {
