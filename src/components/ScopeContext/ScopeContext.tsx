@@ -103,20 +103,13 @@ const frameSx = (variant: ScopeContextVariant) =>
 
 interface CommunitySwitchProps {
   details: ActiveCommunityDetails;
-  /**
-   * Overrides the button's accessible name. A screen that shows this control
-   * beside the scope surface's own gives it a different name, so the two are
-   * told apart.
-   */
-  buttonLabel?: string;
 }
 
 /**
  * The active community and, for a caller with several, the control that
- * switches it. Exported so a page can offer the same control rather than a
- * second one.
+ * switches it: the only one in the app (#237).
  */
-export const CommunitySwitch: FC<CommunitySwitchProps> = ({ details, buttonLabel }) => {
+const CommunitySwitch: FC<CommunitySwitchProps> = ({ details }) => {
   const { activeCommunityId, activeCommunity, communities, membershipCount, select } = details;
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const menuId = useId();
@@ -157,7 +150,7 @@ export const CommunitySwitch: FC<CommunitySwitchProps> = ({ details, buttonLabel
         aria-haspopup="menu"
         aria-expanded={anchorElement ? "true" : "false"}
         aria-controls={anchorElement ? menuId : undefined}
-        aria-label={buttonLabel ?? (hasActive ? `${label}: ${name}. Cambiar comunidad` : `${name}. Cambiar comunidad`)}
+        aria-label={hasActive ? `${label}: ${name}. Cambiar comunidad` : `${name}. Cambiar comunidad`}
         onClick={(event) => setAnchorElement(event.currentTarget)}
         sx={{
           width: "100%",

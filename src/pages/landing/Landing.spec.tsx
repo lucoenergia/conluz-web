@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { FC } from "react";
 import { act, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
@@ -35,6 +36,7 @@ import {
   answerCommunities,
   communitiesPending,
   currentUser,
+  ownSupply,
 } from "../home/homeViews.mocks";
 
 /**
@@ -87,6 +89,14 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 
 const MEMBER = currentUser({ [COMMUNITY_A]: CommunityRole.COMMUNITY_MEMBER });
 const ADMIN = currentUser({ [COMMUNITY_A]: CommunityRole.COMMUNITY_ADMIN });
+const MEMBER_OF_TWO = currentUser({
+  [COMMUNITY_A]: CommunityRole.COMMUNITY_MEMBER,
+  [COMMUNITY_B]: CommunityRole.COMMUNITY_MEMBER,
+});
+const ADMIN_OF_TWO = currentUser({
+  [COMMUNITY_A]: CommunityRole.COMMUNITY_ADMIN,
+  [COMMUNITY_B]: CommunityRole.COMMUNITY_ADMIN,
+});
 const NO_MEMBERSHIP = buildCurrentUser({ id: USER_ID, memberships: {} });
 const PLATFORM_ADMIN_NO_MEMBERSHIP = buildCurrentUser({
   id: USER_ID,
@@ -125,7 +135,11 @@ function as(user: CurrentUserResponse, { adminOf = [] as string[] } = {}): void 
  * `resolved: false` holds the selection in the "not yet worked out" state the
  * provider passes through before its effect has run.
  */
-function openApp(route: string, communityId?: string | null, { resolved = true } = {}) {
+function openApp(
+  route: string,
+  communityId?: string | null,
+  { resolved = true, remembered }: { resolved?: boolean; remembered?: string } = {},
+) {
   const ui = (isResolved: boolean) => (
     <ActiveCommunityResolvedContext.Provider value={isResolved}>
       <App />
@@ -136,6 +150,7 @@ function openApp(route: string, communityId?: string | null, { resolved = true }
     route,
     token: "a-token",
     activeCommunityId: communityId,
+    rememberedCommunity: remembered === undefined ? undefined : { userId: USER_ID, communityId: remembered },
   });
   return { ...rendered, resolve: () => rendered.rerender(ui(true)) };
 }
@@ -148,8 +163,8 @@ async function settle(): Promise<void> {
 /**
  * While the landing cannot yet decide, nothing it could decide on renders.
  *
- * Every screen reachable from "/" -- either home view, the prompt to choose,
- * the no-community screen -- opens with an h1, so no h1 at all in the content
+ * Every screen reachable from "/" -- either home view, the no-community
+ * screen -- opens with an h1, so no h1 at all in the content
  * means none of them, and no screen standing in for them either. Not the route
  * chunk's spinner, which would mean the landing had not mounted and nothing
  * was being tested. And the caller has not been moved.
@@ -159,7 +174,22 @@ function expectNothingDecided(): void {
   const main = screen.getByRole("main");
   expect(within(main).queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
   expect(within(main).queryByRole("progressbar")).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Elegir comunidad" })).not.toBeInTheDocument();
+}
+
+/** The surface that states the active community (#186). */
+function scopeSurface(): HTMLElement {
+  return screen.getByRole("region", { name: "Ámbito de la página" });
+}
+
+/** Where the caller owns supply points, as GET /users/{me}/supplies answers. */
+function ownsSuppliesIn(...communityIds: string[]): void {
+  vi.mocked(useGetSuppliesByUserId).mockReturnValue(
+    query.success<typeof getSuppliesByUserId>(communityIds.map(ownSupply)),
+  );
+}
+
+function suppliesReadEnabled(): boolean {
+  return vi.mocked(useGetSuppliesByUserId).mock.calls.some(([, options]) => options?.query?.enabled === true);
 }
 
 describe("landing at / (#221)", () => {
@@ -247,8 +277,82 @@ describe("landing at / (#221)", () => {
     });
   });
 
+  describe("entry with several communities (#237)", () => {
+    it("UI-ENT-002 AC1 -- a valid remembered community is active, and the caller lands on its home", async () => {
+      as(MEMBER_OF_TWO);
+      openApp("/", undefined, { remembered: COMMUNITY_B });
+
+      expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+      expect(within(scopeSurface()).getByText("Comunidad B")).toBeInTheDocument();
+      // Remembered and valid: the first-time rule is not consulted at all.
+      expect(suppliesReadEnabled()).toBe(false);
+    });
+
+    it("UI-ENT-003 AC2 -- with nothing remembered, the first-time rule selects and the caller lands on its home", async () => {
+      as(MEMBER_OF_TWO);
+      // Alphabetical order alone would pick Comunidad A.
+      ownsSuppliesIn(COMMUNITY_B);
+      openApp("/");
+
+      expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+      expect(within(scopeSurface()).getByText("Comunidad B")).toBeInTheDocument();
+    });
+
+    it("UI-ENT-003 AC3 -- a remembered community that is no longer a membership gives way to the first-time rule", async () => {
+      as(MEMBER_OF_TWO);
+      ownsSuppliesIn(COMMUNITY_B);
+      openApp("/", undefined, { remembered: "community-no-longer-mine" });
+
+      expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+      expect(within(scopeSurface()).getByText("Comunidad B")).toBeInTheDocument();
+    });
+
+    it("UI-ENT-006 AC4 -- an admin of several sees which community they entered, and the switch changes it in one step", async () => {
+      const user = userEvent.setup();
+      as(ADMIN_OF_TWO, { adminOf: [COMMUNITY_A, COMMUNITY_B] });
+      openApp("/");
+
+      expect(await screen.findByRole("heading", MANAGEMENT_HEADING)).toBeInTheDocument();
+      const surface = scopeSurface();
+      const control = within(surface).getByRole("button", { name: /^Comunidad activa: Comunidad A\./ });
+
+      await user.click(control);
+      await user.click(await screen.findByRole("menuitem", { name: /Comunidad B/ }));
+
+      expect(
+        await within(scopeSurface()).findByRole("button", { name: /^Comunidad activa: Comunidad B\./ }),
+      ).toBeInTheDocument();
+    });
+
+    it("UI-ENT-005 AC8 -- renders nothing while the first-time rule's reads are in flight, then lands", async () => {
+      as(MEMBER_OF_TWO);
+      vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.loading());
+      const { rerender } = openApp("/");
+      await settle();
+
+      expectNothingDecided();
+
+      ownsSuppliesIn(COMMUNITY_B);
+      rerender(appWithProbe());
+
+      expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+    });
+
+    it("UI-ENT-005 a deep link with nothing remembered is kept, not refused for want of a community", async () => {
+      as(MEMBER_OF_TWO);
+      openApp("/home/member");
+
+      expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+    });
+  });
+
   describe("AC3 case (c) -- no membership at all", () => {
-    it("sees the no-community screen", async () => {
+    it("UI-ENT-004 AC7 -- sees the no-community screen", async () => {
       as(NO_MEMBERSHIP);
       openApp("/", null);
 
@@ -256,14 +360,14 @@ describe("landing at / (#221)", () => {
       expect(currentPath()).toBe("/no-community");
     });
 
-    it("lands on the platform when they may administer it", async () => {
+    it("UI-ENT-004 AC7 -- lands on the platform when they may administer it", async () => {
       as(PLATFORM_ADMIN_NO_MEMBERSHIP);
       openApp("/", null);
 
       await waitFor(() => expect(currentPath()).toBe("/platform"));
     });
 
-    it("still lands after being refused a deep link", async () => {
+    it("UI-ENT-004 still lands after being refused a deep link", async () => {
       as(PLATFORM_ADMIN_NO_MEMBERSHIP);
       // A community page: the guard refuses and sends them to "/".
       openApp("/integrations", null);
@@ -314,6 +418,43 @@ describe("the old home screen is gone (#221)", () => {
 
     expect(offenders).toEqual([]);
     expect(existsSync(join("src", "pages", "Home.tsx"))).toBe(false);
+  });
+});
+
+/**
+ * AC5 and AC6 of #237 over the source. The choose-a-community screen had no
+ * route of its own -- "/" rendered it -- so what must not survive is the
+ * component and its copy, and any other control that changes the community.
+ */
+describe("the choose-a-community screen is gone (#237)", () => {
+  it("UI-ENT-006 AC5 AC6 -- nothing in the app renders it, routes to it or names it", () => {
+    const offenders = sourceFiles("src").filter((file) =>
+      /\bChooseCommunityPage\b|Elige una comunidad|Elegir comunidad/.test(readFileSync(file, "utf8")),
+    );
+
+    expect(offenders).toEqual([]);
+    expect(existsSync(join("src", "pages", "landing", "ChooseCommunityPage.tsx"))).toBe(false);
+  });
+
+  it("UI-ENT-006 the scope surface's community switch is the only control that changes the community", () => {
+    const sources = sourceFiles("src").map((file) => ({ file, source: readFileSync(file, "utf8") }));
+
+    // The dispatch is reached only through useActiveCommunityDetails...
+    const dispatchers = sources
+      .filter(({ file, source }) => /\buseActiveCommunityDispatch\b/.test(source) && !file.endsWith("community.context.tsx"))
+      .map(({ file }) => file);
+    expect(dispatchers).toEqual([join("src", "hooks", "useActiveCommunityDetails.ts")]);
+
+    // ...and only the scope surface takes its `select`.
+    const selectors = sources
+      .filter(
+        ({ file, source }) =>
+          /\buseActiveCommunityDetails\b/.test(source) &&
+          /\bselect\b/.test(source) &&
+          !file.endsWith("useActiveCommunityDetails.ts"),
+      )
+      .map(({ file }) => file);
+    expect(selectors).toEqual([join("src", "components", "ScopeContext", "ScopeContext.tsx")]);
   });
 });
 
