@@ -105,16 +105,6 @@ export const MembersPage: FC = () => {
   // coincide today.
   const { importUsers } = useCommunityActions().forCommunity(activeCommunity).actions;
 
-  if (!activeCommunityId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="warning">
-          Selecciona una comunidad activa para gestionar sus miembros.
-        </Alert>
-      </Box>
-    );
-  }
-
   // Resolved from the list on every render rather than stored, so the row the
   // menu and its dialogs act on is the one the cache currently holds.
   const selectedMembership = selectedMembershipId
