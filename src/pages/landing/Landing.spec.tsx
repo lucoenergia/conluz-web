@@ -334,6 +334,8 @@ describe("landing at / (#221)", () => {
       await settle();
 
       expectNothingDecided();
+      // The scope surface waits too, rather than asking the caller to choose.
+      expect(within(scopeSurface()).getByRole("button", { name: /Cargando comunidad…/ })).toBeInTheDocument();
 
       ownsSuppliesIn(COMMUNITY_B);
       rerender(appWithProbe());

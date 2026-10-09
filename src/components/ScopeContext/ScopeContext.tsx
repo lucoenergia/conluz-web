@@ -114,8 +114,11 @@ const CommunitySwitch: FC<CommunitySwitchProps> = ({ details }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const menuId = useId();
 
+  // None active is only ever the moment before the selection is worked out: a
+  // caller with memberships always has one after that (#237). So it reads as
+  // loading, never as a prompt to choose.
   const hasActive = activeCommunityId !== null;
-  const name = activeCommunity?.name ?? (hasActive ? "Cargando comunidad…" : "Selecciona una comunidad");
+  const name = activeCommunity?.name ?? "Cargando comunidad…";
   const avatar = hasActive ? (
     <Avatar aria-hidden sx={communityAvatarSx}>
       {communityInitials(activeCommunity?.name)}
@@ -126,9 +129,7 @@ const CommunitySwitch: FC<CommunitySwitchProps> = ({ details }) => {
     </Avatar>
   );
   const label = "Comunidad activa";
-  const description = hasActive
-    ? "Los datos y los cambios de esta página pertenecen a esta comunidad."
-    : "Elige la comunidad con la que quieres trabajar.";
+  const description = "Los datos y los cambios de esta página pertenecen a esta comunidad.";
 
   if (membershipCount === 1) {
     return (

@@ -100,11 +100,14 @@ describe("ScopeContext — community-scoped page", () => {
     expect(control).toHaveAttribute("aria-expanded", "false");
   });
 
-  test("with several communities and none selected it asks for one", () => {
+  // Several communities and none active is the moment before the selection is
+  // worked out (#237): the surface waits, it does not ask the caller to choose.
+  test("UI-ENT-005 with several communities and none active yet it reads as loading, not as a prompt", () => {
     setUp(TWO_COMMUNITIES, null);
     renderWithProviders(<ScopeContext variant="strip" />, { route: "/" });
 
-    expect(within(scopeRegion()).getByRole("button", { name: /Selecciona una comunidad/ })).toBeInTheDocument();
+    expect(within(scopeRegion()).getByRole("button", { name: /Cargando comunidad…/ })).toBeInTheDocument();
+    expect(within(scopeRegion()).getByText("Comunidad activa")).toBeInTheDocument();
   });
 
   test("lists only the user's communities", async () => {
