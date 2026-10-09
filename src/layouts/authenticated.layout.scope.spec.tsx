@@ -6,7 +6,7 @@ import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../test/fixtures";
-import { useGetCurrentUser } from "../api/users/users";
+import { useGetCurrentUser, useGetSuppliesByUserId } from "../api/users/users";
 import {
   useGetAllCommunities,
   useGetCommunityById,
@@ -32,8 +32,12 @@ vi.mock(import("../hooks/useLogout"), () => ({
   useLogout: () => vi.fn(),
 }));
 
+// useGetSuppliesByUserId is read by the harness's CommunityProvider, for the
+// first-time rule (#237). The community is seeded here, so the provider's own
+// choice is never what the layout sees; its read is left unanswered.
 vi.mock(import("../api/users/users"), () => ({
   useGetCurrentUser: vi.fn(),
+  useGetSuppliesByUserId: vi.fn(),
 }));
 
 // The layout reads the active community's capabilities from
@@ -73,6 +77,7 @@ function renderAt(route: string) {
 const navigation = () => screen.getByRole("navigation", { name: "Navegación principal" });
 
 beforeEach(() => {
+  vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
   loggedUser = buildCurrentUser({
     id: "user-1",
     fullName: "Ada",

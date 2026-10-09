@@ -116,9 +116,13 @@ function expectNamesTheCommunity(dialog: HTMLElement, title: string) {
   expect(within(dialog).getByText(`Comunidad · ${COMMUNITY_NAME}`)).toBeInTheDocument();
 }
 
+// useGetSuppliesByUserId is read by the harness's real CommunityProvider, for the
+// first-time rule (#237). The community is seeded here, so the provider's own
+// choice is never what the page sees; its read is left unanswered.
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
+  useGetSuppliesByUserId: vi.fn(),
 }));
 
 vi.mock(import("../../context/error.context"), async (importOriginal) => ({
@@ -146,7 +150,7 @@ import {
   useGetMemberships,
   useUpdateMembershipRole,
 } from "../../api/memberships/memberships";
-import { getAllUsers, getGetCurrentUserQueryKey, useGetAllUsers } from "../../api/users/users";
+import { getAllUsers, getGetCurrentUserQueryKey, useGetAllUsers, useGetSuppliesByUserId } from "../../api/users/users";
 import { MembersPage } from "./MembersPage";
 
 const ADMIN_COMMUNITY: Partial<CommunityCapabilitiesResponse> = {
@@ -160,6 +164,7 @@ describe("MembersPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>(MOCK_ALL_USERS));
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
     vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutate }));
     vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutate }));
     vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutate }));

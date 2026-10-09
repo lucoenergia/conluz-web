@@ -5,11 +5,11 @@ import { useEffect, type FC } from "react";
 import { Route, Routes, useParams } from "react-router";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
-import { useGetCurrentUser } from "../api/users/users";
+import { useGetCurrentUser, useGetSuppliesByUserId } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
 import { CommunityRole } from "../api/models";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../test/fixtures";
-import { useGetCommunityById, type getCommunityById } from "../api/communities/communities";
+import { useGetAllCommunities, useGetCommunityById, type getCommunityById } from "../api/communities/communities";
 
 const LOGGED_USER = buildCurrentUser({
   id: "user-1",
@@ -39,16 +39,24 @@ vi.mock(import("../hooks/useLogout"), () => ({
 // (#203), and `useAuth` is mocked to a token above -- so an unmocked hook would
 // try to reach the backend. `useLoggedUser` is mocked too, so what this returns
 // is never read; it only has to not be a request.
+//
+// useGetSuppliesByUserId is read by the harness's CommunityProvider, for the
+// first-time rule (#237). The community is seeded here, so the provider's own
+// choice is never what the layout sees; its read is left unanswered.
 vi.mock(import("../api/users/users"), () => ({
   useGetCurrentUser: vi.fn(),
+  useGetSuppliesByUserId: vi.fn(),
 }));
 
 // The layout reads the active community's capabilities from
 // useGetCommunityById; left real, it reached the network on every render and
 // switch (#211). The spread keeps the rest of the module real.
+// useGetAllCommunities is the provider's other first-time read; left
+// unanswered for the same reason.
 vi.mock(import("../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCommunityById: vi.fn(),
+  useGetAllCommunities: vi.fn(),
 }));
 
 vi.mock("../components/Header/Header", () => ({
@@ -108,6 +116,8 @@ function renderLayoutAt(initialEntry: string, communityId: string | null) {
 
 describe("AuthenticatedLayout community switching", () => {
   beforeEach(() => {
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
+    vi.mocked(useGetAllCommunities).mockReturnValue(query.disabled());
     renders.length = 0;
     mounts.length = 0;
     vi.mocked(useGetCurrentUser).mockReturnValue(query.disabled());

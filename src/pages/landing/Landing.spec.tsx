@@ -3,7 +3,6 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { FC } from "react";
 import { act, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
@@ -88,10 +87,6 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 
 const MEMBER = currentUser({ [COMMUNITY_A]: CommunityRole.COMMUNITY_MEMBER });
 const ADMIN = currentUser({ [COMMUNITY_A]: CommunityRole.COMMUNITY_ADMIN });
-const MEMBER_OF_TWO = currentUser({
-  [COMMUNITY_A]: CommunityRole.COMMUNITY_MEMBER,
-  [COMMUNITY_B]: CommunityRole.COMMUNITY_MEMBER,
-});
 const NO_MEMBERSHIP = buildCurrentUser({ id: USER_ID, memberships: {} });
 const PLATFORM_ADMIN_NO_MEMBERSHIP = buildCurrentUser({
   id: USER_ID,
@@ -101,7 +96,6 @@ const PLATFORM_ADMIN_NO_MEMBERSHIP = buildCurrentUser({
 
 const MEMBER_HEADING = { name: "Tu energía", level: 1 } as const;
 const MANAGEMENT_HEADING = { name: "Gestión de la comunidad", level: 1 } as const;
-const CHOOSE_HEADING = { name: "Elige una comunidad", level: 1 } as const;
 const NO_COMMUNITY_HEADING = { name: "Sin comunidad asignada", level: 1 } as const;
 
 const LocationProbe: FC = () => <output aria-label="Ruta actual">{useLocation().pathname}</output>;
@@ -250,32 +244,6 @@ describe("landing at / (#221)", () => {
 
       expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
       expect(currentPath()).toBe("/home/member");
-    });
-  });
-
-  describe("AC3 case (b) -- several communities and none selected", () => {
-    it("asks the caller to choose one, and choosing lands on the home", async () => {
-      const user = userEvent.setup();
-      // Left to the real provider with nothing persisted: a fresh sign-in.
-      as(MEMBER_OF_TWO);
-      openApp("/");
-
-      expect(await screen.findByRole("heading", CHOOSE_HEADING)).toBeInTheDocument();
-      expect(currentPath()).toBe("/");
-
-      await user.click(screen.getByRole("button", { name: "Elegir comunidad" }));
-      await user.click(await screen.findByRole("menuitem", { name: /Comunidad A/ }));
-
-      expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
-      expect(currentPath()).toBe("/home/member");
-    });
-
-    it("is also where a denial sends such a caller, rather than a loop", async () => {
-      as(MEMBER_OF_TWO);
-      openApp("/home", null);
-
-      expect(await screen.findByRole("heading", CHOOSE_HEADING)).toBeInTheDocument();
-      expect(currentPath()).toBe("/");
     });
   });
 

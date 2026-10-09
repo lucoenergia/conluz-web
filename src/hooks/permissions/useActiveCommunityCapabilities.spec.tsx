@@ -5,11 +5,14 @@ import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures"
 import { query } from "../../test/queryState";
 import type { CommunityCapabilitiesResponse } from "../../api/models";
 
+// useGetAllCommunities is read by the harness's CommunityProvider, for the
+// first-time rule (#237); no user is signed in here, so it is never enabled.
 vi.mock(import("../../api/communities/communities"), () => ({
   useGetCommunityById: vi.fn(),
+  useGetAllCommunities: vi.fn(),
 }));
 
-import { getCommunityById, useGetCommunityById } from "../../api/communities/communities";
+import { getCommunityById, useGetAllCommunities, useGetCommunityById } from "../../api/communities/communities";
 import { useActiveCommunityCapabilities } from "./useActiveCommunityCapabilities";
 
 const COMMUNITY_ID = "community-A";
@@ -45,6 +48,7 @@ function respondWith(capabilities: Partial<CommunityCapabilitiesResponse>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(useGetAllCommunities).mockReturnValue(query.disabled());
 });
 
 describe("useActiveCommunityCapabilities", () => {

@@ -26,8 +26,11 @@ export function useActiveCommunityCapabilities(
   const activeCommunityId = useActiveCommunity();
   const isResolved = useIsActiveCommunityResolved();
 
+  // Not before it is resolved: while the first-time rule decides, the id can
+  // still be a community the caller has just lost (#237), and asking for it
+  // would only be refused.
   const query = useGetCommunityById(activeCommunityId ?? "", {
-    query: { enabled: !!activeCommunityId },
+    query: { enabled: !!activeCommunityId && isResolved },
   });
 
   if (!isResolved) return PENDING;
