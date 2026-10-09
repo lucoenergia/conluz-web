@@ -344,6 +344,22 @@ describe("landing at / (#221)", () => {
       expect(currentPath()).toBe("/home/member");
     });
 
+    it("UI-ENT-007 losing the active community mid-task lands the caller on the new community's home", async () => {
+      as(MEMBER_OF_TWO);
+      const { rerender } = openApp("/production", undefined, { remembered: COMMUNITY_A });
+      await settle();
+      expect(currentPath()).toBe("/production");
+      expect(within(scopeSurface()).getByText("Comunidad A")).toBeInTheDocument();
+
+      // Removed from community A while working in it.
+      as(currentUser({ [COMMUNITY_B]: CommunityRole.COMMUNITY_MEMBER }));
+      rerender(appWithProbe());
+
+      expect(await screen.findByRole("heading", MEMBER_HEADING)).toBeInTheDocument();
+      expect(currentPath()).toBe("/home/member");
+      expect(within(scopeSurface()).getByText("Comunidad B")).toBeInTheDocument();
+    });
+
     it("UI-ENT-005 a deep link with nothing remembered is kept, not refused for want of a community", async () => {
       as(MEMBER_OF_TWO);
       openApp("/home/member");

@@ -102,9 +102,10 @@ const CommunityProvider = ({ children }: CommunityProviderProps) => {
         // Unresolved until the rule can decide, so nothing is routed on the
         // basis of having no community. A community this user was already in --
         // the one just taken away mid-session -- is left in place rather than
-        // cleared: the move to the rule's choice is then one step, which the
-        // layout handles as a switch. Going through null would read as a first
-        // load instead and keep a page pinned to the community they left.
+        // cleared: the move to the rule's choice is then one step, from the
+        // lost community, which the layout answers by sending a community page
+        // to the landing. Going through null would read as a first load instead
+        // and leave them on the page, unaware the community changed.
         if (resolvedForUserId !== userId) setActiveCommunityId(null);
         setAwaitingFirstTimeRule(true);
         return;
