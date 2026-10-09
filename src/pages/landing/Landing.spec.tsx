@@ -454,6 +454,14 @@ describe("the choose-a-community screen is gone (#237)", () => {
     expect(existsSync(join("src", "pages", "landing", "ChooseCommunityPage.tsx"))).toBe(false);
   });
 
+  it("UI-ENT-005 no copy asks the caller to select or choose a community", () => {
+    const offenders = sourceFiles("src").filter((file) =>
+      /(?:Selecciona|Elige|Elegir|Seleccionar) (?:una|la) comunidad/i.test(readFileSync(file, "utf8")),
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
   it("UI-ENT-006 the scope surface's community switch is the only control that changes the community", () => {
     const sources = sourceFiles("src").map((file) => ({ file, source: readFileSync(file, "utf8") }));
 
