@@ -8,6 +8,7 @@ description: >-
 ---
 
 # conluz-web — Testing
+> In this skill, "spec" means a test spec (a Vitest or Playwright file), not a spec document under `docs/specs/`.
 
 The hard rules (never update baselines, no real network, `.spec.tsx`, no `data-testid` on interactive
 elements) are restated in `AGENTS.md` because they apply even when this skill is not loaded.

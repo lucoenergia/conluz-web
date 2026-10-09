@@ -30,6 +30,14 @@ Closes #000
 
 -
 
+## Spec changes
+
+<!-- UI rules in docs/specs/ added, changed or removed by this PR, and the tests that cover each
+     added or changed rule. Write "None" and why if no behaviour changed. -->
+
+| Rule | Change | Statement | Tests |
+| --- | --- | --- | --- |
+
 ## Visibility
 
 <!-- Visibility: mandatory. Delete no row — write "none" and why, if that is the answer.
@@ -62,7 +70,7 @@ Closes #000
 
 ## Tests
 
-<!-- Tests: which specs were added or changed and what each one proves, and the exact commands
+<!-- Tests: which test specs were added or changed and what each one proves, and the exact commands
      that were run with their result (pass counts, failures). If a check was skipped, say which
      and why. For visual tests, list which captures changed and which screenshot names are new:
      new names fail as missing until a maintainer regenerates them, which is expected, not a

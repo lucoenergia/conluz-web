@@ -35,3 +35,15 @@ needs a reason that survives reading.
 ## Acceptance criteria
 
 - <!-- Observable, and checkable by someone who did not write the code. -->
+
+## Spec impact
+
+<!-- UI rules in docs/specs/ that this issue adds, changes or removes. Cite existing rules by ID.
+     New rules use placeholders (NEW-1, NEW-2…); the ID is assigned when the spec document is
+     updated. Domain rules are cited by their ID in lucoenergia/conluz. If the screen has no spec
+     document yet, write "Spec document created by this issue" and list only the rules this issue
+     touches. If no behaviour changes, write "None" and why. -->
+
+| Rule | Change | Statement | Rationale |
+| --- | --- | --- | --- |
+| <!-- UI-SUP-001 / NEW-1 --> | <!-- Added / Changed / Removed --> | <!-- MUST / MUST NOT / MAY … --> | <!-- why --> |

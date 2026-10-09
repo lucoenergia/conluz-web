@@ -89,6 +89,7 @@ All commits must follow this format:
 - Ensure your PR references the related issue (e.g., "Closes #123").
 - Provide a clear description of the changes made.
 - Ensure all CI checks pass and the code is properly tested.
+- A PR that changes UI behaviour updates the affected spec document in `docs/specs/`, following [`docs/specs/README.md`](docs/specs/README.md).
 
 ---
 

@@ -4,6 +4,12 @@ This file provides guidance to AI coding agents (Claude Code, Codex, Cursor, Cop
 any other tool that reads `AGENTS.md`) when working with code in this repository. It is the single
 source of truth for agent rules; tool-specific entry points such as `CLAUDE.md` only point here.
 
+## Terminology
+
+**Spec document**: a file under `docs/specs/` describing UI rules. **Test spec** or **test**: a
+Vitest or Playwright file. Never write "spec" alone; if an instruction says "spec" without
+qualification, ask which one is meant.
+
 ## Where the detail lives
 
 This file holds the rules that apply to every task. Task-specific depth lives in skills — plain
@@ -13,12 +19,14 @@ directly. **Read the matching one before starting:**
 - **`conluz-web-community-scope`** — before any data-fetching, role-gating, route, action, or
   user-scoped-read work. Holds the full authorization model, the recipes for adding a screen, route,
   action or user-scoped read, and the data-fetching pattern.
-- **`conluz-web-testing`** — before writing, changing or running any spec or visual test: the
+- **`conluz-web-testing`** — before writing, changing or running any test spec or visual test: the
   rendering harness, the two API-mocking tiers, fixtures, the selector hierarchy, and the Playwright
   suite (captures, masking, thresholds, coverage).
 - **`conluz-web-list-tables`** — before building a list table, a row menu or a row-action dialog.
 - Styling: `references/styling-conventions.md`, `references/theme-tokens.md`, `references/fonts.md`.
 - Decisions and their revisit conditions: `docs/decisions/adrs/`.
+- UI rules and their rationale: the spec documents under `docs/specs/`; conventions in
+  `docs/specs/README.md`.
 
 ## Commands
 
@@ -47,7 +55,7 @@ The app is **multi-community**. This supersedes any older single-community assum
 - **Capabilities decide visibility, not roles.** Every response carries `capabilities`; `GET /users/current` carries `platformCapabilities`. Never re-derive a rule locally. `src/hooks/permissions/` is the only module allowed to read a role or the platform-admin flag (lint-enforced); reading `user.isPlatformAdmin` to **display** it is fine.
 - **No exemptions.** No file under `src/` reads a role or the platform-admin flag to decide what to render, and none carries an `eslint-disable` for the permission rules. If you want one, the capability either exists on the payload or is missing from the backend — ask for it; do not approximate it with a role.
 - **A capability says "may this caller ever", not "is this legal now".** Pair it with the resource's state (`isDraft && canDelete`). Opposite pairs (`canEnable`/`canDisable`, `canGrantPlatformAdmin`/`canRevokePlatformAdmin`) are **both** true for a caller who may do either; the row's own state picks one — resolve the pair once. Fixtures grant both halves.
-- **Mutations go through `src/hooks/actions/` only.** No component imports a generated mutation hook (lint- and spec-enforced over the whole tree). Action hooks return `undefined` for an action the caller may not perform; record each decision in `ACTION_COVERAGE` (`src/contracts/mutationHooks.spec.ts`).
+- **Mutations go through `src/hooks/actions/` only.** No component imports a generated mutation hook (lint- and test-enforced over the whole tree). Action hooks return `undefined` for an action the caller may not perform; record each decision in `ACTION_COVERAGE` (`src/contracts/mutationHooks.spec.ts`).
 - **Routes are a contract.** Wrap every route in `CapabilityRoute` and classify it in `ROUTE_ACCESS` (`src/contracts/routeAccess.spec.ts`); a menu entry names the same requirement as its page. `/` stays unguarded on purpose — every denial redirects there. Only `denied` redirects; a failed check renders a retry.
 - **A capability gates the call; it does not scope the rows.** A user-scoped listing still gets filtered to the active community, and the filter is declared in `USER_SCOPED_LISTINGS` (`src/contracts/userScopedReads.spec.ts`). Conflating the two produced `lucoenergia/conluz#326` and `#336`.
 
@@ -62,17 +70,31 @@ The app is **multi-community**. This supersedes any older single-community assum
 ## Testing — rules that always apply
 Full guide: the `conluz-web-testing` skill.
 
-- Specs use `.spec.tsx` (not `.test.tsx`), colocated, rendered through `renderWithProviders` / `renderHookWithProviders` (`src/test/renderWithProviders.tsx`), never a hand-built wrapper.
-- **No real network**: a spec must never reach the backend. A setup-file guard (`src/test/networkGuard.ts`) refuses every `XMLHttpRequest` and `fetch` and fails the test, naming the method and URL; fix it by mocking, never by taking the request.
-- While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` prints "No test files found" and still exits 0 when it resolves nothing — then run the spec by path. Run `npm run lint && npm test` once at the end, and `npm run test:visual` only at the end and only if the UI changed.
+- Test specs use `.spec.tsx` (not `.test.tsx`), colocated, rendered through `renderWithProviders` / `renderHookWithProviders` (`src/test/renderWithProviders.tsx`), never a hand-built wrapper.
+- **No real network**: a test spec must never reach the backend. A setup-file guard (`src/test/networkGuard.ts`) refuses every `XMLHttpRequest` and `fetch` and fails the test, naming the method and URL; fix it by mocking, never by taking the request.
+- While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` prints "No test files found" and still exits 0 when it resolves nothing — then run the test spec by path. Run `npm run lint && npm test` once at the end, and `npm run test:visual` only at the end and only if the UI changed.
 - **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If it can only be found by test id, it is missing an accessible name or role: report the defect, don't route around it.
 - **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails or a baseline is missing, report which screens differ and stop.
-- Screenshot names are globally unique across all visual specs. The warmup test `screenshot names are unique across the visual specs` (`tests/visual/warmup.setup.ts`) enforces it; to check locally, this must print nothing (it reads spec files only, skips comments, and sees calls split over several lines):
+- Screenshot names are globally unique across all visual test specs. The warmup test `screenshot names are unique across the visual specs` (`tests/visual/warmup.setup.ts`) enforces it; to check locally, this must print nothing (it reads test spec files only, skips comments, and sees calls split over several lines):
 
   ```bash
   perl -0777 -ne 's{/\*.*?\*/}{}gs; s{^\s*//.*}{}gm; print "$1\n" while /\.toHaveScreenshot\(\s*"([^"]+)"/g' $(find tests/visual -name '*.spec.ts') | sort | uniq -d
   ```
 - A green visual suite proves the UI is consistent with the capabilities it is *served*, not that the backend enforces them. Never cite it as an authorization guarantee.
+
+## Spec documents
+
+`docs/specs/` holds the living specification of UI rules: one document per screen or flow, written
+as normative rules with stable IDs (`UI-SUP-001`). Domain rules live in `lucoenergia/conluz` and
+are referenced by ID, never restated. Conventions: `docs/specs/README.md`.
+
+- Before changing UI behaviour, read the spec document of the affected screen or flow.
+- Update it in the same PR, in a separate commit: add, change or tombstone rules, each with
+  Rationale and Source.
+- If the spec document and the code disagree, stop and report. Never fix either side silently.
+- Tests covering a rule start their title with the rule ID.
+- Never reuse or renumber an ID.
+- Spec documents are created lazily, covering only the rules the task touches. No backfill.
 
 ## UI conventions
 
@@ -92,7 +114,7 @@ Use the tokens: `src/theme/tokens.ts` (`colors`, `alphas`, `shadows`, `radii`, `
 
 - Which skill to read for which task is listed under **Where the detail lives** at the top of this file. When a section moves out of this file into a skill, leave the rules that must hold even when the skill is not loaded behind in this file.
 - **Author skills, this file, and the reference docs against the real, merged code — never against a plan.** A convention describing code that has since changed misleads with authority and is worse than none.
-- **Epic-closeout rule:** closing any epic includes updating `AGENTS.md`, the affected skills, and the reference docs to match the code that actually landed. This is part of "done," not a follow-up. This file drifted before — it described a single-community model long after multi-community shipped — precisely because that step was skipped.
+- **Epic-closeout rule:** closing any epic includes updating `AGENTS.md`, the affected skills, the affected spec documents, and the reference docs to match the code that actually landed. This is part of "done," not a follow-up. This file drifted before — it described a single-community model long after multi-community shipped — precisely because that step was skipped.
 
 # Language
 All code and documentation must be in english.

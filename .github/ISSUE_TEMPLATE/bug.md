@@ -8,6 +8,11 @@ labels: ''
 
 <!-- What happens, and what should happen instead. -->
 
+## Rule
+
+<!-- The rule in docs/specs/ this bug violates, by ID (e.g. UI-SUP-001). If no rule covers this
+     behaviour, write "No rule covers this": the fix must add one. -->
+
 ## How to reproduce
 
 <!-- The persona matters: a member, a community admin, a platform admin, or a caller with no
