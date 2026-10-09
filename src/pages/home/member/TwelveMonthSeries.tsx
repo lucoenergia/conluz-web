@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
+import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { colors } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
@@ -13,6 +14,8 @@ import {
   toMonthlySeriesView,
   type MonthlySeriesView,
 } from "./monthlySeries";
+import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "./energyColors";
+import { SeriesLegend } from "./SeriesLegend";
 import { TwelveMonthChart } from "./TwelveMonthChart";
 import { useMemberEnergyMetrics, type ReferencePeriod } from "./useMemberEnergyMetrics";
 import { useTwelveMonthSeries } from "./useTwelveMonthSeries";
@@ -71,12 +74,19 @@ const Series: FC<{ referencePeriod: ReferencePeriod }> = ({ referencePeriod }) =
   const first = view.months[0];
   const last = view.months[view.months.length - 1];
   return (
-    <HomeCard title={TITLE}>
+    <HomeCard title={TITLE} icon={BarChartRoundedIcon}>
       <Typography variant="body2" sx={{ color: colors.text.subtle }}>
         De {first.name} a {last.name}: {view.monthsWithData} de {view.months.length} meses con datos.
         {view.hasIncompleteMonth &&
           " Un mes marcado con dos cifras, como «1 de 2», solo suma los suministros que enviaron datos: una barra más baja no significa que consumieras menos."}
       </Typography>
+      <SeriesLegend
+        items={[
+          { label: SELF_CONSUMPTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.community) },
+          { label: GRID_IMPORT_SERIES, swatch: swatch.solid(ENERGY_COLORS.grid) },
+          { label: SAVINGS_SERIES, swatch: swatch.solid(SAVINGS_COLOR) },
+        ]}
+      />
       <TwelveMonthChart view={view} />
       <SeriesTable view={view} />
     </HomeCard>

@@ -116,7 +116,8 @@ export const colors = {
     inactive: "#f9fafb", // inactive dropzone / input background
     errorFaint: "#fef2f2", // very-light error tint
   },
-  // Accent hues: stat figures, provider marks, and the production chart series.
+  // Accent hues: stat figures, provider marks, and the member home's assigned
+  // energy and consumption series (src/pages/home/member/energyColors.ts).
   // Named `accent` rather than `chart` because most uses are not charts — the
   // old name sent people looking for series colours and hid the fact that these
   // carry TYPE on the member's home screen.
@@ -129,6 +130,17 @@ export const colors = {
     violet: "#8050e8", // production figures — 4.96:1
     blue:   "#286cdb", // consumption figures — 4.93:1
     cyan:   "#0078ac", // integration provider marks — 4.90:1
+    // Dark tones for marks that sit beside a lighter mark and must differ from
+    // it in lightness, not only in hue (#231). Same guarantees as above.
+    violetDeep: "#5826b1", // 9.02:1; 7.90:1 on its own 8% tint
+    navy:       "#113c93", // 10.04:1; 8.72:1 on its own 8% tint
+    raspberry:  "#b32385", // 6.01:1; 5.28:1 on its own 8% tint
+  },
+  // Mark-only tones: chart bars and legend swatches that must clear the 3:1
+  // graphic-object bar and nothing more. Like `vivid`, never type and never
+  // behind text.
+  marks: {
+    gold: "#bc7f04", // 3.40:1 on white, 3.09:1 on success.surface
   },
 } as const;
 

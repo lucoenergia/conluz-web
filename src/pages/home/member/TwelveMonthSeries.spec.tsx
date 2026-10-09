@@ -19,6 +19,7 @@ import {
 } from "../../../test/fixtures";
 import { query } from "../../../test/queryState";
 import { renderWithProviders } from "../../../test/renderWithProviders";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "./energyColors";
 import { TwelveMonthSeries } from "./TwelveMonthSeries";
 
 /**
@@ -384,5 +385,30 @@ describe("TwelveMonthSeries (#201)", () => {
         });
       },
     );
+  });
+
+  describe("#231 AC4 -- community and grid energy keep the colours they have everywhere else", () => {
+    it("colours each series by its concept, and the savings as a gain", () => {
+      open();
+
+      expect(chartWith("De la comunidad").options.colors).toEqual([ENERGY_COLORS.community, ENERGY_COLORS.grid]);
+      expect(chartWith("Ahorro").options.colors).toEqual([SAVINGS_COLOR]);
+    });
+
+    it("draws every bar at full opacity, so it shows its token and not a lighter tint of it", () => {
+      open();
+
+      expect(chartWith("De la comunidad").options.fill?.opacity).toBe(1);
+      expect(chartWith("Ahorro").options.fill?.opacity).toBe(1);
+    });
+
+    it("leaves the legend to the block, naming the series the charts draw", () => {
+      open();
+      const legend = within(screen.getByRole("region", { name: "Tus últimos 12 meses" })).getByRole("list");
+
+      expect(chartWith("De la comunidad").options.legend?.show).toBe(false);
+      expect(chartWith("Ahorro").options.legend?.show).toBe(false);
+      expect(within(legend).getAllByRole("listitem").map(text)).toEqual(["De la comunidad", "De la red", "Ahorro"]);
+    });
   });
 });

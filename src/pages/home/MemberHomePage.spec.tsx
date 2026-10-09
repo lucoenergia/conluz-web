@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ApexOptions } from "apexcharts";
 import "@testing-library/jest-dom";
 import {
   useGetMembershipEnergyMetrics,
@@ -31,8 +32,11 @@ import {
   buildMembershipPayback,
 } from "../../test/fixtures";
 import { query } from "../../test/queryState";
+import { declaredStyle } from "../../test/declaredStyle";
+import { colors } from "../../theme/tokens";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "./member/energyColors";
 import { answerCommunities } from "./homeViews.mocks";
 
 vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
@@ -46,9 +50,13 @@ vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => (
   useGetMembershipMonthlyConsumption: vi.fn(),
   useGetMembershipPayback: vi.fn(),
 }));
-// ApexCharts cannot lay out in jsdom; what the charts are told to draw is
-// asserted in TwelveMonthSeries.spec.tsx and BestHours.spec.tsx.
-vi.mock("react-apexcharts", () => ({ default: () => null }));
+// ApexCharts cannot lay out in jsdom, so the stub records what each chart is
+// told to draw; its content is asserted in TwelveMonthSeries.spec.tsx and
+// BestHours.spec.tsx, and its colours against the rest of the page here.
+const { Chart } = vi.hoisted(() => ({
+  Chart: vi.fn<(props: { options: ApexOptions; series: { name: string }[] }) => null>(() => null),
+}));
+vi.mock("react-apexcharts", () => ({ default: Chart }));
 // The view switch asks the active community what the caller may do there.
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -708,7 +716,7 @@ describe("MemberHomePage (#199)", () => {
   });
 
   describe("the best hours (#201)", () => {
-    const bestHours = () => card("Tus mejores horas");
+    const bestHours = () => card("Tus mejores horas para autoconsumir");
     const twelveMonths = () => card("Tus últimos 12 meses");
 
     it("asks for the profile with no period of its own, and renders without waiting for the reference month", () => {
@@ -758,6 +766,206 @@ describe("MemberHomePage (#199)", () => {
         expect(card("El recorrido de tu energía")).toBeInTheDocument();
         expect(twelveMonths()).toBeInTheDocument();
       });
+    });
+  });
+  describe("#231 AC4 -- each concept keeps one colour across the screen", () => {
+    const background = (element: Element) => declaredStyle(element)["background-color"];
+    // A legend swatch is an unnamed decorative box: the first child of the item that names it.
+    const swatchOf = (region: HTMLElement, label: RegExp) => within(region).getByText(label).closest("li")!.firstElementChild!;
+    // A journey bar is decorative too: the box after its title row, whose first child is the community segment.
+    const barOf = (title: string) => screen.getByRole("heading", { name: title }).parentElement!.nextElementSibling!;
+    const chartColors = (seriesName: string) =>
+      Chart.mock.calls
+        .map(([props]) => props)
+        .filter((props) => props.series.some((series) => series.name === seriesName))
+        .at(-1)!.options.colors;
+
+    beforeEach(() => openHome());
+
+    it("community energy is one colour in both journey bars, the twelve months and every legend", () => {
+      const journey = card("El recorrido de tu energía");
+
+      expect(background(barOf("La energía que se te asignó").firstElementChild!)).toBe(ENERGY_COLORS.community);
+      expect(background(barOf("Tu consumo").firstElementChild!)).toBe(ENERGY_COLORS.community);
+      expect(background(swatchOf(journey, /^La usaste tú/))).toBe(ENERGY_COLORS.community);
+      expect(background(swatchOf(journey, /^De la comunidad/))).toBe(ENERGY_COLORS.community);
+      expect(background(swatchOf(within(card("Tus últimos 12 meses")).getByRole("list"), /^De la comunidad$/))).toBe(ENERGY_COLORS.community);
+      expect(chartColors("De la comunidad")?.[0]).toBe(ENERGY_COLORS.community);
+    });
+
+    it("grid energy is one colour in the journey, the twelve months and every legend", () => {
+      expect(background(barOf("Tu consumo"))).toBe(ENERGY_COLORS.grid);
+      expect(background(swatchOf(card("El recorrido de tu energía"), /^De la red/))).toBe(ENERGY_COLORS.grid);
+      expect(background(swatchOf(within(card("Tus últimos 12 meses")).getByRole("list"), /^De la red$/))).toBe(ENERGY_COLORS.grid);
+      expect(chartColors("De la red")?.[1]).toBe(ENERGY_COLORS.grid);
+    });
+
+    it("the exported part of the assigned energy is a solid colour of its own, in its bar and its legend", () => {
+      const exported = barOf("La energía que se te asignó");
+
+      expect(background(exported)).toBe(ENERGY_COLORS.exported);
+      expect(declaredStyle(exported)["background-image"]).toBeUndefined();
+      expect(background(swatchOf(card("El recorrido de tu energía"), /^Se fue a la red/))).toBe(ENERGY_COLORS.exported);
+    });
+
+    it("savings is one colour wherever it appears: the month's amount, the monthly bars, the payback", () => {
+      const amount = within(savingsCard()).getByText("27,00 €");
+      const share = within(paybackCard()).getByText("40 %");
+
+      expect(declaredStyle(amount).color).toBe(SAVINGS_COLOR);
+      expect(declaredStyle(share).color).toBe(SAVINGS_COLOR);
+      expect(chartColors("Ahorro")).toEqual([SAVINGS_COLOR]);
+      expect(background(swatchOf(within(card("Tus últimos 12 meses")).getByRole("list"), /^Ahorro$/))).toBe(SAVINGS_COLOR);
+    });
+
+    it("assigned energy and consumption in the hourly chart keep the colours their legend shows", () => {
+      const legend = within(card("Tus mejores horas para autoconsumir")).getByRole("list");
+
+      expect(chartColors("Energía asignada")).toEqual([ENERGY_COLORS.consumption, ENERGY_COLORS.assigned]);
+      expect(background(swatchOf(legend, /^Energía asignada$/))).toBe(ENERGY_COLORS.assigned);
+      expect(background(swatchOf(legend, /^Tu consumo$/))).toBe(ENERGY_COLORS.consumption);
+    });
+  });
+  describe("#231 -- the share of the assigned energy used leads the page", () => {
+    const primaryFigure = () => screen.queryByRole("group", { name: "Energía asignada que usaste" });
+
+    it("AC1 -- states the share, with the kWh it stands for beneath it, and nothing else", () => {
+      openHome();
+
+      expect(text(primaryFigure()!)).toBe("Energía asignada que usaste67 %180 kWh de 268 kWh");
+      expect(primaryFigure()!.querySelector("svg")).toBeNull();
+      expect(within(card("El recorrido de tu energía")).getByRole("group", { name: "Energía asignada que usaste" })).toBe(
+        primaryFigure(),
+      );
+    });
+
+    it("AC1 -- shows no figure when nothing was assigned, and keeps saying why", () => {
+      answer({ metrics: monthWith({ selfConsumptionRatio: null }) });
+      openHome();
+
+      expect(primaryFigure()).not.toBeInTheDocument();
+      expect(text(card("El recorrido de tu energía"))).toContain("Este mes no se te asignó energía de la comunidad.");
+    });
+
+    it("AC2 -- says the share can rise only inside the advice, under its own rules", () => {
+      answer({ metrics: monthWith({ selfConsumptionRatio: 0.45 }) });
+      openHome();
+      const outsideAdvice = document.body.cloneNode(true) as HTMLElement;
+      outsideAdvice.querySelector('section[aria-label="Qué puedes hacer"]')!.remove();
+
+      expect(text(advice()[0])).toContain("sube ese porcentaje");
+      expect(text(outsideAdvice)).not.toMatch(/sube|subir|aumenta|mejora/i);
+    });
+  });
+
+  describe("#231 AC9 -- each block carries one icon as a label for its concept", () => {
+    // The label icon is decorative and unnamed: it sits just before the block's title.
+    const labelIcon = (region: HTMLElement) =>
+      within(region).getByRole("heading", { level: 2 }).previousElementSibling?.querySelectorAll("svg") ?? [];
+
+    it("gives every block its own icon, and no two blocks the same", () => {
+      answer({ previous: previousMonthWith() });
+      openHome();
+      const monthIcon = screen.getByText("Datos de agosto de 2026").previousElementSibling!;
+      const icons = {
+        "El recorrido de tu energía": "RouteRoundedIcon",
+        "Qué puedes hacer": "LightbulbRoundedIcon",
+        "Tus mejores horas para autoconsumir": "ScheduleRoundedIcon",
+        "Tu ahorro en agosto de 2026": "SavingsRoundedIcon",
+        "Comparado con julio de 2026": "CompareArrowsRoundedIcon",
+        "Recuperación de tu inversión": "AccountBalanceWalletRoundedIcon",
+        "Tus últimos 12 meses": "BarChartRoundedIcon",
+      };
+
+      expect(monthIcon).toHaveAttribute("data-testid", "CalendarMonthRoundedIcon");
+      for (const [block, icon] of Object.entries(icons)) {
+        const found = labelIcon(card(block));
+        expect(found, block).toHaveLength(1);
+        expect(found[0], block).toHaveAttribute("data-testid", icon);
+      }
+      expect(new Set([...Object.values(icons), "CalendarMonthRoundedIcon"]).size).toBe(8);
+    });
+  });
+  describe("#231 -- the payback carries its own figure", () => {
+    it("states the share recovered as a figure, with its bar and the bar's ends", () => {
+      openHome();
+      const payback = paybackCard();
+
+      expect(text(payback)).toContain("40 %recuperado");
+      expect(within(payback).getByRole("progressbar", { name: "Parte recuperada de tu inversión" })).toHaveAttribute("aria-valuenow", "40");
+      expect(text(payback)).toContain("0,00 €500,00 €");
+    });
+
+    it("shows a recovered investment as recovered, with no progress left to report", () => {
+      answer({ payback: paybackWith({ savedEur: 650, remainingEur: 0, progressRatio: 1.3, estimatedRemainingMonths: null }) });
+      openHome();
+      const payback = paybackCard();
+
+      expect(text(payback)).toContain("130 %recuperado");
+      expect(within(payback).getByTestId("CheckCircleRoundedIcon")).toBeInTheDocument();
+      expect(within(payback).queryByRole("progressbar")).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ["a new member who has recovered nothing", 0],
+      ["a member whose share still rounds to nothing", 0.004],
+    ])("leaves %s without a large figure, and says the share in its sentence", (_, progressRatio) => {
+      answer({ payback: paybackWith({ savedEur: progressRatio * 500, remainingEur: 500, progressRatio, estimatedRemainingMonths: null }) });
+      openHome();
+      const payback = paybackCard();
+
+      expect(text(payback)).not.toMatch(/%recuperado/);
+      expect(text(payback)).toContain("Has recuperado el 0 % de tu inversión de 500,00 €");
+      expect(within(payback).getByRole("progressbar", { name: "Parte recuperada de tu inversión" })).toBeInTheDocument();
+    });
+
+    it("draws the figure as soon as the share reads 1 %", () => {
+      answer({ payback: paybackWith({ savedEur: 5, remainingEur: 495, progressRatio: 0.01 }) });
+      openHome();
+
+      expect(text(paybackCard())).toContain("1 %recuperado");
+    });
+
+    it("draws no figure and no bar when no investment is recorded, and adds no notice to the page", () => {
+      answer({ payback: paybackWith({ investmentEur: null, remainingEur: null, progressRatio: null, estimatedRemainingMonths: null }) });
+      openHome();
+
+      expect(text(paybackCard())).not.toMatch(/%recuperado/);
+      expect(within(paybackCard()).getByTestId("RemoveCircleOutlineRoundedIcon")).toBeInTheDocument();
+      expect(screen.queryAllByRole("note")).toHaveLength(0);
+    });
+  });
+
+  describe("#231 AC6 -- a neutral state is never coloured as an alert", () => {
+    // MUI writes the colours it derives from the palette as rgb(), sx keeps the token's hex: match both.
+    const rgbOf = (hex: string) => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(", ")})`;
+    const ALERT_COLOURS = [...Object.values(colors.error), ...Object.values(colors.warning)].flatMap((hex) => [hex, rgbOf(hex)]);
+    const alertColoured = () =>
+      [...document.body.querySelectorAll("*")].filter((element) =>
+        Object.values(declaredStyle(element)).some((value) => ALERT_COLOURS.some((colour) => value.includes(colour))),
+      );
+
+    it.each([
+      ["an incomplete month", () => answer({ metrics: monthWith({ coverage: { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 } }) })],
+      ["no investment recorded", () => answer({ payback: paybackWith({ investmentEur: null, remainingEur: null, progressRatio: null, estimatedRemainingMonths: null }) })],
+      ["a community that has never shared", () => answer({ metrics: buildMembershipEnergyMetrics(), payback: buildMembershipPayback({ investmentEur: 500 }), hourly: buildMembershipHourlyProfile() })],
+      ["a new member", () => answer({ metrics: buildMembershipEnergyMetrics(), payback: paybackWith({ savedEur: 0, remainingEur: 500, progressRatio: 0 }) })],
+      ["a comparison not available yet", () => answer({ previous: previousMonthWith({ coverage: { hoursWithData: 0, expectedHours: 1488, supplyCount: 2, suppliesWithData: 0 } }) })],
+      ["no assigned energy in any hour", () => answer({ hourly: buildMembershipHourlyProfile({ ...augustProfile(), buckets: augustProfile().buckets.map((bucket) => ({ ...bucket, averageAssignedProductionKWh: 0, assignedProductionSampleCount: 62 })) }) })],
+      ["best hours that cannot be worked out", () => answer({ hourly: { ...augustProfile(), coverage: { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 } } })],
+    ])("%s", (_, serve) => {
+      serve();
+      openHome();
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(alertColoured()).toEqual([]);
+    });
+
+    it("sees alert colouring where there is some: a failed read", () => {
+      answer({ metrics: "error" });
+      openHome();
+
+      expect(alertColoured()).not.toEqual([]);
     });
   });
 });

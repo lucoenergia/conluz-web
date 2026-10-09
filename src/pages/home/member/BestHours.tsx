@@ -1,15 +1,20 @@
 import type { FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
+import WbSunnyRoundedIcon from "@mui/icons-material/WbSunnyRounded";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
-import { colors } from "../../../theme/tokens";
+import { colors, radii } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
 import { NeutralNotice } from "../NeutralNotice";
 import { BestHoursChart } from "./BestHoursChart";
-import { CONSUMPTION_SERIES, PRODUCTION_SERIES, toHourlyProfileView, type HourlyProfileView } from "./hourlyProfile";
+import { ENERGY_COLORS, swatch } from "./energyColors";
+import { BEST_HOURS_LABEL, CONSUMPTION_SERIES, PRODUCTION_SERIES, toHourlyProfileView, type HourlyProfileView } from "./hourlyProfile";
+import { SeriesLegend } from "./SeriesLegend";
 import { useHourlyProfile } from "./useHourlyProfile";
 
-const TITLE = "Tus mejores horas";
+/** The heading says what the hours are best for; it also names the block's region. */
+const TITLE = "Tus mejores horas para autoconsumir";
 
 type Profile = Extract<HourlyProfileView, { kind: "profile" }>;
 
@@ -22,7 +27,7 @@ const ProfileTable: FC<{ view: Profile }> = ({ view }) => (
   // table box, so a hidden table still widens the page to its full width.
   <Box sx={visuallyHidden}>
     <table>
-      <caption>Datos del gráfico: {TITLE.toLowerCase()}</caption>
+      <caption>Datos del gráfico: tus mejores horas</caption>
       <thead>
         <tr>
           <th scope="col">Hora</th>
@@ -66,12 +71,39 @@ export const BestHours: FC = () => {
   }
 
   return (
-    <HomeCard title={TITLE}>
+    <HomeCard title={TITLE} icon={ScheduleRoundedIcon}>
+      {/* The answer before the chart: this is the block that says when to act. */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          alignSelf: "flex-start",
+          px: 1.5,
+          py: 0.75,
+          borderRadius: radii.default,
+          bgcolor: colors.success.surface,
+          color: colors.success.main,
+        }}
+      >
+        <WbSunnyRoundedIcon aria-hidden fontSize="small" />
+        <Typography variant="body1" component="p" sx={{ fontWeight: 600, color: colors.success.main }}>
+          {view.bestHoursText}
+        </Typography>
+      </Box>
       <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-        Media de cada hora en {view.month}, el último mes que ha publicado la distribuidora. Las horas en que la energía
-        asignada supera tu consumo son las mejores para usar electricidad. Un círculo vacío marca una hora sin registros, y
-        uno relleno, una media de cero.
+        Media de cada hora en {view.month}, el último mes que ha publicado la distribuidora. Tus mejores horas son las que
+        más energía asignada recibes: usar la electricidad en ellas es la mejor forma de aprovecharla. Un círculo vacío
+        marca una hora sin registros, y uno relleno, una media de cero.
       </Typography>
+      <SeriesLegend
+        items={[
+          { label: CONSUMPTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.consumption) },
+          { label: PRODUCTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.assigned) },
+          // A legend entry with nothing shaded would point at nothing.
+          ...(view.hasBestHours ? [{ label: BEST_HOURS_LABEL, swatch: swatch.band }] : []),
+        ]}
+      />
       <BestHoursChart view={view} />
       <ProfileTable view={view} />
     </HomeCard>

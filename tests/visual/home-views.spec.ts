@@ -37,6 +37,8 @@ import {
   MEMBER_ENERGY_METRICS_NO_MONTH,
   MEMBER_MONTHLY_SERIES,
   MEMBER_ENERGY_METRICS_PARTIAL,
+  MEMBER_HOURLY_PROFILE_NO_BEST_HOUR,
+  MEMBER_HOURLY_PROFILE_PARTIAL,
   MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER,
   MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA,
   MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL,
@@ -120,7 +122,7 @@ const savingsCard = (page: Page) => page.getByRole("region", { name: "Tu ahorro 
 const estimateLabel = (page: Page) => page.getByText(/Estimado con un precio de/);
 const comparisonCard = (page: Page) => page.getByRole("region", { name: "Comparado con julio de 2026" });
 const twelveMonthsCard = (page: Page) => page.getByRole("region", { name: "Tus últimos 12 meses" });
-const bestHoursCard = (page: Page) => page.getByRole("region", { name: "Tus mejores horas" });
+const bestHoursCard = (page: Page) => page.getByRole("region", { name: "Tus mejores horas para autoconsumir" });
 const chartTable = (card: ReturnType<Page["getByRole"]>) => card.getByRole("table", { name: /Datos del gráfico/ });
 // Structural: ApexCharts' SVG has no role or name of its own. Waiting for it
 // keeps a capture from catching the card before the chart has drawn.
@@ -338,6 +340,28 @@ test.describe("Visual baselines", () => {
 
     // Component subject: the best-hours block alone, with the app bar hidden.
     await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-gaps.png", await hideAppBar(page));
+  });
+
+  test("member home view, best hours when no hour received assigned energy", async ({ page }) => {
+    await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_NO_BEST_HOUR });
+    await expect(
+      bestHoursCard(page).getByText("Mejores horas: este mes no te llegó energía de la comunidad en ninguna hora."),
+    ).toBeVisible();
+    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await stabilizePage(page);
+
+    // Component subject: the best-hours block alone, with the app bar hidden.
+    await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-none.png", await hideAppBar(page));
+  });
+
+  test("member home view, best hours in a month with gaps", async ({ page }) => {
+    await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_PARTIAL });
+    await expect(bestHoursCard(page).getByText("Mejores horas: no se pueden calcular, porque faltan datos de este mes.")).toBeVisible();
+    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await stabilizePage(page);
+
+    // Component subject: the best-hours block alone, with the app bar hidden.
+    await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-partial.png", await hideAppBar(page));
   });
 
   test("member home view, best hours with no month yet", async ({ page }) => {

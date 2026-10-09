@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import CompareArrowsRoundedIcon from "@mui/icons-material/CompareArrowsRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import RemoveIcon from "@mui/icons-material/Remove";
 import type { MembershipEnergyMetricsResponse } from "../../../api/models";
@@ -80,7 +81,7 @@ const Comparison: FC<{ current: MembershipEnergyMetricsResponse; referencePeriod
     return <NeutralNotice title={comparison.title}>{comparison.text}</NeutralNotice>;
   }
   return (
-    <HomeCard title={`Comparado con ${previousMonth}`}>
+    <HomeCard title={`Comparado con ${previousMonth}`} icon={CompareArrowsRoundedIcon}>
       {comparison.affectedBy && (
         <Box sx={{ display: "flex", gap: 1 }}>
           <InfoOutlinedIcon fontSize="small" aria-hidden sx={{ color: colors.text.subtle, mt: 0.25 }} />

@@ -1159,6 +1159,28 @@ export const MEMBER_HOURLY_PROFILE_GAPS: MembershipHourlyProfileResponse = {
   }),
 };
 
+/**
+ * A complete month in which no hour received any assigned energy, so the
+ * best-hours lead names none (#231).
+ */
+export const MEMBER_HOURLY_PROFILE_NO_BEST_HOUR: MembershipHourlyProfileResponse = {
+  ...MEMBER_HOURLY_PROFILE,
+  buckets: MEMBER_HOURLY_PROFILE.buckets.map((bucket) => ({
+    ...bucket,
+    averageAssignedProductionKWh: 0,
+  })),
+};
+
+/**
+ * The same month with one of the two supplies missing, so its coverage
+ * reports a gap: the best hours cannot be worked out (#231), though some hours
+ * would otherwise qualify.
+ */
+export const MEMBER_HOURLY_PROFILE_PARTIAL: MembershipHourlyProfileResponse = {
+  ...MEMBER_HOURLY_PROFILE,
+  coverage: { ...MEMBER_HOURLY_PROFILE.coverage, suppliesWithData: 1 },
+};
+
 /** No month resolves yet: null bounds, and the 24 hours without a sample. */
 export const MEMBER_HOURLY_PROFILE_EMPTY: MembershipHourlyProfileResponse = {
   period: { startDate: null, endDate: null },

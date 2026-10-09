@@ -117,11 +117,45 @@ call-site opt-in. `.light` is the vivid tone — never put small text on it.
 | `colors.accent.violet` | `#8050e8` | Production figures — 4.96:1 |
 | `colors.accent.blue` | `#286cdb` | Consumption figures — 4.93:1 |
 | `colors.accent.cyan` | `#0078ac` | Integration provider marks — 4.90:1 |
+| `colors.accent.violetDeep` | `#5826b1` | Dark tone for a mark beside a lighter one — 9.02:1, 7.90:1 on its own tint |
+| `colors.accent.navy` | `#113c93` | Dark tone for a mark beside a lighter one — 10.04:1, 8.72:1 on its own tint |
+| `colors.accent.raspberry` | `#b32385` | 6.01:1, 5.28:1 on its own tint |
 
-Named `accent`, not `chart`: no chart series uses them — series take the `vivid`
-tones of the semantic hues. Unlike `vivid`, each accent is safe in every
-direction (≥ 4.5:1 as type on white, behind white text, and on its own 8% tint),
-so it can carry a figure or a glyph without a second check.
+Named `accent`, not `chart`, because most uses are not charts. Unlike `vivid`,
+each accent is safe in every direction (≥ 4.5:1 as type on white, behind white
+text, and on its own 8% tint), so it can carry a figure or a glyph without a
+second check.
+
+### Marks
+| Token | Value | Use |
+|---|---|---|
+| `colors.marks.gold` | `#bc7f04` | **Mark only** — chart bars and swatches. 3.40:1 on white, 3.09:1 on `success.surface`. Never type, never behind text |
+
+Like `vivid`, a `marks` tone clears the 3:1 graphic-object bar and nothing more.
+
+### Energy series on the member home
+
+The member home gives each energy concept one colour across the whole screen —
+the journey bars, both charts and every legend — and no colour two concepts
+(#231). The mapping lives in `src/pages/home/member/energyColors.ts`, the only
+place a series colour is chosen; `energyColors.spec.ts` pins it.
+
+Every mark clears 3:1 on the white card, and community energy sits at that floor, so every other
+mark is darker than it. Marks drawn side by side differ in lightness, not only in hue, so a reader
+who cannot tell hues apart still tells them apart; `energyColors.spec.ts` holds each pair to 1.9:1.
+The hourly pair, consumption and assigned energy, is also held to 2:1 under a protanopia,
+deuteranopia and tritanopia simulation (Machado et al., 2009). Charts draw their fills at full
+opacity: ApexCharts' default of 85 % would lighten every bar off its token.
+
+| Concept | Token | On white | Beside |
+|---|---|---|---|
+| Community energy | `success.vivid` | 3.03:1 — at the graphic-object bar, with no margin | — |
+| Grid energy | `secondary.main` | 7.58:1 | community 2.50:1 |
+| Assigned energy | `marks.gold` | 3.40:1; 3.09:1 on the best-hours band | consumption 2.95:1; 2.31–3.22:1 simulated |
+| Its exported part | `accent.violetDeep` | 9.02:1 | community 2.98:1 |
+| Consumption | `accent.navy` | 10.04:1; 9.14:1 on the best-hours band | assigned 2.95:1 |
+| Best hours | `success.surface` band | 1.10:1 — a tint that repeats the block's lead in words | — |
+| Savings | `accent.raspberry` | 6.01:1 | community, the chart above it, 1.98:1 and the opposite hue |
 
 ---
 
