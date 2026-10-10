@@ -1,0 +1,8 @@
+{
+  "name": "conluz-web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "module": "./index.ts",
+  "types": "./types/.design-sync/pkg/index.d.ts"
+}

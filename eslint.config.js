@@ -220,7 +220,9 @@ const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) 
 }));
 
 export default tseslint.config([
-  globalIgnores(["dist"]),
+  // .design-sync/ holds the claude.ai/design sync inputs (previews import from a
+  // virtual "conluz-web" package); .ds-sync/ and ds-bundle/ are its tooling and output.
+  globalIgnores(["dist", ".design-sync", ".ds-sync", "ds-bundle"]),
   {
     // Base rules for all TS/TSX source (includes tests, excludes api/ via ignore below)
     files: ["**/*.{ts,tsx}"],
