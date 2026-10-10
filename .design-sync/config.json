@@ -1,0 +1,311 @@
+{
+  "projectId": "0f2a485c-16f2-40a0-8daa-f60d47528106",
+  "shape": "package",
+  "pkg": "conluz-web",
+  "globalName": "ConluzWeb",
+  "entry": ".design-sync/pkg/index.ts",
+  "buildCmd": "npx tsc -p .design-sync/pkg/tsconfig.json",
+  "srcDir": ".",
+  "extraFonts": [
+    "fonts.css"
+  ],
+  "guidelinesGlob": [
+    "../../DESIGN.md",
+    "../../references/theme-tokens.md",
+    "../guidelines/*.md"
+  ],
+  "provider": {
+    "component": "ConluzProvider"
+  },
+  "componentSrcMap": {
+    "ConluzProvider": null,
+    "Mui": null,
+    "Icons": null
+  },
+  "docsMap": {
+    "AppCard": "../groups/layout.md",
+    "AppAccordion": "../groups/layout.md",
+    "LoadingAppAccordion": "../groups/layout.md",
+    "CardGrid": "../groups/layout.md",
+    "LoadingCardGrid": "../groups/layout.md",
+    "SectionHeading": "../groups/layout.md",
+    "DetailHeader": "../groups/layout.md",
+    "PaginatedList": "../groups/layout.md",
+    "RecordList": "../groups/layout.md",
+    "SupportCard": "../groups/layout.md",
+    "BreadCrumb": "../groups/navigation.md",
+    "SideMenu": "../groups/navigation.md",
+    "MenuLinkItem": "../groups/navigation.md",
+    "MenuTemplate": "../groups/navigation.md",
+    "DisplayMenu": "../groups/navigation.md",
+    "PaginationOutlined": "../groups/navigation.md",
+    "Logo": "../groups/navigation.md",
+    "CommunityScopeHeader": "../groups/navigation.md",
+    "Stat": "../groups/data-display.md",
+    "LoadingStat": "../groups/data-display.md",
+    "StatsCard": "../groups/data-display.md",
+    "PlatformKpiCard": "../groups/data-display.md",
+    "LabeledIcon": "../groups/data-display.md",
+    "TagComponent": "../groups/data-display.md",
+    "ListTable": "../groups/data-display.md",
+    "ListTableHeaderText": "../groups/data-display.md",
+    "RowActionsMenu": "../groups/data-display.md",
+    "CommunityStatusChip": "../groups/data-display.md",
+    "ActionStatus": "../groups/feedback.md",
+    "AttentionPanel": "../groups/feedback.md",
+    "EmptyState": "../groups/feedback.md",
+    "LoadErrorAlert": "../groups/feedback.md",
+    "ResultStatus": "../groups/feedback.md",
+    "RouteFallback": "../groups/feedback.md",
+    "CapabilityLoadError": "../groups/feedback.md",
+    "DropdownSelector": "../groups/forms.md",
+    "PasswordInput": "../groups/forms.md",
+    "PasswordPolicyHint": "../groups/forms.md",
+    "SearchBar": "../groups/forms.md",
+    "FilterChipsBar": "../groups/forms.md",
+    "UserForm": "../groups/forms.md",
+    "Graph": "../groups/charts.md",
+    "GraphBar": "../groups/charts.md",
+    "GraphCard": "../groups/charts.md",
+    "GraphFilter": "../groups/charts.md",
+    "LoadingGraphCard": "../groups/charts.md",
+    "MultiSeriesBar": "../groups/charts.md",
+    "AlertModal": "../groups/dialogs.md",
+    "AppModal": "../groups/dialogs.md",
+    "BasicModal": "../groups/dialogs.md",
+    "ConfirmationModal": "../groups/dialogs.md",
+    "DeleteSuccessModal": "../groups/dialogs.md",
+    "DisablePartnerConfirmationModal": "../groups/dialogs.md",
+    "DisablePartnerSuccessModal": "../groups/dialogs.md",
+    "DisableSuccessModal": "../groups/dialogs.md",
+    "EnablePartnerConfirmationModal": "../groups/dialogs.md",
+    "EnableSuccessModal": "../groups/dialogs.md",
+    "GrantPlatformAdminConfirmationModal": "../groups/dialogs.md",
+    "PlatformAdminSuccessModal": "../groups/dialogs.md",
+    "RevokePlatformAdminConfirmationModal": "../groups/dialogs.md",
+    "CoefficientDialogErrorPanel": "../groups/dialogs.md",
+    "CoefficientTargetSummary": "../groups/dialogs.md",
+    "SupplyCard": "../groups/supplies-and-plants.md",
+    "SupplyDetailCard": "../groups/supplies-and-plants.md",
+    "LoadingSupplyDetailCard": "../groups/supplies-and-plants.md",
+    "SupplyDetailHeader": "../groups/supplies-and-plants.md",
+    "SupplyStatsCard": "../groups/supplies-and-plants.md",
+    "LoadingSupplyStatsCard": "../groups/supplies-and-plants.md",
+    "PlantCard": "../groups/supplies-and-plants.md",
+    "PlantDetailHeader": "../groups/supplies-and-plants.md",
+    "CoefficientHistory": "../groups/supplies-and-plants.md",
+    "CoefficientActionsMenuItems": "../groups/supplies-and-plants.md",
+    "SharingAgreementActionButton": "../groups/sharing-agreements.md",
+    "SharingAgreementApplicationPanel": "../groups/sharing-agreements.md",
+    "SharingAgreementCard": "../groups/sharing-agreements.md",
+    "SharingAgreementCoefficientCard": "../groups/sharing-agreements.md",
+    "SharingAgreementCoefficientTableRow": "../groups/sharing-agreements.md",
+    "SharingAgreementCoefficientSumGauges": "../groups/sharing-agreements.md",
+    "SharingAgreementLifecycleSpine": "../groups/sharing-agreements.md",
+    "SharingAgreementNextStepBanner": "../groups/sharing-agreements.md",
+    "SharingAgreementOutgoingSupplies": "../groups/sharing-agreements.md",
+    "SharingAgreementStatusChip": "../groups/sharing-agreements.md",
+    "SharingAgreementTimeline": "../groups/sharing-agreements.md",
+    "ApplyCoefficientDateConfirmationModal": "../groups/dialogs.md",
+    "CloseCoefficientConfirmationModal": "../groups/dialogs.md",
+    "CorrectCoefficientDateConfirmationModal": "../groups/dialogs.md",
+    "DeactivateOrReopenCoefficientConfirmationModal": "../groups/dialogs.md",
+    "DeleteConfirmationModal": "../groups/dialogs.md",
+    "DeleteSharingAgreementConfirmationModal": "../groups/dialogs.md",
+    "DisableConfirmationModal": "../groups/dialogs.md",
+    "EnableConfirmationModal": "../groups/dialogs.md",
+    "PublishSharingAgreementConfirmationModal": "../groups/dialogs.md",
+    "RevertSharingAgreementToDraftConfirmationModal": "../groups/dialogs.md"
+  },
+  "overrides": {
+    "RowActionsMenu": {
+      "cardMode": "single",
+      "viewport": "480x320"
+    },
+    "AlertModal": {
+      "cardMode": "single",
+      "viewport": "720x320"
+    },
+    "BasicModal": {
+      "cardMode": "single",
+      "viewport": "720x320"
+    },
+    "AppModal": {
+      "cardMode": "single",
+      "viewport": "720x440"
+    },
+    "ConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x400"
+    },
+    "DeleteConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x420"
+    },
+    "DeleteSharingAgreementConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x440"
+    },
+    "DeleteSuccessModal": {
+      "cardMode": "single",
+      "viewport": "720x400"
+    },
+    "DisableConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x440"
+    },
+    "DisablePartnerConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x360"
+    },
+    "DisablePartnerSuccessModal": {
+      "cardMode": "single",
+      "viewport": "720x400"
+    },
+    "DisableSuccessModal": {
+      "cardMode": "single",
+      "viewport": "720x400"
+    },
+    "EnableConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x420"
+    },
+    "EnablePartnerConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x340"
+    },
+    "EnableSuccessModal": {
+      "cardMode": "single",
+      "viewport": "720x400"
+    },
+    "GrantPlatformAdminConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x420"
+    },
+    "PlatformAdminSuccessModal": {
+      "cardMode": "single",
+      "viewport": "720x400"
+    },
+    "RevokePlatformAdminConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x420"
+    },
+    "RevertSharingAgreementToDraftConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x500"
+    },
+    "PublishSharingAgreementConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x720"
+    },
+    "ApplyCoefficientDateConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x540"
+    },
+    "CloseCoefficientConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x680"
+    },
+    "DeactivateOrReopenCoefficientConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x520"
+    },
+    "CorrectCoefficientDateConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x720"
+    },
+    "DetailHeader": {
+      "cardMode": "column"
+    },
+    "CardGrid": {
+      "cardMode": "column"
+    },
+    "LoadingCardGrid": {
+      "cardMode": "column"
+    },
+    "SupportCard": {
+      "cardMode": "column"
+    },
+    "SharingAgreementCoefficientTableRow": {
+      "cardMode": "column"
+    },
+    "SharingAgreementNextStepBanner": {
+      "cardMode": "column"
+    },
+    "SharingAgreementLifecycleSpine": {
+      "cardMode": "column"
+    },
+    "SharingAgreementOutgoingSupplies": {
+      "cardMode": "column"
+    },
+    "SharingAgreementTimeline": {
+      "cardMode": "column"
+    },
+    "SideMenu": {
+      "cardMode": "single",
+      "primaryStory": "CommunityAdmin",
+      "viewport": "900x800"
+    },
+    "UserForm": {
+      "cardMode": "column",
+      "viewport": "900x1000"
+    },
+    "MenuTemplate": {
+      "cardMode": "single",
+      "viewport": "480x360"
+    },
+    "DisplayMenu": {
+      "cardMode": "single",
+      "viewport": "640x320"
+    },
+    "GraphBar": {
+      "cardMode": "column"
+    },
+    "MultiSeriesBar": {
+      "cardMode": "column"
+    },
+    "CommunityStatusChip": {
+      "cardMode": "column"
+    },
+    "LabeledIcon": {
+      "cardMode": "column"
+    },
+    "ListTableHeaderText": {
+      "cardMode": "column"
+    },
+    "LoadingStat": {
+      "cardMode": "column"
+    },
+    "PlatformKpiCard": {
+      "cardMode": "column"
+    },
+    "PaginatedList": {
+      "cardMode": "column"
+    },
+    "CoefficientActionsMenuItems": {
+      "cardMode": "single",
+      "primaryStory": "AppliedRow",
+      "viewport": "480x360"
+    },
+    "CoefficientHistory": {
+      "cardMode": "column"
+    },
+    "LoadingSupplyDetailCard": {
+      "cardMode": "column"
+    },
+    "SupplyDetailCard": {
+      "cardMode": "column"
+    },
+    "PlantDetailHeader": {
+      "cardMode": "column"
+    },
+    "SupplyDetailHeader": {
+      "cardMode": "column"
+    }
+  },
+  "dtsPropsFor": {
+    "ListTable": "/** The records, one table row each (any shape; columns read from it). */ rows: any[]; getRowKey: (row: any) => string | number | undefined; /** header: a string renders as standard header text, a node renders as is. render(row) returns the cell content. */ columns: { key: string; header: React.ReactNode; align?: \"left\" | \"center\"; cellSx?: object; render: (row: any) => React.ReactNode }[]; /** Shows a centred spinner row instead of the records. */ isLoading: boolean; /** Shown in a full-width row when rows is empty and not loading. */ emptyMessage: string; /** Accessible name of the row's kebab (actions) button. */ rowActionsLabel: (row: any) => string; /** Open a RowActionsMenu anchored at event.currentTarget. */ onRowActionsClick: (event: React.MouseEvent<HTMLElement>, row: any) => void; /** Whether a row has any action; rows without one get no kebab button. Defaults to every row. */ hasRowActions?: (row: any) => boolean;"
+  },
+  "tsconfig": "tsconfig.bundle.json",
+  "readmeHeader": ".design-sync/conventions.md"
+}

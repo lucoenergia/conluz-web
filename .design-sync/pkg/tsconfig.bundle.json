@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "react-apexcharts": ["shims/react-apexcharts.ts"] }
+  }
+}

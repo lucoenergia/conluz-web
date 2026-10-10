@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "../../node_modules/.tmp/tsconfig.design-sync-previews.tsbuildinfo",
+    "noEmit": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "baseUrl": ".",
+    "paths": { "conluz-web": ["../pkg/index.ts"] }
+  },
+  "include": ["*.tsx", "../../src/vite-env.d.ts"]
+}
