@@ -641,18 +641,27 @@ always reported in `period`, also when the caller supplied them.
   the `endDate` is a bad request. **Both bounds are inclusive**: a single
   calendar day runs from `00:00` to `23:00` of that day.
 - `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in
-  the community's time zone, in which any of the member's supplies has stored
-  assigned production (self-consumed or surplus energy). The distributor
-  publishes a month's assigned production only some days after it ends, so this
-  is not necessarily the previous month: an unpublished previous month is
-  skipped and the search continues backwards through the 24 complete months
-  before the current one. The current month is never a candidate. The period
-  runs from `00:00` of the first day to `23:00` of the last day. Combining it
-  with `startDate` or `endDate` is a bad request.
+  the community's time zone, that the distributor has published for any of the
+  member's supplies. The distributor publishes a month's self-consumed energy
+  only some days after it ends; until then the month's hourly records already
+  carry consumption and the surplus the meter measured, but no self-consumed
+  energy. An hourly record is therefore published when it carries self-consumed
+  energy, zero included, and surplus alone does not count. A month is published
+  for a supply when at least 90% of the hours it could have published carry it:
+  the hours of the month from the later of its first hour and the supply's first
+  published record, so a supply whose assigned production started mid-month is
+  judged from that point. A month published for one supply is resolved even if
+  another of the member's supplies is still unpublished. This is not necessarily
+  the previous month: an unpublished or partly published month is skipped and
+  the search continues backwards through the 24 complete months before the
+  current one. The current month is never a candidate. When no month in the
+  search window is published, no period is resolved. The period runs from
+  `00:00` of the first day to `23:00` of the last day. Combining it with
+  `startDate` or `endDate` is a bad request.
 - Neither: from the earliest to the latest record stored for any of the member's
   supplies.
 
-When no period can be resolved -- no assigned production in the search window, no
+When no period can be resolved -- no published month in the search window, no
 stored record at all, or no supplies to search -- the response is still
 successful, with null period bounds, zero totals and null ratios.
 
@@ -800,12 +809,17 @@ member's other communities are not counted.
 **Period:**
 Always the latest published month, resolved exactly as the aggregated energy
 metrics resolve `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar
-month, in the community's time zone, in which any of the member's supplies has
-stored assigned production. It **cannot be chosen**: only inside a published month
-is a stored zero a measured zero rather than a value not published yet. The
-resolved bounds are reported in `period`. When no month can be resolved -- no
-assigned production in the search window, or no supplies to search -- the response
-is still successful, with null period bounds and 24 buckets without any sample.
+month, in the community's time zone, that the distributor has published for any
+of the member's supplies. An hourly record is published when it carries
+self-consumed energy, zero included; surplus alone does not count, since the
+distributor sends the measured surplus before it publishes the month. A month is
+published for a supply when at least 90% of the hours it could have published
+carry it, counted from the later of the month's first hour and the supply's first
+published record. It **cannot be chosen**: only inside a published month is a
+stored zero a measured zero rather than a value not published yet. The resolved
+bounds are reported in `period`. When no month can be resolved -- no published
+month in the search window, or no supplies to search -- the response is still
+successful, with null period bounds and 24 buckets without any sample.
 
 **Buckets:**
 Always 24, ordered from hour 0 to hour 23. The hour is **local to the community**,
