@@ -23,6 +23,10 @@ directly. **Read the matching one before starting:**
   rendering harness, the two API-mocking tiers, fixtures, the selector hierarchy, and the Playwright
   suite (captures, masking, thresholds, coverage).
 - **`conluz-web-list-tables`** — before building a list table, a row menu or a row-action dialog.
+- **`conluz-web-design-system`** — before adding, removing, renaming or changing a component under
+  `src/components/`, or changing `src/theme/`, the provider stack in `src/main.tsx`, or the icons the
+  app imports. Holds the recipes for keeping the Claude Design design system in `.design-sync/` in
+  step with the code.
 - Styling: `references/styling-conventions.md`, `references/theme-tokens.md`, `references/fonts.md`.
 - Decisions and their revisit conditions: `docs/decisions/adrs/`.
 - UI rules and their rationale: the spec documents under `docs/specs/`; conventions in
@@ -109,6 +113,24 @@ are referenced by ID, never restated. Conventions: `docs/specs/README.md`.
 Use the tokens: `src/theme/tokens.ts` (`colors`, `alphas`, `shadows`, `radii`, `fontSizes`), the MUI theme in `src/theme/index.ts` (`"primary.main"` shorthands in `sx`), and `src/theme/sx.ts` (`sxStyles`). For a genuine one-off: `// eslint-disable-next-line no-restricted-syntax -- <reason>`.
 
 **Colour roles.** A hue's `main` is the safe role (≥ 4.5:1 as type and behind white text). `vivid` is decorative only, never type. Two traps: `colors.brand.light` (`#667eea`) is decorative only, and `colors.text.disabled` is for disabled controls only. Never express a tint as an alpha overlay when type sits on it. Full table: `references/theme-tokens.md`. Fonts are self-hosted Inter — do not move them back to a CDN (`references/fonts.md`).
+
+## Design system (Claude Design)
+
+The presentational components are published to Claude Design from the inputs in `.design-sync/`
+(README section "Design System (Claude Design)"; recipes in the `conluz-web-design-system` skill).
+
+- **A component change carries its design-system change in the same PR.** Adding, removing or
+  renaming a synced component, or changing its props, means updating `.design-sync/` as well:
+  - its export in `.design-sync/pkg/index.ts`;
+  - its `docsMap` group, plus any `overrides` / `dtsPropsFor` entries, in `.design-sync/config.json`;
+  - its preview in `.design-sync/previews/<Name>.tsx`.
+- **Only components that render with `ConluzProvider` alone are synced.** A component that uses
+  `src/hooks/actions/`, a generated query hook, auth/logged-user context or `useLogout` is never
+  exported to the design system. One that starts depending on them is removed from it.
+- **Verify** with `npx tsc -p .design-sync/pkg/tsconfig.json` and
+  `npx tsc -p .design-sync/previews/tsconfig.json`. ESLint ignores `.design-sync/` on purpose.
+- **Never run `/design-sync` or upload to Claude Design unless the user asks.** Say in the PR
+  description that a re-sync is needed. Never edit `ds-bundle/`, `.ds-sync/` or `.design-sync/.cache/`.
 
 ## Skills & documentation maintenance
 

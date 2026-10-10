@@ -40,7 +40,9 @@
 2. `npx tsc -p .design-sync/pkg/tsconfig.json` (cfg.buildCmd — emits the .d.ts the converter reads).
 3. Fetch `_ds_sync.json` from the project into `.design-sync/.cache/remote-sync.json`, then
    `node .ds-sync/resync.mjs --config .design-sync/config.json --node-modules ./node_modules --out ./ds-bundle --remote .design-sync/.cache/remote-sync.json`.
-4. If a type named in `guidelines/data-shapes.md` changed, regenerate its block with
+4. Type-check the previews without building: `npx tsc -p .design-sync/previews/tsconfig.json`
+   (maps `conluz-web` to `pkg/index.ts`; catches previews left stale by a props change).
+5. If a type named in `guidelines/data-shapes.md` changed, regenerate its block with
    `node .design-sync/scripts/data-shapes.mjs <TypeNames…>`.
 - ESLint ignores `.design-sync/`, `.ds-sync/`, `ds-bundle/` (eslint.config.js globalIgnores): previews
   import a virtual `conluz-web` package and would otherwise fail lint.

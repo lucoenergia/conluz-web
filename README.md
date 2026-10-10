@@ -339,7 +339,13 @@ fresh clone does not have it. The converter scripts that produce it come with Cl
   to a group under `docsMap` in `.design-sync/config.json`, and write its preview in
   `.design-sync/previews/<Name>.tsx`.
 - Preview files import a virtual `conluz-web` package, so ESLint ignores `.design-sync/`, `.ds-sync/`
-  and `ds-bundle/`.
+  and `ds-bundle/`. Check them with the TypeScript compiler instead:
+  ```bash
+  npx tsc -p .design-sync/pkg/tsconfig.json        # the entry package resolves every export
+  npx tsc -p .design-sync/previews/tsconfig.json   # every preview matches the real props
+  ```
+- AI coding agents follow the rules in `AGENTS.md` ("Design system (Claude Design)") and the
+  `conluz-web-design-system` skill.
 
 ## 🤝 Contributing
 
