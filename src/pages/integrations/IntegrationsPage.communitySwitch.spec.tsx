@@ -30,6 +30,14 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
   useGetAllCommunities: vi.fn(),
 }));
 
+// useGetSuppliesByUserId is read by the harness's real CommunityProvider, for the
+// first-time rule (#237). The community is seeded here, so the provider's own
+// choice is never what the page sees; its read is left unanswered.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetSuppliesByUserId: vi.fn(),
+}));
+
 vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetShellyConfig: vi.fn(),
@@ -55,6 +63,7 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 }));
 
 import { useGetAllPlants, type getAllPlants } from "../../api/plants/plants";
+import { useGetSuppliesByUserId } from "../../api/users/users";
 import {
   getAllCommunities,
   getCommunityById,
@@ -99,6 +108,7 @@ function confirmation(): HTMLElement {
 describe("IntegrationsPage across a community switch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
     vi.mocked(useGetCommunityById).mockImplementation((communityId) =>
       query.success<typeof getCommunityById>(
         buildCommunity({

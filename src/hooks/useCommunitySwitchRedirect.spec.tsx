@@ -1,10 +1,31 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { type FC, type ReactNode } from "react";
 import { MemoryRouter, Navigate, Route, Routes, useLocation } from "react-router";
 import { ActiveCommunityContext } from "../context/community.context";
+import type { CurrentUserResponse } from "../api/models";
+import { buildCurrentUser } from "../test/fixtures";
 import { useCommunitySwitchRedirect } from "./useCommunitySwitchRedirect";
+
+// The caller's memberships tell a move they made from one they did not. Null
+// -- not yet known -- is how the tests that are not about that run.
+const loggedUser = vi.hoisted(() => ({ current: null as CurrentUserResponse | null }));
+vi.mock(import("../context/logged-user.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useLoggedUser: () => loggedUser.current,
+}));
+
+beforeEach(() => {
+  loggedUser.current = null;
+});
+
+/** The caller after losing community-a: still a member of b and c. */
+function memberOnlyOf(...communityIds: string[]): void {
+  loggedUser.current = buildCurrentUser({
+    memberships: Object.fromEntries(communityIds.map((id) => [id, "COMMUNITY_MEMBER"])),
+  });
+}
 
 const Harness: FC = () => {
   const redirectTo = useCommunitySwitchRedirect();
@@ -105,5 +126,57 @@ describe("useCommunitySwitchRedirect", () => {
     rerenderWith("community-c");
     expectLocation("/supply-points");
     expect(screen.getByTestId("page")).toBeInTheDocument();
+  });
+});
+
+describe("useCommunitySwitchRedirect when the previous community was lost (#237)", () => {
+  it("UI-ENT-007 sends a community page to the landing", () => {
+    memberOnlyOf("community-a", "community-b");
+    const { rerenderWith } = renderAt("/members", "community-a");
+
+    memberOnlyOf("community-b");
+    rerenderWith("community-b");
+
+    expectLocation("/");
+  });
+
+  it("UI-ENT-007 sends a page about one of its plants to the landing, not to the plants list", () => {
+    memberOnlyOf("community-a", "community-b");
+    const { rerenderWith } = renderAt("/production/plant-a/sharing-agreements", "community-a");
+
+    memberOnlyOf("community-b");
+    rerenderWith("community-b");
+
+    expectLocation("/");
+  });
+
+  it("UI-ENT-007 leaves a page that is not about a community where it is", () => {
+    memberOnlyOf("community-a", "community-b");
+    const { rerenderWith } = renderAt("/profile", "community-a");
+
+    memberOnlyOf("community-b");
+    rerenderWith("community-b");
+
+    expectLocation("/profile");
+  });
+
+  it("UI-ENT-007 on the landing itself, stays there rather than redirecting to itself", () => {
+    memberOnlyOf("community-a", "community-b");
+    const { rerenderWith } = renderAt("/", "community-a");
+
+    memberOnlyOf("community-b");
+    rerenderWith("community-b");
+
+    expect(screen.getByTestId("page")).toBeInTheDocument();
+    expectLocation("/");
+  });
+
+  // The contrast: a switch the caller made keeps them on the page.
+  it("UI-ENT-006 a switch the caller made leaves a community page where it is", () => {
+    memberOnlyOf("community-a", "community-b");
+    const { rerenderWith } = renderAt("/members", "community-a");
+    rerenderWith("community-b");
+
+    expectLocation("/members");
   });
 });

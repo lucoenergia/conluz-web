@@ -68,10 +68,20 @@ production by virtue of the flag; they must go through community membership.
 
 ## Active community context
 
-`community.context.tsx` selects and persists the active community: auto-selects when the
-user has exactly one membership; restores the persisted choice when there are several.
-`ScopeContext` switches it, through `useActiveCommunityDetails().select`. Most data views
-are meaningless without an active community.
+`community.context.tsx` selects and persists the active community, so a caller with
+memberships always has one once it is resolved (#237): the only membership when there is
+one; with several, the remembered one while it is still a membership, otherwise the
+first-time rule in `src/context/entryCommunity.ts` (where they own supply points, then
+alphabetical). That rule reads `GET /communities` and `GET /users/{me}/supplies`, only when it
+applies, and the context stays **unresolved** until both have answered or failed — so
+nothing decides on "no community" for such a caller, and there is no choose-a-community
+screen. When the active membership is lost mid-session, the old id stays in place while
+unresolved, so the move to the rule's choice is one step from the lost community, and
+`useCommunitySwitchRedirect` sends a community page to `/` (a switch the caller makes keeps
+them on the page).
+`ScopeContext`'s community switch is the only control that changes it, through
+`useActiveCommunityDetails().select`. The rules are in the spec document
+`docs/specs/community-entry.md`. Most data views are meaningless without an active community.
 
 ## Stating the scope on screen
 

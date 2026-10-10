@@ -77,3 +77,12 @@ describe("renderWithProviders active community seed", () => {
     expect(screen.getByTestId("community")).toHaveTextContent("none");
   });
 });
+
+describe("renderWithProviders remembered community", () => {
+  it("leaves the remembered community, and nothing else, in the storage the provider reads", () => {
+    renderWithProviders(<ContextProbe />, { rememberedCommunity: { userId: "u9", communityId: "c9" } });
+
+    expect(window.localStorage.getItem("activeCommunity:u9")).toBe("c9");
+    expect(window.localStorage.length).toBe(1);
+  });
+});

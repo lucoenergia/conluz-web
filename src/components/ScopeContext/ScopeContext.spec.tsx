@@ -7,6 +7,7 @@ import { query } from "../../test/queryState";
 import { buildCommunity, buildCurrentUser } from "../../test/fixtures";
 import type { CurrentUserResponse, UserResponseMemberships } from "../../api/models";
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import { useGetSuppliesByUserId } from "../../api/users/users";
 import { ScopeContext } from "./ScopeContext";
 
 let loggedUser: CurrentUserResponse | null = null;
@@ -28,6 +29,14 @@ vi.mock(import("../../api/communities/communities"), () => ({
   useGetAllCommunities: vi.fn(),
 }));
 
+// Read by the harness's real CommunityProvider, for the first-time rule (#237).
+// The active community is mocked above, so the provider's own choice is never
+// what this surface sees; its read is left unanswered.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetSuppliesByUserId: vi.fn(),
+}));
+
 const LONG_NAME = "Comunidad Energética Renovable del Valle Alto de la Sierra de Luco";
 
 const TWO_COMMUNITIES: UserResponseMemberships = {
@@ -46,6 +55,7 @@ function scopeRegion() {
 
 beforeEach(() => {
   mockDispatch.mockClear();
+  vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
   vi.mocked(useGetAllCommunities).mockReturnValue(
     query.success<typeof getAllCommunities>([
       buildCommunity({ id: "community-a", name: "Comunidad Alpha" }),
@@ -90,11 +100,14 @@ describe("ScopeContext — community-scoped page", () => {
     expect(control).toHaveAttribute("aria-expanded", "false");
   });
 
-  test("with several communities and none selected it asks for one", () => {
+  // Several communities and none active is the moment before the selection is
+  // worked out (#237): the surface waits, it does not ask the caller to choose.
+  test("UI-ENT-005 with several communities and none active yet it reads as loading, not as a prompt", () => {
     setUp(TWO_COMMUNITIES, null);
     renderWithProviders(<ScopeContext variant="strip" />, { route: "/" });
 
-    expect(within(scopeRegion()).getByRole("button", { name: /Selecciona una comunidad/ })).toBeInTheDocument();
+    expect(within(scopeRegion()).getByRole("button", { name: /Cargando comunidad…/ })).toBeInTheDocument();
+    expect(within(scopeRegion()).getByText("Comunidad activa")).toBeInTheDocument();
   });
 
   test("lists only the user's communities", async () => {

@@ -44,6 +44,16 @@ const USER_SCOPED_LISTINGS: Record<string, { hook: string; filter: string; reaso
         "under this page's heading.",
     },
   ],
+  "src/context/community.context.tsx": [
+    {
+      hook: "useGetSuppliesByUserId",
+      filter: "pickFirstTimeCommunity",
+      reason:
+        "decides which community a caller with several enters on when nothing valid is remembered " +
+        "(#237). It reads across communities on purpose -- there is no active one yet -- and counts a " +
+        "supply only when its community is one of the caller's memberships.",
+    },
+  ],
   "src/pages/home/useHomeViews.ts": [
     {
       hook: "useGetSuppliesByUserId",

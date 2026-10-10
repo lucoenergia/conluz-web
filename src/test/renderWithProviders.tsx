@@ -47,6 +47,14 @@ export type ProviderOptions = {
    * `switchActiveCommunity`.
    */
   activeCommunityId?: string | null;
+  /**
+   * The community the real `CommunityProvider` finds remembered for a user, as
+   * a previous session in this browser would have left it. Written after the
+   * storage reset, so it is the only thing there. Unlike `activeCommunityId`,
+   * the provider still decides: this is for a spec whose subject is that
+   * decision, such as a remembered community that is no longer a membership.
+   */
+  rememberedCommunity?: { userId: string; communityId: string };
 };
 
 type CommunityControl = { set: ((communityId: string | null) => void) | null };
@@ -115,6 +123,11 @@ function switcher(control: CommunityControl) {
 function resetBrowserStorage(): void {
   window.localStorage.clear();
   window.sessionStorage.clear();
+}
+
+// The key `CommunityProvider` remembers a user's community under.
+function seedRememberedCommunity(remembered: ProviderOptions["rememberedCommunity"]): void {
+  if (remembered) window.localStorage.setItem(`activeCommunity:${remembered.userId}`, remembered.communityId);
 }
 
 // The other end: rendering can persist storage (a single-membership user makes
@@ -192,9 +205,17 @@ export function renderWithProviders(
   ui: ReactElement,
   options: ProviderOptions & Omit<RenderOptions, "wrapper"> = {},
 ): RenderResult & HarnessExtras {
-  const { route, browserHistory, queryClient = createTestQueryClient(), token, activeCommunityId, ...renderOptions } =
-    options;
+  const {
+    route,
+    browserHistory,
+    queryClient = createTestQueryClient(),
+    token,
+    activeCommunityId,
+    rememberedCommunity,
+    ...renderOptions
+  } = options;
   resetBrowserStorage();
+  seedRememberedCommunity(rememberedCommunity);
   const control: CommunityControl = { set: null };
   const wrapper = createWrapper({ route, browserHistory, token, activeCommunityId }, queryClient, control);
   return { ...render(ui, { wrapper, ...renderOptions }), queryClient, switchActiveCommunity: switcher(control) };
@@ -205,9 +226,17 @@ export function renderHookWithProviders<Result, Props>(
   hook: (props: Props) => Result,
   options: ProviderOptions & { initialProps?: Props } = {},
 ): RenderHookResult<Result, Props> & HarnessExtras {
-  const { route, browserHistory, queryClient = createTestQueryClient(), token, activeCommunityId, initialProps } =
-    options;
+  const {
+    route,
+    browserHistory,
+    queryClient = createTestQueryClient(),
+    token,
+    activeCommunityId,
+    rememberedCommunity,
+    initialProps,
+  } = options;
   resetBrowserStorage();
+  seedRememberedCommunity(rememberedCommunity);
   const control: CommunityControl = { set: null };
   const wrapper = createWrapper({ route, browserHistory, token, activeCommunityId }, queryClient, control);
   return {

@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { screen } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { Header } from "./Header";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -20,7 +20,20 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
   useGetAllCommunities: vi.fn(),
 }));
 
+// Read by the harness's real CommunityProvider, for the first-time rule (#237).
+// The community is seeded where it matters, so the provider's own choice is
+// never what the header sees; its read is left unanswered.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetSuppliesByUserId: vi.fn(),
+}));
+
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import { useGetSuppliesByUserId } from "../../api/users/users";
+
+beforeEach(() => {
+  vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
+});
 
 // Through the harness rather than a hand-built provider stack: LoggedUserProvider
 // is a query now (#203), so it has to sit under the QueryClientProvider, and the

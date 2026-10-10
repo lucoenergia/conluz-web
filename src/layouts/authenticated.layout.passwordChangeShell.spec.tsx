@@ -192,7 +192,6 @@ describe("a caller who must change their password (#213)", () => {
     expect(screen.queryByRole("button", { name: "Abrir menú de usuario" })).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Navegación principal" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Ámbito de la página" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Selecciona una comunidad")).not.toBeInTheDocument();
     expect(screen.queryByText("Cargando comunidad…")).not.toBeInTheDocument();
 
     expect(screen.getAllByRole("main")).toHaveLength(1);

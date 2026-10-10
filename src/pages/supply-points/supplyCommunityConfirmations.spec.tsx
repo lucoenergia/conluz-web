@@ -11,7 +11,7 @@ import {
   type getCommunityById,
 } from "../../api/communities/communities";
 import { useCreateSupply } from "../../api/supplies/supplies";
-import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
+import { useGetAllUsers, useGetSuppliesByUserId, type getAllUsers } from "../../api/users/users";
 import { DisableConfirmationModal } from "../../components/Modals/DisableConfirmationModal";
 import { EnableConfirmationModal } from "../../components/Modals/EnableConfirmationModal";
 import { CreateSupplyPage } from "./CreateSupply";
@@ -35,9 +35,13 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   useCreateSupply: vi.fn(),
 }));
 
+// useGetSuppliesByUserId is read by the harness's real CommunityProvider, for the
+// first-time rule (#237). The community is seeded here, so the provider's own
+// choice is never what the page sees; its read is left unanswered.
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
+  useGetSuppliesByUserId: vi.fn(),
 }));
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
@@ -49,6 +53,7 @@ const COMMUNITY_NAME = "Comunidad Solar Norte";
 const HEADER_LINE = `Comunidad · ${COMMUNITY_NAME}`;
 
 beforeEach(() => {
+  vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
   // The admin reaching the create page may create supply points there.
   vi.mocked(useGetCommunityById).mockReturnValue(
     query.success<typeof getCommunityById>(

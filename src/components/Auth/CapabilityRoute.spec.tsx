@@ -9,8 +9,12 @@ import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildPlat
 import { query } from "../../test/queryState";
 import type { CommunityCapabilitiesResponse, PlatformCapabilitiesResponse } from "../../api/models";
 
+// useGetAllCommunities is read by the harness's CommunityProvider, for the
+// first-time rule (#237); the callers here have no more than one membership, so
+// it is never enabled.
 vi.mock(import("../../api/communities/communities"), () => ({
   useGetCommunityById: vi.fn(),
+  useGetAllCommunities: vi.fn(),
 }));
 
 // Spread, not replaced: the real LoggedUserProvider in the harness imports
@@ -36,7 +40,7 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   useLoggedUser: () => loggedUser.current,
 }));
 
-import { getCommunityById, useGetCommunityById } from "../../api/communities/communities";
+import { getCommunityById, useGetAllCommunities, useGetCommunityById } from "../../api/communities/communities";
 import { getUserById, useGetUserById } from "../../api/users/users";
 import { usePlantInActiveCommunity } from "../../pages/production/usePlantInActiveCommunity";
 import { useSupplyInActiveCommunity } from "../../pages/supply-points/useSupplyInActiveCommunity";
@@ -168,6 +172,7 @@ const expectNeither = () => {
 beforeEach(() => {
   vi.clearAllMocks();
   loggedUser.current = buildCurrentUser();
+  vi.mocked(useGetAllCommunities).mockReturnValue(query.disabled());
   vi.mocked(useGetCommunityById).mockReturnValue(query.loading());
   vi.mocked(usePlantInActiveCommunity).mockReturnValue({
     plant: undefined,

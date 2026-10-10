@@ -4,7 +4,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Link, Route, Routes, useLocation } from "react-router";
-import { useGetCurrentUser, type getCurrentUser } from "../api/users/users";
+import { useGetCurrentUser, useGetSuppliesByUserId, type getCurrentUser } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
 import { LandingRoute } from "../pages/landing/LandingRoute";
 import { renderWithProviders } from "../test/renderWithProviders";
@@ -18,8 +18,12 @@ import { CommunityRole, type CurrentUserResponse } from "../api/models";
  * served -- whether that user came from the first load, a login or a refetch
  * after a 403 is the cache's business, covered in passwordChangeRecheck.spec.
  */
+// useGetSuppliesByUserId is read by the harness's CommunityProvider, for the
+// first-time rule (#237); no caller here has more than one membership, so it is
+// never enabled.
 vi.mock(import("../api/users/users"), () => ({
   useGetCurrentUser: vi.fn(),
+  useGetSuppliesByUserId: vi.fn(),
 }));
 
 vi.mock(import("../context/auth.context"), async (importOriginal) => ({
@@ -90,6 +94,7 @@ const currentPath = () => screen.getByRole("status", { name: "path" }).textConte
 
 describe("the forced password change (AC5)", () => {
   beforeEach(() => {
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
     vi.mocked(useGetCurrentUser).mockReset();
     mockHeader.mockClear();
   });

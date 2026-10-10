@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { useActiveCommunity } from "../context/community.context";
-import { resolveCommunityScopedTarget } from "../utils/routes";
+import { useLoggedUser } from "../context/logged-user.context";
+import { resolveCommunityScopedTarget, resolvePageScope } from "../utils/routes";
 
 /**
  * The route to leave for, when the active community has just changed underneath
@@ -20,11 +21,18 @@ import { resolveCommunityScopedTarget } from "../utils/routes";
  * foreign entity reached that way is caught by the per-page community guard
  * instead (see isPlantOutsideActiveCommunity).
  *
+ * A move the caller did not make -- the previous community is no longer one of
+ * their memberships, so the provider chose another (#237) -- sends any
+ * community page to "/", which lands them on the new community's home. Staying
+ * on the same page would let them carry on working without noticing the
+ * community changed under them. Pages that are not about a community stay.
+ *
  * Must be called from inside the router -- CommunityProvider itself sits
  * outside BrowserRouter in main.tsx and cannot navigate.
  */
 export function useCommunitySwitchRedirect(): string | null {
   const activeCommunityId = useActiveCommunity();
+  const memberships = useLoggedUser()?.memberships;
   const { pathname, search } = useLocation();
 
   const [communitySnapshot, setCommunitySnapshot] = useState(activeCommunityId);
@@ -33,7 +41,9 @@ export function useCommunitySwitchRedirect(): string | null {
   if (communitySnapshot !== activeCommunityId) {
     setCommunitySnapshot(activeCommunityId);
     setPendingRedirect(
-      communitySnapshot === null ? null : resolveCommunityScopedTarget(pathname, search),
+      communitySnapshot === null
+        ? null
+        : targetAfterMove(communitySnapshot, activeCommunityId, memberships, pathname, search),
     );
   }
 
@@ -45,4 +55,20 @@ export function useCommunitySwitchRedirect(): string | null {
   }, [pathname, search]);
 
   return pendingRedirect;
+}
+
+function targetAfterMove(
+  previous: string,
+  next: string | null,
+  memberships: Record<string, unknown> | undefined,
+  pathname: string,
+  search: string,
+): string | null {
+  // To no community at all, the caller has no membership left: the guards and
+  // the landing deal with that, as before.
+  const lostPrevious = next !== null && memberships !== undefined && !(previous in memberships);
+  if (lostPrevious && resolvePageScope(pathname) === "community") {
+    return pathname === "/" ? null : "/";
+  }
+  return resolveCommunityScopedTarget(pathname, search);
 }
