@@ -49,7 +49,7 @@ const PROVIDERS = [
     description:
       "Plataforma oficial de las distribuidoras eléctricas para acceder a datos de consumo de los socios.",
     fields: ["credentials"] as string[],
-    urlPlaceholder: "https://datadis.es/api-private",
+    urlPlaceholder: "https://datadis.es",
     help: "Necesitas una cuenta dada de alta en datadis.es con permiso de consulta de los CUPS de la comunidad.",
   },
   {
