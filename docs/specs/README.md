@@ -31,3 +31,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | Prefix | Screen or flow | File |
 | --- | --- | --- |
 | `UI-ENT` | Community entry: which community is active and where a caller lands | [`community-entry.md`](community-entry.md) |
+| `UI-INT` | Integrations: the Datadis configuration form | [`integrations.md`](integrations.md) |
