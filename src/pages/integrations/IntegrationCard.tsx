@@ -332,6 +332,12 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         <Button
           variant="contained"
           disabled={isSaving || isLoading}
+          // With field rules, pressing Guardar would first blur the field being
+          // edited, and the message that blur reveals pushes this button down
+          // before the press ends -- so the click lands outside it and is lost.
+          // Keeping focus where it is lets the click through; the save attempt
+          // then shows every message at once.
+          onMouseDown={onFieldBlur ? (e) => e.preventDefault() : undefined}
           onClick={() => void save.run()}
           startIcon={
             isSaving ? (

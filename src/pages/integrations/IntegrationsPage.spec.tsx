@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
@@ -475,6 +475,16 @@ describe("the Datadis form", () => {
 
       expect(field("Usuario")).toHaveAccessibleDescription("Introduce el usuario.");
       expect(within(datadis()).queryByText("Introduce la URL del servicio.")).not.toBeInTheDocument();
+    });
+
+    it("UI-INT-002 pressing Guardar does not blur the field being edited, so a message cannot move the button from under the click", () => {
+      // jsdom has no layout, so the lost click itself cannot happen here: what
+      // is asserted is the cause, that the press keeps focus in the field.
+      setup({ community: { canManage: true } });
+
+      expect(fireEvent.mouseDown(within(datadis()).getByRole("button", { name: "Guardar" }))).toBe(false);
+      // Huawei passes no rules, so its button keeps the default.
+      expect(fireEvent.mouseDown(within(cardOf("Huawei")).getByRole("button", { name: "Guardar" }))).toBe(true);
     });
 
     it("UI-INT-002 lets the save through once every field is fixed", async () => {
