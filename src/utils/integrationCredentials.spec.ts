@@ -27,7 +27,7 @@ describe("buildCredentialsBody", () => {
 });
 
 describe("validateCredentials", () => {
-  it("UI-INT-001 requires the password only when none is stored", () => {
+  it("UI-INT-003 requires the password only when none is stored", () => {
     expect(validateCredentials(VALID, { passwordSet: false })).toEqual({ password: "Introduce la contraseña." });
     expect(validateCredentials(VALID, { passwordSet: true })).toEqual({});
     // Unknown: the read failed, so the backend decides.
@@ -65,16 +65,16 @@ describe("isHttpUrl", () => {
 });
 
 describe("storedPasswordFrom", () => {
-  it("UI-INT-001 reads passwordSet from a successful read", () => {
+  it("UI-INT-003 reads passwordSet from a successful read", () => {
     expect(storedPasswordFrom({ passwordSet: true }, null)).toBe(true);
     expect(storedPasswordFrom({ passwordSet: false }, null)).toBe(false);
   });
 
-  it("UI-INT-001 takes a 404 for no password stored", () => {
+  it("UI-INT-003 takes a 404 for no password stored", () => {
     expect(storedPasswordFrom(undefined, apiError(404))).toBe(false);
   });
 
-  it("UI-INT-001 leaves it unknown on any other failure, and while nothing has arrived", () => {
+  it("UI-INT-003 leaves it unknown on any other failure, and while nothing has arrived", () => {
     expect(storedPasswordFrom(undefined, apiError(500))).toBeUndefined();
     expect(storedPasswordFrom(undefined, new Error("Network Error"))).toBeUndefined();
     expect(storedPasswordFrom(undefined, null)).toBeUndefined();
@@ -82,7 +82,7 @@ describe("storedPasswordFrom", () => {
 });
 
 describe("passwordRequiredMessage", () => {
-  it("UI-INT-001 places the provider's own password-required refusal", () => {
+  it("UI-INT-004 places the provider's own password-required refusal", () => {
     expect(
       passwordRequiredMessage(
         apiError(400, { code: "DATADIS_CONFIG_PASSWORD_REQUIRED" }),
@@ -91,7 +91,7 @@ describe("passwordRequiredMessage", () => {
     ).toBe("No hay ninguna contraseña guardada. Introdúcela para guardar la configuración.");
   });
 
-  it("UI-INT-001 leaves every other refusal to the screen's generic handling", () => {
+  it("UI-INT-004 leaves every other refusal to the screen's generic handling", () => {
     expect(passwordRequiredMessage(apiError(400), "DATADIS_CONFIG_PASSWORD_REQUIRED")).toBeUndefined();
     expect(
       passwordRequiredMessage(

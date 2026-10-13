@@ -70,7 +70,7 @@ test.describe("Visual baselines", () => {
 
   /**
    * The Datadis card on its own, in the three states the form rules define
-   * (UI-INT-001, UI-INT-002, #245). Component subject: the card's region, so a
+   * (UI-INT-001 to UI-INT-004, #245). Component subject: the card's region, so a
    * change elsewhere on the page does not fail these.
    */
   test.describe("Datadis card", () => {

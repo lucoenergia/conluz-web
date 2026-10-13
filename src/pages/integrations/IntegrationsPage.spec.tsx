@@ -249,7 +249,7 @@ async function fillRequired(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("the Datadis form", () => {
-  describe("UI-INT-001 the password", () => {
+  describe("the password", () => {
     it("UI-INT-001 AC1 with a password stored, saving with the field empty sends no password key", async () => {
       const user = userEvent.setup();
       serveDatadis({ passwordSet: true });
@@ -274,7 +274,7 @@ describe("the Datadis form", () => {
       expect(sentDatadis()).toHaveProperty("password", "nueva-clave");
     });
 
-    it("UI-INT-001 AC3 with no password stored, an empty field blocks the save with a visible message and sends nothing", async () => {
+    it("UI-INT-003 AC3 with no password stored, an empty field blocks the save with a visible message and sends nothing", async () => {
       const user = userEvent.setup();
       serveDatadis({ passwordSet: false });
       setup({ community: { canManage: true } });
@@ -287,7 +287,7 @@ describe("the Datadis form", () => {
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
 
-    it("UI-INT-001 AC3 a GET 404 (no configuration yet) requires the password too", async () => {
+    it("UI-INT-003 AC3 a GET 404 (no configuration yet) requires the password too", async () => {
       const user = userEvent.setup();
       failDatadisRead(404);
       setup({ community: { canManage: true } });
@@ -300,7 +300,7 @@ describe("the Datadis form", () => {
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
 
-    it("UI-INT-001 a failed read other than 404 leaves the stored password unknown: no rule, no hint, the backend decides", async () => {
+    it("UI-INT-003 a failed read other than 404 leaves the stored password unknown: no rule, no hint, the backend decides", async () => {
       const user = userEvent.setup();
       failDatadisRead(500);
       setup({ community: { canManage: true } });
@@ -332,7 +332,7 @@ describe("the Datadis form", () => {
       expect(within(datadis()).queryByText("Contraseña configurada. Déjala vacía para mantenerla.")).not.toBeInTheDocument();
     });
 
-    it("UI-INT-001 shows nothing on first render, and the rule once the field is left", async () => {
+    it("UI-INT-003 shows nothing on first render, and the rule once the field is left", async () => {
       const user = userEvent.setup();
       serveDatadis({ passwordSet: false });
       setup({ community: { canManage: true } });
@@ -346,7 +346,7 @@ describe("the Datadis form", () => {
       expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
     });
 
-    it("UI-INT-001 AC5 a 400 DATADIS_CONFIG_PASSWORD_REQUIRED lands on the password field, without a generic error", async () => {
+    it("UI-INT-004 AC5 a 400 DATADIS_CONFIG_PASSWORD_REQUIRED lands on the password field, without a generic error", async () => {
       const user = userEvent.setup();
       // The stored configuration says one is stored, the backend finds none:
       // the case of a password already wiped before conluz#404.
@@ -369,7 +369,7 @@ describe("the Datadis form", () => {
       expect(field("Contraseña")).toBeValid();
     });
 
-    it("UI-INT-001 any other refusal keeps the generic error", async () => {
+    it("UI-INT-004 any other refusal keeps the generic error", async () => {
       const user = userEvent.setup();
       serveDatadis({ passwordSet: true });
       mockConfigureDatadis.mockRejectedValueOnce(apiError(400));
@@ -381,7 +381,7 @@ describe("the Datadis form", () => {
       expect(field("Contraseña")).toBeValid();
     });
 
-    it("UI-INT-001 empties the field after a successful save, so the next save keeps what was stored", async () => {
+    it("UI-INT-004 empties the field after a successful save, so the next save keeps what was stored", async () => {
       const user = userEvent.setup();
       serveDatadis({ passwordSet: false });
       // Stands in for the refetch the save triggers: from the next render on,
@@ -405,7 +405,7 @@ describe("the Datadis form", () => {
       expect(sentDatadis()).not.toHaveProperty("password");
     });
 
-    it("UI-INT-001 a successful save returns the form to its first render, so the emptied field is not flagged before the refetch lands", async () => {
+    it("UI-INT-004 a successful save returns the form to its first render, so the emptied field is not flagged before the refetch lands", async () => {
       const user = userEvent.setup();
       // The read keeps saying "none stored": the refetch has not answered yet.
       serveDatadis({ passwordSet: false });
@@ -422,7 +422,7 @@ describe("the Datadis form", () => {
       expect(field("Contraseña")).toBeValid();
     });
 
-    it("UI-INT-001 opens the fields when a blocked save happens with the switch off", async () => {
+    it("UI-INT-002 opens the fields when a blocked save happens with the switch off", async () => {
       const user = userEvent.setup();
       serveDatadis({ enabled: false, passwordSet: false });
       setup({ community: { canManage: true } });
