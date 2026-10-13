@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CurrentUserResponseAddress } from './currentUserResponseAddress';
+import type { CurrentUserResponseEmail } from './currentUserResponseEmail';
 import type { CurrentUserResponsePhoneNumber } from './currentUserResponsePhoneNumber';
 import type { CurrentUserResponseMemberships } from './currentUserResponseMemberships';
 import type { UserCapabilitiesResponse } from './userCapabilitiesResponse';
@@ -20,7 +21,7 @@ export interface CurrentUserResponse {
   number: number;
   fullName: string;
   address: CurrentUserResponseAddress;
-  email: string;
+  email: CurrentUserResponseEmail;
   phoneNumber: CurrentUserResponsePhoneNumber;
   enabled: boolean;
   /** Whether the caller's password was chosen by someone else and must be changed through PUT /api/v1/users/current/password. While it is true, every request other than reading the current user (GET /api/v1/users/current), changing the password and logging out (POST /api/v1/logout) is refused with 403 and the `USER_PASSWORD_CHANGE_REQUIRED` code. */
