@@ -216,9 +216,7 @@ describe("IntegrationsPage", () => {
 
 // ── The Datadis form (#245) ─────────────────────────────────────────────────
 
-// Structural: the card is a Paper with no role of its own, so it is reached
-// from its heading, as the specs above do.
-const cardOf = (name: string) => screen.getByRole("heading", { name }).closest(".MuiPaper-root") as HTMLElement;
+const cardOf = (name: string) => screen.getByRole("region", { name });
 const datadis = () => cardOf("Datadis");
 const field = (label: string) => within(datadis()).getByLabelText(label);
 const confirmation = () => screen.queryByTestId("modal-panel");

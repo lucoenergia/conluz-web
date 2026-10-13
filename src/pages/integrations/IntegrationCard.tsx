@@ -139,9 +139,14 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   // A blocked save must show why, so its messages open the fields even with
   // the switch off: the backend checks them whether or not it is on (#245).
   const hasErrors = Object.values(errors).some(Boolean);
+  const titleId = `integration-${provider.id}-title`;
 
   return (
+    // A named section, so the card is a region labelled by its provider:
+    // reachable by role rather than by its MUI class.
     <Paper
+      component="section"
+      aria-labelledby={titleId}
       elevation={0}
       sx={{
         borderRadius: { xs: radii.default, sm: radii.large },
@@ -167,7 +172,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
           {/* eslint-disable-next-line no-restricted-syntax -- near-black provider name (#111827); no matching token */}
-          <Typography component="h2" variant="h6" sx={{ color: "#111827" }}>
+          <Typography id={titleId} component="h2" variant="h6" sx={{ color: "#111827" }}>
               {provider.name}
             </Typography>
           </Box>
