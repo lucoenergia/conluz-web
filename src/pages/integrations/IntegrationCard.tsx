@@ -218,6 +218,9 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                   label="Usuario"
                   value={value.username || ""}
                   onChange={(e) => onChange(provider.id, { username: e.target.value })}
+                  onBlur={() => onFieldBlur?.("username")}
+                  error={!!errors.username}
+                  helperText={errors.username}
                   fullWidth
                   variant="outlined"
                   size="small"
@@ -272,6 +275,9 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                   placeholder={provider.urlPlaceholder}
                   value={value.baseUrl || ""}
                   onChange={(e) => onChange(provider.id, { baseUrl: e.target.value })}
+                  onBlur={() => onFieldBlur?.("baseUrl")}
+                  error={!!errors.baseUrl}
+                  helperText={errors.baseUrl}
                   fullWidth
                   variant="outlined"
                   size="small"

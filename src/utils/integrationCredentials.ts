@@ -23,6 +23,19 @@ export type CredentialsErrors = Partial<Record<CredentialsField, string>>;
 export const CREDENTIALS_FIELDS: readonly CredentialsField[] = ["username", "password", "baseUrl"];
 
 export const PASSWORD_REQUIRED_MESSAGE = "Introduce la contraseña.";
+export const USERNAME_REQUIRED_MESSAGE = "Introduce el usuario.";
+export const BASE_URL_REQUIRED_MESSAGE = "Introduce la URL del servicio.";
+export const BASE_URL_INVALID_MESSAGE = "Introduce una URL válida que empiece por http:// o https://.";
+
+/** An absolute `http` or `https` URL. A bare host such as `datadis.es` is not one. */
+export function isHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value.trim());
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * The request body: the password only when one was typed.
@@ -53,7 +66,12 @@ export function validateCredentials(
   { passwordSet }: { passwordSet: boolean | undefined },
 ): CredentialsErrors {
   const errors: CredentialsErrors = {};
+  // Blank counts as empty: the backend refuses a blank username or URL with a
+  // 400 that carries no code, so the client is the only one that can say which.
+  if (!values.username.trim()) errors.username = USERNAME_REQUIRED_MESSAGE;
   if (passwordSet === false && !values.password) errors.password = PASSWORD_REQUIRED_MESSAGE;
+  if (!values.baseUrl.trim()) errors.baseUrl = BASE_URL_REQUIRED_MESSAGE;
+  else if (!isHttpUrl(values.baseUrl)) errors.baseUrl = BASE_URL_INVALID_MESSAGE;
   return errors;
 }
 
