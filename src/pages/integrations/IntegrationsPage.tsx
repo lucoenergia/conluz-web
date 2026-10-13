@@ -10,7 +10,7 @@ import { useGetAllPlants } from "../../api/plants/plants";
 import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
-import type { ConfigureDatadisBody, ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
+import type { ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
 import { colors, alphas } from "../../theme/tokens";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
@@ -18,6 +18,12 @@ import { useCommunityActions, usePlantActions, type Action, type MaybeAction } f
 import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { useCredentialsForm } from "../../hooks/useCredentialsForm";
+import {
+  buildCredentialsBody,
+  passwordRequiredMessage,
+  storedPasswordFrom,
+} from "../../utils/integrationCredentials";
 
 /**
  * Integration credentials change only when someone edits them on this page, so
@@ -101,7 +107,9 @@ function bindSave<TBody>(
 
 /**
  * Turns a save the caller may perform into the one the card is given: same gate,
- * same pending flag, but clicking asks for confirmation instead of writing.
+ * same pending flag, but clicking asks for confirmation instead of writing --
+ * and, for a form with rules, only once `canProceed` lets it through, so a
+ * save the form already knows is wrong neither asks nor writes (#245).
  *
  * Credentials are community configuration and the dialog names the community
  * (#186), so the write cannot be aimed at the wrong one by accident. The card's
@@ -112,8 +120,18 @@ function bindSave<TBody>(
  * providers whose action was never handed over, so one of those renders no card
  * and can never reach the confirmation either.
  */
-function requestSave(save: Action<[], void>, providerId: string, ask: (id: string) => void): Action<[], void> {
-  return { isPending: save.isPending, run: async () => ask(providerId) };
+function requestSave(
+  save: Action<[], void>,
+  providerId: string,
+  ask: (id: string) => void,
+  canProceed: () => boolean = () => true,
+): Action<[], void> {
+  return {
+    isPending: save.isPending,
+    run: async () => {
+      if (canProceed()) ask(providerId);
+    },
+  };
 }
 
 export const IntegrationsPage: FC = () => {
@@ -153,7 +171,7 @@ export const IntegrationsPage: FC = () => {
     activeCommunityId ?? "",
     { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
-  const { data: datadisConfig, isLoading: datadisLoading } = useGetDatadisConfig(
+  const { data: datadisConfig, error: datadisError, isLoading: datadisLoading } = useGetDatadisConfig(
     activeCommunityId ?? "",
     { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
@@ -161,6 +179,11 @@ export const IntegrationsPage: FC = () => {
     firstPlantId,
     { query: { enabled: !!firstPlantId, staleTime: CONFIG_STALE_TIME } },
   );
+
+  // Live from the read, not copied into state: the refetch after a save is what
+  // turns "none stored" into "stored".
+  const datadisPasswordSet = storedPasswordFrom(datadisConfig, datadisError);
+  const datadisForm = useCredentialsForm(state.datadis, datadisPasswordSet);
 
   const { configureDatadis, configureShelly } = useCommunityActions().forCommunity(activeCommunity).actions;
   const { configureHuawei } = usePlantActions().forPlant(firstPlant).actions;
@@ -223,20 +246,26 @@ export const IntegrationsPage: FC = () => {
   // PUT on all three carry the same @PreAuthorize -- so there is no read-only
   // card to fall back to: a card that cannot be saved cannot be filled either.
   const saves: Record<string, MaybeAction<[], void>> = {
-    datadis: bindSave(
-      configureDatadis && {
-        isPending: configureDatadis.isPending,
-        run: async (body: ConfigureDatadisBody) => "ok" in (await configureDatadis.run(body)),
+    // Not bindSave: a refusal for a missing password belongs on the password
+    // field rather than in the generic snack (#245).
+    datadis: configureDatadis && {
+      isPending: configureDatadis.isPending,
+      run: async () => {
+        const sentPassword = state.datadis.password;
+        const result = await configureDatadis.run(buildCredentialsBody(state.datadis));
+        if ("ok" in result) {
+          // Emptied, so the next save keeps what was just stored instead of
+          // sending it again; the refetch then reports it as stored.
+          update("datadis", { password: "" });
+          datadisForm.reset();
+          setSnack("Datadis guardado correctamente");
+          return;
+        }
+        const passwordRequired = passwordRequiredMessage(result.error, "DATADIS_CONFIG_PASSWORD_REQUIRED");
+        if (passwordRequired) datadisForm.showPasswordRefusal(passwordRequired, sentPassword);
+        else setSnack(SAVE_FAILED);
       },
-      () => ({
-        enabled: state.datadis.enabled,
-        username: state.datadis.username,
-        password: state.datadis.password,
-        baseUrl: state.datadis.baseUrl,
-      }),
-      "Datadis guardado correctamente",
-      setSnack,
-    ),
+    },
     huawei: bindSave(
       configureHuawei,
       () => ({
@@ -388,10 +417,19 @@ export const IntegrationsPage: FC = () => {
             key={provider.id}
             provider={provider}
             accent={ACCENT}
-            value={state[provider.id]}
             onChange={update}
-            save={requestSave(save, provider.id, setPendingSaveId)}
             isLoading={loadingByProvider[provider.id]}
+            {...(provider.id === "datadis"
+              ? {
+                  value: { ...state.datadis, passwordSet: datadisPasswordSet },
+                  errors: datadisForm.errors,
+                  onFieldBlur: datadisForm.touch,
+                  save: requestSave(save, provider.id, setPendingSaveId, datadisForm.attemptSave),
+                }
+              : {
+                  value: state[provider.id],
+                  save: requestSave(save, provider.id, setPendingSaveId),
+                })}
           />
         ))}
       </Box>

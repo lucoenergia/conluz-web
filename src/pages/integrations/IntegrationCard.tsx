@@ -2,6 +2,7 @@ import { alpha } from "@mui/material/styles";
 import { radii, shadows, colors } from "../../theme/tokens";
 import { useState, type FC } from "react";
 import type { Action } from "../../hooks/actions";
+import type { CredentialsErrors, CredentialsField } from "../../utils/integrationCredentials";
 import {
   Box,
   Typography,
@@ -78,7 +79,16 @@ interface IntegrationCardProps {
   save: Action<[], void>;
   /** This provider's stored configuration is still in flight. */
   isLoading?: boolean;
+  /**
+   * The field messages to show now. The page decides when a rule speaks; the
+   * card only renders what it is given. A provider without rules passes none.
+   */
+  errors?: CredentialsErrors;
+  /** A credentials field lost focus. */
+  onFieldBlur?: (field: CredentialsField) => void;
 }
+
+export const PASSWORD_KEPT_HELPER = "Contraseña configurada. Déjala vacía para mantenerla.";
 
 const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
   const IconComponent = iconMap[icon] || ExtensionIcon;
@@ -118,12 +128,17 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   onChange,
   save,
   isLoading = false,
+  errors = {},
+  onFieldBlur,
 }) => {
   const [showPwd, setShowPwd] = useState(false);
 
   const enabled = value.enabled;
   const hasCreds = provider.fields.includes("credentials");
   const isSaving = save.isPending;
+  // A blocked save must show why, so its messages open the fields even with
+  // the switch off: the backend checks them whether or not it is on (#245).
+  const hasErrors = Object.values(errors).some(Boolean);
 
   return (
     <Paper
@@ -182,7 +197,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
 
       {/* Body — only for providers with credentials */}
       {hasCreds && (
-        <Collapse in={enabled} timeout={250}>
+        <Collapse in={enabled || hasErrors} timeout={250}>
           <Box
             sx={{
               px: { xs: 2, sm: 3 },
@@ -220,6 +235,10 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                   type={showPwd ? "text" : "password"}
                   value={value.password || ""}
                   onChange={(e) => onChange(provider.id, { password: e.target.value })}
+                  onBlur={() => onFieldBlur?.("password")}
+                  error={!!errors.password}
+                  // Visible text, not a tooltip: most admins are on a phone.
+                  helperText={errors.password ?? (value.passwordSet ? PASSWORD_KEPT_HELPER : undefined)}
                   fullWidth
                   variant="outlined"
                   size="small"
@@ -248,14 +267,6 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                   }}
                   sx={fieldSx(accent)}
                 />
-                {value.passwordSet && !value.password && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: -1 }}>
-                    <LockOutlineIcon sx={{ fontSize: 16, color: "success.main" }} />
-                    <Typography variant="caption" sx={{ color: "success.main" }}>
-                      Contraseña configurada (deja vacío para mantener)
-                    </Typography>
-                  </Box>
-                )}
                 <TextField
                   label="URL del servicio"
                   placeholder={provider.urlPlaceholder}

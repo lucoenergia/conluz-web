@@ -145,6 +145,11 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // user. This is only the sentence a screen shows if a request is refused.
   USER_PASSWORD_UNCHANGED: PASSWORD_UNCHANGED_MESSAGE,
   USER_PASSWORD_CHANGE_REQUIRED: "Por seguridad, debes cambiar tu contraseña antes de continuar.",
+
+  // A Datadis save that omits the password when none is stored
+  // (lucoenergia/conluz#404). The form shows it on the password field (#245).
+  DATADIS_CONFIG_PASSWORD_REQUIRED:
+    "No hay ninguna contraseña guardada. Introdúcela para guardar la configuración.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {
@@ -167,6 +172,15 @@ export function translateErrorDetail(detail: RestErrorDetail | null | undefined,
 
 function extractRestError(error: unknown): RestError | undefined {
   return (error as { response?: { data?: RestError } } | null | undefined)?.response?.data;
+}
+
+/**
+ * The code of the first error detail, for a screen that places one refusal
+ * somewhere other than its generic error slot. `undefined` when the response
+ * carries no detail or the detail no code.
+ */
+export function getFirstApiErrorCode(error: unknown): RestErrorDetailCode | undefined {
+  return extractRestError(error)?.errors?.[0]?.code ?? undefined;
 }
 
 /**

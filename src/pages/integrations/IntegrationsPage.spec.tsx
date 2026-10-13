@@ -95,9 +95,11 @@ const card = (name: string) => screen.queryByRole("heading", { name });
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useGetDatadisConfig).mockReturnValue(
+    // A stored password, so saving with the field empty is valid: the default
+    // is the configured community, and the specs that need none override it.
     query.success<typeof getDatadisConfig>({
       enabled: true,
-      passwordSet: false,
+      passwordSet: true,
       username: "datadis-user",
       baseUrl: "https://datadis.example",
     }),
