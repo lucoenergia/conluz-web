@@ -1,9 +1,10 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
+import { apiError } from "../../test/apiError";
 import { buildCommunity, buildCommunityCapabilities, buildPlant, buildPlantCapabilities } from "../../test/fixtures";
 import type { CommunityCapabilitiesResponse, PlantCapabilitiesResponse, PlantResponse } from "../../api/models";
 
@@ -25,6 +26,7 @@ vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => (
   useGetDatadisConfig: vi.fn(),
   useGetShellyConfig: vi.fn(),
   useConfigureDatadis: vi.fn(),
+  useConfigureShelly: vi.fn(),
 }));
 vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -38,6 +40,7 @@ import {
   getDatadisConfig,
   getShellyConfig,
   useConfigureDatadis,
+  useConfigureShelly,
   useGetDatadisConfig,
   useGetShellyConfig,
 } from "../../api/consumption/consumption";
@@ -49,6 +52,7 @@ const PLANT_ID = "plant-1";
 
 const mockConfigureDatadis = vi.fn().mockResolvedValue({});
 const mockConfigureHuawei = vi.fn().mockResolvedValue({});
+const mockConfigureShelly = vi.fn().mockResolvedValue({});
 
 const plant = (capabilities: Partial<PlantCapabilitiesResponse>): PlantResponse =>
   buildPlant({
@@ -114,6 +118,7 @@ beforeEach(() => {
   );
   vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureDatadis }));
   vi.mocked(useConfigureHuawei).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureHuawei }));
+  vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureShelly }));
 });
 
 describe("IntegrationsPage", () => {
@@ -206,5 +211,322 @@ describe("IntegrationsPage", () => {
     expect(card("Datadis")).not.toBeInTheDocument();
     expect(card("Shelly")).not.toBeInTheDocument();
     expect(screen.getByText("Comprobando integraciones…")).toBeInTheDocument();
+  });
+});
+
+// ── The Datadis form (#245) ─────────────────────────────────────────────────
+
+// Structural: the card is a Paper with no role of its own, so it is reached
+// from its heading, as the specs above do.
+const cardOf = (name: string) => screen.getByRole("heading", { name }).closest(".MuiPaper-root") as HTMLElement;
+const datadis = () => cardOf("Datadis");
+const field = (label: string) => within(datadis()).getByLabelText(label);
+const confirmation = () => screen.queryByTestId("modal-panel");
+
+const serveDatadis = (overrides: Partial<Awaited<ReturnType<typeof getDatadisConfig>>> = {}) =>
+  vi.mocked(useGetDatadisConfig).mockReturnValue(
+    query.success<typeof getDatadisConfig>({
+      enabled: true,
+      passwordSet: true,
+      username: "datadis-user",
+      baseUrl: "https://datadis.example",
+      ...overrides,
+    }),
+  );
+
+const failDatadisRead = (status: number) => vi.mocked(useGetDatadisConfig).mockReturnValue(query.error(apiError(status)));
+
+/** Clicks the card's Guardar and, when the form lets it through, confirms. */
+async function save(user: ReturnType<typeof userEvent.setup>, card: HTMLElement = datadis()) {
+  await user.click(within(card).getByRole("button", { name: "Guardar" }));
+  const dialog = confirmation();
+  if (dialog) await user.click(within(dialog).getByRole("button", { name: "Guardar" }));
+}
+
+const sentDatadis = (call = -1) => mockConfigureDatadis.mock.calls.at(call)?.[0].data;
+
+async function fillRequired(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(field("Usuario"), "datadis-user");
+  await user.type(field("URL del servicio"), "https://datadis.es");
+}
+
+describe("the Datadis form", () => {
+  describe("UI-INT-001 the password", () => {
+    it("UI-INT-001 AC1 with a password stored, saving with the field empty sends no password key", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: true });
+      setup({ community: { canManage: true } });
+
+      await save(user);
+
+      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
+      expect(sentDatadis()).not.toHaveProperty("password");
+      expect(sentDatadis()).toEqual({ enabled: true, username: "datadis-user", baseUrl: "https://datadis.example" });
+    });
+
+    it("UI-INT-001 AC2 with a password stored, a typed password is sent", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: true });
+      setup({ community: { canManage: true } });
+
+      await user.type(field("Contraseña"), "nueva-clave");
+      await save(user);
+
+      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
+      expect(sentDatadis()).toHaveProperty("password", "nueva-clave");
+    });
+
+    it("UI-INT-001 AC3 with no password stored, an empty field blocks the save with a visible message and sends nothing", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: false });
+      setup({ community: { canManage: true } });
+
+      await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
+
+      expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
+      expect(field("Contraseña")).toBeInvalid();
+      expect(confirmation()).not.toBeInTheDocument();
+      expect(mockConfigureDatadis).not.toHaveBeenCalled();
+    });
+
+    it("UI-INT-001 AC3 a GET 404 (no configuration yet) requires the password too", async () => {
+      const user = userEvent.setup();
+      failDatadisRead(404);
+      setup({ community: { canManage: true } });
+
+      await fillRequired(user);
+      await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
+
+      expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
+      expect(confirmation()).not.toBeInTheDocument();
+      expect(mockConfigureDatadis).not.toHaveBeenCalled();
+    });
+
+    it("UI-INT-001 a failed read other than 404 leaves the stored password unknown: no rule, no hint, the backend decides", async () => {
+      const user = userEvent.setup();
+      failDatadisRead(500);
+      setup({ community: { canManage: true } });
+
+      // Today's handling of a failed read is kept: the card renders, empty and
+      // editable, with no message of its own.
+      expect(field("Usuario")).toHaveValue("");
+      expect(field("Contraseña")).not.toHaveAccessibleDescription();
+
+      await fillRequired(user);
+      await save(user);
+
+      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
+      expect(sentDatadis()).not.toHaveProperty("password");
+      expect(within(datadis()).queryByText("Introduce la contraseña.")).not.toBeInTheDocument();
+    });
+
+    it("UI-INT-001 says that an empty field keeps the stored password, as visible text, only when one is stored", () => {
+      serveDatadis({ passwordSet: true });
+      const { unmount } = setup({ community: { canManage: true } });
+
+      expect(field("Contraseña")).toHaveAccessibleDescription("Contraseña configurada. Déjala vacía para mantenerla.");
+      expect(within(datadis()).getByText("Contraseña configurada. Déjala vacía para mantenerla.")).toBeVisible();
+      unmount();
+
+      serveDatadis({ passwordSet: false });
+      setup({ community: { canManage: true } });
+
+      expect(within(datadis()).queryByText("Contraseña configurada. Déjala vacía para mantenerla.")).not.toBeInTheDocument();
+    });
+
+    it("UI-INT-001 shows nothing on first render, and the rule once the field is left", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: false });
+      setup({ community: { canManage: true } });
+
+      expect(field("Contraseña")).not.toHaveAccessibleDescription();
+      expect(field("Contraseña")).toBeValid();
+
+      await user.click(field("Contraseña"));
+      await user.tab();
+
+      expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
+    });
+
+    it("UI-INT-001 AC5 a 400 DATADIS_CONFIG_PASSWORD_REQUIRED lands on the password field, without a generic error", async () => {
+      const user = userEvent.setup();
+      // The stored configuration says one is stored, the backend finds none:
+      // the case of a password already wiped before conluz#404.
+      serveDatadis({ passwordSet: true });
+      mockConfigureDatadis.mockRejectedValueOnce(apiError(400, { code: "DATADIS_CONFIG_PASSWORD_REQUIRED" }));
+      setup({ community: { canManage: true } });
+
+      await save(user);
+
+      await waitFor(() =>
+        expect(field("Contraseña")).toHaveAccessibleDescription(
+          "No hay ninguna contraseña guardada. Introdúcela para guardar la configuración.",
+        ),
+      );
+      expect(field("Contraseña")).toBeInvalid();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+      // Typing a password is what answers it.
+      await user.type(field("Contraseña"), "x");
+      expect(field("Contraseña")).toBeValid();
+    });
+
+    it("UI-INT-001 any other refusal keeps the generic error", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: true });
+      mockConfigureDatadis.mockRejectedValueOnce(apiError(400));
+      setup({ community: { canManage: true } });
+
+      await save(user);
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Error al guardar la configuración");
+      expect(field("Contraseña")).toBeValid();
+    });
+
+    it("UI-INT-001 empties the field after a successful save, so the next save keeps what was stored", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: false });
+      // Stands in for the refetch the save triggers: from the next render on,
+      // the stored configuration reports the password as stored.
+      mockConfigureDatadis.mockImplementationOnce(async () => {
+        serveDatadis({ passwordSet: true });
+        return {};
+      });
+      setup({ community: { canManage: true } });
+
+      await user.type(field("Contraseña"), "nueva-clave");
+      await save(user);
+      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
+      expect(sentDatadis()).toHaveProperty("password", "nueva-clave");
+      await waitFor(() => expect(field("Contraseña")).toHaveValue(""));
+      expect(field("Contraseña")).toHaveAccessibleDescription("Contraseña configurada. Déjala vacía para mantenerla.");
+
+      await save(user);
+
+      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(2));
+      expect(sentDatadis()).not.toHaveProperty("password");
+    });
+
+    it("UI-INT-001 a successful save returns the form to its first render, so the emptied field is not flagged before the refetch lands", async () => {
+      const user = userEvent.setup();
+      // The read keeps saying "none stored": the refetch has not answered yet.
+      serveDatadis({ passwordSet: false });
+      setup({ community: { canManage: true } });
+
+      await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
+      expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
+
+      await user.type(field("Contraseña"), "nueva-clave");
+      await save(user);
+
+      await waitFor(() => expect(field("Contraseña")).toHaveValue(""));
+      expect(field("Contraseña")).not.toHaveAccessibleDescription();
+      expect(field("Contraseña")).toBeValid();
+    });
+
+    it("UI-INT-001 opens the fields when a blocked save happens with the switch off", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ enabled: false, passwordSet: false });
+      setup({ community: { canManage: true } });
+
+      // Structural: jsdom applies none of the Collapse's styles, so whether it
+      // is open is only readable from its state class.
+      const fields = () => field("Contraseña").closest(".MuiCollapse-root");
+      expect(fields()).toHaveClass("MuiCollapse-hidden");
+
+      await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
+
+      await waitFor(() => expect(fields()).toHaveClass("MuiCollapse-entered"));
+      expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
+      expect(mockConfigureDatadis).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("UI-INT-002 the username and the base URL", () => {
+    it.each([
+      ["an empty username", "Usuario", "", "Introduce el usuario."],
+      ["a blank username", "Usuario", "   ", "Introduce el usuario."],
+      ["an empty base URL", "URL del servicio", "", "Introduce la URL del servicio."],
+      ["a base URL without a scheme", "URL del servicio", "datadis.es", "Introduce una URL válida que empiece por http:// o https://."],
+      ["a base URL that is not http(s)", "URL del servicio", "ftp://datadis.es", "Introduce una URL válida que empiece por http:// o https://."],
+    ])("UI-INT-002 AC4 %s blocks the save with a message on the field and sends nothing", async (_, label, typed, message) => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: true });
+      setup({ community: { canManage: true } });
+
+      await user.clear(field(label));
+      if (typed) await user.type(field(label), typed);
+      await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
+
+      expect(field(label)).toHaveAccessibleDescription(message);
+      expect(field(label)).toBeInvalid();
+      expect(confirmation()).not.toBeInTheDocument();
+      expect(mockConfigureDatadis).not.toHaveBeenCalled();
+    });
+
+    it("UI-INT-002 shows nothing on first render, and a field's rule once it is left", async () => {
+      const user = userEvent.setup();
+      failDatadisRead(404);
+      setup({ community: { canManage: true } });
+
+      expect(within(datadis()).queryByText("Introduce el usuario.")).not.toBeInTheDocument();
+      expect(within(datadis()).queryByText("Introduce la URL del servicio.")).not.toBeInTheDocument();
+
+      await user.click(field("Usuario"));
+      await user.tab();
+
+      expect(field("Usuario")).toHaveAccessibleDescription("Introduce el usuario.");
+      expect(within(datadis()).queryByText("Introduce la URL del servicio.")).not.toBeInTheDocument();
+    });
+
+    it("UI-INT-002 lets the save through once every field is fixed", async () => {
+      const user = userEvent.setup();
+      serveDatadis({ passwordSet: true, baseUrl: "datadis.es" });
+      setup({ community: { canManage: true } });
+
+      await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
+      expect(mockConfigureDatadis).not.toHaveBeenCalled();
+
+      await user.clear(field("URL del servicio"));
+      await user.type(field("URL del servicio"), "https://datadis.es");
+      expect(field("URL del servicio")).toBeValid();
+      await save(user);
+
+      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
+      expect(sentDatadis()).toHaveProperty("baseUrl", "https://datadis.es");
+    });
+  });
+
+  it("AC6 the base URL placeholder is the base URL, without the path the backend appends", async () => {
+    failDatadisRead(404);
+    setup({ community: { canManage: true } });
+
+    expect(field("URL del servicio")).toHaveAttribute("placeholder", "https://datadis.es");
+  });
+});
+
+describe("the other integrations", () => {
+  it("Huawei save body is unchanged by #245", async () => {
+    // Still sends the empty password; moving Huawei to plant detail fixes it (#192).
+    const user = userEvent.setup();
+    setup({ community: { canManage: true } });
+
+    await save(user, cardOf("Huawei"));
+
+    await waitFor(() => expect(mockConfigureHuawei).toHaveBeenCalledTimes(1));
+    expect(mockConfigureHuawei.mock.calls[0][0]).toEqual({
+      plantId: PLANT_ID,
+      data: { enabled: true, username: "huawei-user", password: "", baseUrl: "https://huawei.example" },
+    });
+  });
+
+  it("Shelly save body is unchanged by #245", async () => {
+    const user = userEvent.setup();
+    setup({ community: { canManage: true } });
+
+    await save(user, cardOf("Shelly"));
+
+    await waitFor(() => expect(mockConfigureShelly).toHaveBeenCalledTimes(1));
+    expect(mockConfigureShelly.mock.calls[0][0]).toEqual({ communityId: COMMUNITY_ID, data: { enabled: false } });
   });
 });
