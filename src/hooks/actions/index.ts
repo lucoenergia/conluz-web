@@ -18,7 +18,7 @@
  */
 export { type Action, type MaybeAction, type ActionBundle, grant, ungated } from "./action";
 
-export { useCommunityActions } from "./useCommunityActions";
+export { useCommunityActions, type ConfigureDatadisResult } from "./useCommunityActions";
 export { useMembershipActions } from "./useMembershipActions";
 export { usePlantActions } from "./usePlantActions";
 export { usePlatformActions } from "./usePlatformActions";

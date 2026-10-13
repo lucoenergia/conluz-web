@@ -10,7 +10,7 @@ import { useGetAllPlants } from "../../api/plants/plants";
 import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
-import type { ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
+import type { ConfigureDatadisBody, ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
 import { colors, alphas } from "../../theme/tokens";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
@@ -224,7 +224,10 @@ export const IntegrationsPage: FC = () => {
   // card to fall back to: a card that cannot be saved cannot be filled either.
   const saves: Record<string, MaybeAction<[], void>> = {
     datadis: bindSave(
-      configureDatadis,
+      configureDatadis && {
+        isPending: configureDatadis.isPending,
+        run: async (body: ConfigureDatadisBody) => "ok" in (await configureDatadis.run(body)),
+      },
       () => ({
         enabled: state.datadis.enabled,
         username: state.datadis.username,

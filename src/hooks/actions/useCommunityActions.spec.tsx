@@ -220,7 +220,7 @@ describe("useCommunityActions", () => {
       const { result, queryClient } = render(communityWith({ canManage: true }));
       const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-      await result.current.actions.configureDatadis?.run(DATADIS_BODY);
+      await expect(result.current.actions.configureDatadis?.run(DATADIS_BODY)).resolves.toEqual({ ok: true });
       expect(invalidateQueries).toHaveBeenCalledWith({
         queryKey: getGetDatadisConfigQueryKey(COMMUNITY_ID),
       });
@@ -229,6 +229,16 @@ describe("useCommunityActions", () => {
       expect(invalidateQueries).toHaveBeenCalledWith({
         queryKey: getGetShellyConfigQueryKey(COMMUNITY_ID),
       });
+    });
+
+    it("hands a refused Datadis save the error the API answered with, so the form can place it", async () => {
+      const refusal = new Error("refused");
+      mutateAsync.mockRejectedValue(refusal);
+      const { result, queryClient } = render(communityWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.configureDatadis?.run(DATADIS_BODY)).resolves.toEqual({ error: refusal });
+      expect(invalidateQueries).not.toHaveBeenCalled();
     });
 
     // Huawei's endpoint is plant-scoped, so it is not here even though the
