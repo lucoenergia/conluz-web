@@ -98,7 +98,7 @@ describe("without a session", () => {
     },
   );
 
-  it("UI-ROUTE-002 sends no request", async () => {
+  it("UI-ROUTE-002 sends no request without a session", async () => {
     const router = routeRequests([]);
     mockCustomInstance.mockImplementation(router.handle);
 
