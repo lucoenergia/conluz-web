@@ -68,7 +68,7 @@ vi.mock("../../components/UserForm/UserForm", () => ({
 
 import { Route, Routes } from "react-router";
 import { useGetUserById, useUpdateUser, type getUserById } from "../../api/users/users";
-import { EditUserPage } from "./EditUser";
+import { EditUserPage, NO_NUMBER_MESSAGE } from "./EditUser";
 
 const mockGetUserById = vi.mocked(useGetUserById);
 
@@ -199,5 +199,23 @@ describe("EditUserPage", () => {
     await userEvent.click(screen.getByRole("button", { name: SUBMIT }));
     expect(mockMutateAsync).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("UI-USR-001 blocks the save of a user with no partner number, and says why", async () => {
+    mockGetUserById.mockReturnValue(query.success<typeof getUserById>({ ...editableUser(), number: null }));
+    setup();
+
+    expect(screen.getByText(NO_NUMBER_MESSAGE)).toBeVisible();
+    expect(screen.getByRole("button", { name: SUBMIT })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: SUBMIT }));
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("UI-USR-001 shows no warning for a user with a partner number", () => {
+    setup();
+
+    expect(screen.queryByText(NO_NUMBER_MESSAGE)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled();
   });
 });
