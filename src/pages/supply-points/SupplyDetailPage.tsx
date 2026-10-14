@@ -449,17 +449,16 @@ export const SupplyDetailPage: FC = () => {
     }
 
     const cats = consumptionData.map((item) => {
+      // For day filter with hourly data, each bar is labelled with its own
+      // local hour ("HH:mm") as the API gives it: no offset, so no conversion.
+      if (filterType === "day") {
+        return item.time ?? "";
+      }
+
       const dateStr = item.date || item.time || "";
       if (!dateStr) return "";
 
       const date = new Date(dateStr);
-
-      // For day filter with hourly data, show hour in HH:mm format
-      if (filterType === "day") {
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
-      }
 
       // For month filter, show day number
       if (filterType === "month") {
