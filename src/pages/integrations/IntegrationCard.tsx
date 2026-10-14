@@ -1,19 +1,10 @@
 import { alpha } from "@mui/material/styles";
 import { radii, shadows, colors } from "../../theme/tokens";
-import { useState, type FC } from "react";
+import { type FC } from "react";
 import type { Action } from "../../hooks/actions";
 import type { CredentialsErrors, CredentialsField } from "../../utils/integrationCredentials";
-import {
-  Box,
-  Typography,
-  Paper,
-  Switch,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Button,
-  Collapse,
-} from "@mui/material";
+import { Box, Typography, Paper, Switch, Button, Collapse } from "@mui/material";
+import { CredentialsFields } from "./CredentialsFields";
 import { CircularProgress } from "@mui/material";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -88,8 +79,6 @@ interface IntegrationCardProps {
   onFieldBlur?: (field: CredentialsField) => void;
 }
 
-export const PASSWORD_KEPT_HELPER = "Contraseña configurada. Déjala vacía para mantenerla.";
-
 const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
   const IconComponent = iconMap[icon] || ExtensionIcon;
   return (
@@ -113,14 +102,6 @@ const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
   );
 };
 
-const fieldSx = (accent: string) => ({
-  "& .MuiOutlinedInput-root": {
-    "&:hover fieldset": { borderColor: accent },
-    "&.Mui-focused fieldset": { borderColor: accent },
-  },
-  "& .MuiInputLabel-root.Mui-focused": { color: accent },
-});
-
 export const IntegrationCard: FC<IntegrationCardProps> = ({
   provider,
   accent,
@@ -131,8 +112,6 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   errors = {},
   onFieldBlur,
 }) => {
-  const [showPwd, setShowPwd] = useState(false);
-
   const enabled = value.enabled;
   const hasCreds = provider.fields.includes("credentials");
   const isSaving = save.isPending;
@@ -212,90 +191,14 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
             }}
           >
             <Box sx={{ pt: { xs: 2, sm: 3 } }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gap: 2,
-                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                }}
-              >
-                <TextField
-                  label="Usuario"
-                  value={value.username || ""}
-                  onChange={(e) => onChange(provider.id, { username: e.target.value })}
-                  onBlur={() => onFieldBlur?.("username")}
-                  error={!!errors.username}
-                  helperText={errors.username}
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={fieldSx(accent)}
-                />
-                <TextField
-                  label="Contraseña"
-                  type={showPwd ? "text" : "password"}
-                  value={value.password || ""}
-                  onChange={(e) => onChange(provider.id, { password: e.target.value })}
-                  onBlur={() => onFieldBlur?.("password")}
-                  error={!!errors.password}
-                  // Visible text, not a tooltip: most admins are on a phone.
-                  helperText={errors.password ?? (value.passwordSet ? PASSWORD_KEPT_HELPER : undefined)}
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
-                          onClick={() => setShowPwd((v) => !v)}
-                          edge="end"
-                        >
-                          {showPwd ? (
-                            <VisibilityOffIcon sx={{ fontSize: 20, color: colors.text.muted }} />
-                          ) : (
-                            <VisibilityIcon sx={{ fontSize: 20, color: colors.text.muted }} />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={fieldSx(accent)}
-                />
-                <TextField
-                  label="URL del servicio"
-                  placeholder={provider.urlPlaceholder}
-                  value={value.baseUrl || ""}
-                  onChange={(e) => onChange(provider.id, { baseUrl: e.target.value })}
-                  onBlur={() => onFieldBlur?.("baseUrl")}
-                  error={!!errors.baseUrl}
-                  helperText={errors.baseUrl}
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LinkIcon sx={{ fontSize: 20, color: colors.text.muted }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{ ...fieldSx(accent), gridColumn: { xs: "auto", sm: "1 / -1" } }}
-                />
-              </Box>
+              <CredentialsFields
+                value={value}
+                onChange={(patch) => onChange(provider.id, patch)}
+                errors={errors}
+                onFieldBlur={onFieldBlur}
+                accent={accent}
+                urlPlaceholder={provider.urlPlaceholder}
+              />
 
               {/* Helper / docs link */}
               {provider.help && (
