@@ -38,3 +38,24 @@ export const SHORT_CALENDAR_DATE: Intl.DateTimeFormatOptions = {
   month: "short",
   year: "numeric",
 };
+
+const TIME_OF_DAY = new Intl.DateTimeFormat("es-ES", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: APP_TIME_ZONE,
+});
+
+/**
+ * Formats an ISO instant as the time of day in the app's timezone
+ * (Europe/Madrid), never the device's: "00:30". For chart labels built from
+ * instants; an hour that is already local is `formatHourOfDay`'s job.
+ */
+export function formatTimeOfDay(isoInstant: string | undefined): string {
+  if (!isoInstant) return "-";
+
+  const date = new Date(isoInstant);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return TIME_OF_DAY.format(date);
+}

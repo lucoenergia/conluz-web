@@ -435,7 +435,7 @@ describe("SharingAgreementCoefficientSet (installed power)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
-    expect(screen.getByText("Potencia instalada de la planta: 100,00 kW")).toBeInTheDocument();
+    expect(screen.getByText("Potencia instalada de la planta: 100 kW")).toBeInTheDocument();
   });
 
   it("omits it when the agreement has none", () => {

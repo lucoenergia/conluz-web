@@ -4,6 +4,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { AppCard } from "../AppCard";
 import { alphas, colors } from "../../theme/tokens";
+import { formatPercentage } from "../../utils/formatPercentage";
 
 export interface StatItem {
   label: string;
@@ -115,7 +116,7 @@ export const StatsCard: FC<StatsCardProps> = ({
                       fontWeight: 500,
                     }}
                   >
-                    {Math.abs(stat.trend)}%
+                    {formatPercentage(Math.abs(stat.trend) / 100, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
                     {stat.trendLabel && ` ${stat.trendLabel}`}
                   </Typography>
                 </Box>

@@ -33,3 +33,5 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-ENT` | Community entry: which community is active and where a caller lands | [`community-entry.md`](community-entry.md) |
 | `UI-INT` | Integrations: the community integrations page and the plant's Huawei integration | [`integrations.md`](integrations.md) |
 | `UI-USR` | Users: the edit screen | [`users.md`](users.md) |
+| `UI-ROUTE` | Routing: what an unknown path renders | [`routing.md`](routing.md) |
+| `UI-FMT` | Formatting of figures with units, dates and chart time labels | [`formatting.md`](formatting.md) |

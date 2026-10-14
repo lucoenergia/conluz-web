@@ -9,7 +9,7 @@ export const Consumption = () => (
       icon={<Icons.Power sx={{ fontSize: 32 }} />}
       stats={[
         { label: "Consumo", value: "312,48 kWh", trend: 8, trendLabel: "vs período anterior", icon: <Icons.Power sx={{ fontSize: 24 }} />, color: colors.error.main },
-        { label: "Autoconsumo", value: "184,20 kWh", trend: 14, trendLabel: "vs período anterior", icon: <Icons.BatteryChargingFull sx={{ fontSize: 24 }} />, color: colors.success.main },
+        { label: "Autoconsumo", value: "184,2 kWh", trend: 14, trendLabel: "vs período anterior", icon: <Icons.BatteryChargingFull sx={{ fontSize: 24 }} />, color: colors.success.main },
         { label: "Excedentes", value: "42,75 kWh", trend: -6, trendLabel: "vs período anterior", icon: <Icons.EvStation sx={{ fontSize: 24 }} />, color: colors.warning.main },
       ]}
     />
@@ -39,7 +39,7 @@ export const SingleStat = () => (
       variant="production"
       icon={<Icons.SolarPower sx={{ fontSize: 32 }} />}
       stats={[
-        { label: "Producción total", value: "1.284,60 kWh", trend: 12, trendLabel: "vs período anterior", icon: <Icons.SolarPower sx={{ fontSize: 24 }} />, color: "primary.main" },
+        { label: "Producción total", value: "1.284,6 kWh", trend: 12, trendLabel: "vs período anterior", icon: <Icons.SolarPower sx={{ fontSize: 24 }} />, color: "primary.main" },
       ]}
     />
   </Mui.Box>
@@ -50,7 +50,7 @@ export const NoTrendNoIcons = () => (
     <StatsCard
       title="Resumen del mes"
       stats={[
-        { label: "Consumo", value: "296,10 kWh" },
+        { label: "Consumo", value: "296,1 kWh" },
         { label: "Autoconsumo", value: "171,35 kWh" },
       ]}
     />

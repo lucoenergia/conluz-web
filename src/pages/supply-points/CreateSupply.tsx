@@ -42,7 +42,7 @@ export const CreateSupplyPage: FC = () => {
     if (created) {
       navigate("/supply-points");
     } else {
-      errorDispatch("Hay habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
+      errorDispatch("Ha habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
     }
   };
 

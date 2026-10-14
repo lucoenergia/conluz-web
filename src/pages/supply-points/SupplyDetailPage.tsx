@@ -19,6 +19,9 @@ import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 // supply from another community never reaches them.
 import { useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption, useGetSupplyYearlyConsumption, useGetSupplyMonthlyProduction } from "../../api/supplies/supplies";
 import { getTimeRange } from "../../utils/getTimeRange";
+import { formatKilowattHours } from "../../utils/formatEnergyFigures";
+import { formatPercentage } from "../../utils/formatPercentage";
+import { formatCalendarDate, formatTimeOfDay } from "../../utils/formatCalendarDate";
 import { useErrorDispatch } from "../../context/error.context";
 import PowerIcon from "@mui/icons-material/Power";
 import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
@@ -277,7 +280,7 @@ export const SupplyDetailPage: FC = () => {
   useEffect(() => {
     if (error)
       errorDispatch(
-        "Hay habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde",
+        "Ha habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde",
       );
   }, [error]);
 
@@ -287,7 +290,8 @@ export const SupplyDetailPage: FC = () => {
     const yearMap = new Map<number, number>();
     supplyMonthlyProductionData.forEach((item) => {
       if (!item.time) return;
-      const year = new Date(item.time).getFullYear();
+      // The year the instant falls in, in the app's time zone (#255).
+      const year = Number(formatCalendarDate(item.time, { day: undefined, month: undefined, year: "numeric" }));
       yearMap.set(year, (yearMap.get(year) || 0) + (item.power ?? 0));
     });
     const sortedYears = Array.from(yearMap.keys()).sort((a, b) => a - b);
@@ -315,29 +319,24 @@ export const SupplyDetailPage: FC = () => {
       const dateStr = item.time || "";
       if (!dateStr) return "";
 
-      const date = new Date(dateStr);
-
+      // Production times are instants, labelled in the app's time zone (#255).
       // For day filter with hourly data, show hour in HH:mm format
       if (filterType === "day") {
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
+        return formatTimeOfDay(dateStr);
       }
 
       // For month filter, show day number
       if (filterType === "month") {
-        return date.getDate().toString();
+        return formatCalendarDate(dateStr, { day: "numeric", month: undefined, year: undefined });
       }
 
       // For year filter, show month name
       if (filterType === "year") {
-        return date.toLocaleDateString("es-ES", { month: "short" });
+        return formatCalendarDate(dateStr, { day: undefined, month: "short", year: undefined });
       }
 
       // For custom dates, show day and month
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = date.toLocaleDateString("es-ES", { month: "short" });
-      return `${day} ${month}`;
+      return formatCalendarDate(dateStr, { day: "2-digit", month: "short", year: undefined });
     });
   }, [supplyProductionData, yearlyProductionData, filterType]);
 
@@ -450,17 +449,16 @@ export const SupplyDetailPage: FC = () => {
     }
 
     const cats = consumptionData.map((item) => {
+      // For day filter with hourly data, each bar is labelled with its own
+      // local hour ("HH:mm") as the API gives it: no offset, so no conversion.
+      if (filterType === "day") {
+        return item.time ?? "";
+      }
+
       const dateStr = item.date || item.time || "";
       if (!dateStr) return "";
 
       const date = new Date(dateStr);
-
-      // For day filter with hourly data, show hour in HH:mm format
-      if (filterType === "day") {
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
-      }
 
       // For month filter, show day number
       if (filterType === "month") {
@@ -588,7 +586,7 @@ export const SupplyDetailPage: FC = () => {
           stats={[
             {
               label: "Consumo",
-              value: `${consumptionMetrics.totalConsumption.toFixed(2)} kWh`,
+              value: formatKilowattHours(consumptionMetrics.totalConsumption),
               trend: consumptionMetrics.consumptionTrend !== undefined ? Math.round(consumptionMetrics.consumptionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PowerIcon sx={{ fontSize: 24 }} />,
@@ -596,7 +594,7 @@ export const SupplyDetailPage: FC = () => {
             },
             {
               label: "Autoconsumo",
-              value: `${consumptionMetrics.totalSelfConsumption.toFixed(2)} kWh`,
+              value: formatKilowattHours(consumptionMetrics.totalSelfConsumption),
               trend: consumptionMetrics.selfConsumptionTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
@@ -604,7 +602,7 @@ export const SupplyDetailPage: FC = () => {
             },
             {
               label: "Excedentes",
-              value: `${consumptionMetrics.totalSurplus.toFixed(2)} kWh`,
+              value: formatKilowattHours(consumptionMetrics.totalSurplus),
               trend: consumptionMetrics.surplusTrend !== undefined ? Math.round(consumptionMetrics.surplusTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <EvStationIcon sx={{ fontSize: 24 }} />,
@@ -621,7 +619,7 @@ export const SupplyDetailPage: FC = () => {
           stats={[
             {
               label: "Porcentaje de autoconsumo",
-              value: `${consumptionMetrics.selfConsumptionPercentage.toFixed(2)}%`,
+              value: formatPercentage(consumptionMetrics.selfConsumptionPercentage / 100, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
               trend: consumptionMetrics.selfConsumptionPercentageTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
@@ -629,7 +627,7 @@ export const SupplyDetailPage: FC = () => {
             },
             {
               label: "Porcentaje de aprovechamiento",
-              value: `${consumptionMetrics.utilizationPercentage.toFixed(2)}%`,
+              value: formatPercentage(consumptionMetrics.utilizationPercentage / 100, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
               trend: consumptionMetrics.utilizationPercentageTrend !== undefined ? Math.round(consumptionMetrics.utilizationPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,

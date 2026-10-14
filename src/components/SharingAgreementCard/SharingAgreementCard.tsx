@@ -14,6 +14,7 @@ import { MenuTemplate } from "../Menu/MenuTemplate";
 import { SharingAgreementStatusChip } from "../SharingAgreementStatusChip";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
+import { formatCalendarDate } from "../../utils/formatCalendarDate";
 
 export interface SharingAgreementCardProps {
   plantId: string;
@@ -28,19 +29,6 @@ export interface SharingAgreementCardProps {
 }
 
 const NOTES_EXCERPT_LENGTH = 140;
-
-function formatCreatedAt(dateString?: string): string {
-  if (!dateString) return "-";
-  try {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch {
-    return "-";
-  }
-}
 
 function excerpt(text: string | undefined, maxLength: number): string | undefined {
   if (!text) return undefined;
@@ -179,7 +167,7 @@ export const SharingAgreementCard: FC<SharingAgreementCardProps> = ({
             <CalendarTodayIcon sx={{ color: "primary.main", fontSize: 24 }} />
             <Box>
               <Typography variant="body1" fontWeight="600">
-                {formatCreatedAt(agreement.createdAt)}
+                {formatCalendarDate(agreement.createdAt)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Fecha de creación

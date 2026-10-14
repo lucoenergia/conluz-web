@@ -58,13 +58,13 @@ describe("SharingAgreementOutgoingSupplies", () => {
     expect(within(garaje).getByText("ES0031300000000004GH")).toBeInTheDocument();
     expect(within(garaje).getByText("Vigente 12,5000 %")).toBeInTheDocument();
     // 0.125 × Reparto 2024's 80 kW.
-    expect(within(garaje).getByText("Vigente 10,00 kW")).toBeInTheDocument();
+    expect(within(garaje).getByText("Vigente 10 kW")).toBeInTheDocument();
 
     // No name: the CUPS is the identifier, not repeated beneath it.
     expect(within(unnamed).getAllByText("ES0031300000000005IJ")).toHaveLength(1);
     expect(within(unnamed).getByText("Vigente 5,0000 %")).toBeInTheDocument();
     // 0.05 × Reparto ampliación's 60 kW.
-    expect(within(unnamed).getByText("Vigente 3,00 kW")).toBeInTheDocument();
+    expect(within(unnamed).getByText("Vigente 3 kW")).toBeInTheDocument();
   });
 
   it("offers no actions", () => {
@@ -80,7 +80,7 @@ describe("SharingAgreementOutgoingSupplies", () => {
     expect(items).toHaveLength(2);
     expect(within(items[0]).getByText("Garaje D")).toBeInTheDocument();
     expect(within(items[0]).getByText("Vigente 12,5000 %")).toBeInTheDocument();
-    expect(within(items[1]).getByText("Vigente 3,00 kW")).toBeInTheDocument();
+    expect(within(items[1]).getByText("Vigente 3 kW")).toBeInTheDocument();
   });
 
   it("shows a dash for a power whose agreement could not be read, and a skeleton while it loads", () => {

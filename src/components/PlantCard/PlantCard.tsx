@@ -18,6 +18,8 @@ import { MenuTemplate } from "../Menu/MenuTemplate";
 import { DeleteConfirmationModal } from "../Modals/DeleteConfirmationModal";
 import { DeleteSuccessModal } from "../Modals/DeleteSuccessModal";
 import { AppCard } from "../AppCard";
+import { formatKilowatts } from "../../utils/formatKilowatts";
+import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 
 interface PlantCardProps {
   id?: string;
@@ -110,19 +112,8 @@ export const PlantCard: FC<PlantCardProps> = ({
     setOpenDeleteConfirmation(true);
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("es-ES", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return "N/A";
-    }
-  };
+  const formatDate = (dateString: string) =>
+    dateString ? formatCalendarDate(dateString, SHORT_CALENDAR_DATE) : "N/A";
 
   return (
     <>
@@ -263,7 +254,7 @@ export const PlantCard: FC<PlantCardProps> = ({
               <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
                 <Typography component="p" variant="h5" color={theme.palette.primary.main}>
-                  {totalPower || 0} kW
+                  {formatKilowatts(totalPower || 0)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Potencia total

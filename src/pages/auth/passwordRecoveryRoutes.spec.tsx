@@ -107,22 +107,27 @@ async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
 // front keeps a test from paying their transform inside its own timeout, which
 // under a full parallel run it can exceed.
 beforeAll(async () => {
-  await Promise.all([import("./ForgotPassword"), import("./ResetPassword"), import("./Login")]);
+  await Promise.all([
+    import("./ForgotPassword"),
+    import("./ResetPassword"),
+    import("./Login"),
+    import("../not-found/NotFoundPage"),
+  ]);
 });
 
 beforeEach(() => {
   mockCustomInstance.mockReset();
 });
 
-describe("the old new-password route (AC10)", () => {
-  it("no longer renders a screen at /forgot-password/<anything>", async () => {
+describe("the old new-password route", () => {
+  it("UI-ROUTE-001 renders the not-found page at /forgot-password/<anything>", async () => {
     const router = routeRequests([]);
     mockCustomInstance.mockImplementation(router.handle);
 
     renderAppAt("/forgot-password/anything");
-    await settle();
 
-    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Esta página no existe" })).toBeInTheDocument();
+    await settle();
     expect(screen.queryByLabelText("Nueva contraseña")).not.toBeInTheDocument();
     expect(currentPath()).toBe("/forgot-password/anything");
   });

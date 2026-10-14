@@ -2,6 +2,7 @@ import { type FC } from "react";
 import { Card, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { AppAccordion } from "../AppAccordion/AppAccordion";
 import { Stat } from "../Stat/Stat";
+import { formatPercentage } from "../../utils/formatPercentage";
 
 interface SupplyDetailCardProps {
   name?: string;
@@ -56,7 +57,7 @@ const SupplyDetailContent: FC<SupplyDetailContentProps> = ({ cups, address, part
     <>
       <Stat label="CUPS:" value={cups} />
       <Stat label="Dirección:" value={address} />
-      <Stat label="Coeficiente de reparto:" value={`${partitionCoeficient.toFixed(4)}%`} />
+      <Stat label="Coeficiente de reparto:" value={formatPercentage(partitionCoeficient / 100)} />
     </>
   );
 };

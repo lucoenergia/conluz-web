@@ -8,6 +8,7 @@ import type { PlantResponse } from "../../api/models";
 import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 import { colors } from "../../theme/tokens";
+import { formatKilowatts } from "../../utils/formatKilowatts";
 
 export interface PlantDetailHeaderProps {
   plant?: PlantResponse;
@@ -19,7 +20,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading
   const supply = plant?.supply;
 
   const keyFacts: DetailKeyFacts = [
-    { label: "Potencia", value: plant?.totalPower ? `${plant.totalPower} kW` : "-" },
+    { label: "Potencia", value: plant?.totalPower ? formatKilowatts(plant.totalPower) : "-" },
     {
       label: "CAU",
       value: plant?.regulatoryCode || "-",
