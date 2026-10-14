@@ -5,8 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
-import { buildCommunity, buildCommunityCapabilities, buildPlant, buildPlantCapabilities } from "../../test/fixtures";
-import type { CommunityCapabilitiesResponse, PlantCapabilitiesResponse, PlantResponse } from "../../api/models";
+import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures";
+import type { CommunityCapabilitiesResponse } from "../../api/models";
 
 // Only the reads are replaced. The actions layer runs for real -- which is the
 // point: what is under test is that each card follows the capabilities on the
@@ -28,14 +28,15 @@ vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => (
   useConfigureDatadis: vi.fn(),
   useConfigureShelly: vi.fn(),
 }));
+// Mocked only to prove they are never called: Huawei lives on plant detail
+// (#192), so this page reads no plant and no Huawei configuration.
 vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetHuaweiConfig: vi.fn(),
-  useConfigureHuawei: vi.fn(),
 }));
 
 import { getCommunityById, useGetCommunityById } from "../../api/communities/communities";
-import { getAllPlants, useGetAllPlants } from "../../api/plants/plants";
+import { useGetAllPlants } from "../../api/plants/plants";
 import {
   getDatadisConfig,
   getShellyConfig,
@@ -44,32 +45,21 @@ import {
   useGetDatadisConfig,
   useGetShellyConfig,
 } from "../../api/consumption/consumption";
-import { useConfigureHuawei, useGetHuaweiConfig } from "../../api/production/production";
+import { useGetHuaweiConfig } from "../../api/production/production";
 import { IntegrationsPage } from "./IntegrationsPage";
 
 const COMMUNITY_ID = "community-a";
-const PLANT_ID = "plant-1";
 
 const mockConfigureDatadis = vi.fn().mockResolvedValue({});
-const mockConfigureHuawei = vi.fn().mockResolvedValue({});
 const mockConfigureShelly = vi.fn().mockResolvedValue({});
-
-const plant = (capabilities: Partial<PlantCapabilitiesResponse>): PlantResponse =>
-  buildPlant({
-    id: PLANT_ID,
-    name: "Planta Norte",
-    community: { id: COMMUNITY_ID },
-    capabilities: buildPlantCapabilities({ canRead: true, ...capabilities }),
-  });
 
 function setup(
   options: {
     community?: Partial<CommunityCapabilitiesResponse>;
-    plants?: PlantResponse[];
     communityLoading?: boolean;
   } = {},
 ) {
-  const { community = {}, plants = [plant({ canManage: true })], communityLoading = false } = options;
+  const { community = {}, communityLoading = false } = options;
 
   vi.mocked(useGetCommunityById).mockReturnValue(
     communityLoading
@@ -81,16 +71,6 @@ function setup(
           }),
         ),
   );
-  vi.mocked(useGetAllPlants).mockReturnValue(
-    query.success<typeof getAllPlants>({
-      items: plants,
-      size: 1,
-      totalElements: plants.length,
-      totalPages: 1,
-      number: 0,
-    }),
-  );
-
   return renderWithProviders(<IntegrationsPage />, { activeCommunityId: COMMUNITY_ID });
 }
 
@@ -109,15 +89,7 @@ beforeEach(() => {
     }),
   );
   vi.mocked(useGetShellyConfig).mockReturnValue(query.success<typeof getShellyConfig>({ enabled: false }));
-  vi.mocked(useGetHuaweiConfig).mockReturnValue(
-    query.success<() => Promise<unknown>>({
-      enabled: true,
-      username: "huawei-user",
-      baseUrl: "https://huawei.example",
-    }),
-  );
   vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureDatadis }));
-  vi.mocked(useConfigureHuawei).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureHuawei }));
   vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureShelly }));
 });
 
@@ -128,8 +100,7 @@ describe("IntegrationsPage", () => {
 
       expect(card("Datadis")).toBeInTheDocument();
       expect(card("Shelly")).toBeInTheDocument();
-      expect(card("Huawei")).toBeInTheDocument();
-      expect(screen.getAllByRole("button", { name: "Guardar" })).toHaveLength(3);
+      expect(screen.getAllByRole("button", { name: "Guardar" })).toHaveLength(2);
     });
 
     it("saves through the action, which carries the community it writes into", async () => {
@@ -155,11 +126,10 @@ describe("IntegrationsPage", () => {
     it("is offered no integration to configure at all", () => {
       // Reading each configuration needs exactly what writing it needs, so
       // there is no read-only card to fall back to.
-      setup({ community: { canManage: false }, plants: [plant({ canManage: false })] });
+      setup({ community: { canManage: false } });
 
       expect(card("Datadis")).not.toBeInTheDocument();
       expect(card("Shelly")).not.toBeInTheDocument();
-      expect(card("Huawei")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
     });
   });
@@ -168,45 +138,33 @@ describe("IntegrationsPage", () => {
     it("gets nothing, because the flag is not a grant over a community's data", () => {
       // The platform flag never answers a community capability: the backend
       // reports canManage false, and that is the only thing consulted here.
-      setup({ community: { canManage: false }, plants: [] });
+      setup({ community: { canManage: false } });
 
       expect(card("Datadis")).not.toBeInTheDocument();
       expect(card("Shelly")).not.toBeInTheDocument();
-      expect(card("Huawei")).not.toBeInTheDocument();
     });
   });
 
-  it("decides Huawei from the plant, not from the community", () => {
-    // The three forms sit together but do not share a gate: Huawei's endpoint
-    // is PUT /plants/{plantId}/production/huawei/config.
-    setup({ community: { canManage: true }, plants: [plant({ canManage: false })] });
+  it("UI-INT-011 lists only the community-scoped integrations, and reads no plant", () => {
+    // Huawei is configured per plant, on plant detail (#192). Picking a plant
+    // here could only be implicit, which is what UI-INT-005 forbids.
+    setup({ community: { canManage: true } });
 
     expect(card("Datadis")).toBeInTheDocument();
     expect(card("Shelly")).toBeInTheDocument();
     expect(card("Huawei")).not.toBeInTheDocument();
-  });
-
-  it("drops the Huawei card when the community has no plant to configure", () => {
-    // Known gap, recorded rather than papered over: there is no plant to carry
-    // the answer, so the card goes without an explanation. The per-plant
-    // section that replaces this card owns that empty state -- and this is also
-    // what stops the old PUT /api/v1/plants//production/huawei/config.
-    setup({ community: { canManage: true }, plants: [] });
-
-    expect(card("Huawei")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Guardar" })).toHaveLength(2);
+    expect(useGetAllPlants).not.toHaveBeenCalled();
+    expect(useGetHuaweiConfig).not.toHaveBeenCalled();
   });
 
   it("counts only the cards it actually shows", () => {
-    setup({ community: { canManage: true }, plants: [] });
+    setup({ community: { canManage: true } });
 
     expect(screen.getByText("1 de 2 integraciones activas")).toBeInTheDocument();
   });
 
   it("offers nothing while the community has not loaded -- not yet known is not 'no'", () => {
-    // The plant is deliberately permissive, so the only unresolved answer is
-    // the community's.
-    setup({ communityLoading: true, plants: [plant({ canManage: true })] });
+    setup({ communityLoading: true });
 
     expect(card("Datadis")).not.toBeInTheDocument();
     expect(card("Shelly")).not.toBeInTheDocument();
@@ -483,8 +441,8 @@ describe("the Datadis form", () => {
       setup({ community: { canManage: true } });
 
       expect(fireEvent.mouseDown(within(datadis()).getByRole("button", { name: "Guardar" }))).toBe(false);
-      // Huawei passes no rules, so its button keeps the default.
-      expect(fireEvent.mouseDown(within(cardOf("Huawei")).getByRole("button", { name: "Guardar" }))).toBe(true);
+      // Shelly passes no rules, so its button keeps the default.
+      expect(fireEvent.mouseDown(within(cardOf("Shelly")).getByRole("button", { name: "Guardar" }))).toBe(true);
     });
 
     it("UI-INT-002 lets the save through once every field is fixed", async () => {
@@ -514,20 +472,6 @@ describe("the Datadis form", () => {
 });
 
 describe("the other integrations", () => {
-  it("Huawei save body is unchanged by #245", async () => {
-    // Still sends the empty password; moving Huawei to plant detail fixes it (#192).
-    const user = userEvent.setup();
-    setup({ community: { canManage: true } });
-
-    await save(user, cardOf("Huawei"));
-
-    await waitFor(() => expect(mockConfigureHuawei).toHaveBeenCalledTimes(1));
-    expect(mockConfigureHuawei.mock.calls[0][0]).toEqual({
-      plantId: PLANT_ID,
-      data: { enabled: true, username: "huawei-user", password: "", baseUrl: "https://huawei.example" },
-    });
-  });
-
   it("Shelly save body is unchanged by #245", async () => {
     const user = userEvent.setup();
     setup({ community: { canManage: true } });

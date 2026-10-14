@@ -98,9 +98,9 @@ describe("usePlantActions", () => {
     expect(result.current.actions.createSharingAgreement).toBeUndefined();
   });
 
-  // The integrations screen shows the Huawei form beside Datadis and Shelly, but
-  // its endpoint is plant-scoped, so it cannot share the community's gate.
-  it("gates configureHuawei on the plant even though the screen groups it with the community's integrations", () => {
+  // Huawei's endpoints are plant-scoped, so the plant's own canManage decides,
+  // never a community's (#192).
+  it("gates configureHuawei on the plant", () => {
     const denied = render(plantWith({})).result;
     expect(denied.current.actions.configureHuawei).toBeUndefined();
 

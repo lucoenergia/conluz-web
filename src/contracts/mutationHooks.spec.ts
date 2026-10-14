@@ -122,7 +122,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     scope: "plant",
     capability: "canManage",
     hook: "usePlantActions",
-    approximates: "plant-scoped despite sitting on the community integrations screen: the endpoint is PUT /plants/{plantId}/production/huawei/config",
+    approximates: "canManage names 'read and write its Huawei configuration'; there is no per-action flag",
   },
   useEnableHuaweiConfig: {
     scope: "plant",

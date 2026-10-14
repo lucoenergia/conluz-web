@@ -17,11 +17,6 @@ const mockConfigureDatadis = vi.fn().mockResolvedValue({});
 // Only the reads are replaced, plus the one mutation this file asserts the
 // arguments of. The actions layer runs for real, so the cards here exist for
 // the same reason they exist in the app: the community answered canManage.
-vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useGetAllPlants: vi.fn(),
-}));
-
 // useActiveCommunityResource reads this, and it now re-keys on the switch too:
 // the Datadis card depends on the NEW community's canManage, not the old one's.
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
@@ -45,11 +40,6 @@ vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => (
   useConfigureDatadis: vi.fn(),
 }));
 
-vi.mock(import("../../api/production/production"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useGetHuaweiConfig: vi.fn(),
-}));
-
 // useActiveCommunityName -> useActiveCommunityDetails reads the caller's
 // memberships, so the confirmation can name the community it is about to write
 // into (#186).
@@ -62,7 +52,6 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
     }),
 }));
 
-import { useGetAllPlants, type getAllPlants } from "../../api/plants/plants";
 import { useGetSuppliesByUserId } from "../../api/users/users";
 import {
   getAllCommunities,
@@ -77,7 +66,6 @@ import {
   type getDatadisConfig,
   type getShellyConfig,
 } from "../../api/consumption/consumption";
-import { useGetHuaweiConfig } from "../../api/production/production";
 import { IntegrationsPage } from "./IntegrationsPage";
 
 /**
@@ -117,17 +105,12 @@ describe("IntegrationsPage across a community switch", () => {
         }),
       ),
     );
-    vi.mocked(useGetAllPlants).mockReturnValue(query.success<typeof getAllPlants>({ items: [] }));
     vi.mocked(useGetShellyConfig).mockReturnValue(query.success<typeof getShellyConfig>({ enabled: false }));
     vi.mocked(useGetDatadisConfig).mockImplementation((communityId) =>
       // A stored password, so a save with the field empty is a valid one: this
       // spec is about which community is written, not the password rule (#245).
       query.success<typeof getDatadisConfig>({ enabled: true, passwordSet: true, ...CONFIG_BY_COMMUNITY[communityId] }),
     );
-    // No plants, so the page disables the Huawei config query (enabled: !!firstPlantId)
-    // and, now, mounts no Huawei card at all -- there is no plant to carry the
-    // canManage that one is gated on.
-    vi.mocked(useGetHuaweiConfig).mockReturnValue(query.disabled());
     vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureDatadis }));
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([

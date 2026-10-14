@@ -57,7 +57,7 @@ import { grant, type MaybeAction } from "./action";
  *   configuration".
  *
  * The Huawei configuration is NOT here. Its endpoint is plant-scoped, so it
- * lives in usePlantActions even though one screen shows all three forms.
+ * lives in usePlantActions, and its form on plant detail (#192).
  */
 /**
  * A Datadis save either succeeds or carries the error the API answered with.

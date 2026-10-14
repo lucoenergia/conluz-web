@@ -241,8 +241,7 @@ describe("useCommunityActions", () => {
       expect(invalidateQueries).not.toHaveBeenCalled();
     });
 
-    // Huawei's endpoint is plant-scoped, so it is not here even though the
-    // integrations screen shows all three forms together.
+    // Huawei's endpoint is plant-scoped, so it is configured per plant (#192).
     it("does not offer the Huawei configuration, which belongs to a plant", () => {
       const { result } = render(communityWith({ canManage: true }));
 
