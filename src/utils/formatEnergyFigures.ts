@@ -29,19 +29,21 @@ export function formatMonth(isoDateTime: string): string {
   return formatCalendarDate(isoDateTime, { day: undefined, month: "long", year: "numeric" });
 }
 
+const ZERO_KILOWATT_HOURS = formatKilowattHours(0);
+
 /**
- * An hourly average in kWh, which is a fraction of a kWh: up to three decimals,
- * so a small average is never rounded into a zero it is not. Below that
- * precision it says so rather than printing "0 kWh", which reads as a
- * measured zero. "0,42 kWh", "0,005 kWh", "menos de 0,001 kWh".
+ * An hourly average in kWh, which is often a fraction of a kWh, written as
+ * every other kWh figure is (formatKilowattHours). A positive average too small
+ * to show at that precision says so rather than printing "0 kWh", which reads
+ * as a measured zero; a measured zero still reads "0 kWh". "0,42 kWh",
+ * "menos de 0,01 kWh".
  */
 export function formatAverageKilowattHours(value: number): string {
-  const precision = 0.001;
-  if (value > 0 && value < precision / 2) {
-    return `menos de ${new Intl.NumberFormat("es-ES").format(precision)} kWh`;
+  const formatted = formatKilowattHours(value);
+  if (value > 0 && formatted === ZERO_KILOWATT_HOURS) {
+    return `menos de ${formatKilowattHours(0.01)}`;
   }
-  const formatted = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 3 }).format(value);
-  return `${formatted} kWh`;
+  return formatted;
 }
 
 /**
