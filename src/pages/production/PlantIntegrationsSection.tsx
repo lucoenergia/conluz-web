@@ -1,6 +1,7 @@
 import { useId, type FC } from "react";
 import { Box, Typography } from "@mui/material";
 import type { PlantResponse } from "../../api/models";
+import { sxStyles } from "../../theme/sx";
 import { usePlantActions } from "../../hooks/actions";
 import { HuaweiIntegrationCard } from "./HuaweiIntegrationCard";
 
@@ -19,7 +20,11 @@ export const PlantIntegrationsSection: FC<{ plant: PlantResponse | undefined }> 
   if (!plant || !configureHuawei || !enableHuawei || !disableHuawei) return null;
 
   return (
-    <Box component="section" aria-labelledby={titleId} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box
+      component="section"
+      aria-labelledby={titleId}
+      sx={{ ...sxStyles.pageContainer, display: "flex", flexDirection: "column", gap: 2 }}
+    >
       <Typography id={titleId} component="h2" variant="h6">
         Integraciones
       </Typography>

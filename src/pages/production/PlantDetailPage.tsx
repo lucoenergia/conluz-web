@@ -419,10 +419,9 @@ export const PlantDetailPage: FC = () => {
         )}
       </Box>
 
-      {/* Integrations: only for a caller who may manage this plant */}
-      <Box sx={sxStyles.pageContainer}>
-        <PlantIntegrationsSection plant={plant} />
-      </Box>
+      {/* Integrations: only for a caller who may manage this plant. No wrapper:
+          a caller without canManage must not get an empty box and its gap. */}
+      <PlantIntegrationsSection plant={plant} />
     </Box>
   );
 };
