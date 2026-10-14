@@ -229,6 +229,40 @@ function extractRoutes(source: string): ExtractedRoute[] {
   return routes;
 }
 
+interface SplatRoute {
+  /** The `element` source of every enclosing Route, outermost first. */
+  ancestors: string[];
+  element: string;
+}
+
+/**
+ * Every `path="*"` route, with what wraps it. The catch-all is the one route
+ * outside AuthenticatedLayout that this spec still has to place: under that
+ * layout it would demand a session, and under an anonymous one it would send a
+ * signed-in caller away.
+ */
+function extractSplatRoutes(source: string): SplatRoute[] {
+  const file = ts.createSourceFile(APP_PATH, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const splats: SplatRoute[] = [];
+
+  function walk(node: ts.Node, ancestors: string[]) {
+    if (tagName(node) === "Route") {
+      const opening = openingOf(node)!;
+      const element = attribute(opening, "element")?.initializer?.getText() ?? "";
+      const pathAttr = attribute(opening, "path");
+      if (pathAttr?.initializer && ts.isStringLiteral(pathAttr.initializer) && pathAttr.initializer.text === "*") {
+        splats.push({ ancestors, element });
+      }
+      node.forEachChild((child) => walk(child, [...ancestors, element]));
+      return;
+    }
+    node.forEachChild((child) => walk(child, ancestors));
+  }
+
+  walk(file, []);
+  return splats;
+}
+
 function describeRequirement(requirement: Requirement | MenuRequirement | null): string {
   if (!requirement) return "no guard";
   return "capability" in requirement
@@ -317,6 +351,23 @@ describe("route access", () => {
         "router refuses -- or hides pages the caller could use. If the entry is deliberately " +
         "stricter, say why in STRICTER_THAN_ROUTE.",
     ).toEqual([]);
+  });
+
+  it("UI-ROUTE-002 serves the catch-all route outside AuthenticatedLayout and every guard", () => {
+    const splats = extractSplatRoutes(readFileSync(APP_PATH, "utf8"));
+    expect(splats, `Expected exactly one path="*" route in ${APP_PATH}`).toHaveLength(1);
+
+    const [{ ancestors, element }] = splats;
+    const wrappers = [...ancestors, element];
+    expect(
+      wrappers.filter((text) => text.includes(AUTHENTICATED_LAYOUT) || text.includes("CapabilityRoute")),
+      "The not-found page is for every caller, with or without a session; nothing may guard it",
+    ).toEqual([]);
+    // allowSignedIn is what keeps AnonRoute from sending a signed-in caller to "/".
+    expect(
+      ancestors.some((text) => /<LoginLayout\b[^>]*\ballowSignedIn\b/.test(text)),
+      "The catch-all must sit under <LoginLayout allowSignedIn />, the shell served to every caller",
+    ).toBe(true);
   });
 
   it("keeps no stale reason for a menu entry that now matches its route", () => {
