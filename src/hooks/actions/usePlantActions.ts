@@ -28,16 +28,23 @@ import { grant, type MaybeAction } from "./action";
  * "update or delete this plant, and read and write its Huawei configuration".
  * One answer, three actions.
  *
- * `configureHuawei` belongs here rather than on the community, even though the
- * integrations screen presents it beside the Datadis and Shelly forms. Its
- * endpoint is PUT /plants/{plantId}/production/huawei/config, so the plant is
- * what authorises it -- the three forms on that screen do not share a gate.
+ * `configureHuawei` belongs here rather than on the community: its endpoint is
+ * PUT /plants/{plantId}/production/huawei/config, so the plant is what
+ * authorises it, and the form lives on the plant's own detail screen (#192).
  */
+/**
+ * A Huawei configuration write: success, or the refusal itself rather than a
+ * bare `false`. The screen places some refusals on a field or a message of
+ * their own -- HUAWEI_CONFIG_PASSWORD_REQUIRED on the password (#192) -- so it
+ * needs the error. Same shape as ConfigureDatadisResult.
+ */
+export type HuaweiWriteResult = { ok: true } | { error: unknown };
+
 export interface PlantRowActions {
   actions: {
     edit: MaybeAction<[UpdatePlantBody], boolean>;
     remove: MaybeAction<[], boolean>;
-    configureHuawei: MaybeAction<[ConfigureHuaweiBody], boolean>;
+    configureHuawei: MaybeAction<[ConfigureHuaweiBody], HuaweiWriteResult>;
     createSharingAgreement: MaybeAction<[CreateSharingAgreementBody], SharingAgreementResponse | undefined>;
   };
   outcomes: {
@@ -109,13 +116,13 @@ export function usePlantActions(): PlantActions {
           ),
           configureHuawei: grant(
             manage,
-            async (data: ConfigureHuaweiBody) => {
+            async (data: ConfigureHuaweiBody): Promise<HuaweiWriteResult> => {
               try {
                 await configureHuaweiMutation.mutateAsync({ plantId, data });
                 queryClient.invalidateQueries({ queryKey: getGetHuaweiConfigQueryKey(plantId) });
-                return true;
-              } catch {
-                return false;
+                return { ok: true };
+              } catch (error) {
+                return { error };
               }
             },
             configureHuaweiMutation.isPending,

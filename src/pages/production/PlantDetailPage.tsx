@@ -17,6 +17,7 @@ import { useActiveCommunity } from "../../context/community.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
+import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
 
 export const PlantDetailPage: FC = () => {
   const { plantId = "" } = useParams();
@@ -416,6 +417,11 @@ export const PlantDetailPage: FC = () => {
             </Box>
           </Box>
         )}
+      </Box>
+
+      {/* Integrations: only for a caller who may manage this plant */}
+      <Box sx={sxStyles.pageContainer}>
+        <PlantIntegrationsSection plant={plant} />
       </Box>
     </Box>
   );

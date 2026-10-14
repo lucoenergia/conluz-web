@@ -155,9 +155,21 @@ describe("usePlantActions", () => {
     const { result, queryClient } = render(plantWith({ canManage: true }));
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-    await result.current.actions.configureHuawei?.run(HUAWEI_CONFIG_BODY);
+    await expect(result.current.actions.configureHuawei?.run(HUAWEI_CONFIG_BODY)).resolves.toEqual({ ok: true });
 
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetHuaweiConfigQueryKey(PLANT_ID) });
+  });
+
+  // The refusal itself, not false: the screen shows HUAWEI_CONFIG_PASSWORD_REQUIRED
+  // on the password field, so it needs the error to read the code from (#192).
+  it("hands back a refused Huawei write's error and leaves the cache alone", async () => {
+    const refusal = new Error("refused");
+    mutateAsync.mockRejectedValue(refusal);
+    const { result, queryClient } = render(plantWith({ canManage: true }));
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.configureHuawei?.run(HUAWEI_CONFIG_BODY)).resolves.toEqual({ error: refusal });
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("invalidates the agreement list and returns the created agreement", async () => {

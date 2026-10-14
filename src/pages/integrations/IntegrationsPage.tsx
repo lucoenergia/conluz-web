@@ -267,7 +267,12 @@ export const IntegrationsPage: FC = () => {
       },
     },
     huawei: bindSave(
-      configureHuawei,
+      // configureHuawei now returns the refusal itself; this card only needs
+      // whether it worked. Huawei leaves this page for plant detail in #192.
+      configureHuawei && {
+        isPending: configureHuawei.isPending,
+        run: async (body: ConfigureHuaweiBody) => "ok" in (await configureHuawei.run(body)),
+      },
       () => ({
         enabled: state.huawei.enabled,
         username: state.huawei.username,

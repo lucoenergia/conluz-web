@@ -20,6 +20,7 @@ vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   useGetDailyProduction: vi.fn(),
   useGetMonthlyProduction: vi.fn(),
   useGetYearlyProduction: vi.fn(),
+  useGetHuaweiConfig: vi.fn(),
 }));
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
@@ -27,6 +28,7 @@ import {
   getHourlyProduction,
   useGetDailyProduction,
   useGetHourlyProduction,
+  useGetHuaweiConfig,
   useGetMonthlyProduction,
   useGetYearlyProduction,
 } from "../../api/production/production";
@@ -63,6 +65,8 @@ function setup(options: Partial<PlantCapabilitiesResponse> & { isNotFound?: bool
   ]) {
     vi.mocked(hook).mockReturnValue(query.success<typeof getHourlyProduction>([]));
   }
+  // The integrations section has its own spec; here it only has to stay quiet.
+  vi.mocked(useGetHuaweiConfig).mockReturnValue(query.loading());
 
   return renderWithProviders(
     <Routes>
@@ -81,9 +85,10 @@ beforeEach(() => {
 });
 
 describe("PlantDetailPage", () => {
-  // The page itself offers no write: no edit, no delete, no Huawei form. Those
-  // live on the card menu and on /integrations. This case is what would fail if
-  // one appeared here without a gate.
+  // The page offers no write on the plant itself: no edit, no delete. Those live
+  // on the card menu. The Huawei integration is the one exception, in its own
+  // section under the same canManage gate (PlantIntegrationsSection.spec). This
+  // case is what would fail if an edit or delete appeared here without a gate.
   it("offers no action on the plant itself, to a caller who may manage it", () => {
     setup({ canManage: true, canListSharingAgreements: true });
 
