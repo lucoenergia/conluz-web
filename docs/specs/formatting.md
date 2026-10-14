@@ -28,7 +28,7 @@ values a screen shows.
   NOT format a displayed figure with `toFixed` or by interpolating the raw number. This includes chart
   axis labels and tooltips.
 - **Rationale:** One formatting path keeps the decimal separator, the precision and the unit spacing
-  consistent: a figure built by hand rendered "12.57 kWh" while the rest of the app wrote "12,6 kWh". It is
+  consistent: a figure built by hand rendered "12.57 kWh" where the shared formatter writes "12,57 kWh". It is
   also the single place to make locale-aware later. A helper's input scale is part of its contract:
   `formatPercentage` takes a 0–1 share, so a caller holding a 0–100 number divides it first.
 - **Implements:** n/a
@@ -67,4 +67,4 @@ shows them.
 
 | Exception | Reason | Expires when | Source |
 | --- | --- | --- | --- |
-| The literal "100,0000 %" in the sharing agreement sentences (`sharingAgreementLifecycle.ts`, `sharingAgreementGapMessage.ts`) | Out of scope of #255. The literal already renders in the shared formatter's form. | A follow-up issue routes it through `formatPercentage` | #255 |
+| The literal "100,0000 %" in the sharing agreement sentences (`sharingAgreementLifecycle.ts`, `sharingAgreementGapMessage.ts`) | Out of scope of #255. The literal already renders in the shared formatter's form. | #<issue> routes it through `formatPercentage` | #255 |
