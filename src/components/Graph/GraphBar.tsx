@@ -2,6 +2,7 @@ import { useMemo, useEffect, useState, type FC } from "react";
 import Chart from "react-apexcharts";
 import { useTheme } from "@mui/material/styles";
 import { colors, shadows} from "../../theme/tokens";
+import { formatKilowattHours } from "../../utils/formatEnergyFigures";
 
 interface GraphBarProps {
   title: string;
@@ -140,13 +141,13 @@ export const GraphBar: FC<GraphBarProps> = ({
             fontSize: "12px",
             fontWeight: 400,
           },
-          formatter: (value: number) => `${value} kWh`
+          formatter: (value: number) => formatKilowattHours(value)
         },
       },
       tooltip: {
         enabled: true,
         y: {
-          formatter: (value: number) => `${value.toFixed(2)} kWh`
+          formatter: (value: number) => formatKilowattHours(value)
         },
         style: {
           fontSize: "12px",
@@ -159,7 +160,7 @@ export const GraphBar: FC<GraphBarProps> = ({
             `<div class="custom-tooltip" style="padding: 10px; background: white; border-radius: 8px; box-shadow: ${shadows.dropdown};">` +
             `<p style="margin: 0 0 4px 0; font-weight: 600; color: ${colors.text.primary};">` + category + '</p>' +
             `<p style="margin: 0; color: ${colors.text.secondary}; font-size: 14px;">` +
-            '<span style="color:' + chartColors.colors[0] + '; font-weight: 600;">' + value.toFixed(2) + ' kWh</span>' +
+            '<span style="color:' + chartColors.colors[0] + '; font-weight: 600;">' + formatKilowattHours(value) + '</span>' +
             '</p>' +
             '</div>'
           );

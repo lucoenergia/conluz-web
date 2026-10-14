@@ -14,13 +14,13 @@ test("Supply stat card renders all elements correctly", async () => {
     />,
   );
   expect(screen.getByText("Consumo")).toBeInTheDocument();
-  expect(screen.getByText("100kWh")).toBeInTheDocument();
+  expect(screen.getByText("100 kWh")).toBeInTheDocument();
   expect(screen.getByText("Autoconsumo")).toBeInTheDocument();
-  expect(screen.getByText("40kWh")).toBeInTheDocument();
+  expect(screen.getByText("40 kWh")).toBeInTheDocument();
   expect(screen.getByText("Excedente")).toBeInTheDocument();
-  expect(screen.getByText("0kWh")).toBeInTheDocument();
+  expect(screen.getByText("0 kWh")).toBeInTheDocument();
   expect(screen.getByText("Porcentaje de autoconsumo")).toBeInTheDocument();
-  expect(screen.getByText("40%")).toBeInTheDocument();
+  expect(screen.getByText("40 %")).toBeInTheDocument();
   expect(screen.getByText("Porcentaje de aprovechamiento")).toBeInTheDocument();
-  expect(screen.getByText("100%")).toBeInTheDocument();
+  expect(screen.getByText("100 %")).toBeInTheDocument();
 });

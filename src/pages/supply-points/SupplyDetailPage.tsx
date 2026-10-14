@@ -19,6 +19,8 @@ import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 // supply from another community never reaches them.
 import { useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupplyHourlyProduction, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption, useGetSupplyYearlyConsumption, useGetSupplyMonthlyProduction } from "../../api/supplies/supplies";
 import { getTimeRange } from "../../utils/getTimeRange";
+import { formatKilowattHours } from "../../utils/formatEnergyFigures";
+import { formatPercentage } from "../../utils/formatPercentage";
 import { useErrorDispatch } from "../../context/error.context";
 import PowerIcon from "@mui/icons-material/Power";
 import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
@@ -588,7 +590,7 @@ export const SupplyDetailPage: FC = () => {
           stats={[
             {
               label: "Consumo",
-              value: `${consumptionMetrics.totalConsumption.toFixed(2)} kWh`,
+              value: formatKilowattHours(consumptionMetrics.totalConsumption),
               trend: consumptionMetrics.consumptionTrend !== undefined ? Math.round(consumptionMetrics.consumptionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PowerIcon sx={{ fontSize: 24 }} />,
@@ -596,7 +598,7 @@ export const SupplyDetailPage: FC = () => {
             },
             {
               label: "Autoconsumo",
-              value: `${consumptionMetrics.totalSelfConsumption.toFixed(2)} kWh`,
+              value: formatKilowattHours(consumptionMetrics.totalSelfConsumption),
               trend: consumptionMetrics.selfConsumptionTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <BatteryChargingFullIcon sx={{ fontSize: 24 }} />,
@@ -604,7 +606,7 @@ export const SupplyDetailPage: FC = () => {
             },
             {
               label: "Excedentes",
-              value: `${consumptionMetrics.totalSurplus.toFixed(2)} kWh`,
+              value: formatKilowattHours(consumptionMetrics.totalSurplus),
               trend: consumptionMetrics.surplusTrend !== undefined ? Math.round(consumptionMetrics.surplusTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <EvStationIcon sx={{ fontSize: 24 }} />,
@@ -621,7 +623,7 @@ export const SupplyDetailPage: FC = () => {
           stats={[
             {
               label: "Porcentaje de autoconsumo",
-              value: `${consumptionMetrics.selfConsumptionPercentage.toFixed(2)}%`,
+              value: formatPercentage(consumptionMetrics.selfConsumptionPercentage / 100, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
               trend: consumptionMetrics.selfConsumptionPercentageTrend !== undefined ? Math.round(consumptionMetrics.selfConsumptionPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,
@@ -629,7 +631,7 @@ export const SupplyDetailPage: FC = () => {
             },
             {
               label: "Porcentaje de aprovechamiento",
-              value: `${consumptionMetrics.utilizationPercentage.toFixed(2)}%`,
+              value: formatPercentage(consumptionMetrics.utilizationPercentage / 100, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
               trend: consumptionMetrics.utilizationPercentageTrend !== undefined ? Math.round(consumptionMetrics.utilizationPercentageTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <PercentIcon sx={{ fontSize: 24 }} />,

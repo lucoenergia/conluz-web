@@ -12,6 +12,7 @@ import { DetailHeader } from "../../components/DetailHeader";
 import { CardGrid } from "../../components/CardGrid";
 import { LoadingCardGrid } from "../../components/CardGrid";
 import { EmptyState } from "../../components/EmptyState";
+import { formatKilowatts } from "../../utils/formatKilowatts";
 import { Link, useNavigate } from "react-router";
 import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -60,7 +61,7 @@ export const PlantsPage: FC = () => {
   const stats = useMemo(() => {
     const total = responseFromApi.length;
     const totalPower = responseFromApi.reduce((sum, item) => sum + (item.totalPower || 0), 0);
-    return { total, totalPower: totalPower.toFixed(2) };
+    return { total, totalPower };
   }, [responseFromApi]);
 
   return (
@@ -97,7 +98,7 @@ export const PlantsPage: FC = () => {
           subtitle="Gestiona las plantas de producción de la comunidad energética"
           keyFacts={[
             { label: "Total plantas", value: stats.total },
-            { label: "Potencia total", value: `${stats.totalPower} kW` },
+            { label: "Potencia total", value: formatKilowatts(stats.totalPower) },
           ]}
         />
       </Box>

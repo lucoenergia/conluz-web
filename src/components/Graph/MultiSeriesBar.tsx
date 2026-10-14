@@ -2,6 +2,7 @@ import { useMemo, useEffect, useState, type FC } from "react";
 import Chart from "react-apexcharts";
 import { useTheme } from "@mui/material/styles";
 import { colors as themeColors, shadows } from "../../theme/tokens";
+import { formatKilowattHours } from "../../utils/formatEnergyFigures";
 
 interface SeriesData {
   name: string;
@@ -140,7 +141,7 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
             fontSize: "12px",
             fontWeight: 400,
           },
-          formatter: (value: number) => `${value.toFixed(1)} kWh`
+          formatter: (value: number) => formatKilowattHours(value)
         },
       },
       legend: {
@@ -191,7 +192,7 @@ export const MultiSeriesBar: FC<MultiSeriesBarProps> = ({
               <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
                 <span style="color: ${themeColors.text.secondary}; font-size: 12px;">${seriesName}:</span>
-                <span style="font-weight: 600; color: ${themeColors.text.primary}; font-size: 12px;">${value !== undefined && value !== null ? value.toFixed(2) : '0.00'} kWh</span>
+                <span style="font-weight: 600; color: ${themeColors.text.primary}; font-size: 12px;">${formatKilowattHours(value ?? 0)}</span>
               </div>
             `;
           });

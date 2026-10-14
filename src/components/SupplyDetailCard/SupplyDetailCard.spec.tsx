@@ -31,7 +31,7 @@ test("Regular card renders on big screens", async () => {
   expect(cup).toBeVisible();
   const address = screen.getByText("Calle del testeo, nº1");
   expect(address).toBeVisible();
-  const partitionCoeficient = screen.getByText("1.2346%"); // We check the number is correctly rounded to 4 decimal places
+  const partitionCoeficient = screen.getByText("1,2346 %"); // We check the number is correctly rounded to 4 decimal places
   expect(partitionCoeficient).toBeVisible();
 });
 
@@ -52,6 +52,6 @@ test("Dropdown card renders on small screens", async () => {
   expect(cup).not.toBeVisible();
   const address = screen.getByText("Calle del testeo, nº1");
   expect(address).not.toBeVisible();
-  const partitionCoeficient = screen.getByText("1.2346%"); // We check the number is correctly rounded to 4 decimal places
+  const partitionCoeficient = screen.getByText("1,2346 %"); // We check the number is correctly rounded to 4 decimal places
   expect(partitionCoeficient).not.toBeVisible();
 });

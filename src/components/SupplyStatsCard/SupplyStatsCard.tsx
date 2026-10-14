@@ -1,6 +1,10 @@
 import type { FC } from "react";
 import { Card, Divider, useMediaQuery, useTheme } from "@mui/material";
 import { Stat } from "../Stat/Stat";
+import { formatKilowattHours } from "../../utils/formatEnergyFigures";
+import { formatPercentage } from "../../utils/formatPercentage";
+
+const SHARE = { maximumFractionDigits: 2, minimumFractionDigits: 0 };
 
 interface SupplyStatsCardProps {
   consumption: number;
@@ -32,12 +36,12 @@ export const SupplyStatsCard: FC<SupplyStatsCardProps> = ({
         p: 2,
       }}
     >
-      <Stat label="Consumo" value={`${consumption}kWh`} variant="big" />
-      <Stat label="Autoconsumo" value={`${selfconsumption}kWh`} variant="big" />
-      <Stat label="Excedente" value={`${surplus}kWh`} variant="big" />
+      <Stat label="Consumo" value={formatKilowattHours(consumption)} variant="big" />
+      <Stat label="Autoconsumo" value={formatKilowattHours(selfconsumption)} variant="big" />
+      <Stat label="Excedente" value={formatKilowattHours(surplus)} variant="big" />
       {isSmall ? <Divider orientation="horizontal" /> : <Divider orientation="vertical" />}
-      <Stat label="Porcentaje de autoconsumo" value={`${selfconstumptionRate}%`} variant="big" />
-      <Stat label="Porcentaje de aprovechamiento" value={`${utilizationRate}%`} variant="big" />
+      <Stat label="Porcentaje de autoconsumo" value={formatPercentage(selfconstumptionRate / 100, SHARE)} variant="big" />
+      <Stat label="Porcentaje de aprovechamiento" value={formatPercentage(utilizationRate / 100, SHARE)} variant="big" />
     </Card>
   );
 };

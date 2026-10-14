@@ -12,6 +12,7 @@ import { PlantDetailHeader } from "../../components/PlantDetailHeader";
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
 import { getTimeRange } from "../../utils/getTimeRange";
+import { formatKilowattHours } from "../../utils/formatEnergyFigures";
 import { useErrorDispatch } from "../../context/error.context";
 import { useActiveCommunity } from "../../context/community.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -376,7 +377,7 @@ export const PlantDetailPage: FC = () => {
           stats={[
             {
               label: "Producción total",
-              value: `${productionMetrics.totalProduction.toFixed(2)} kWh`,
+              value: formatKilowattHours(productionMetrics.totalProduction),
               trend: productionMetrics.productionTrend !== undefined ? Math.round(productionMetrics.productionTrend) : undefined,
               trendLabel: "vs período anterior",
               icon: <SolarPowerIcon sx={{ fontSize: 24 }} />,

@@ -16,6 +16,7 @@ import { EnableConfirmationModal } from "../Modals/EnableConfirmationModal";
 import { EnableSuccessModal } from "../Modals/EnableSuccesModal";
 import { DisableConfirmationModal } from "../Modals/DisableConfirmationModal";
 import { AppCard } from "../AppCard";
+import { formatKilowattHours } from "../../utils/formatEnergyFigures";
 
 export interface SupplyCardProps {
   id?: string;
@@ -189,7 +190,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
               <BoltIcon sx={{ color: "primary.main", fontSize: 24 }} />
               <Box>
                 <Typography component="p" variant="h5" color={theme.palette.primary.main}>
-                  {lastMeasurement || 0} kWh
+                  {formatKilowattHours(lastMeasurement || 0)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Último consumo
