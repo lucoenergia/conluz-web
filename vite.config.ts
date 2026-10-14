@@ -7,10 +7,36 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    // Scope to src/ only so Playwright specs in tests/visual/ are not picked up by vitest
-    include: ["src/**/*.spec.{ts,tsx}"],
     // Fails any test that makes a real network request (#211).
     setupFiles: ["src/test/networkGuard.setup.ts"],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          // Scope to src/ only so Playwright specs in tests/visual/ are not picked up by vitest
+          include: ["src/**/*.spec.{ts,tsx}"],
+          exclude: ["src/**/*.tz.spec.{ts,tsx}"],
+        },
+      },
+      {
+        // Specs proving that dates and chart labels follow APP_TIME_ZONE, not the
+        // device's (#255), run as a device in another zone. TZ is process-wide,
+        // so it is never set from test code: Vitest applies this project's env
+        // in the worker before any setup file or spec is imported, and forks
+        // with isolation give each spec file a process of its own, so no other
+        // file can see it. Pinned rather than left to the defaults, which is
+        // what the guarantee rests on. Each spec asserts the zone it runs in.
+        extends: true,
+        test: {
+          name: "app-time-zone",
+          include: ["src/**/*.tz.spec.{ts,tsx}"],
+          env: { TZ: "America/New_York" },
+          pool: "forks",
+          isolate: true,
+        },
+      },
+    ],
   },
   envPrefix: "CONLUZ_",
   server: {

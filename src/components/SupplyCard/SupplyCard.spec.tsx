@@ -103,3 +103,11 @@ describe("SupplyCard", () => {
     });
   });
 });
+
+describe("SupplyCard figures", () => {
+  it("UI-FMT-001 shows the last measurement in kWh with a decimal comma and at most two decimals", () => {
+    renderCard({ lastMeasurement: 12.567 });
+
+    expect(screen.getByText("12,57 kWh")).toBeInTheDocument();
+  });
+});

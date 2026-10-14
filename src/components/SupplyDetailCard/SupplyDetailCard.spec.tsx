@@ -55,3 +55,12 @@ test("Dropdown card renders on small screens", async () => {
   const partitionCoeficient = screen.getByText("1,2346 %"); // We check the number is correctly rounded to 4 decimal places
   expect(partitionCoeficient).not.toBeVisible();
 });
+
+// The partition coefficient reaches the card as a percentage (0-100), and it
+// keeps the four decimals coefficients are stated with.
+test("UI-FMT-001 shows the partition coefficient as a percentage with a decimal comma and four decimals", () => {
+  mockUseMediaQuery.mockReturnValue(false);
+  render(<SupplyDetailCard name="Mi casa" cups="ES012345678" address="Calle Mayor 1" partitionCoeficient={3.2541} />);
+
+  expect(screen.getByText("3,2541 %")).toBeInTheDocument();
+});

@@ -120,3 +120,11 @@ describe("PlantCard", () => {
     });
   });
 });
+
+describe("PlantCard figures", () => {
+  it("UI-FMT-001 shows the installed power in kW with a decimal comma", () => {
+    renderCard({ totalPower: 120.5 });
+
+    expect(screen.getByText("120,50 kW")).toBeInTheDocument();
+  });
+});
