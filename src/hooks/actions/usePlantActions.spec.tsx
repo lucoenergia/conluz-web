@@ -5,7 +5,12 @@ import {
   useDeletePlant,
   useUpdatePlant,
 } from "../../api/plants/plants";
-import { getGetHuaweiConfigQueryKey, useConfigureHuawei } from "../../api/production/production";
+import {
+  getGetHuaweiConfigQueryKey,
+  useConfigureHuawei,
+  useDisableHuaweiConfig,
+  useEnableHuaweiConfig,
+} from "../../api/production/production";
 import {
   getGetSharingAgreementsQueryKey,
   useCreateSharingAgreement,
@@ -41,6 +46,8 @@ vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
 vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   ...(await importOriginal()),
   useConfigureHuawei: vi.fn(),
+  useEnableHuaweiConfig: vi.fn(),
+  useDisableHuaweiConfig: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -65,6 +72,8 @@ beforeEach(() => {
   vi.mocked(useUpdatePlant).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useDeletePlant).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureHuawei).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useEnableHuaweiConfig).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useDisableHuaweiConfig).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreateSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
@@ -192,5 +201,51 @@ describe("usePlantActions", () => {
 
     await expect(result.current.actions.remove?.run()).resolves.toBe(false);
     expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  describe("the Huawei switch's actions", () => {
+    // An opposite pair: both halves for a caller who may do either, and the
+    // stored configuration's enabled picks the one that applies.
+    it("UI-INT-009 hands back enableHuawei and disableHuawei together under the plant's canManage", () => {
+      const allowed = render(plantWith({ canManage: true })).result;
+      expect(allowed.current.actions.enableHuawei).toBeDefined();
+      expect(allowed.current.actions.disableHuawei).toBeDefined();
+
+      const denied = render(plantWith({ canManageSharingAgreements: true, canReadSupply: true })).result;
+      expect(denied.current.actions.enableHuawei).toBeUndefined();
+      expect(denied.current.actions.disableHuawei).toBeUndefined();
+    });
+
+    it("UI-INT-009 calls each endpoint with the plant id and no body", async () => {
+      const { result } = render(plantWith({ canManage: true }));
+
+      await expect(result.current.actions.enableHuawei?.run()).resolves.toEqual({ ok: true });
+      expect(mutateAsync).toHaveBeenLastCalledWith({ plantId: PLANT_ID });
+      await expect(result.current.actions.disableHuawei?.run()).resolves.toEqual({ ok: true });
+      expect(mutateAsync).toHaveBeenLastCalledWith({ plantId: PLANT_ID });
+    });
+
+    it("UI-INT-005 refreshes only this plant's Huawei configuration", async () => {
+      const { result, queryClient } = render(plantWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await result.current.actions.enableHuawei?.run();
+      await result.current.actions.disableHuawei?.run();
+
+      expect(invalidateQueries.mock.calls).toEqual([
+        [{ queryKey: getGetHuaweiConfigQueryKey(PLANT_ID) }],
+        [{ queryKey: getGetHuaweiConfigQueryKey(PLANT_ID) }],
+      ]);
+    });
+
+    it("UI-INT-010 hands back a refused enable's error, so its code can be read", async () => {
+      const refusal = new Error("incomplete");
+      mutateAsync.mockRejectedValue(refusal);
+      const { result, queryClient } = render(plantWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.enableHuawei?.run()).resolves.toEqual({ error: refusal });
+      expect(invalidateQueries).not.toHaveBeenCalled();
+    });
   });
 });

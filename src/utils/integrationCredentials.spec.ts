@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { apiError } from "../test/apiError";
 import {
   buildCredentialsBody,
+  formatFieldList,
   isHttpUrl,
+  missingFieldLabels,
   passwordRequiredMessage,
   storedPasswordFrom,
   validateCredentials,
@@ -99,5 +101,38 @@ describe("passwordRequiredMessage", () => {
         "DATADIS_CONFIG_PASSWORD_REQUIRED",
       ),
     ).toBeUndefined();
+  });
+});
+
+describe("missingFieldLabels", () => {
+  const incomplete = (missingFields?: string) =>
+    apiError(409, { code: "HUAWEI_CONFIG_INCOMPLETE", ...(missingFields === undefined ? {} : { params: { missingFields } }) });
+
+  it("UI-INT-010 names each missing field in Spanish, in the order the backend lists them", () => {
+    expect(missingFieldLabels(incomplete("username,baseUrl,password"))).toEqual([
+      "usuario",
+      "URL del servicio",
+      "contraseña",
+    ]);
+    expect(missingFieldLabels(incomplete("baseUrl,password"))).toEqual(["URL del servicio", "contraseña"]);
+  });
+
+  it("UI-INT-010 shows a field it has no label for as sent, rather than dropping it", () => {
+    expect(missingFieldLabels(incomplete("username, region"))).toEqual(["usuario", "region"]);
+  });
+
+  it("UI-INT-010 answers no fields when the refusal names none", () => {
+    expect(missingFieldLabels(incomplete())).toEqual([]);
+    expect(missingFieldLabels(new Error("network"))).toEqual([]);
+  });
+});
+
+describe("formatFieldList", () => {
+  it("joins Spanish labels as a sentence does", () => {
+    expect(formatFieldList(["contraseña"])).toBe("contraseña");
+    expect(formatFieldList(["usuario", "contraseña"])).toBe("usuario y contraseña");
+    expect(formatFieldList(["usuario", "URL del servicio", "contraseña"])).toBe(
+      "usuario, URL del servicio y contraseña",
+    );
   });
 });
