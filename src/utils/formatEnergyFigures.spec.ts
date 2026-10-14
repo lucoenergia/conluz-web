@@ -18,8 +18,16 @@ describe("formatKilowattHours", () => {
     expect(formatKilowattHours(268)).toBe("268 kWh");
   });
 
-  it("keeps one decimal of a fractional amount", () => {
-    expect(formatKilowattHours(3.44)).toBe("3,4 kWh");
+  it("keeps up to two decimals of a fractional amount", () => {
+    expect(formatKilowattHours(3.44)).toBe("3,44 kWh");
+  });
+
+  it("rounds a third decimal away", () => {
+    expect(formatKilowattHours(12.567)).toBe("12,57 kWh");
+  });
+
+  it("drops trailing zeros", () => {
+    expect(formatKilowattHours(12.5)).toBe("12,5 kWh");
   });
 
   it("formats zero as a figure", () => {

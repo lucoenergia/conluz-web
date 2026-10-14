@@ -1,11 +1,11 @@
 import { APP_TIME_ZONE, formatCalendarDate } from "./formatCalendarDate";
 
 /**
- * Spanish-locale energy in kWh: no decimals for whole amounts, at most one
- * otherwise -- "268 kWh", "3,4 kWh".
+ * Spanish-locale energy in kWh: no decimals for whole amounts, at most two
+ * otherwise and no trailing zeros -- "268 kWh", "3,4 kWh", "12,57 kWh".
  */
 export function formatKilowattHours(value: number): string {
-  const formatted = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 }).format(value);
+  const formatted = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(value);
   return `${formatted} kWh`;
 }
 
