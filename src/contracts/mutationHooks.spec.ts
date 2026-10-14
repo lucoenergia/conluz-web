@@ -127,9 +127,15 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useEnableHuaweiConfig: {
     scope: "plant",
     capability: "canManage",
+    hook: "usePlantActions",
     approximates: "canManage names 'read and write its Huawei configuration'; there is no per-action flag",
   },
-  useDisableHuaweiConfig: { scope: "plant", capability: "canManage", approximates: "as useEnableHuaweiConfig" },
+  useDisableHuaweiConfig: {
+    scope: "plant",
+    capability: "canManage",
+    hook: "usePlantActions",
+    approximates: "as useEnableHuaweiConfig",
+  },
   useSyncYearlyHuaweiProduction: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
   useSyncMonthlyHuaweiProduction: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
   useSyncYearlyDatadisProduction: { scope: "community", capability: "canManage", approximates: SYNC_JOB },

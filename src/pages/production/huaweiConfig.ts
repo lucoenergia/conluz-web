@@ -1,5 +1,6 @@
 import type { ConfigureHuaweiBody } from "../../api/models";
 import { colors } from "../../theme/tokens";
+import { formatFieldList } from "../../utils/integrationCredentials";
 
 /**
  * What GET /plants/{plantId}/production/huawei/config answers.
@@ -27,3 +28,15 @@ export const SAVE_FAILED_MESSAGE = "No se pudo guardar la configuración. Intén
 export function isNotFound(error: unknown): boolean {
   return (error as { response?: { status?: number } } | null | undefined)?.response?.status === 404;
 }
+
+export const NOT_CONFIGURED_TEXT = "Esta planta aún no tiene configurada la integración con Huawei.";
+export const LOAD_FAILED_TEXT = "No se pudo cargar la configuración de Huawei.";
+export const SAVED_TEXT = "Configuración de Huawei guardada";
+export const DISABLED_TEXT = "La integración está desactivada. Actívala para empezar a sincronizar.";
+export const TOGGLE_FAILED_TEXT = "No se pudo cambiar el estado de la integración con Huawei. Inténtalo de nuevo.";
+
+/** The visible message for a refused enable, naming what is missing. */
+export const incompleteText = (labels: string[]) =>
+  labels.length > 0
+    ? `Faltan datos para activar la integración: ${formatFieldList(labels)}.`
+    : "Faltan datos para activar la integración.";

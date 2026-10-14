@@ -14,16 +14,21 @@ import { HuaweiIntegrationCard } from "./HuaweiIntegrationCard";
  */
 export const PlantIntegrationsSection: FC<{ plant: PlantResponse | undefined }> = ({ plant }) => {
   const titleId = useId();
-  const { configureHuawei } = usePlantActions().forPlant(plant).actions;
+  const { configureHuawei, enableHuawei, disableHuawei } = usePlantActions().forPlant(plant).actions;
 
-  if (!plant || !configureHuawei) return null;
+  if (!plant || !configureHuawei || !enableHuawei || !disableHuawei) return null;
 
   return (
     <Box component="section" aria-labelledby={titleId} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Typography id={titleId} component="h2" variant="h6">
         Integraciones
       </Typography>
-      <HuaweiIntegrationCard plantId={plant.id} configure={configureHuawei} />
+      <HuaweiIntegrationCard
+        plantId={plant.id}
+        configure={configureHuawei}
+        enable={enableHuawei}
+        disable={disableHuawei}
+      />
     </Box>
   );
 };

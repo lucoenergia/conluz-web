@@ -1,25 +1,38 @@
 import { useId, useState, type FC } from "react";
 import { alpha } from "@mui/material/styles";
-import { Box, Button, CircularProgress, Paper, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Paper, Switch, Typography } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
-import { useGetHuaweiConfig } from "../../api/production/production";
+import { getGetHuaweiConfigQueryKey, useGetHuaweiConfig } from "../../api/production/production";
 import type { ConfigureHuaweiBody } from "../../api/models";
 import type { Action, HuaweiWriteResult } from "../../hooks/actions";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
+import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
+import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
+import { useIntegrationToggle } from "../../hooks/useIntegrationToggle";
 import { storedPasswordFrom } from "../../utils/integrationCredentials";
 import { colors, radii, shadows } from "../../theme/tokens";
 import { HuaweiConfigDialog } from "./HuaweiConfigDialog";
-import { HUAWEI_ACCENT, isNotFound, type StoredHuaweiConfig } from "./huaweiConfig";
-
-export const NOT_CONFIGURED_TEXT = "Esta planta aún no tiene configurada la integración con Huawei.";
-export const LOAD_FAILED_TEXT = "No se pudo cargar la configuración de Huawei.";
-export const SAVED_TEXT = "Configuración de Huawei guardada";
+import {
+  DISABLED_TEXT,
+  HUAWEI_ACCENT,
+  LOAD_FAILED_TEXT,
+  NOT_CONFIGURED_TEXT,
+  SAVED_TEXT,
+  TOGGLE_FAILED_TEXT,
+  incompleteText,
+  isNotFound,
+  type StoredHuaweiConfig,
+} from "./huaweiConfig";
 
 export interface HuaweiIntegrationCardProps {
   plantId: string;
   /** The configuration write, handed over only to a caller who may manage the plant. */
   configure: Action<[ConfigureHuaweiBody], HuaweiWriteResult>;
+  /** The enable and disable writes; both are handed over to a caller who may do either. */
+  enable: Action<[], HuaweiWriteResult>;
+  disable: Action<[], HuaweiWriteResult>;
 }
 
 /**
@@ -41,9 +54,11 @@ const Fact: FC<{ label: string; value: string }> = ({ label, value }) => (
 );
 
 /** The Huawei integration of one plant: its state, and the way to configure it (#192). */
-export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId, configure }) => {
+export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId, configure, enable, disable }) => {
   const titleId = useId();
+  const queryClient = useQueryClient();
   const successDispatch = useSuccessDispatch();
+  const errorDispatch = useErrorDispatch();
   const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
 
   const { data, error, isLoading, refetch } = useGetHuaweiConfig(plantId, {
@@ -55,6 +70,19 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
     stored ? { passwordSet: stored.passwordSet === true } : undefined,
     error,
   );
+  const enabled = stored?.enabled === true;
+
+  const toggle = useIntegrationToggle({
+    enabled,
+    enable,
+    disable,
+    incompleteCode: "HUAWEI_CONFIG_INCOMPLETE",
+    notFoundCode: "HUAWEI_CONFIG_NOT_FOUND",
+    // Reset, not refetch: a refetch that fails keeps the stale configuration
+    // on screen, and the point is to show that there is none any more.
+    onNotFound: () => void queryClient.resetQueries({ queryKey: getGetHuaweiConfigQueryKey(plantId) }),
+    onError: () => errorDispatch(TOGGLE_FAILED_TEXT),
+  });
 
   return (
     <Paper
@@ -94,6 +122,19 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
             Datos de producción de esta planta desde sus inversores Huawei.
           </Typography>
         </Box>
+        {/* Only once configured: there is nothing to turn on before (UI-INT-007). */}
+        {stored && (
+          <Switch
+            checked={enabled}
+            disabled={toggle.isPending}
+            onChange={(e) => toggle.request(e.target.checked)}
+            slotProps={{ input: { "aria-label": "Integración con Huawei activa" } }}
+            sx={{
+              "& .MuiSwitch-switchBase.Mui-checked": { color: HUAWEI_ACCENT },
+              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: HUAWEI_ACCENT },
+            }}
+          />
+        )}
       </Box>
 
       {isLoading && (
@@ -119,6 +160,23 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
 
       {stored && (
         <>
+          {!enabled && (
+            <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+              {DISABLED_TEXT}
+            </Typography>
+          )}
+          {toggle.missingFields && (
+            <Alert
+              severity="warning"
+              action={
+                <Button color="inherit" size="small" onClick={() => setDialog("edit")}>
+                  Completar configuración
+                </Button>
+              }
+            >
+              {incompleteText(toggle.missingFields)}
+            </Alert>
+          )}
           <Box
             component="dl"
             sx={{
@@ -149,10 +207,25 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
           onClose={() => setDialog(null)}
           onSaved={() => {
             setDialog(null);
+            toggle.clearMissing();
             successDispatch(SAVED_TEXT);
           }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={toggle.requested !== null}
+        onCancel={toggle.cancel}
+        onConfirm={() => void toggle.confirm()}
+        title={toggle.requested ? "Activar integración con Huawei" : "Desactivar integración con Huawei"}
+        confirmLabel={toggle.requested ? "Activar" : "Desactivar"}
+        confirmColor={toggle.requested ? "success" : "error"}
+        confirmPending={toggle.isPending}
+      >
+        {toggle.requested
+          ? "La planta empezará a sincronizar su producción desde Huawei."
+          : "La planta dejará de sincronizar su producción desde Huawei. La configuración guardada se conserva."}
+      </ConfirmationModal>
     </Paper>
   );
 };
