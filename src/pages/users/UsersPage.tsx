@@ -463,7 +463,7 @@ export const UsersPage: FC = () => {
         >
           {error ? (
             <Alert severity="error" sx={{ m: 2 }}>
-              Error al cargar los usuarios. Por favor, intente de nuevo.
+              Error al cargar los usuarios. Por favor, inténtalo de nuevo.
             </Alert>
           ) : (
             <>

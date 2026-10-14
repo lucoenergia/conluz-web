@@ -36,7 +36,7 @@ export const EditSupplyPage: FC = () => {
     if (await edit.run(updatedSupply)) {
       navigate("/supply-points");
     } else {
-      errorDispatch("Hay habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
+      errorDispatch("Ha habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
     }
   };
   return (

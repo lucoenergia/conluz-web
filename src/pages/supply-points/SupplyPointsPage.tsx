@@ -78,7 +78,7 @@ export const SupplyPointsPage: FC = () => {
 
   useEffect(() => {
     if (error) {
-      errorDispatch("Hay habido un problema al cargar los puntos de suministro. Por favor, inténtalo más tarde");
+      errorDispatch("Ha habido un problema al cargar los puntos de suministro. Por favor, inténtalo más tarde");
     }
   }, [error, errorDispatch]);
 

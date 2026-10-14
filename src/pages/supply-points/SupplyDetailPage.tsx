@@ -280,7 +280,7 @@ export const SupplyDetailPage: FC = () => {
   useEffect(() => {
     if (error)
       errorDispatch(
-        "Hay habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde",
+        "Ha habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde",
       );
   }, [error]);
 
