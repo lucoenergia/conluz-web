@@ -77,7 +77,7 @@ describe("PlantDetailHeader", () => {
     it("promotes power and the CAU, leaving everything else behind the toggle", () => {
       renderHeader(mockPlant);
 
-      expect(screen.getByText("63,00 kW")).toBeInTheDocument();
+      expect(screen.getByText("63 kW")).toBeInTheDocument();
       expect(screen.getByText("ES0031300325733001FH0FA000")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Ver 5 datos más" })).toBeInTheDocument();
       expect(screen.queryByText("HUAWEI")).not.toBeInTheDocument();
@@ -167,14 +167,14 @@ describe("PlantDetailHeader", () => {
     it("renders neither the strip nor the details while loading", () => {
       renderHeader(mockPlant, { isLoading: true });
 
-      expect(screen.queryByText("63,00 kW")).not.toBeInTheDocument();
+      expect(screen.queryByText("63 kW")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Ver \d+ dato/ })).not.toBeInTheDocument();
     });
 
     it("renders neither the strip nor the details on error", () => {
       renderHeader(mockPlant, { error: new Error("boom") });
 
-      expect(screen.queryByText("63,00 kW")).not.toBeInTheDocument();
+      expect(screen.queryByText("63 kW")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Ver \d+ dato/ })).not.toBeInTheDocument();
     });
   });
@@ -185,7 +185,7 @@ describe("PlantDetailHeader", () => {
     mockUseMediaQuery.mockReturnValue(true);
     renderHeader(mockPlant);
 
-    expect(screen.getByText("63,00 kW")).toBeInTheDocument();
+    expect(screen.getByText("63 kW")).toBeInTheDocument();
     expect(screen.getByText("+5")).toBeInTheDocument();
   });
 });

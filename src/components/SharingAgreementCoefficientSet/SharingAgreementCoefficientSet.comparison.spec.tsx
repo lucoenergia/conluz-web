@@ -144,7 +144,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
     const viviendaB = tableRow("Vivienda B");
     expect(within(viviendaB).getByText("Vigente 40,0000 % · +10,0000 p.p.")).toBeInTheDocument();
     // 0.4 × Reparto ampliación's 60 kW.
-    expect(await within(viviendaB).findByText("Vigente 24,00 kW")).toBeInTheDocument();
+    expect(await within(viviendaB).findByText("Vigente 24 kW")).toBeInTheDocument();
 
     const localC = tableRow("Local C");
     expect(within(localC).getByText("Nuevo")).toBeInTheDocument();
@@ -245,7 +245,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
     ];
     renderDraft(rows);
 
-    await within(tableRow("Local C")).findByText("Vigente 12,00 kW");
+    await within(tableRow("Local C")).findByText("Vigente 12 kW");
     const requestedIds = vi.mocked(getSharingAgreementById).mock.calls.map(([, id]) => id);
     expect([...requestedIds].sort()).toEqual([REPARTO_AMPLIACION.id, REPARTO_2024.id].sort());
   });
@@ -259,7 +259,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
       expect(matches.filter((element) => table().contains(element))).toHaveLength(1);
     }
     await waitFor(() => expect(screen.getAllByText("Vigente 3,33 kW")).toHaveLength(2));
-    expect(screen.getAllByText("Vigente 24,00 kW")).toHaveLength(2);
+    expect(screen.getAllByText("Vigente 24 kW")).toHaveLength(2);
   });
 
   describe("outgoing supplies", () => {
@@ -282,10 +282,10 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
       const [, garaje, nave] = within(outgoingTable()).getAllByRole("row");
       expect(within(garaje).getByText("Garaje D")).toBeInTheDocument();
       expect(within(garaje).getByText("Vigente 12,5000 %")).toBeInTheDocument();
-      expect(await within(garaje).findByText("Vigente 10,00 kW")).toBeInTheDocument();
+      expect(await within(garaje).findByText("Vigente 10 kW")).toBeInTheDocument();
       expect(within(nave).getByText("Nave E")).toBeInTheDocument();
       expect(within(nave).getByText("Vigente 5,0000 %")).toBeInTheDocument();
-      expect(await within(nave).findByText("Vigente 3,00 kW")).toBeInTheDocument();
+      expect(await within(nave).findByText("Vigente 3 kW")).toBeInTheDocument();
       // The narrow-viewport list carries the same entries.
       expect(within(screen.getByRole("list", { name: /^Salen del reparto/ })).getAllByRole("listitem")).toHaveLength(2);
     });
