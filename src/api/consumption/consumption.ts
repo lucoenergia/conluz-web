@@ -348,6 +348,9 @@ The request body contains:
   When `false`, the scheduled Datadis sync and aggregation jobs skip the community, and the
   operations that sync or aggregate its Datadis data respond with `409 Conflict`.
 
+To only switch the configuration on or off, use `POST .../config/datadis/enable` and
+`POST .../config/datadis/disable`: they change nothing else and take no request body.
+
 This configuration is a mandatory step to be able to retrieve consumption data from datadis.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
@@ -686,6 +689,168 @@ export const useSyncMonthlyDatadisConsumptions = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getSyncMonthlyDatadisConsumptionsMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint enables the community's Datadis configuration, changing nothing else: the stored
+username, password and base URL are not rewritten. The request has no body.
+
+Enabling requires the stored configuration to be complete: a non-blank username, a base URL the
+configuration write would accept, and a non-empty password. Otherwise the request is rejected
+with `409` and error code `DATADIS_CONFIG_INCOMPLETE`, and nothing changes. Its
+`params.missingFields` lists the missing fields, comma-separated, in the order `username`,
+`baseUrl`, `password` (for example `"baseUrl,password"`). Complete them with the configuration
+write first. Disabling, through its own endpoint, never requires complete data.
+
+Enabling a configuration that is already enabled succeeds.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required: the caller can manage the community** (the community's `canManage` capability).
+
+Upon successful request, the server responds with an HTTP status code of 200 and no body.
+
+A rejected request changes nothing. The server responds with `404` and error code
+`DATADIS_CONFIG_NOT_FOUND` when the community has no Datadis configuration (none is created), and with
+`400` when the community id is not a valid UUID.
+
+ * @summary Enables a community's Datadis configuration.
+ */
+export const enableDatadisConfig = (
+    communityId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/config/datadis/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableDatadisConfigMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableDatadisConfig>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableDatadisConfig>>, TError,{communityId: string}, TContext> => {
+
+const mutationKey = ['enableDatadisConfig'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableDatadisConfig>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
+
+          return  enableDatadisConfig(communityId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableDatadisConfigMutationResult = NonNullable<Awaited<ReturnType<typeof enableDatadisConfig>>>
+    
+    export type EnableDatadisConfigMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Enables a community's Datadis configuration.
+ */
+export const useEnableDatadisConfig = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableDatadisConfig>>, TError,{communityId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableDatadisConfig>>,
+        TError,
+        {communityId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableDatadisConfigMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint disables the community's Datadis configuration, changing nothing else: the stored
+username, password and base URL are not rewritten. The request has no body.
+
+Disabling never requires complete data: it succeeds whatever the stored configuration holds,
+which is how a configuration with missing credentials is switched off.
+
+Disabling a configuration that is already disabled succeeds.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required: the caller can manage the community** (the community's `canManage` capability).
+
+Upon successful request, the server responds with an HTTP status code of 200 and no body.
+
+A rejected request changes nothing. The server responds with `404` and error code
+`DATADIS_CONFIG_NOT_FOUND` when the community has no Datadis configuration (none is created), and with
+`400` when the community id is not a valid UUID.
+
+ * @summary Disables a community's Datadis configuration.
+ */
+export const disableDatadisConfig = (
+    communityId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/config/datadis/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getDisableDatadisConfigMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext> => {
+
+const mutationKey = ['disableDatadisConfig'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableDatadisConfig>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
+
+          return  disableDatadisConfig(communityId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableDatadisConfigMutationResult = NonNullable<Awaited<ReturnType<typeof disableDatadisConfig>>>
+    
+    export type DisableDatadisConfigMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Disables a community's Datadis configuration.
+ */
+export const useDisableDatadisConfig = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableDatadisConfig>>,
+        TError,
+        {communityId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDisableDatadisConfigMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

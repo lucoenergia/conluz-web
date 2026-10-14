@@ -118,6 +118,7 @@ export const MEMBER_COMMUNITY_CAPABILITIES = {
   canManage: false,
   canManageMemberships: false,
   canManageMembershipInvestment: false,
+  canRegisterMembers: false,
   canListPlants: true,
   canCreatePlants: false,
   canCreateUsers: false,
@@ -131,6 +132,7 @@ export const COMMUNITY_ADMIN_CAPABILITIES = {
   canManage: true,
   canManageMemberships: true,
   canManageMembershipInvestment: true,
+  canRegisterMembers: true,
   canCreatePlants: true,
   canCreateUsers: true,
 };
@@ -849,6 +851,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canDelete: false,
       canManageInvestment: true,
       canReadPayback: true,
+      canInvite: false,
     },
   },
   {
@@ -875,6 +878,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canDelete: true,
       canManageInvestment: true,
       canReadPayback: true,
+      canInvite: false,
     },
   },
   {
@@ -901,6 +905,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canDelete: true,
       canManageInvestment: false,
       canReadPayback: false,
+      canInvite: false,
     },
   },
 ];

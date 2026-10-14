@@ -101,6 +101,7 @@ export function buildCommunityCapabilities(
     canManage: false,
     canManageMemberships: false,
     canManageMembershipInvestment: false,
+    canRegisterMembers: false,
     canListPlants: false,
     canCreatePlants: false,
     canCreateUsers: false,
@@ -143,6 +144,7 @@ export function buildMembershipCapabilities(
     canDelete: false,
     canManageInvestment: false,
     canReadPayback: false,
+    canInvite: false,
     ...overrides,
   };
 }

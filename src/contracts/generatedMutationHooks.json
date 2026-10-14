@@ -34,6 +34,8 @@
       "hooks": [
         "useConfigureDatadis",
         "useConfigureShelly",
+        "useDisableDatadisConfig",
+        "useEnableDatadisConfig",
         "useSyncDatadisConsumptions",
         "useSyncMonthlyDatadisConsumptions",
         "useSyncYearlyDatadisConsumptions"
@@ -46,6 +48,8 @@
         "useClearMembershipInvestment",
         "useCreateMembership",
         "useDeleteMembership",
+        "useRegisterMember",
+        "useSendInvitation",
         "useSetMembershipInvestment",
         "useUpdateMembershipRole"
       ]
@@ -64,6 +68,8 @@
       "module": "src/api/production/production",
       "hooks": [
         "useConfigureHuawei",
+        "useDisableHuaweiConfig",
+        "useEnableHuaweiConfig",
         "useSyncMonthlyDatadisProduction",
         "useSyncMonthlyHuaweiProduction",
         "useSyncYearlyDatadisProduction",
