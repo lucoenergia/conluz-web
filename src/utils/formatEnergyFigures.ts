@@ -70,7 +70,11 @@ export function formatCalendarMonth(localDate: string): string {
   return calendarMonthOf(localDate, { month: "long", year: "numeric" });
 }
 
-/** An hour of the local day, 0 to 23: "8 h". */
+/**
+ * An hour of the local day, given as a number from 0 to 23 that is already
+ * local: no time zone is involved. "8 h". For an ISO instant, use
+ * `formatTimeOfDay`, which reads it in `APP_TIME_ZONE`.
+ */
 export function formatHourOfDay(hour: number): string {
   return `${hour} h`;
 }
