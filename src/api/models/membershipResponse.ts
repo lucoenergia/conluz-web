@@ -7,6 +7,7 @@
  */
 import type { MembershipResponseUser } from './membershipResponseUser';
 import type { MembershipResponseRole } from './membershipResponseRole';
+import type { MembershipResponseAcceptedAt } from './membershipResponseAcceptedAt';
 import type { MembershipCapabilitiesResponse } from './membershipCapabilitiesResponse';
 
 export interface MembershipResponse {
@@ -16,6 +17,8 @@ export interface MembershipResponse {
   communityId: string;
   role: MembershipResponseRole;
   enabled: boolean;
+  /** When the membership was accepted. Null while it is pending: a pending membership grants no access until it is accepted. Independent of enabled. */
+  acceptedAt: MembershipResponseAcceptedAt;
   /** What the caller may do with this membership. */
   capabilities: MembershipCapabilitiesResponse;
 }
