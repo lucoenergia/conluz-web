@@ -6,6 +6,7 @@ import {
 } from "./data";
 import {
   mockAllApiRoutes,
+  mockHuaweiConfigRoutes,
   mockPlantDetailRoutes,
 } from "./routes";
 import {
@@ -64,13 +65,21 @@ export async function navigateToSharingAgreementDetail(page: Page, agreementName
   await stabilizePage(page);
 }
 
-export async function openPlantDetail(page: Page, currentUser = FIXED_COMMUNITY_ADMIN_USER) {
+export async function openPlantDetail(
+  page: Page,
+  currentUser = FIXED_COMMUNITY_ADMIN_USER,
+  huawei: Omit<Parameters<typeof mockHuaweiConfigRoutes>[1], "currentUser"> = {},
+) {
   // The chart date filter defaults to today.
   await freezeClock(page);
   await injectAuthToken(page);
   await seedActiveCommunity(page, currentUser.id);
   await mockAllApiRoutes(page, currentUser);
   await mockPlantDetailRoutes(page, currentUser);
+  // A caller who may manage the plant gets its integrations section, which
+  // reads the Huawei configuration (#192). Without this route the read would
+  // fall to mockPlantDetailRoutes and come back as the plant itself.
+  await mockHuaweiConfigRoutes(page, { ...huawei, currentUser });
 
   await page.goto(`/production/${FIXED_PLANT_ID}`);
   await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();

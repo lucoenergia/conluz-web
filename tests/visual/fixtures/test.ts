@@ -38,6 +38,15 @@ export const ALLOWED_DENIALS: AllowedDenial[] = [
       "answers, and 404 is the answer 'none yet' -- the file panel renders its empty state from it. " +
       "mockSharingAgreementDetailRoutes takes fileStatus for exactly this.",
   },
+  {
+    method: "GET",
+    path: /\/api\/v1\/plants\/[^/]+\/production\/huawei\/config$/,
+    status: 404,
+    reason:
+      "whether a plant has a Huawei configuration is a question only this endpoint answers, and 404 " +
+      "is the answer 'not configured yet' -- the plant integrations section renders its empty state " +
+      "from it (UI-INT-007). mockHuaweiConfigRoutes takes config: null for exactly this.",
+  },
 ];
 
 /**

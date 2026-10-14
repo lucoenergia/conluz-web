@@ -1,4 +1,5 @@
 import type {
+  ConfigureHuaweiBody,
   GetDatadisConfigResponse,
   GetShellyConfigResponse,
   MembershipEnergyMetricsResponse,
@@ -920,6 +921,20 @@ export const FIXED_DATADIS_CONFIG: GetDatadisConfigResponse = {
 
 /** Shelly off, so the two cards do not render the same state. */
 export const FIXED_SHELLY_CONFIG: GetShellyConfigResponse = { enabled: false };
+
+/**
+ * A plant's Huawei configuration as GET .../huawei/config answers it. The
+ * contract declares no schema for that 200, so the type is the write body
+ * without the password, plus passwordSet, as the endpoint documents (#192).
+ */
+export type HuaweiConfigFixture = Omit<ConfigureHuaweiBody, "password"> & { passwordSet: boolean };
+
+export const FIXED_HUAWEI_CONFIG: HuaweiConfigFixture = {
+  username: "planta-norte@conluz.test",
+  baseUrl: "https://eu5.fusionsolar.huawei.com/thirdData",
+  passwordSet: true,
+  enabled: true,
+};
 
 // ---------------------------------------------------------------------------
 // Member home (#199): the caller's energy in the reference month and their
