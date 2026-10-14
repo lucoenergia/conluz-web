@@ -128,7 +128,7 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
             checked={enabled}
             disabled={toggle.isPending}
             onChange={(e) => toggle.request(e.target.checked)}
-            slotProps={{ input: { "aria-label": "Integración con Huawei activa" } }}
+            slotProps={{ input: { role: "switch", "aria-label": "Integración con Huawei activa" } }}
             sx={{
               "& .MuiSwitch-switchBase.Mui-checked": { color: HUAWEI_ACCENT },
               "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: HUAWEI_ACCENT },
@@ -221,6 +221,7 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
         confirmLabel={toggle.requested ? "Activar" : "Desactivar"}
         confirmColor={toggle.requested ? "success" : "error"}
         confirmPending={toggle.isPending}
+        confirmDisabled={toggle.isPending}
       >
         {toggle.requested
           ? "La planta empezará a sincronizar su producción desde Huawei."
