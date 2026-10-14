@@ -7,8 +7,7 @@
  */
 
 export interface UpdateProfileBody {
-  /** @minLength 1 */
-  email: string;
+  email?: string;
   address?: string;
   phoneNumber?: string;
 }

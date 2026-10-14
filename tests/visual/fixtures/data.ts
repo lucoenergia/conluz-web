@@ -840,6 +840,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       capabilities: OWN_USER_CAPABILITIES,
     },
     role: "COMMUNITY_ADMIN",
+    acceptedAt: "2026-01-15T09:00:00Z",
     enabled: true,
     // Their own membership: the backend does not offer them their own removal
     // or demotion, which is the safety rail the row menu has to respect.
@@ -867,6 +868,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       capabilities: MANAGED_USER_CAPABILITIES,
     },
     role: "COMMUNITY_MEMBER",
+    acceptedAt: "2026-01-15T09:00:00Z",
     enabled: true,
     capabilities: {
       canUpdateRole: true,
@@ -892,6 +894,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       capabilities: MANAGED_USER_CAPABILITIES,
     },
     role: "COMMUNITY_MEMBER",
+    acceptedAt: "2026-01-15T09:00:00Z",
     enabled: false,
     capabilities: {
       canUpdateRole: true,

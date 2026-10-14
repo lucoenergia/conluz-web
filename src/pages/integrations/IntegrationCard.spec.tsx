@@ -12,7 +12,7 @@ const PROVIDER = {
   color: "#0078ac",
   description: "Plataforma oficial de las distribuidoras eléctricas.",
   fields: ["credentials"],
-  urlPlaceholder: "https://datadis.es/api-private",
+  urlPlaceholder: "https://datadis.es",
 };
 
 const setup = (overrides: Partial<React.ComponentProps<typeof IntegrationCard>> = {}) => {
@@ -23,7 +23,7 @@ const setup = (overrides: Partial<React.ComponentProps<typeof IntegrationCard>> 
       <IntegrationCard
         provider={PROVIDER}
         accent="#0078ac"
-        value={{ enabled: true, username: "u", baseUrl: "https://datadis.es/api-private" }}
+        value={{ enabled: true, username: "u", baseUrl: "https://datadis.es" }}
         onChange={onChange}
         save={{ run, isPending: false }}
         {...overrides}

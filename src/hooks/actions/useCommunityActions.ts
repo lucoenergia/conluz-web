@@ -59,6 +59,14 @@ import { grant, type MaybeAction } from "./action";
  * The Huawei configuration is NOT here. Its endpoint is plant-scoped, so it
  * lives in usePlantActions even though one screen shows all three forms.
  */
+/**
+ * A Datadis save either succeeds or carries the error the API answered with.
+ * The screen needs the error, not just "it failed": a save that omits the
+ * password when none is stored is refused with DATADIS_CONFIG_PASSWORD_REQUIRED
+ * (#245), and the admin must be told on the password field.
+ */
+export type ConfigureDatadisResult = { ok: true } | { error: unknown };
+
 export interface CommunityRowActions {
   actions: {
     update: MaybeAction<[UpdateCommunityBody], boolean>;
@@ -69,7 +77,7 @@ export interface CommunityRowActions {
     importUsers: MaybeAction<[CreateUsersWithFileBody], CreateUsersInBulkResponse | undefined>;
     createSupply: MaybeAction<[CreateSupplyBody], SupplyResponse | undefined>;
     importSupplies: MaybeAction<[CreateSuppliesWithFileBody], CreationInBulkResponse | undefined>;
-    configureDatadis: MaybeAction<[ConfigureDatadisBody], boolean>;
+    configureDatadis: MaybeAction<[ConfigureDatadisBody], ConfigureDatadisResult>;
     configureShelly: MaybeAction<[ConfigureShellyBody], boolean>;
   };
   outcomes: Record<keyof CommunityRowActions["actions"], CapabilityOutcome>;
@@ -195,13 +203,13 @@ export function useCommunityActions(): CommunityActions {
           ),
           configureDatadis: grant(
             manage,
-            async (data: ConfigureDatadisBody) => {
+            async (data: ConfigureDatadisBody): Promise<ConfigureDatadisResult> => {
               try {
                 await configureDatadisMutation.mutateAsync({ communityId, data });
                 queryClient.invalidateQueries({ queryKey: getGetDatadisConfigQueryKey(communityId) });
-                return true;
-              } catch {
-                return false;
+                return { ok: true };
+              } catch (error) {
+                return { error };
               }
             },
             configureDatadisMutation.isPending,

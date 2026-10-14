@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { UserResponseAddress } from './userResponseAddress';
+import type { UserResponseEmail } from './userResponseEmail';
 import type { UserResponsePhoneNumber } from './userResponsePhoneNumber';
 import type { UserResponseMemberships } from './userResponseMemberships';
 import type { UserCapabilitiesResponse } from './userCapabilitiesResponse';
@@ -16,7 +17,7 @@ export interface UserResponse {
   number: number;
   fullName: string;
   address: UserResponseAddress;
-  email: string;
+  email: UserResponseEmail;
   phoneNumber: UserResponsePhoneNumber;
   enabled: boolean;
   memberships: UserResponseMemberships;

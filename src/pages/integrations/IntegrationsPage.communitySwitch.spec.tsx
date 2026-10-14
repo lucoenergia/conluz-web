@@ -120,9 +120,9 @@ describe("IntegrationsPage across a community switch", () => {
     vi.mocked(useGetAllPlants).mockReturnValue(query.success<typeof getAllPlants>({ items: [] }));
     vi.mocked(useGetShellyConfig).mockReturnValue(query.success<typeof getShellyConfig>({ enabled: false }));
     vi.mocked(useGetDatadisConfig).mockImplementation((communityId) =>
-      // passwordSet is required by the schema; false renders the same as the
-      // field's previous absence (no "password saved" hint).
-      query.success<typeof getDatadisConfig>({ enabled: true, passwordSet: false, ...CONFIG_BY_COMMUNITY[communityId] }),
+      // A stored password, so a save with the field empty is a valid one: this
+      // spec is about which community is written, not the password rule (#245).
+      query.success<typeof getDatadisConfig>({ enabled: true, passwordSet: true, ...CONFIG_BY_COMMUNITY[communityId] }),
     );
     // No plants, so the page disables the Huawei config query (enabled: !!firstPlantId)
     // and, now, mounts no Huawei card at all -- there is no plant to carry the

@@ -234,6 +234,8 @@ export function buildMembership(overrides: Partial<MembershipResponse> = {}): Me
       communityId: "TEST-COMMUNITY-ID",
       role: "COMMUNITY_MEMBER",
       enabled: true,
+      // Accepted: a pending membership (null) grants no access, so it is opt-in.
+      acceptedAt: "2026-01-01T00:00:00Z",
       capabilities: buildMembershipCapabilities(),
     } satisfies MembershipResponse),
     ...overrides,
