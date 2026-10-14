@@ -4,17 +4,21 @@
 | --- | --- |
 | **Prefix** | `UI-INT` |
 | **Status** | Active |
-| **Routes** | `/integrations` |
-| **Roles** | A caller who may manage the active community (`canManage`) |
+| **Routes** | `/integrations`, `/production/:plantId` |
+| **Roles** | `/integrations`: a caller who may manage the active community (`canManage`). Plant detail's integrations section: a caller who may manage that plant (the plant's `canManage`) |
 | **Domain rules** | `lucoenergia/conluz`: DCF-001, DCF-002, DCF-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #245 |
+| **Last reviewed against code** | #192 |
 
 ## Purpose
 
-Let a community's administrator connect the community to external services. This document covers
-only the Datadis configuration form, and only the rules #245 introduced. The Huawei and Shelly cards
-on the same page are not covered: Huawei moves to plant detail in #192.
+Let an administrator connect the community, and each of its plants, to external services. The
+community integrations page holds the community-scoped integrations, Datadis and Shelly. The Huawei
+integration belongs to a plant and is configured from that plant's detail screen.
+
+This document covers the Datadis configuration form (the rules #245 introduced), the plant's Huawei
+integration, and which integrations the community page lists (#192). The Shelly card is not
+covered.
 
 ## Rules
 
@@ -82,6 +86,107 @@ on the same page are not covered: Huawei moves to plant detail in #192.
 - **Implements:** DCF-002
 - **Source:** #245, lucoenergia/conluz#404
 
+### UI-INT-005 — Huawei is configured only from the detail screen of its plant
+
+- **Status:** Active
+- **Rule:**
+  - The Huawei configuration MUST be read and written only from the detail screen of the plant it
+    belongs to, for the plant named by the route's `plantId`.
+  - No screen may select a plant implicitly to read or write a Huawei configuration.
+  - A write to one plant's configuration MUST refresh only that plant's configuration.
+- **Rationale:** The configuration endpoints are plant-scoped, and a community can have several
+  plants. The community page used to configure whichever plant the plant list returned first, so an
+  admin could edit a plant they never chose without knowing which one it was.
+- **Implements:** n/a
+- **Source:** #192
+
+### UI-INT-006 — The plant integrations section is only for a caller who may manage the plant
+
+- **Status:** Active
+- **Rule:** The plant integrations section MUST render only when the plant's `capabilities.canManage`
+  is `true`; otherwise nothing renders, with no placeholder, no disabled control and no read of the
+  configuration.
+- **Rationale:** Reading the configuration needs exactly what writing it needs (the plant's
+  `canManage`), so there is no read-only view to fall back to. A community capability does not
+  answer for a plant.
+- **Implements:** n/a
+- **Source:** #192, lucoenergia/conluz#399
+
+### UI-INT-007 — A plant with no Huawei configuration shows an empty state, not an error
+
+- **Status:** Active
+- **Rule:**
+  - When the read answers `404`, the section MUST show visible text saying that the plant has no
+    Huawei configuration yet and a "Configurar" action, with no error styling and no switch.
+  - When the read fails with anything other than `404`, the section MUST show an error with a retry,
+    and MUST NOT claim whether a password is stored.
+  - A configured plant MUST show its username and base URL and whether a password is stored, and
+    MUST NOT show the password.
+- **Rationale:** A `404` is the normal state of a new plant, not a failure, so it must not look like
+  one; there is nothing to turn on before a configuration exists. Any other failure says nothing
+  about what is stored, so the screen claims nothing, as UI-INT-003 does for Datadis. The password is
+  write-only: only `passwordSet` comes back.
+- **Implements:** n/a
+- **Source:** #192
+
+### UI-INT-008 — The Huawei form follows the Datadis form's rules, and never sets `enabled`
+
+- **Status:** Active
+- **Rule:**
+  - The Huawei form MUST follow UI-INT-001, UI-INT-002, UI-INT-003 and UI-INT-004, with
+    `HUAWEI_CONFIG_PASSWORD_REQUIRED` in place of `DATADIS_CONFIG_PASSWORD_REQUIRED`.
+  - Creating a configuration MUST require a password; editing one MUST NOT, when one is stored.
+  - The form MUST NOT have an `enabled` control. A create MUST send `enabled: false`, and an edit
+    MUST send the stored `enabled` unchanged.
+- **Rationale:** Both providers share the same write-only password contract, so they share the
+  rules and the code that applies them. Turning the integration on or off is a separate decision,
+  taken on the switch (UI-INT-009): a new configuration starts disabled so that it syncs only once
+  someone turns it on, and an edit of the credentials must not turn it on or off as a side effect.
+- **Implements:** n/a
+- **Source:** #192, lucoenergia/conluz#399
+
+### UI-INT-009 — The Huawei switch goes through its own actions, and states when it is off
+
+- **Status:** Active
+- **Rule:**
+  - Turning the integration on MUST call `enableHuaweiConfig`, and turning it off MUST call
+    `disableHuaweiConfig`. The switch MUST NOT call the configuration write.
+  - The switch MUST reflect the stored `enabled`, ask for confirmation, and MUST NOT be operable again
+    while a write is in flight.
+  - While the stored configuration is disabled, the section MUST show visible text saying so; while
+    it is enabled, that text MUST NOT show.
+  - A `404 HUAWEI_CONFIG_NOT_FOUND` MUST read the configuration again, which shows UI-INT-007's empty
+    state. Any other refusal, apart from UI-INT-010's, MUST show the generic error feedback.
+- **Rationale:** The enable and disable endpoints change only `enabled`. Toggling through the
+  configuration write would also rewrite the username and base URL with whatever the screen last
+  read, overwriting an edit made meanwhile. A configuration starts disabled (UI-INT-008), so the screen says why nothing syncs.
+  A `404` here means the configuration was deleted meanwhile, and showing the stale one would offer
+  actions that can only fail.
+- **Implements:** n/a
+- **Source:** #192, lucoenergia/conluz#414
+
+### UI-INT-010 — An incomplete Huawei configuration names what is missing
+
+- **Status:** Active
+- **Rule:** A `409 HUAWEI_CONFIG_INCOMPLETE` on enable MUST leave the switch off and show the fields
+  in `params.missingFields` in Spanish ("usuario", "URL del servicio", "contraseña"), with an action
+  that opens the edit form.
+- **Rationale:** The backend refuses to enable a configuration that cannot work and says which
+  fields it lacks. Naming them, with the way to fix them one tap away, turns a dead end into the next
+  step.
+- **Implements:** n/a
+- **Source:** #192, lucoenergia/conluz#414
+
+### UI-INT-011 — The community integrations page lists only community-scoped integrations
+
+- **Status:** Active
+- **Rule:** The community integrations page MUST list only community-scoped integrations: Datadis
+  and Shelly. It MUST NOT read a plant or a plant's configuration.
+- **Rationale:** A plant-scoped integration on a community page can only be reached by picking a
+  plant implicitly, which UI-INT-005 forbids.
+- **Implements:** n/a
+- **Source:** #192
+
 ## States
 
 The Datadis card only.
@@ -94,6 +199,19 @@ The Datadis card only.
 | Read failed (not `404`) | The form, empty, with no helper text and no password rule | Edit, Guardar |
 | Blocked save | A message on each field that breaks a rule, and the fields open | Edit |
 | Refused save (`DATADIS_CONFIG_PASSWORD_REQUIRED`) | A message on the password field, and no generic error | Edit, Guardar |
+
+The plant's Huawei integration, on plant detail.
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Not offered (plant `canManage` false) | Nothing | None |
+| Loading | A spinner in the Huawei card | None |
+| Not configured (`404`) | Text saying there is no configuration yet, with no error styling and no switch | Configurar |
+| Read failed (not `404`) | An error with a retry; nothing said about the password | Reintentar |
+| Configured, enabled | Username, base URL, whether a password is stored; the switch on | Switch, Editar |
+| Configured, disabled | As above, the switch off, and text saying the integration is disabled | Switch, Editar |
+| Enable refused (`HUAWEI_CONFIG_INCOMPLETE`) | The switch off and a message naming the missing fields | Completar configuración, Editar |
+| Form (create or edit) | A dialog that fills the screen on a phone, with no `enabled` control | Guardar, Cancelar |
 
 ## Accepted exceptions
 
