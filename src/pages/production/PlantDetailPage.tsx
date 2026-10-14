@@ -13,6 +13,7 @@ import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
 import { getTimeRange } from "../../utils/getTimeRange";
 import { formatKilowattHours } from "../../utils/formatEnergyFigures";
+import { formatCalendarDate, formatTimeOfDay } from "../../utils/formatCalendarDate";
 import { useErrorDispatch } from "../../context/error.context";
 import { useActiveCommunity } from "../../context/community.context";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -234,43 +235,35 @@ export const PlantDetailPage: FC = () => {
       const dateStr = item.time || "";
       if (!dateStr) return "";
 
-      const date = new Date(dateStr);
-
+      // Instants, labelled in the app's time zone, never the device's (#255).
       if (filterType === "day") {
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
+        return formatTimeOfDay(dateStr);
       }
 
       if (filterType === "month") {
-        return date.getDate().toString();
+        return formatCalendarDate(dateStr, { day: "numeric", month: undefined, year: undefined });
       }
 
       // monthly data → show month name
       if (filterType === "year") {
-        return date.toLocaleDateString("es-ES", { month: "short" });
+        return formatCalendarDate(dateStr, { day: undefined, month: "short", year: undefined });
       }
 
       // yearly data → show year number
       if (filterType === "totals") {
-        return date.getFullYear().toString();
+        return formatCalendarDate(dateStr, { day: undefined, month: undefined, year: "numeric" });
       }
 
       if (filterType === "dates") {
         if (datesGranularity === "monthly") {
-          return date.toLocaleDateString("es-ES", { month: "short", year: "2-digit" });
+          return formatCalendarDate(dateStr, { day: undefined, month: "short", year: "2-digit" });
         }
         if (datesGranularity === "yearly") {
-          return date.getFullYear().toString();
+          return formatCalendarDate(dateStr, { day: undefined, month: undefined, year: "numeric" });
         }
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = date.toLocaleDateString("es-ES", { month: "short" });
-        return `${day} ${month}`;
       }
 
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = date.toLocaleDateString("es-ES", { month: "short" });
-      return `${day} ${month}`;
+      return formatCalendarDate(dateStr, { day: "2-digit", month: "short", year: undefined });
     });
   }, [productionData, filterType, datesGranularity]);
 

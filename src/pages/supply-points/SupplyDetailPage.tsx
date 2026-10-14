@@ -21,6 +21,7 @@ import { useGetSupplyDailyProduction, useGetSupplyDailyConsumption, useGetSupply
 import { getTimeRange } from "../../utils/getTimeRange";
 import { formatKilowattHours } from "../../utils/formatEnergyFigures";
 import { formatPercentage } from "../../utils/formatPercentage";
+import { formatCalendarDate, formatTimeOfDay } from "../../utils/formatCalendarDate";
 import { useErrorDispatch } from "../../context/error.context";
 import PowerIcon from "@mui/icons-material/Power";
 import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
@@ -289,7 +290,8 @@ export const SupplyDetailPage: FC = () => {
     const yearMap = new Map<number, number>();
     supplyMonthlyProductionData.forEach((item) => {
       if (!item.time) return;
-      const year = new Date(item.time).getFullYear();
+      // The year the instant falls in, in the app's time zone (#255).
+      const year = Number(formatCalendarDate(item.time, { day: undefined, month: undefined, year: "numeric" }));
       yearMap.set(year, (yearMap.get(year) || 0) + (item.power ?? 0));
     });
     const sortedYears = Array.from(yearMap.keys()).sort((a, b) => a - b);
@@ -317,29 +319,24 @@ export const SupplyDetailPage: FC = () => {
       const dateStr = item.time || "";
       if (!dateStr) return "";
 
-      const date = new Date(dateStr);
-
+      // Production times are instants, labelled in the app's time zone (#255).
       // For day filter with hourly data, show hour in HH:mm format
       if (filterType === "day") {
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
+        return formatTimeOfDay(dateStr);
       }
 
       // For month filter, show day number
       if (filterType === "month") {
-        return date.getDate().toString();
+        return formatCalendarDate(dateStr, { day: "numeric", month: undefined, year: undefined });
       }
 
       // For year filter, show month name
       if (filterType === "year") {
-        return date.toLocaleDateString("es-ES", { month: "short" });
+        return formatCalendarDate(dateStr, { day: undefined, month: "short", year: undefined });
       }
 
       // For custom dates, show day and month
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = date.toLocaleDateString("es-ES", { month: "short" });
-      return `${day} ${month}`;
+      return formatCalendarDate(dateStr, { day: "2-digit", month: "short", year: undefined });
     });
   }, [supplyProductionData, yearlyProductionData, filterType]);
 
