@@ -100,7 +100,7 @@ describe("SharingAgreementDetailHeader", () => {
       renderHeader({ coefficients: ALL_PENDING });
 
       for (const [label, value] of [
-        ["Potencia instalada", "42,50 kW"],
+        ["Potencia instalada", "42,5 kW"],
         ["Creado el", "23 may 2024"],
       ] as const) {
         expect(screen.getByText(label).parentElement).toHaveTextContent(value);

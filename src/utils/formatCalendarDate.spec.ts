@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCalendarDate } from "./formatCalendarDate";
+import { formatCalendarDate, formatTimeOfDay } from "./formatCalendarDate";
 
 describe("formatCalendarDate", () => {
   it("formats a Z-suffixed instant that stays on the same Madrid calendar day", () => {
@@ -27,5 +27,20 @@ describe("formatCalendarDate", () => {
 
   it("accepts formatting overrides", () => {
     expect(formatCalendarDate("2024-05-23", { month: "short" })).toBe("23 may 2024");
+  });
+});
+
+describe("formatTimeOfDay", () => {
+  it("reads the instant in Madrid time, past midnight into the next day (CEST, UTC+2)", () => {
+    expect(formatTimeOfDay("2026-08-01T22:30:00Z")).toBe("00:30");
+  });
+
+  it("reads the instant in Madrid time in winter (CET, UTC+1)", () => {
+    expect(formatTimeOfDay("2026-01-15T12:05:00Z")).toBe("13:05");
+  });
+
+  it("returns a dash for undefined or unparseable input", () => {
+    expect(formatTimeOfDay(undefined)).toBe("-");
+    expect(formatTimeOfDay("garbage")).toBe("-");
   });
 });

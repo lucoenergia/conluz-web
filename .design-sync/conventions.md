@@ -2,7 +2,7 @@
 
 Conluz is the web app of Spanish renewable-energy communities: supplies (puntos de suministro),
 plants, sharing agreements (acuerdos de reparto) and their coefficients. UI copy is **Spanish**:
-numbers use a decimal comma (`182,4 kWh`, `45,60 kW`, `62 %`); supplies have CUPS codes like
+numbers use a decimal comma (`182,4 kWh`, `45,6 kW`, `62 %`); supplies have CUPS codes like
 `ES0031406912345678JN0F`.
 
 ## Setup: always wrap in `ConluzProvider`

@@ -256,7 +256,7 @@ export const MembersPage: FC = () => {
         >
           {error ? (
             <Alert severity="error" sx={{ m: 2 }}>
-              Error al cargar los miembros. Por favor, intente de nuevo.
+              Error al cargar los miembros. Por favor, inténtalo de nuevo.
             </Alert>
           ) : (
             <>

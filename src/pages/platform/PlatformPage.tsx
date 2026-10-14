@@ -136,7 +136,7 @@ export const PlatformPage: FC = () => {
   } else if (error) {
     body = (
       <Alert severity="error">
-        Error al cargar la información de la plataforma. Por favor, intente de nuevo.
+        Error al cargar la información de la plataforma. Por favor, inténtalo de nuevo.
       </Alert>
     );
   } else if (communities.length === 0) {

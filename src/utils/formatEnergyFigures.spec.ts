@@ -18,8 +18,16 @@ describe("formatKilowattHours", () => {
     expect(formatKilowattHours(268)).toBe("268 kWh");
   });
 
-  it("keeps one decimal of a fractional amount", () => {
-    expect(formatKilowattHours(3.44)).toBe("3,4 kWh");
+  it("keeps up to two decimals of a fractional amount", () => {
+    expect(formatKilowattHours(3.44)).toBe("3,44 kWh");
+  });
+
+  it("rounds a third decimal away", () => {
+    expect(formatKilowattHours(12.567)).toBe("12,57 kWh");
+  });
+
+  it("drops trailing zeros", () => {
+    expect(formatKilowattHours(12.5)).toBe("12,5 kWh");
   });
 
   it("formats zero as a figure", () => {
@@ -56,9 +64,10 @@ describe("formatMonth", () => {
 });
 
 describe("formatAverageKilowattHours (#201)", () => {
-  it("keeps up to three decimals of a fraction of a kWh", () => {
+  it("writes an average as every other kWh figure: at most two decimals, no trailing zeros", () => {
     expect(formatAverageKilowattHours(0.42)).toBe("0,42 kWh");
-    expect(formatAverageKilowattHours(0.005)).toBe("0,005 kWh");
+    expect(formatAverageKilowattHours(0.5)).toBe("0,5 kWh");
+    expect(formatAverageKilowattHours(0.567)).toBe("0,57 kWh");
   });
 
   it("formats a measured zero as zero", () => {
@@ -66,7 +75,13 @@ describe("formatAverageKilowattHours (#201)", () => {
   });
 
   it("never rounds a positive average into a zero", () => {
-    expect(formatAverageKilowattHours(0.0002)).toBe("menos de 0,001 kWh");
+    expect(formatAverageKilowattHours(0.0002)).toBe("menos de 0,01 kWh");
+    expect(formatAverageKilowattHours(0.0049)).toBe("menos de 0,01 kWh");
+  });
+
+  it("shows an average that rounds up to the second decimal as that figure", () => {
+    expect(formatAverageKilowattHours(0.005)).toBe("0,01 kWh");
+    expect(formatAverageKilowattHours(0.011)).toBe("0,01 kWh");
   });
 });
 

@@ -46,7 +46,7 @@ describe("SharingAgreementCoefficientSet", () => {
     // one of which is hidden by a media query jsdom does not apply.
     expect(screen.getAllByText("Potencia asignada").length).toBeGreaterThan(0);
     // Vivienda A: 40% of 100 kW
-    expect(screen.getAllByText("40,00 kW").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("40 kW").length).toBeGreaterThan(0);
   });
 
   it("renders the filtered-empty state (distinct copy) when a chip filter matches nothing", () => {
@@ -292,7 +292,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     // 0.4 + 0.6 + 0 = 100%.
     expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
     expect(screen.getByText(/Suma completa \(100%\)/)).toBeInTheDocument();
-    expect(screen.getByText(/100,00 kW de 100,00 kW instalados/)).toBeInTheDocument();
+    expect(screen.getByText(/100 kW de 100 kW instalados/)).toBeInTheDocument();
   });
 
   it("kW mode shows the outstanding percentage gap, with the rounding caveat, when kW rounds to installedPowerKw but the coefficient sum isn't exactly 100%", () => {

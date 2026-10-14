@@ -160,7 +160,7 @@ describe("in-force assigned power", () => {
       return view.kind === "inForce" ? formatInForcePowerLine(view.coefficient, view.power) : null;
     });
 
-    expect(lines).toEqual(["Vigente 40,00 kW", "Vigente 15,00 kW"]);
+    expect(lines).toEqual(["Vigente 40 kW", "Vigente 15 kW"]);
     expect(lines).not.toContain(`Vigente ${0.5 * draftInstalledPowerKw},00 kW`);
   });
 

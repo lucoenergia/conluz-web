@@ -77,7 +77,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     // regular space before comparing, so the matcher uses a regular space too.
     expect(screen.getByText("25,0000 %")).toBeInTheDocument();
     // 25% of 100 kW, matching the mock-up's coefficient×installedPowerKw derivation.
-    expect(screen.getByText("25,00 kW")).toBeInTheDocument();
+    expect(screen.getByText("25 kW")).toBeInTheDocument();
     expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
     expect(screen.getByText("No recibe producción hasta que registres la fecha")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
@@ -359,7 +359,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
       </Table>,
     );
 
-    expect(screen.getByText("40,00 kW")).toBeInTheDocument();
+    expect(screen.getByText("40 kW")).toBeInTheDocument();
   });
 
   it("focus and blur with no edit never call onCoefficientChange — the field has no onBlur wiring", async () => {
@@ -513,7 +513,7 @@ describe("SharingAgreementCoefficientCard", () => {
     // getByText's default normalizer collapses the formatter's U+00A0 into a
     // regular space before comparing, so the matcher uses a regular space too.
     expect(screen.getByText("25,0000 %")).toBeInTheDocument();
-    expect(screen.getByText("25,00 kW")).toBeInTheDocument();
+    expect(screen.getByText("25 kW")).toBeInTheDocument();
     expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
   });
 
@@ -960,9 +960,9 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
       const [, , coefficientCell, powerCell] = screen.getAllByRole("cell");
       expect(within(coefficientCell).getByText("40,0000 %")).toBeInTheDocument();
       expect(within(coefficientCell).getByText("Vigente 35,0000 % · +5,0000 p.p.")).toBeInTheDocument();
-      expect(within(powerCell).getByText("40,00 kW")).toBeInTheDocument();
+      expect(within(powerCell).getByText("40 kW")).toBeInTheDocument();
       // 0.35 × the authoring agreement's 80 kW, not the draft's 100 kW.
-      expect(within(powerCell).getByText("Vigente 28,00 kW")).toBeInTheDocument();
+      expect(within(powerCell).getByText("Vigente 28 kW")).toBeInTheDocument();
     });
 
     it("signs a reduction negatively", () => {
@@ -1019,7 +1019,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
       renderCard({});
       expect(screen.getByText("40,0000 %")).toBeInTheDocument();
       expect(screen.getByText("Vigente 35,0000 % · +5,0000 p.p.")).toBeInTheDocument();
-      expect(screen.getByText("Vigente 28,00 kW")).toBeInTheDocument();
+      expect(screen.getByText("Vigente 28 kW")).toBeInTheDocument();
     });
 
     it("badges a new supply and says it has nothing in force", () => {
@@ -1053,7 +1053,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
     it("keeps each line under the value in its own unit when editing in kW", () => {
       renderRow({ isEditing: true, inputUnit: "kw", coefficientInput: "50", editedValue: 0.5, onCoefficientChange: vi.fn() });
       const [, , inputCell, equivalentCell] = screen.getAllByRole("cell");
-      expect(within(inputCell).getByText("Vigente 28,00 kW")).toBeInTheDocument();
+      expect(within(inputCell).getByText("Vigente 28 kW")).toBeInTheDocument();
       expect(within(equivalentCell).getByText("Vigente 35,0000 % · +15,0000 p.p.")).toBeInTheDocument();
     });
 

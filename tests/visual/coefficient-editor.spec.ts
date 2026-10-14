@@ -168,7 +168,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
     // Three rows of 0.333333 sum to 999,999 units (short by one) but each
-    // row's kW, rounded to 2dp on a 45 kW plant, still totals to 45,00 kW.
+    // row's kW, rounded to 2dp on a 45 kW plant, still totals to 45 kW.
     const roundingCaveatAgreement = { ...DRAFT_AGREEMENT, installedPowerKw: 45 };
     const roundingCaveatCoefficients = [
       { coefficientId: "1", supply: { id: "supply-1", name: "Vivienda A", code: "ES0031300000000001AA" }, coefficient: 0.333333 },

@@ -75,6 +75,7 @@ The app is **multi-community**. This supersedes any older single-community assum
 Full guide: the `conluz-web-testing` skill.
 
 - Test specs use `.spec.tsx` (not `.test.tsx`), colocated, rendered through `renderWithProviders` / `renderHookWithProviders` (`src/test/renderWithProviders.tsx`), never a hand-built wrapper.
+- **Never set `process.env.TZ` from test code.** A spec about the device time zone is a `*.tz.spec.tsx`, run by the `app-time-zone` Vitest project; details in the testing skill.
 - **No real network**: a test spec must never reach the backend. A setup-file guard (`src/test/networkGuard.ts`) refuses every `XMLHttpRequest` and `fetch` and fails the test, naming the method and URL; fix it by mocking, never by taking the request.
 - While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` prints "No test files found" and still exits 0 when it resolves nothing — then run the test spec by path. Run `npm run lint && npm test` once at the end, and `npm run test:visual` only at the end and only if the UI changed.
 - **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If it can only be found by test id, it is missing an accessible name or role: report the defect, don't route around it.
