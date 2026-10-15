@@ -39,6 +39,7 @@ import type {
 } from "../../api/models";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
+import { writeStoredEnabled } from "./storedEnabled";
 
 /**
  * What the caller may do in one community -- including the things that have no
@@ -162,9 +163,10 @@ export function useCommunityActions(): CommunityActions {
         queryClient.invalidateQueries({ queryKey: getGetAllPlantsQueryKey(communityId) });
 
       // Only this community's Datadis configuration is read back.
-      const toggleDatadis = async (call: () => Promise<unknown>): Promise<DatadisToggleResult> => {
+      const toggleDatadis = async (call: () => Promise<unknown>, enabled: boolean): Promise<DatadisToggleResult> => {
         try {
           await call();
+          writeStoredEnabled(queryClient, getGetDatadisConfigQueryKey(communityId), enabled);
           queryClient.invalidateQueries({ queryKey: getGetDatadisConfigQueryKey(communityId) });
           return { ok: true };
         } catch (error) {
@@ -255,12 +257,12 @@ export function useCommunityActions(): CommunityActions {
           ),
           enableDatadis: grant(
             manage,
-            () => toggleDatadis(() => enableDatadisMutation.mutateAsync({ communityId })),
+            () => toggleDatadis(() => enableDatadisMutation.mutateAsync({ communityId }), true),
             enableDatadisMutation.isPending,
           ),
           disableDatadis: grant(
             manage,
-            () => toggleDatadis(() => disableDatadisMutation.mutateAsync({ communityId })),
+            () => toggleDatadis(() => disableDatadisMutation.mutateAsync({ communityId }), false),
             disableDatadisMutation.isPending,
           ),
         },

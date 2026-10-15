@@ -165,6 +165,7 @@ export const IntegrationsPage: FC = () => {
     data: datadisConfig,
     error: datadisError,
     isLoading: datadisLoading,
+    isFetching: datadisFetching,
     refetch: refetchDatadis,
   } = useGetDatadisConfig(
     activeCommunityId ?? "",
@@ -425,6 +426,7 @@ export const IntegrationsPage: FC = () => {
                   errors: datadisForm.errors,
                   onFieldBlur: datadisForm.touch,
                   inputRefs: datadisInputs,
+                  isRefreshing: datadisFetching,
                   // Only once configured: there is nothing to turn on before.
                   headerControl: datadisConfig ? (
                     <Switch

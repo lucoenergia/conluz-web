@@ -72,6 +72,11 @@ interface IntegrationCardProps {
   /** This provider's stored configuration is still in flight. */
   isLoading?: boolean;
   /**
+   * The stored configuration is being read again: Guardar waits for it, since
+   * the save sends what is stored.
+   */
+  isRefreshing?: boolean;
+  /**
    * The field messages to show now. The page decides when a rule speaks; the
    * card only renders what it is given. A provider without rules passes none.
    */
@@ -121,6 +126,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   onChange,
   save,
   isLoading = false,
+  isRefreshing = false,
   errors = {},
   onFieldBlur,
   headerControl,
@@ -254,7 +260,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         >
           <Button
             variant="contained"
-            disabled={isSaving || isLoading}
+            disabled={isSaving || isLoading || isRefreshing}
             // With field rules, pressing Guardar would first blur the field being
             // edited, and the message that blur reveals pushes this button down
             // before the press ends -- so the click lands outside it and is lost.

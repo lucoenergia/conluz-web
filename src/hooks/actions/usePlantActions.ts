@@ -25,6 +25,7 @@ import type {
 import { useActiveCommunity } from "../../context/community.context";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
+import { writeStoredEnabled } from "./storedEnabled";
 
 /**
  * What the caller may do with one plant.
@@ -95,9 +96,12 @@ export function usePlantActions(): PlantActions {
 
       // Only this plant's configuration is read back: another plant's is not
       // touched by a write to this one (#192).
-      const writeHuawei = async (call: () => Promise<unknown>): Promise<HuaweiWriteResult> => {
+      // `enabled` is what an enable or disable stored, written into the cache
+      // ahead of the refetch; a configuration write passes none.
+      const writeHuawei = async (call: () => Promise<unknown>, enabled?: boolean): Promise<HuaweiWriteResult> => {
         try {
           await call();
+          if (enabled !== undefined) writeStoredEnabled(queryClient, getGetHuaweiConfigQueryKey(plantId), enabled);
           queryClient.invalidateQueries({ queryKey: getGetHuaweiConfigQueryKey(plantId) });
           return { ok: true };
         } catch (error) {
@@ -146,12 +150,12 @@ export function usePlantActions(): PlantActions {
           ),
           enableHuawei: grant(
             manage,
-            () => writeHuawei(() => enableHuaweiMutation.mutateAsync({ plantId })),
+            () => writeHuawei(() => enableHuaweiMutation.mutateAsync({ plantId }), true),
             enableHuaweiMutation.isPending,
           ),
           disableHuawei: grant(
             manage,
-            () => writeHuawei(() => disableHuaweiMutation.mutateAsync({ plantId })),
+            () => writeHuawei(() => disableHuaweiMutation.mutateAsync({ plantId }), false),
             disableHuaweiMutation.isPending,
           ),
           createSharingAgreement: grant(
