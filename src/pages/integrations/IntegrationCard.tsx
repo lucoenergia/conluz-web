@@ -1,8 +1,9 @@
 import { alpha } from "@mui/material/styles";
 import { radii, shadows, colors } from "../../theme/tokens";
-import { type FC } from "react";
+import { type FC, type ReactNode } from "react";
 import type { Action } from "../../hooks/actions";
 import type { CredentialsErrors, CredentialsField } from "../../utils/integrationCredentials";
+import type { CredentialsFieldsProps } from "./CredentialsFields";
 import { Box, Typography, Paper, Switch, Button, Collapse } from "@mui/material";
 import { CredentialsFields } from "./CredentialsFields";
 import { CircularProgress } from "@mui/material";
@@ -77,6 +78,12 @@ interface IntegrationCardProps {
   errors?: CredentialsErrors;
   /** A credentials field lost focus. */
   onFieldBlur?: (field: CredentialsField) => void;
+  /** `undefined`: the built-in switch, writing `enabled` through `onChange`. `null`: no control. A node: that control. */
+  headerControl?: ReactNode;
+  /** What the provider says about its own state, shown under the header. */
+  status?: ReactNode;
+  /** Each credentials field's input, for a screen that must bring the admin to one. */
+  inputRefs?: CredentialsFieldsProps["inputRefs"];
 }
 
 const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
@@ -111,6 +118,9 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   isLoading = false,
   errors = {},
   onFieldBlur,
+  headerControl,
+  status,
+  inputRefs,
 }) => {
   const enabled = value.enabled;
   const hasCreds = provider.fields.includes("credentials");
@@ -167,6 +177,8 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 58, height: 38 }}>
             <CircularProgress size={20} aria-label={`Cargando configuración de ${provider.name}`} />
           </Box>
+        ) : headerControl !== undefined ? (
+          headerControl
         ) : (
         <Switch
           checked={enabled}
@@ -178,6 +190,8 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         />
         )}
       </Box>
+
+      {status && <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>{status}</Box>}
 
       {/* Body — only for providers with credentials */}
       {hasCreds && (
@@ -196,6 +210,7 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
                 onChange={(patch) => onChange(provider.id, patch)}
                 errors={errors}
                 onFieldBlur={onFieldBlur}
+                inputRefs={inputRefs}
                 accent={accent}
                 urlPlaceholder={provider.urlPlaceholder}
               />

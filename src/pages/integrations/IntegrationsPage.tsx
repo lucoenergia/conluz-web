@@ -1,9 +1,10 @@
 import { radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { useState, useCallback, useEffect, type FC } from "react";
-import { Box, Typography, Paper, Snackbar, Alert, Avatar } from "@mui/material";
+import { useState, useCallback, useEffect, useRef, type FC, type RefObject } from "react";
+import { Box, Typography, Paper, Snackbar, Alert, Avatar, Button, Switch } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { useGetDatadisConfig } from "../../api/consumption/consumption";
+import { getGetDatadisConfigQueryKey, useGetDatadisConfig } from "../../api/consumption/consumption";
 import { useGetShellyConfig } from "../../api/consumption/consumption";
 import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
@@ -17,11 +18,15 @@ import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { useCredentialsForm } from "../../hooks/useCredentialsForm";
+import { useIntegrationToggle } from "../../hooks/useIntegrationToggle";
 import {
+  CREDENTIALS_FIELDS,
   buildCredentialsBody,
   passwordRequiredMessage,
   storedPasswordFrom,
+  type CredentialsField,
 } from "../../utils/integrationCredentials";
+import { DISABLED_TEXT, incompleteText } from "../../utils/integrationStatus";
 
 /**
  * Integration credentials change only when someone edits them on this page, so
@@ -63,6 +68,14 @@ const PROVIDERS = [
 const ACCENT = colors.brand.main;
 
 const SAVE_FAILED = "Error al guardar la configuración";
+// "Error" is what turns the snack red.
+const DATADIS_TOGGLE_FAILED = "Error al cambiar el estado de la integración con Datadis. Inténtalo de nuevo.";
+
+const EMPTY_DATADIS: IntegrationState["datadis"] = { enabled: false, username: "", password: "", baseUrl: "" };
+
+/** A refused enable's first missing field the form has, or the first field when it names none. */
+const firstMissingField = (names: string[]): CredentialsField =>
+  names.find((name): name is CredentialsField => CREDENTIALS_FIELDS.includes(name as CredentialsField)) ?? "username";
 
 /**
  * Turns one configuration action into the card's Guardar button.
@@ -126,8 +139,9 @@ export const IntegrationsPage: FC = () => {
   const activeCommunity = useActiveCommunityResource();
   const communityName = useActiveCommunityName();
 
+  const queryClient = useQueryClient();
   const [state, setState] = useState<IntegrationState>({
-    datadis: { enabled: false, username: "", password: "", baseUrl: "" },
+    datadis: EMPTY_DATADIS,
     shelly: { enabled: false },
   });
 
@@ -152,7 +166,42 @@ export const IntegrationsPage: FC = () => {
   const datadisPasswordSet = storedPasswordFrom(datadisConfig, datadisError);
   const datadisForm = useCredentialsForm(state.datadis, datadisPasswordSet);
 
-  const { configureDatadis, configureShelly } = useCommunityActions().forCommunity(activeCommunity).actions;
+  const { configureDatadis, configureShelly, enableDatadis, disableDatadis } =
+    useCommunityActions().forCommunity(activeCommunity).actions;
+
+  // The stored `enabled`, never a copy: the switch writes through its own
+  // endpoints, and the refetch after each write is what moves it (#256).
+  const datadisEnabled = datadisConfig?.enabled === true;
+  const datadisToggle = useIntegrationToggle({
+    enabled: datadisEnabled,
+    enable: enableDatadis,
+    disable: disableDatadis,
+    incompleteCode: "DATADIS_CONFIG_INCOMPLETE",
+    notFoundCode: "DATADIS_CONFIG_NOT_FOUND",
+    // Reset, not refetch: a refetch that fails keeps the stale configuration
+    // on screen, and the point is to show that there is none any more. The
+    // form forgets it too, so the create starts from nothing.
+    onNotFound: () => {
+      setState((prev) => ({ ...prev, datadis: EMPTY_DATADIS }));
+      setConfigLoaded((prev) => ({ ...prev, datadis: false }));
+      void queryClient.resetQueries({ queryKey: getGetDatadisConfigQueryKey(activeCommunityId ?? "") });
+    },
+    onError: () => setSnack(DATADIS_TOGGLE_FAILED),
+  });
+
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const baseUrlRef = useRef<HTMLInputElement>(null);
+  const datadisInputs: Record<CredentialsField, RefObject<HTMLInputElement | null>> = {
+    username: usernameRef,
+    password: passwordRef,
+    baseUrl: baseUrlRef,
+  };
+  const completeDatadis = () => {
+    const input = datadisInputs[firstMissingField(datadisToggle.missingFieldNames ?? [])].current;
+    input?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    input?.focus();
+  };
 
   // Prefill state when config data arrives
   useEffect(() => {
@@ -208,6 +257,7 @@ export const IntegrationsPage: FC = () => {
           // sending it again; the refetch then reports it as stored.
           update("datadis", { password: "" });
           datadisForm.reset();
+          datadisToggle.clearMissing();
           setSnack("Datadis guardado correctamente");
           return;
         }
@@ -236,7 +286,8 @@ export const IntegrationsPage: FC = () => {
 
   // Counted over the cards that exist, not over PROVIDERS: saying "1 de 3" to
   // someone who is shown two of them describes a page they are not looking at.
-  const activeCount = cards.filter(({ provider }) => state[provider.id].enabled).length;
+  const isEnabled: Record<string, boolean> = { datadis: datadisEnabled, shelly: state.shelly.enabled };
+  const activeCount = cards.filter(({ provider }) => isEnabled[provider.id]).length;
   // Per provider, not per page: the breadcrumb, the title and a card already
   // resolved do not wait on another card's request.
   const loadingByProvider: Record<string, boolean> = {
@@ -350,9 +401,44 @@ export const IntegrationsPage: FC = () => {
             isLoading={loadingByProvider[provider.id]}
             {...(provider.id === "datadis"
               ? {
-                  value: { ...state.datadis, passwordSet: datadisPasswordSet },
+                  value: { ...state.datadis, enabled: datadisEnabled, passwordSet: datadisPasswordSet },
                   errors: datadisForm.errors,
                   onFieldBlur: datadisForm.touch,
+                  inputRefs: datadisInputs,
+                  // Only once configured: there is nothing to turn on before.
+                  headerControl: datadisConfig ? (
+                    <Switch
+                      checked={datadisEnabled}
+                      disabled={datadisToggle.isPending}
+                      onChange={(e) => datadisToggle.request(e.target.checked)}
+                      slotProps={{ input: { role: "switch", "aria-label": "Integración con Datadis activa" } }}
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": { color: ACCENT },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: ACCENT },
+                      }}
+                    />
+                  ) : null,
+                  status: datadisConfig && (!datadisEnabled || datadisToggle.missingFields) && (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                      {!datadisEnabled && (
+                        <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+                          {DISABLED_TEXT}
+                        </Typography>
+                      )}
+                      {datadisToggle.missingFields && (
+                        <Alert
+                          severity="warning"
+                          action={
+                            <Button color="inherit" size="small" onClick={completeDatadis}>
+                              Completar configuración
+                            </Button>
+                          }
+                        >
+                          {incompleteText(datadisToggle.missingFields)}
+                        </Alert>
+                      )}
+                    </Box>
+                  ),
                   save: requestSave(save, provider.id, setPendingSaveId, datadisForm.attemptSave),
                 }
               : {
@@ -378,6 +464,24 @@ export const IntegrationsPage: FC = () => {
         <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
           La configuración de <strong>{pendingCard?.provider.name}</strong> se guardará en{" "}
           <strong>{communityLabel(communityName)}</strong> y sustituirá la que tenga ahora esta comunidad.
+        </Typography>
+      </ConfirmationModal>
+
+      <ConfirmationModal
+        isOpen={datadisToggle.requested !== null}
+        onCancel={datadisToggle.cancel}
+        onConfirm={() => void datadisToggle.confirm()}
+        title={datadisToggle.requested ? "Activar integración con Datadis" : "Desactivar integración con Datadis"}
+        confirmLabel={datadisToggle.requested ? "Activar" : "Desactivar"}
+        confirmColor={datadisToggle.requested ? "success" : "error"}
+        confirmPending={datadisToggle.isPending}
+        confirmDisabled={datadisToggle.isPending}
+        scopeHeader={<CommunityScopeHeader name={communityName} />}
+      >
+        <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+          {datadisToggle.requested ? "Se empezará a sincronizar" : "Se dejará de sincronizar"} desde Datadis el consumo de
+          los socios de <strong>{communityLabel(communityName)}</strong>.
+          {!datadisToggle.requested && " La configuración guardada se conserva."}
         </Typography>
       </ConfirmationModal>
 

@@ -18,7 +18,7 @@ export interface CredentialsFieldsValue {
   passwordSet?: boolean;
 }
 
-interface CredentialsFieldsProps {
+export interface CredentialsFieldsProps {
   value: CredentialsFieldsValue;
   onChange: (patch: Partial<Record<CredentialsField, string>>) => void;
   /** The field messages to show now. The owner decides when a rule speaks. */
