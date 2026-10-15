@@ -150,3 +150,141 @@ describe("the Datadis switch and the next save", () => {
     },
   );
 });
+
+describe("the Datadis switch", () => {
+  const DISABLED = "La integración está desactivada. Actívala para empezar a sincronizar.";
+
+  /** A stored configuration whose `enabled` the enable and disable endpoints move. */
+  function serveToggleable(enabled: boolean) {
+    let current = stored({ enabled });
+    return serve(() => current, [
+      {
+        method: "POST",
+        url: `${CONFIG_URL}/disable`,
+        respond: () => {
+          current = { ...current, enabled: false };
+          return undefined;
+        },
+      },
+      {
+        method: "POST",
+        url: `${CONFIG_URL}/enable`,
+        respond: () => {
+          current = { ...current, enabled: true };
+          return undefined;
+        },
+      },
+    ]);
+  }
+
+  it("UI-INT-012 AC1 turning it off calls disable, never the PUT, and says the integration is off", async () => {
+    const user = userEvent.setup();
+    const router = serveToggleable(true);
+    const { queryClient } = render();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    await waitFor(() => expect(datadisSwitch()).toBeChecked());
+    expect(within(datadis()).queryByText(DISABLED)).not.toBeInTheDocument();
+
+    await toggle(user, "Desactivar");
+
+    await waitFor(() => expect(datadisSwitch()).not.toBeChecked());
+    expect(within(datadis()).getByText(DISABLED)).toBeVisible();
+    expect(requestsTo(router.requests, "POST", `${CONFIG_URL}/disable`)).toHaveLength(1);
+    expect(requestsTo(router.requests, "POST", `${CONFIG_URL}/enable`)).toHaveLength(0);
+    expect(requestsTo(router.requests, "PUT", CONFIG_URL)).toEqual([]);
+    // Only this community's Datadis configuration is read back.
+    expect(invalidate.mock.calls).toEqual([[{ queryKey: [CONFIG_URL] }]]);
+  });
+
+  it("UI-INT-012 AC2 turning it on calls enable, never the PUT, and the disabled text goes", async () => {
+    const user = userEvent.setup();
+    const router = serveToggleable(false);
+    render();
+    await waitFor(() => expect(within(datadis()).getByText(DISABLED)).toBeVisible());
+    expect(datadisSwitch()).not.toBeChecked();
+
+    await toggle(user, "Activar");
+
+    await waitFor(() => expect(datadisSwitch()).toBeChecked());
+    expect(within(datadis()).queryByText(DISABLED)).not.toBeInTheDocument();
+    expect(requestsTo(router.requests, "POST", `${CONFIG_URL}/enable`)).toHaveLength(1);
+    expect(requestsTo(router.requests, "PUT", CONFIG_URL)).toEqual([]);
+  });
+
+  it("UI-INT-014 AC5 with no configuration there is no switch, the first save sends enabled: false, and the switch then arrives off", async () => {
+    const user = userEvent.setup();
+    let current: GetDatadisConfigResponse | null = null;
+    const router = serve(
+      () => {
+        if (!current) throw apiError(404, { code: "DATADIS_CONFIG_NOT_FOUND" });
+        return current;
+      },
+      [
+        {
+          method: "PUT",
+          url: CONFIG_URL,
+          respond: (config) => {
+            const sent = config.data as { enabled: boolean; username: string; baseUrl: string };
+            current = { enabled: sent.enabled, username: sent.username, baseUrl: sent.baseUrl, passwordSet: true };
+            return current;
+          },
+        },
+      ],
+    );
+    render();
+    await screen.findByRole("region", { name: "Datadis" });
+    // Settled on the 404: Guardar is offered once the read has answered.
+    await waitFor(() => expect(guardar()).toBeEnabled());
+    const usuario = within(datadis()).getByLabelText("Usuario");
+    expect(within(datadis()).queryByRole("switch")).not.toBeInTheDocument();
+    expect(within(datadis()).queryByText(DISABLED)).not.toBeInTheDocument();
+
+    await user.type(usuario, "datadis-user");
+    await user.type(within(datadis()).getByLabelText("Contraseña"), "secreta");
+    await user.type(within(datadis()).getByLabelText("URL del servicio"), "https://datadis.es");
+    await save(user);
+
+    await waitFor(() => expect(requestsTo(router.requests, "PUT", CONFIG_URL)).toHaveLength(1));
+    expect(requestsTo(router.requests, "PUT", CONFIG_URL)[0].data).toEqual({
+      enabled: false,
+      username: "datadis-user",
+      password: "secreta",
+      baseUrl: "https://datadis.es",
+    });
+    await waitFor(() => expect(datadisSwitch()).not.toBeChecked());
+    expect(within(datadis()).getByText(DISABLED)).toBeVisible();
+  });
+
+  it("UI-INT-012 a configuration deleted meanwhile (404 DATADIS_CONFIG_NOT_FOUND) is reset, and the create state shows", async () => {
+    const user = userEvent.setup();
+    let deleted = false;
+    serve(
+      () => {
+        if (deleted) throw apiError(404, { code: "DATADIS_CONFIG_NOT_FOUND" });
+        return stored({ enabled: true });
+      },
+      [
+        {
+          method: "POST",
+          url: `${CONFIG_URL}/disable`,
+          respond: () => {
+            deleted = true;
+            throw apiError(404, { code: "DATADIS_CONFIG_NOT_FOUND" });
+          },
+        },
+      ],
+    );
+    const { queryClient } = render();
+    const reset = vi.spyOn(queryClient, "resetQueries");
+    await waitFor(() => expect(datadisSwitch()).toBeChecked());
+
+    await toggle(user, "Desactivar");
+
+    await waitFor(() => expect(within(datadis()).queryByRole("switch")).not.toBeInTheDocument());
+    expect(reset).toHaveBeenCalledWith({ queryKey: [CONFIG_URL] });
+    // The create state: an empty form, not the stale configuration.
+    expect(within(datadis()).getByLabelText("Usuario")).toHaveValue("");
+    expect(within(datadis()).getByLabelText("URL del servicio")).toHaveValue("");
+    expect(within(datadis()).queryByText(DISABLED)).not.toBeInTheDocument();
+  });
+});

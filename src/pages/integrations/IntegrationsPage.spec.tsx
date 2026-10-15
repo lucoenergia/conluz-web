@@ -27,6 +27,8 @@ vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => (
   useGetShellyConfig: vi.fn(),
   useConfigureDatadis: vi.fn(),
   useConfigureShelly: vi.fn(),
+  useEnableDatadisConfig: vi.fn(),
+  useDisableDatadisConfig: vi.fn(),
 }));
 // Mocked only to prove they are never called: Huawei lives on plant detail
 // (#192), so this page reads no plant and no Huawei configuration.
@@ -42,6 +44,8 @@ import {
   getShellyConfig,
   useConfigureDatadis,
   useConfigureShelly,
+  useDisableDatadisConfig,
+  useEnableDatadisConfig,
   useGetDatadisConfig,
   useGetShellyConfig,
 } from "../../api/consumption/consumption";
@@ -52,6 +56,8 @@ const COMMUNITY_ID = "community-a";
 
 const mockConfigureDatadis = vi.fn().mockResolvedValue({});
 const mockConfigureShelly = vi.fn().mockResolvedValue({});
+const mockEnableDatadis = vi.fn().mockResolvedValue(undefined);
+const mockDisableDatadis = vi.fn().mockResolvedValue(undefined);
 
 function setup(
   options: {
@@ -91,6 +97,10 @@ beforeEach(() => {
   vi.mocked(useGetShellyConfig).mockReturnValue(query.success<typeof getShellyConfig>({ enabled: false }));
   vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureDatadis }));
   vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync: mockConfigureShelly }));
+  mockEnableDatadis.mockResolvedValue(undefined);
+  mockDisableDatadis.mockResolvedValue(undefined);
+  vi.mocked(useEnableDatadisConfig).mockReturnValue(mutation.idle({ mutateAsync: mockEnableDatadis }));
+  vi.mocked(useDisableDatadisConfig).mockReturnValue(mutation.idle({ mutateAsync: mockDisableDatadis }));
 });
 
 describe("IntegrationsPage", () => {
@@ -466,7 +476,147 @@ describe("the Datadis form", () => {
   });
 });
 
+// ── The Datadis switch (#256) ───────────────────────────────────────────────
+
+describe("the Datadis switch", () => {
+  const datadisSwitch = () => within(datadis()).getByRole("switch", { name: "Integración con Datadis activa" });
+
+  async function toggle(user: ReturnType<typeof userEvent.setup>, confirmLabel: "Activar" | "Desactivar") {
+    await user.click(datadisSwitch());
+    await user.click(within(screen.getByTestId("modal-panel")).getByRole("button", { name: confirmLabel }));
+  }
+
+  it("UI-INT-013 AC3 a 409 DATADIS_CONFIG_INCOMPLETE leaves the switch off and names the missing fields, with a way to the first", async () => {
+    const user = userEvent.setup();
+    serveDatadis({ enabled: false, passwordSet: false, username: "" });
+    mockEnableDatadis.mockRejectedValue(
+      apiError(409, { code: "DATADIS_CONFIG_INCOMPLETE", params: { missingFields: "username,password" } }),
+    );
+    setup({ community: { canManage: true } });
+
+    await toggle(user, "Activar");
+
+    const alert = await within(datadis()).findByRole("alert");
+    expect(alert).toHaveTextContent("Faltan datos para activar la integración: usuario y contraseña.");
+    expect(datadisSwitch()).not.toBeChecked();
+    expect(mockConfigureDatadis).not.toHaveBeenCalled();
+
+    await user.click(within(alert).getByRole("button", { name: "Completar configuración" }));
+
+    expect(field("Usuario")).toHaveFocus();
+  });
+
+  it("UI-INT-013 the action brings the admin to the first missing field, whichever it is", async () => {
+    const user = userEvent.setup();
+    serveDatadis({ enabled: false, passwordSet: false });
+    mockEnableDatadis.mockRejectedValue(
+      apiError(409, { code: "DATADIS_CONFIG_INCOMPLETE", params: { missingFields: "baseUrl,password" } }),
+    );
+    setup({ community: { canManage: true } });
+
+    await toggle(user, "Activar");
+    await user.click(await within(datadis()).findByRole("button", { name: "Completar configuración" }));
+
+    expect(field("URL del servicio")).toHaveFocus();
+  });
+
+  it("UI-INT-012 AC4 an enabled configuration with no password stored can still be turned off", async () => {
+    const user = userEvent.setup();
+    serveDatadis({ enabled: true, passwordSet: false });
+    setup({ community: { canManage: true } });
+
+    await toggle(user, "Desactivar");
+
+    await waitFor(() => expect(mockDisableDatadis).toHaveBeenCalledWith({ communityId: COMMUNITY_ID }));
+    expect(mockEnableDatadis).not.toHaveBeenCalled();
+    expect(mockConfigureDatadis).not.toHaveBeenCalled();
+    expect(within(datadis()).queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Error al cambiar el estado/)).not.toBeInTheDocument();
+  });
+
+  it("UI-INT-012 AC7 a second flip while the write is in flight is ignored", async () => {
+    const user = userEvent.setup();
+    mockDisableDatadis.mockReturnValue(new Promise(() => {}));
+    setup({ community: { canManage: true } });
+
+    await toggle(user, "Desactivar");
+
+    // The confirmation stays open while the write runs, and a modal hides the
+    // page behind it from the accessibility tree: reached with `hidden`.
+    const behindTheModal = within(screen.getByRole("region", { name: "Datadis", hidden: true })).getByRole("switch", {
+      name: "Integración con Datadis activa",
+      hidden: true,
+    });
+    expect(behindTheModal).toBeDisabled();
+    // fireEvent rather than userEvent, which refuses a disabled control: the
+    // guarantee is that the handlers stay unreachable even so.
+    fireEvent.click(behindTheModal);
+    fireEvent.click(within(screen.getByTestId("modal-panel")).getByRole("button", { name: "Desactivar" }));
+    expect(mockDisableDatadis).toHaveBeenCalledTimes(1);
+    expect(mockEnableDatadis).not.toHaveBeenCalled();
+  });
+
+  it("UI-INT-012 any other refusal shows the generic error", async () => {
+    const user = userEvent.setup();
+    mockDisableDatadis.mockRejectedValue(apiError(500));
+    setup({ community: { canManage: true } });
+
+    await toggle(user, "Desactivar");
+
+    expect(
+      await screen.findByText("Error al cambiar el estado de la integración con Datadis. Inténtalo de nuevo."),
+    ).toBeVisible();
+    expect(within(datadis()).queryByText(/Faltan datos/)).not.toBeInTheDocument();
+  });
+
+  it.each([true, false])(
+    "UI-INT-014 AC6 an edit of a configuration with enabled %s sends it unchanged",
+    async (enabled) => {
+      const user = userEvent.setup();
+      serveDatadis({ enabled });
+      setup({ community: { canManage: true } });
+
+      await user.clear(field("Usuario"));
+      await user.type(field("Usuario"), "otro-usuario");
+      await save(user);
+
+      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
+      expect(sentDatadis()).toEqual({ enabled, username: "otro-usuario", baseUrl: "https://datadis.example" });
+    },
+  );
+
+  it("UI-INT-014 shows the fields with the switch off, and has no enabled control of its own", () => {
+    serveDatadis({ enabled: false });
+    setup({ community: { canManage: true } });
+
+    for (const label of ["Usuario", "Contraseña", "URL del servicio"]) {
+      // Structural: jsdom applies none of MUI's Collapse styles, so a field
+      // hidden by one would still read as visible. Its state class is what
+      // says whether the fields were folded away.
+      expect(field(label).closest(".MuiCollapse-hidden")).toBeNull();
+      expect(field(label)).toBeVisible();
+    }
+    // The switch is the card's only on/off control, and it is the actions' one.
+    expect(within(datadis()).getAllByRole("switch")).toEqual([datadisSwitch()]);
+    expect(within(datadis()).queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+});
+
 describe("the other integrations", () => {
+  it("Shelly's switch still goes through its configuration write, and never through the Datadis actions", async () => {
+    const user = userEvent.setup();
+    setup({ community: { canManage: true } });
+
+    await user.click(within(cardOf("Shelly")).getByRole("checkbox"));
+    await save(user, cardOf("Shelly"));
+
+    await waitFor(() => expect(mockConfigureShelly).toHaveBeenCalledTimes(1));
+    expect(mockConfigureShelly.mock.calls[0][0]).toEqual({ communityId: COMMUNITY_ID, data: { enabled: true } });
+    expect(mockEnableDatadis).not.toHaveBeenCalled();
+    expect(mockDisableDatadis).not.toHaveBeenCalled();
+    expect(within(cardOf("Shelly")).queryByRole("switch")).not.toBeInTheDocument();
+  });
+
   it("Shelly save body is unchanged by #245", async () => {
     const user = userEvent.setup();
     setup({ community: { canManage: true } });
