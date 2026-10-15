@@ -1,22 +1,15 @@
-import { radii, shadows, colors } from "../../theme/tokens";
+import { colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { useEffect, useMemo, useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
-import { LoadingGraphCard } from "../../components/Graph/LoadingGraphCard";
-import { Graph } from "../../components/Graph";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { StatsCard } from "../../components/StatsCard";
-import { GraphFilter } from "../../components/Graph/GraphFilter";
 import { PlantDetailHeader } from "../../components/PlantDetailHeader";
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
-import { getTimeRange } from "../../utils/getTimeRange";
-import { formatKilowattHours } from "../../utils/formatEnergyFigures";
 import { formatCalendarDate, formatTimeOfDay } from "../../utils/formatCalendarDate";
 import { useErrorDispatch } from "../../context/error.context";
 import { useActiveCommunity } from "../../context/community.context";
-import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
@@ -24,6 +17,8 @@ import { PlantSummary } from "./plantDetail/PlantSummary";
 import { PlantNextStep } from "./plantDetail/PlantNextStep";
 import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
 import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
+import { PlantProductionSection } from "./plantDetail/PlantProductionSection";
+import { productionSubtitle, type DatesGranularity, type ProductionPeriodKind } from "./plantDetail/productionSubtitle";
 
 export const PlantDetailPage: FC = () => {
   const { plantId = "" } = useParams();
@@ -33,7 +28,7 @@ export const PlantDetailPage: FC = () => {
   const errorDispatch = useErrorDispatch();
 
   // Detect which filter button was clicked based on date patterns
-  const filterType = useMemo(() => {
+  const filterType = useMemo((): ProductionPeriodKind => {
     const difference = Math.abs(endDate.getTime() - startDate.getTime());
     const daysInRange = difference / (1000 * 60 * 60 * 24);
 
@@ -64,28 +59,13 @@ export const PlantDetailPage: FC = () => {
   }, [startDate, endDate]);
 
   // For "dates" filter, determine granularity based on range size
-  const datesGranularity = useMemo(() => {
+  const datesGranularity = useMemo((): DatesGranularity => {
     if (filterType !== "dates") return null;
     const days = Math.abs(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
     if (days <= 60) return "daily";
     if (days <= 730) return "monthly";
     return "yearly";
   }, [filterType, startDate, endDate]);
-
-  // Calculate time range for display and x-axis formatting
-  const timeRangeData: string = useMemo(() => {
-    const difference = Math.abs(endDate.getTime() - startDate.getTime());
-    const daysInRange = difference / (1000 * 60 * 60 * 24);
-
-    // Check if this is a single month range (28-31 days) and both dates are in the same month
-    if (daysInRange >= 27 && daysInRange <= 32 &&
-        startDate.getDate() === 1 &&
-        startDate.getMonth() !== endDate.getMonth()) {
-      return "month";
-    }
-
-    return getTimeRange(startDate, endDate);
-  }, [startDate, endDate]);
 
   const handleFilterChange = (startDate: Date, endDate: Date) => {
     setStartDate(startDate);
@@ -234,6 +214,12 @@ export const PlantDetailPage: FC = () => {
       );
   }, [error, errorDispatch]);
 
+  // A period has data when at least one of its rows carries a figure. The
+  // contract does not say how an empty period is answered, so an empty array
+  // and rows without a power both count as none; a power of 0 is a real zero
+  // and is shown (UI-PLT-005).
+  const hasProductionData = !!productionData?.some((item) => item.power !== undefined && item.power !== null);
+
   // Process production data from the API response
   const data = useMemo(() => {
     if (!productionData) return [];
@@ -378,61 +364,19 @@ export const PlantDetailPage: FC = () => {
         <PlantSummary plant={plant} integrationStatus={integrationStatus} />
       </Box>
 
-      {/* Filter Section */}
       <Box sx={sxStyles.pageContainer}>
-        <GraphFilter handleChange={handleFilterChange} />
-      </Box>
-
-      {/* Stats Card */}
-      <Box sx={sxStyles.pageContainer}>
-        <StatsCard
-          title="Producción"
-          subtitle="Producción energética de la planta"
-          variant="production"
-          icon={<SolarPowerIcon sx={{ fontSize: 32 }} />}
-          stats={[
-            {
-              label: "Producción total",
-              value: formatKilowattHours(productionMetrics.totalProduction),
-              trend: productionMetrics.productionTrend !== undefined ? Math.round(productionMetrics.productionTrend) : undefined,
-              trendLabel: "vs período anterior",
-              icon: <SolarPowerIcon sx={{ fontSize: 24 }} />,
-              color: "primary.main",
-            },
-          ]}
+        <PlantProductionSection
+          handlePeriodChange={handleFilterChange}
+          isLoading={isLoading}
+          hasError={!!error}
+          hasData={hasProductionData}
+          total={productionMetrics.totalProduction}
+          trend={productionMetrics.productionTrend}
+          values={productionValues}
+          categories={categories}
+          subtitle={productionSubtitle(filterType, datesGranularity)}
+          integrationStatus={integrationStatus}
         />
-      </Box>
-
-      {/* Production Graph */}
-      <Box sx={sxStyles.pageContainer}>
-        {!isLoading && !error && productionValues.length > 0 && (
-          <Graph
-            title="Producción"
-            subtitle={`Rango: ${timeRangeData}`}
-            values={productionValues}
-            xAxis={categories}
-            info="Producción energética de la planta durante el período seleccionado"
-            variant="production"
-          />
-        )}
-        {isLoading && <LoadingGraphCard />}
-        {!isLoading && !error && productionValues.length === 0 && (
-          <Box
-            sx={{
-              p: 4,
-              textAlign: "center",
-              bgcolor: "white",
-              borderRadius: radii.large,
-              boxShadow: shadows.soft,
-            }}
-          >
-            {/* eslint-disable-next-line no-restricted-syntax -- empty-state icon muted blue (#cbd5e1); no matching token */}
-            <SolarPowerIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 2 }} />
-            <Box sx={{ typography: "h6", color: "text.secondary" }}>
-              No hay datos de producción para el período seleccionado
-            </Box>
-          </Box>
-        )}
       </Box>
 
       {plant?.capabilities.canListSharingAgreements && (

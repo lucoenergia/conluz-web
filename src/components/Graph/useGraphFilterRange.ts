@@ -31,6 +31,12 @@ export function getStartDateViews(range: GrapFilterRange): DateView[] {
   }
 }
 
+const STEP_UNITS: Partial<Record<GrapFilterRange, "day" | "month" | "year">> = {
+  day: "day",
+  month: "month",
+  year: "year",
+};
+
 /**
  * The period a graph filter selects: the range kind, the dates the user picked,
  * and the interval those amount to, reported through `handleChange` whenever
@@ -63,7 +69,27 @@ export function useGraphFilterRange(handleChange: (startDate: Date, endDate: Dat
   }, [range, startDate, endDate]);
 
 
-  return { range, setRange, startDate, setStartDate, endDate, setEndDate, startDateViews };
+  // One period back or forward, for a range that is a single calendar unit.
+  // Never into a period that has not started yet.
+  const stepUnit = STEP_UNITS[range];
+  const canStepForward = !!stepUnit && !startDate.add(1, stepUnit).startOf(stepUnit).isAfter(dayjs());
+  const step = (direction: 1 | -1) => {
+    if (!stepUnit || (direction === 1 && !canStepForward)) return;
+    setStartDate(startDate.add(direction, stepUnit));
+  };
+
+  return {
+    range,
+    setRange,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    startDateViews,
+    stepUnit,
+    step,
+    canStepForward,
+  };
 }
 
 export type GraphFilterRangeState = ReturnType<typeof useGraphFilterRange>;

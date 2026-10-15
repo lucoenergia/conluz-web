@@ -1,10 +1,12 @@
 import type { FC } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
+import CableRoundedIcon from "@mui/icons-material/CableRounded";
 import type { PlantResponse } from "../../api/models";
 import { sxStyles } from "../../theme/sx";
 import { usePlantActions } from "../../hooks/actions";
 import { HuaweiIntegrationCard } from "./HuaweiIntegrationCard";
-import { PLANT_SECTION_IDS, sectionHeadingId, sectionScrollMarginSx } from "./plantDetail/plantSections";
+import { PlantSection } from "./plantDetail/PlantSection";
+import { PLANT_SECTION_IDS } from "./plantDetail/plantSections";
 
 /**
  * The integrations of the plant on screen: today, Huawei (#192).
@@ -13,36 +15,30 @@ import { PLANT_SECTION_IDS, sectionHeadingId, sectionScrollMarginSx } from "./pl
  * the plant's own `canManage` allows it, and without it nothing renders -- no
  * placeholder, no disabled control, and no read of the configuration
  * (UI-INT-006). The community's capabilities play no part.
+ *
+ * The plant summary and the next step jump here, so the section carries their
+ * anchor and its heading takes focus after the jump.
  */
 export const PlantIntegrationsSection: FC<{ plant: PlantResponse | undefined }> = ({ plant }) => {
-  const titleId = sectionHeadingId(PLANT_SECTION_IDS.integrations);
   const { configureHuawei, enableHuawei, disableHuawei } = usePlantActions().forPlant(plant).actions;
 
   if (!plant || !configureHuawei || !enableHuawei || !disableHuawei) return null;
 
   return (
-    <Box
-      component="section"
-      id={PLANT_SECTION_IDS.integrations}
-      aria-labelledby={titleId}
-      sx={[{ ...sxStyles.pageContainer, display: "flex", flexDirection: "column", gap: 2 }, sectionScrollMarginSx]}
-    >
-      {/* Focused from code after a jump here from the plant summary. */}
-      <Typography
-        id={titleId}
-        component="h2"
-        variant="h6"
-        tabIndex={-1}
-        sx={{ "&:focus:not(:focus-visible)": { outline: "none" } }}
+    <Box sx={sxStyles.pageContainer}>
+      <PlantSection
+        id={PLANT_SECTION_IDS.integrations}
+        title="Integraciones"
+        description="De dónde llegan los datos de producción de esta planta."
+        icon={CableRoundedIcon}
       >
-        Integraciones
-      </Typography>
-      <HuaweiIntegrationCard
-        plantId={plant.id}
-        configure={configureHuawei}
-        enable={enableHuawei}
-        disable={disableHuawei}
-      />
+        <HuaweiIntegrationCard
+          plantId={plant.id}
+          configure={configureHuawei}
+          enable={enableHuawei}
+          disable={disableHuawei}
+        />
+      </PlantSection>
     </Box>
   );
 };
