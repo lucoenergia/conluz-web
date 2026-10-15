@@ -23,6 +23,7 @@ import {
   TOGGLE_FAILED_TEXT,
   incompleteText,
   isNotFound,
+  retryUnlessNotFound,
 } from "./huaweiConfig";
 
 export interface HuaweiIntegrationCardProps {
@@ -33,13 +34,6 @@ export interface HuaweiIntegrationCardProps {
   enable: Action<[], HuaweiWriteResult>;
   disable: Action<[], HuaweiWriteResult>;
 }
-
-/**
- * A 404 is "not configured yet", the normal state of a new plant, so it is
- * answered at once rather than retried like a failure. Anything else keeps
- * the app's default of three attempts.
- */
-const retryUnlessNotFound = (failureCount: number, error: unknown) => !isNotFound(error) && failureCount < 3;
 
 const Fact: FC<{ label: string; value: string }> = ({ label, value }) => (
   <Box sx={{ minWidth: 0 }}>

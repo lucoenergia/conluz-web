@@ -1,9 +1,10 @@
-import { useId, type FC } from "react";
+import type { FC } from "react";
 import { Box, Typography } from "@mui/material";
 import type { PlantResponse } from "../../api/models";
 import { sxStyles } from "../../theme/sx";
 import { usePlantActions } from "../../hooks/actions";
 import { HuaweiIntegrationCard } from "./HuaweiIntegrationCard";
+import { PLANT_SECTION_IDS, sectionHeadingId, sectionScrollMarginSx } from "./plantDetail/plantSections";
 
 /**
  * The integrations of the plant on screen: today, Huawei (#192).
@@ -14,7 +15,7 @@ import { HuaweiIntegrationCard } from "./HuaweiIntegrationCard";
  * (UI-INT-006). The community's capabilities play no part.
  */
 export const PlantIntegrationsSection: FC<{ plant: PlantResponse | undefined }> = ({ plant }) => {
-  const titleId = useId();
+  const titleId = sectionHeadingId(PLANT_SECTION_IDS.integrations);
   const { configureHuawei, enableHuawei, disableHuawei } = usePlantActions().forPlant(plant).actions;
 
   if (!plant || !configureHuawei || !enableHuawei || !disableHuawei) return null;
@@ -22,10 +23,18 @@ export const PlantIntegrationsSection: FC<{ plant: PlantResponse | undefined }> 
   return (
     <Box
       component="section"
+      id={PLANT_SECTION_IDS.integrations}
       aria-labelledby={titleId}
-      sx={{ ...sxStyles.pageContainer, display: "flex", flexDirection: "column", gap: 2 }}
+      sx={[{ ...sxStyles.pageContainer, display: "flex", flexDirection: "column", gap: 2 }, sectionScrollMarginSx]}
     >
-      <Typography id={titleId} component="h2" variant="h6">
+      {/* Focused from code after a jump here from the plant summary. */}
+      <Typography
+        id={titleId}
+        component="h2"
+        variant="h6"
+        tabIndex={-1}
+        sx={{ "&:focus:not(:focus-visible)": { outline: "none" } }}
+      >
         Integraciones
       </Typography>
       <HuaweiIntegrationCard

@@ -9,13 +9,14 @@ export interface PlantSharingAgreements {
 }
 
 /**
- * Every sharing agreement of one plant, for the management home (#198): one
- * request per plant.
+ * Every sharing agreement of one plant, for the management home (#198) and the
+ * plant detail (#260): one request per plant.
  *
  * GET /plants/{plantId}/sharing-agreements is keyed by the plant alone, which
  * is why the bare hook is restricted. Here the plant is not an id from the URL
- * but a row of GET /communities/{communityId}/plants for the active community,
- * so it belongs to that community by construction, and the keyed Outlet
+ * but a plant already known to belong to the active community: a row of
+ * GET /communities/{communityId}/plants, or the plant usePlantInActiveCommunity
+ * hands over, which withholds one from another community. The keyed Outlet
  * remounts the view -- and so this read -- when the community changes.
  */
 export function usePlantSharingAgreements(plant: PlantResponse): PlantSharingAgreements {

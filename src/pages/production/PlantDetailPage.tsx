@@ -20,6 +20,9 @@ import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
+import { PlantSummary } from "./plantDetail/PlantSummary";
+import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
+import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
 
 export const PlantDetailPage: FC = () => {
   const { plantId = "" } = useParams();
@@ -112,6 +115,7 @@ export const PlantDetailPage: FC = () => {
   // is requested before the plant is known, or the first answer would be the
   // whole community's.
   const supplyId = plant?.supply.id;
+  const integrationStatus = usePlantIntegrationStatus(plant);
   const canQueryProduction = !!activeCommunityId && !!supplyId;
 
     // Fetch hourly production data when DAY filter is selected
@@ -362,6 +366,11 @@ export const PlantDetailPage: FC = () => {
         />
       </Box>
 
+      {/* What the caller may look into: renders nothing when that is nothing. */}
+      <Box sx={{ ...sxStyles.pageContainer, "&:empty": { display: "none" } }}>
+        <PlantSummary plant={plant} integrationStatus={integrationStatus} />
+      </Box>
+
       {/* Filter Section */}
       <Box sx={sxStyles.pageContainer}>
         <GraphFilter handleChange={handleFilterChange} />
@@ -418,6 +427,12 @@ export const PlantDetailPage: FC = () => {
           </Box>
         )}
       </Box>
+
+      {plant?.capabilities.canListSharingAgreements && (
+        <Box sx={sxStyles.pageContainer}>
+          <PlantAgreementsSection plant={plant} />
+        </Box>
+      )}
 
       {/* Integrations: only for a caller who may manage this plant. No wrapper:
           a caller without canManage must not get an empty box and its gap. */}

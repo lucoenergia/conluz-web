@@ -18,6 +18,13 @@ export function isNotFound(error: unknown): boolean {
   return (error as { response?: { status?: number } } | null | undefined)?.response?.status === 404;
 }
 
+/**
+ * A 404 is "not configured yet", the normal state of a new plant, so it is
+ * answered at once rather than retried like a failure. Anything else keeps
+ * the app's default of three attempts.
+ */
+export const retryUnlessNotFound = (failureCount: number, error: unknown) => !isNotFound(error) && failureCount < 3;
+
 export const NOT_CONFIGURED_TEXT = "Esta planta aún no tiene configurada la integración con Huawei.";
 export const LOAD_FAILED_TEXT = "No se pudo cargar la configuración de Huawei.";
 export const SAVED_TEXT = "Configuración de Huawei guardada";
