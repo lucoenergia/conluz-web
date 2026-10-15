@@ -258,22 +258,22 @@ describe("the Datadis form", () => {
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
 
-    it("UI-INT-003 a failed read other than 404 leaves the stored password unknown: no rule, no hint, the backend decides", async () => {
+    it("UI-INT-003 a failed read other than 404 offers a retry and no form: nothing about what is stored is known", async () => {
       const user = userEvent.setup();
       failDatadisRead(500);
       setup({ community: { canManage: true } });
 
-      // Today's handling of a failed read is kept: the card renders, empty and
-      // editable, with no message of its own.
-      expect(field("Usuario")).toHaveValue("");
-      expect(field("Contraseña")).not.toHaveAccessibleDescription();
+      // An edit must send the stored `enabled`, unknown here, so no save is
+      // offered at all (#256). Nothing claims whether a password is stored.
+      expect(within(datadis()).getByText("No se pudo cargar la configuración de Datadis.")).toBeVisible();
+      expect(within(datadis()).queryByLabelText("Usuario")).not.toBeInTheDocument();
+      expect(within(datadis()).queryByLabelText("Contraseña")).not.toBeInTheDocument();
+      expect(within(datadis()).queryByRole("switch")).not.toBeInTheDocument();
+      expect(within(datadis()).queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
 
-      await fillRequired(user);
-      await save(user);
+      await user.click(within(datadis()).getByRole("button", { name: "Reintentar" }));
 
-      await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
-      expect(sentDatadis()).not.toHaveProperty("password");
-      expect(within(datadis()).queryByText("Introduce la contraseña.")).not.toBeInTheDocument();
+      expect(vi.mocked(useGetDatadisConfig).mock.results.at(-1)?.value.refetch).toHaveBeenCalled();
     });
 
     it("UI-INT-001 says that an empty field keeps the stored password, as visible text, only when one is stored", () => {
@@ -380,20 +380,15 @@ describe("the Datadis form", () => {
       expect(field("Contraseña")).toBeValid();
     });
 
-    it("UI-INT-002 opens the fields when a blocked save happens with the switch off", async () => {
+    it("UI-INT-002 a blocked save with the switch off shows its message on the field, and sends nothing", async () => {
       const user = userEvent.setup();
       serveDatadis({ enabled: false, passwordSet: false });
       setup({ community: { canManage: true } });
 
-      // Structural: jsdom applies none of the Collapse's styles, so whether it
-      // is open is only readable from its state class.
-      const fields = () => field("Contraseña").closest(".MuiCollapse-root");
-      expect(fields()).toHaveClass("MuiCollapse-hidden");
-
       await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
 
-      await waitFor(() => expect(fields()).toHaveClass("MuiCollapse-entered"));
       expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
+      expect(confirmation()).not.toBeInTheDocument();
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
   });

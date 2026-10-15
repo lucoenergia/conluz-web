@@ -16,6 +16,7 @@ import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResour
 import { useCommunityActions, type Action, type MaybeAction } from "../../hooks/actions";
 import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
+import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { useCredentialsForm } from "../../hooks/useCredentialsForm";
 import { useIntegrationToggle } from "../../hooks/useIntegrationToggle";
@@ -38,7 +39,9 @@ import { DISABLED_TEXT, incompleteText } from "../../utils/integrationStatus";
 const CONFIG_STALE_TIME = 5 * 60 * 1000;
 
 interface IntegrationState {
-  datadis: { enabled: boolean; username: string; password: string; baseUrl: string };
+  // No `enabled`: Datadis is turned on and off through its own endpoints, and
+  // the PUT sends what is stored (#256).
+  datadis: { username: string; password: string; baseUrl: string };
   shelly: { enabled: boolean };
 }
 
@@ -71,7 +74,9 @@ const SAVE_FAILED = "Error al guardar la configuración";
 // "Error" is what turns the snack red.
 const DATADIS_TOGGLE_FAILED = "Error al cambiar el estado de la integración con Datadis. Inténtalo de nuevo.";
 
-const EMPTY_DATADIS: IntegrationState["datadis"] = { enabled: false, username: "", password: "", baseUrl: "" };
+const EMPTY_DATADIS: IntegrationState["datadis"] = { username: "", password: "", baseUrl: "" };
+
+const DATADIS_LOAD_FAILED = "No se pudo cargar la configuración de Datadis.";
 
 /** A refused enable's first missing field the form has, or the first field when it names none. */
 const firstMissingField = (names: string[]): CredentialsField =>
@@ -156,7 +161,12 @@ export const IntegrationsPage: FC = () => {
     activeCommunityId ?? "",
     { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
-  const { data: datadisConfig, error: datadisError, isLoading: datadisLoading } = useGetDatadisConfig(
+  const {
+    data: datadisConfig,
+    error: datadisError,
+    isLoading: datadisLoading,
+    refetch: refetchDatadis,
+  } = useGetDatadisConfig(
     activeCommunityId ?? "",
     { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
@@ -164,14 +174,22 @@ export const IntegrationsPage: FC = () => {
   // Live from the read, not copied into state: the refetch after a save is what
   // turns "none stored" into "stored".
   const datadisPasswordSet = storedPasswordFrom(datadisConfig, datadisError);
-  const datadisForm = useCredentialsForm(state.datadis, datadisPasswordSet);
+  // The stored `enabled`, never a copy: the switch writes through its own
+  // endpoints, and the refetch after each write is what moves it (#256). A
+  // GET 404 is "none stored", so a create sends `false`.
+  const datadisEnabled = datadisConfig?.enabled === true;
+  const datadisValues = { ...state.datadis, enabled: datadisEnabled };
+  const datadisForm = useCredentialsForm(datadisValues, datadisPasswordSet);
+  // Anything but a 404 says nothing about what is stored, `enabled` included,
+  // so there is no form to offer: a save would have to guess it.
+  const datadisReadFailed =
+    !datadisConfig &&
+    !!datadisError &&
+    (datadisError as { response?: { status?: number } }).response?.status !== 404;
 
   const { configureDatadis, configureShelly, enableDatadis, disableDatadis } =
     useCommunityActions().forCommunity(activeCommunity).actions;
 
-  // The stored `enabled`, never a copy: the switch writes through its own
-  // endpoints, and the refetch after each write is what moves it (#256).
-  const datadisEnabled = datadisConfig?.enabled === true;
   const datadisToggle = useIntegrationToggle({
     enabled: datadisEnabled,
     enable: enableDatadis,
@@ -220,7 +238,6 @@ export const IntegrationsPage: FC = () => {
       setState(prev => ({
         ...prev,
         datadis: {
-          enabled: datadisConfig.enabled ?? false,
           username: datadisConfig.username ?? "",
           password: "", // Never prefill - security
           baseUrl: datadisConfig.baseUrl || "",
@@ -251,7 +268,7 @@ export const IntegrationsPage: FC = () => {
       isPending: configureDatadis.isPending,
       run: async () => {
         const sentPassword = state.datadis.password;
-        const result = await configureDatadis.run(buildCredentialsBody(state.datadis));
+        const result = await configureDatadis.run(buildCredentialsBody(datadisValues));
         if ("ok" in result) {
           // Emptied, so the next save keeps what was just stored instead of
           // sending it again; the refetch then reports it as stored.
@@ -401,7 +418,10 @@ export const IntegrationsPage: FC = () => {
             isLoading={loadingByProvider[provider.id]}
             {...(provider.id === "datadis"
               ? {
-                  value: { ...state.datadis, enabled: datadisEnabled, passwordSet: datadisPasswordSet },
+                  value: { ...datadisValues, passwordSet: datadisPasswordSet },
+                  loadFailure: datadisReadFailed && (
+                    <LoadErrorAlert message={DATADIS_LOAD_FAILED} onRetry={() => void refetchDatadis()} />
+                  ),
                   errors: datadisForm.errors,
                   onFieldBlur: datadisForm.touch,
                   inputRefs: datadisInputs,
