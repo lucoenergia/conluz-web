@@ -107,6 +107,13 @@ export const PlantDetailPage: FC = () => {
   const { plant, isLoading: plantLoading, isNotFound: isPlantNotFound, error: plantError } =
     usePlantInActiveCommunity(plantId);
 
+  // The community endpoints filtered by the plant's supply: a supply backs at
+  // most one plant, so this is the plant's own production (UI-PLT-001). Nothing
+  // is requested before the plant is known, or the first answer would be the
+  // whole community's.
+  const supplyId = plant?.supply.id;
+  const canQueryProduction = !!activeCommunityId && !!supplyId;
+
     // Fetch hourly production data when DAY filter is selected
   const {
     data: hourlyProductionData,
@@ -114,8 +121,8 @@ export const PlantDetailPage: FC = () => {
     error: hourlyProductionError,
   } = useGetHourlyProduction(
     activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!activeCommunityId && filterType === "day" } },
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
+    { query: { enabled: canQueryProduction && filterType === "day" } },
   );
 
   // Fetch daily production data for month filter and dates filter with daily granularity
@@ -125,8 +132,8 @@ export const PlantDetailPage: FC = () => {
     error: dailyProductionError,
   } = useGetDailyProduction(
     activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString()},
-    { query: { enabled: !!activeCommunityId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
+    { query: { enabled: canQueryProduction && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
   );
 
   // Fetch monthly production data for year filter and dates filter with monthly granularity
@@ -136,8 +143,8 @@ export const PlantDetailPage: FC = () => {
     error: monthlyProductionError,
   } = useGetMonthlyProduction(
     activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!activeCommunityId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
+    { query: { enabled: canQueryProduction && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
   );
 
   // Fetch yearly production data for totals filter and dates filter with yearly granularity
@@ -147,8 +154,8 @@ export const PlantDetailPage: FC = () => {
     error: yearlyProductionError,
   } = useGetYearlyProduction(
     activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!activeCommunityId && (filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly")) } },
+    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
+    { query: { enabled: canQueryProduction && (filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly")) } },
   );
 
   // Fetch previous period hourly production data when DAY filter is selected
@@ -156,8 +163,8 @@ export const PlantDetailPage: FC = () => {
     data: prevHourlyProductionData,
   } = useGetHourlyProduction(
     activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
-    { query: { enabled: !!activeCommunityId && filterType === "day" } },
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
+    { query: { enabled: canQueryProduction && filterType === "day" } },
   );
 
   // Fetch previous period daily production data for month filter and dates filter with daily granularity
@@ -165,8 +172,8 @@ export const PlantDetailPage: FC = () => {
     data: prevDailyProductionData,
   } = useGetDailyProduction(
     activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString()},
-    { query: { enabled: !!activeCommunityId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
+    { query: { enabled: canQueryProduction && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
   );
 
   // Fetch previous period monthly production data
@@ -174,8 +181,8 @@ export const PlantDetailPage: FC = () => {
     data: prevMonthlyProductionData,
   } = useGetMonthlyProduction(
     activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
-    { query: { enabled: !!activeCommunityId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
+    { query: { enabled: canQueryProduction && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
   );
 
   // No meaningful previous period for totals (multi-year range)
@@ -183,7 +190,7 @@ export const PlantDetailPage: FC = () => {
     data: prevYearlyProductionData,
   } = useGetYearlyProduction(
     activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString() },
+    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
     { query: { enabled: false } },
   );
 
@@ -306,9 +313,8 @@ export const PlantDetailPage: FC = () => {
     };
   }, [productionData, prevProductionData]);
 
-  // The production charts are community-scoped and re-key on their own; only the
-  // plant identity is pinned to the URL. Rendering both would put one
-  // community's plant above another community's whole-community totals.
+  // A plant outside the active community is withheld, so its supply is never
+  // requested against the active community's production either.
   if (isPlantNotFound) {
     return (
       <Box sx={sxStyles.pageContainer}>
