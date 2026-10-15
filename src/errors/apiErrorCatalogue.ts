@@ -1,6 +1,7 @@
 import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/models";
 import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
+import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
 
 /**
  * code -> Spanish message template. Templates may reference `{paramName}`
@@ -46,6 +47,10 @@ import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 type ApiErrorTemplate = string | ((params: Record<string, string> | undefined) => string);
 
 /** `full` runs only when params.cups is present and non-empty; otherwise `generic`. */
+/** A refused enable, naming the fields in `params.missingFields`, or none when it is absent. */
+const incompleteConfig: ApiErrorTemplate = (params) =>
+  incompleteText(labelsForMissingFields(missingFieldNamesFrom(params?.missingFields)));
+
 function withOptionalCups(full: (cups: string) => string, generic: string): ApiErrorTemplate {
   return (params) => {
     const cups = params?.cups;
@@ -155,6 +160,12 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // The form on plant detail shows it on the password field (#192).
   HUAWEI_CONFIG_PASSWORD_REQUIRED:
     "No hay ninguna contraseña guardada. Introdúcela para guardar la configuración.",
+
+  // An enable refused because the configuration lacks data
+  // (lucoenergia/conluz#414). The cards word it the same way through
+  // incompleteText, with an action to complete it (#192, #256).
+  DATADIS_CONFIG_INCOMPLETE: incompleteConfig,
+  HUAWEI_CONFIG_INCOMPLETE: incompleteConfig,
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

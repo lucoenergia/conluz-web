@@ -18,7 +18,7 @@
  */
 export { type Action, type MaybeAction, type ActionBundle, grant, ungated } from "./action";
 
-export { useCommunityActions, type ConfigureDatadisResult } from "./useCommunityActions";
+export { useCommunityActions, type ConfigureDatadisResult, type DatadisToggleResult } from "./useCommunityActions";
 export { useMembershipActions } from "./useMembershipActions";
 export { usePlantActions, type HuaweiWriteResult } from "./usePlantActions";
 export { usePlatformActions } from "./usePlatformActions";
