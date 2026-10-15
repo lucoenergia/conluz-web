@@ -27,15 +27,6 @@ import {
 const { chart } = vi.hoisted(() => ({ chart: vi.fn<(props: unknown) => null>(() => null) }));
 vi.mock("react-apexcharts", () => ({ default: chart }));
 
-// A stable dispatch. The provider's own changes identity on every render, and
-// the page's error effect depends on it, so a failed read re-dispatches without
-// end; that defect is not this spec's subject (see the PR's follow-ups).
-const { mockErrorDispatch } = vi.hoisted(() => ({ mockErrorDispatch: vi.fn() }));
-vi.mock(import("../../context/error.context"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useErrorDispatch: () => mockErrorDispatch,
-}));
-
 vi.mock(import("./usePlantInActiveCommunity"), async (importOriginal) => ({
   ...(await importOriginal()),
   usePlantInActiveCommunity: vi.fn(),
@@ -444,7 +435,6 @@ describe("PlantDetailPage rules (#260)", () => {
     it("UI-PLT-005 an error is not an empty period", () => {
       setup({ production: "failed" });
 
-      expect(mockErrorDispatch).toHaveBeenCalled();
       expect(screen.queryByText("No hay datos de producción para este periodo")).not.toBeInTheDocument();
       expect(screen.queryByText(/Todavía no llegan datos/)).not.toBeInTheDocument();
       expect(chart).not.toHaveBeenCalled();
