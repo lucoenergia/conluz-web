@@ -49,7 +49,10 @@
         "useCreateMembership",
         "useDeleteMembership",
         "useRegisterMember",
+        "useResendInvitation",
+        "useRevokeInvitation",
         "useSendInvitation",
+        "useSendInvitations",
         "useSetMembershipInvestment",
         "useUpdateMembershipRole"
       ]
