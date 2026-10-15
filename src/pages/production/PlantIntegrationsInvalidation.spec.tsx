@@ -8,7 +8,8 @@ import { apiError } from "../../test/apiError";
 import { buildPlant, buildPlantCapabilities } from "../../test/fixtures";
 import { getGetHuaweiConfigQueryKey } from "../../api/production/production";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
-import { DISABLED_TEXT, NOT_CONFIGURED_TEXT, type StoredHuaweiConfig } from "./huaweiConfig";
+import { NOT_CONFIGURED_TEXT, type StoredHuaweiConfig } from "./huaweiConfig";
+import { DISABLED_TEXT } from "../../utils/integrationStatus";
 
 // Tier 2: the real generated hooks against a real QueryClient, with only the
 // HTTP layer replaced. The subject is which plant each request names and which

@@ -14,14 +14,13 @@ import { useIntegrationToggle } from "../../hooks/useIntegrationToggle";
 import { storedPasswordFrom } from "../../utils/integrationCredentials";
 import { colors, radii, shadows } from "../../theme/tokens";
 import { HuaweiConfigDialog } from "./HuaweiConfigDialog";
+import { DISABLED_TEXT, incompleteText } from "../../utils/integrationStatus";
 import {
-  DISABLED_TEXT,
   HUAWEI_ACCENT,
   LOAD_FAILED_TEXT,
   NOT_CONFIGURED_TEXT,
   SAVED_TEXT,
   TOGGLE_FAILED_TEXT,
-  incompleteText,
   isNotFound,
   type StoredHuaweiConfig,
 } from "./huaweiConfig";

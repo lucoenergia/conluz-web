@@ -33,8 +33,8 @@ import {
   useGetHuaweiConfig,
 } from "../../api/production/production";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
+import { DISABLED_TEXT } from "../../utils/integrationStatus";
 import {
-  DISABLED_TEXT,
   LOAD_FAILED_TEXT,
   NOT_CONFIGURED_TEXT,
   SAVE_FAILED_MESSAGE,

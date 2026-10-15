@@ -1,4 +1,4 @@
-import type { RestError, RestErrorDetailCode } from "../api/models";
+import type { RestErrorDetailCode } from "../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../errors/apiErrorCatalogue";
 
 /**
@@ -99,35 +99,4 @@ export function storedPasswordFrom(
 ): boolean | undefined {
   if (config) return config.passwordSet;
   return (error as { response?: { status?: number } } | null | undefined)?.response?.status === 404 ? false : undefined;
-}
-
-/** The Spanish name of each credentials field, as a refusal lists them. */
-export const MISSING_FIELD_LABELS: Record<CredentialsField, string> = {
-  username: "usuario",
-  baseUrl: "URL del servicio",
-  password: "contraseña",
-};
-
-/**
- * The fields a refused enable says are missing, in Spanish and in the order the
- * backend lists them.
- *
- * Read from the first error's `params.missingFields`, a comma-separated list of
- * field names (`"username,password"`), as the enable endpoints document their
- * `*_CONFIG_INCOMPLETE` refusal. A name with no label is shown as sent rather
- * than dropped.
- */
-export function missingFieldLabels(error: unknown): string[] {
-  const raw = (error as { response?: { data?: RestError } } | null | undefined)?.response?.data?.errors?.[0]?.params
-    ?.missingFields;
-  return (raw ?? "")
-    .split(",")
-    .map((field) => field.trim())
-    .filter(Boolean)
-    .map((field) => MISSING_FIELD_LABELS[field as CredentialsField] ?? field);
-}
-
-/** "usuario", "usuario y contraseña", "usuario, URL del servicio y contraseña". */
-export function formatFieldList(labels: string[]): string {
-  return new Intl.ListFormat("es", { type: "conjunction" }).format(labels);
 }

@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { RestErrorDetailCode } from "../api/models";
 import type { Action } from "./actions";
 import { getFirstApiErrorCode } from "../errors/apiErrorCatalogue";
-import { missingFieldLabels } from "../utils/integrationCredentials";
+import { labelsForMissingFields, missingFieldNames } from "../utils/integrationStatus";
 
 /** An enable or disable write: success, or the refusal itself. */
 export type IntegrationToggleResult = { ok: true } | { error: unknown };
@@ -41,6 +41,11 @@ export interface IntegrationToggle {
    * switch stays at the stored `enabled`, which a refused enable did not change.
    */
   missingFields: string[] | null;
+  /**
+   * The same fields by name (`username`, `baseUrl`, `password`), in the order
+   * the backend lists them, so a screen can bring the admin to the first one.
+   */
+  missingFieldNames: string[] | null;
   /** Forget a refused enable, once the configuration has been completed. */
   clearMissing: () => void;
 }
@@ -65,7 +70,7 @@ export function useIntegrationToggle({
 }: IntegrationToggleOptions): IntegrationToggle {
   const [requested, setRequested] = useState<boolean | null>(null);
   const [running, setRunning] = useState(false);
-  const [missingFields, setMissingFields] = useState<string[] | null>(null);
+  const [missingNames, setMissingNames] = useState<string[] | null>(null);
   // State lags a render behind: a second flip in the same tick would still
   // read `running` as false. The ref is what refuses it.
   const inFlight = useRef(false);
@@ -87,11 +92,11 @@ export function useIntegrationToggle({
     try {
       const result = await action.run();
       if ("ok" in result) {
-        setMissingFields(null);
+        setMissingNames(null);
         return;
       }
       const code = getFirstApiErrorCode(result.error);
-      if (code === incompleteCode) setMissingFields(missingFieldLabels(result.error));
+      if (code === incompleteCode) setMissingNames(missingFieldNames(result.error));
       else if (code === notFoundCode) onNotFound();
       else onError();
     } finally {
@@ -111,7 +116,8 @@ export function useIntegrationToggle({
     confirm,
     cancel,
     isPending,
-    missingFields,
-    clearMissing: () => setMissingFields(null),
+    missingFields: missingNames && labelsForMissingFields(missingNames),
+    missingFieldNames: missingNames,
+    clearMissing: () => setMissingNames(null),
   };
 }
