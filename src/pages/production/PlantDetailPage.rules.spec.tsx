@@ -457,7 +457,7 @@ describe("PlantDetailPage rules (#260)", () => {
 
       const status = within(summary()!).getByText(text);
       const declared = declaredStyle(status);
-      expect(declared).toMatchObject({ color: colors.secondary.main, "background-color": colors.background.surface });
+      expect(declared).toMatchObject({ color: colors.secondary.main });
       const alertTones = [colors.error.main, colors.error.surface, colors.error.vivid, colors.warning.main, colors.warning.surface];
       expect(alertTones).not.toContain(declared.color);
       expect(alertTones).not.toContain(declared["background-color"]);

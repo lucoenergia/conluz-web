@@ -1,4 +1,4 @@
-import { useMemo, type FC } from "react";
+import { Fragment, useMemo, type FC } from "react";
 import { Box, ButtonBase, Typography, type SvgIconProps } from "@mui/material";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import type { PlantResponse } from "../../../api/models";
@@ -14,12 +14,12 @@ import type { PlantIntegrationStatus } from "./usePlantIntegrationStatus";
 type StatusTone = "positive" | "neutral";
 
 /**
- * A status pill. Neither tone is an alert: a plant that is not set up yet is in
- * a normal state, and alert colour is kept for failures (UI-PLT-006).
+ * The colour of a status. Neither tone is an alert: a plant that is not set up
+ * yet is in a normal state, and alert colour is kept for failures (UI-PLT-006).
  */
-const TONE_SX: Record<StatusTone, object> = {
-  positive: { bgcolor: colors.success.surface, color: colors.success.main },
-  neutral: { bgcolor: colors.background.surface, color: colors.secondary.main, border: `1px solid ${colors.border.light}` },
+const TONE_COLOR: Record<StatusTone, string> = {
+  positive: colors.success.main,
+  neutral: colors.secondary.main,
 };
 
 interface SummaryRowProps {
@@ -40,9 +40,9 @@ const SummaryRow: FC<SummaryRowProps> = ({ label, icon: Icon, status, target }) 
       sx={{
         width: "100%",
         minHeight: 56,
-        px: 1,
+        px: 0,
         py: 1.25,
-        gap: 1.5,
+        gap: 1,
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
@@ -68,23 +68,25 @@ const SummaryRow: FC<SummaryRowProps> = ({ label, icon: Icon, status, target }) 
       >
         <Icon fontSize="small" />
       </Box>
-      <Typography component="span" sx={{ flex: 1, minWidth: 0, fontWeight: 600, color: colors.text.primary }}>
+      {/* The label keeps its line; the status wraps between its parts instead,
+          never narrower than its longest part. Both labels fit a 390px screen. */}
+      <Typography component="span" sx={{ flex: "1 0 auto", fontSize: fontSizes.lg, fontWeight: 600, color: colors.text.primary }}>
         {label}
       </Typography>
       {status && (
         <Typography
           component="span"
-          sx={{
-            px: 1.25,
-            py: 0.25,
-            borderRadius: radii.large,
-            fontSize: fontSizes.sm,
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-            ...TONE_SX[status.tone],
-          }}
+          sx={{ flex: "0 1 auto", minWidth: "min-content", textAlign: "right", fontSize: fontSizes.sm }}
         >
-          {status.text}
+          {/* Wraps only between its parts ("1 vigente ·" / "1 borrador"), never inside one. */}
+          {status.text.split(" · ").map((part, index, parts) => (
+            <Fragment key={part}>
+              {index > 0 && " "}
+              <Box component="span" sx={{ whiteSpace: "nowrap", color: TONE_COLOR[status.tone] }}>
+                {index < parts.length - 1 ? `${part} ·` : part}
+              </Box>
+            </Fragment>
+          ))}
         </Typography>
       )}
       <ChevronRightRoundedIcon aria-hidden fontSize="small" sx={{ color: colors.text.muted, flexShrink: 0 }} />
