@@ -22,3 +22,16 @@ export const InAPanel = () => (
     </Mui.Paper>
   </Mui.Box>
 );
+
+/** A section the page jumps to: the title carries `headingId` and takes focus after the jump. */
+export const AsJumpTarget = () => (
+  <Mui.Box sx={{ maxWidth: 640 }}>
+    <Mui.Paper elevation={0} sx={sxStyles.softPanel}>
+      <SectionHeading
+        title="Acuerdos de reparto"
+        description="Cómo se reparte la energía de esta planta entre los puntos de suministro."
+        headingId="plant-agreements-heading"
+      />
+    </Mui.Paper>
+  </Mui.Box>
+);
