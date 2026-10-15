@@ -1,7 +1,6 @@
 import type { FC } from "react";
 import { Box, Link, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router";
-import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { SharingAgreementResponseStatus, type PlantResponse, type SharingAgreementResponse } from "../../../api/models";
 import { EmptyState } from "../../../components/EmptyState";
@@ -12,6 +11,7 @@ import { formatCalendarDate } from "../../../utils/formatCalendarDate";
 import { usePlantSharingAgreements } from "../../home/management/usePlantSharingAgreements";
 import { PlantSection } from "./PlantSection";
 import { PLANT_SECTION_IDS } from "./plantSections";
+import { AGREEMENTS_ICON } from "./sectionIcons";
 
 /** In force first, then those being prepared. Superseded ones are history and stay on the full list. */
 const LISTED_STATUSES = [SharingAgreementResponseStatus.PUBLISHED, SharingAgreementResponseStatus.DRAFT];
@@ -27,20 +27,20 @@ const AgreementLink: FC<{ plantId: string; agreement: SharingAgreementResponse }
         alignItems: "center",
         gap: 1.5,
         minHeight: 48,
-        px: 1.5,
-        py: 1,
-        borderRadius: radii.default,
+        p: 2,
+        border: `1px solid ${colors.border.light}`,
+        borderRadius: radii.large,
         color: colors.text.primary,
         "&:hover": { bgcolor: colors.background.surface },
       }}
     >
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.75 }}>
         <Typography sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>{agreement.name}</Typography>
+        <SharingAgreementStatusChip status={agreement.status} />
         <Typography variant="body2" sx={{ color: colors.text.subtle }}>
           Creado el {formatCalendarDate(agreement.createdAt)}
         </Typography>
       </Box>
-      <SharingAgreementStatusChip status={agreement.status} />
       <ChevronRightRoundedIcon aria-hidden fontSize="small" sx={{ color: colors.text.muted, flexShrink: 0 }} />
     </Link>
   </Box>
@@ -60,18 +60,18 @@ export const PlantAgreementsSection: FC<{ plant: PlantResponse }> = ({ plant }) 
       id={PLANT_SECTION_IDS.agreements}
       title="Acuerdos de reparto"
       description="Cómo se reparte la energía de esta planta entre los puntos de suministro."
-      icon={HandshakeOutlinedIcon}
+      icon={AGREEMENTS_ICON}
     >
       {isError && <LoadErrorAlert message="No se pudieron cargar los acuerdos de reparto." onRetry={retry} />}
       {agreements && listed.length === 0 && (
         <EmptyState
-          icon={HandshakeOutlinedIcon}
+          icon={AGREEMENTS_ICON}
           title="Ningún acuerdo en vigor"
           subtitle="Esta planta no tiene ningún acuerdo de reparto vigente ni en borrador."
         />
       )}
       {listed.length > 0 && (
-        <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 0.5 }}>
+        <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
           {listed.map((agreement) => (
             <AgreementLink key={agreement.id} plantId={plant.id} agreement={agreement} />
           ))}

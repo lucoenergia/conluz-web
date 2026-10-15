@@ -1,13 +1,13 @@
 import { useMemo, type FC } from "react";
-import { Box, ButtonBase, Typography } from "@mui/material";
+import { Box, ButtonBase, Typography, type SvgIconProps } from "@mui/material";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import ListAltRoundedIcon from "@mui/icons-material/ListAltRounded";
 import type { PlantResponse } from "../../../api/models";
 import { colors, fontSizes, radii } from "../../../theme/tokens";
-import { HomeCard } from "../../home/HomeCard";
+import { sxStyles } from "../../../theme/sx";
 import { usePlantSharingAgreements } from "../../home/management/usePlantSharingAgreements";
 import { computeSharingAgreementCounts } from "../useSharingAgreementsData";
 import { agreementsSummaryText } from "./agreementsSummary";
+import { AGREEMENTS_ICON, INTEGRATIONS_ICON } from "./sectionIcons";
 import { PLANT_SECTION_IDS, scrollToSection, type PlantSectionId } from "./plantSections";
 import type { PlantIntegrationStatus } from "./usePlantIntegrationStatus";
 
@@ -24,21 +24,24 @@ const TONE_SX: Record<StatusTone, object> = {
 
 interface SummaryRowProps {
   label: string;
+  /** The icon of the section the row leads to, so the two read as one. */
+  icon: FC<SvgIconProps>;
   /** Absent while the status is unknown: the row then claims nothing. */
   status?: { text: string; tone: StatusTone };
   target: PlantSectionId;
 }
 
-const SummaryRow: FC<SummaryRowProps> = ({ label, status, target }) => (
-  <Box component="li">
+const SummaryRow: FC<SummaryRowProps> = ({ label, icon: Icon, status, target }) => (
+  // A divider between rows, never above the first.
+  <Box component="li" sx={{ "& + &": { borderTop: `1px solid ${colors.divider}` } }}>
     <ButtonBase
       onClick={() => scrollToSection(target)}
       aria-label={status ? `${label}: ${status.text}` : label}
       sx={{
         width: "100%",
-        minHeight: 48,
-        px: 1.5,
-        py: 1,
+        minHeight: 56,
+        px: 1,
+        py: 1.25,
         gap: 1.5,
         display: "flex",
         alignItems: "center",
@@ -49,7 +52,23 @@ const SummaryRow: FC<SummaryRowProps> = ({ label, status, target }) => (
         "&.Mui-focusVisible": { outline: `2px solid ${colors.brand.main}`, outlineOffset: 2 },
       }}
     >
-      <Typography component="span" sx={{ flex: 1, minWidth: 0, fontWeight: 500, color: colors.text.primary }}>
+      <Box
+        aria-hidden
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 36,
+          height: 36,
+          flexShrink: 0,
+          borderRadius: "50%",
+          bgcolor: colors.brand.surface,
+          color: colors.brand.main,
+        }}
+      >
+        <Icon fontSize="small" />
+      </Box>
+      <Typography component="span" sx={{ flex: 1, minWidth: 0, fontWeight: 600, color: colors.text.primary }}>
         {label}
       </Typography>
       {status && (
@@ -81,7 +100,9 @@ const AgreementsRow: FC<{ plant: PlantResponse }> = ({ plant }) => {
     const counts = computeSharingAgreementCounts(agreements);
     return { text: agreementsSummaryText(counts), tone: counts.vigentes > 0 ? "positive" : "neutral" } as const;
   }, [agreements]);
-  return <SummaryRow label="Acuerdos de reparto" status={status} target={PLANT_SECTION_IDS.agreements} />;
+  return (
+    <SummaryRow label="Acuerdos de reparto" icon={AGREEMENTS_ICON} status={status} target={PLANT_SECTION_IDS.agreements} />
+  );
 };
 
 const INTEGRATION_STATUS: Partial<Record<PlantIntegrationStatus, SummaryRowProps["status"]>> = {
@@ -100,6 +121,9 @@ export interface PlantSummaryProps {
  * with that section's status and a jump to it, so a phone shows what needs
  * attention without scrolling past production (UI-PLT-002, UI-PLT-003).
  * With no row to show, the block is not rendered at all.
+ *
+ * It shows no title: under the plant's own header, its rows say what they are.
+ * The name stays for assistive technology, which announces the region.
  */
 export const PlantSummary: FC<PlantSummaryProps> = ({ plant, integrationStatus }) => {
   const showAgreements = plant?.capabilities.canListSharingAgreements === true;
@@ -107,17 +131,18 @@ export const PlantSummary: FC<PlantSummaryProps> = ({ plant, integrationStatus }
   if (!plant || (!showAgreements && !showIntegration)) return null;
 
   return (
-    <HomeCard title="En esta planta" icon={ListAltRoundedIcon}>
-      <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 0.5 }}>
+    <Box component="section" aria-label="En esta planta" sx={{ ...sxStyles.softPanel, py: { xs: 1, sm: 1.5 } }}>
+      <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
         {showAgreements && <AgreementsRow plant={plant} />}
         {showIntegration && (
           <SummaryRow
             label="Integración Huawei"
+            icon={INTEGRATIONS_ICON}
             status={INTEGRATION_STATUS[integrationStatus]}
             target={PLANT_SECTION_IDS.integrations}
           />
         )}
       </Box>
-    </HomeCard>
+    </Box>
   );
 };

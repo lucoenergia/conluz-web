@@ -1,12 +1,12 @@
 import type { FC } from "react";
 import { Box } from "@mui/material";
-import CableRoundedIcon from "@mui/icons-material/CableRounded";
 import type { PlantResponse } from "../../api/models";
 import { sxStyles } from "../../theme/sx";
 import { usePlantActions } from "../../hooks/actions";
 import { HuaweiIntegrationCard } from "./HuaweiIntegrationCard";
 import { PlantSection } from "./plantDetail/PlantSection";
 import { PLANT_SECTION_IDS } from "./plantDetail/plantSections";
+import { INTEGRATIONS_ICON } from "./plantDetail/sectionIcons";
 
 /**
  * The integrations of the plant on screen: today, Huawei (#192).
@@ -30,7 +30,7 @@ export const PlantIntegrationsSection: FC<{ plant: PlantResponse | undefined }> 
         id={PLANT_SECTION_IDS.integrations}
         title="Integraciones"
         description="De dónde llegan los datos de producción de esta planta."
-        icon={CableRoundedIcon}
+        icon={INTEGRATIONS_ICON}
       >
         <HuaweiIntegrationCard
           plantId={plant.id}
