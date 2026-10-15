@@ -28,11 +28,13 @@ import type {
   CreateMembershipBody,
   GetMembershipEnergyMetricsParams,
   GetMembershipMonthlyConsumptionParams,
+  MemberResponse,
   MembershipEnergyMetricsResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
   MembershipResponse,
+  RegisterMemberBody,
   RestError,
   SetMembershipInvestmentBody,
   UpdateMembershipRoleBody
@@ -353,6 +355,146 @@ export const useCreateMembership = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getCreateMembershipMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Emails the member an invitation to accept their pending membership, at the contact email of the community's member record, never the account's email. The link is valid for 7 days. Only an active community admin of the community may invite; a platform admin may not.
+
+This is the first invitation only. A membership that has already been invited responds 409 with the `MEMBERSHIP_ALREADY_INVITED` code, one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
+
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded: `invitedAt` stays null and the same request can be repeated once sending works.
+
+ * @summary Invites a registered member to accept their membership.
+ */
+export const sendInvitation = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invite`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getSendInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['sendInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  sendInvitation(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof sendInvitation>>>
+    
+    export type SendInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Invites a registered member to accept their membership.
+ */
+export const useSendInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendInvitation>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getSendInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Registers a person as a member of the community with their DNI/NIE/NIF and the community's own member record. The membership is created pending, with the role COMMUNITY_MEMBER: it grants no access until the member accepts it. Only an active community admin of the community may register members; a platform admin may not.
+
+Nothing is sent to the member: registering only records them. Invite them with `sendInvitation` once the community is ready for them to join; until then `invitedAt` stays null.
+
+The response is the same whether or not the person already had an account, and carries nothing from it. Registering someone who already has a membership in this community, in any state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code.
+
+ * @summary Registers a member in a community.
+ */
+export const registerMember = (
+    communityId: string,
+    registerMemberBody: RegisterMemberBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/register`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: registerMemberBody, signal
+    },
+      );
+    }
+  
+
+
+export const getRegisterMemberMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext> => {
+
+const mutationKey = ['registerMember'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerMember>>, {communityId: string;data: RegisterMemberBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  registerMember(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterMemberMutationResult = NonNullable<Awaited<ReturnType<typeof registerMember>>>
+    export type RegisterMemberMutationBody = RegisterMemberBody
+    export type RegisterMemberMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Registers a member in a community.
+ */
+export const useRegisterMember = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof registerMember>>,
+        TError,
+        {communityId: string;data: RegisterMemberBody},
+        TContext
+      > => {
+
+      const mutationOptions = getRegisterMemberMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

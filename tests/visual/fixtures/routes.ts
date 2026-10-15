@@ -32,7 +32,9 @@ import {
   FIXED_SUPPLY_OTHER_COMMUNITY,
   FIXED_MEMBERSHIPS,
   FIXED_DATADIS_CONFIG,
+  FIXED_HUAWEI_CONFIG,
   FIXED_SHELLY_CONFIG,
+  type HuaweiConfigFixture,
   FIXED_SUPPLY_ID,
   FIXED_USER_2,
   MANAGED_USER_CAPABILITIES,
@@ -532,6 +534,68 @@ export async function mockPlantDetailRoutes(page: Page, currentUser?: { membersh
         contentType: "application/json",
         body: JSON.stringify(plant),
       }),
+  );
+}
+
+/**
+ * The plant's Huawei configuration and its enable/disable endpoints (#192).
+ * Registered AFTER mockPlantDetailRoutes(), whose predicate also matches these
+ * URLs: Playwright matches routes in reverse registration order.
+ *
+ * - `config: null` answers the read with 404, the "not configured" state.
+ * - `enable: "incomplete"` refuses the enable with 409 HUAWEI_CONFIG_INCOMPLETE,
+ *   naming the fields the served configuration lacks, as the backend does.
+ *
+ * Every call is refused with 403 unless the plant served to this caller says
+ * canManage, so the mock cannot contradict its own payload.
+ */
+export async function mockHuaweiConfigRoutes(
+  page: Page,
+  options: {
+    config?: HuaweiConfigFixture | null;
+    enable?: "ok" | "incomplete";
+    currentUser?: { memberships?: Record<string, string> };
+  } = {},
+) {
+  const { config = FIXED_HUAWEI_CONFIG, enable = "ok", currentUser } = options;
+  const plant = asPlantCaller(FIXED_PLANT, currentUser);
+  const base = `/api/v1/plants/${FIXED_PLANT_ID}/production/huawei/config`;
+
+  await page.route(
+    (url) => url.pathname === base || url.pathname === `${base}/enable` || url.pathname === `${base}/disable`,
+    (route: Route) => {
+      if (refusal(plant.capabilities, "canManage")) return refuse(route, "canManage");
+
+      const path = new URL(route.request().url()).pathname;
+      const method = route.request().method();
+      if (path === base && method === "GET") {
+        return config
+          ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(config) })
+          : route.fulfill({
+              status: 404,
+              contentType: "application/json",
+              body: JSON.stringify({ status: 404, errors: [{ code: "HUAWEI_CONFIG_NOT_FOUND", message: "Not found" }] }),
+            });
+      }
+      if (path === `${base}/enable` && enable === "incomplete") {
+        const missingFields = [
+          !config?.username && "username",
+          !config?.baseUrl && "baseUrl",
+          !config?.passwordSet && "password",
+        ]
+          .filter(Boolean)
+          .join(",");
+        return route.fulfill({
+          status: 409,
+          contentType: "application/json",
+          body: JSON.stringify({
+            status: 409,
+            errors: [{ code: "HUAWEI_CONFIG_INCOMPLETE", message: "Incomplete", params: { missingFields } }],
+          }),
+        });
+      }
+      return route.fulfill({ status: 200, contentType: "application/json", body: "" });
+    },
   );
 }
 

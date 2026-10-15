@@ -150,6 +150,11 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // (lucoenergia/conluz#404). The form shows it on the password field (#245).
   DATADIS_CONFIG_PASSWORD_REQUIRED:
     "No hay ninguna contraseña guardada. Introdúcela para guardar la configuración.",
+
+  // The same refusal for a plant's Huawei configuration (lucoenergia/conluz#399).
+  // The form on plant detail shows it on the password field (#192).
+  HUAWEI_CONFIG_PASSWORD_REQUIRED:
+    "No hay ninguna contraseña guardada. Introdúcela para guardar la configuración.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

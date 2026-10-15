@@ -20,7 +20,7 @@ export { type Action, type MaybeAction, type ActionBundle, grant, ungated } from
 
 export { useCommunityActions, type ConfigureDatadisResult } from "./useCommunityActions";
 export { useMembershipActions } from "./useMembershipActions";
-export { usePlantActions } from "./usePlantActions";
+export { usePlantActions, type HuaweiWriteResult } from "./usePlantActions";
 export { usePlatformActions } from "./usePlatformActions";
 export { useProfileActions } from "./useProfileActions";
 export { useSessionActions } from "./useSessionActions";

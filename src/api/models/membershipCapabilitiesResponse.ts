@@ -18,4 +18,6 @@ export interface MembershipCapabilitiesResponse {
   canManageInvestment: boolean;
   /** Whether the caller may read this membership's payback progress. Either an admin of the community, or the member themselves. */
   canReadPayback: boolean;
+  /** Whether the caller may invite this member to accept the membership. Whether an invitation can be sent right now depends on the membership's state and contact email. */
+  canInvite: boolean;
 }

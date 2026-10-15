@@ -11,6 +11,9 @@ import { useErrorDispatch } from "../../context/error.context";
 import { UserForm, type UserFormValues } from "../../components/UserForm/UserForm";
 import PersonIcon from "@mui/icons-material/Person";
 
+export const NO_NUMBER_MESSAGE =
+  "Este usuario no tiene número de socio, así que sus datos no se pueden guardar desde aquí.";
+
 export const EditUserPage: FC = () => {
   const { userId = "" } = useParams();
   const errorDispatch = useErrorDispatch();
@@ -22,14 +25,19 @@ export const EditUserPage: FC = () => {
   // own details is PUT /users/profile, which the profile screen owns.
   const { edit } = useUserActions().forUser(userData).actions;
 
+  // The read may answer `number: null`, but the update requires one, and this
+  // form has no field for it. A save would be refused, so none is offered
+  // (UI-USR-001).
+  const hasNumber = userData?.number != null;
+
   const handleSubmit = async ({ fullName, personalId, email, address, phoneNumber }: UserFormValues) => {
     // The route guard has already established canEdit, so this only covers the
     // render before the account itself has arrived.
-    if (!edit || !userData) return;
+    if (!edit || !userData || userData.number == null) return;
 
     // No cast: UpdateUserBody requires `number`, and reading it off the loaded
-    // account is what makes it a number rather than `number | undefined`. The
-    // cast that used to be here hid exactly that.
+    // account, past the null check above, is what makes it a number. The cast
+    // that used to be here hid exactly that.
     const updatedUser: UpdateUserBody = {
       number: userData.number,
       personalId,
@@ -118,6 +126,12 @@ export const EditUserPage: FC = () => {
         </Box>
       </Paper>
 
+      {!hasNumber && (
+        <Box sx={sxStyles.pageContainerFull}>
+          <Alert severity="warning">{NO_NUMBER_MESSAGE}</Alert>
+        </Box>
+      )}
+
       <Box sx={sxStyles.pageContainerFull}>
         <Paper elevation={0} sx={sxStyles.softPanel}>
           <UserForm
@@ -131,7 +145,7 @@ export const EditUserPage: FC = () => {
             }}
             handleSubmit={handleSubmit}
             isPending={edit?.isPending ?? false}
-            disabled={!edit}
+            disabled={!edit || !hasNumber}
             submitLabel="Guardar cambios"
           />
         </Paper>

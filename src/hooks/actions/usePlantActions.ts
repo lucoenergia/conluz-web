@@ -5,7 +5,12 @@ import {
   useDeletePlant,
   useUpdatePlant,
 } from "../../api/plants/plants";
-import { getGetHuaweiConfigQueryKey, useConfigureHuawei } from "../../api/production/production";
+import {
+  getGetHuaweiConfigQueryKey,
+  useConfigureHuawei,
+  useDisableHuaweiConfig,
+  useEnableHuaweiConfig,
+} from "../../api/production/production";
 import {
   getGetSharingAgreementsQueryKey,
   useCreateSharingAgreement,
@@ -24,26 +29,39 @@ import { grant, type MaybeAction } from "./action";
 /**
  * What the caller may do with one plant.
  *
- * `edit`, `remove` and `configureHuawei` share `canManage`: its doc covers
- * "update or delete this plant, and read and write its Huawei configuration".
- * One answer, three actions.
+ * `edit`, `remove`, `configureHuawei`, `enableHuawei` and `disableHuawei` share
+ * `canManage`: its doc covers "update or delete this plant, and read and write
+ * its Huawei configuration". One answer, five actions. `enableHuawei` and
+ * `disableHuawei` are an opposite pair, both handed over to a caller who may do
+ * either: the stored configuration's `enabled` picks the one that applies.
  *
- * `configureHuawei` belongs here rather than on the community, even though the
- * integrations screen presents it beside the Datadis and Shelly forms. Its
- * endpoint is PUT /plants/{plantId}/production/huawei/config, so the plant is
- * what authorises it -- the three forms on that screen do not share a gate.
+ * `configureHuawei` belongs here rather than on the community: its endpoint is
+ * PUT /plants/{plantId}/production/huawei/config, so the plant is what
+ * authorises it, and the form lives on the plant's own detail screen (#192).
  */
+/**
+ * A Huawei configuration write: success, or the refusal itself rather than a
+ * bare `false`. The screen places some refusals on a field or a message of
+ * their own -- HUAWEI_CONFIG_PASSWORD_REQUIRED on the password (#192) -- so it
+ * needs the error. Same shape as ConfigureDatadisResult.
+ */
+export type HuaweiWriteResult = { ok: true } | { error: unknown };
+
 export interface PlantRowActions {
   actions: {
     edit: MaybeAction<[UpdatePlantBody], boolean>;
     remove: MaybeAction<[], boolean>;
-    configureHuawei: MaybeAction<[ConfigureHuaweiBody], boolean>;
+    configureHuawei: MaybeAction<[ConfigureHuaweiBody], HuaweiWriteResult>;
+    enableHuawei: MaybeAction<[], HuaweiWriteResult>;
+    disableHuawei: MaybeAction<[], HuaweiWriteResult>;
     createSharingAgreement: MaybeAction<[CreateSharingAgreementBody], SharingAgreementResponse | undefined>;
   };
   outcomes: {
     edit: CapabilityOutcome;
     remove: CapabilityOutcome;
     configureHuawei: CapabilityOutcome;
+    enableHuawei: CapabilityOutcome;
+    disableHuawei: CapabilityOutcome;
     createSharingAgreement: CapabilityOutcome;
   };
 }
@@ -60,6 +78,8 @@ export function usePlantActions(): PlantActions {
   const updateMutation = useUpdatePlant();
   const deleteMutation = useDeletePlant();
   const configureHuaweiMutation = useConfigureHuawei();
+  const enableHuaweiMutation = useEnableHuaweiConfig();
+  const disableHuaweiMutation = useDisableHuaweiConfig();
   const createAgreementMutation = useCreateSharingAgreement();
 
   const invalidateList = () =>
@@ -72,6 +92,18 @@ export function usePlantActions(): PlantActions {
 
       const manage = outcomeFromResource(capabilities, "canManage");
       const manageAgreements = outcomeFromResource(capabilities, "canManageSharingAgreements");
+
+      // Only this plant's configuration is read back: another plant's is not
+      // touched by a write to this one (#192).
+      const writeHuawei = async (call: () => Promise<unknown>): Promise<HuaweiWriteResult> => {
+        try {
+          await call();
+          queryClient.invalidateQueries({ queryKey: getGetHuaweiConfigQueryKey(plantId) });
+          return { ok: true };
+        } catch (error) {
+          return { error };
+        }
+      };
 
       return {
         actions: {
@@ -109,16 +141,18 @@ export function usePlantActions(): PlantActions {
           ),
           configureHuawei: grant(
             manage,
-            async (data: ConfigureHuaweiBody) => {
-              try {
-                await configureHuaweiMutation.mutateAsync({ plantId, data });
-                queryClient.invalidateQueries({ queryKey: getGetHuaweiConfigQueryKey(plantId) });
-                return true;
-              } catch {
-                return false;
-              }
-            },
+            (data: ConfigureHuaweiBody) => writeHuawei(() => configureHuaweiMutation.mutateAsync({ plantId, data })),
             configureHuaweiMutation.isPending,
+          ),
+          enableHuawei: grant(
+            manage,
+            () => writeHuawei(() => enableHuaweiMutation.mutateAsync({ plantId })),
+            enableHuaweiMutation.isPending,
+          ),
+          disableHuawei: grant(
+            manage,
+            () => writeHuawei(() => disableHuaweiMutation.mutateAsync({ plantId })),
+            disableHuaweiMutation.isPending,
           ),
           createSharingAgreement: grant(
             manageAgreements,
@@ -138,6 +172,8 @@ export function usePlantActions(): PlantActions {
           edit: manage,
           remove: manage,
           configureHuawei: manage,
+          enableHuawei: manage,
+          disableHuawei: manage,
           createSharingAgreement: manageAgreements,
         },
       };

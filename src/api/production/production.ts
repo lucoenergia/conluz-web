@@ -177,6 +177,9 @@ The request body contains:
   skipped and the manual sync endpoints respond with `409 Conflict`. Set this to
   `false` for plants that use a different inverter vendor (e.g. Greenheiss).
 
+To only switch the configuration on or off, use `POST .../config/enable` and
+`POST .../config/disable`: they change nothing else and take no request body.
+
 This configuration is a mandatory step to be able to retrieve the plant's production
 data from the Huawei API.
 
@@ -251,6 +254,168 @@ export const useConfigureHuawei = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getConfigureHuaweiMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint enables the plant's Huawei configuration, changing nothing else: the stored
+username, password and base URL are not rewritten. The request has no body.
+
+Enabling requires the stored configuration to be complete: a non-blank username, a base URL the
+configuration write would accept, and a non-empty password. Otherwise the request is rejected
+with `409` and error code `HUAWEI_CONFIG_INCOMPLETE`, and nothing changes. Its
+`params.missingFields` lists the missing fields, comma-separated, in the order `username`,
+`baseUrl`, `password` (for example `"baseUrl,password"`). Complete them with the configuration
+write first. Disabling, through its own endpoint, never requires complete data.
+
+Enabling a configuration that is already enabled succeeds.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required: the caller can manage the plant** (the plant's `canManage` capability).
+
+Upon successful request, the server responds with an HTTP status code of 200 and no body.
+
+A rejected request changes nothing. The server responds with `404` and error code
+`HUAWEI_CONFIG_NOT_FOUND` when the plant has no Huawei configuration (none is created), and with
+`400` when the plant id is not a valid UUID.
+
+ * @summary Enables a plant's Huawei configuration.
+ */
+export const enableHuaweiConfig = (
+    plantId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/plants/${plantId}/production/huawei/config/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableHuaweiConfigMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableHuaweiConfig>>, TError,{plantId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableHuaweiConfig>>, TError,{plantId: string}, TContext> => {
+
+const mutationKey = ['enableHuaweiConfig'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableHuaweiConfig>>, {plantId: string}> = (props) => {
+          const {plantId} = props ?? {};
+
+          return  enableHuaweiConfig(plantId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableHuaweiConfigMutationResult = NonNullable<Awaited<ReturnType<typeof enableHuaweiConfig>>>
+    
+    export type EnableHuaweiConfigMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Enables a plant's Huawei configuration.
+ */
+export const useEnableHuaweiConfig = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableHuaweiConfig>>, TError,{plantId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableHuaweiConfig>>,
+        TError,
+        {plantId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableHuaweiConfigMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint disables the plant's Huawei configuration, changing nothing else: the stored
+username, password and base URL are not rewritten. The request has no body.
+
+Disabling never requires complete data: it succeeds whatever the stored configuration holds,
+which is how a configuration with missing credentials is switched off.
+
+Disabling a configuration that is already disabled succeeds.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required: the caller can manage the plant** (the plant's `canManage` capability).
+
+Upon successful request, the server responds with an HTTP status code of 200 and no body.
+
+A rejected request changes nothing. The server responds with `404` and error code
+`HUAWEI_CONFIG_NOT_FOUND` when the plant has no Huawei configuration (none is created), and with
+`400` when the plant id is not a valid UUID.
+
+ * @summary Disables a plant's Huawei configuration.
+ */
+export const disableHuaweiConfig = (
+    plantId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/plants/${plantId}/production/huawei/config/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getDisableHuaweiConfigMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableHuaweiConfig>>, TError,{plantId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableHuaweiConfig>>, TError,{plantId: string}, TContext> => {
+
+const mutationKey = ['disableHuaweiConfig'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableHuaweiConfig>>, {plantId: string}> = (props) => {
+          const {plantId} = props ?? {};
+
+          return  disableHuaweiConfig(plantId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableHuaweiConfigMutationResult = NonNullable<Awaited<ReturnType<typeof disableHuaweiConfig>>>
+    
+    export type DisableHuaweiConfigMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Disables a plant's Huawei configuration.
+ */
+export const useDisableHuaweiConfig = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableHuaweiConfig>>, TError,{plantId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableHuaweiConfig>>,
+        TError,
+        {plantId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDisableHuaweiConfigMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

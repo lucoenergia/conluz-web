@@ -4,17 +4,15 @@ import { useState, useCallback, useEffect, type FC } from "react";
 import { Box, Typography, Paper, Snackbar, Alert, Avatar } from "@mui/material";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { useGetDatadisConfig } from "../../api/consumption/consumption";
-import { useGetHuaweiConfig } from "../../api/production/production";
 import { useGetShellyConfig } from "../../api/consumption/consumption";
-import { useGetAllPlants } from "../../api/plants/plants";
 import { IntegrationCard } from "./IntegrationCard";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import BoltIcon from "@mui/icons-material/Bolt";
-import type { ConfigureHuaweiBody, ConfigureShellyBody } from "../../api/models";
+import type { ConfigureShellyBody } from "../../api/models";
 import { colors, alphas } from "../../theme/tokens";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
-import { useCommunityActions, usePlantActions, type Action, type MaybeAction } from "../../hooks/actions";
+import { useCommunityActions, type Action, type MaybeAction } from "../../hooks/actions";
 import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -36,7 +34,6 @@ const CONFIG_STALE_TIME = 5 * 60 * 1000;
 
 interface IntegrationState {
   datadis: { enabled: boolean; username: string; password: string; baseUrl: string };
-  huawei: { enabled: boolean; username: string; password: string; baseUrl: string };
   shelly: { enabled: boolean };
 }
 
@@ -51,16 +48,6 @@ const PROVIDERS = [
     fields: ["credentials"] as string[],
     urlPlaceholder: "https://datadis.es",
     help: "Necesitas una cuenta dada de alta en datadis.es con permiso de consulta de los CUPS de la comunidad.",
-  },
-  {
-    id: "huawei" as const,
-    name: "Huawei",
-    icon: "solar_power",
-    color: colors.error.dark,
-    description: "Conexión con inversores Huawei para recoger datos de producción de las plantas fotovoltaicas.",
-    fields: ["credentials"] as string[],
-    urlPlaceholder: "https://eu5.fusionsolar.huawei.com/thirdData",
-    help: "Usa una cuenta de tipo Northbound API. Confirma con tu instalador la región correcta del endpoint.",
   },
     {
     id: "shelly" as const,
@@ -141,7 +128,6 @@ export const IntegrationsPage: FC = () => {
 
   const [state, setState] = useState<IntegrationState>({
     datadis: { enabled: false, username: "", password: "", baseUrl: "" },
-    huawei: { enabled: false, username: "", password: "", baseUrl: "" },
     shelly: { enabled: false },
   });
 
@@ -152,21 +138,6 @@ export const IntegrationsPage: FC = () => {
   // through a confirmation that names the community.
   const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
 
-  const { data: plantsData, isLoading: plantsLoading } = useGetAllPlants(
-    activeCommunityId ?? "",
-    { size: 1 },
-    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
-  );
-  // The whole plant, not just its id: Huawei's endpoint is plant-scoped, so it
-  // is this plant's own canManage that decides the card -- and the answer
-  // already rides along in the payload the page fetches anyway.
-  //
-  // Which plant this is remains arbitrary (`size: 1`, no sort, no selector);
-  // that defect is not fixed here, and gating on the plant rather than on the
-  // community is what lets the gate survive the move to a per-plant section.
-  const firstPlant = plantsData?.items?.[0];
-  const firstPlantId = firstPlant?.id ?? "";
-
   const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig(
     activeCommunityId ?? "",
     { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
@@ -175,10 +146,6 @@ export const IntegrationsPage: FC = () => {
     activeCommunityId ?? "",
     { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
-  const { data: huaweiConfig, isLoading: huaweiLoading } = useGetHuaweiConfig(
-    firstPlantId,
-    { query: { enabled: !!firstPlantId, staleTime: CONFIG_STALE_TIME } },
-  );
 
   // Live from the read, not copied into state: the refetch after a save is what
   // turns "none stored" into "stored".
@@ -186,7 +153,6 @@ export const IntegrationsPage: FC = () => {
   const datadisForm = useCredentialsForm(state.datadis, datadisPasswordSet);
 
   const { configureDatadis, configureShelly } = useCommunityActions().forCommunity(activeCommunity).actions;
-  const { configureHuawei } = usePlantActions().forPlant(firstPlant).actions;
 
   // Prefill state when config data arrives
   useEffect(() => {
@@ -214,22 +180,6 @@ export const IntegrationsPage: FC = () => {
       setConfigLoaded(prev => ({ ...prev, datadis: true }));
     }
   }, [datadisConfig, configLoaded.datadis]);
-
-  useEffect(() => {
-    if (huaweiConfig && !configLoaded.huawei) {
-      const config = huaweiConfig as ConfigureHuaweiBody;
-      setState(prev => ({
-        ...prev,
-        huawei: {
-          enabled: config.enabled ?? false,
-          username: config.username || "",
-          password: "", // Never prefill - security
-          baseUrl: config.baseUrl || "",
-        }
-      }));
-      setConfigLoaded(prev => ({ ...prev, huawei: true }));
-    }
-  }, [huaweiConfig, configLoaded.huawei]);
 
   const update = useCallback((id: string, patch: Record<string, unknown>) => {
     setState((s) => ({
@@ -266,17 +216,6 @@ export const IntegrationsPage: FC = () => {
         else setSnack(SAVE_FAILED);
       },
     },
-    huawei: bindSave(
-      configureHuawei,
-      () => ({
-        enabled: state.huawei.enabled,
-        username: state.huawei.username,
-        password: state.huawei.password,
-        baseUrl: state.huawei.baseUrl,
-      }),
-      "Configuración de Huawei guardada correctamente",
-      setSnack,
-    ),
     shelly: bindSave(
       configureShelly,
       () => ({ enabled: state.shelly.enabled }),
@@ -298,27 +237,17 @@ export const IntegrationsPage: FC = () => {
   // Counted over the cards that exist, not over PROVIDERS: saying "1 de 3" to
   // someone who is shown two of them describes a page they are not looking at.
   const activeCount = cards.filter(({ provider }) => state[provider.id].enabled).length;
-  // Per provider, not per page. The old gate was
-  // `shellyLoading || datadisLoading || huaweiLoading` in front of an early
-  // return, so the breadcrumb, the title and the two cards that were already
-  // resolved all waited on the slowest request — and Huawei is necessarily the
-  // slowest, because its config is keyed by plant id and cannot even start
-  // until the plants request comes back. Measured: chrome appeared at the same
-  // moment as the cards, a full extra round trip after it could have.
-  //
-  // Huawei counts `plantsLoading` too: while plants is in flight its own query
-  // is disabled, so it reports "not loading" while very much not being ready.
+  // Per provider, not per page: the breadcrumb, the title and a card already
+  // resolved do not wait on another card's request.
   const loadingByProvider: Record<string, boolean> = {
     datadis: datadisLoading,
     shelly: shellyLoading,
-    huawei: plantsLoading || huaweiLoading,
   };
-  // The community and the plant decide which cards exist at all, so nothing can
-  // be counted until they have arrived either -- and a card the caller turns
-  // out not to have is not a config request that is still in flight.
+  // The community decides which cards exist at all, so nothing can be counted
+  // until it has arrived -- and a card the caller turns out not to have is not
+  // a config request that is still in flight.
   const anyConfigLoading =
     activeCommunity === undefined ||
-    plantsLoading ||
     cards.some(({ provider }) => loadingByProvider[provider.id]);
 
   return (
