@@ -47,6 +47,15 @@ export const ALLOWED_DENIALS: AllowedDenial[] = [
       "is the answer 'not configured yet' -- the plant integrations section renders its empty state " +
       "from it (UI-INT-007). mockHuaweiConfigRoutes takes config: null for exactly this.",
   },
+  {
+    method: "GET",
+    path: /\/api\/v1\/communities\/[^/]+\/config\/datadis$/,
+    status: 404,
+    reason:
+      "whether a community has a Datadis configuration is a question only this endpoint answers, and " +
+      "404 is the answer 'not configured yet' -- the Datadis card renders its create form, with no " +
+      "switch, from it (UI-INT-014). mockDatadisConfigRoutes takes config: null for exactly this.",
+  },
 ];
 
 /**

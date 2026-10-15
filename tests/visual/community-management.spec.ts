@@ -10,6 +10,7 @@ import {
   mainRegion,
   mockAllApiRoutes,
   mockCommunityManagementRoutes,
+  mockDatadisConfigRoutes,
   seedActiveCommunity,
   stabilizePage,
 } from "./fixtures";
@@ -130,6 +131,80 @@ test.describe("Visual baselines", () => {
       await stabilizePage(page);
 
       await expect(card).toHaveScreenshot("integrations-datadis-field-errors.png", await hideAppBar(page));
+    });
+  });
+
+  /**
+   * The Datadis switch and what the card says about it (UI-INT-012 to
+   * UI-INT-014, #256). Component subject: the card's region.
+   */
+  test.describe("Datadis switch", () => {
+    const DISABLED = "La integración está desactivada. Actívala para empezar a sincronizar.";
+    const switchOf = (card: ReturnType<Page["getByRole"]>) =>
+      card.getByRole("switch", { name: "Integración con Datadis activa" });
+
+    // The Datadis read retries a 404 with the app's default policy before it
+    // settles, so the not-configured state takes several seconds to arrive.
+    const SETTLED_TIMEOUT = 15_000;
+
+    async function openDatadis(page: Page, options: Parameters<typeof mockDatadisConfigRoutes>[2] = {}) {
+      await injectAuthToken(page);
+      await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+      await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+      await mockCommunityManagementRoutes(page);
+      await mockDatadisConfigRoutes(page, FIXED_COMMUNITY_ADMIN_USER, options);
+      await page.goto("/integrations");
+      const card = page.getByRole("region", { name: "Datadis" });
+      // Guardar is offered only once the read has answered, 200 or 404.
+      await expect(card.getByRole("button", { name: "Guardar" })).toBeEnabled({ timeout: SETTLED_TIMEOUT });
+      return card;
+    }
+
+    test("enabled", async ({ page }) => {
+      const card = await openDatadis(page);
+      await expect(switchOf(card)).toBeChecked();
+      await expect(card.getByText(DISABLED)).toHaveCount(0);
+      await stabilizePage(page);
+
+      await expect(card).toHaveScreenshot("integrations-datadis-enabled.png", await hideAppBar(page));
+    });
+
+    test("disabled", async ({ page }) => {
+      const card = await openDatadis(page, { config: { ...FIXED_DATADIS_CONFIG, enabled: false } });
+      await expect(switchOf(card)).not.toBeChecked();
+      await expect(card.getByText(DISABLED)).toBeVisible();
+      await expect(card.getByRole("textbox", { name: "Usuario" })).toHaveValue(FIXED_DATADIS_CONFIG.username ?? "");
+      await stabilizePage(page);
+
+      await expect(card).toHaveScreenshot("integrations-datadis-disabled.png", await hideAppBar(page));
+    });
+
+    test("enable refused as incomplete", async ({ page }) => {
+      const card = await openDatadis(page, {
+        config: { ...FIXED_DATADIS_CONFIG, enabled: false, passwordSet: false },
+        enable: "incomplete",
+      });
+      await switchOf(card).click();
+      // modal-panel is BasicModal's interim test id, pending a real role="dialog".
+      await page.getByTestId("modal-panel").getByRole("button", { name: "Activar" }).click();
+      await expect(card.getByRole("alert")).toHaveText(/Faltan datos para activar la integración: contraseña\./);
+      await expect(page.getByTestId("modal-panel")).toHaveCount(0);
+      await expect(switchOf(card)).not.toBeChecked();
+      // Move focus off the switch, so its focus ring is not part of the picture.
+      await page.getByRole("heading", { level: 1 }).click();
+      await stabilizePage(page);
+
+      await expect(card).toHaveScreenshot("integrations-datadis-incomplete.png", await hideAppBar(page));
+    });
+
+    test("not configured", async ({ page }) => {
+      const card = await openDatadis(page, { config: null });
+      await expect(switchOf(card)).toHaveCount(0);
+      await expect(card.getByText(DISABLED)).toHaveCount(0);
+      await expect(card.getByRole("textbox", { name: "Usuario" })).toHaveValue("");
+      await stabilizePage(page);
+
+      await expect(card).toHaveScreenshot("integrations-datadis-unconfigured.png", await hideAppBar(page));
     });
   });
 });
