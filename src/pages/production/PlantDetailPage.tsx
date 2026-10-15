@@ -21,6 +21,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
 import { PlantSummary } from "./plantDetail/PlantSummary";
+import { PlantNextStep } from "./plantDetail/PlantNextStep";
 import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
 import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
 
@@ -364,6 +365,12 @@ export const PlantDetailPage: FC = () => {
           isLoading={plantLoading}
           error={plantError}
         />
+      </Box>
+
+      {/* Only while the integration needs a step from someone who may manage it.
+          Edge to edge on a phone, as the agreement's next step is. */}
+      <Box sx={{ "&:empty": { display: "none" } }}>
+        <PlantNextStep integrationStatus={integrationStatus} />
       </Box>
 
       {/* What the caller may look into: renders nothing when that is nothing. */}
