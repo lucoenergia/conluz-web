@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type FC, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, type FC, type ReactNode } from "react";
 
 type Dispatch = (error: string) => void;
 
@@ -12,14 +12,18 @@ const ErrorDispatchContext = createContext<Dispatch | null>(null);
 const ErrorProvider: FC<ErrorProviderProps> = ({ children }) => {
   const [errors, setErrors] = useState<string[]>([]);
 
-  const addError: Dispatch = (error: string) => {
-    setErrors([...errors, error]);
+  // Stable across renders: screens report a failed read from an effect that
+  // depends on this dispatch, so a new function on every render made each
+  // report trigger the next one. It reads the errors through the updater, never
+  // from this render.
+  const addError: Dispatch = useCallback((error: string) => {
+    setErrors((current) => [...current, error]);
 
     // AUTO REMOVE ERROR AFTER 5 SECONDS
     setTimeout(() => {
-      setErrors(errors.filter((e) => e === error));
+      setErrors((current) => current.filter((e) => e !== error));
     }, 5000);
-  };
+  }, []);
 
   return (
     <ErrorContext.Provider value={errors}>
