@@ -96,6 +96,11 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useCreateMembership: { scope: "community", capability: "canManageMemberships", hook: "useMembershipActions" },
   useRegisterMember: { scope: "community", capability: "canRegisterMembers" },
   useSendInvitation: { scope: "membership", capability: "canInvite" },
+  // No screen sends these yet: no action hook. The capability is the one the
+  // contract names for each endpoint, not a choice made here.
+  useResendInvitation: { scope: "membership", capability: "canInvite" },
+  useRevokeInvitation: { scope: "membership", capability: "canInvite" },
+  useSendInvitations: { scope: "community", capability: "canInviteMembers" },
   useDeleteMembership: { scope: "membership", capability: "canDelete", hook: "useMembershipActions" },
   useUpdateMembershipRole: { scope: "membership", capability: "canUpdateRole", hook: "useMembershipActions" },
   useSetMembershipInvestment: { scope: "membership", capability: "canManageInvestment", hook: "useMembershipActions" },

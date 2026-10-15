@@ -36,6 +36,7 @@ import type {
   MembershipResponse,
   RegisterMemberBody,
   RestError,
+  SendInvitationsResponse,
   SetMembershipInvestmentBody,
   UpdateMembershipRoleBody
 } from '.././models';
@@ -361,7 +362,7 @@ export const useCreateMembership = <TError = ErrorType<RestError>,
     /**
  * Emails the member an invitation to accept their pending membership, at the contact email of the community's member record, never the account's email. The link is valid for 7 days. Only an active community admin of the community may invite; a platform admin may not.
 
-This is the first invitation only. A membership that has already been invited responds 409 with the `MEMBERSHIP_ALREADY_INVITED` code, one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
+This sends the first invitation only; every later send goes through `resendInvitation`. A membership that has already been invited responds 409 with the `MEMBERSHIP_ALREADY_INVITED` code, one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
 
 If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded: `invitedAt` stays null and the same request can be repeated once sending works.
 
@@ -424,6 +425,144 @@ export const useSendInvitation = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getSendInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Stops the member's invitation link from working, for example when it was sent to a wrong address. The membership stays pending and keeps its `invitedAt`, and its invitation can be resent. A membership without a link that can still be used is answered the same. Only an active community admin of the community may revoke; a platform admin may not.
+
+A membership that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code. Revoking sends nothing, so it works whether or not the server can send emails.
+
+ * @summary Withdraws a member's invitation link.
+ */
+export const revokeInvitation = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invitation/revoke`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getRevokeInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['revokeInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  revokeInvitation(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeInvitation>>>
+    
+    export type RevokeInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Withdraws a member's invitation link.
+ */
+export const useRevokeInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeInvitation>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRevokeInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Emails the member a new invitation link, at the contact email the community's member record has now, and stops the previous link from working, whether it was still valid, had expired or had been revoked. The new link is valid for 7 days, and `invitedAt` becomes the resend's instant. Only an active community admin of the community may resend; a platform admin may not.
+
+A membership is sent at most 4 invitations in any 24 hours, the first included. Over that, it responds 429 with the `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED` code and the number of seconds until a resend is accepted again in the `Retry-After` header and in `params.retryAfterSeconds`.
+
+A membership never invited responds 409 with the `MEMBERSHIP_NOT_INVITED` code (send its first invitation instead), one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
+
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded: the previous link and `invitedAt` stay as they were.
+
+ * @summary Sends a member's invitation again, with a new link.
+ */
+export const resendInvitation = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invitation/resend`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getResendInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['resendInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  resendInvitation(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResendInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendInvitation>>>
+    
+    export type ResendInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Sends a member's invitation again, with a new link.
+ */
+export const useResendInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resendInvitation>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getResendInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -495,6 +634,72 @@ export const useRegisterMember = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getRegisterMemberMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Invites, as `sendInvitation` does, the members of the community who are pending, enabled, have a contact email and have never been invited, up to 50 per request, in ascending user id. Every other member is skipped, not refused: an accepted or disabled membership, one without a contact email, and one already invited, including by a concurrent request. Each member is invited on their own, so a failure keeps the invitations already sent. Call again while `remaining` is above zero. Only an active community admin of the community may send; a platform admin may not.
+
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anyone is invited.
+
+ * @summary Sends the first invitation to members registered without one, up to 50 per request.
+ */
+export const sendInvitations = (
+    communityId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SendInvitationsResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/invite`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getSendInvitationsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext> => {
+
+const mutationKey = ['sendInvitations'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitations>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
+
+          return  sendInvitations(communityId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendInvitationsMutationResult = NonNullable<Awaited<ReturnType<typeof sendInvitations>>>
+    
+    export type SendInvitationsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Sends the first invitation to members registered without one, up to 50 per request.
+ */
+export const useSendInvitations = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendInvitations>>,
+        TError,
+        {communityId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getSendInvitationsMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

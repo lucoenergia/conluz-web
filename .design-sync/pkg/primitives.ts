@@ -89,6 +89,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -153,9 +154,11 @@ import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import PersonOffRoundedIcon from "@mui/icons-material/PersonOffRounded";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import PieChartOutlineRoundedIcon from "@mui/icons-material/PieChartOutlineRounded";
 import PlaceIcon from "@mui/icons-material/Place";
 import PowerIcon from "@mui/icons-material/Power";
 import PowerOffIcon from "@mui/icons-material/PowerOff";
+import PowerRoundedIcon from "@mui/icons-material/PowerRounded";
 import PublicRoundedIcon from "@mui/icons-material/PublicRounded";
 import PublishOutlinedIcon from "@mui/icons-material/PublishOutlined";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -170,6 +173,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SensorsIcon from "@mui/icons-material/Sensors";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
+import SolarPowerOutlinedIcon from "@mui/icons-material/SolarPowerOutlined";
 import SolarPowerRoundedIcon from "@mui/icons-material/SolarPowerRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
@@ -279,6 +283,7 @@ export const Icons = {
   CheckCircleOutline: CheckCircleOutlineIcon,
   CheckCircleRounded: CheckCircleRoundedIcon,
   CheckRounded: CheckRoundedIcon,
+  ChevronLeftRounded: ChevronLeftRoundedIcon,
   ChevronRight: ChevronRightIcon,
   ChevronRightRounded: ChevronRightRoundedIcon,
   Clear: ClearIcon,
@@ -343,9 +348,11 @@ export const Icons = {
   PersonOffRounded: PersonOffRoundedIcon,
   PersonOutline: PersonOutlineIcon,
   PersonRounded: PersonRoundedIcon,
+  PieChartOutlineRounded: PieChartOutlineRoundedIcon,
   Place: PlaceIcon,
   Power: PowerIcon,
   PowerOff: PowerOffIcon,
+  PowerRounded: PowerRoundedIcon,
   PublicRounded: PublicRoundedIcon,
   PublishOutlined: PublishOutlinedIcon,
   Remove: RemoveIcon,
@@ -360,6 +367,7 @@ export const Icons = {
   SearchOff: SearchOffIcon,
   Sensors: SensorsIcon,
   SolarPower: SolarPowerIcon,
+  SolarPowerOutlined: SolarPowerOutlinedIcon,
   SolarPowerRounded: SolarPowerRoundedIcon,
   SupportAgentRounded: SupportAgentRoundedIcon,
   TrendingDown: TrendingDownIcon,

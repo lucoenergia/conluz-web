@@ -33,6 +33,7 @@ import type {
   GetDatadisMonthlyProductionParams,
   GetDatadisYearlyProductionParams,
   GetHourlyProductionParams,
+  GetHuaweiConfigResponse,
   GetInstantProductionParams,
   GetMonthlyProductionParams,
   GetYearlyProductionParams,
@@ -71,7 +72,7 @@ export const getHuaweiConfig = (
 ) => {
       
       
-      return customInstance<unknown>(
+      return customInstance<GetHuaweiConfigResponse>(
       {url: `/api/v1/plants/${plantId}/production/huawei/config`, method: 'GET', signal
     },
       );

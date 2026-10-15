@@ -23,7 +23,7 @@ import {
   TOGGLE_FAILED_TEXT,
   incompleteText,
   isNotFound,
-  type StoredHuaweiConfig,
+  retryUnlessNotFound,
 } from "./huaweiConfig";
 
 export interface HuaweiIntegrationCardProps {
@@ -34,13 +34,6 @@ export interface HuaweiIntegrationCardProps {
   enable: Action<[], HuaweiWriteResult>;
   disable: Action<[], HuaweiWriteResult>;
 }
-
-/**
- * A 404 is "not configured yet", the normal state of a new plant, so it is
- * answered at once rather than retried like a failure. Anything else keeps
- * the app's default of three attempts.
- */
-const retryUnlessNotFound = (failureCount: number, error: unknown) => !isNotFound(error) && failureCount < 3;
 
 const Fact: FC<{ label: string; value: string }> = ({ label, value }) => (
   <Box sx={{ minWidth: 0 }}>
@@ -61,10 +54,9 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
   const errorDispatch = useErrorDispatch();
   const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
 
-  const { data, error, isLoading, refetch } = useGetHuaweiConfig(plantId, {
+  const { data: stored, error, isLoading, refetch } = useGetHuaweiConfig(plantId, {
     query: { retry: retryUnlessNotFound },
   });
-  const stored = data as StoredHuaweiConfig | undefined;
   const notConfigured = !stored && isNotFound(error);
   const passwordSet = storedPasswordFrom(
     stored ? { passwordSet: stored.passwordSet === true } : undefined,

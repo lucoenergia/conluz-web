@@ -6,7 +6,7 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import { buildPlant, buildPlantCapabilities } from "../../test/fixtures";
-import type { PlantCapabilitiesResponse } from "../../api/models";
+import type { GetHuaweiConfigResponse, PlantCapabilitiesResponse } from "../../api/models";
 
 // The reads, and the three writes whose arguments these tests assert. The
 // actions layer runs for real, so the section exists for the reason it exists
@@ -39,7 +39,6 @@ import {
   NOT_CONFIGURED_TEXT,
   SAVE_FAILED_MESSAGE,
   TOGGLE_FAILED_TEXT,
-  type StoredHuaweiConfig,
 } from "./huaweiConfig";
 import {
   BASE_URL_INVALID_MESSAGE,
@@ -55,7 +54,7 @@ const mockConfigure = vi.fn();
 const mockEnable = vi.fn();
 const mockDisable = vi.fn();
 
-const configured = (overrides: Partial<StoredHuaweiConfig> = {}): StoredHuaweiConfig => ({
+const configured = (overrides: Partial<GetHuaweiConfigResponse> = {}): GetHuaweiConfigResponse => ({
   enabled: true,
   username: "huawei-user",
   baseUrl: "https://eu5.fusionsolar.huawei.com/thirdData",
@@ -63,7 +62,7 @@ const configured = (overrides: Partial<StoredHuaweiConfig> = {}): StoredHuaweiCo
   ...overrides,
 });
 
-const serveConfig = (config: StoredHuaweiConfig) =>
+const serveConfig = (config: GetHuaweiConfigResponse) =>
   vi.mocked(useGetHuaweiConfig).mockReturnValue(query.success<typeof getHuaweiConfig>(config));
 const failConfigRead = (status: number) => vi.mocked(useGetHuaweiConfig).mockReturnValue(query.error(apiError(status)));
 
