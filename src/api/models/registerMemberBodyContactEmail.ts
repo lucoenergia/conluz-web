@@ -7,6 +7,6 @@
  */
 
 /**
- * The email address this community contacts the member at. If given, the member is emailed an invitation to accept the membership. Omit it, or send null or an empty string, if there is none.
+ * The email address this community contacts the member at. Registering sends nothing: the invitation to accept the membership is sent to this address with sendInvitation. Omit it, or send null, an empty or a blank string, if there is none.
  */
 export type RegisterMemberBodyContactEmail = string | null;

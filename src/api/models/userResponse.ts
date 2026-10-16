@@ -15,10 +15,15 @@ import type { UserCapabilitiesResponse } from './userCapabilitiesResponse';
 export interface UserResponse {
   id: string;
   personalId: string;
+  /** Member number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   number: UserResponseNumber;
+  /** Full name. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   fullName: string;
+  /** Address. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   address: UserResponseAddress;
+  /** Email. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   email: UserResponseEmail;
+  /** Phone number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   phoneNumber: UserResponsePhoneNumber;
   enabled: boolean;
   memberships: UserResponseMemberships;

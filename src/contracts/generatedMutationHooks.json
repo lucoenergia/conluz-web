@@ -51,7 +51,9 @@
         "useCreateMembership",
         "useDeleteMembership",
         "useDisableCommunityAdmin",
+        "useDisableMembership",
         "useEnableCommunityAdmin",
+        "useEnableMembership",
         "useInspectInvitation",
         "useInviteCommunityAdmin",
         "useRegisterMember",
@@ -62,6 +64,7 @@
         "useSendInvitation",
         "useSendInvitations",
         "useSetMembershipInvestment",
+        "useUpdateMemberRecord",
         "useUpdateMembershipRole"
       ]
     },

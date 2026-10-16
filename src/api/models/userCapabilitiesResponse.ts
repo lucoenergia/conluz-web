@@ -12,13 +12,13 @@
 export interface UserCapabilitiesResponse {
   /** Whether the caller may read this user (GET /api/v1/users/{userId}). */
   canRead: boolean;
-  /** Whether the caller may edit this user administratively (PUT /api/v1/users/{userId}). This is false for an ordinary member looking at their own record: changing one's own contact details goes through PUT /api/v1/users/profile, which any authenticated caller may use. */
+  /** Whether the caller may edit this user administratively (PUT /api/v1/users/{userId}). This is false for an ordinary member looking at their own record: changing one's own contact details goes through PUT /api/v1/users/profile, which any authenticated caller may use. False for a community admin on any other user: only the platform admin may change another user's account. */
   canEdit: boolean;
-  /** Whether the caller may delete this user. Always false when the user is the caller: nobody may delete themselves, admins included. */
+  /** Whether the caller may delete this user. Always false when the user is the caller: nobody may delete themselves, admins included. False for a community admin: only the platform admin may delete another user's account. */
   canDelete: boolean;
-  /** Whether the caller may enable this user. Always false when the user is the caller. */
+  /** Whether the caller may enable this user. Always false when the user is the caller. False for a community admin: only the platform admin may enable another user's account. */
   canEnable: boolean;
-  /** Whether the caller may disable this user. Always false when the user is the caller. */
+  /** Whether the caller may disable this user. Always false when the user is the caller. False for a community admin: only the platform admin may disable another user's account; a community admin disables the membership instead. */
   canDisable: boolean;
   /** Whether the caller may grant this user the platform-admin flag. */
   canGrantPlatformAdmin: boolean;
