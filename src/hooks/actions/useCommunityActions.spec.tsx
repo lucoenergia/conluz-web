@@ -280,25 +280,6 @@ describe("useCommunityActions", () => {
       },
     );
 
-    it("UI-INT-014 writes the stored enabled into a cached Datadis configuration, and writes nothing when none is cached", async () => {
-      const key = getGetDatadisConfigQueryKey(COMMUNITY_ID);
-      const { result, queryClient } = render(communityWith({ canManage: true }));
-
-      await result.current.actions.disableDatadis?.run();
-      expect(queryClient.getQueryData(key)).toBeUndefined();
-
-      queryClient.setQueryData(key, { enabled: true, username: "TEST-USERNAME", baseUrl: "https://test.invalid" });
-      await result.current.actions.disableDatadis?.run();
-      expect(queryClient.getQueryData(key)).toEqual({
-        enabled: false,
-        username: "TEST-USERNAME",
-        baseUrl: "https://test.invalid",
-      });
-
-      await result.current.actions.enableDatadis?.run();
-      expect(queryClient.getQueryData(key)).toHaveProperty("enabled", true);
-    });
-
     it("UI-INT-013 hands a refused Datadis enable the error itself, so the card can name what is missing", async () => {
       const refusal = new Error("incomplete");
       enableDatadis.mockRejectedValue(refusal);

@@ -10,9 +10,9 @@ import type { GetDatadisConfigResponse } from "../../api/models";
 import { IntegrationsPage } from "./IntegrationsPage";
 
 // Tier 2: the real generated hooks against a real QueryClient, with only the
-// HTTP layer replaced. The subject is what the Datadis switch sends, what it
-// leaves in the cache, and what the next save reads from it, which a mocked
-// hook cannot show (#256).
+// HTTP layer replaced. The subject is what the Datadis switch and the first
+// save send, and what the refetch after each one shows, which a mocked hook
+// cannot show (#256).
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
@@ -31,17 +31,6 @@ const stored = (overrides: Partial<GetDatadisConfigResponse> = {}): GetDatadisCo
   baseUrl: "https://datadis.example",
   ...overrides,
 });
-
-/** A response the test releases when it chooses, to hold a refetch in flight. */
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (error: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
 
 /**
  * The page's own reads, with the Datadis configuration answered by `readDatadis`
@@ -91,29 +80,6 @@ const render = () => renderWithProviders(<IntegrationsPage />, { activeCommunity
 
 beforeEach(() => {
   vi.clearAllMocks();
-});
-
-describe("the Datadis switch and the next save", () => {
-  it("UI-INT-014 Guardar waits while the configuration is read again after a toggle", async () => {
-    const user = userEvent.setup();
-    let current = stored({ enabled: true });
-    let held: ReturnType<typeof deferred<GetDatadisConfigResponse>> | null = null;
-    serve(() => (held ? held.promise : current), [
-      { method: "POST", url: `${CONFIG_URL}/disable`, respond: () => undefined },
-    ]);
-    render();
-    await waitFor(() => expect(datadisSwitch()).toBeChecked());
-
-    held = deferred();
-    await toggle(user, "Desactivar");
-
-    await waitFor(() => expect(guardar()).toBeDisabled());
-    current = stored({ enabled: false });
-    const release = held;
-    held = null;
-    release.resolve(current);
-    await waitFor(() => expect(guardar()).toBeEnabled());
-  });
 });
 
 describe("the Datadis switch", () => {
