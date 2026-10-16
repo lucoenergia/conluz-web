@@ -198,12 +198,10 @@ When an intentional UI change alters a captured screen, or a change adds a captu
 baselines manually:
 
 ```bash
-# Changed captures only — the usual case.
 npm run test:visual -- --update-snapshots=changed
-
-# Also write baselines for names that have none yet, after a change that adds captures.
-npm run test:visual -- --update-snapshots=missing
 ```
+
+`changed` also writes a baseline for a new screenshot name.
 
 Review every changed PNG under `tests/visual/__screenshots__/` before committing. An unreviewed
 baseline turns a regression into the new expected result — and a new name's first baseline is
