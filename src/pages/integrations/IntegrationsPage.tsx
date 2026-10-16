@@ -27,7 +27,7 @@ import {
   storedPasswordFrom,
   type CredentialsField,
 } from "../../utils/integrationCredentials";
-import { DISABLED_TEXT, incompleteText } from "../../utils/integrationStatus";
+import { DISABLED_TEXT, incompleteText, isNotFound, retryUnlessNotFound } from "../../utils/integrationStatus";
 
 /**
  * Integration credentials change only when someone edits them on this page, so
@@ -168,7 +168,8 @@ export const IntegrationsPage: FC = () => {
     refetch: refetchDatadis,
   } = useGetDatadisConfig(
     activeCommunityId ?? "",
-    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
+    // A 404 is the create form, answered at once, as for Huawei (UI-INT-014).
+    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME, retry: retryUnlessNotFound } },
   );
 
   // Live from the read, not copied into state: the refetch after a save is what
@@ -181,10 +182,7 @@ export const IntegrationsPage: FC = () => {
   // Anything but a 404 says nothing about what is stored: whether a password
   // is, so which save rules apply, or whether the integration is on. So there
   // is no form and no switch to offer, only the retry (UI-INT-003).
-  const datadisReadFailed =
-    !datadisConfig &&
-    !!datadisError &&
-    (datadisError as { response?: { status?: number } }).response?.status !== 404;
+  const datadisReadFailed = !datadisConfig && !!datadisError && !isNotFound(datadisError);
 
   const { configureDatadis, configureShelly, enableDatadis, disableDatadis } =
     useCommunityActions().forCommunity(activeCommunity).actions;

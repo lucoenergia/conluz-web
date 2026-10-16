@@ -143,10 +143,6 @@ test.describe("Visual baselines", () => {
     const switchOf = (card: ReturnType<Page["getByRole"]>) =>
       card.getByRole("switch", { name: "Integración con Datadis activa" });
 
-    // The Datadis read retries a 404 with the app's default policy before it
-    // settles, so the not-configured state takes several seconds to arrive.
-    const SETTLED_TIMEOUT = 15_000;
-
     async function openDatadis(page: Page, options: Parameters<typeof mockDatadisConfigRoutes>[2] = {}) {
       await injectAuthToken(page);
       await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -156,7 +152,7 @@ test.describe("Visual baselines", () => {
       await page.goto("/integrations");
       const card = page.getByRole("region", { name: "Datadis" });
       // Guardar is offered only once the read has answered, 200 or 404.
-      await expect(card.getByRole("button", { name: "Guardar" })).toBeEnabled({ timeout: SETTLED_TIMEOUT });
+      await expect(card.getByRole("button", { name: "Guardar" })).toBeEnabled();
       return card;
     }
 

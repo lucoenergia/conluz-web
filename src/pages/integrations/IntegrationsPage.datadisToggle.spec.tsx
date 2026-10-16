@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { createAppQueryClient } from "../../queryClient";
 import { routeRequests, type RequestConfig, type Route } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
 import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures";
@@ -218,5 +219,20 @@ describe("the Datadis switch", () => {
     expect(within(datadis()).getByLabelText("Usuario")).toHaveValue("");
     expect(within(datadis()).getByLabelText("URL del servicio")).toHaveValue("");
     expect(within(datadis()).queryByText(DISABLED)).not.toBeInTheDocument();
+  });
+
+  it("UI-INT-014 a GET 404 shows the create form at once: the read is not retried", async () => {
+    // The app's own query client, whose default retries a failed read three
+    // times with backoff; the harness's turns retries off, which would hide it.
+    const router = serve(() => {
+      throw apiError(404, { code: "DATADIS_CONFIG_NOT_FOUND" });
+    });
+    renderWithProviders(<IntegrationsPage />, { activeCommunityId: COMMUNITY_ID, queryClient: createAppQueryClient() });
+
+    await screen.findByRole("region", { name: "Datadis" });
+    await waitFor(() => expect(guardar()).toBeEnabled());
+    expect(within(datadis()).getByLabelText("Usuario")).toHaveValue("");
+    expect(within(datadis()).queryByRole("switch")).not.toBeInTheDocument();
+    expect(requestsTo(router.requests, "GET", CONFIG_URL)).toHaveLength(1);
   });
 });
