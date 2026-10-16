@@ -34,14 +34,16 @@ directly. **Read the matching one before starting:**
 
 ## Commands
 
-Scripts are in `package.json`. What they do not tell you:
+Scripts are in `package.json`; the root `Makefile` wraps them and the test commands below, and
+`make help` lists its targets. Agents never run `make visual-update` or `make generate-client`. What
+the scripts do not tell you:
 
 - `npm test` runs Vitest in watch mode in an interactive terminal and once in CI or non-interactive
-  shells; `npx vitest run` runs once anywhere.
-- `npm run generate-mutation-hook-list` re-derives the mutation-hook list from the `api-docs.json`
-  already present. It does NOT regenerate the client, so the "agents never run `generate-client`"
-  rule does not cover it — agents may run this.
-- Never run the dev server after completing changes.
+  shells; `npx vitest run` (`make test`) runs once anywhere.
+- `npm run generate-mutation-hook-list` (`make mutation-hook-list`) re-derives the mutation-hook
+  list from the `api-docs.json` already present. It does NOT regenerate the client, so the "agents
+  never run `generate-client`" rule does not cover it — agents may run this.
+- Never run the dev server (`npm run dev` or `make dev`) after completing changes.
 
 ## Architecture rules
 
@@ -65,7 +67,7 @@ The app is **multi-community**. This supersedes any older single-community assum
 
 ### API client
 - `src/api/` is **generated** by Orval from `api-docs.json`. **Never edit it.**
-- **For AI-agent tasks:** the updated `api-docs.json` and regenerated client are **always provided before implementation** — treat `src/api/` as current. Do **not** fetch `api-docs.json` or run `npm run generate-client`, and do not list either as a task step. If `src/api/` looks out of sync, stop and report it.
+- **For AI-agent tasks:** the updated `api-docs.json` and regenerated client are **always provided before implementation** — treat `src/api/` as current. Do **not** fetch `api-docs.json` or run `npm run generate-client` (or `make generate-client`), and do not list either as a task step. If `src/api/` looks out of sync, stop and report it.
 - Reads use the generated hooks (or their community-scope wrappers); `getGet…QueryKey()` getters are importable everywhere. Invalidation is explicit after every mutation (`removeQueries` after a delete) — see `src/hooks/actions/useSharingAgreementActions.ts`.
 
 ### Routing
@@ -77,11 +79,11 @@ Full guide: the `conluz-web-testing` skill.
 - Test specs use `.spec.tsx` (not `.test.tsx`), colocated, rendered through `renderWithProviders` / `renderHookWithProviders` (`src/test/renderWithProviders.tsx`), never a hand-built wrapper.
 - **Never set `process.env.TZ` from test code.** A spec about the device time zone is a `*.tz.spec.tsx`, run by the `app-time-zone` Vitest project; details in the testing skill.
 - **No real network**: a test spec must never reach the backend. A setup-file guard (`src/test/networkGuard.ts`) refuses every `XMLHttpRequest` and `fetch` and fails the test, naming the method and URL; fix it by mocking, never by taking the request.
-- While iterating, run `npx tsc -b` plus `npx vitest related --run <changed files>`. `related` prints "No test files found" and still exits 0 when it resolves nothing — then run the test spec by path. Run `npm run lint && npm test` once at the end. If the UI changed, run only the affected visual test spec files and project at the end (`npx playwright test <spec> --project=<mobile|desktop>`); CI runs the full suite. If the change touches the theme, a layout or a component shared across screens, run the visual test spec files of every screen that uses it. The final report lists the visual test spec files run and why.
+- While iterating, run `npx tsc -b` (`make typecheck`) plus `npx vitest related --run <changed files>` (`make test-related FILES="…"`). `related` prints "No test files found" and still exits 0 when it resolves nothing — then run the test spec by path. Run `npm run lint && npm test` (`make lint test`) once at the end. If the UI changed, run only the affected visual test spec files and project at the end (`npx playwright test <spec> --project=<mobile|desktop>`, or `make visual SPEC=<spec> PROJECT=<mobile|desktop>`); CI runs the full suite. If the change touches the theme, a layout or a component shared across screens, run the visual test spec files of every screen that uses it. The final report lists the visual test spec files run and why.
 - **Visual tests are admitted only where a pixel change is the risk** ([`docs/testing/testing-strategy.md`](docs/testing/testing-strategy.md)). Before adding a visual test for a state, assert that state's behaviour in Vitest. Justify each new visual test against the admission rule. The final report lists every visual test added, with its justification. Do not delete, merge or migrate existing visual tests outside an issue dedicated to classifying them. If a visual test you touch appears to violate the admission rule, leave it unchanged and list it in the final report.
 - **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If it can only be found by test id, it is missing an accessible name or role: report the defect, don't route around it.
-- **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails or a baseline is missing, report which screens differ and stop.
-- Screenshot names are globally unique across all visual test specs. The warmup test `screenshot names are unique across the visual specs` (`tests/visual/warmup.setup.ts`) enforces it; to check locally, this must print nothing (it reads test spec files only, skips comments, and sees calls split over several lines):
+- **Baselines are never updated by an agent (hard rule).** Never run `--update-snapshots` or `make visual-update`, and never rewrite the PNGs under `tests/visual/__screenshots__/`. When a visual test fails or a baseline is missing, report which screens differ and stop.
+- Screenshot names are globally unique across all visual test specs. The warmup test `screenshot names are unique across the visual specs` (`tests/visual/warmup.setup.ts`) enforces it; to check locally, this (or `make visual-names`) must print nothing (it reads test spec files only, skips comments, and sees calls split over several lines):
 
   ```bash
   perl -0777 -ne 's{/\*.*?\*/}{}gs; s{^\s*//.*}{}gm; print "$1\n" while /\.toHaveScreenshot\(\s*"([^"]+)"/g' $(find tests/visual -name '*.spec.ts') | sort | uniq -d
