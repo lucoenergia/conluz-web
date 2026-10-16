@@ -32,7 +32,12 @@ export default defineConfig({
   snapshotDir: "./tests/visual/__screenshots__",
   // {projectName} separates mobile and desktop baselines; {arg} is the screenshot name passed to toHaveScreenshot()
   snapshotPathTemplate: "{snapshotDir}/{projectName}/{arg}{ext}",
-  fullyParallel: false,
+  // Tests are independent: each one builds its own browser context, route
+  // mocks and state, so Playwright may run any test on any worker. With this
+  // off, the tests of a file ran serially on one worker, so the slowest
+  // file × project capped the speed-up extra workers could give, and a single
+  // spec file run locally used one worker per project.
+  fullyParallel: true,
   // With fullyParallel off, Playwright parallelises across spec files, one
   // worker per file × project. The suite is split into several area specs, so
   // the default (half the cores) would run many of them at once against the
