@@ -1,6 +1,6 @@
 import { useGetHuaweiConfig } from "../../../api/production/production";
 import type { PlantResponse } from "../../../api/models";
-import { isNotFound, retryUnlessNotFound } from "../huaweiConfig";
+import { isNotFound, retryUnlessNotFound } from "../../../utils/integrationStatus";
 
 /**
  * Where the plant's Huawei integration stands, as the plant detail summarises it:

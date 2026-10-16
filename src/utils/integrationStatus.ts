@@ -3,7 +3,8 @@ import type { CredentialsField } from "./integrationCredentials";
 
 /**
  * What an integration's switch says about its state, for any provider: the
- * text while it is off, and the fields a refused enable names as missing.
+ * text while it is off, the fields a refused enable names as missing, and
+ * whether a configuration read's 404 means "not configured yet".
  *
  * Shared by the plant's Huawei card (#192) and the community's Datadis card
  * (#256). It imports nothing at runtime, so the error catalogue can word the
@@ -62,3 +63,15 @@ export const incompleteText = (labels: string[]) =>
   labels.length > 0
     ? `Faltan datos para activar la integración: ${formatFieldList(labels)}.`
     : "Faltan datos para activar la integración.";
+
+export function isNotFound(error: unknown): boolean {
+  return (error as { response?: { status?: number } } | null | undefined)?.response?.status === 404;
+}
+
+/**
+ * A 404 on an integration's configuration read is "not configured yet", the
+ * normal state of a new plant or community, so it is answered at once rather
+ * than retried like a failure. Anything else keeps the app's default of three
+ * attempts.
+ */
+export const retryUnlessNotFound = (failureCount: number, error: unknown) => !isNotFound(error) && failureCount < 3;
