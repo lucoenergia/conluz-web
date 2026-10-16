@@ -66,9 +66,9 @@ Shelly card is not covered.
     said about whether a password is stored.
 - **Rationale:** A `404` means the community has no configuration yet, so there is no password to
   keep, and a save without one can only be refused. Any other failed read says nothing about what is
-  stored: not the password, and not `enabled`, which an edit must send unchanged (UI-INT-014). A
-  save from that state would have to guess `enabled` and could turn off a working integration, so
-  there is nothing to offer but the retry, as for Huawei (UI-INT-007).
+  stored: not whether a password is, so not which save rules apply, and not whether the integration
+  is on, so not which way the switch points. A form offered in that state would guess both, so there
+  is nothing to offer but the retry, as for Huawei (UI-INT-007).
 - **Implements:** DCF-002
 - **Source:** #245, #256, lucoenergia/conluz#404
 
@@ -136,18 +136,15 @@ Shelly card is not covered.
   - The Huawei form MUST follow UI-INT-001, UI-INT-002, UI-INT-003 and UI-INT-004, with
     `HUAWEI_CONFIG_PASSWORD_REQUIRED` in place of `DATADIS_CONFIG_PASSWORD_REQUIRED`.
   - Creating a configuration MUST require a password; editing one MUST NOT, when one is stored.
-  - The form MUST NOT have an `enabled` control. A create MUST send `enabled: false`, and an edit
-    MUST send the stored `enabled` unchanged.
-  - After an enable or disable, an edit MUST send the `enabled` that write stored, even before the
-    configuration has been read again.
+  - The form MUST NOT have an `enabled` control, and MUST NOT send `enabled`, on create or on edit.
+    A new configuration is created disabled by the backend.
 - **Rationale:** Both providers share the same write-only password contract, so they share the
   rules and the code that applies them. Turning the integration on or off is a separate decision,
-  taken on the switch (UI-INT-009): a new configuration starts disabled so that it syncs only once
-  someone turns it on, and an edit of the credentials must not turn it on or off as a side effect.
-  An edit made between a toggle and the read that follows would otherwise send the old `enabled`,
-  undoing the toggle.
+  taken on the switch (UI-INT-009). The configuration write no longer accepts `enabled`, and refuses
+  a body that carries it with `400`: the backend creates a configuration disabled, so that it syncs
+  only once someone turns it on, and an edit leaves its state as it is.
 - **Implements:** n/a
-- **Source:** #192, #256, lucoenergia/conluz#399
+- **Source:** #192, #256, lucoenergia/conluz#399, lucoenergia/conluz#425
 
 ### UI-INT-009 — The Huawei switch goes through its own actions, and states when it is off
 
@@ -163,7 +160,8 @@ Shelly card is not covered.
     state. Any other refusal, apart from UI-INT-010's, MUST show the generic error feedback.
 - **Rationale:** The enable and disable endpoints change only `enabled`. Toggling through the
   configuration write would also rewrite the username and base URL with whatever the screen last
-  read, overwriting an edit made meanwhile. A configuration starts disabled (UI-INT-008), so the screen says why nothing syncs.
+  read, overwriting an edit made meanwhile. The backend creates a configuration disabled
+  (UI-INT-008), so the screen says why nothing syncs.
   A `404` here means the configuration was deleted meanwhile, and showing the stale one would offer
   actions that can only fail.
 - **Implements:** n/a
@@ -206,11 +204,11 @@ Shelly card is not covered.
     feedback.
 - **Rationale:** The enable and disable endpoints change only `enabled`. Toggling through the
   configuration write would also rewrite the username and base URL with whatever the screen last
-  read, overwriting an edit made meanwhile. A new configuration starts disabled (UI-INT-014), so
-  the card says why nothing syncs. A `404` here means the configuration was deleted meanwhile, and
+  read, overwriting an edit made meanwhile. The backend creates a configuration disabled
+  (UI-INT-014), so the card says why nothing syncs. A `404` here means the configuration was deleted meanwhile, and
   showing the stale one would offer actions that can only fail. Same model as Huawei (UI-INT-009).
 - **Implements:** n/a
-- **Source:** #256, lucoenergia/conluz#414
+- **Source:** #256, lucoenergia/conluz#414, lucoenergia/conluz#425
 
 ### UI-INT-013 — An incomplete Datadis configuration names what is missing
 
@@ -228,20 +226,17 @@ Shelly card is not covered.
 
 - **Status:** Active
 - **Rule:**
-  - The form MUST NOT have an `enabled` control. A create (the read answered `404`) MUST send
-    `enabled: false`, and an edit MUST send the stored `enabled` unchanged.
+  - The form MUST NOT have an `enabled` control, and MUST NOT send `enabled`, on create or on edit.
   - The credential fields MUST be shown whether the integration is enabled or disabled.
-  - With no configuration stored, the card MUST show the form with no switch.
-  - After an enable or disable, an edit MUST send the `enabled` that write stored, even before the
-    configuration has been read again, and Guardar MUST wait while it is read again.
+  - With no configuration stored, the card MUST show the form with no switch. After the first save,
+    the configuration is read again and the switch shows it off, as the backend creates it.
 - **Rationale:** Turning the integration on or off is a separate decision, taken on the switch
-  (UI-INT-012). A new configuration starts disabled so that it syncs only once someone turns it on,
-  and an edit of the credentials must not turn it on or off as a side effect. The fields used to fold
-  away with the switch off, which only made sense while the switch was part of the form. An edit made
-  between a toggle and the read that follows would otherwise send the old `enabled`, undoing the
-  toggle, and an undone disable would bypass the completeness check of the enable.
+  (UI-INT-012). The configuration write no longer accepts `enabled`, and refuses a body that carries
+  it with `400`: the backend creates a configuration disabled, so that it syncs only once someone
+  turns it on, and an edit leaves its state as it is. The fields used to fold away with the switch
+  off, which only made sense while the switch was part of the form.
 - **Implements:** n/a
-- **Source:** #256, lucoenergia/conluz#414
+- **Source:** #256, lucoenergia/conluz#414, lucoenergia/conluz#425
 
 ## States
 
@@ -255,7 +250,6 @@ The Datadis card only.
 | Configured, disabled | As above, the switch off, and text saying the integration is disabled | Switch, Edit, Guardar |
 | Enable refused (`DATADIS_CONFIG_INCOMPLETE`) | The switch off and a message naming the missing fields | Completar configuración, Switch, Edit, Guardar |
 | Read failed (not `404`) | An error with a retry; no fields, no switch, nothing said about the password | Reintentar |
-| Read again after a toggle | As configured, with Guardar disabled until the read lands | Switch (disabled while its write runs), Edit |
 | Blocked save | A message on each field that breaks a rule | Edit |
 | Refused save (`DATADIS_CONFIG_PASSWORD_REQUIRED`) | A message on the password field, and no generic error | Edit, Guardar |
 
