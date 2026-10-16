@@ -87,7 +87,7 @@ tests manually".
 
 Baselines are never auto-accepted: `playwright.config.ts` sets `updateSnapshots: "none"`, so no run
 writes a PNG unless a CLI flag says so. A maintainer regenerates them locally with
-`--update-snapshots=changed`, reviews them and commits them. Agents never update them.
+`--update-snapshots=changed` (`make visual-update`), reviews them and commits them. Agents never update them.
 
 The maintainer procedure is in [`CONTRIBUTE.md`](../../CONTRIBUTE.md), section "Updating visual
 regression baselines".
@@ -106,6 +106,7 @@ Locally, run only the affected test spec files and project:
 
 ```bash
 npx playwright test <spec> --project=<mobile|desktop>
+# or: make visual SPEC=<spec> PROJECT=<mobile|desktop>
 ```
 
 If the change touches the theme, a layout or a component shared across screens, run the visual test

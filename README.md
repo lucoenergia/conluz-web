@@ -148,6 +148,8 @@ npm test            # Run tests
 npm run generate-client  # Regenerate API client from OpenAPI spec
 ```
 
+The root `Makefile` wraps these scripts and the test commands; `make help` lists its targets.
+
 ## 🐳 Docker Deployment
 
 ### Using Docker Compose

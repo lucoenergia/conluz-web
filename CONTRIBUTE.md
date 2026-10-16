@@ -38,6 +38,10 @@ To contribute, you will need:
 - A fork of this repository
 - A properly configured local development environment (see project README for setup instructions)
 
+The root `Makefile` wraps the common commands: run `make help` to list its targets. Every target
+runs an npm script or a command documented in this repository, so those commands keep working
+without `make`.
+
 ---
 
 ## Workflow
@@ -203,6 +207,7 @@ baselines manually:
 
 ```bash
 npm run test:visual -- --update-snapshots=changed
+# or: make visual-update [SPEC=<spec>] [PROJECT=<mobile|desktop>]
 ```
 
 `changed` also writes a baseline for a new screenshot name.
