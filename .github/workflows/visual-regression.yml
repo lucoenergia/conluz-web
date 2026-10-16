@@ -5,6 +5,11 @@ on:
     branches: ["main", "develop"]
   pull_request:
 
+concurrency:
+  # One group per PR ref, so a new push cancels its superseded run; push and manual runs get a group of their own (run_id), so none of them is ever queued behind, or replaced by, another.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   visual-regression:
     runs-on: ubuntu-latest
