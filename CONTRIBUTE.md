@@ -172,10 +172,14 @@ workflow**. The run uses the HEAD of the branch you select there, as it is when 
 | `grep`        | Only tests whose title matches this pattern (Playwright `--grep`). Empty runs all. |
 | `project`     | `all`, `mobile` or `desktop`.                                           |
 | `repeat_each` | How many times to run each selected test.                               |
+| `workers`     | Playwright `--workers`: a positive integer or a percentage (`1%`–`100%`). Empty uses the configured value. |
 
 A manual run never retries, so every failure counts. To check a flake, set `grep` to the test's
 title, `project` to the project it was reported in, and `repeat_each = 20`: any failure out of the
 twenty confirms it.
+
+To compare worker counts, run the whole suite several times on the same commit, changing only `workers`,
+and compare the test-execution time, flaky entries and timeouts of each run.
 
 The two `warmup` setup tests always run, whatever `grep` and `project` say, because the viewport
 projects depend on them. They run **once**: `repeat_each` does not repeat them. A run of one test
