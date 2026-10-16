@@ -121,7 +121,7 @@ describe("PlantDetailPage chart labels in a device time zone other than the app'
     const user = userEvent.setup();
     setup({ yearly: [point("2024-12-31T23:00:00Z", 3000), point("2025-12-31T23:30:00Z", 3100)] });
 
-    await user.click(screen.getByRole("button", { name: "Totales" }));
+    await user.click(screen.getByRole("button", { name: "Total" }));
 
     expect(chartLabels()).toEqual(["2025", "2026"]);
   });

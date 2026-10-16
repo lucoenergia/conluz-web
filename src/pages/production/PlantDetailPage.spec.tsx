@@ -22,6 +22,10 @@ vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   useGetYearlyProduction: vi.fn(),
   useGetHuaweiConfig: vi.fn(),
 }));
+vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetSharingAgreements: vi.fn(),
+}));
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import {
@@ -32,6 +36,7 @@ import {
   useGetMonthlyProduction,
   useGetYearlyProduction,
 } from "../../api/production/production";
+import { getSharingAgreements, useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { PlantDetailPage } from "./PlantDetailPage";
 
 const COMMUNITY_ID = "community-a";
@@ -67,6 +72,7 @@ function setup(options: Partial<PlantCapabilitiesResponse> & { isNotFound?: bool
   }
   // The integrations section has its own spec; here it only has to stay quiet.
   vi.mocked(useGetHuaweiConfig).mockReturnValue(query.loading());
+  vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>([]));
 
   return renderWithProviders(
     <Routes>

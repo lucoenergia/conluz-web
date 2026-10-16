@@ -13,7 +13,7 @@ import {
   useTheme,
 } from "@mui/material";
 import InfoOutlineIcon from "@mui/icons-material/InfoOutlined";
-import type { ConfigureHuaweiBody } from "../../api/models";
+import type { ConfigureHuaweiBody, GetHuaweiConfigResponse } from "../../api/models";
 import type { Action, HuaweiWriteResult } from "../../hooks/actions";
 import { useCredentialsForm } from "../../hooks/useCredentialsForm";
 import { buildCredentialsBody, passwordRequiredMessage } from "../../utils/integrationCredentials";
@@ -24,14 +24,13 @@ import {
   HUAWEI_HELP,
   HUAWEI_URL_PLACEHOLDER,
   SAVE_FAILED_MESSAGE,
-  type StoredHuaweiConfig,
 } from "./huaweiConfig";
 
 export interface HuaweiConfigDialogProps {
   /** `create` when the plant has no configuration (a 404), `edit` otherwise. */
   mode: "create" | "edit";
   /** The stored configuration; read only in `edit` mode. */
-  stored: StoredHuaweiConfig | undefined;
+  stored: GetHuaweiConfigResponse | undefined;
   /** Whether a password is stored, as `storedPasswordFrom` answers it. */
   passwordSet: boolean | undefined;
   configure: Action<[ConfigureHuaweiBody], HuaweiWriteResult>;

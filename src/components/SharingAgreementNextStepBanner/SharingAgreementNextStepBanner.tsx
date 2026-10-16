@@ -1,7 +1,8 @@
 import type { FC } from "react";
 import { Box, Typography } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { colors, fontSizes, radii } from "../../theme/tokens";
+import { colors, fontSizes } from "../../theme/tokens";
+import { NextStepBanner } from "../NextStepBanner";
 import { SharingAgreementActionButton } from "../SharingAgreementActionButton";
 import { SharingAgreementLifecycleSpine } from "../SharingAgreementLifecycleSpine";
 import type { LifecycleActionKind, LifecycleView } from "../../pages/production/sharingAgreementLifecycle";
@@ -47,46 +48,7 @@ export const SharingAgreementNextStepBanner: FC<SharingAgreementNextStepBannerPr
   const hasActions = !!(primary && primaryHandler) || !!(secondary && secondaryHandler) || !!revert;
 
   return (
-    <Box
-      sx={{
-        bgcolor: isClosed ? colors.secondary.main : colors.brand.main,
-        borderRadius: { xs: 0, sm: radii.large },
-        p: { xs: 2, sm: 3 },
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 1.5, sm: 2 },
-      }}
-    >
-      <Box>
-        <Typography
-          component="p"
-          sx={{
-            fontSize: fontSizes.xs,
-            fontWeight: 500,
-            letterSpacing: "0.5px",
-            textTransform: "uppercase",
-            color: colors.brand.onSoft,
-          }}
-        >
-          Siguiente paso
-        </Typography>
-        {headline && (
-          <Typography
-            component="p"
-            sx={{
-              mt: 1,
-              fontSize: { xs: fontSizes["2xl"], sm: "1.25rem" },
-              fontWeight: 600,
-              lineHeight: 1.35,
-              color: colors.brand.contrastText,
-              textWrap: "pretty",
-            }}
-          >
-            {headline}
-          </Typography>
-        )}
-      </Box>
-
+    <NextStepBanner headline={headline} isClosed={isClosed}>
       {hasActions && (
         <Box
           sx={{
@@ -136,6 +98,6 @@ export const SharingAgreementNextStepBanner: FC<SharingAgreementNextStepBannerPr
       )}
 
       <SharingAgreementLifecycleSpine view={view} />
-    </Box>
+    </NextStepBanner>
   );
 };

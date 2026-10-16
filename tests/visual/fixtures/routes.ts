@@ -45,6 +45,7 @@ import {
   PAGED_SUPPLIES,
   PAGED_USERS,
   SECOND_IN_FORCE_AGREEMENT,
+  FIXED_SHARING_AGREEMENTS,
 } from "./data";
 
 // ---------------------------------------------------------------------------
@@ -545,6 +546,17 @@ export async function mockPlantDetailRoutes(page: Page, currentUser?: { membersh
         contentType: "application/json",
         body: JSON.stringify(plant),
       }),
+  );
+
+  // The plant's agreements, which its summary and agreements section list
+  // (#260): in force, in draft and superseded, so the screen has to pick.
+  // Refused unless the plant served to this caller says it may list them.
+  await page.route(
+    (url) => url.pathname === `/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements`,
+    (route: Route) =>
+      refusal(plant.capabilities, "canListSharingAgreements")
+        ? refuse(route, "canListSharingAgreements")
+        : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FIXED_SHARING_AGREEMENTS) }),
   );
 }
 

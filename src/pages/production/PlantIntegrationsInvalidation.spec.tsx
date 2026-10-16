@@ -8,8 +8,9 @@ import { apiError } from "../../test/apiError";
 import { buildPlant, buildPlantCapabilities } from "../../test/fixtures";
 import { getGetHuaweiConfigQueryKey } from "../../api/production/production";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
-import { NOT_CONFIGURED_TEXT, type StoredHuaweiConfig } from "./huaweiConfig";
+import { NOT_CONFIGURED_TEXT } from "./huaweiConfig";
 import { DISABLED_TEXT } from "../../utils/integrationStatus";
+import type { GetHuaweiConfigResponse } from "../../api/models";
 
 // Tier 2: the real generated hooks against a real QueryClient, with only the
 // HTTP layer replaced. The subject is which plant each request names and which
@@ -26,7 +27,7 @@ const PLANT_A = "plant-a";
 const PLANT_B = "plant-b";
 const configUrl = (plantId: string) => `/api/v1/plants/${plantId}/production/huawei/config`;
 
-const configured = (overrides: Partial<StoredHuaweiConfig> = {}): StoredHuaweiConfig => ({
+const configured = (overrides: Partial<GetHuaweiConfigResponse> = {}): GetHuaweiConfigResponse => ({
   enabled: true,
   username: "huawei-user",
   baseUrl: "https://eu5.fusionsolar.huawei.com/thirdData",
@@ -196,7 +197,7 @@ describe("the Huawei integration of one plant", () => {
 
   it("UI-INT-008 a created configuration arrives disabled: the switch is off and says so", async () => {
     const user = userEvent.setup();
-    let stored: StoredHuaweiConfig | undefined;
+    let stored: GetHuaweiConfigResponse | undefined;
     const router = routeRequests([
       {
         method: "GET",
