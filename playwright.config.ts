@@ -39,7 +39,11 @@ export default defineConfig({
   // single Vite dev server. Two workers keeps the concurrency the suite had as
   // one file run by two projects, and matches the default on a 4-core CI runner.
   workers: 2,
-  retries: 0,
+  // One retry in CI tells a flake from a real diff without re-running the whole
+  // job: a test that fails and then passes is reported "flaky", and the retry
+  // records the trace ("on-first-retry" below). Locally a failure stays a
+  // failure. scripts/report-flaky-tests.mjs lists the flaky ones in the job summary.
+  retries: process.env.CI ? 1 : 0,
   // Never write a baseline implicitly. Playwright's default ("missing") writes a
   // PNG for any screenshot name that has none, even on a plain run. So adding a
   // test silently created its baseline, and the rule that agents never update
@@ -48,7 +52,13 @@ export default defineConfig({
   // regeneration path) is the only way a baseline is ever written. That is what
   // makes the rule enforceable.
   updateSnapshots: "none",
-  reporter: [["html", { open: "never" }], ["list"]],
+  // The JSON report sits outside test-results/ and playwright-report/, which
+  // Playwright empties at the start of a run, and is what CI reads flaky tests from.
+  reporter: [
+    ["html", { open: "never" }],
+    ["list"],
+    ["json", { outputFile: "reports/visual-results.json" }],
+  ],
   use: {
     baseURL: BASE_URL,
     // No reducedMotion here. `use` has no such option (Playwright only honours

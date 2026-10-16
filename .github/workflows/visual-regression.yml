@@ -4,6 +4,29 @@ on:
   push:
     branches: ["main", "develop"]
   pull_request:
+  # A manual run repeats a filtered set of tests on the selected branch's HEAD,
+  # without retries, to tell a flake from a real diff. See CONTRIBUTE.md.
+  workflow_dispatch:
+    inputs:
+      grep:
+        description: "Only run tests whose title matches this pattern (Playwright --grep); empty runs all"
+        type: string
+        required: false
+        default: ""
+      project:
+        description: "Viewport project to run"
+        type: choice
+        options: ["all", "mobile", "desktop"]
+        default: "all"
+      repeat_each:
+        description: "How many times to run each selected test (Playwright --repeat-each)"
+        type: number
+        default: 1
+
+concurrency:
+  # One group per PR ref, so a new push cancels its superseded run; push and manual runs get a group of their own (run_id), so none of them is ever queued behind, or replaced by, another.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   visual-regression:
@@ -14,6 +37,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -26,8 +50,55 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run visual regression tests (mobile + desktop)
-        run: npm run test:visual
+      # Inputs reach the script through env, never interpolated into it, so a
+      # pattern typed into the form is data, not shell.
+      - name: Run visual regression tests
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GREP: ${{ inputs.grep }}
+          PROJECT: ${{ inputs.project }}
+          REPEAT_EACH: ${{ inputs.repeat_each }}
+        run: |
+          if [ "$EVENT_NAME" != "workflow_dispatch" ]; then
+            npm run test:visual
+            exit
+          fi
+          if ! [[ "$REPEAT_EACH" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error title=Invalid input::repeat_each must be a positive integer, got '$REPEAT_EACH'"
+            exit 1
+          fi
+          # No retries: a manual run exists to count failures, and a retry would hide them.
+          args=(--retries=0 "--repeat-each=$REPEAT_EACH")
+          if [ -n "$GREP" ]; then args+=("--grep=$GREP"); fi
+          if [ "$PROJECT" != "all" ]; then args+=("--project=$PROJECT"); fi
+          npm run test:visual -- "${args[@]}"
+
+      # !cancelled() rather than always(): a PR run cancelled because a newer
+      # push superseded it must not report or upload a partial result.
+      - name: Report flaky tests
+        id: flaky
+        if: ${{ !cancelled() }}
+        run: node scripts/report-flaky-tests.mjs reports/visual-results.json
+
+      - name: Upload JSON report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-results
+          path: reports/visual-results.json
+          # A run that failed before the tests (npm ci, browser install) has no report.
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Traces of the retries that turned a failure into a pass. A run that also
+      # failed uploads test-results/ through the failure step below instead.
+      - name: Upload flaky test traces
+        if: steps.flaky.outputs.flaky == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-flaky-traces
+          path: test-results/
+          retention-days: 7
 
       - name: Upload failure artifacts
         if: failure()

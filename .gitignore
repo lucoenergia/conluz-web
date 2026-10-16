@@ -11,6 +11,7 @@
 # Playwright runtime output (keep __screenshots__ baselines tracked in git)
 /test-results
 /playwright-report
+/reports
 
 .vite
 

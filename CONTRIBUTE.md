@@ -13,6 +13,7 @@ Thank you for your interest in contributing to **ConLuz**! This document provide
 - [Commit Message Format](#commit-message-format)
 - [Pull Requests](#pull-requests)
 - [Release notes](#release-notes)
+- [Continuous integration](#continuous-integration)
 - [Maintainer Notes](#maintainer-notes)
 - [Code of Conduct](#code-of-conduct)
 - [Contact](#contact)
@@ -135,6 +136,47 @@ breaking section whatever its other labels.
 - The code must be self explanatory adding comments when further explanation is required.
 - The code must be in English.
 - The code must be tested through automated tests to validate it works as expected.
+
+---
+
+## Continuous integration
+
+### Retries and flaky visual tests
+
+The visual suite retries a failed test **once in CI** and **never locally** (`retries` in
+`playwright.config.ts` follows the `CI` variable). A test that fails and then passes on its retry
+does not fail the job; Playwright reports it as **flaky**. The *Visual regression tests* job then:
+
+- lists it under "Flaky visual tests" in the job summary, with its project and title;
+- emits a warning annotation for it;
+- uploads `test-results/`, which holds the trace recorded on the retry, as `playwright-flaky-traces`.
+
+A flaky entry is a defect, not noise. It means the same code produced two different screenshots or
+outcomes, so a later run can fail for a reason that has nothing to do with the change under review.
+Follow it up: confirm it with a manual run (below) and open an issue with the result. Do not treat a
+green job as the end of it.
+
+Every run that is not cancelled also uploads Playwright's JSON report as `playwright-visual-results`,
+whatever the result.
+
+### Running visual tests manually
+
+To check a suspected flake, run the workflow by hand: **Actions → Visual regression tests → Run
+workflow**. The run uses the HEAD of the branch you select there, as it is when you trigger it.
+
+| Input         | Meaning                                                                 |
+| ------------- | ----------------------------------------------------------------------- |
+| `grep`        | Only tests whose title matches this pattern (Playwright `--grep`). Empty runs all. |
+| `project`     | `all`, `mobile` or `desktop`.                                           |
+| `repeat_each` | How many times to run each selected test.                               |
+
+A manual run never retries, so every failure counts. To check a flake, set `grep` to the test's
+title, `project` to the project it was reported in, and `repeat_each = 20`: any failure out of the
+twenty confirms it.
+
+The two `warmup` setup tests always run, whatever `grep` and `project` say, because the viewport
+projects depend on them. They run **once**: `repeat_each` does not repeat them. A run of one test
+with `repeat_each = 20` therefore reports 22 tests.
 
 ---
 
