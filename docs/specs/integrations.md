@@ -228,13 +228,16 @@ Shelly card is not covered.
 - **Rule:**
   - The form MUST NOT have an `enabled` control, and MUST NOT send `enabled`, on create or on edit.
   - The credential fields MUST be shown whether the integration is enabled or disabled.
-  - With no configuration stored, the card MUST show the form with no switch. After the first save,
-    the configuration is read again and the switch shows it off, as the backend creates it.
+  - With no configuration stored, the card MUST show the form with no switch, as soon as the read
+    answers `404`: that answer MUST NOT be retried. After the first save, the configuration is read
+    again and the switch shows it off, as the backend creates it.
 - **Rationale:** Turning the integration on or off is a separate decision, taken on the switch
   (UI-INT-012). The configuration write no longer accepts `enabled`, and refuses a body that carries
   it with `400`: the backend creates a configuration disabled, so that it syncs only once someone
   turns it on, and an edit leaves its state as it is. The fields used to fold away with the switch
-  off, which only made sense while the switch was part of the form.
+  off, which only made sense while the switch was part of the form. A `404` is the normal state of
+  a community that has not configured Datadis yet, not a failure, so retrying it only delays the
+  form by several seconds, as for Huawei.
 - **Implements:** n/a
 - **Source:** #256, lucoenergia/conluz#414, lucoenergia/conluz#425
 
