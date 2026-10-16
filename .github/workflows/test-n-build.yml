@@ -23,6 +23,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+          cache: npm
       - run: npm ci
       # Fails if `npm ci` rewrote the lockfile, which the npm pin (package.json
       # engines + .npmrc engine-strict) exists to prevent.
