@@ -35,6 +35,33 @@ jobs:
       - name: Run visual regression tests (mobile + desktop)
         run: npm run test:visual
 
+      # !cancelled() rather than always(): a PR run cancelled because a newer
+      # push superseded it must not report or upload a partial result.
+      - name: Report flaky tests
+        id: flaky
+        if: ${{ !cancelled() }}
+        run: node scripts/report-flaky-tests.mjs reports/visual-results.json
+
+      - name: Upload JSON report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-results
+          path: reports/visual-results.json
+          # A run that failed before the tests (npm ci, browser install) has no report.
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Traces of the retries that turned a failure into a pass. A run that also
+      # failed uploads test-results/ through the failure step below instead.
+      - name: Upload flaky test traces
+        if: steps.flaky.outputs.flaky == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-flaky-traces
+          path: test-results/
+          retention-days: 7
+
       - name: Upload failure artifacts
         if: failure()
         uses: actions/upload-artifact@v4
