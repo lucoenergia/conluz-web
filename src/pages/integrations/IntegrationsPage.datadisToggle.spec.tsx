@@ -142,7 +142,7 @@ describe("the Datadis switch", () => {
     expect(requestsTo(router.requests, "PUT", CONFIG_URL)).toEqual([]);
   });
 
-  it("UI-INT-014 AC5 with no configuration there is no switch, the first save sends no enabled, and the switch then arrives off", async () => {
+  it("UI-INT-014 AC5 AC6 with no configuration there is no switch, the first save sends no enabled, and the switch then arrives off", async () => {
     const user = userEvent.setup();
     let current: GetDatadisConfigResponse | null = null;
     const router = serve(
@@ -182,6 +182,7 @@ describe("the Datadis switch", () => {
       password: "secreta",
       baseUrl: "https://datadis.es",
     });
+    expect(requestsTo(router.requests, "PUT", CONFIG_URL)[0].data).not.toHaveProperty("enabled");
     await waitFor(() => expect(datadisSwitch()).not.toBeChecked());
     expect(within(datadis()).getByText(DISABLED)).toBeVisible();
   });
