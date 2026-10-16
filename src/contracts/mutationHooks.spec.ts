@@ -106,6 +106,21 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useCreateMembership: { scope: "community", capability: "canManageMemberships", hook: "useMembershipActions" },
   useRegisterMember: { scope: "community", capability: "canRegisterMembers" },
   useSendInvitation: { scope: "membership", capability: "canInvite" },
+  useResendInvitation: { scope: "membership", capability: "canInvite" },
+  useRevokeInvitation: { scope: "membership", capability: "canInvite" },
+  useSendInvitations: { scope: "community", capability: "canInviteMembers" },
+
+  // ── Community admins ──────────────────────────────────────────────────────
+  useInviteCommunityAdmin: { scope: "community", capability: "canManageAdmins" },
+  useEnableCommunityAdmin: { scope: "community", capability: "canManageAdmins" },
+  useDisableCommunityAdmin: { scope: "community", capability: "canManageAdmins" },
+  useResendCommunityAdminInvitation: { scope: "community", capability: "canManageAdmins" },
+  useRevokeCommunityAdminInvitation: { scope: "community", capability: "canManageAdmins" },
+
+  // ── Invitations ───────────────────────────────────────────────────────────
+  useInspectInvitation: { ungated: "no session: the holder of an emailed invitation link may not have an account to sign in with yet, and the token is the only credential" },
+  useAcceptInvitation: { ungated: "no session: it sets the account's first password, so nobody can be signed in as it, and the token is the only credential" },
+  useAcceptInvitationAsCurrentUser: { ungated: "open to any authenticated caller: it accepts one of the caller's own memberships, named by the token, and takes no id" },
   useDeleteMembership: { scope: "membership", capability: "canDelete", hook: "useMembershipActions" },
   useUpdateMembershipRole: { scope: "membership", capability: "canUpdateRole", hook: "useMembershipActions" },
   useSetMembershipInvestment: { scope: "membership", capability: "canManageInvestment", hook: "useMembershipActions" },

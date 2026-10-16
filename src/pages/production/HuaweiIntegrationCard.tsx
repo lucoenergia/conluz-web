@@ -22,7 +22,6 @@ import {
   SAVED_TEXT,
   TOGGLE_FAILED_TEXT,
   isNotFound,
-  type StoredHuaweiConfig,
 } from "./huaweiConfig";
 
 export interface HuaweiIntegrationCardProps {
@@ -63,7 +62,7 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
   const { data, error, isLoading, refetch } = useGetHuaweiConfig(plantId, {
     query: { retry: retryUnlessNotFound },
   });
-  const stored = data as StoredHuaweiConfig | undefined;
+  const stored = data;
   const notConfigured = !stored && isNotFound(error);
   const passwordSet = storedPasswordFrom(
     stored ? { passwordSet: stored.passwordSet === true } : undefined,

@@ -102,6 +102,8 @@ export function buildCommunityCapabilities(
     canManageMemberships: false,
     canManageMembershipInvestment: false,
     canRegisterMembers: false,
+    canInviteMembers: false,
+    canManageAdmins: false,
     canListPlants: false,
     canCreatePlants: false,
     canCreateUsers: false,
@@ -238,6 +240,7 @@ export function buildMembership(overrides: Partial<MembershipResponse> = {}): Me
       enabled: true,
       // Accepted: a pending membership (null) grants no access, so it is opt-in.
       acceptedAt: "2026-01-01T00:00:00Z",
+      invitationExpiresAt: null,
       capabilities: buildMembershipCapabilities(),
     } satisfies MembershipResponse),
     ...overrides,

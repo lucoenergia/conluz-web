@@ -1,15 +1,8 @@
-import type { ConfigureHuaweiBody } from "../../api/models";
+import type { GetHuaweiConfigResponse } from "../../api/models";
 import { colors } from "../../theme/tokens";
 
-/**
- * What GET /plants/{plantId}/production/huawei/config answers.
- *
- * The contract declares no schema for its 200, so the generated client types
- * it `unknown` and the screen casts it, as the integrations page did. The
- * endpoint's description documents the shape: the write body without the
- * password, plus `passwordSet`.
- */
-export type StoredHuaweiConfig = Omit<ConfigureHuaweiBody, "password"> & { passwordSet?: boolean };
+/** What GET /plants/{plantId}/production/huawei/config answers. */
+export type StoredHuaweiConfig = GetHuaweiConfigResponse;
 
 /**
  * The backend appends `/login`, `/getStationRealKpi` and `/getKpiStationHour`

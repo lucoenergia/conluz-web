@@ -67,6 +67,14 @@ const REVIEWED: Record<string, Scope> = {
   // caller. Global like /api/v1/login, which also precedes any session.
   "/api/v1/users/password/recover": "global",
   "/api/v1/users/password/reset": "global",
+  // Accepting an invitation: no session, and the membership is named by the
+  // token from the emailed link, never by a path. Global for the same reason as
+  // the forgotten-password flow.
+  "/api/v1/invitations/inspect": "global",
+  "/api/v1/invitations/accept": "global",
+  // Accepts one of the caller's own memberships: user-scoped like
+  // /api/v1/users/current/password.
+  "/api/v1/users/current/invitations/accept": "user",
 };
 
 function structuralScope(path: string): Scope | null {

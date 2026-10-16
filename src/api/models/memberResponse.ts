@@ -14,6 +14,7 @@ import type { MemberResponseAddress } from './memberResponseAddress';
 import type { MemberResponsePhoneNumber } from './memberResponsePhoneNumber';
 import type { MemberResponseAcceptedAt } from './memberResponseAcceptedAt';
 import type { MemberResponseInvitedAt } from './memberResponseInvitedAt';
+import type { MemberResponseInvitationExpiresAt } from './memberResponseInvitationExpiresAt';
 import type { MembershipCapabilitiesResponse } from './membershipCapabilitiesResponse';
 
 /**
@@ -44,6 +45,8 @@ export interface MemberResponse {
   enabled: boolean;
   /** When the member was last sent an invitation. Null if none has been sent. */
   invitedAt: MemberResponseInvitedAt;
+  /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
+  invitationExpiresAt: MemberResponseInvitationExpiresAt;
   /** What the caller may do with this membership. */
   capabilities: MembershipCapabilitiesResponse;
 }

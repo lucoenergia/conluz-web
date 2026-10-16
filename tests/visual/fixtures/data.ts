@@ -120,6 +120,8 @@ export const MEMBER_COMMUNITY_CAPABILITIES = {
   canManageMemberships: false,
   canManageMembershipInvestment: false,
   canRegisterMembers: false,
+  canInviteMembers: false,
+  canManageAdmins: false,
   canListPlants: true,
   canCreatePlants: false,
   canCreateUsers: false,
@@ -134,6 +136,7 @@ export const COMMUNITY_ADMIN_CAPABILITIES = {
   canManageMemberships: true,
   canManageMembershipInvestment: true,
   canRegisterMembers: true,
+  canInviteMembers: true,
   canCreatePlants: true,
   canCreateUsers: true,
 };
@@ -844,6 +847,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_ADMIN",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitationExpiresAt: null,
     enabled: true,
     // Their own membership: the backend does not offer them their own removal
     // or demotion, which is the safety rail the row menu has to respect.
@@ -873,6 +877,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitationExpiresAt: null,
     enabled: true,
     capabilities: {
       canUpdateRole: true,
@@ -900,6 +905,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitationExpiresAt: null,
     enabled: false,
     capabilities: {
       canUpdateRole: true,
