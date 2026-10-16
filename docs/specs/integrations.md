@@ -8,7 +8,7 @@
 | **Roles** | `/integrations`: a caller who may manage the active community (`canManage`). Plant detail's integrations section: a caller who may manage that plant (the plant's `canManage`) |
 | **Domain rules** | `lucoenergia/conluz`: DCF-001, DCF-002, DCF-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #192 |
+| **Last reviewed against code** | #256 |
 
 ## Purpose
 
@@ -16,9 +16,9 @@ Let an administrator connect the community, and each of its plants, to external 
 community integrations page holds the community-scoped integrations, Datadis and Shelly. The Huawei
 integration belongs to a plant and is configured from that plant's detail screen.
 
-This document covers the Datadis configuration form (the rules #245 introduced), the plant's Huawei
-integration, and which integrations the community page lists (#192). The Shelly card is not
-covered.
+This document covers the Datadis configuration form (the rules #245 introduced) and its switch
+(#256), the plant's Huawei integration, and which integrations the community page lists (#192). The
+Shelly card is not covered.
 
 ## Rules
 
@@ -48,14 +48,12 @@ covered.
   - A message of this rule or of UI-INT-003 MUST appear once its field has been left or a save has
     been attempted. It MUST NOT appear on first render.
   - A blocked save MUST NOT open the save confirmation and MUST NOT send a request.
-  - When the integration switch is off, a blocked save MUST open the credential fields, so that its
-    messages are visible.
 - **Rationale:** The backend refuses these values with a `400` that carries no error code, so the
   client is the only place that can say which field is wrong. An empty form is the normal state of a
-  first setup, not a mistake, so it starts without messages. The backend checks the fields whether
-  the integration is on or off, so a blocked save with the fields collapsed would say nothing.
+  first setup, not a mistake, so it starts without messages. The fields are always shown
+  (UI-INT-014), so a blocked save's messages are visible whether the integration is on or off.
 - **Implements:** n/a
-- **Source:** #245, lucoenergia/conluz#404
+- **Source:** #245, #256, lucoenergia/conluz#404
 
 ### UI-INT-003 — A Datadis password is required when none is stored
 
@@ -63,14 +61,16 @@ covered.
 - **Rule:**
   - When no password is stored (`passwordSet` is `false`, or the read of the configuration answers
     `404`), an empty password field MUST block the save with a visible message on the field.
-  - When the read of the configuration fails with anything other than `404`, the form MUST NOT apply
-    this rule and MUST NOT show the helper text of UI-INT-001.
+  - When the read of the configuration fails with anything other than `404`, the card MUST show an
+    error with a retry instead of the form: no credential fields, no switch, no Guardar, and nothing
+    said about whether a password is stored.
 - **Rationale:** A `404` means the community has no configuration yet, so there is no password to
-  keep, and a save without one can only be refused. Any other failed read says nothing about the
-  password: requiring one would block saves the backend accepts, and the helper text would claim a
-  password that may not exist. The backend decides instead, and UI-INT-004 places its refusal.
+  keep, and a save without one can only be refused. Any other failed read says nothing about what is
+  stored: not whether a password is, so not which save rules apply, and not whether the integration
+  is on, so not which way the switch points. A form offered in that state would guess both, so there
+  is nothing to offer but the retry, as for Huawei (UI-INT-007).
 - **Implements:** DCF-002
-- **Source:** #245, lucoenergia/conluz#404
+- **Source:** #245, #256, lucoenergia/conluz#404
 
 ### UI-INT-004 — The backend's password refusal lands on the password field
 
@@ -79,8 +79,8 @@ covered.
   - A `400` whose first error code is `DATADIS_CONFIG_PASSWORD_REQUIRED` MUST be shown on the password
     field, without the generic error. Every other refusal MUST keep the generic error.
   - After a successful save, the password field MUST be empty.
-- **Rationale:** The client cannot always know that no password is stored: the read may have failed,
-  or a password wiped before lucoenergia/conluz#404 may still read as stored. The refusal names the
+- **Rationale:** The client cannot always know that no password is stored: a password wiped before
+  lucoenergia/conluz#404 may still read as stored. The refusal names the
   field to fix, so it belongs on that field, not in a generic message. The field is emptied after a
   save so the next save keeps what was stored instead of sending it again.
 - **Implements:** DCF-002
@@ -136,14 +136,15 @@ covered.
   - The Huawei form MUST follow UI-INT-001, UI-INT-002, UI-INT-003 and UI-INT-004, with
     `HUAWEI_CONFIG_PASSWORD_REQUIRED` in place of `DATADIS_CONFIG_PASSWORD_REQUIRED`.
   - Creating a configuration MUST require a password; editing one MUST NOT, when one is stored.
-  - The form MUST NOT have an `enabled` control. A create MUST send `enabled: false`, and an edit
-    MUST send the stored `enabled` unchanged.
+  - The form MUST NOT have an `enabled` control, and MUST NOT send `enabled`, on create or on edit.
+    A new configuration is created disabled by the backend.
 - **Rationale:** Both providers share the same write-only password contract, so they share the
   rules and the code that applies them. Turning the integration on or off is a separate decision,
-  taken on the switch (UI-INT-009): a new configuration starts disabled so that it syncs only once
-  someone turns it on, and an edit of the credentials must not turn it on or off as a side effect.
+  taken on the switch (UI-INT-009). The configuration write no longer accepts `enabled`, and refuses
+  a body that carries it with `400`: the backend creates a configuration disabled, so that it syncs
+  only once someone turns it on, and an edit leaves its state as it is.
 - **Implements:** n/a
-- **Source:** #192, lucoenergia/conluz#399
+- **Source:** #192, #256, lucoenergia/conluz#399, lucoenergia/conluz#425
 
 ### UI-INT-009 — The Huawei switch goes through its own actions, and states when it is off
 
@@ -159,7 +160,8 @@ covered.
     state. Any other refusal, apart from UI-INT-010's, MUST show the generic error feedback.
 - **Rationale:** The enable and disable endpoints change only `enabled`. Toggling through the
   configuration write would also rewrite the username and base URL with whatever the screen last
-  read, overwriting an edit made meanwhile. A configuration starts disabled (UI-INT-008), so the screen says why nothing syncs.
+  read, overwriting an edit made meanwhile. The backend creates a configuration disabled
+  (UI-INT-008), so the screen says why nothing syncs.
   A `404` here means the configuration was deleted meanwhile, and showing the stale one would offer
   actions that can only fail.
 - **Implements:** n/a
@@ -187,6 +189,58 @@ covered.
 - **Implements:** n/a
 - **Source:** #192
 
+### UI-INT-012 — The Datadis switch goes through its own actions, and states when it is off
+
+- **Status:** Active
+- **Rule:**
+  - With a configuration stored, the switch MUST reflect the stored `enabled`. Turning it on MUST
+    call `enableDatadisConfig`, and turning it off MUST call `disableDatadisConfig`. The switch MUST
+    NOT call the configuration write.
+  - The switch MUST ask for confirmation, and MUST NOT be operable again while a write is in flight.
+  - While the stored configuration is disabled, the card MUST show visible text saying so and
+    inviting the admin to enable it; while it is enabled, that text MUST NOT show.
+  - A `404 DATADIS_CONFIG_NOT_FOUND` MUST discard the stored configuration on screen, which shows
+    UI-INT-014's create form. Any other refusal, apart from UI-INT-013's, MUST show the generic error
+    feedback.
+- **Rationale:** The enable and disable endpoints change only `enabled`. Toggling through the
+  configuration write would also rewrite the username and base URL with whatever the screen last
+  read, overwriting an edit made meanwhile. The backend creates a configuration disabled
+  (UI-INT-014), so the card says why nothing syncs. A `404` here means the configuration was deleted meanwhile, and
+  showing the stale one would offer actions that can only fail. Same model as Huawei (UI-INT-009).
+- **Implements:** n/a
+- **Source:** #256, lucoenergia/conluz#414, lucoenergia/conluz#425
+
+### UI-INT-013 — An incomplete Datadis configuration names what is missing
+
+- **Status:** Active
+- **Rule:** A `409 DATADIS_CONFIG_INCOMPLETE` on enable MUST leave the switch off and show the fields
+  in `params.missingFields` in Spanish ("usuario", "URL del servicio", "contraseña"), with an action
+  that brings the admin to the first missing field and focuses it.
+- **Rationale:** The backend refuses to enable a configuration that cannot work and says which
+  fields it lacks. The fields are on the card already (UI-INT-014), so the next step is the first of
+  them, not another screen.
+- **Implements:** n/a
+- **Source:** #256, lucoenergia/conluz#414
+
+### UI-INT-014 — The Datadis form never sets `enabled`, and always shows its fields
+
+- **Status:** Active
+- **Rule:**
+  - The form MUST NOT have an `enabled` control, and MUST NOT send `enabled`, on create or on edit.
+  - The credential fields MUST be shown whether the integration is enabled or disabled.
+  - With no configuration stored, the card MUST show the form with no switch, as soon as the read
+    answers `404`: that answer MUST NOT be retried. After the first save, the configuration is read
+    again and the switch shows it off, as the backend creates it.
+- **Rationale:** Turning the integration on or off is a separate decision, taken on the switch
+  (UI-INT-012). The configuration write no longer accepts `enabled`, and refuses a body that carries
+  it with `400`: the backend creates a configuration disabled, so that it syncs only once someone
+  turns it on, and an edit leaves its state as it is. The fields used to fold away with the switch
+  off, which only made sense while the switch was part of the form. A `404` is the normal state of
+  a community that has not configured Datadis yet, not a failure, so retrying it only delays the
+  form by several seconds, as for Huawei.
+- **Implements:** n/a
+- **Source:** #256, lucoenergia/conluz#414, lucoenergia/conluz#425
+
 ## States
 
 The Datadis card only.
@@ -194,10 +248,12 @@ The Datadis card only.
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Loading | A spinner in place of the switch | None |
-| Configured (`passwordSet: true`) | The stored username and base URL, an empty password field with the "keep" helper text | Edit, Guardar |
-| Not configured (`404`, or `passwordSet: false`) | The form, with no messages until a field is left or a save is attempted | Edit, Guardar |
-| Read failed (not `404`) | The form, empty, with no helper text and no password rule | Edit, Guardar |
-| Blocked save | A message on each field that breaks a rule, and the fields open | Edit |
+| Not configured (`404`) | The form, with no switch and no messages until a field is left or a save is attempted | Edit, Guardar |
+| Configured, enabled | The switch on; the stored username and base URL; an empty password field, with the "keep" helper text when `passwordSet` is `true` | Switch, Edit, Guardar |
+| Configured, disabled | As above, the switch off, and text saying the integration is disabled | Switch, Edit, Guardar |
+| Enable refused (`DATADIS_CONFIG_INCOMPLETE`) | The switch off and a message naming the missing fields | Completar configuración, Switch, Edit, Guardar |
+| Read failed (not `404`) | An error with a retry; no fields, no switch, nothing said about the password | Reintentar |
+| Blocked save | A message on each field that breaks a rule | Edit |
 | Refused save (`DATADIS_CONFIG_PASSWORD_REQUIRED`) | A message on the password field, and no generic error | Edit, Guardar |
 
 The plant's Huawei integration, on plant detail.

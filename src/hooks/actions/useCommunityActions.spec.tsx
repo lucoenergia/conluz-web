@@ -18,6 +18,8 @@ import {
   getGetShellyConfigQueryKey,
   useConfigureDatadis,
   useConfigureShelly,
+  useDisableDatadisConfig,
+  useEnableDatadisConfig,
 } from "../../api/consumption/consumption";
 import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures";
 import { mutation } from "../../test/queryState";
@@ -72,6 +74,8 @@ vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => (
   ...(await importOriginal()),
   useConfigureDatadis: vi.fn(),
   useConfigureShelly: vi.fn(),
+  useEnableDatadisConfig: vi.fn(),
+  useDisableDatadisConfig: vi.fn(),
 }));
 
 const COMMUNITY_ID = "TEST-COMMUNITY-ID";
@@ -83,6 +87,8 @@ const render = (community: ReturnType<typeof buildCommunity> | undefined) =>
   renderHookWithProviders(() => useCommunityActions().forCommunity(community));
 
 let mutateAsync: ReturnType<typeof vi.fn>;
+let enableDatadis: ReturnType<typeof vi.fn>;
+let disableDatadis: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);
@@ -96,6 +102,10 @@ beforeEach(() => {
   vi.mocked(useCreateUsersWithFile).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync }));
+  enableDatadis = vi.fn().mockResolvedValue(undefined);
+  disableDatadis = vi.fn().mockResolvedValue(undefined);
+  vi.mocked(useEnableDatadisConfig).mockReturnValue(mutation.idle({ mutateAsync: enableDatadis }));
+  vi.mocked(useDisableDatadisConfig).mockReturnValue(mutation.idle({ mutateAsync: disableDatadis }));
 });
 
 describe("useCommunityActions", () => {
@@ -238,6 +248,45 @@ describe("useCommunityActions", () => {
       const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
       await expect(result.current.actions.configureDatadis?.run(DATADIS_BODY)).resolves.toEqual({ error: refusal });
+      expect(invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("UI-INT-012 hands over both Datadis switch writes on canManage, and neither without it", () => {
+      const allowed = render(communityWith({ canManage: true })).result.current;
+      expect(allowed.actions.enableDatadis).toBeDefined();
+      expect(allowed.actions.disableDatadis).toBeDefined();
+      expect(allowed.outcomes.enableDatadis).toEqual({ state: "allowed" });
+
+      const denied = render(communityWith({ canManage: false })).result.current;
+      expect(denied.actions.enableDatadis).toBeUndefined();
+      expect(denied.actions.disableDatadis).toBeUndefined();
+      expect(denied.outcomes.disableDatadis).toEqual({ state: "denied" });
+    });
+
+    it.each([
+      ["enableDatadis", () => enableDatadis],
+      ["disableDatadis", () => disableDatadis],
+    ] as const)(
+      "UI-INT-012 %s calls its own endpoint for the community it was handed, and refreshes only that Datadis configuration",
+      async (name, endpoint) => {
+        const { result, queryClient } = render(communityWith({ canManage: true }));
+        const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+        await expect(result.current.actions[name]?.run()).resolves.toEqual({ ok: true });
+
+        expect(endpoint()).toHaveBeenCalledWith({ communityId: COMMUNITY_ID });
+        expect(mutateAsync).not.toHaveBeenCalled();
+        expect(invalidateQueries.mock.calls).toEqual([[{ queryKey: getGetDatadisConfigQueryKey(COMMUNITY_ID) }]]);
+      },
+    );
+
+    it("UI-INT-013 hands a refused Datadis enable the error itself, so the card can name what is missing", async () => {
+      const refusal = new Error("incomplete");
+      enableDatadis.mockRejectedValue(refusal);
+      const { result, queryClient } = render(communityWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.enableDatadis?.run()).resolves.toEqual({ error: refusal });
       expect(invalidateQueries).not.toHaveBeenCalled();
     });
 

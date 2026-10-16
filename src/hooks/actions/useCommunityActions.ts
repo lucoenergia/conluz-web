@@ -18,6 +18,8 @@ import {
   getGetShellyConfigQueryKey,
   useConfigureDatadis,
   useConfigureShelly,
+  useDisableDatadisConfig,
+  useEnableDatadisConfig,
 } from "../../api/consumption/consumption";
 import type {
   CommunityResponse,
@@ -52,9 +54,11 @@ import { grant, type MaybeAction } from "./action";
  *   `canCreateSupplies`, unlike the sibling `canCreatePlants` and
  *   `canCreateUsers` -- but `canManage`'s own doc names "creating and importing
  *   its supplies", so this is the backend's stated umbrella rather than a guess.
- * - the Datadis and Shelly configuration gate on `canManage` for the same
- *   reason: its doc names "reading and writing its Datadis and Shelly
- *   configuration".
+ * - the Datadis and Shelly configuration, and turning Datadis on and off, gate
+ *   on `canManage` for the same reason: its doc names "reading and writing its
+ *   Datadis and Shelly configuration". `enableDatadis` and `disableDatadis` are
+ *   an opposite pair, both handed over to a caller who may do either; the
+ *   stored `enabled` picks which one applies.
  *
  * The Huawei configuration is NOT here. Its endpoint is plant-scoped, so it
  * lives in usePlantActions, and its form on plant detail (#192).
@@ -66,6 +70,13 @@ import { grant, type MaybeAction } from "./action";
  * (#245), and the admin must be told on the password field.
  */
 export type ConfigureDatadisResult = { ok: true } | { error: unknown };
+
+/**
+ * Turning Datadis on or off: success, or the refusal itself. An enable is
+ * refused with DATADIS_CONFIG_INCOMPLETE when the configuration lacks data,
+ * and the screen names the missing fields (#256).
+ */
+export type DatadisToggleResult = { ok: true } | { error: unknown };
 
 export interface CommunityRowActions {
   actions: {
@@ -79,6 +90,8 @@ export interface CommunityRowActions {
     importSupplies: MaybeAction<[CreateSuppliesWithFileBody], CreationInBulkResponse | undefined>;
     configureDatadis: MaybeAction<[ConfigureDatadisBody], ConfigureDatadisResult>;
     configureShelly: MaybeAction<[ConfigureShellyBody], boolean>;
+    enableDatadis: MaybeAction<[], DatadisToggleResult>;
+    disableDatadis: MaybeAction<[], DatadisToggleResult>;
   };
   outcomes: Record<keyof CommunityRowActions["actions"], CapabilityOutcome>;
 }
@@ -101,6 +114,8 @@ export function useCommunityActions(): CommunityActions {
   const importSuppliesMutation = useCreateSuppliesWithFile();
   const configureDatadisMutation = useConfigureDatadis();
   const configureShellyMutation = useConfigureShelly();
+  const enableDatadisMutation = useEnableDatadisConfig();
+  const disableDatadisMutation = useDisableDatadisConfig();
 
   return {
     forCommunity: (community) => {
@@ -145,6 +160,17 @@ export function useCommunityActions(): CommunityActions {
         queryClient.invalidateQueries({ queryKey: getGetAllUsersQueryKey() });
       const invalidatePlants = () =>
         queryClient.invalidateQueries({ queryKey: getGetAllPlantsQueryKey(communityId) });
+
+      // Only this community's Datadis configuration is read back.
+      const toggleDatadis = async (call: () => Promise<unknown>): Promise<DatadisToggleResult> => {
+        try {
+          await call();
+          queryClient.invalidateQueries({ queryKey: getGetDatadisConfigQueryKey(communityId) });
+          return { ok: true };
+        } catch (error) {
+          return { error };
+        }
+      };
 
       return {
         actions: {
@@ -227,6 +253,16 @@ export function useCommunityActions(): CommunityActions {
             },
             configureShellyMutation.isPending,
           ),
+          enableDatadis: grant(
+            manage,
+            () => toggleDatadis(() => enableDatadisMutation.mutateAsync({ communityId })),
+            enableDatadisMutation.isPending,
+          ),
+          disableDatadis: grant(
+            manage,
+            () => toggleDatadis(() => disableDatadisMutation.mutateAsync({ communityId })),
+            disableDatadisMutation.isPending,
+          ),
         },
         outcomes: {
           update,
@@ -239,6 +275,8 @@ export function useCommunityActions(): CommunityActions {
           importSupplies: manage,
           configureDatadis: manage,
           configureShelly: manage,
+          enableDatadis: manage,
+          disableDatadis: manage,
         },
       };
     },

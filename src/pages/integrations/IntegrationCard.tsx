@@ -1,9 +1,10 @@
 import { alpha } from "@mui/material/styles";
 import { radii, shadows, colors } from "../../theme/tokens";
-import { type FC } from "react";
+import { type FC, type ReactNode } from "react";
 import type { Action } from "../../hooks/actions";
 import type { CredentialsErrors, CredentialsField } from "../../utils/integrationCredentials";
-import { Box, Typography, Paper, Switch, Button, Collapse } from "@mui/material";
+import type { CredentialsFieldsProps } from "./CredentialsFields";
+import { Box, Typography, Paper, Switch, Button } from "@mui/material";
 import { CredentialsFields } from "./CredentialsFields";
 import { CircularProgress } from "@mui/material";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -77,6 +78,17 @@ interface IntegrationCardProps {
   errors?: CredentialsErrors;
   /** A credentials field lost focus. */
   onFieldBlur?: (field: CredentialsField) => void;
+  /** `undefined`: the built-in switch, writing `enabled` through `onChange`. `null`: no control. A node: that control. */
+  headerControl?: ReactNode;
+  /** What the provider says about its own state, shown under the header. */
+  status?: ReactNode;
+  /**
+   * Set when the stored configuration could not be read: shown in place of the
+   * fields and Guardar, since a save would have to guess what is stored.
+   */
+  loadFailure?: ReactNode;
+  /** Each credentials field's input, for a screen that must bring the admin to one. */
+  inputRefs?: CredentialsFieldsProps["inputRefs"];
 }
 
 const ProviderMark: FC<{ icon: string; color: string }> = ({ icon, color }) => {
@@ -111,13 +123,14 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
   isLoading = false,
   errors = {},
   onFieldBlur,
+  headerControl,
+  status,
+  loadFailure,
+  inputRefs,
 }) => {
   const enabled = value.enabled;
   const hasCreds = provider.fields.includes("credentials");
   const isSaving = save.isPending;
-  // A blocked save must show why, so its messages open the fields even with
-  // the switch off: the backend checks them whether or not it is on (#245).
-  const hasErrors = Object.values(errors).some(Boolean);
   const titleId = `integration-${provider.id}-title`;
 
   return (
@@ -167,6 +180,8 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 58, height: 38 }}>
             <CircularProgress size={20} aria-label={`Cargando configuración de ${provider.name}`} />
           </Box>
+        ) : headerControl !== undefined ? (
+          headerControl
         ) : (
         <Switch
           checked={enabled}
@@ -179,93 +194,97 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
         )}
       </Box>
 
-      {/* Body — only for providers with credentials */}
-      {hasCreds && (
-        <Collapse in={enabled || hasErrors} timeout={250}>
-          <Box
-            sx={{
-              px: { xs: 2, sm: 3 },
-              pb: { xs: 2, sm: 3 },
-              pt: 0,
-              borderTop: `1px dashed ${colors.divider}`,
-            }}
-          >
-            <Box sx={{ pt: { xs: 2, sm: 3 } }}>
-              <CredentialsFields
-                value={value}
-                onChange={(patch) => onChange(provider.id, patch)}
-                errors={errors}
-                onFieldBlur={onFieldBlur}
-                accent={accent}
-                urlPlaceholder={provider.urlPlaceholder}
-              />
+      {status && <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>{status}</Box>}
 
-              {/* Helper / docs link */}
-              {provider.help && (
-                <Box
-                  sx={{
-                    mt: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    color: colors.text.subtle,
-                  }}
-                >
-                  <InfoOutlineIcon sx={{ fontSize: 16, color: colors.text.muted }} />
-                  <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                    {provider.help}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </Collapse>
-      )}
+      {loadFailure && <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>{loadFailure}</Box>}
 
-      {/* Save button always visible for all integrations */}
-      <Box
-        sx={{
-          px: { xs: 2, sm: 3 },
-          pb: { xs: 2, sm: 3 },
-          pt: 0,
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
-        <Button
-          variant="contained"
-          disabled={isSaving || isLoading}
-          // With field rules, pressing Guardar would first blur the field being
-          // edited, and the message that blur reveals pushes this button down
-          // before the press ends -- so the click lands outside it and is lost.
-          // Keeping focus where it is lets the click through; the save attempt
-          // then shows every message at once.
-          onMouseDown={onFieldBlur ? (e) => e.preventDefault() : undefined}
-          onClick={() => void save.run()}
-          startIcon={
-            isSaving ? (
-              <CircularProgress size={16} sx={{ color: "white" }} />
-            ) : (
-              <SaveIcon sx={{ fontSize: 18 }} />
-            )
-          }
+      {/* Body — only for providers with credentials. Shown whether or not the
+          integration is on: the fields are what is stored either way (#256). */}
+      {hasCreds && !loadFailure && (
+        <Box
           sx={{
-            background: accent,
-            borderRadius: radii.default,
-            px: 3,
-            boxShadow: shadows.medium,
-            "&:hover": {
-              background: accent,
-              filter: "brightness(0.95)",
-              boxShadow: shadows.strong,
-            },
+            px: { xs: 2, sm: 3 },
+            pb: { xs: 2, sm: 3 },
+            pt: 0,
+            borderTop: `1px dashed ${colors.divider}`,
           }}
         >
-          {isSaving ? "Guardando..." : "Guardar"}
-        </Button>
-      </Box>
+          <Box sx={{ pt: { xs: 2, sm: 3 } }}>
+            <CredentialsFields
+              value={value}
+              onChange={(patch) => onChange(provider.id, patch)}
+              errors={errors}
+              onFieldBlur={onFieldBlur}
+              inputRefs={inputRefs}
+              accent={accent}
+              urlPlaceholder={provider.urlPlaceholder}
+            />
 
-      {/* Save button always visible for all integrations */}
+            {/* Helper / docs link */}
+            {provider.help && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  color: colors.text.subtle,
+                }}
+              >
+                <InfoOutlineIcon sx={{ fontSize: 16, color: colors.text.muted }} />
+                <Typography variant="caption" sx={{ color: colors.text.subtle }}>
+                  {provider.help}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {/* Save button for all integrations, unless their configuration could not be read */}
+      {!loadFailure && (
+        <Box
+          sx={{
+            px: { xs: 2, sm: 3 },
+            pb: { xs: 2, sm: 3 },
+            pt: 0,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Button
+            variant="contained"
+            disabled={isSaving || isLoading}
+            // With field rules, pressing Guardar would first blur the field being
+            // edited, and the message that blur reveals pushes this button down
+            // before the press ends -- so the click lands outside it and is lost.
+            // Keeping focus where it is lets the click through; the save attempt
+            // then shows every message at once.
+            onMouseDown={onFieldBlur ? (e) => e.preventDefault() : undefined}
+            onClick={() => void save.run()}
+            startIcon={
+              isSaving ? (
+                <CircularProgress size={16} sx={{ color: "white" }} />
+              ) : (
+                <SaveIcon sx={{ fontSize: 18 }} />
+              )
+            }
+            sx={{
+              background: accent,
+              borderRadius: radii.default,
+              px: 3,
+              boxShadow: shadows.medium,
+              "&:hover": {
+                background: accent,
+                filter: "brightness(0.95)",
+                boxShadow: shadows.strong,
+              },
+            }}
+          >
+            {isSaving ? "Guardando..." : "Guardar"}
+          </Button>
+        </Box>
+      )}
     </Paper>
   );
 };

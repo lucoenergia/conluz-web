@@ -18,6 +18,8 @@ export interface CommunityCapabilitiesResponse {
   canEnable: boolean;
   /** Whether the caller may disable this community (POST /api/v1/communities/{communityId}/disable). A platform-wide decision. */
   canDisable: boolean;
+  /** Whether the caller may invite, list, re-invite, enable and disable this community's admins (/api/v1/communities/{communityId}/admins). A platform-wide decision: being a community admin does not confer it. */
+  canManageAdmins: boolean;
   /** Whether the caller administers this community: creating and importing its supplies, reading and writing its Datadis and Shelly configuration, and triggering its synchronisation endpoints. */
   canManage: boolean;
   /** Whether the caller may administer this community's roster: creating, deleting and re-roling its memberships. */

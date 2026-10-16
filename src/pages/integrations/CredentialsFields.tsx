@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useState, type FC, type Ref } from "react";
 import { Box, TextField, InputAdornment, IconButton } from "@mui/material";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlineIcon from "@mui/icons-material/LockOutline";
@@ -18,7 +18,7 @@ export interface CredentialsFieldsValue {
   passwordSet?: boolean;
 }
 
-interface CredentialsFieldsProps {
+export interface CredentialsFieldsProps {
   value: CredentialsFieldsValue;
   onChange: (patch: Partial<Record<CredentialsField, string>>) => void;
   /** The field messages to show now. The owner decides when a rule speaks. */
@@ -27,6 +27,8 @@ interface CredentialsFieldsProps {
   onFieldBlur?: (field: CredentialsField) => void;
   accent: string;
   urlPlaceholder?: string;
+  /** Each field's input element, for a screen that must bring the admin to one. */
+  inputRefs?: Partial<Record<CredentialsField, Ref<HTMLInputElement>>>;
 }
 
 const fieldSx = (accent: string) => ({
@@ -50,6 +52,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
   onFieldBlur,
   accent,
   urlPlaceholder,
+  inputRefs = {},
 }) => {
   const [showPwd, setShowPwd] = useState(false);
 
@@ -63,6 +66,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
     >
       <TextField
         label="Usuario"
+        inputRef={inputRefs.username}
         value={value.username || ""}
         onChange={(e) => onChange({ username: e.target.value })}
         onBlur={() => onFieldBlur?.("username")}
@@ -82,6 +86,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
       />
       <TextField
         label="Contraseña"
+        inputRef={inputRefs.password}
         type={showPwd ? "text" : "password"}
         value={value.password || ""}
         onChange={(e) => onChange({ password: e.target.value })}
@@ -119,6 +124,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
       />
       <TextField
         label="URL del servicio"
+        inputRef={inputRefs.baseUrl}
         placeholder={urlPlaceholder}
         value={value.baseUrl || ""}
         onChange={(e) => onChange({ baseUrl: e.target.value })}

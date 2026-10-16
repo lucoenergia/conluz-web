@@ -33,8 +33,8 @@ import {
   useGetHuaweiConfig,
 } from "../../api/production/production";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
+import { DISABLED_TEXT } from "../../utils/integrationStatus";
 import {
-  DISABLED_TEXT,
   LOAD_FAILED_TEXT,
   NOT_CONFIGURED_TEXT,
   SAVE_FAILED_MESSAGE,
@@ -183,7 +183,7 @@ describe("PlantIntegrationsSection", () => {
       expect(mockConfigure).not.toHaveBeenCalled();
     });
 
-    it("UI-INT-008 creates the configuration disabled, with no enabled control", async () => {
+    it("UI-INT-008 AC6 a create sends no enabled, and the form has no enabled control", async () => {
       const user = userEvent.setup();
       setup();
       await openCreate(user);
@@ -198,11 +198,11 @@ describe("PlantIntegrationsSection", () => {
 
       await waitFor(() => expect(mockConfigure).toHaveBeenCalled());
       expect(sentBody()).toEqual({
-        enabled: false,
         username: "huawei-user",
         password: "s3cret",
         baseUrl: "https://eu5.fusionsolar.huawei.com/thirdData",
       });
+      expect(sentBody()).not.toHaveProperty("enabled");
     });
 
     it("UI-INT-008 shows no messages before a field is left or a save is attempted", async () => {
@@ -228,7 +228,7 @@ describe("PlantIntegrationsSection", () => {
     const save = (user: ReturnType<typeof userEvent.setup>) =>
       user.click(within(dialog()).getByRole("button", { name: "Guardar" }));
 
-    it("UI-INT-008 omits the password key when the field is left empty, and sends the stored enabled", async () => {
+    it("UI-INT-008 omits the password key when the field is left empty", async () => {
       const user = userEvent.setup();
       setup();
       await openEdit(user);
@@ -236,22 +236,21 @@ describe("PlantIntegrationsSection", () => {
 
       await waitFor(() => expect(mockConfigure).toHaveBeenCalled());
       expect(sentBody()).toEqual({
-        enabled: true,
         username: "huawei-user",
         baseUrl: "https://eu5.fusionsolar.huawei.com/thirdData",
       });
       expect(sentBody()).not.toHaveProperty("password");
     });
 
-    it("UI-INT-008 leaves a disabled configuration disabled on edit", async () => {
+    it.each([true, false])("UI-INT-008 AC6 an edit of a configuration with enabled %s sends no enabled", async (enabled) => {
       const user = userEvent.setup();
-      serveConfig(configured({ enabled: false }));
+      serveConfig(configured({ enabled }));
       setup();
       await openEdit(user);
       await save(user);
 
       await waitFor(() => expect(mockConfigure).toHaveBeenCalled());
-      expect(sentBody()).toHaveProperty("enabled", false);
+      expect(sentBody()).not.toHaveProperty("enabled");
     });
 
     it("UI-INT-008 says an empty field keeps the stored password, only when one is stored", async () => {

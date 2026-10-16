@@ -1,16 +1,16 @@
-import type { RestError, RestErrorDetailCode } from "../api/models";
+import type { RestErrorDetailCode } from "../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../errors/apiErrorCatalogue";
 
 /**
  * The credentials form an integration shares: a username, a write-only password
- * and the service's base URL, behind an on/off switch.
+ * and the service's base URL. Whether the integration is on is not part of it:
+ * that has its own enable and disable endpoints (lucoenergia/conluz#425).
  *
  * Provider-agnostic on purpose. Datadis uses it on the integrations page
  * (#245), and the Huawei form on plant detail (#192) has the same contract:
  * the password is never returned, only whether one is stored.
  */
 export interface CredentialsValues {
-  enabled: boolean;
   username: string;
   password: string;
   baseUrl: string;
@@ -44,13 +44,12 @@ export function isHttpUrl(value: string): boolean {
  * 400 (lucoenergia/conluz#404). So an empty field omits the key rather than
  * sending it empty.
  */
-export function buildCredentialsBody({ enabled, username, password, baseUrl }: CredentialsValues): {
-  enabled: boolean;
+export function buildCredentialsBody({ username, password, baseUrl }: CredentialsValues): {
   username: string;
   baseUrl: string;
   password?: string;
 } {
-  return { enabled, username, baseUrl, ...(password ? { password } : {}) };
+  return { username, baseUrl, ...(password ? { password } : {}) };
 }
 
 /**
@@ -99,35 +98,4 @@ export function storedPasswordFrom(
 ): boolean | undefined {
   if (config) return config.passwordSet;
   return (error as { response?: { status?: number } } | null | undefined)?.response?.status === 404 ? false : undefined;
-}
-
-/** The Spanish name of each credentials field, as a refusal lists them. */
-export const MISSING_FIELD_LABELS: Record<CredentialsField, string> = {
-  username: "usuario",
-  baseUrl: "URL del servicio",
-  password: "contraseña",
-};
-
-/**
- * The fields a refused enable says are missing, in Spanish and in the order the
- * backend lists them.
- *
- * Read from the first error's `params.missingFields`, a comma-separated list of
- * field names (`"username,password"`), as the enable endpoints document their
- * `*_CONFIG_INCOMPLETE` refusal. A name with no label is shown as sent rather
- * than dropped.
- */
-export function missingFieldLabels(error: unknown): string[] {
-  const raw = (error as { response?: { data?: RestError } } | null | undefined)?.response?.data?.errors?.[0]?.params
-    ?.missingFields;
-  return (raw ?? "")
-    .split(",")
-    .map((field) => field.trim())
-    .filter(Boolean)
-    .map((field) => MISSING_FIELD_LABELS[field as CredentialsField] ?? field);
-}
-
-/** "usuario", "usuario y contraseña", "usuario, URL del servicio y contraseña". */
-export function formatFieldList(labels: string[]): string {
-  return new Intl.ListFormat("es", { type: "conjunction" }).format(labels);
 }

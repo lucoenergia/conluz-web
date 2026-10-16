@@ -14,16 +14,13 @@ import { useIntegrationToggle } from "../../hooks/useIntegrationToggle";
 import { storedPasswordFrom } from "../../utils/integrationCredentials";
 import { colors, radii, shadows } from "../../theme/tokens";
 import { HuaweiConfigDialog } from "./HuaweiConfigDialog";
+import { DISABLED_TEXT, incompleteText, isNotFound, retryUnlessNotFound } from "../../utils/integrationStatus";
 import {
-  DISABLED_TEXT,
   HUAWEI_ACCENT,
   LOAD_FAILED_TEXT,
   NOT_CONFIGURED_TEXT,
   SAVED_TEXT,
   TOGGLE_FAILED_TEXT,
-  incompleteText,
-  isNotFound,
-  retryUnlessNotFound,
 } from "./huaweiConfig";
 
 export interface HuaweiIntegrationCardProps {
@@ -145,7 +142,8 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
       )}
 
       {/* Only a failure other than 404 is an error. Nothing is offered but the
-          retry: an edit must send the stored `enabled`, which is unknown here. */}
+          retry: whether a password is stored, and whether the integration is
+          on, are unknown here. */}
       {!stored && !isLoading && !!error && !notConfigured && (
         <LoadErrorAlert message={LOAD_FAILED_TEXT} onRetry={() => void refetch()} />
       )}

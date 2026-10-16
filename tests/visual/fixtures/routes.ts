@@ -1,6 +1,7 @@
 import type { Page, Route } from "@playwright/test";
 import type {
   CommunityCapabilitiesResponse,
+  GetDatadisConfigResponse,
   MembershipEnergyMetricsResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
@@ -187,29 +188,39 @@ export async function mockMemberHome(
   );
 }
 
-export async function mockAllApiRoutes(page: Page, currentUser: object) {
-  // The app reads what it may do from the community itself, so the fixture has
-  // to answer differently for a member and for an admin of the same community
-  // -- otherwise every role would see the same menu. Derive it from the
-  // caller's membership, the way the backend does.
+/**
+ * What the fixed community answers this caller may do in it.
+ *
+ * The app reads what it may do from the community itself, so the fixture has
+ * to answer differently for a member and for an admin of the same community
+ * -- otherwise every role would see the same menu. Derived from the caller's
+ * membership, the way the backend does.
+ *
+ * A platform admin belongs to no community, so there is no membership to read
+ * and the member shape would be the wrong answer: canUpdate, canEnable,
+ * canDisable and canManageMemberships are decisions a platform admin holds on
+ * every community, while the operational ones stay out of reach. Without this
+ * branch /communities/:communityId/edit refuses them, because the fixture --
+ * not the product -- says they may not update it.
+ */
+function communityCapabilitiesFor(currentUser: object) {
   const role = (currentUser as CurrentUserFixture).memberships?.[FIXED_COMMUNITY_ID];
-  // A platform admin belongs to no community, so there is no membership to read
-  // and the member shape would be the wrong answer: canUpdate, canEnable,
-  // canDisable and canManageMemberships are decisions a platform admin holds on
-  // every community, while the operational ones stay out of reach. Without this
-  // branch /communities/:communityId/edit refuses them, because the fixture --
-  // not the product -- says they may not update it.
   const isPlatformAdmin = (currentUser as CurrentUserFixture).isPlatformAdmin === true;
+  return isPlatformAdmin
+    ? PLATFORM_VIEW_COMMUNITY_CAPABILITIES
+    : role === "COMMUNITY_ADMIN"
+      ? COMMUNITY_ADMIN_CAPABILITIES
+      : MEMBER_COMMUNITY_CAPABILITIES;
+}
+
+export async function mockAllApiRoutes(page: Page, currentUser: object) {
+  const role = (currentUser as CurrentUserFixture).memberships?.[FIXED_COMMUNITY_ID];
   const activeCommunity = {
     id: FIXED_COMMUNITY_ID,
     name: "Sol Común",
     code: "SOL",
     enabled: true,
-    capabilities: isPlatformAdmin
-      ? PLATFORM_VIEW_COMMUNITY_CAPABILITIES
-      : role === "COMMUNITY_ADMIN"
-        ? COMMUNITY_ADMIN_CAPABILITIES
-        : MEMBER_COMMUNITY_CAPABILITIES,
+    capabilities: communityCapabilitiesFor(currentUser),
   };
 
   // Each supply carries its own answer, and the card reads it rather than the
@@ -880,6 +891,66 @@ export async function mockManagementHome(
         contentType: "application/json",
         body: JSON.stringify(agreementsByPlant[plantId] ?? []),
       });
+    },
+  );
+}
+
+/**
+ * The community's Datadis configuration and its enable/disable endpoints
+ * (#256). Registered AFTER mockCommunityManagementRoutes(), whose predicate
+ * also matches these URLs: Playwright matches routes in reverse registration
+ * order.
+ *
+ * - `config: null` answers the read with 404, the "not configured" state.
+ * - `enable: "incomplete"` refuses the enable with 409 DATADIS_CONFIG_INCOMPLETE,
+ *   naming the fields the served configuration lacks, as the backend does.
+ *
+ * Every call is refused with 403 unless the community served to this caller
+ * says canManage, so the mock cannot contradict its own payload.
+ */
+export async function mockDatadisConfigRoutes(
+  page: Page,
+  currentUser: object,
+  options: { config?: GetDatadisConfigResponse | null; enable?: "ok" | "incomplete" } = {},
+) {
+  const { config = FIXED_DATADIS_CONFIG, enable = "ok" } = options;
+  const capabilities = communityCapabilitiesFor(currentUser);
+  const base = `/api/v1/communities/${FIXED_COMMUNITY_ID}/config/datadis`;
+
+  await page.route(
+    (url) => url.pathname === base || url.pathname === `${base}/enable` || url.pathname === `${base}/disable`,
+    (route: Route) => {
+      if (refusal(capabilities, "canManage")) return refuse(route, "canManage");
+
+      const path = new URL(route.request().url()).pathname;
+      const method = route.request().method();
+      if (path === base && method === "GET") {
+        return config
+          ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(config) })
+          : route.fulfill({
+              status: 404,
+              contentType: "application/json",
+              body: JSON.stringify({ status: 404, errors: [{ code: "DATADIS_CONFIG_NOT_FOUND", message: "Not found" }] }),
+            });
+      }
+      if (path === `${base}/enable` && enable === "incomplete") {
+        const missingFields = [
+          !config?.username && "username",
+          !config?.baseUrl && "baseUrl",
+          !config?.passwordSet && "password",
+        ]
+          .filter(Boolean)
+          .join(",");
+        return route.fulfill({
+          status: 409,
+          contentType: "application/json",
+          body: JSON.stringify({
+            status: 409,
+            errors: [{ code: "DATADIS_CONFIG_INCOMPLETE", message: "Incomplete", params: { missingFields } }],
+          }),
+        });
+      }
+      return route.fulfill({ status: 200, contentType: "application/json", body: "" });
     },
   );
 }

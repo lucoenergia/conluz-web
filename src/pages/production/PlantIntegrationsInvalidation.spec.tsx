@@ -8,7 +8,8 @@ import { apiError } from "../../test/apiError";
 import { buildPlant, buildPlantCapabilities } from "../../test/fixtures";
 import { getGetHuaweiConfigQueryKey } from "../../api/production/production";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
-import { DISABLED_TEXT, NOT_CONFIGURED_TEXT } from "./huaweiConfig";
+import { NOT_CONFIGURED_TEXT } from "./huaweiConfig";
+import { DISABLED_TEXT } from "../../utils/integrationStatus";
 import type { GetHuaweiConfigResponse } from "../../api/models";
 
 // Tier 2: the real generated hooks against a real QueryClient, with only the
@@ -210,8 +211,9 @@ describe("the Huawei integration of one plant", () => {
         method: "PUT",
         url: configUrl(PLANT_A),
         respond: (config) => {
-          const body = config.data as { enabled: boolean; username: string; baseUrl: string };
-          stored = { enabled: body.enabled, username: body.username, baseUrl: body.baseUrl, passwordSet: true };
+          // The backend creates a configuration disabled (lucoenergia/conluz#425).
+          const body = config.data as { username: string; baseUrl: string };
+          stored = { enabled: false, username: body.username, baseUrl: body.baseUrl, passwordSet: true };
           return undefined;
         },
       },
@@ -229,7 +231,6 @@ describe("the Huawei integration of one plant", () => {
     await waitFor(() => expect(theSwitch()).not.toBeChecked());
     expect(screen.getByText(DISABLED_TEXT)).toBeVisible();
     expect(requestsTo(router.requests, "PUT", configUrl(PLANT_A))[0].data).toEqual({
-      enabled: false,
       username: "huawei-user",
       password: "s3cret",
       baseUrl: "https://eu5.fusionsolar.huawei.com/thirdData",

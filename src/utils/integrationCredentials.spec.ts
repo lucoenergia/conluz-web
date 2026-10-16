@@ -2,17 +2,15 @@ import { describe, expect, it } from "vitest";
 import { apiError } from "../test/apiError";
 import {
   buildCredentialsBody,
-  formatFieldList,
   isHttpUrl,
-  missingFieldLabels,
   passwordRequiredMessage,
   storedPasswordFrom,
   validateCredentials,
   type CredentialsValues,
 } from "./integrationCredentials";
+import { formatFieldList, missingFieldLabels } from "./integrationStatus";
 
 const VALID: CredentialsValues = {
-  enabled: true,
   username: "datadis-user",
   password: "",
   baseUrl: "https://datadis.es",

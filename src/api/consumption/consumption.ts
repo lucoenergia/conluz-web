@@ -344,12 +344,12 @@ The request body contains:
   - An empty string: rejected with `400`.
 - **baseUrl** (required, string): Base URL of the Datadis API (for example
   `https://datadis.es`).
-- **enabled** (required, boolean): Master switch for the community's Datadis integration.
-  When `false`, the scheduled Datadis sync and aggregation jobs skip the community, and the
-  operations that sync or aggregate its Datadis data respond with `409 Conflict`.
 
-To only switch the configuration on or off, use `POST .../config/datadis/enable` and
-`POST .../config/datadis/disable`: they change nothing else and take no request body.
+The request body does not carry `enabled`, and a body that does is rejected with `400`. This
+endpoint never changes whether the Datadis integration is enabled: a new configuration starts
+disabled, and an existing one keeps its current state. To switch it on or off, use
+`POST .../config/datadis/enable` and `POST .../config/datadis/disable`. Enabling requires a
+complete configuration.
 
 This configuration is a mandatory step to be able to retrieve consumption data from datadis.
 
@@ -694,7 +694,8 @@ export const useSyncMonthlyDatadisConsumptions = <TError = ErrorType<RestError>,
     }
     /**
  * This endpoint enables the community's Datadis configuration, changing nothing else: the stored
-username, password and base URL are not rewritten. The request has no body.
+username, password and base URL are not rewritten. The request has no body. It undoes what
+disabling does to the community's Datadis integration; see `POST .../config/datadis/disable`.
 
 Enabling requires the stored configuration to be complete: a non-blank username, a base URL the
 configuration write would accept, and a non-empty password. Otherwise the request is rejected
@@ -778,6 +779,10 @@ export const useEnableDatadisConfig = <TError = ErrorType<RestError>,
     /**
  * This endpoint disables the community's Datadis configuration, changing nothing else: the stored
 username, password and base URL are not rewritten. The request has no body.
+
+A disabled configuration switches off the community's Datadis integration: the scheduled Datadis
+sync and aggregation jobs skip the community, and the operations that sync or aggregate its
+Datadis data respond with `409 Conflict`.
 
 Disabling never requires complete data: it succeeds whatever the stored configuration holds,
 which is how a configuration with missing credentials is switched off.

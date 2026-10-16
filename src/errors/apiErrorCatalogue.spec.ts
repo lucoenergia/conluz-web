@@ -309,3 +309,23 @@ describe("getGroupedApiErrorDetails", () => {
     expect(getGroupedApiErrorDetails(new Error("network error"))).toEqual({ fileLevel: [], lineLevel: [] });
   });
 });
+
+describe("integration enable refusals (*_CONFIG_INCOMPLETE)", () => {
+  it.each(["DATADIS_CONFIG_INCOMPLETE", "HUAWEI_CONFIG_INCOMPLETE"] as const)(
+    "%s names the missing fields in Spanish, in the order sent",
+    (code) => {
+      expect(
+        translateErrorDetail({ message: "Incomplete", code, params: { missingFields: "username,password" } }, "fallback"),
+      ).toBe("Faltan datos para activar la integración: usuario y contraseña.");
+    },
+  );
+
+  it.each(["DATADIS_CONFIG_INCOMPLETE", "HUAWEI_CONFIG_INCOMPLETE"] as const)(
+    "%s without params still says data is missing, with no placeholder",
+    (code) => {
+      expect(translateErrorDetail({ message: "Incomplete", code }, "fallback")).toBe(
+        "Faltan datos para activar la integración.",
+      );
+    },
+  );
+});

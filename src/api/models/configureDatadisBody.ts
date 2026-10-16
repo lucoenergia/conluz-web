@@ -13,5 +13,4 @@ export interface ConfigureDatadisBody {
   password?: string;
   /** @minLength 1 */
   baseUrl: string;
-  enabled: boolean;
 }

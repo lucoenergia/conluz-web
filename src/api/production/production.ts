@@ -173,13 +173,12 @@ The request body contains:
   (for example `https://localhost:8000/thirdData`). Mock services
   that emulate the SmartPVMS V6 Northbound Interface can be targeted by
   providing their base URL here.
-- **enabled** (required, boolean): Master switch for every Huawei-related
-  service of the plant. When `false`, scheduled syncs and aggregation jobs are
-  skipped and the manual sync endpoints respond with `409 Conflict`. Set this to
-  `false` for plants that use a different inverter vendor (e.g. Greenheiss).
 
-To only switch the configuration on or off, use `POST .../config/enable` and
-`POST .../config/disable`: they change nothing else and take no request body.
+The request body does not carry `enabled`, and a body that does is rejected with
+`400`. This endpoint never changes whether the Huawei integration is enabled: a new
+configuration starts disabled, and an existing one keeps its current state. To switch
+it on or off, use `POST .../config/enable` and `POST .../config/disable`. Enabling
+requires a complete configuration.
 
 This configuration is a mandatory step to be able to retrieve the plant's production
 data from the Huawei API.
@@ -260,7 +259,8 @@ export const useConfigureHuawei = <TError = ErrorType<RestError>,
     }
     /**
  * This endpoint enables the plant's Huawei configuration, changing nothing else: the stored
-username, password and base URL are not rewritten. The request has no body.
+username, password and base URL are not rewritten. The request has no body. It undoes what
+disabling does to the plant's Huawei services; see `POST .../config/disable`.
 
 Enabling requires the stored configuration to be complete: a non-blank username, a base URL the
 configuration write would accept, and a non-empty password. Otherwise the request is rejected
@@ -344,6 +344,10 @@ export const useEnableHuaweiConfig = <TError = ErrorType<RestError>,
     /**
  * This endpoint disables the plant's Huawei configuration, changing nothing else: the stored
 username, password and base URL are not rewritten. The request has no body.
+
+A disabled configuration switches off every Huawei-related service of the plant: the scheduled
+syncs and aggregation jobs skip the plant, and the manual sync endpoints respond with
+`409 Conflict`. Disable it for plants that use a different inverter vendor (e.g. Greenheiss).
 
 Disabling never requires complete data: it succeeds whatever the stored configuration holds,
 which is how a configuration with missing credentials is switched off.

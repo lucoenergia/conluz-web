@@ -103,6 +103,7 @@ export function buildCommunityCapabilities(
     canManageMembershipInvestment: false,
     canRegisterMembers: false,
     canInviteMembers: false,
+    canManageAdmins: false,
     canListPlants: false,
     canCreatePlants: false,
     canCreateUsers: false,
