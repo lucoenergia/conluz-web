@@ -3,14 +3,14 @@ import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../errors/apiErro
 
 /**
  * The credentials form an integration shares: a username, a write-only password
- * and the service's base URL, behind an on/off switch.
+ * and the service's base URL. Whether the integration is on is not part of it:
+ * that has its own enable and disable endpoints (lucoenergia/conluz#425).
  *
  * Provider-agnostic on purpose. Datadis uses it on the integrations page
  * (#245), and the Huawei form on plant detail (#192) has the same contract:
  * the password is never returned, only whether one is stored.
  */
 export interface CredentialsValues {
-  enabled: boolean;
   username: string;
   password: string;
   baseUrl: string;
@@ -44,13 +44,12 @@ export function isHttpUrl(value: string): boolean {
  * 400 (lucoenergia/conluz#404). So an empty field omits the key rather than
  * sending it empty.
  */
-export function buildCredentialsBody({ enabled, username, password, baseUrl }: CredentialsValues): {
-  enabled: boolean;
+export function buildCredentialsBody({ username, password, baseUrl }: CredentialsValues): {
   username: string;
   baseUrl: string;
   password?: string;
 } {
-  return { enabled, username, baseUrl, ...(password ? { password } : {}) };
+  return { username, baseUrl, ...(password ? { password } : {}) };
 }
 
 /**

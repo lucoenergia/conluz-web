@@ -13,5 +13,4 @@ export interface ConfigureHuaweiBody {
   password?: string;
   /** @minLength 1 */
   baseUrl: string;
-  enabled: boolean;
 }

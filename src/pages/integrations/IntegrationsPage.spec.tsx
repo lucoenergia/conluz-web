@@ -227,7 +227,7 @@ describe("the Datadis form", () => {
 
       await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
       expect(sentDatadis()).not.toHaveProperty("password");
-      expect(sentDatadis()).toEqual({ enabled: true, username: "datadis-user", baseUrl: "https://datadis.example" });
+      expect(sentDatadis()).toEqual({ username: "datadis-user", baseUrl: "https://datadis.example" });
     });
 
     it("UI-INT-001 AC2 with a password stored, a typed password is sent", async () => {
@@ -570,7 +570,7 @@ describe("the Datadis switch", () => {
   });
 
   it.each([true, false])(
-    "UI-INT-014 AC6 an edit of a configuration with enabled %s sends it unchanged",
+    "UI-INT-014 AC6 an edit of a configuration with enabled %s sends no enabled",
     async (enabled) => {
       const user = userEvent.setup();
       serveDatadis({ enabled });
@@ -581,7 +581,8 @@ describe("the Datadis switch", () => {
       await save(user);
 
       await waitFor(() => expect(mockConfigureDatadis).toHaveBeenCalledTimes(1));
-      expect(sentDatadis()).toEqual({ enabled, username: "otro-usuario", baseUrl: "https://datadis.example" });
+      expect(sentDatadis()).toEqual({ username: "otro-usuario", baseUrl: "https://datadis.example" });
+      expect(sentDatadis()).not.toHaveProperty("enabled");
     },
   );
 

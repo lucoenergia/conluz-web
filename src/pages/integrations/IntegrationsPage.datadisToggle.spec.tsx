@@ -114,41 +114,6 @@ describe("the Datadis switch and the next save", () => {
     release.resolve(current);
     await waitFor(() => expect(guardar()).toBeEnabled());
   });
-
-  it.each([
-    ["disabling", "disable", true, "Desactivar", false],
-    ["enabling", "enable", false, "Activar", true],
-  ] as const)(
-    "UI-INT-014 a save after %s, when the read that follows fails, sends the enabled the switch stored, not the one read before",
-    async (_, endpoint, before, confirmLabel, after) => {
-      const user = userEvent.setup();
-      let failNext = false;
-      const router = serve(
-        () => {
-          if (failNext) throw apiError(503);
-          return stored({ enabled: before });
-        },
-        [
-          { method: "POST", url: `${CONFIG_URL}/${endpoint}`, respond: () => undefined },
-          { method: "PUT", url: CONFIG_URL, respond: () => stored({ enabled: after }) },
-        ],
-      );
-      render();
-      await waitFor(() => expect(datadisSwitch()).toHaveProperty("checked", before));
-
-      // The read after the toggle fails: the query keeps its data, stops
-      // fetching, and Guardar is offered again with whatever the cache holds.
-      failNext = true;
-      await toggle(user, confirmLabel);
-      await waitFor(() => expect(requestsTo(router.requests, "GET", CONFIG_URL)).toHaveLength(2));
-      await waitFor(() => expect(guardar()).toBeEnabled());
-
-      await save(user);
-
-      await waitFor(() => expect(requestsTo(router.requests, "PUT", CONFIG_URL)).toHaveLength(1));
-      expect(requestsTo(router.requests, "PUT", CONFIG_URL)[0].data).toHaveProperty("enabled", after);
-    },
-  );
 });
 
 describe("the Datadis switch", () => {
@@ -211,7 +176,7 @@ describe("the Datadis switch", () => {
     expect(requestsTo(router.requests, "PUT", CONFIG_URL)).toEqual([]);
   });
 
-  it("UI-INT-014 AC5 with no configuration there is no switch, the first save sends enabled: false, and the switch then arrives off", async () => {
+  it("UI-INT-014 AC5 with no configuration there is no switch, the first save sends no enabled, and the switch then arrives off", async () => {
     const user = userEvent.setup();
     let current: GetDatadisConfigResponse | null = null;
     const router = serve(
@@ -224,8 +189,9 @@ describe("the Datadis switch", () => {
           method: "PUT",
           url: CONFIG_URL,
           respond: (config) => {
-            const sent = config.data as { enabled: boolean; username: string; baseUrl: string };
-            current = { enabled: sent.enabled, username: sent.username, baseUrl: sent.baseUrl, passwordSet: true };
+            // The backend creates a configuration disabled (lucoenergia/conluz#425).
+            const sent = config.data as { username: string; baseUrl: string };
+            current = { enabled: false, username: sent.username, baseUrl: sent.baseUrl, passwordSet: true };
             return current;
           },
         },
@@ -246,7 +212,6 @@ describe("the Datadis switch", () => {
 
     await waitFor(() => expect(requestsTo(router.requests, "PUT", CONFIG_URL)).toHaveLength(1));
     expect(requestsTo(router.requests, "PUT", CONFIG_URL)[0].data).toEqual({
-      enabled: false,
       username: "datadis-user",
       password: "secreta",
       baseUrl: "https://datadis.es",

@@ -161,35 +161,6 @@ describe("the Huawei integration of one plant", () => {
     expect(router.requests.filter((r) => r.method?.toUpperCase() === "PUT")).toEqual([]);
   });
 
-  it("UI-INT-008 an edit made before the read that follows a disable lands sends enabled: false, not the stale value", async () => {
-    // The edit sends the stored `enabled`, read from the cache. Until the
-    // refetch lands, only the value the disable wrote there keeps the edit
-    // from turning the integration back on (#256).
-    const user = userEvent.setup();
-    let held: Promise<StoredHuaweiConfig> | null = null;
-    const router = routeRequests([
-      { method: "GET", url: configUrl(PLANT_A), respond: () => held ?? configured({ enabled: true }) },
-      { method: "POST", url: `${configUrl(PLANT_A)}/disable`, respond: () => undefined },
-      { method: "PUT", url: configUrl(PLANT_A), respond: () => configured({ enabled: false }) },
-    ]);
-    mockCustomInstance.mockImplementation(router.handle);
-    renderOne();
-
-    await waitFor(() => expect(theSwitch()).toBeChecked());
-    let release!: (config: StoredHuaweiConfig) => void;
-    held = new Promise((resolve) => (release = resolve));
-    await user.click(theSwitch());
-    await user.click(within(confirmation()).getByRole("button", { name: "Desactivar" }));
-    await waitFor(() => expect(requestsTo(router.requests, "GET", configUrl(PLANT_A))).toHaveLength(2));
-
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Guardar" }));
-
-    await waitFor(() => expect(requestsTo(router.requests, "PUT", configUrl(PLANT_A))).toHaveLength(1));
-    expect(requestsTo(router.requests, "PUT", configUrl(PLANT_A))[0].data).toHaveProperty("enabled", false);
-    release(configured({ enabled: false }));
-  });
-
   it("UI-INT-009 a configuration deleted meanwhile (404 HUAWEI_CONFIG_NOT_FOUND) is read again, and shows the empty state", async () => {
     const user = userEvent.setup();
     let deleted = false;
@@ -239,8 +210,9 @@ describe("the Huawei integration of one plant", () => {
         method: "PUT",
         url: configUrl(PLANT_A),
         respond: (config) => {
-          const body = config.data as { enabled: boolean; username: string; baseUrl: string };
-          stored = { enabled: body.enabled, username: body.username, baseUrl: body.baseUrl, passwordSet: true };
+          // The backend creates a configuration disabled (lucoenergia/conluz#425).
+          const body = config.data as { username: string; baseUrl: string };
+          stored = { enabled: false, username: body.username, baseUrl: body.baseUrl, passwordSet: true };
           return undefined;
         },
       },
@@ -258,7 +230,6 @@ describe("the Huawei integration of one plant", () => {
     await waitFor(() => expect(theSwitch()).not.toBeChecked());
     expect(screen.getByText(DISABLED_TEXT)).toBeVisible();
     expect(requestsTo(router.requests, "PUT", configUrl(PLANT_A))[0].data).toEqual({
-      enabled: false,
       username: "huawei-user",
       password: "s3cret",
       baseUrl: "https://eu5.fusionsolar.huawei.com/thirdData",

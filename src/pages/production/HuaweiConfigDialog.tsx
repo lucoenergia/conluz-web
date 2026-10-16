@@ -44,8 +44,8 @@ export interface HuaweiConfigDialogProps {
  * screen on a phone.
  *
  * It follows the Datadis form's rules (UI-INT-001…004) through the same
- * helpers, and has no `enabled` control: a new configuration is created
- * disabled, and an edit sends the stored `enabled` unchanged (UI-INT-008).
+ * helpers. It neither shows nor sends `enabled`: the backend creates a new
+ * configuration disabled, and an edit leaves it as it is (UI-INT-008).
  * Turning it on or off is the card's switch, through its own endpoints.
  */
 export const HuaweiConfigDialog: FC<HuaweiConfigDialogProps> = ({
@@ -67,10 +67,9 @@ export const HuaweiConfigDialog: FC<HuaweiConfigDialogProps> = ({
   });
   const [failed, setFailed] = useState(false);
 
-  const enabled = mode === "create" ? false : (stored?.enabled ?? false);
   // Nothing is stored before a create, so the password is required then.
   const storedPassword = mode === "create" ? false : passwordSet;
-  const form = useCredentialsForm({ ...values, enabled }, storedPassword);
+  const form = useCredentialsForm(values, storedPassword);
   const isSaving = configure.isPending;
 
   const save = async () => {
@@ -78,7 +77,7 @@ export const HuaweiConfigDialog: FC<HuaweiConfigDialogProps> = ({
     if (!form.attemptSave()) return;
 
     const sentPassword = values.password;
-    const result = await configure.run(buildCredentialsBody({ ...values, enabled }));
+    const result = await configure.run(buildCredentialsBody(values));
     if ("ok" in result) {
       setValues((current) => ({ ...current, password: "" }));
       form.reset();

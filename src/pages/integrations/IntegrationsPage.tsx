@@ -40,7 +40,7 @@ const CONFIG_STALE_TIME = 5 * 60 * 1000;
 
 interface IntegrationState {
   // No `enabled`: Datadis is turned on and off through its own endpoints, and
-  // the PUT sends what is stored (#256).
+  // the PUT carries none (#256).
   datadis: { username: string; password: string; baseUrl: string };
   shelly: { enabled: boolean };
 }
@@ -176,13 +176,12 @@ export const IntegrationsPage: FC = () => {
   // turns "none stored" into "stored".
   const datadisPasswordSet = storedPasswordFrom(datadisConfig, datadisError);
   // The stored `enabled`, never a copy: the switch writes through its own
-  // endpoints, and the refetch after each write is what moves it (#256). A
-  // GET 404 is "none stored", so a create sends `false`.
+  // endpoints, and the refetch after each write is what moves it (#256).
   const datadisEnabled = datadisConfig?.enabled === true;
-  const datadisValues = { ...state.datadis, enabled: datadisEnabled };
-  const datadisForm = useCredentialsForm(datadisValues, datadisPasswordSet);
-  // Anything but a 404 says nothing about what is stored, `enabled` included,
-  // so there is no form to offer: a save would have to guess it.
+  const datadisForm = useCredentialsForm(state.datadis, datadisPasswordSet);
+  // Anything but a 404 says nothing about what is stored: whether a password
+  // is, so which save rules apply, or whether the integration is on. So there
+  // is no form and no switch to offer, only the retry (UI-INT-003).
   const datadisReadFailed =
     !datadisConfig &&
     !!datadisError &&
@@ -269,7 +268,7 @@ export const IntegrationsPage: FC = () => {
       isPending: configureDatadis.isPending,
       run: async () => {
         const sentPassword = state.datadis.password;
-        const result = await configureDatadis.run(buildCredentialsBody(datadisValues));
+        const result = await configureDatadis.run(buildCredentialsBody(state.datadis));
         if ("ok" in result) {
           // Emptied, so the next save keeps what was just stored instead of
           // sending it again; the refetch then reports it as stored.
@@ -419,7 +418,7 @@ export const IntegrationsPage: FC = () => {
             isLoading={loadingByProvider[provider.id]}
             {...(provider.id === "datadis"
               ? {
-                  value: { ...datadisValues, passwordSet: datadisPasswordSet },
+                  value: { ...state.datadis, enabled: datadisEnabled, passwordSet: datadisPasswordSet },
                   loadFailure: datadisReadFailed && (
                     <LoadErrorAlert message={DATADIS_LOAD_FAILED} onRetry={() => void refetchDatadis()} />
                   ),

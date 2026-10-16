@@ -151,7 +151,8 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
       )}
 
       {/* Only a failure other than 404 is an error. Nothing is offered but the
-          retry: an edit must send the stored `enabled`, which is unknown here. */}
+          retry: whether a password is stored, and whether the integration is
+          on, are unknown here. */}
       {!stored && !isLoading && !!error && !notConfigured && (
         <LoadErrorAlert message={LOAD_FAILED_TEXT} onRetry={() => void refetch()} />
       )}

@@ -11,7 +11,6 @@ import {
 import { formatFieldList, missingFieldLabels } from "./integrationStatus";
 
 const VALID: CredentialsValues = {
-  enabled: true,
   username: "datadis-user",
   password: "",
   baseUrl: "https://datadis.es",
