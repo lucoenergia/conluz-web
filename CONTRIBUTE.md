@@ -141,6 +141,9 @@ breaking section whatever its other labels.
 
 ## Continuous integration
 
+Which test level owns which risk, when a visual test may be added, and the reasoning behind the CI
+policy below: [`docs/testing/testing-strategy.md`](docs/testing/testing-strategy.md).
+
 ### Retries and flaky visual tests
 
 The visual suite retries a failed test **once in CI** and **never locally** (`retries` in
