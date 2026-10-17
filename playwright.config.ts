@@ -32,13 +32,17 @@ export default defineConfig({
   snapshotDir: "./tests/visual/__screenshots__",
   // {projectName} separates mobile and desktop baselines; {arg} is the screenshot name passed to toHaveScreenshot()
   snapshotPathTemplate: "{snapshotDir}/{projectName}/{arg}{ext}",
-  fullyParallel: false,
-  // With fullyParallel off, Playwright parallelises across spec files, one
-  // worker per file × project. The suite is split into several area specs, so
-  // the default (half the cores) would run many of them at once against the
-  // single Vite dev server. Two workers keeps the concurrency the suite had as
-  // one file run by two projects, and matches the default on a 4-core CI runner.
-  workers: 2,
+  // Tests are independent: each one builds its own browser context, route
+  // mocks and state, so Playwright may run any test on any worker. With this
+  // off, the tests of a file ran serially on one worker, so the slowest
+  // file × project capped the speed-up extra workers could give, and a single
+  // spec file run locally used one worker per project.
+  fullyParallel: true,
+  // In CI, one worker per vCPU of the standard GitHub-hosted runner for public
+  // repositories, which has 4. A manual run of the workflow can override it
+  // (the `workers` input) to compare worker counts on the same commit; see
+  // CONTRIBUTE.md. Locally, Playwright's default applies.
+  workers: process.env.CI ? 4 : undefined,
   // One retry in CI tells a flake from a real diff without re-running the whole
   // job: a test that fails and then passes is reported "flaky", and the retry
   // records the trace ("on-first-retry" below). Locally a failure stays a
