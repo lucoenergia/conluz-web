@@ -3,17 +3,27 @@ import {
   getGetMembershipsQueryKey,
   useCreateMembership,
   useDeleteMembership,
+  useDisableMembership,
+  useEnableMembership,
   useSetMembershipInvestment,
   useClearMembershipInvestment,
+  useUpdateMemberRecord,
   useUpdateMembershipRole,
 } from "../../api/memberships/memberships";
 import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
-import { getGetCurrentUserQueryKey } from "../../api/users/users";
+import { getGetAllSuppliesQueryKey } from "../../api/supplies/supplies";
+import {
+  getGetAllUsersQueryKey,
+  getGetCurrentUserQueryKey,
+  getGetSuppliesByUserIdQueryKey,
+  getGetUserByIdQueryKey,
+} from "../../api/users/users";
 import type {
   CommunityResponse,
   CreateMembershipBody,
   MembershipResponse,
   SetMembershipInvestmentBody,
+  UpdateMemberRecordBody,
   UpdateMembershipRoleBody,
 } from "../../api/models";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
@@ -39,14 +49,31 @@ export interface MembershipRowActions {
     remove: MaybeAction<[], boolean>;
     setInvestment: MaybeAction<[SetMembershipInvestmentBody], boolean>;
     clearInvestment: MaybeAction<[], boolean>;
+    editRecord: MaybeAction<[UpdateMemberRecordBody], EditMemberRecordResult>;
+    enable: MaybeAction<[], boolean>;
+    disable: MaybeAction<[], boolean>;
   };
   outcomes: {
     changeRole: CapabilityOutcome;
     remove: CapabilityOutcome;
     setInvestment: CapabilityOutcome;
     clearInvestment: CapabilityOutcome;
+    editRecord: CapabilityOutcome;
+    enable: CapabilityOutcome;
+    disable: CapabilityOutcome;
   };
 }
+
+/**
+ * The error, not a boolean: the record form places the refusal on the field it
+ * is about (`MEMBERSHIP_WITHOUT_CONTACT_EMAIL` on the email), and tells a 403
+ * from a 404, so it needs more than "it failed".
+ */
+export type EditMemberRecordResult = { ok: true } | { error: unknown };
+
+// The detail of one supply, not its sub-resources: the detail is what names
+// the owner, and the owner's name is the member record's.
+const SUPPLY_DETAIL_QUERY_URL = /^\/api\/v1\/supplies\/[^/]+$/;
 
 export interface MembershipActions {
   actions: { add: MaybeAction<[CreateMembershipBody], boolean> };
@@ -72,6 +99,9 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   const updateRoleMutation = useUpdateMembershipRole();
   const setInvestmentMutation = useSetMembershipInvestment();
   const clearInvestmentMutation = useClearMembershipInvestment();
+  const updateRecordMutation = useUpdateMemberRecord();
+  const enableMutation = useEnableMembership();
+  const disableMutation = useDisableMembership();
 
   // All three, because a membership change moves a user between communities'
   // member counts as well as this community's roster -- and because the user
@@ -86,6 +116,25 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
     queryClient.invalidateQueries({ queryKey: getGetMembershipsQueryKey(communityId) });
     queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
     queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
+  };
+
+  // A member record is what every community-scoped response reads a member's
+  // name and contact details from (lucoenergia/conluz#396), so besides the
+  // roster it refreshes every read here that shows the member: the community's
+  // supplies and each supply's detail (their owner), the member's own supplies
+  // and the member as a user (the supply list names them), and the user list
+  // the add-member picker offers.
+  const invalidateMemberReads = (userId: string) => {
+    queryClient.invalidateQueries({ queryKey: getGetAllSuppliesQueryKey(communityId) });
+    queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === "string" && SUPPLY_DETAIL_QUERY_URL.test(key);
+      },
+    });
+    queryClient.invalidateQueries({ queryKey: getGetSuppliesByUserIdQueryKey(userId) });
+    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(userId) });
+    queryClient.invalidateQueries({ queryKey: getGetAllUsersQueryKey() });
   };
 
   const run = async (call: () => Promise<unknown>) => {
@@ -117,6 +166,11 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
       const changeRole = outcomeFromResource(capabilities, "canUpdateRole");
       const remove = outcomeFromResource(capabilities, "canDelete");
       const investment = outcomeFromResource(capabilities, "canManageInvestment");
+      // A backend that predates these capabilities leaves them out, and a
+      // missing capability is a denial: the actions stay hidden until it sends them.
+      const editRecord = outcomeFromResource(capabilities, "canEditRecord");
+      const enable = outcomeFromResource(capabilities, "canEnable");
+      const disable = outcomeFromResource(capabilities, "canDisable");
 
       return {
         actions: {
@@ -142,8 +196,40 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
             () => run(() => clearInvestmentMutation.mutateAsync({ communityId, userId })),
             clearInvestmentMutation.isPending,
           ),
+          editRecord: grant(
+            editRecord,
+            async (data: UpdateMemberRecordBody): Promise<EditMemberRecordResult> => {
+              try {
+                await updateRecordMutation.mutateAsync({ communityId, userId, data });
+                invalidateAfterWrite();
+                invalidateMemberReads(userId);
+                return { ok: true };
+              } catch (error) {
+                return { error };
+              }
+            },
+            updateRecordMutation.isPending,
+          ),
+          enable: grant(
+            enable,
+            () => run(() => enableMutation.mutateAsync({ communityId, userId })),
+            enableMutation.isPending,
+          ),
+          disable: grant(
+            disable,
+            () => run(() => disableMutation.mutateAsync({ communityId, userId })),
+            disableMutation.isPending,
+          ),
         },
-        outcomes: { changeRole, remove, setInvestment: investment, clearInvestment: investment },
+        outcomes: {
+          changeRole,
+          remove,
+          setInvestment: investment,
+          clearInvestment: investment,
+          editRecord,
+          enable,
+          disable,
+        },
       };
     },
   };

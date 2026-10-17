@@ -20,4 +20,10 @@ export interface MembershipCapabilitiesResponse {
   canReadPayback: boolean;
   /** Whether the caller may invite this member to accept the membership, and resend or revoke its invitation. Whether one can be sent right now depends on the membership's state, its contact email and how many invitations it has been sent in the last 24 hours. */
   canInvite: boolean;
+  /** Whether the caller may enable this membership (POST /api/v1/communities/{communityId}/memberships/{userId}/enable). Only an active admin of the community, and only on a membership with the COMMUNITY_MEMBER role. Whether it is disabled right now is the membership's enabled field. */
+  canEnable: boolean;
+  /** Whether the caller may disable this membership (POST /api/v1/communities/{communityId}/memberships/{userId}/disable). Only an active admin of the community, and only on a membership with the COMMUNITY_MEMBER role. Whether it is enabled right now is the membership's enabled field. */
+  canDisable: boolean;
+  /** Whether the caller may edit this membership's member record (PUT /api/v1/communities/{communityId}/memberships/{userId}/record). Only an active admin of the community, on any membership of it whatever its role and state. Whether a change is accepted right now depends on the record sent: a membership with the COMMUNITY_ADMIN role must keep a contact email. */
+  canEditRecord: boolean;
 }

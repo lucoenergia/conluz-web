@@ -29,6 +29,9 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import EditIcon from "@mui/icons-material/Edit";
+import BlockIcon from "@mui/icons-material/Block";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
@@ -48,17 +51,52 @@ import {
   UpdateMembershipRoleBodyRole,
 } from "../../api/models";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
-import { useCommunityActions, useMembershipActions } from "../../hooks/actions";
+import {
+  useCommunityActions,
+  useMembershipActions,
+  type Action,
+  type MembershipRowActions,
+} from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useErrorDispatch } from "../../context/error.context";
 import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { MemberRecordDialog } from "./MemberRecordDialog";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
   [MembershipResponseRole.COMMUNITY_ADMIN]: "Administrador",
 };
+
+type StatusToggle = { action: Action<[], boolean>; isSuspending: boolean } | undefined;
+
+/**
+ * Suspend or reactivate, never both. A caller who may do either is granted
+ * both canEnable and canDisable, so the membership's own `enabled` picks the
+ * one that applies -- resolved once, so the menu item, its confirmation and
+ * the handler cannot disagree about which was chosen.
+ */
+function statusToggleFor(
+  membership: MembershipResponse | null | undefined,
+  actions: MembershipRowActions["actions"],
+): StatusToggle {
+  if (!membership) return undefined;
+  if (membership.enabled) return actions.disable && { action: actions.disable, isSuspending: true };
+  return actions.enable && { action: actions.enable, isSuspending: false };
+}
+
+/** A member without email is named alone: no empty parentheses. */
+const nameWithEmail = (fullName: string, email: string | null) => (email ? `${fullName} (${email})` : fullName);
+
+const MembershipStatusChip: FC<{ enabled: boolean }> = ({ enabled }) => (
+  <Chip
+    label={enabled ? "Activo" : "Suspendido"}
+    color={enabled ? "success" : "error"}
+    size="small"
+    sx={{ fontWeight: 600 }}
+  />
+);
 
 export const MembersPage: FC = () => {
   const { width } = useWindowDimensions();
@@ -85,6 +123,8 @@ export const MembersPage: FC = () => {
   const [selectedMembershipId, setSelectedMembershipId] = useState<string | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [pendingRole, setPendingRole] = useState<string>("");
+  const [recordDialogOpen, setRecordDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
   const {
     data: memberships = [],
@@ -111,6 +151,7 @@ export const MembersPage: FC = () => {
     ? (memberships.find((m) => m.id === selectedMembershipId) ?? null)
     : null;
   const selectedActions = forMembership(selectedMembership ?? undefined).actions;
+  const selectedStatusToggle = statusToggleFor(selectedMembership, selectedActions);
 
   // "Puntos de suministro" opens the member's own supply list, which is the
   // user's decision to make, not the membership's -- canListSupplies is
@@ -121,8 +162,14 @@ export const MembersPage: FC = () => {
   // No permitted action means no menu at all, rather than a menu with nothing
   // in it or items the backend would refuse.
   const hasRowActions = (membership: MembershipResponse) => {
-    const { changeRole, remove } = forMembership(membership).actions;
-    return !!changeRole || !!remove || rowSupplies(membership).state === "allowed";
+    const actions = forMembership(membership).actions;
+    return (
+      !!actions.editRecord ||
+      !!statusToggleFor(membership, actions) ||
+      !!actions.changeRole ||
+      !!actions.remove ||
+      rowSupplies(membership).state === "allowed"
+    );
   };
 
   const handleAddMember = async () => {
@@ -165,6 +212,20 @@ export const MembersPage: FC = () => {
       setRoleDialogOpen(false);
     } else {
       errorDispatch("Error al actualizar el rol. Por favor, inténtalo de nuevo.");
+    }
+  };
+
+  const handleStatusConfirm = async () => {
+    if (!selectedStatusToggle) return;
+    const { action, isSuspending } = selectedStatusToggle;
+    if (await action.run()) {
+      setStatusDialogOpen(false);
+    } else {
+      errorDispatch(
+        isSuspending
+          ? "No se ha podido suspender al miembro. Inténtalo de nuevo."
+          : "No se ha podido reactivar al miembro. Inténtalo de nuevo.",
+      );
     }
   };
 
@@ -296,9 +357,11 @@ export const MembersPage: FC = () => {
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {membership.user?.fullName ?? "Miembro desconocido"}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                          {membership.user?.email ?? ""}
-                        </Typography>
+                        {membership.user?.email && (
+                          <Typography variant="caption" sx={{ color: colors.text.subtle }}>
+                            {membership.user.email}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   ),
@@ -316,12 +379,7 @@ export const MembersPage: FC = () => {
                   key: "status",
                   header: "Estado",
                   render: (membership) => (
-                    <Chip
-                      label={membership.enabled ? "Activo" : "Inactivo"}
-                      color={membership.enabled ? "success" : "error"}
-                      size="small"
-                      sx={{ fontWeight: 600 }}
-                    />
+                    <MembershipStatusChip enabled={membership.enabled} />
                   ),
                 },
               ]}
@@ -342,14 +400,7 @@ export const MembersPage: FC = () => {
                     </Avatar>
                   ),
                   title: membership.user?.fullName ?? "Miembro desconocido",
-                  status: (
-                    <Chip
-                      label={membership.enabled ? "Activo" : "Inactivo"}
-                      color={membership.enabled ? "success" : "error"}
-                      size="small"
-                      sx={{ fontWeight: 600 }}
-                    />
-                  ),
+                  status: <MembershipStatusChip enabled={membership.enabled} />,
                   actions: hasRowActions(membership) ? (
                     <IconButton
                       aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
@@ -387,6 +438,19 @@ export const MembersPage: FC = () => {
           the caller's: the backend decides per membership, so there is no
           self-check here. */}
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
+        {selectedActions.editRecord && (
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              setRecordDialogOpen(true);
+            }}
+          >
+            <ListItemIcon>
+              <EditIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText>Editar ficha</ListItemText>
+          </MenuItem>
+        )}
         <Can outcome={rowSupplies(selectedMembership)}>
           <MenuItem
             onClick={() => {
@@ -408,6 +472,25 @@ export const MembersPage: FC = () => {
             <ListItemText>Cambiar rol</ListItemText>
           </MenuItem>
         )}
+        {selectedStatusToggle && (
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              setStatusDialogOpen(true);
+            }}
+          >
+            <ListItemIcon>
+              {selectedStatusToggle.isSuspending ? (
+                <BlockIcon fontSize="small" sx={{ color: "error.main" }} />
+              ) : (
+                <CheckCircleIcon fontSize="small" sx={{ color: "success.main" }} />
+              )}
+            </ListItemIcon>
+            <ListItemText sx={{ color: selectedStatusToggle.isSuspending ? "error.main" : "success.main" }}>
+              {selectedStatusToggle.isSuspending ? "Suspender" : "Reactivar"}
+            </ListItemText>
+          </MenuItem>
+        )}
         {selectedActions.remove && [
           <Divider key="divider" />,
           <MenuItem
@@ -424,6 +507,53 @@ export const MembersPage: FC = () => {
           </MenuItem>,
         ]}
       </RowActionsMenu>
+
+      {/* Mounted only while the row grants the edit, and seeded from it on open. */}
+      {recordDialogOpen && selectedMembership && selectedActions.editRecord && (
+        <MemberRecordDialog
+          membership={selectedMembership}
+          communityName={communityName}
+          editRecord={selectedActions.editRecord}
+          onClose={() => setRecordDialogOpen(false)}
+        />
+      )}
+
+      {/* Suspend / reactivate confirmation, gated like the item that opens it. */}
+      <Dialog
+        open={statusDialogOpen && !!selectedStatusToggle}
+        onClose={() => setStatusDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <Box sx={{ px: 3, pt: 2.5 }}>
+          <CommunityScopeHeader name={communityName} />
+        </Box>
+        <DialogTitle sx={{ pt: 0 }}>
+          {selectedStatusToggle?.isSuspending ? "Suspender miembro en" : "Reactivar miembro en"} {community}
+        </DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Typography variant="body2">
+            {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
+            <strong>{selectedMembership?.user?.fullName ?? "este miembro"}</strong> en {community}?
+          </Typography>
+          <Alert severity="info">
+            {selectedStatusToggle?.isSuspending
+              ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
+              : `Volverá a tener acceso a ${community}.`}
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setStatusDialogOpen(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color={selectedStatusToggle?.isSuspending ? "error" : "primary"}
+            onClick={handleStatusConfirm}
+            disabled={selectedStatusToggle?.action.isPending}
+          >
+            {selectedStatusToggle?.isSuspending ? "Suspender" : "Reactivar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Change role dialog */}
       {/* Mounted inside the same gate as the item that opens it: a confirmation
@@ -497,7 +627,7 @@ export const MembersPage: FC = () => {
             >
               {availableUsers.map((u) => (
                 <MenuItem key={u.id} value={u.id}>
-                  {u.fullName} ({u.email})
+                  {nameWithEmail(u.fullName, u.email)}
                 </MenuItem>
               ))}
             </Select>

@@ -43,6 +43,7 @@ import type {
   RestError,
   SendInvitationsResponse,
   SetMembershipInvestmentBody,
+  UpdateMemberRecordBody,
   UpdateMembershipRoleBody
 } from '.././models';
 
@@ -53,6 +54,81 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
+ * Replaces the record this community keeps on a member: full name, member number, contact email, address and phone number. The whole record is sent: an optional value that is missing, null, empty or blank is cleared. Only the record is written, never the person's account, which they share with their other communities, nor the membership's role, state or invitation.
+
+Any membership of the community may be edited, whatever its role and whether it is pending, accepted or disabled, the caller's own included. A user with no membership in the community responds 404.
+
+A membership with the `COMMUNITY_ADMIN` role must keep a contact email: a record without one responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and nothing is changed.
+
+An invitation link already sent stays valid; the next invitation, or resend, goes to the new contact email.
+
+**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
+
+ * @summary Replaces the member record of a membership.
+ */
+export const updateMemberRecord = (
+    communityId: string,
+    userId: string,
+    updateMemberRecordBody: UpdateMemberRecordBody,
+ ) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/record`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateMemberRecordBody
+    },
+      );
+    }
+  
+
+
+export const getUpdateMemberRecordMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext> => {
+
+const mutationKey = ['updateMemberRecord'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMemberRecord>>, {communityId: string;userId: string;data: UpdateMemberRecordBody}> = (props) => {
+          const {communityId,userId,data} = props ?? {};
+
+          return  updateMemberRecord(communityId,userId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMemberRecordMutationResult = NonNullable<Awaited<ReturnType<typeof updateMemberRecord>>>
+    export type UpdateMemberRecordMutationBody = UpdateMemberRecordBody
+    export type UpdateMemberRecordMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Replaces the member record of a membership.
+ */
+export const useUpdateMemberRecord = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMemberRecord>>,
+        TError,
+        {communityId: string;userId: string;data: UpdateMemberRecordBody},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateMemberRecordMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Sets the amount, in euros, that this member initially contributed to the
 community, replacing any amount previously recorded. Only the current value is
 kept: there is no history of changes.
@@ -822,6 +898,146 @@ export const useResendInvitation = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getResendInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Enables a member's membership of this community, so that it grants access to this community again once it is accepted. Only the membership is written, never the account, which the person shares with their other communities. Enabling an enabled membership changes nothing.
+
+Only memberships with the COMMUNITY_MEMBER role, pending or accepted: a membership with any other role, or none, is answered 404. Admin memberships are enabled by the platform admin (`POST /api/v1/communities/{communityId}/admins/{userId}/enable`).
+
+**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
+
+ * @summary Enables a member's membership.
+ */
+export const enableMembership = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableMembershipMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['enableMembership'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableMembership>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  enableMembership(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof enableMembership>>>
+    
+    export type EnableMembershipMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Enables a member's membership.
+ */
+export const useEnableMembership = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableMembership>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableMembershipMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Disables a member's membership of this community: from the member's next request it grants no access to this community, while their other communities are unaffected, and no invitation is sent to it. Only the membership is written, never the account, which the person shares with their other communities. Disabling a disabled membership changes nothing.
+
+This is how a community suspends a member: a community admin cannot disable the account itself (`POST /api/v1/users/{userId}/disable`).
+
+Only memberships with the COMMUNITY_MEMBER role, pending or accepted: a membership with any other role, or none, is answered 404. Admin memberships are disabled by the platform admin (`POST /api/v1/communities/{communityId}/admins/{userId}/disable`).
+
+**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
+
+ * @summary Disables a member's membership.
+ */
+export const disableMembership = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getDisableMembershipMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['disableMembership'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableMembership>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  disableMembership(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof disableMembership>>>
+    
+    export type DisableMembershipMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Disables a member's membership.
+ */
+export const useDisableMembership = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableMembership>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDisableMembershipMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -166,6 +166,12 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // incompleteText, with an action to complete it (#192, #256).
   DATADIS_CONFIG_INCOMPLETE: incompleteConfig,
   HUAWEI_CONFIG_INCOMPLETE: incompleteConfig,
+
+  // A member record saved without a contact email on a COMMUNITY_ADMIN
+  // membership (lucoenergia/conluz#416). The record form shows it on the email
+  // field (#272).
+  MEMBERSHIP_WITHOUT_CONTACT_EMAIL:
+    "Un administrador de la comunidad tiene que tener un email de contacto. Para quitárselo, cámbiale antes el rol a miembro.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

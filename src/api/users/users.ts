@@ -152,7 +152,9 @@ export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, 
  * This endpoint enables the update of user information by specifying the user's unique identifier in the endpoint path.
 
 Clients send a request containing the updated user details, and authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin or Community Admin**
+**Required: Platform Admin. A Community Admin may use it only on their own account.**
+
+Community admins cannot change another user's account: the account belongs to the person, it is shared by every community they belong to, and its email receives the password recovery link (#415). A member's data in a community is edited on their member record (#416).
 
 A successful update results in an HTTP status code of 200, indicating that the user information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
 
@@ -226,7 +228,9 @@ export const useUpdateUser = <TError = ErrorType<RestError>,
  *     This endpoint enables the removal of a user from the system by specifying the user's unique identifier within the endpoint path.
 
     To utilize this endpoint, clients send a DELETE request with the targeted user's ID, requiring authentication for secure access.
-    **Required: Platform Admin or Community Admin. You cannot delete your own account.**
+    **Required: Platform Admin. You cannot delete your own account.**
+
+    Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To remove a member from one community, delete their membership instead (`DELETE /api/v1/communities/{communityId}/memberships/{userId}`); to suspend them, disable it (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`).
 
     Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the user has been successfully removed.
 
@@ -819,7 +823,9 @@ export const useGrantPlatformAdmin = <TError = ErrorType<RestError>,
  * This endpoint serves the purpose of enabling a previously disabled user within the system, with the user's unique identifier specified in the endpoint path.
 
 Proper authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin or Community Admin. You cannot enable your own account.**
+**Required: Platform Admin. You cannot enable your own account.**
+
+Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
 
 Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been successfully enabled.
 
@@ -891,7 +897,9 @@ export const useEnableUser = <TError = ErrorType<RestError>,
  *     This endpoint is designed to disable a user within the system by specifying the user's unique identifier in the endpoint path.
 
     This operation requires proper authentication, through an authentication token, to ensure secure access.
-    **Required: Platform Admin or Community Admin. You cannot disable your own account.**
+    **Required: Platform Admin. You cannot disable your own account.**
+
+    Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
 
     Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been disabled.
 

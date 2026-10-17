@@ -10,16 +10,22 @@ import { useGetCurrentUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
 import { useProfileActions } from "../hooks/actions";
 import { useActiveCommunityRoleLabel } from "../hooks/permissions";
+import { isValidEmail } from "../utils/email";
 
 export const ProfilePage: FC = () => {
   const { data: currentUser, isLoading, error } = useGetCurrentUser();
   const { actions } = useProfileActions();
   const errorDispatch = useErrorDispatch();
   const roleLabel = useActiveCommunityRoleLabel();
+  // Accounts created by member registration have no global number: the member
+  // number lives on each community's member record (lucoenergia/conluz#392).
+  // No number means no chip, rather than "Socio #0"; a real 0 still shows.
+  const hasMemberNumber = currentUser?.number != null;
 
   // Only what PUT /users/profile accepts. Name, DNI and member number identify
   // the member to the community and to the distributor, so they are changed
-  // administratively through PUT /users/{userId} and are shown here read-only.
+  // administratively, on the community's member record, and are shown here
+  // read-only.
   const [formData, setFormData] = useState({
     email: "",
     address: "",
@@ -51,9 +57,12 @@ export const ProfilePage: FC = () => {
     }
   };
 
+  // The email is optional (lucoenergia/conluz#389): an empty field is valid,
+  // and only a value that is there has to look like an email.
   const validateForm = (): boolean => {
+    const email = formData.email.trim();
     const newErrors = {
-      email: !formData.email.trim(),
+      email: email !== "" && !isValidEmail(email),
       address: false,
       phone: false,
     };
@@ -65,11 +74,12 @@ export const ProfilePage: FC = () => {
     event.preventDefault();
     if (!validateForm()) return;
 
-    // Omitting address or phoneNumber is how the endpoint clears them, which
-    // is what an emptied field means. The action refreshes the signed-in user
-    // itself, so there is nothing to refetch here.
+    // Omitting a field is how the endpoint clears it, which is what an emptied
+    // field means -- the email included, which then leaves the account without
+    // one. The action refreshes the signed-in user itself, so there is nothing
+    // to refetch here.
     const saved = await actions.save.run({
-      email: formData.email,
+      email: formData.email.trim() || undefined,
       address: formData.address || undefined,
       phoneNumber: formData.phone || undefined,
     });
@@ -152,37 +162,41 @@ export const ProfilePage: FC = () => {
           )}
 
           {!isLoading && !error && (
-            <Box component="form" onSubmit={handleSubmit} sx={sxStyles.flexColumnGap3}>
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
-                <Chip
-                  icon={<BadgeIcon />}
-                  label={`Socio #${currentUser?.number || 0}`}
-                  sx={(theme) => ({
-                    fontSize: fontSizes.md,
-                    fontWeight: 600,
-                    backgroundColor: theme.palette.primary.main,
-                    color: "white",
-                    px: 1,
-                    py: 2.5,
-                    "& .MuiChip-icon": { color: "white" },
-                  })}
-                />
-                {roleLabel && (
-                  <Chip
-                    icon={<AdminPanelSettingsIcon />}
-                    label={roleLabel}
-                    sx={{
-                      fontSize: fontSizes.md,
-                      fontWeight: 600,
-                      backgroundColor: colors.success.main,
-                      color: "white",
-                      px: 1,
-                      py: 2.5,
-                      "& .MuiChip-icon": { color: "white" },
-                    }}
-                  />
-                )}
-              </Box>
+            <Box component="form" onSubmit={handleSubmit} noValidate sx={sxStyles.flexColumnGap3}>
+              {(hasMemberNumber || roleLabel) && (
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+                  {hasMemberNumber && (
+                    <Chip
+                      icon={<BadgeIcon />}
+                      label={`Socio #${currentUser.number}`}
+                      sx={(theme) => ({
+                        fontSize: fontSizes.md,
+                        fontWeight: 600,
+                        backgroundColor: theme.palette.primary.main,
+                        color: "white",
+                        px: 1,
+                        py: 2.5,
+                        "& .MuiChip-icon": { color: "white" },
+                      })}
+                    />
+                  )}
+                  {roleLabel && (
+                    <Chip
+                      icon={<AdminPanelSettingsIcon />}
+                      label={roleLabel}
+                      sx={{
+                        fontSize: fontSizes.md,
+                        fontWeight: 600,
+                        backgroundColor: colors.success.main,
+                        color: "white",
+                        px: 1,
+                        py: 2.5,
+                        "& .MuiChip-icon": { color: "white" },
+                      }}
+                    />
+                  )}
+                </Box>
+              )}
 
               <TextField label="Nombre completo" value={currentUser?.fullName ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
               <TextField label="DNI/NIF" value={currentUser?.personalId ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
@@ -191,7 +205,7 @@ export const ProfilePage: FC = () => {
                 Para cambiarlos, contacta con la administración de tu comunidad.
               </Typography>
 
-              <TextField label="Email" error={formErrors.email} helperText={formErrors.email ? "Por favor, introduce tu email" : ""} type="email" value={formData.email} onChange={handleChange("email")} required fullWidth variant="outlined" />
+              <TextField label="Email" error={formErrors.email} helperText={formErrors.email ? "Introduce un email válido" : ""} type="email" value={formData.email} onChange={handleChange("email")} fullWidth variant="outlined" />
               <TextField label="Dirección" value={formData.address} onChange={handleChange("address")} fullWidth variant="outlined" />
               <TextField label="Número de teléfono" value={formData.phone} onChange={handleChange("phone")} fullWidth variant="outlined" />
 
