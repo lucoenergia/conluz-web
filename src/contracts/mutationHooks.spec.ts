@@ -127,6 +127,9 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useUpdateMembershipRole: { scope: "membership", capability: "canUpdateRole", hook: "useMembershipActions" },
   useSetMembershipInvestment: { scope: "membership", capability: "canManageInvestment", hook: "useMembershipActions" },
   useClearMembershipInvestment: { scope: "membership", capability: "canManageInvestment", hook: "useMembershipActions" },
+  useUpdateMemberRecord: { scope: "membership", capability: "canEditRecord", hook: "useMembershipActions" },
+  useEnableMembership: { scope: "membership", capability: "canEnable", hook: "useMembershipActions" },
+  useDisableMembership: { scope: "membership", capability: "canDisable", hook: "useMembershipActions" },
 
   // ── Plants ────────────────────────────────────────────────────────────────
   useCreatePlant: {

@@ -857,6 +857,11 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canManageInvestment: true,
       canReadPayback: true,
       canInvite: false,
+      // Only a COMMUNITY_MEMBER membership can be suspended; any record can be
+      // edited, the admin's own included.
+      canEnable: false,
+      canDisable: false,
+      canEditRecord: true,
     },
   },
   {
@@ -885,6 +890,9 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canManageInvestment: true,
       canReadPayback: true,
       canInvite: false,
+      canEnable: true,
+      canDisable: true,
+      canEditRecord: true,
     },
   },
   {
@@ -913,6 +921,9 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canManageInvestment: false,
       canReadPayback: false,
       canInvite: false,
+      canEnable: true,
+      canDisable: true,
+      canEditRecord: true,
     },
   },
 ];

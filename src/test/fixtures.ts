@@ -147,6 +147,9 @@ export function buildMembershipCapabilities(
     canManageInvestment: false,
     canReadPayback: false,
     canInvite: false,
+    canEnable: false,
+    canDisable: false,
+    canEditRecord: false,
     ...overrides,
   };
 }
