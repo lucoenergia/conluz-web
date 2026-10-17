@@ -113,7 +113,10 @@ If the change touches the theme, a layout or a component shared across screens, 
 spec files of every screen that uses it. The final report lists the visual test spec files run and
 why.
 
-CI runs the full suite. Retries are 0 locally, so a local failure is always real.
+CI runs the full suite. Retries are 0 locally, so a failure is never retried away. A timeout on a
+machine under other load (a parallel build, many workers against the single dev server) can be
+contention rather than a defect: re-run the failing test alone with `--workers=4` before treating it
+as real. Any other failure, including every screenshot difference, is real.
 
 ## References
 

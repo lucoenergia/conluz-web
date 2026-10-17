@@ -22,6 +22,11 @@ on:
         description: "How many times to run each selected test (Playwright --repeat-each)"
         type: number
         default: 1
+      workers:
+        description: "Playwright --workers: a positive integer or a percentage from 1% to 100%; empty uses the configured value"
+        type: string
+        required: false
+        default: ""
 
 concurrency:
   # One group per PR ref, so a new push cancels its superseded run; push and manual runs get a group of their own (run_id), so none of them is ever queued behind, or replaced by, another.
@@ -58,6 +63,7 @@ jobs:
           GREP: ${{ inputs.grep }}
           PROJECT: ${{ inputs.project }}
           REPEAT_EACH: ${{ inputs.repeat_each }}
+          WORKERS: ${{ inputs.workers }}
         run: |
           if [ "$EVENT_NAME" != "workflow_dispatch" ]; then
             npm run test:visual
@@ -67,10 +73,15 @@ jobs:
             echo "::error title=Invalid input::repeat_each must be a positive integer, got '$REPEAT_EACH'"
             exit 1
           fi
+          if [ -n "$WORKERS" ] && ! [[ "$WORKERS" =~ ^[1-9][0-9]*$ || "$WORKERS" =~ ^([1-9][0-9]?|100)%$ ]]; then
+            echo "::error title=Invalid input::workers must be a positive integer or a percentage from 1% to 100%, got '$WORKERS'"
+            exit 1
+          fi
           # No retries: a manual run exists to count failures, and a retry would hide them.
           args=(--retries=0 "--repeat-each=$REPEAT_EACH")
           if [ -n "$GREP" ]; then args+=("--grep=$GREP"); fi
           if [ "$PROJECT" != "all" ]; then args+=("--project=$PROJECT"); fi
+          if [ -n "$WORKERS" ]; then args+=("--workers=$WORKERS"); fi
           npm run test:visual -- "${args[@]}"
 
       # !cancelled() rather than always(): a PR run cancelled because a newer
