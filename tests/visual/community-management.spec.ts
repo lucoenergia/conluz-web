@@ -47,6 +47,28 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("members-page.png", await mainRegion(page));
   });
 
+  // A new multi-field dialog with a read-only field (#272): what can break is
+  // its layout -- the helper texts and labels at 390 px -- not its behaviour,
+  // which MembersPage's specs assert.
+  test("member record dialog", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockCommunityManagementRoutes(page);
+
+    const member = FIXED_MEMBERSHIPS[1].user;
+    await page.goto("/members");
+    await page.getByRole("button", { name: `Más acciones para ${member?.fullName}` }).click();
+    await page.getByRole("menuitem", { name: "Editar ficha" }).click();
+    const dialog = page.getByRole("dialog");
+    // Seeded from the row: a capture of empty fields would look plausible.
+    await expect(dialog.getByLabel(/Nombre completo/)).toHaveValue(member?.fullName ?? "");
+    await expect(dialog.getByLabel("DNI/NIE")).toHaveValue(member?.personalId ?? "");
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("member-record-dialog.png", await hideAppBar(page));
+  });
+
   test("integrations page", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
