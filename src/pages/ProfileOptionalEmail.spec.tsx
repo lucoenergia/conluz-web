@@ -68,7 +68,7 @@ const profileRequests = (router: ReturnType<typeof routeRequests>) =>
 
 const renderProfile = async () => {
   renderWithProviders(<ProfilePage />, { token: "a-token" });
-  return screen.findByLabelText("Email");
+  return screen.findByLabelText(/^Email/);
 };
 
 describe("ProfilePage optional email", () => {
@@ -100,7 +100,7 @@ describe("ProfilePage optional email", () => {
       address: "Calle Mayor 1",
       phoneNumber: "600000002",
     });
-    expect(screen.getByLabelText("Email")).toHaveValue("");
+    expect(screen.getByLabelText(/^Email/)).toHaveValue("");
     expect(screen.queryByText("Introduce un email válido")).not.toBeInTheDocument();
   });
 
@@ -123,7 +123,7 @@ describe("ProfilePage optional email", () => {
     expect(profileRequests(router)[0].data).toMatchObject({ email: undefined });
     // The save refetched the signed-in user, and what came back has no email.
     await waitFor(() => expect(currentUserServed).toBeGreaterThan(1));
-    expect(screen.getByLabelText("Email")).toHaveValue("");
+    expect(screen.getByLabelText(/^Email/)).toHaveValue("");
   });
 
   it("UI-PRF-002 rejects an invalid email that is there, and sends nothing", async () => {
