@@ -463,4 +463,157 @@ describe("MembersPage", () => {
     expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
   });
+
+  describe("the member record edit and the suspension (#272)", () => {
+    const row = (overrides: Partial<MembershipResponse> & Pick<MembershipResponse, "id" | "user">) =>
+      buildMembership({ communityId: "c1", role: "COMMUNITY_MEMBER", enabled: true, ...overrides });
+    const openMenuFor = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
+      await user.click(screen.getByRole("button", { name: `Más acciones para ${name}` }));
+      return screen.findByRole("menu");
+    };
+    const NEW_ACTIONS = /Editar ficha|Suspender|Reactivar/;
+
+    it.each([
+      // A platform admin who is not an admin of the community, and a plain
+      // member: the backend grants neither any of the three.
+      ["a platform admin", buildMembershipCapabilities({ canReadPayback: true })],
+      ["a plain member", buildMembershipCapabilities({ canReadPayback: true })],
+    ])("UI-MBR-001 offers %s neither the record edit nor the suspension", async (_caller, capabilities) => {
+      const user = userEvent.setup();
+      setup({
+        community: { canManageMemberships: false, canCreateUsers: false },
+        memberships: [row({ id: "m1", user: member("u1", "Ana García", "ana@example.com"), capabilities })],
+      });
+
+      // The supply list is the user's own answer, so the row keeps a menu.
+      const menu = await openMenuFor(user, "Ana García");
+      expect(within(menu).getByRole("menuitem", { name: /Puntos de suministro/ })).toBeInTheDocument();
+      expect(within(menu).queryByRole("menuitem", { name: NEW_ACTIONS })).not.toBeInTheDocument();
+    });
+
+    it("UI-MBR-001 offers the record edit from canEditRecord alone, on any role, the caller's own row included", async () => {
+      const user = userEvent.setup();
+      setup({
+        memberships: [
+          row({
+            id: "m1",
+            user: buildUser({ id: "admin", fullName: "Ada Admin", email: "ada@example.com" }),
+            role: "COMMUNITY_ADMIN",
+            acceptedAt: null,
+            capabilities: buildMembershipCapabilities({ canEditRecord: true }),
+          }),
+        ],
+      });
+
+      const menu = await openMenuFor(user, "Ada Admin");
+      expect(within(menu).getByRole("menuitem", { name: /Editar ficha/ })).toBeInTheDocument();
+      // canEditRecord says nothing about suspending.
+      expect(within(menu).queryByRole("menuitem", { name: /Suspender|Reactivar/ })).not.toBeInTheDocument();
+    });
+
+    it("UI-MBR-005 offers Suspender on an active row and Reactivar on a suspended one, never both", async () => {
+      const user = userEvent.setup();
+      const both = buildMembershipCapabilities({ canEnable: true, canDisable: true });
+      setup({
+        memberships: [
+          row({ id: "m1", user: member("u1", "Ana García", "ana@example.com"), enabled: true, capabilities: both }),
+          row({ id: "m2", user: member("u2", "Bruno Leal", "bruno@example.com"), enabled: false, capabilities: both }),
+        ],
+      });
+
+      let menu = await openMenuFor(user, "Ana García");
+      expect(within(menu).getByRole("menuitem", { name: /Suspender/ })).toBeInTheDocument();
+      expect(within(menu).queryByRole("menuitem", { name: /Reactivar/ })).not.toBeInTheDocument();
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+
+      menu = await openMenuFor(user, "Bruno Leal");
+      expect(within(menu).getByRole("menuitem", { name: /Reactivar/ })).toBeInTheDocument();
+      expect(within(menu).queryByRole("menuitem", { name: /Suspender/ })).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ["an active row without canDisable", true, { canEnable: true }],
+      ["a suspended row without canEnable", false, { canDisable: true }],
+    ])("UI-MBR-005 offers no toggle on %s", async (_case, enabled, capabilities) => {
+      const user = userEvent.setup();
+      setup({
+        memberships: [
+          row({
+            id: "m1",
+            user: member("u1", "Ana García", "ana@example.com"),
+            enabled,
+            capabilities: buildMembershipCapabilities(capabilities),
+          }),
+        ],
+      });
+
+      const menu = await openMenuFor(user, "Ana García");
+      expect(within(menu).queryByRole("menuitem", { name: /Suspender|Reactivar/ })).not.toBeInTheDocument();
+    });
+
+    it("UI-MBR-006 shows a suspended membership as Suspendido", () => {
+      setup({
+        memberships: [row({ id: "m1", user: member("u1", "Ana García", "ana@example.com"), enabled: false })],
+      });
+
+      const anaRow = screen.getByText("Ana García").closest("tr") as HTMLElement;
+      expect(within(anaRow).getByText("Suspendido")).toBeInTheDocument();
+    });
+
+    it("never leads a community admin to the account edit screen", async () => {
+      const user = userEvent.setup();
+      setup({
+        memberships: [
+          row({
+            id: "m1",
+            user: member("u1", "Ana García", "ana@example.com"),
+            capabilities: buildMembershipCapabilities({ canEditRecord: true, canEnable: true, canDisable: true }),
+          }),
+        ],
+      });
+
+      await openMenuFor(user, "Ana García");
+      await user.click(screen.getByRole("menuitem", { name: /Editar ficha/ }));
+
+      expect(await screen.findByRole("dialog", { name: `Editar ficha en ${COMMUNITY_NAME}` })).toBeInTheDocument();
+      expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringMatching(/^\/users\/.*\/edit$/));
+    });
+  });
+
+  describe("a member without email (#272)", () => {
+    it("UI-MBR-007 shows the name alone in the roster", () => {
+      setup({
+        memberships: [
+          buildMembership({
+            id: "m1",
+            user: buildUser({ id: "u1", fullName: "Ana García", email: null }),
+            communityId: "c1",
+            enabled: true,
+          }),
+        ],
+      });
+
+      const cell = screen.getByText("Ana García").parentElement as HTMLElement;
+      expect(cell).toHaveTextContent(/^Ana García$/);
+    });
+
+    it("UI-MBR-007 shows the name alone in the add-member picker", async () => {
+      const user = userEvent.setup();
+      vi.mocked(useGetAllUsers).mockReturnValue(
+        query.success<typeof getAllUsers>({
+          ...MOCK_ALL_USERS,
+          items: [buildUser({ id: "u9", fullName: "Diana Sin Email", email: null })],
+        }),
+      );
+      setup();
+
+      await user.click(screen.getByRole("button", { name: "Añadir miembro" }));
+      const dialog = await screen.findByRole("dialog");
+      await user.click(within(dialog).getAllByRole("combobox")[0]);
+
+      const option = await screen.findByRole("option", { name: "Diana Sin Email" });
+      expect(option).toHaveTextContent(/^Diana Sin Email$/);
+    });
+  });
 });

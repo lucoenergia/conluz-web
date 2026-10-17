@@ -40,7 +40,7 @@ test.describe("Visual baselines", () => {
     // look plausible and get regenerated -- enshrining a broken fixture rather
     // than failing. The rows have to be there for the picture to mean anything.
     await expect(page.getByText(FIXED_MEMBERSHIPS[1].user?.fullName ?? "")).toBeVisible();
-    await expect(page.getByText("Inactivo")).toBeVisible();
+    await expect(page.getByText("Suspendido")).toBeVisible();
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
