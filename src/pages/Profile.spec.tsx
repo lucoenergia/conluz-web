@@ -230,4 +230,25 @@ describe("ProfilePage identity fields", () => {
     expect(screen.getByText("Socio #7")).toBeInTheDocument();
     expect(screen.queryByLabelText("Número de socio")).not.toBeInTheDocument();
   });
+
+  it("UI-PRF-003 shows no member-number chip for an account without a number", () => {
+    mockRoleLabel = "Miembro";
+    vi.mocked(useGetCurrentUser).mockReturnValue(
+      query.success<typeof getCurrentUser>({ ...mockCurrentUser, number: null }),
+    );
+    renderWithProviders(<ProfilePage />);
+
+    expect(screen.queryByText(/^Socio #/)).not.toBeInTheDocument();
+    // Only the number's chip goes; the role chip beside it stays.
+    expect(screen.getByText("Miembro")).toBeInTheDocument();
+  });
+
+  it("UI-PRF-003 shows a member number of 0, which is a real number", () => {
+    vi.mocked(useGetCurrentUser).mockReturnValue(
+      query.success<typeof getCurrentUser>({ ...mockCurrentUser, number: 0 }),
+    );
+    renderWithProviders(<ProfilePage />);
+
+    expect(screen.getByText("Socio #0")).toBeInTheDocument();
+  });
 });

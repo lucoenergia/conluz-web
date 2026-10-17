@@ -17,6 +17,10 @@ export const ProfilePage: FC = () => {
   const { actions } = useProfileActions();
   const errorDispatch = useErrorDispatch();
   const roleLabel = useActiveCommunityRoleLabel();
+  // Accounts created by member registration have no global number: the member
+  // number lives on each community's member record (lucoenergia/conluz#392).
+  // No number means no chip, rather than "Socio #0"; a real 0 still shows.
+  const hasMemberNumber = currentUser?.number != null;
 
   // Only what PUT /users/profile accepts. Name, DNI and member number identify
   // the member to the community and to the distributor, so they are changed
@@ -159,36 +163,40 @@ export const ProfilePage: FC = () => {
 
           {!isLoading && !error && (
             <Box component="form" onSubmit={handleSubmit} noValidate sx={sxStyles.flexColumnGap3}>
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
-                <Chip
-                  icon={<BadgeIcon />}
-                  label={`Socio #${currentUser?.number || 0}`}
-                  sx={(theme) => ({
-                    fontSize: fontSizes.md,
-                    fontWeight: 600,
-                    backgroundColor: theme.palette.primary.main,
-                    color: "white",
-                    px: 1,
-                    py: 2.5,
-                    "& .MuiChip-icon": { color: "white" },
-                  })}
-                />
-                {roleLabel && (
-                  <Chip
-                    icon={<AdminPanelSettingsIcon />}
-                    label={roleLabel}
-                    sx={{
-                      fontSize: fontSizes.md,
-                      fontWeight: 600,
-                      backgroundColor: colors.success.main,
-                      color: "white",
-                      px: 1,
-                      py: 2.5,
-                      "& .MuiChip-icon": { color: "white" },
-                    }}
-                  />
-                )}
-              </Box>
+              {(hasMemberNumber || roleLabel) && (
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+                  {hasMemberNumber && (
+                    <Chip
+                      icon={<BadgeIcon />}
+                      label={`Socio #${currentUser.number}`}
+                      sx={(theme) => ({
+                        fontSize: fontSizes.md,
+                        fontWeight: 600,
+                        backgroundColor: theme.palette.primary.main,
+                        color: "white",
+                        px: 1,
+                        py: 2.5,
+                        "& .MuiChip-icon": { color: "white" },
+                      })}
+                    />
+                  )}
+                  {roleLabel && (
+                    <Chip
+                      icon={<AdminPanelSettingsIcon />}
+                      label={roleLabel}
+                      sx={{
+                        fontSize: fontSizes.md,
+                        fontWeight: 600,
+                        backgroundColor: colors.success.main,
+                        color: "white",
+                        px: 1,
+                        py: 2.5,
+                        "& .MuiChip-icon": { color: "white" },
+                      }}
+                    />
+                  )}
+                </Box>
+              )}
 
               <TextField label="Nombre completo" value={currentUser?.fullName ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
               <TextField label="DNI/NIF" value={currentUser?.personalId ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
