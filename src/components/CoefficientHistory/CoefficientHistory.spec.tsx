@@ -140,7 +140,7 @@ describe("CoefficientHistory", () => {
     expect(screen.getByText("20,0000 %")).toBeInTheDocument();
   });
 
-  it("renders no links at all when no period may be followed", () => {
+  it("UI-AGR-007 renders no links at all when no period may be followed", () => {
     renderHistory();
 
     expect(screen.queryAllByRole("link")).toHaveLength(0);
@@ -160,7 +160,7 @@ describe("CoefficientHistory", () => {
     );
   });
 
-  it("marks the agreement already on screen and does not link it to itself", () => {
+  it("UI-AGR-007 marks the agreement already on screen and does not link it to itself", () => {
     renderHistory({ periods: withAgreementAccess(TWO_PLANT_HISTORY), currentSharingAgreementId: "sa-2024" });
 
     expect(screen.queryByRole("link", { name: "Reparto 2024" })).not.toBeInTheDocument();
@@ -169,7 +169,7 @@ describe("CoefficientHistory", () => {
     expect(screen.getByRole("link", { name: "Reparto 2023" })).toBeInTheDocument();
   });
 
-  it("links only the plants whose own period allows it", () => {
+  it("UI-AGR-007 links only the plants whose own period allows it", () => {
     // The answer a screen-wide boolean could not express: the caller
     // administers Norte and not Sur, and the history spans both.
     renderHistory({ periods: withAgreementAccess(TWO_PLANT_HISTORY, PLANT_NORTE.id) });

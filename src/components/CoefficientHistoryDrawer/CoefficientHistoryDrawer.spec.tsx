@@ -203,7 +203,7 @@ describe("CoefficientHistoryDrawer — reachable from every agreement status", (
     );
   });
 
-  it("marks the agreement it was opened from rather than linking back to the same page", async () => {
+  it("UI-AGR-007 marks the agreement it was opened from rather than linking back to the same page", async () => {
     historyResult = [
       historyPeriod(),
       historyPeriod({

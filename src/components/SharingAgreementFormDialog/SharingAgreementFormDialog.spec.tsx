@@ -85,7 +85,7 @@ describe("SharingAgreementFormDialog", () => {
     });
   });
 
-  test("edit mode is seeded with the agreement's current values and sends all three fields on submit", async () => {
+  test("UI-AGR-009 edit mode is seeded with the agreement's current values and sends all three fields on submit", async () => {
     const onSubmit = vi.fn();
     const user = userEvent.setup();
     renderWithProviders(

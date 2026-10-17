@@ -179,7 +179,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
     expect(screen.getByText("Comparado con el acuerdo vigente «Reparto 2024»")).toBeInTheDocument();
   });
 
-  it("shows no comparison at all for a plant's first agreement (AC5)", () => {
+  it("UI-AGR-004 shows no comparison at all for a plant's first agreement (AC5)", () => {
     givenActive([]);
     renderDraft([draftRow(VIVIENDA_A, 0.6, null), draftRow(VIVIENDA_B, 0.4, null)]);
 
@@ -303,6 +303,15 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
       renderDraft(rows);
 
       expect(screen.getByText("Comparado con los coeficientes en vigor hoy")).toBeInTheDocument();
+    });
+
+    it("UI-AGR-004 compares a draft whose own supplies have nothing in force when a supply in force leaves it", () => {
+      givenActive([activeCoefficient(NAVE_E, 0.05, REPARTO_AMPLIACION)]);
+      renderDraft([draftRow(VIVIENDA_A, 0.6, null), draftRow(VIVIENDA_B, 0.4, null)]);
+
+      expect(screen.getByText("Comparado con el acuerdo vigente «Reparto ampliación»")).toBeInTheDocument();
+      expect(within(tableRow("Vivienda A")).getByText("Nuevo")).toBeInTheDocument();
+      expect(within(tableRow("Vivienda A")).getByText("Sin coeficiente vigente")).toBeInTheDocument();
     });
 
     it("is not rendered when nothing leaves", () => {
