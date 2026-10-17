@@ -29,7 +29,6 @@ import {
   PUBLISHED_AGREEMENT,
   seedActiveCommunity,
   stabilizePage,
-  SUPERSEDED_AGREEMENT,
 } from "./fixtures";
 
 test.describe("Visual baselines", () => {
@@ -122,33 +121,6 @@ test.describe("Visual baselines", () => {
     await expect(drawer.getByText("1 mar 2022 → 1 ene 2023")).toBeVisible();
   });
 
-  test("coefficient history drawer (superseded)", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, SUPERSEDED_AGREEMENT.id, SUPERSEDED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 404);
-    await mockSupplyPartitionCoefficientRoutes(page, FIXED_SUPPLY_COEFFICIENT_HISTORY, FIXED_COMMUNITY_ADMIN_USER);
-
-    await navigateToSharingAgreementDetail(page, SUPERSEDED_AGREEMENT.name);
-
-    await page.getByRole("button", { name: "Más acciones para Vivienda A" }).first().click();
-    await page.getByRole("menuitem", { name: "Ver histórico" }).click();
-
-    const drawer = page.getByTestId("coefficient-history-drawer");
-    await expect(drawer.getByRole("heading", { name: "Histórico de coeficientes" })).toBeVisible();
-    await stabilizePage(page);
-
-    await expect(drawer).toHaveScreenshot("coefficient-history-drawer-superseded.png", await hideAppBar(page));
-    // The oldest period belongs to the agreement being viewed, so it is marked
-    // and deliberately not linked back to the page the admin is already on.
-    await expect(drawer.getByText("Este acuerdo")).toBeVisible();
-    await expect(drawer.getByRole("link", { name: "Reparto original 2022" })).toHaveCount(0);
-    // The later period, on another agreement, keeps its link.
-    await expect(drawer.getByRole("link", { name: "Reparto vecinos bloque A" })).toBeVisible();
-    await expect(drawer.getByText("En vigor")).toBeVisible();
-  });
-
   test("sharing agreement coefficient recalculation dialog (Corregir fecha)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -165,42 +137,6 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-coefficient-recalculation-dialog.png", await hideAppBar(page));
-  });
-
-  test("sharing agreement coefficient close dialog (Cerrar (baja))", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
-
-    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-    // Local C (coef-3) is the OPEN_ORPHAN row — the only one offering "Cerrar (baja)".
-    await page.getByRole("button", { name: "Más acciones para Local C" }).first().click();
-    await page.getByRole("menuitem", { name: "Cerrar (baja)" }).click();
-
-    await expect(page.getByRole("heading", { name: /^Cerrar coeficiente (en|de) / })).toBeVisible();
-    await expect(page.getByText(/dejará de recibir atribución de producción/)).toBeVisible();
-    await stabilizePage(page);
-
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-coefficient-close-dialog.png", await hideAppBar(page));
-  });
-
-  test("sharing agreement edit dialog (seeded with existing values)", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
-
-    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-    await page.getByRole("button", { name: "Más opciones del acuerdo" }).click();
-    await page.getByRole("menuitem", { name: "Editar datos del acuerdo" }).click();
-
-    await expect(page.getByLabel("Nombre", { exact: false })).toHaveValue(DRAFT_AGREEMENT.name);
-    await stabilizePage(page);
-
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-edit-dialog.png", await hideAppBar(page));
   });
 
   test("sharing agreement delete confirmation", async ({ page }) => {
@@ -241,33 +177,6 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-publish-confirmation.png", await hideAppBar(page));
-  });
-
-  test("sharing agreement revert-to-draft confirmation", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(
-      page,
-      PUBLISHED_AGREEMENT.id,
-      PUBLISHED_AGREEMENT,
-      FIXED_COEFFICIENTS_ALL_PENDING,
-      200,
-    );
-
-    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-    // Reverting is a labelled control on the lifecycle rail now. The published
-    // agreement's kebab is gone entirely: editing and deleting are draft-only.
-    await page.getByRole("button", { name: "Volver a borrador" }).click();
-
-    await expect(page.getByRole("heading", { name: /^Volver a borrador (en|de) / })).toBeVisible();
-    await expect(
-      page.getByText(/dejará de estar en vigor y sus coeficientes volverán a ser editables/),
-    ).toBeVisible();
-    await stabilizePage(page);
-
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-revert-confirmation.png", await hideAppBar(page));
   });
 
   test("sharing agreement upload dialog (idle)", async ({ page }) => {

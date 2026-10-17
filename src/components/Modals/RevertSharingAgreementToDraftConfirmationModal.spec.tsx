@@ -20,7 +20,7 @@ function renderModal(
 }
 
 describe("RevertSharingAgreementToDraftConfirmationModal", () => {
-  test("states the agreement stops being in force and its coefficients become editable", () => {
+  test("UI-AGR-010 states the agreement stops being in force and its coefficients become editable", () => {
     renderModal();
 
     expect(screen.getByRole("heading", { name: /^Volver a borrador (en|de) / })).toBeInTheDocument();
