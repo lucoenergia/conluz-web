@@ -36,3 +36,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-USR` | Users: the edit screen | [`users.md`](users.md) |
 | `UI-ROUTE` | Routing: what an unknown path renders | [`routing.md`](routing.md) |
 | `UI-FMT` | Formatting of figures with units, dates and chart time labels | [`formatting.md`](formatting.md) |
+| `UI-AGR` | Sharing agreements: the list, the detail page, the coefficient editor and their dialogs | [`sharing-agreements.md`](sharing-agreements.md) |
