@@ -392,7 +392,7 @@ describe("SharingAgreementCoefficientSet (anomalous draft)", () => {
     { coefficientId: "h2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.4, applicationState: PENDING, ...OPEN_UNCLOSED },
   ];
 
-  it("says so, rather than silently growing two columns and leaving the reader to notice", () => {
+  it("UI-AGR-005 says so, rather than silently growing two columns and leaving the reader to notice", () => {
     renderWithTheme({ coefficients: anomalousDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     const warning = screen.getByText(ANOMALY_COPY);
@@ -406,7 +406,18 @@ describe("SharingAgreementCoefficientSet (anomalous draft)", () => {
     expect(screen.getByText(/antes de poner el acuerdo en vigor o eliminarlo/)).toBeInTheDocument();
   });
 
-  it("stays silent for a healthy draft", () => {
+  it("UI-AGR-005 treats a known end state other than open as the same anomaly, even on a pending row", () => {
+    renderWithTheme({
+      coefficients: [{ ...healthyDraft[0], endState: CLOSED }, healthyDraft[1]],
+      agreementStatus: SharingAgreementResponseStatus.DRAFT,
+    });
+
+    expect(screen.getByText(ANOMALY_COPY)).toBeInTheDocument();
+    expect(screen.getByText("Estado de fin")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sin aplicar" })).toBeInTheDocument();
+  });
+
+  it("UI-AGR-005 stays silent for a healthy draft", () => {
     renderWithTheme({ coefficients: healthyDraft, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     expect(screen.queryByText(ANOMALY_COPY)).not.toBeInTheDocument();

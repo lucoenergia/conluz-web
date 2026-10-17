@@ -154,7 +154,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
   });
 
-  it("the batch bar mounts only once something is selected — not merely because a PENDING row exists — and unmounts again when the last selection is cleared", async () => {
+  it("UI-AGR-006 the batch bar mounts only once something is selected — not merely because a PENDING row exists — and unmounts again when the last selection is cleared", async () => {
     const user = userEvent.setup({ delay: null });
     renderWithTheme({ coefficients: mixed });
 
@@ -171,7 +171,20 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
     expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
   });
 
-  it("singular/plural count text", async () => {
+  it("UI-AGR-006 offers an enabled Registrar fecha under Acciones when every selected row awaits its date", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderWithTheme({ coefficients: mixed });
+
+    await selectPendingRow(user, "Vivienda A");
+    await selectPendingRow(user, "Vivienda B");
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+
+    const registrar = screen.getByRole("menuitem", { name: "Registrar fecha" });
+    expect(registrar).not.toHaveAttribute("aria-disabled", "true");
+    expect(screen.getAllByRole("menuitem")).toHaveLength(1);
+  });
+
+  it("UI-AGR-006 singular/plural count text", async () => {
     const user = userEvent.setup({ delay: null });
     renderWithTheme({ coefficients: mixed });
 

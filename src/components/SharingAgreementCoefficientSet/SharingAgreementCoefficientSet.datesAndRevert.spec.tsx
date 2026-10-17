@@ -156,7 +156,7 @@ describe("SharingAgreementCoefficientSet (in-force comparison gating)", () => {
 
   const withoutCurrent = withCurrent.map((c) => ({ ...c, currentCoefficient: null }));
 
-  it("compares a DRAFT where at least one supply is already on a coefficient, in a single draft column", () => {
+  it("UI-AGR-004 compares a DRAFT where at least one supply is already on a coefficient, in a single draft column", () => {
     renderWithTheme({ coefficients: withCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
     expect(screen.getByRole("columnheader", { name: "Coeficiente" })).toBeInTheDocument();
     expect(screen.queryByText("Coeficiente actual")).not.toBeInTheDocument();
@@ -178,7 +178,7 @@ describe("SharingAgreementCoefficientSet (in-force comparison gating)", () => {
     expect(screen.queryByText(/^Comparado con/)).not.toBeInTheDocument();
   });
 
-  it("is absent on a DRAFT where no supply is on one yet and nothing leaves — a first agreement", () => {
+  it("UI-AGR-004 is absent on a DRAFT where no supply is on one yet and nothing leaves — a first agreement", () => {
     renderWithTheme({ coefficients: withoutCurrent, agreementStatus: SharingAgreementResponseStatus.DRAFT });
     expect(screen.queryByText(/^Vigente|^Sin coeficiente vigente$/)).not.toBeInTheDocument();
     expect(screen.queryByText("Nuevo")).not.toBeInTheDocument();

@@ -388,7 +388,7 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
     { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.6, applicationState: PENDING, ...OPEN_UNCLOSED },
   ];
 
-  it("hides the state columns and filter chips for a clean DRAFT", () => {
+  it("UI-AGR-005 hides the state columns and filter chips for a clean DRAFT", () => {
     renderWithTheme({ coefficients: cleanDraftCoefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     expect(screen.queryByText("Estado de aplicación")).not.toBeInTheDocument();
@@ -402,12 +402,15 @@ describe("SharingAgreementCoefficientSet — DRAFT column visibility", () => {
   // real DRAFT can never have — the backend guarantees this can't happen. It
   // exists here purely to prove the frontend doesn't silently hide unexpected
   // data if that guarantee is ever violated by a backend regression.
-  it("still shows the state columns and chips for a DRAFT containing anomalous (non-PENDING) rows", () => {
+  it("UI-AGR-005 still shows the state columns and chips for a DRAFT containing anomalous (non-PENDING) rows", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     expect(screen.getByText("Estado de aplicación")).toBeInTheDocument();
     expect(screen.getByText("Estado de fin")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Todos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sin aplicar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "En vigor" })).toBeInTheDocument();
+    expect(screen.getByText(/contiene coeficientes marcados como aplicados o cerrados/)).toBeInTheDocument();
   });
 
   // DRAFT safety used to fall out of getAvailableCoefficientActions alone

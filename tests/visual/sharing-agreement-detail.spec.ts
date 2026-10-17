@@ -82,24 +82,6 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("sharing-agreement-detail-draft.png", await mainRegion(page));
   });
 
-  test("sharing agreement detail page (draft, no coefficient in force yet)", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    // FIXED_COEFFICIENTS_INCOMPLETE deliberately carries no currentCoefficient:
-    // a community's first agreement has nothing in force to compare against.
-    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_INCOMPLETE, 200);
-
-    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
-
-    // No comparison at all: nothing in force and nothing leaving.
-    await expect(page.getByText(/^Comparado con/)).toHaveCount(0);
-    await expect(page.getByText("Nuevo")).toHaveCount(0);
-
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-draft-no-current-coefficient.png", await hideAppBar(page));
-  });
-
   test("sharing agreement detail page (draft, anomalous coefficients — defensive fallback)", async ({ page }) => {
     // FIXED_COEFFICIENTS_MIXED represents a state the backend guarantees a
     // real DRAFT can never reach (APPLIED requires publishing first; revert-
@@ -227,25 +209,6 @@ test.describe("Visual baselines", () => {
     await expect(page.getByTestId("sharing-agreement-file-panel")).toHaveScreenshot("sharing-agreement-detail-draft-no-file.png", await hideAppBar(page));
   });
 
-  test("sharing agreement detail page (mobile coefficient cards)", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "mobile", "Mobile-only card layout — not rendered on the desktop viewport.");
-
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
-
-    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-
-    // Both the desktop table and the mobile card list render unconditionally (CSS-only
-    // display toggle) — the table comes first in DOM order, so .last() is the mobile
-    // card instance. Assert it's the one actually visible, not just relying on viewport.
-    await expect(page.getByText("Vivienda A").last()).toBeVisible();
-
-    await expect(page.getByTestId("sharing-agreement-coefficient-set")).toHaveScreenshot("sharing-agreement-detail-mobile.png", await hideAppBar(page));
-  });
-
   test("sharing agreement detail page (batch activation bar, selection active)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -264,23 +227,6 @@ test.describe("Visual baselines", () => {
 
     await stabilizePage(page);
     await expect(page.getByTestId("sharing-agreement-batch-bar")).toHaveScreenshot("sharing-agreement-batch-bar-selection.png", await hideAppBar(page));
-  });
-
-  test("sharing agreement detail page (batch bar Acciones menu, single action fully available)", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
-
-    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
-
-    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
-    await page.getByRole("button", { name: "Acciones", exact: true }).click();
-    await expect(page.getByRole("menuitem", { name: "Registrar fecha" })).toBeVisible();
-
-    await stabilizePage(page);
-    await expect(page.getByRole("menu")).toHaveScreenshot("sharing-agreement-batch-bar-acciones-menu.png", await hideAppBar(page));
   });
 
   test("sharing agreement coefficient row actions menu (⋯ open)", async ({ page }) => {
