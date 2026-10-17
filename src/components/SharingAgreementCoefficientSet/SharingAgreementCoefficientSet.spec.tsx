@@ -127,6 +127,53 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.queryByText(/Suma del fichero/)).not.toBeInTheDocument();
   });
 
+  it("UI-AGR-001 typing a value updates the live sum before anything is saved", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+
+    // kW mode on 100 kW installed: Vivienda B's 60,00 kW becomes 50,00 kW.
+    // Table and card rows share one state; [1] is the table's Vivienda B input.
+    const viviendaB = screen.getAllByPlaceholderText("0,00")[1];
+    await user.clear(viviendaB);
+    await user.type(viviendaB, "50");
+
+    expect(screen.getByText("Suma de los coeficientes: 90,0000 %")).toBeInTheDocument();
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("UI-AGR-001 adding a supply and giving it a value updates the live sum", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderWithTheme({ coefficients: [], agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: /Editar a mano/ }));
+    await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
+    await user.click(await screen.findByText("Trastero Nuevo"));
+    await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
+
+    const [trasteroNuevo] = await screen.findAllByPlaceholderText("0,00");
+    await user.type(trasteroNuevo, "25");
+
+    expect(screen.getByText("Suma de los coeficientes: 25,0000 %")).toBeInTheDocument();
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("UI-AGR-001 removing a supply updates the live sum before anything is saved", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+    expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
+
+    // A removal changes no input field, which is why it is pinned on its own.
+    // Table and card both render in jsdom; either removes the same row.
+    fireEvent.click(screen.getAllByRole("button", { name: "Quitar Vivienda A" })[0]);
+
+    expect(screen.getByText("Suma de los coeficientes: 60,0000 %")).toBeInTheDocument();
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+  });
+
   it("entering edit mode opens in kW mode by default, seeding inputs in kW including a real zero", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
@@ -295,7 +342,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.getByText(/100 kW de 100 kW instalados/)).toBeInTheDocument();
   });
 
-  it("kW mode shows the outstanding percentage gap, with the rounding caveat, when kW rounds to installedPowerKw but the coefficient sum isn't exactly 100%", () => {
+  it("UI-AGR-003 kW mode shows the outstanding percentage gap, with the rounding caveat, when kW rounds to installedPowerKw but the coefficient sum isn't exactly 100%", () => {
     // Three rows summing to 999,999 units (short by one) but each row's kW,
     // rounded to 2dp, still totals to exactly the 60 kW installed.
     const rows: SharingAgreementPartitionCoefficientResponse[] = [
@@ -312,6 +359,23 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.getByText(/faltan 0,0001 % por ajustar en modo porcentaje/)).toBeInTheDocument();
     // No standalone "cuadra" claim in the copy.
     expect(screen.queryByText(/cuadra/i)).not.toBeInTheDocument();
+  });
+
+  it("UI-AGR-003 kW mode states the excess, with the rounding caveat, when kW rounds to installedPowerKw but the coefficients sum to more than 100%", () => {
+    // Three rows summing to 1,000,002 units (two over) whose kW, rounded to
+    // 2dp, still totals to exactly the 60 kW installed.
+    const rows: SharingAgreementPartitionCoefficientResponse[] = [
+      { coefficientId: "1", supply: { id: "s1", name: "A", code: "X1" }, coefficient: 0.333334, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "2", supply: { id: "s2", name: "B", code: "X2" }, coefficient: 0.333334, applicationState: PENDING, ...OPEN_UNCLOSED },
+      { coefficientId: "3", supply: { id: "s3", name: "C", code: "X3" }, coefficient: 0.333334, applicationState: PENDING, ...OPEN_UNCLOSED },
+    ];
+    renderWithTheme({ coefficients: rows, installedPowerKw: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
+
+    expect(screen.getByText("Suma de los coeficientes: 100,0002 %")).toBeInTheDocument();
+    expect(screen.getByText(/con redondeo a céntimos/)).toBeInTheDocument();
+    expect(screen.getByText(/sobran 0,0002 % por ajustar en modo porcentaje/)).toBeInTheDocument();
   });
 });
 

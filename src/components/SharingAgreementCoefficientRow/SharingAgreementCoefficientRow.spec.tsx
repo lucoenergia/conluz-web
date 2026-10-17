@@ -955,7 +955,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
   }
 
   describe("table row", () => {
-    it("keeps the draft as the main value and puts what is in force, and the change in points, beneath it", () => {
+    it("UI-AGR-002 keeps the draft as the main value and puts what is in force, and the change in points, beneath it", () => {
       renderRow({});
       const [, , coefficientCell, powerCell] = screen.getAllByRole("cell");
       expect(within(coefficientCell).getByText("40,0000 %")).toBeInTheDocument();
@@ -970,7 +970,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
       expect(screen.getByText("Vigente 30,0000 % · -5,0000 p.p.")).toBeInTheDocument();
     });
 
-    it("drops the difference when the draft keeps the same coefficient", () => {
+    it("UI-AGR-002 drops the difference when the draft keeps the same coefficient", () => {
       renderRow({ coefficient: row(0.3), comparison: inForce(0.3) });
       expect(screen.getByText("Vigente 30,0000 %")).toBeInTheDocument();
       expect(screen.queryByText(DELTA_LINE)).not.toBeInTheDocument();
@@ -981,7 +981,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
       expect(screen.getByText("Vigente 30,0000 % · -5,0000 p.p.")).toHaveStyle({ color: colors.text.secondary });
     });
 
-    it("badges a supply with nothing in force as new, with no power line", () => {
+    it("UI-AGR-002 badges a supply with nothing in force as new, with no power line", () => {
       renderRow({ comparison: { kind: "new" } });
       const [pointCell, , coefficientCell, powerCell] = screen.getAllByRole("cell");
       expect(within(pointCell).getByText("Nuevo")).toBeInTheDocument();
@@ -1050,7 +1050,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
       expect(screen.queryByText(DELTA_LINE)).not.toBeInTheDocument();
     });
 
-    it("keeps each line under the value in its own unit when editing in kW", () => {
+    it("UI-AGR-002 keeps each line under the value in its own unit when editing in kW", () => {
       renderRow({ isEditing: true, inputUnit: "kw", coefficientInput: "50", editedValue: 0.5, onCoefficientChange: vi.fn() });
       const [, , inputCell, equivalentCell] = screen.getAllByRole("cell");
       expect(within(inputCell).getByText("Vigente 28 kW")).toBeInTheDocument();
@@ -1089,7 +1089,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
         return text;
       }
 
-      it("reports the same difference for 50 % and for the 100 kW that equals it", () => {
+      it("UI-AGR-002 reports the same difference for 50 % and for the 100 kW that equals it", () => {
         const asPercentage = deltaLineFor("50", "percentage");
         // 100 kW of 200 kW installed is 0.5, the same coefficient as "50 %".
         expect(deltaLineFor("100", "kw")).toBe(asPercentage);
