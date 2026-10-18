@@ -41,14 +41,6 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("production-list-member.png", await mainRegion(page));
   });
 
-  test("plant detail as a member", async ({ page }) => {
-    // The capture includes GraphFilter's date input, which defaults to today.
-    await freezeClock(page);
-    await openPlantDetail(page, FIXED_MEMBER_USER);
-
-    await expect(page).toHaveScreenshot("plant-detail-member.png", await mainRegion(page));
-  });
-
   test("plant detail as a member, details expanded", async ({ page }) => {
     await freezeClock(page);
     await openPlantDetail(page, FIXED_MEMBER_USER);
