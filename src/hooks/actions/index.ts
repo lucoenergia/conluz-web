@@ -19,6 +19,11 @@
 export { type Action, type MaybeAction, type ActionBundle, grant, ungated } from "./action";
 
 export { useCommunityActions, type ConfigureDatadisResult, type DatadisToggleResult } from "./useCommunityActions";
+export {
+  useInvitationActions,
+  type InvitationAcceptanceResult,
+  type InvitationInspectionResult,
+} from "./useInvitationActions";
 export { useMembershipActions, type EditMemberRecordResult, type MembershipRowActions } from "./useMembershipActions";
 export { usePlantActions, type HuaweiWriteResult } from "./usePlantActions";
 export { usePlatformActions } from "./usePlatformActions";
