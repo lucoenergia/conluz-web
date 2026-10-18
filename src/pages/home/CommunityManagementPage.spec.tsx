@@ -174,7 +174,7 @@ describe("CommunityManagementPage (#198)", () => {
   });
 
   describe("AC3: no plant, or a plant without an agreement, explained neutrally", () => {
-    it("explains a community with no plant, with no alert", () => {
+    it("UI-HOM-009 explains a community with no plant, with no alert", () => {
       answer({ plants: query.success<typeof getAllPlants>(plantPage([])) });
       openManagement();
 
@@ -182,7 +182,7 @@ describe("CommunityManagementPage (#198)", () => {
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
-    it("explains a plant that has no agreement yet, with no alert", () => {
+    it("UI-HOM-009 explains a plant that has no agreement yet, with no alert", () => {
       answer({ agreements: { [SOLAR.id]: [] } });
       openManagement();
 

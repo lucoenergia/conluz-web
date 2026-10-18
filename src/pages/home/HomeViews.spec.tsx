@@ -163,7 +163,7 @@ describe("home views (#197)", () => {
   });
 
   describe("AC1 -- a member without admin rights", () => {
-    it("opening the member route gets the member view and no switch", async () => {
+    it("UI-HOM-008 opening the member route gets the member view and no switch", async () => {
       as(MEMBER);
       openApp("/home/member");
 
@@ -191,7 +191,7 @@ describe("home views (#197)", () => {
   });
 
   describe("AC2 -- a community admin known to own no supplies here", () => {
-    it.each(["/home/member", "/home/management"])("opening %s gets the management view and no switch", async (route) => {
+    it.each(["/home/member", "/home/management"])("UI-HOM-008 opening %s gets the management view and no switch", async (route) => {
       as(ADMIN_WITHOUT_SUPPLIES);
       openApp(route);
 
@@ -211,19 +211,24 @@ describe("home views (#197)", () => {
   });
 
   describe("AC3 -- a community admin who owns supplies here", () => {
-    it("moves from the management view to the member view, and back", async () => {
+    it("UI-HOM-008 moves from the management view to the member view, and back", async () => {
       const user = userEvent.setup();
       as(ADMIN_WITH_SUPPLIES);
       openApp("/home/management");
       await managementView();
+      expect(screen.getByRole("tab", { name: "Gestión" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Tu energía" })).toHaveAttribute("aria-selected", "false");
 
       await user.click(screen.getByRole("tab", { name: "Tu energía" }));
       expect(await memberView()).toBeInTheDocument();
       expect(currentPath()).toBe("/home/member");
+      expect(screen.getByRole("tab", { name: "Tu energía" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Gestión" })).toHaveAttribute("aria-selected", "false");
 
       await user.click(screen.getByRole("tab", { name: "Gestión" }));
       expect(await managementView()).toBeInTheDocument();
       expect(currentPath()).toBe("/home/management");
+      expect(screen.getByRole("tab", { name: "Gestión" })).toHaveAttribute("aria-selected", "true");
     });
 
     it("lands on the management view from /home", async () => {

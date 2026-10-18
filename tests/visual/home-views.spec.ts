@@ -1,15 +1,13 @@
 /**
  * Visual baselines — the member and management home views (#197, #199).
  *
- * The member view is captured in every state it defines (#199), its
- * comparison with the previous month in each of its states (#200), and its
- * twelve-month series and best hours in each of theirs (#201), each with
- * its figures asserted before the capture, so a broken fixture fails rather than
- * becoming a plausible baseline. The management view (#198) is captured with
- * plants in different stages, with no plant, and with a plant that has no
- * agreement yet. Each view is captured with the persona that has it, and the
- * switch, on both views, with the one caller who gets it: a community admin
- * who owns a supply here.
+ * Each state captured here is a distinct visual treatment of the member view
+ * (#199, #200, #201) or the management view (#198); a state that differs from
+ * one of them only in content is asserted in Vitest under the UI-HOM rules
+ * (#280). Each capture asserts its figures first, so a broken fixture fails
+ * rather than becoming a plausible baseline. Each view is captured with the
+ * persona that has it, and the switch, on the management view, with the one
+ * caller who gets it: a community admin who owns a supply here.
  *
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
@@ -38,20 +36,12 @@ import {
   MEMBER_MONTHLY_SERIES,
   MEMBER_ENERGY_METRICS_PARTIAL,
   MEMBER_HOURLY_PROFILE_NO_BEST_HOUR,
-  MEMBER_HOURLY_PROFILE_PARTIAL,
-  MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER,
   MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA,
-  MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL,
-  MEMBER_ENERGY_METRICS_REAL_TARIFF,
   MEMBER_HOURLY_PROFILE_EMPTY,
   MEMBER_HOURLY_PROFILE_GAPS,
-  MEMBER_MONTHLY_SERIES_EMPTY,
   MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
-  MEMBER_MONTHLY_SERIES_ONE_MONTH,
-  MEMBER_PAYBACK_NEW_MEMBER,
   MEMBER_PAYBACK_NO_INVESTMENT,
   MEMBER_PAYBACK_NOTHING_SHARED,
-  MEMBER_PAYBACK_REAL_TARIFF,
   MEMBER_PAYBACK_RECOVERED,
   injectAuthToken,
   hideAppBar,
@@ -143,16 +133,6 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("home-member-normal.png", await mainRegion(page));
   });
 
-  test("member home view, priced with the contracted tariff", async ({ page }) => {
-    await openMemberHome(page, { metrics: MEMBER_ENERGY_METRICS_REAL_TARIFF, payback: MEMBER_PAYBACK_REAL_TARIFF });
-    await expect(savingsCard(page)).toContainText("21,42");
-    await expect(estimateLabel(page)).toHaveCount(0);
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-member-real-tariff.png", await mainRegion(page));
-  });
-
   test("member home view, no investment recorded", async ({ page }) => {
     await openMemberHome(page, { payback: MEMBER_PAYBACK_NO_INVESTMENT });
     await expect(paybackCard(page)).toContainText("No consta ninguna inversión tuya registrada");
@@ -186,20 +166,6 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("home-member-nothing-shared.png", await mainRegion(page));
   });
 
-  test("member home view, new member with no month yet", async ({ page }) => {
-    await openMemberHome(page, {
-      metrics: MEMBER_ENERGY_METRICS_NO_MONTH,
-      payback: MEMBER_PAYBACK_NEW_MEMBER,
-      hourly: MEMBER_HOURLY_PROFILE_EMPTY,
-    });
-    await expect(page.getByText("Todavía no hay datos de tu energía")).toBeVisible();
-    await expect(paybackCard(page)).toContainText("Has recuperado el 0");
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-member-new-member.png", await mainRegion(page));
-  });
-
   test("member home view, month with partial coverage", async ({ page }) => {
     await openMemberHome(page, { metrics: MEMBER_ENERGY_METRICS_PARTIAL });
     await expect(page.getByRole("note")).toContainText("Este mes está incompleto");
@@ -208,28 +174,6 @@ test.describe("Visual baselines", () => {
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("home-member-partial-coverage.png", await mainRegion(page));
-  });
-
-  test("member home view, comparison with a rise", async ({ page }) => {
-    await openMemberHome(page);
-    await expect(comparisonCard(page)).toContainText("6,45 € más");
-    await expect(comparisonCard(page)).toContainText("14 puntos porcentuales más");
-    await expect(comparisonCard(page)).toContainText("9 puntos porcentuales más");
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-member-comparison-rise.png", await mainRegion(page));
-  });
-
-  test("member home view, comparison with a fall", async ({ page }) => {
-    await openMemberHome(page, { previousMetrics: MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER });
-    await expect(comparisonCard(page)).toContainText("5,85 € menos");
-    await expect(comparisonCard(page)).toContainText("10 puntos porcentuales menos");
-    await expect(comparisonCard(page)).toContainText("8 puntos porcentuales menos");
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-member-comparison-fall.png", await mainRegion(page));
   });
 
   test("member home view, comparison not available yet", async ({ page }) => {
@@ -243,16 +187,6 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("home-member-comparison-unavailable.png", await mainRegion(page));
   });
 
-  test("member home view, comparison affected by coverage", async ({ page }) => {
-    await openMemberHome(page, { previousMetrics: MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL });
-    await expect(comparisonCard(page)).toContainText("La comparación está afectada: faltan datos de julio de 2026");
-    await expect(comparisonCard(page)).toContainText("9,15 € más");
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-member-comparison-affected-by-coverage.png", await mainRegion(page));
-  });
-
   // #219: these fixtures once wrote the date as "2026-08-01" while the API
   // writes "2026/08/01", so every capture showed labels the real page never did.
   test("the twelve-month fixtures carry every field, and the date and time, as the API returns them", () => {
@@ -260,8 +194,6 @@ test.describe("Visual baselines", () => {
     const series = [
       MEMBER_MONTHLY_SERIES,
       MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
-      MEMBER_MONTHLY_SERIES_ONE_MONTH,
-      MEMBER_MONTHLY_SERIES_EMPTY,
     ];
     for (const bucket of series.flat()) {
       expect(Object.keys(bucket).sort()).toEqual(Object.keys(captured).sort());
@@ -295,27 +227,6 @@ test.describe("Visual baselines", () => {
     // Component subject: the twelve-month block alone, with the app bar hidden.
     const options = await hideAppBar(page);
     await expect(twelveMonthsCard(page)).toHaveScreenshot("home-member-twelve-months-gap-incomplete.png", options);
-  });
-
-  test("member home view, twelve months with only the reference month", async ({ page }) => {
-    await openMemberHome(page, { monthly: MEMBER_MONTHLY_SERIES_ONE_MONTH });
-    await expect(twelveMonthsCard(page)).toContainText("1 de 12 meses con datos.");
-    await expect(drawnCharts(twelveMonthsCard(page))).toHaveCount(2);
-    await stabilizePage(page);
-
-    // Component subject: the twelve-month block alone, with the app bar hidden.
-    await expect(twelveMonthsCard(page)).toHaveScreenshot("home-member-twelve-months-one-month.png", await hideAppBar(page));
-  });
-
-  test("member home view, twelve months with nothing stored", async ({ page }) => {
-    await openMemberHome(page, { monthly: MEMBER_MONTHLY_SERIES_EMPTY });
-    const notice = page.getByRole("note").filter({ hasText: "Todavía no hay meses que mostrar" });
-    await expect(notice).toBeVisible();
-    await expect(twelveMonthsCard(page)).toHaveCount(0);
-    await stabilizePage(page);
-
-    // Component subject: the block's neutral notice, with the app bar hidden.
-    await expect(notice).toHaveScreenshot("home-member-twelve-months-empty.png", await hideAppBar(page));
   });
 
   test("member home view, best hours with data", async ({ page }) => {
@@ -354,48 +265,6 @@ test.describe("Visual baselines", () => {
     await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-none.png", await hideAppBar(page));
   });
 
-  test("member home view, best hours in a month with gaps", async ({ page }) => {
-    await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_PARTIAL });
-    await expect(bestHoursCard(page).getByText("Mejores horas: no se pueden calcular, porque faltan datos de este mes.")).toBeVisible();
-    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
-    await stabilizePage(page);
-
-    // Component subject: the best-hours block alone, with the app bar hidden.
-    await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-partial.png", await hideAppBar(page));
-  });
-
-  test("member home view, best hours with no month yet", async ({ page }) => {
-    await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_EMPTY });
-    const notice = page.getByRole("note").filter({ hasText: "Todavía no hay horas que mostrar" });
-    await expect(notice).toBeVisible();
-    await expect(bestHoursCard(page)).toHaveCount(0);
-    await stabilizePage(page);
-
-    // Component subject: the block's neutral notice, with the app bar hidden.
-    await expect(notice).toHaveScreenshot("home-member-best-hours-empty.png", await hideAppBar(page));
-  });
-
-  // The one caller who sees the member view with the switch: a community
-  // admin who owns a supply here. Served the normal state, as the admin's own
-  // membership.
-  test("member home view with the switch (admin owning a supply)", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-    await mockCommunityAdminOwnsSupply(page);
-
-    await page.goto("/home/member");
-    await expect(page.getByRole("heading", { name: "Tu energía", level: 1 })).toBeVisible();
-    await expect(page.getByRole("tab", { name: "Tu energía", selected: true })).toBeVisible();
-    await expect(page.getByRole("tab", { name: "Gestión" })).toBeVisible();
-    await expect(page.getByText("de 268 kWh asignados")).toBeVisible();
-    await expect(paybackCard(page)).toContainText("212,40");
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-member-with-switch.png", await mainRegion(page));
-  });
-
   test("management home view (admin owning no supplies)", async ({ page }) => {
     await openManagementHome(page);
     await expect(page.getByRole("tablist", { name: "Vistas de inicio" })).toHaveCount(0);
@@ -407,28 +276,6 @@ test.describe("Visual baselines", () => {
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("home-management-normal.png", await mainRegion(page));
-  });
-
-  test("management home view, community with no plant", async ({ page }) => {
-    await openManagementHome(page, { plants: [], agreementsByPlant: {} });
-    await expect(agreementsCard(page).getByRole("note")).toContainText("La comunidad todavía no tiene plantas");
-    await expect(page.getByRole("alert")).toHaveCount(0);
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-management-no-plant.png", await mainRegion(page));
-  });
-
-  test("management home view, plant without an agreement yet", async ({ page }) => {
-    await openManagementHome(page, { plants: [FIXED_PLANT], agreementsByPlant: {} });
-    await expect(plantRow(page, "Planta Solar Norte").getByRole("note")).toContainText(
-      "Todavía no tiene acuerdo de reparto.",
-    );
-    await expect(page.getByRole("alert")).toHaveCount(0);
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("home-management-plant-without-agreement.png", await mainRegion(page));
   });
 
   test("management home view with the switch (admin owning a supply)", async ({ page }) => {

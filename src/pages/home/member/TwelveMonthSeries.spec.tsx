@@ -294,7 +294,7 @@ describe("TwelveMonthSeries (#201)", () => {
   });
 
   describe("AC8 -- nothing to show yet", () => {
-    it("explains it neutrally when no month in the range has anything stored", () => {
+    it("UI-HOM-007 explains it neutrally when no month in the range has anything stored", () => {
       answer(MONTHS.map((date) => buildMembershipMonthlyConsumptionBucket({ date, ...NOTHING_STORED, supplyCount: 2 })));
       open();
 
@@ -303,11 +303,13 @@ describe("TwelveMonthSeries (#201)", () => {
       expect(Chart).not.toHaveBeenCalled();
     });
 
-    it("draws a single month with data beside eleven gaps, and says how many carry data", () => {
+    it("UI-HOM-005 draws a single month with data beside eleven gaps, and says how many carry data", () => {
       answer(MONTHS.map((date, i) => (i === 11 ? storedMonth(date, i) : buildMembershipMonthlyConsumptionBucket({ date, ...NOTHING_STORED }))));
       open();
 
+      expect(seriesData(savingsChart(), "Ahorro")).toHaveLength(12);
       expect(seriesData(savingsChart(), "Ahorro").filter((value) => value === null)).toHaveLength(11);
+      expect(tableRow("septiembre de 2025")).toContain("Sin datos");
       expect(text(screen.getByRole("region", { name: "Tus últimos 12 meses" }))).toContain("1 de 12 meses con datos.");
     });
   });

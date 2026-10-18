@@ -290,7 +290,7 @@ describe("MemberHomePage (#199)", () => {
   });
 
   describe("AC3/AC4 -- the estimate label follows estimatedPrice, and nothing else", () => {
-    it("states the price beside each figure whose own response carries one", () => {
+    it("UI-HOM-001 states the price beside each figure whose own response carries one", () => {
       answer({
         metrics: monthWith({ savings: { amountEur: 27, tariffSource: "ESTIMATE", estimatedPrice: { eurPerKWh: 0.15 } } }),
         payback: paybackWith({ tariffSource: "ESTIMATE", estimatedPrice: { eurPerKWh: 0.1234 } }),
@@ -301,7 +301,7 @@ describe("MemberHomePage (#199)", () => {
       expect(text(paybackCard())).toContain("Estimado con un precio de 0,1234 €/kWh para la energía, sin impuestos.");
     });
 
-    it("shows no estimate wording anywhere when neither response carries a price", () => {
+    it("UI-HOM-001 shows no estimate wording anywhere when neither response carries a price", () => {
       openHome();
 
       expect(page()).not.toMatch(/estimad/i);
@@ -481,7 +481,8 @@ describe("MemberHomePage (#199)", () => {
 
   describe("the comparison with the previous month (#200)", () => {
     const comparison = () => card("Comparado con julio de 2026");
-    const row = (label: string) => text(within(comparison()).getByRole("heading", { name: label }).closest("li")!);
+    const rowItem = (label: string) => within(comparison()).getByRole("heading", { name: label }).closest("li")!;
+    const row = (label: string) => text(rowItem(label));
     const energyCalls = () => vi.mocked(useGetMembershipEnergyMetrics).mock.calls.map(([, , params]) => params);
 
     it("asks for the month before the resolved one, by explicit bounds, and leaves the first read as it was", () => {
@@ -494,19 +495,23 @@ describe("MemberHomePage (#199)", () => {
     });
 
     describe("AC1 -- both months have data: each change is shown with its direction", () => {
-      it("a rise in savings, in euros", () => {
+      it("UI-HOM-003 a rise in savings, in euros", () => {
         openHome();
 
         expect(row("Tu ahorro")).toContain("4,50 € más");
+        expect(within(rowItem("Tu ahorro")).getByTestId("ArrowUpwardIcon")).toBeInTheDocument();
+        expect(within(rowItem("Tu ahorro")).queryByTestId("ArrowDownwardIcon")).not.toBeInTheDocument();
         expect(row("Tu ahorro")).toContain("27,00 € en agosto de 2026, frente a 22,50 € en julio de 2026.");
       });
 
-      it("a rise and a fall in the two shares, in percentage points", () => {
+      it("UI-HOM-003 a rise and a fall in the two shares, in percentage points", () => {
         openHome();
 
         expect(row("Energía asignada que usaste")).toContain("15 puntos porcentuales más");
         expect(row("Energía asignada que usaste")).toContain("67 % en agosto de 2026, frente a 52 % en julio de 2026.");
+        expect(within(rowItem("Energía asignada que usaste")).getByTestId("ArrowUpwardIcon")).toBeInTheDocument();
         expect(row("Consumo cubierto por la comunidad")).toContain("5 puntos porcentuales menos");
+        expect(within(rowItem("Consumo cubierto por la comunidad")).getByTestId("ArrowDownwardIcon")).toBeInTheDocument();
       });
 
       it("a share going from 20 % to 30 % is ten points, not a 50 % rise", () => {
@@ -517,11 +522,13 @@ describe("MemberHomePage (#199)", () => {
         expect(row("Consumo cubierto por la comunidad")).not.toContain("50");
       });
 
-      it("a fall in savings", () => {
+      it("UI-HOM-003 a fall in savings", () => {
         answer({ previous: previousMonthWith({ savings: { amountEur: 31.2, tariffSource: "REAL_TARIFF", estimatedPrice: null } }) });
         openHome();
 
         expect(row("Tu ahorro")).toContain("4,20 € menos");
+        expect(within(rowItem("Tu ahorro")).getByTestId("ArrowDownwardIcon")).toBeInTheDocument();
+        expect(within(rowItem("Tu ahorro")).queryByTestId("ArrowUpwardIcon")).not.toBeInTheDocument();
       });
     });
 
@@ -559,7 +566,7 @@ describe("MemberHomePage (#199)", () => {
     });
 
     describe("AC3 -- partial coverage in either month: the comparison says it is affected", () => {
-      it("the reference month", () => {
+      it("UI-HOM-004 the reference month", () => {
         answer({ metrics: monthWith({ coverage: { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 } }) });
         openHome();
 
@@ -568,11 +575,12 @@ describe("MemberHomePage (#199)", () => {
         );
       });
 
-      it("the month before", () => {
+      it("UI-HOM-004 the month before", () => {
         answer({ previous: previousMonthWith({ coverage: { hoursWithData: 744, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 } }) });
         openHome();
 
         expect(text(comparison())).toContain("La comparación está afectada: faltan datos de julio de 2026,");
+        expect(row("Tu ahorro")).toContain("4,50 € más");
       });
 
       it("neither: no such statement", () => {
@@ -909,7 +917,7 @@ describe("MemberHomePage (#199)", () => {
     it.each([
       ["a new member who has recovered nothing", 0],
       ["a member whose share still rounds to nothing", 0.004],
-    ])("leaves %s without a large figure, and says the share in its sentence", (_, progressRatio) => {
+    ])("UI-HOM-002 leaves %s without a large figure, and says the share in its sentence", (_, progressRatio) => {
       answer({ payback: paybackWith({ savedEur: progressRatio * 500, remainingEur: 500, progressRatio, estimatedRemainingMonths: null }) });
       openHome();
       const payback = paybackCard();
