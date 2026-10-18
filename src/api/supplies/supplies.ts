@@ -227,6 +227,74 @@ export const useUpdateSupply = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Deletes the supply with its contract, distributor and Shelly details.
+**Required: Community Admin of the supply's community.** A platform admin who does not administer it is answered 404, as for any other access to a supply.
+
+A supply that a plant is attached to, or for which a sharing agreement holds partition coefficients, is not deleted: the request is answered 409 with `SUPPLY_HAS_PLANTS` or `SUPPLY_HAS_PARTITION_COEFFICIENTS`, and nothing is deleted. To stop using such a supply, disable it instead (`POST /api/v1/supplies/{supplyId}/disable`).
+
+The supply's consumption and production series are not deleted.
+
+ * @summary Removes a supply by ID
+ */
+export const deleteSupply = (
+    supplyId: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/supplies/${supplyId}`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getDeleteSupplyMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext> => {
+
+const mutationKey = ['deleteSupply'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSupply>>, {supplyId: string}> = (props) => {
+          const {supplyId} = props ?? {};
+
+          return  deleteSupply(supplyId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSupply>>>
+    
+    export type DeleteSupplyMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Removes a supply by ID
+ */
+export const useDeleteSupply = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSupply>>,
+        TError,
+        {supplyId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteSupplyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint is designed to create a new supply within the system.
 
 To utilize this endpoint, a client sends a request containing essential details such as the supply's address, partition coefficient, and any relevant parameters.

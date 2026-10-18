@@ -256,6 +256,9 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     approximates: "canEdit covers update, enable and disable together, by its own doc; the UI cannot offer edit without disable",
   },
   useDisableSupply: { scope: "supply", capability: "canEdit", hook: "useSupplyActions", approximates: "as useEnableSupply" },
+  // No screen deletes a supply yet: no action hook. The capability is the one
+  // the contract names for the endpoint (lucoenergia/conluz#412).
+  useDeleteSupply: { scope: "supply", capability: "canDelete" },
   useSyncDatadisSupplies: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
 
   // ── Users ─────────────────────────────────────────────────────────────────

@@ -1514,7 +1514,10 @@ export const useInviteCommunityAdmin = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Deletes the membership of the specified user in the community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Deletes the membership of the specified user in the community, with its member record and its invitation tokens. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+
+The membership of a user who owns supplies in the community is not deleted: the request is answered 409 with `MEMBERSHIP_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`); to delete it, delete their supplies in the community first (`DELETE /api/v1/supplies/{supplyId}`). Supplies the user owns in other communities do not prevent it.
+
  * @summary Removes a user from a community.
  */
 export const deleteMembership = (
