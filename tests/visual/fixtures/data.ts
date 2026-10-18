@@ -978,12 +978,6 @@ export const MEMBER_ENERGY_METRICS: MembershipEnergyMetricsResponse = {
   selfSufficiencyRatio: 0.2937,
 };
 
-/** The same month priced with every supply's contracted tariff: no estimate label. */
-export const MEMBER_ENERGY_METRICS_REAL_TARIFF: MembershipEnergyMetricsResponse = {
-  ...MEMBER_ENERGY_METRICS,
-  savings: { amountEur: 21.42, tariffSource: "REAL_TARIFF", estimatedPrice: null },
-};
-
 /** One of the two supplies sent nothing this month. */
 export const MEMBER_ENERGY_METRICS_PARTIAL: MembershipEnergyMetricsResponse = {
   ...MEMBER_ENERGY_METRICS,
@@ -1028,21 +1022,6 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS: MembershipEnergyMetricsResponse = {
   selfSufficiencyRatio: 0.2042,
 };
 
-/** A complete July above August on every compared figure: 24,00 € saved, 55 % used, 37 % from the community. */
-export const MEMBER_ENERGY_METRICS_PREVIOUS_HIGHER: MembershipEnergyMetricsResponse = {
-  ...MEMBER_ENERGY_METRICS_PREVIOUS,
-  energy: {
-    assignedProductionKWh: 290,
-    selfConsumptionKWh: 160,
-    surplusKWh: 130,
-    totalConsumptionKWh: 430,
-    gridImportKWh: 270,
-  },
-  savings: { amountEur: 24, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
-  selfConsumptionRatio: 0.5517,
-  selfSufficiencyRatio: 0.3721,
-};
-
 /** July with nothing recorded: not yet published, or before the member's supplies existed. */
 export const MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA: MembershipEnergyMetricsResponse = {
   period: PREVIOUS_JULY_2026,
@@ -1052,22 +1031,6 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA: MembershipEnergyMetricsResp
   savings: { amountEur: 0, tariffSource: "ESTIMATE", estimatedPrice: null },
   selfConsumptionRatio: null,
   selfSufficiencyRatio: null,
-};
-
-/** July with one of the two supplies silent: enough to compare, but the comparison is affected. */
-export const MEMBER_ENERGY_METRICS_PREVIOUS_PARTIAL: MembershipEnergyMetricsResponse = {
-  ...MEMBER_ENERGY_METRICS_PREVIOUS,
-  coverage: { hoursWithData: 744, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 },
-  energy: {
-    assignedProductionKWh: 130,
-    selfConsumptionKWh: 60,
-    surplusKWh: 70,
-    totalConsumptionKWh: 200,
-    gridImportKWh: 140,
-  },
-  savings: { amountEur: 9, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
-  selfConsumptionRatio: 0.4615,
-  selfSufficiencyRatio: 0.3,
 };
 
 /** A stored month of the member's two supplies (#201), both reporting unless stated. */
@@ -1108,12 +1071,6 @@ function nothingStoredMonth(date: string): MembershipMonthlyConsumptionBucketRes
   };
 }
 
-/** September 2025 to August 2026: the twelve months ending at the reference month. */
-const SERIES_MONTHS = [
-  "2025/09/01", "2025/10/01", "2025/11/01", "2025/12/01", "2026/01/01", "2026/02/01",
-  "2026/03/01", "2026/04/01", "2026/05/01", "2026/06/01", "2026/07/01", "2026/08/01",
-];
-
 /** Twelve stored, complete months, sunnier in summer; August matches the reference month. */
 export const MEMBER_MONTHLY_SERIES: MembershipMonthlyConsumptionBucketResponse[] = [
   storedMonth("2025/09/01", 112, 268, 16.8),
@@ -1143,14 +1100,6 @@ export const MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE: MembershipMonthlyConsumptionB
     return month;
   },
 );
-
-/** A new member: only the reference month has anything stored. */
-export const MEMBER_MONTHLY_SERIES_ONE_MONTH: MembershipMonthlyConsumptionBucketResponse[] = SERIES_MONTHS.map((date) =>
-  date === "2026/08/01" ? storedMonth(date, 121, 291, 18.15) : nothingStoredMonth(date),
-);
-
-/** No month in the range has anything stored. */
-export const MEMBER_MONTHLY_SERIES_EMPTY: MembershipMonthlyConsumptionBucketResponse[] = SERIES_MONTHS.map(nothingStoredMonth);
 
 /**
  * August's average day: consumption every hour, peaking in the evening;
@@ -1209,16 +1158,6 @@ export const MEMBER_HOURLY_PROFILE_NO_BEST_HOUR: MembershipHourlyProfileResponse
   })),
 };
 
-/**
- * The same month with one of the two supplies missing, so its coverage
- * reports a gap: the best hours cannot be worked out (#231), though some hours
- * would otherwise qualify.
- */
-export const MEMBER_HOURLY_PROFILE_PARTIAL: MembershipHourlyProfileResponse = {
-  ...MEMBER_HOURLY_PROFILE,
-  coverage: { ...MEMBER_HOURLY_PROFILE.coverage, suppliesWithData: 1 },
-};
-
 /** No month resolves yet: null bounds, and the 24 hours without a sample. */
 export const MEMBER_HOURLY_PROFILE_EMPTY: MembershipHourlyProfileResponse = {
   period: { startDate: null, endDate: null },
@@ -1242,16 +1181,6 @@ export const MEMBER_PAYBACK: MembershipPaybackResponse = {
   estimatedRemainingMonths: 19,
   tariffSource: "ESTIMATE",
   estimatedPrice: ESTIMATED_PRICE,
-};
-
-export const MEMBER_PAYBACK_REAL_TARIFF: MembershipPaybackResponse = {
-  ...MEMBER_PAYBACK,
-  savedEur: 250.1,
-  remainingEur: 249.9,
-  progressRatio: 0.5002,
-  estimatedRemainingMonths: 15,
-  tariffSource: "REAL_TARIFF",
-  estimatedPrice: null,
 };
 
 export const MEMBER_PAYBACK_NO_INVESTMENT: MembershipPaybackResponse = {
@@ -1281,15 +1210,6 @@ export const MEMBER_PAYBACK_NOTHING_SHARED: MembershipPaybackResponse = {
   estimatedRemainingMonths: null,
   tariffSource: "ESTIMATE",
   estimatedPrice: null,
-};
-
-/** The community shares energy, but nothing has been saved by this member yet. */
-export const MEMBER_PAYBACK_NEW_MEMBER: MembershipPaybackResponse = {
-  ...MEMBER_PAYBACK,
-  savedEur: 0,
-  remainingEur: 500,
-  progressRatio: 0,
-  estimatedRemainingMonths: null,
 };
 
 // ---------------------------------------------------------------------------
