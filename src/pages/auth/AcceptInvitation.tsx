@@ -10,6 +10,8 @@ import { PasswordInput } from "../../components/Forms/PasswordInput";
 import { PasswordPolicyHint } from "../../components/Forms/PasswordPolicyHint";
 import { useInvitationActions, useSessionActions } from "../../hooks/actions";
 import { useEndSession } from "../../hooks/useEndSession";
+import { useBoundedRevoke } from "../../hooks/useBoundedRevoke";
+import { useGetCurrentUser } from "../../api/users/users";
 import { useAuth, useAuthDispatch } from "../../context/auth.context";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { checkPasswordPolicy, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
@@ -44,6 +46,11 @@ export const LOGIN_FAILED_MESSAGE = "DNI/NIF o contraseña incorrectos";
 const SESSION_ENDED_MESSAGE = "Tu sesión ha caducado. Vuelve a iniciar sesión.";
 const INSPECT_FAILED_MESSAGE = "No se ha podido comprobar la invitación. Inténtalo de nuevo más tarde.";
 const ACCEPT_FAILED_MESSAGE = "No se ha podido aceptar la invitación. Inténtalo de nuevo más tarde.";
+export const LOGIN_INCOMPLETE_MESSAGE = "No se ha podido completar el inicio de sesión. Inténtalo de nuevo.";
+
+function statusOf(error: unknown): number | undefined {
+  return (error as { response?: { status?: number } } | null | undefined)?.response?.status;
+}
 
 /**
  * The token from the emailed link, `<web>/accept-invitation#<token>`: everything
@@ -85,7 +92,13 @@ export const AcceptInvitation: FC = () => {
   const dispatchAuth = useAuthDispatch();
   const endSession = useEndSession();
   const { inspect, accept, acceptAsCurrentUser } = useInvitationActions().actions;
-  const { login, logout } = useSessionActions().actions;
+  const { login } = useSessionActions().actions;
+  const revoke = useBoundedRevoke();
+  const [leaving, setLeaving] = useState(false);
+  // The current user that `LoggedUserProvider` serves, read here for its
+  // failure only: the provider ends the session on a 401, and shares nothing
+  // else. Disabled, so it never fetches on its own; `refetch` is the retry.
+  const currentUser = useGetCurrentUser({ query: { enabled: false, throwOnError: false } });
 
   useEffect(() => {
     // `href`, not `hash`: a bare trailing "#" leaves `hash` empty but is still
@@ -114,9 +127,15 @@ export const AcceptInvitation: FC = () => {
 
   const leaveSession = async () => {
     // Revoke first, as every logout does (#213), and end the session here
-    // whatever the answer: the browser must not keep it either way.
-    await logout.run();
-    endSession("logout");
+    // whatever the answer, or once the revoke has had as long as a logout
+    // gives it: the browser must not keep the session either way.
+    setLeaving(true);
+    try {
+      await revoke();
+      endSession("logout");
+    } finally {
+      setLeaving(false);
+    }
   };
 
   const acceptSignedIn = async (linkToken: string) => {
@@ -208,6 +227,13 @@ export const AcceptInvitation: FC = () => {
     setMode("login");
   };
 
+  // After a login here, the current user failed for a reason other than an
+  // expired session (the provider ends that one). The acceptance waits for it,
+  // so without a retry the screen would wait for good; the token is still in
+  // state, and a successful retry lets the acceptance go out.
+  const loginIncomplete =
+    acceptAfterLogin && !loggedUser && currentUser.isError && statusOf(currentUser.error) !== 401;
+
   const communityName = invitation?.community.name;
   const subtitle = !token
     ? "Acepta la invitación de tu comunidad"
@@ -244,7 +270,7 @@ export const AcceptInvitation: FC = () => {
         {offerLogout && authToken && (
           <>
             <Typography sx={{ fontSize: fontSizes.md, color: "text.secondary" }}>{OTHER_ACCOUNT_MESSAGE}</Typography>
-            <Button variant="outlined" disabled={logout.isPending} onClick={() => void handleLogoutForOtherAccount()}>
+            <Button variant="outlined" disabled={leaving} onClick={() => void handleLogoutForOtherAccount()}>
               Cerrar sesión
             </Button>
           </>
@@ -269,6 +295,15 @@ export const AcceptInvitation: FC = () => {
         onInvalid={() => setMode("invalid")}
         onLoginRequired={handleLoginRequired}
       />
+    );
+  } else if (authToken && loginIncomplete) {
+    body = (
+      <Box sx={sxStyles.flexColumnGap3}>
+        <Alert severity="error" sx={{ borderRadius: radii.default }}>{LOGIN_INCOMPLETE_MESSAGE}</Alert>
+        <Button variant="outlined" disabled={currentUser.isFetching} onClick={() => void currentUser.refetch()}>
+          Reintentar
+        </Button>
+      </Box>
     );
   } else if (authToken) {
     body = (

@@ -7,6 +7,7 @@ import { Link, Route, Routes, useLocation } from "react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/auth.context";
 import { createAppQueryClient } from "../../queryClient";
+import { LOGOUT_TIMEOUT_MS } from "../../hooks/useBoundedRevoke";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig, type RequestRouter, type Route as RequestRoute } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
@@ -21,6 +22,7 @@ import {
   INCOMPLETE_LINK_MESSAGE,
   INVALID_LINK_MESSAGE,
   LOGIN_FAILED_MESSAGE,
+  LOGIN_INCOMPLETE_MESSAGE,
   OTHER_ACCOUNT_MESSAGE,
   PASSWORD_CHANGE_REQUIRED_MESSAGE,
 } from "./AcceptInvitation";
@@ -470,6 +472,47 @@ describe("UI-INV-007 an account without a password (AC1)", () => {
     expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME))).toHaveLength(1);
   });
 
+  describe("when the revocation never answers", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
+
+    afterEach(async () => {
+      await act(() => vi.runOnlyPendingTimersAsync());
+      vi.useRealTimers();
+    });
+
+    it("UI-INV-007 ends another account's session and goes to the login page once the bound passes", async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const router = routeRequests([
+        { method: "GET", url: CURRENT_USER, respond: () => OTHER_ACCOUNT },
+        { method: "GET", url: COMMUNITY, respond: () => buildCommunity({ id: "community-other" }) },
+        { method: "POST", url: INSPECT, respond: () => inspection(false) },
+        { method: "POST", url: ACCEPT, respond: () => undefined },
+        { method: "POST", url: LOGOUT, respond: () => new Promise(() => {}) },
+      ]);
+      mockCustomInstance.mockImplementation(router.handle);
+
+      renderAt(`/accept-invitation#${TOKEN}`, { token: "other-session" });
+      await findCommunityHeading();
+      await choosePassword(user, NEW_PASSWORD);
+
+      await waitFor(() => expect(bodiesTo(router, LOGOUT)).toHaveLength(1));
+      // Waiting for the revocation, within its bound.
+      expect(currentToken()).toBe("other-session");
+      expect(currentPath()).toBe("/accept-invitation");
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(LOGOUT_TIMEOUT_MS);
+      });
+
+      await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
+      expect(currentToken()).toBe("none");
+      expect(currentPath()).toBe("/login");
+      expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME))).toHaveLength(1);
+    });
+  });
+
   it("UI-INV-007 checks the policy before sending", async () => {
     const user = userEvent.setup();
     const router = routeRequests([{ method: "POST", url: INSPECT, respond: () => inspection(false) }]);
@@ -627,6 +670,79 @@ describe("UI-INV-012 logging in on this screen (AC2)", () => {
     expect(writtenAnywhere(TOKEN)).toBe(false);
   });
 
+  it("UI-INV-012 offers a retry when the new session's user cannot be read, and accepts once it is", async () => {
+    const user = userEvent.setup();
+    const state = { accepted: false };
+    const router = routeRequests([
+      { method: "POST", url: INSPECT, respond: () => inspection(true) },
+      { method: "POST", url: LOGIN, respond: () => ({ token: "session-token" }) },
+      sequence(
+        "GET",
+        CURRENT_USER,
+        () => {
+          throw apiError(500);
+        },
+        () => (state.accepted ? INVITED_AFTER : INVITED_BEFORE),
+      ),
+      {
+        method: "POST",
+        url: ACCEPT_AS_CURRENT_USER,
+        respond: () => {
+          state.accepted = true;
+          return undefined;
+        },
+      },
+      communityRoute,
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`);
+    await findCommunityHeading();
+    await logIn(user);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(LOGIN_INCOMPLETE_MESSAGE);
+    // Still signed in, still here, and nothing accepted yet.
+    expect(currentToken()).toBe("session-token");
+    expect(currentPath()).toBe("/accept-invitation");
+    expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Inicio" });
+    expect(bodiesTo(router, CURRENT_USER).length).toBeGreaterThanOrEqual(2);
+    expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([{ token: TOKEN }]);
+    expect(pageMounts).toBe(1);
+    expect(writtenAnywhere(TOKEN)).toBe(false);
+  });
+
+  it("UI-INV-012 ends the new session, with no retry, when reading its user answers 401", async () => {
+    const user = userEvent.setup();
+    const router = routeRequests([
+      { method: "POST", url: INSPECT, respond: () => inspection(true) },
+      { method: "POST", url: LOGIN, respond: () => ({ token: "session-token" }) },
+      {
+        method: "GET",
+        url: CURRENT_USER,
+        respond: () => {
+          throw apiError(401);
+        },
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`);
+    await findCommunityHeading();
+    await logIn(user);
+
+    await waitFor(() => expect(bodiesTo(router, CURRENT_USER)).toHaveLength(1));
+    await waitFor(() => expect(currentToken()).toBe("none"));
+    expect(await screen.findByLabelText("DNI/NIF")).toBeInTheDocument();
+    expect(screen.queryByText(LOGIN_INCOMPLETE_MESSAGE)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+    expect(currentPath()).toBe("/accept-invitation");
+    expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([]);
+  });
+
   it("UI-INV-012 keeps the screen on a refused login, and says why", async () => {
     const user = userEvent.setup();
     const router = routeRequests([
@@ -750,6 +866,49 @@ describe("UI-INV-011 signed in as another account (AC4)", () => {
     expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([{ token: TOKEN }, { token: TOKEN }]);
     expect(pageMounts).toBe(1);
     expect(writtenAnywhere(TOKEN)).toBe(false);
+  });
+});
+
+describe("UI-INV-011 logging out when the revocation never answers", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(async () => {
+    await act(() => vi.runOnlyPendingTimersAsync());
+    vi.useRealTimers();
+  });
+
+  it("UI-INV-011 ends the session and offers the login on this screen once the bound passes", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const router = routeRequests([
+      { method: "GET", url: CURRENT_USER, respond: () => OTHER_ACCOUNT },
+      communityRoute,
+      { method: "POST", url: INSPECT, respond: () => inspection(true) },
+      { method: "POST", url: ACCEPT_AS_CURRENT_USER, respond: tokenInvalid },
+      { method: "POST", url: LOGOUT, respond: () => new Promise(() => {}) },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`, { token: "other-session" });
+    await findCommunityHeading();
+    await screen.findByText("Óscar Otro");
+    await user.click(screen.getByRole("button", { name: "Aceptar invitación" }));
+    await user.click(await screen.findByRole("button", { name: "Cerrar sesión" }));
+
+    await waitFor(() => expect(bodiesTo(router, LOGOUT)).toHaveLength(1));
+    // Waiting for the revocation, within its bound.
+    expect(currentToken()).toBe("other-session");
+    expect(screen.getByRole("button", { name: "Cerrar sesión" })).toBeDisabled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(LOGOUT_TIMEOUT_MS);
+    });
+
+    expect(await screen.findByLabelText("DNI/NIF")).toBeInTheDocument();
+    expect(currentToken()).toBe("none");
+    expect(currentPath()).toBe("/accept-invitation");
+    expect(pageMounts).toBe(1);
   });
 });
 
