@@ -85,11 +85,12 @@ with an account they already have, signed in or after logging in on the same scr
 - **Status:** Active
 - **Rule:** When the invitation needs no login, the screen MUST ask for a new password and its
   confirmation, with the visible password policy and its checks before sending; on success it MUST
-  revoke and end any session the browser holds, and then go to the login page, which MUST show once
-  a notice naming the community.
+  revoke and end any session the browser holds, waiting for the revocation no longer than a logout
+  does, and then go to the login page, which MUST show once a notice naming the community.
 - **Rationale:** The invited account had no password, so any session in the browser is another
   account's, and the login page would send it on without the notice. It is revoked like any
-  logout (#213), not only forgotten by the browser.
+  logout (#213), not only forgotten by the browser, and a revocation that never answers must not
+  keep the person from the login page.
 - **Implements:** MEM-016, ACC-007
 - **Source:** #274
 
@@ -127,10 +128,12 @@ with an account they already have, signed in or after logging in on the same scr
 
 - **Status:** Active
 - **Rule:** When the signed-in acceptance is refused as unusable, the screen MUST add to the
-  invalid-link message an offer to log out; logging out MUST revoke the session and keep the screen
-  and the token, so the person can log in on it.
+  invalid-link message an offer to log out; logging out MUST revoke the session, waiting for the
+  revocation no longer than a logout does, and keep the screen and the token, so the person can log
+  in on it.
 - **Rationale:** An invitation for another account is answered like an unusable one, so the screen
-  says what both mean and offers the way out of the first.
+  says what both mean and offers the way out of the first. A revocation that never answers must not
+  leave the person signed in to the wrong account.
 - **Implements:** MEM-017
 - **Source:** #274
 
@@ -139,9 +142,11 @@ with an account they already have, signed in or after logging in on the same scr
 - **Status:** Active
 - **Rule:** When the invitation needs a login and there is no session, the screen MUST offer a
   login form; after a successful login it MUST stay mounted on its route, and accept as the new
-  session's user once that user has loaded.
+  session's user once that user has loaded. If that user cannot be loaded for a reason other than a
+  refused session, the screen MUST say so and offer a retry, keeping the token.
 - **Rationale:** The login page would navigate away and lose the token. Waiting for the current
-  user ensures the acceptance is sent with the new session.
+  user ensures the acceptance is sent with the new session; without a retry, a failed read would
+  leave the screen waiting for good. A refused session ends, as it does anywhere in the app.
 - **Implements:** MEM-017
 - **Source:** #274
 
@@ -167,6 +172,7 @@ with an account they already have, signed in or after logging in on the same scr
 | Set password | The community, the new-password form with the policy | Aceptar invitación |
 | Login, no session | The community, the login form | Entrar y aceptar |
 | Login, signed in | The community, the signed-in account | Aceptar invitación |
+| Login incomplete | The new session's user could not be loaded | Reintentar |
 | Password change required | The explanation | Cambiar contraseña |
 
 ## Accepted exceptions
