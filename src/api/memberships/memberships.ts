@@ -1050,6 +1050,8 @@ Nothing is sent to the member: registering only records them. Invite them with `
 
 The response is the same whether or not the person already had an account, and carries nothing from it. Registering someone who already has a membership in this community, in any state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code.
 
+The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF, with the control letter or character matching its digits; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code and nothing is created.
+
  * @summary Registers a member in a community.
  */
 export const registerMember = (
@@ -1191,7 +1193,7 @@ Nothing is sent to the members and no invitation is issued. Invite them afterwar
 
 **Rows.** Otherwise each row is registered in a transaction of its own, so a row that fails keeps the others. The response has one result per row. A person who already has an account is registered exactly as a new one, and their result is the same. A person who already has a membership in this community, including from an earlier row of the same file, fails with `MEMBERSHIP_ALREADY_EXISTS`. Importing the same file again is therefore safe: rows already registered fail with that code, and the rest are registered.
 
-A row whose values break rules of the registration fails with `MEMBERSHIP_IMPORT_ROW_INVALID` and lists each rule broken in `errors`, by column and constraint code, for a client to write its own text. Every `message` is in the language of the request's Accept-Language.
+A row whose values break rules of the registration fails with `MEMBERSHIP_IMPORT_ROW_INVALID` and lists each rule broken in `errors`, by column and constraint code, for a client to write its own text. A row whose `personalId`, once its spaces, dots and hyphens are removed and its letters upper-cased, is not a valid DNI, NIE or NIF fails with `USER_PERSONAL_ID_INVALID`, the code `registerMember` answers with, and lists the constraint `INVALID_PERSONAL_ID` of the column `personalId` in `errors`. Every `message` is in the language of the request's Accept-Language.
 
  * @summary Imports members into a community from a CSV file.
  */
@@ -1527,6 +1529,8 @@ export const useDisableCommunityAdmin = <TError = ErrorType<RestError>,
  * Registers a person as an admin of the community with their DNI/NIE/NIF, full name, contact email and optional phone, and emails them an invitation to accept it at that contact email, in one operation. The membership is created pending, with the role COMMUNITY_ADMIN: it grants no access until it is accepted. The link is valid for 7 days. Only a platform admin may invite a community admin; a community admin may not.
 
 The response is the same whether or not the person already had an account, and carries nothing from it. Inviting someone who already has a membership in this community, in any role or state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, and nothing is created or sent.
+
+The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF, with the control letter or character matching its digits; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code, and nothing is created or sent.
 
 If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is created.
 

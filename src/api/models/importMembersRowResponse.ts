@@ -18,10 +18,10 @@ export interface ImportMembersRowResponse {
   line: number;
   /** REGISTERED if the member was registered, with a pending membership; FAILED if nothing was registered for this row. */
   outcome: ImportMembersRowResponseOutcome;
-  /** Why the row failed: MEMBERSHIP_ALREADY_EXISTS if the person already has a membership in this community, possibly from an earlier row of the same file; MEMBERSHIP_IMPORT_ROW_INVALID if a value breaks a rule of the registration; MEMBERSHIP_IMPORT_ROW_MALFORMED if the row does not have as many cells as the header. Null for a registered row. */
+  /** Why the row failed: MEMBERSHIP_ALREADY_EXISTS if the person already has a membership in this community, possibly from an earlier row of the same file; MEMBERSHIP_IMPORT_ROW_INVALID if a value breaks a rule of the registration; USER_PERSONAL_ID_INVALID if the personal ID, once normalised, is not a valid DNI, NIE or NIF; MEMBERSHIP_IMPORT_ROW_MALFORMED if the row does not have as many cells as the header. Null for a registered row. */
   code: ImportMembersRowResponseCode;
   /** Why the row failed, as a readable message in the language of the request's Accept-Language, naming the columns and rules broken but never their values. Null for a registered row. */
   message: ImportMembersRowResponseMessage;
-  /** For MEMBERSHIP_IMPORT_ROW_INVALID, each rule broken, in the order of the columns, so that a client can write its own text; the same rules as `message`. Empty for any other row. */
+  /** For MEMBERSHIP_IMPORT_ROW_INVALID, each rule broken, in the order of the columns, so that a client can write its own text; the same rules as `message`. For USER_PERSONAL_ID_INVALID, the one rule INVALID_PERSONAL_ID of the column `personalId`. Empty for any other row. */
   errors: ImportMembersRowErrorResponse[];
 }
