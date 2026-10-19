@@ -5,6 +5,7 @@ import {
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_DATADIS_CONFIG,
   FIXED_MEMBERSHIPS,
+  FIXED_ROSTER_INVITATION_STATES,
   hideAppBar,
   injectAuthToken,
   mainRegion,
@@ -67,6 +68,52 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(dialog).toHaveScreenshot("member-record-dialog.png", await hideAppBar(page));
+  });
+
+  // Every status chip and invitation caption at once (#275): a third chip
+  // colour, and a caption under the chip in a table cell and as an extra
+  // field in the narrow list, where wrapping and alignment are what can break.
+  // Which state shows which text and which actions is asserted in Vitest.
+  test("members page invitation states", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockCommunityManagementRoutes(page, { memberships: FIXED_ROSTER_INVITATION_STATES });
+
+    await page.goto("/members");
+    // Each state's text, before the capture: a roster that failed to load, or
+    // a fixture that lost a state, would otherwise make a plausible baseline.
+    const main = page.getByRole("main");
+    await expect(main.getByText("Nadia Nueva Fernández")).toBeVisible();
+    // Nadia, and Pablo, who was suspended before anyone invited him.
+    await expect(main.getByText("Sin invitar")).toHaveCount(2);
+    await expect(main.getByText("Enlace activo hasta el 8 oct 2026")).toBeVisible();
+    await expect(main.getByText("Enlace caducado o revocado")).toBeVisible();
+    await expect(main.getByText("Pendiente", { exact: true })).toHaveCount(3);
+    await expect(main.getByText("Suspendido", { exact: true })).toHaveCount(2);
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("members-page-invitation-states.png", await mainRegion(page));
+  });
+
+  // The registration form (#275): the record form's fields under an editable
+  // DNI and a notice, where the layout at 390 px is what can break. Its
+  // validation and requests are asserted in Vitest.
+  test("member register dialog", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockCommunityManagementRoutes(page);
+
+    await page.goto("/members");
+    await page.getByRole("button", { name: "Registrar miembro" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("heading", { name: /^Registrar miembro en/ })).toBeVisible();
+    await expect(dialog.getByLabel(/^DNI\/NIE/)).toBeEditable();
+    await expect(dialog.getByLabel(/^Teléfono/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("member-register-dialog.png", await hideAppBar(page));
   });
 
   test("integrations page", async ({ page }) => {

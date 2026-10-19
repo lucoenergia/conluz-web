@@ -6,6 +6,7 @@ import type {
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
+  MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
   SharingAgreementResponse,
@@ -804,20 +805,23 @@ export async function mockCommunityAdminOwnsSupply(page: Page) {
 
 /**
  * The community-management screens: the member roster and the integration
- * configs.
+ * configs. The roster is FIXED_MEMBERSHIPS unless a capture needs another.
  *
  * Registered AFTER mockAllApiRoutes so these win. Without them the broad
  * communities predicate answers both with a list of communities -- the wrong
  * shape, which renders as an empty roster and as cards stuck loading.
  */
-export async function mockCommunityManagementRoutes(page: Page) {
+export async function mockCommunityManagementRoutes(
+  page: Page,
+  { memberships = FIXED_MEMBERSHIPS }: { memberships?: MembershipResponse[] } = {},
+) {
   await page.route(
     (url) => /\/api\/v1\/communities\/[^/]+\/memberships(\?|$)/.test(url.href),
     (route: Route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(FIXED_MEMBERSHIPS),
+        body: JSON.stringify(memberships),
       }),
   );
 
