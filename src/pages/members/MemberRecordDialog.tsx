@@ -23,6 +23,7 @@ import {
   type MemberRecordField,
   type MemberRecordValues,
 } from "./memberRecordForm";
+import { MemberRecordFields } from "./MemberRecordFields";
 
 interface MemberRecordDialogProps {
   membership: MembershipResponse;
@@ -51,8 +52,8 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
   const [errors, setErrors] = useState<MemberRecordErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
 
-  const change = (field: MemberRecordField) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValues((current) => ({ ...current, [field]: event.target.value }));
+  const change = (field: MemberRecordField, value: string) => {
+    setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
@@ -75,14 +76,6 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
       setFormError(refusal.form);
     }
   };
-
-  const fieldProps = (field: MemberRecordField) => ({
-    value: values[field],
-    onChange: change(field),
-    error: !!errors[field],
-    helperText: errors[field] ?? "",
-    fullWidth: true,
-  });
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
@@ -107,15 +100,7 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
             fullWidth
             sx={{ mt: 1 }}
           />
-          <TextField label="Nombre completo" required {...fieldProps("fullName")} />
-          <TextField
-            label="Número de socio"
-            slotProps={{ htmlInput: { inputMode: "numeric" } }}
-            {...fieldProps("memberNumber")}
-          />
-          <TextField label="Email de contacto" type="email" {...fieldProps("contactEmail")} />
-          <TextField label="Dirección" {...fieldProps("address")} />
-          <TextField label="Teléfono" {...fieldProps("phoneNumber")} />
+          <MemberRecordFields values={values} errors={errors} onChange={change} />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={onClose}>Cancelar</Button>

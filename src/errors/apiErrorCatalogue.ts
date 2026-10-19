@@ -1,6 +1,7 @@
 import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/models";
 import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
+import { resendLimitMessage } from "./membershipErrorMessages";
 import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
 
 /**
@@ -172,6 +173,26 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // field (#272).
   MEMBERSHIP_WITHOUT_CONTACT_EMAIL:
     "Un administrador de la comunidad tiene que tener un email de contacto. Para quitárselo, cámbiale antes el rol a miembro.",
+
+  // Registering and inviting members (lucoenergia/conluz#392, #393; #275).
+  // Worded for registration: from an invitation write it means the member
+  // accepted meanwhile, which src/errors/membershipErrors.ts words itself, as
+  // it does the invite case of MEMBERSHIP_WITHOUT_CONTACT_EMAIL above.
+  MEMBERSHIP_ALREADY_EXISTS: "Esta persona ya es miembro de la comunidad.",
+  MEMBERSHIP_ALREADY_INVITED: "Este miembro ya tenía una invitación enviada.",
+  MEMBERSHIP_NOT_INVITED: "Este miembro todavía no tiene ninguna invitación que reenviar.",
+  MEMBERSHIP_DISABLED: "Este miembro está suspendido, así que no se le puede invitar.",
+  MEMBERSHIP_INVITATION_UNAVAILABLE: "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde.",
+  // The wait from the body only, like AUTH_TOO_MANY_FAILED_ATTEMPTS; the
+  // members page reads the Retry-After header as well.
+  MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED: (params) => {
+    const seconds = Number(params?.retryAfterSeconds);
+    return resendLimitMessage(Number.isFinite(seconds) && seconds > 0 ? seconds : null);
+  },
+
+  // Removing a member who owns supplies in the community (lucoenergia/conluz#412).
+  MEMBERSHIP_OWNS_SUPPLIES:
+    "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

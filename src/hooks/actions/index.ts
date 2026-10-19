@@ -24,7 +24,14 @@ export {
   type InvitationAcceptanceResult,
   type InvitationInspectionResult,
 } from "./useInvitationActions";
-export { useMembershipActions, type EditMemberRecordResult, type MembershipRowActions } from "./useMembershipActions";
+export {
+  useMembershipActions,
+  type EditMemberRecordResult,
+  type MembershipActions,
+  type MembershipRef,
+  type MembershipRowActions,
+  type MembershipWriteResult,
+} from "./useMembershipActions";
 export { usePlantActions, type HuaweiWriteResult } from "./usePlantActions";
 export { usePlatformActions } from "./usePlatformActions";
 export { useProfileActions } from "./useProfileActions";

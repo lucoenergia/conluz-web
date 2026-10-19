@@ -4,6 +4,11 @@ import {
   useDeleteMembership,
   useDisableMembership,
   useEnableMembership,
+  useRegisterMember,
+  useResendInvitation,
+  useRevokeInvitation,
+  useSendInvitation,
+  useSendInvitations,
   useSetMembershipInvestment,
   useClearMembershipInvestment,
   useUpdateMemberRecord,
@@ -17,10 +22,11 @@ import {
   getGetSuppliesByUserIdQueryKey,
   getGetUserByIdQueryKey,
 } from "../../api/users/users";
-import type { UpdateMemberRecordBody } from "../../api/models";
+import type { RegisterMemberBody, RestErrorDetailCode, UpdateMemberRecordBody } from "../../api/models";
 import {
   buildCommunity,
   buildCommunityCapabilities,
+  buildMember,
   buildMembership,
   buildMembershipCapabilities,
   buildUser,
@@ -39,6 +45,11 @@ vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => (
   useUpdateMemberRecord: vi.fn(),
   useEnableMembership: vi.fn(),
   useDisableMembership: vi.fn(),
+  useRegisterMember: vi.fn(),
+  useSendInvitations: vi.fn(),
+  useSendInvitation: vi.fn(),
+  useResendInvitation: vi.fn(),
+  useRevokeInvitation: vi.fn(),
 }));
 
 const COMMUNITY_ID = "TEST-COMMUNITY-ID";
@@ -67,6 +78,11 @@ beforeEach(() => {
   vi.mocked(useUpdateMemberRecord).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useEnableMembership).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useDisableMembership).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useRegisterMember).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useSendInvitations).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useSendInvitation).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useResendInvitation).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useRevokeInvitation).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
 const RECORD: UpdateMemberRecordBody = {
@@ -176,7 +192,7 @@ describe("useMembershipActions", () => {
         useMembershipActions(communityWith({})).forMembership(membershipWith({ canDelete: true })),
       );
 
-      await expect(result.current.actions.remove?.run()).resolves.toBe(true);
+      await expect(result.current.actions.remove?.run()).resolves.toEqual({ ok: true, value: undefined });
       expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, userId: USER_ID });
     });
 
@@ -237,12 +253,14 @@ describe("useMembershipActions", () => {
     });
 
     it("reports failure rather than raising a toast, because the two screens word it differently", async () => {
-      mutateAsync.mockRejectedValue(new Error("boom"));
+      const error = new Error("boom");
+      mutateAsync.mockRejectedValue(error);
       const { result } = renderHookWithProviders(() =>
         useMembershipActions(communityWith({})).forMembership(membershipWith({ canDelete: true })),
       );
 
-      await expect(result.current.actions.remove?.run()).resolves.toBe(false);
+      // The error itself, so the members page can word MEMBERSHIP_OWNS_SUPPLIES (#275).
+      await expect(result.current.actions.remove?.run()).resolves.toEqual({ error });
     });
   });
 
@@ -331,6 +349,170 @@ describe("useMembershipActions", () => {
       expect(result.current.actions.remove?.isPending).toBe(true);
       // The flag belongs to that one mutation, not to the bundle.
       expect(result.current.actions.changeRole?.isPending).toBeUndefined();
+    });
+  });
+
+  describe("registering and inviting members (#275)", () => {
+    const restError = (status: number, code: RestErrorDetailCode) => ({
+      response: { status, data: { status, message: "refused", errors: [{ message: "refused", code }] } },
+    });
+
+    const REGISTRATION: RegisterMemberBody = {
+      personalId: "12345678Z",
+      fullName: "Ana García",
+      memberNumber: null,
+      contactEmail: "ana@example.com",
+      address: null,
+      phoneNumber: null,
+    };
+
+    it("withholds registration and bulk send unless the community grants each", () => {
+      const { result } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canManageMemberships: true })),
+      );
+
+      expect(result.current.actions.register).toBeUndefined();
+      expect(result.current.actions.sendPendingInvitations).toBeUndefined();
+      expect(result.current.outcomes.register).toEqual({ state: "denied" });
+      expect(result.current.outcomes.sendPendingInvitations).toEqual({ state: "denied" });
+    });
+
+    it("hands back registration and bulk send each from its own capability", () => {
+      const register = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canRegisterMembers: true })),
+      ).result.current;
+      const bulk = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canInviteMembers: true })),
+      ).result.current;
+
+      expect(register.actions.register).toBeDefined();
+      expect(register.actions.sendPendingInvitations).toBeUndefined();
+      expect(bulk.actions.sendPendingInvitations).toBeDefined();
+      expect(bulk.actions.register).toBeUndefined();
+    });
+
+    it("reports both pending while the community is undefined", () => {
+      const { result } = renderHookWithProviders(() => useMembershipActions(undefined));
+
+      expect(result.current.outcomes.register).toEqual({ state: "pending" });
+      expect(result.current.outcomes.sendPendingInvitations).toEqual({ state: "pending" });
+    });
+
+    it("hands back the three invitation writes from canInvite alone", () => {
+      const granted = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(membershipWith({ canInvite: true })),
+      ).result.current;
+      const denied = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(membershipWith({ canEditRecord: true })),
+      ).result.current;
+
+      for (const action of ["invite", "resendInvitation", "revokeInvitation"] as const) {
+        expect(granted.actions[action]).toBeDefined();
+        expect(denied.actions[action]).toBeUndefined();
+        expect(denied.outcomes[action]).toEqual({ state: "denied" });
+      }
+    });
+
+    it("denies the invitation writes when canInvite is missing, as from a backend that predates it", () => {
+      const capabilities = buildMembershipCapabilities({ canDelete: true });
+      delete (capabilities as Partial<typeof capabilities>).canInvite;
+      const { result } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership({ ...membershipWith({}), capabilities }),
+      );
+
+      expect(result.current.actions.invite).toBeUndefined();
+      expect(result.current.outcomes.invite).toEqual({ state: "denied" });
+    });
+
+    it("gates on the member a registration answers, not only on a roster row", () => {
+      const member = buildMember({
+        user: { id: USER_ID },
+        capabilities: buildMembershipCapabilities({ canInvite: true }),
+      });
+      const { result } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(member),
+      );
+
+      expect(result.current.actions.invite).toBeDefined();
+    });
+
+    it("registers with the whole body, answers the member, and refreshes the roster and the member count", async () => {
+      const member = buildMember({ fullName: "Ana García" });
+      mutateAsync.mockResolvedValue(member);
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canRegisterMembers: true })),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.register?.run(REGISTRATION)).resolves.toEqual({ ok: true, value: member });
+      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, data: REGISTRATION });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    });
+
+    it("sends the pending invitations of the community, answers the counts and refreshes the roster", async () => {
+      mutateAsync.mockResolvedValue({ sent: 50, remaining: 70 });
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canInviteMembers: true })),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.sendPendingInvitations?.run()).resolves.toEqual({
+        ok: true,
+        value: { sent: 50, remaining: 70 },
+      });
+      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+    });
+
+    it.each(["invite", "resendInvitation", "revokeInvitation"] as const)(
+      "%s acts on the membership the row names and refreshes the roster",
+      async (action) => {
+        const { result, queryClient } = renderHookWithProviders(() =>
+          useMembershipActions(communityWith({})).forMembership(membershipWith({ canInvite: true })),
+        );
+        const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+        await expect(result.current.actions[action]?.run()).resolves.toMatchObject({ ok: true });
+        expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, userId: USER_ID });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+      },
+    );
+
+    it.each([
+      ["invite", 409, "MEMBERSHIP_ALREADY_INVITED"],
+      ["invite", 409, "MEMBERSHIP_ALREADY_EXISTS"],
+      ["invite", 409, "MEMBERSHIP_DISABLED"],
+      ["resendInvitation", 409, "MEMBERSHIP_NOT_INVITED"],
+      ["resendInvitation", 409, "MEMBERSHIP_ALREADY_EXISTS"],
+      ["resendInvitation", 409, "MEMBERSHIP_DISABLED"],
+      ["revokeInvitation", 409, "MEMBERSHIP_ALREADY_EXISTS"],
+    ] as const)("%s refused with %i %s refetches the roster, whose row is stale", async (action, status, code) => {
+      const error = restError(status, code);
+      mutateAsync.mockRejectedValue(error);
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(membershipWith({ canInvite: true })),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions[action]?.run()).resolves.toEqual({ error });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+    });
+
+    it.each([
+      ["invite", 400, "MEMBERSHIP_WITHOUT_CONTACT_EMAIL"],
+      ["invite", 503, "MEMBERSHIP_INVITATION_UNAVAILABLE"],
+      ["resendInvitation", 429, "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED"],
+    ] as const)("%s refused with %i %s leaves the cache alone: the row is not stale", async (action, status, code) => {
+      mutateAsync.mockRejectedValue(restError(status, code));
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(membershipWith({ canInvite: true })),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await result.current.actions[action]?.run();
+
+      expect(invalidateQueries).not.toHaveBeenCalled();
     });
   });
 });
