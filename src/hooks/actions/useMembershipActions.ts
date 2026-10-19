@@ -5,6 +5,11 @@ import {
   useDeleteMembership,
   useDisableMembership,
   useEnableMembership,
+  useRegisterMember,
+  useResendInvitation,
+  useRevokeInvitation,
+  useSendInvitation,
+  useSendInvitations,
   useSetMembershipInvestment,
   useClearMembershipInvestment,
   useUpdateMemberRecord,
@@ -21,11 +26,17 @@ import {
 import type {
   CommunityResponse,
   CreateMembershipBody,
-  MembershipResponse,
+  MemberResponse,
+  MembershipCapabilitiesResponse,
+  RegisterMemberBody,
+  RestErrorDetailCode,
+  SendInvitationsResponse,
   SetMembershipInvestmentBody,
   UpdateMemberRecordBody,
   UpdateMembershipRoleBody,
 } from "../../api/models";
+import { getFirstApiErrorCode } from "../../errors/apiErrorCatalogue";
+import { STALE_ROW_CODES } from "../../errors/membershipErrors";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
 
@@ -46,12 +57,15 @@ import { grant, type MaybeAction } from "./action";
 export interface MembershipRowActions {
   actions: {
     changeRole: MaybeAction<[UpdateMembershipRoleBody], boolean>;
-    remove: MaybeAction<[], boolean>;
+    remove: MaybeAction<[], MembershipWriteResult>;
     setInvestment: MaybeAction<[SetMembershipInvestmentBody], boolean>;
     clearInvestment: MaybeAction<[], boolean>;
     editRecord: MaybeAction<[UpdateMemberRecordBody], EditMemberRecordResult>;
     enable: MaybeAction<[], boolean>;
     disable: MaybeAction<[], boolean>;
+    invite: MaybeAction<[], MembershipWriteResult<MemberResponse>>;
+    resendInvitation: MaybeAction<[], MembershipWriteResult<MemberResponse>>;
+    revokeInvitation: MaybeAction<[], MembershipWriteResult<MemberResponse>>;
   };
   outcomes: {
     changeRole: CapabilityOutcome;
@@ -61,6 +75,9 @@ export interface MembershipRowActions {
     editRecord: CapabilityOutcome;
     enable: CapabilityOutcome;
     disable: CapabilityOutcome;
+    invite: CapabilityOutcome;
+    resendInvitation: CapabilityOutcome;
+    revokeInvitation: CapabilityOutcome;
   };
 }
 
@@ -71,13 +88,34 @@ export interface MembershipRowActions {
  */
 export type EditMemberRecordResult = { ok: true } | { error: unknown };
 
+/**
+ * The error, not a boolean, for the same reason as EditMemberRecordResult: each
+ * refusal of a removal or an invitation has its own message (#275), so the
+ * screen needs the code. `value` is the response, when the screen needs it.
+ */
+export type MembershipWriteResult<T = void> = { ok: true; value: T } | { error: unknown };
+
+/**
+ * What forMembership needs of a row: whose membership it is, and what the
+ * caller may do with it. Both the roster's MembershipResponse and the
+ * MemberResponse a registration answers carry it.
+ */
+export interface MembershipRef {
+  user?: { id: string } | null;
+  capabilities?: MembershipCapabilitiesResponse;
+}
+
 // The detail of one supply, not its sub-resources: the detail is what names
 // the owner, and the owner's name is the member record's.
 const SUPPLY_DETAIL_QUERY_URL = /^\/api\/v1\/supplies\/[^/]+$/;
 
 export interface MembershipActions {
-  actions: { add: MaybeAction<[CreateMembershipBody], boolean> };
-  outcomes: { add: CapabilityOutcome };
+  actions: {
+    add: MaybeAction<[CreateMembershipBody], boolean>;
+    register: MaybeAction<[RegisterMemberBody], MembershipWriteResult<MemberResponse>>;
+    sendPendingInvitations: MaybeAction<[], MembershipWriteResult<SendInvitationsResponse>>;
+  };
+  outcomes: { add: CapabilityOutcome; register: CapabilityOutcome; sendPendingInvitations: CapabilityOutcome };
   /**
    * The per-row gate.
    *
@@ -87,7 +125,7 @@ export interface MembershipActions {
    * is true while any row is mutating -- which is what the pages already do with
    * their single useDeleteMembership.
    */
-  forMembership: (membership: MembershipResponse | undefined) => MembershipRowActions;
+  forMembership: (membership: MembershipRef | undefined) => MembershipRowActions;
 }
 
 export function useMembershipActions(community: CommunityResponse | undefined): MembershipActions {
@@ -102,6 +140,11 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   const updateRecordMutation = useUpdateMemberRecord();
   const enableMutation = useEnableMembership();
   const disableMutation = useDisableMembership();
+  const registerMutation = useRegisterMember();
+  const sendInvitationsMutation = useSendInvitations();
+  const inviteMutation = useSendInvitation();
+  const resendMutation = useResendInvitation();
+  const revokeMutation = useRevokeInvitation();
 
   // All three, because a membership change moves a user between communities'
   // member counts as well as this community's roster -- and because the user
@@ -123,7 +166,7 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   // roster it refreshes every read here that shows the member: the community's
   // supplies and each supply's detail (their owner), the member's own supplies
   // and the member as a user (the supply list names them), and the user list
-  // the add-member picker offers.
+  // the community admins dialog offers.
   const invalidateMemberReads = (userId: string) => {
     queryClient.invalidateQueries({ queryKey: getGetAllSuppliesQueryKey(communityId) });
     queryClient.invalidateQueries({
@@ -147,7 +190,33 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
     }
   };
 
+  const invalidateRoster = () =>
+    queryClient.invalidateQueries({ queryKey: getGetMembershipsQueryKey(communityId) });
+
+  /**
+   * A write whose refusal the screen words itself. `afterSuccess` is the
+   * invalidation the write calls for; a refusal in `staleRowCodes` refetches
+   * the roster as well, since it says the row changed under the screen.
+   */
+  const write = async <T>(
+    call: () => Promise<T>,
+    afterSuccess: () => void,
+    staleRowCodes: readonly RestErrorDetailCode[] = [],
+  ): Promise<MembershipWriteResult<T>> => {
+    try {
+      const value = await call();
+      afterSuccess();
+      return { ok: true, value };
+    } catch (error) {
+      const code = getFirstApiErrorCode(error);
+      if (code && staleRowCodes.includes(code)) invalidateRoster();
+      return { error };
+    }
+  };
+
   const addOutcome = outcomeFromResource(community?.capabilities, "canManageMemberships");
+  const registerOutcome = outcomeFromResource(community?.capabilities, "canRegisterMembers");
+  const sendPendingOutcome = outcomeFromResource(community?.capabilities, "canInviteMembers");
 
   return {
     actions: {
@@ -156,8 +225,27 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
         (data: CreateMembershipBody) => run(() => createMutation.mutateAsync({ communityId, data })),
         createMutation.isPending,
       ),
+      // A registration adds a member, so the community's member count moves
+      // with the roster. It cannot be the caller's: they are a member already.
+      register: grant(
+        registerOutcome,
+        (data: RegisterMemberBody) =>
+          write(
+            () => registerMutation.mutateAsync({ communityId, data }),
+            () => {
+              invalidateRoster();
+              queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
+            },
+          ),
+        registerMutation.isPending,
+      ),
+      sendPendingInvitations: grant(
+        sendPendingOutcome,
+        () => write(() => sendInvitationsMutation.mutateAsync({ communityId }), invalidateRoster),
+        sendInvitationsMutation.isPending,
+      ),
     },
-    outcomes: { add: addOutcome },
+    outcomes: { add: addOutcome, register: registerOutcome, sendPendingInvitations: sendPendingOutcome },
 
     forMembership: (membership) => {
       const userId = membership?.user?.id ?? "";
@@ -171,6 +259,9 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
       const editRecord = outcomeFromResource(capabilities, "canEditRecord");
       const enable = outcomeFromResource(capabilities, "canEnable");
       const disable = outcomeFromResource(capabilities, "canDisable");
+      // One capability covers the three invitation writes; whether one applies
+      // right now is the row's state, which the screen reads.
+      const invitation = outcomeFromResource(capabilities, "canInvite");
 
       return {
         actions: {
@@ -182,7 +273,7 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
           ),
           remove: grant(
             remove,
-            () => run(() => deleteMutation.mutateAsync({ communityId, userId })),
+            () => write(() => deleteMutation.mutateAsync({ communityId, userId }), invalidateAfterWrite),
             deleteMutation.isPending,
           ),
           setInvestment: grant(
@@ -220,6 +311,36 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
             () => run(() => disableMutation.mutateAsync({ communityId, userId })),
             disableMutation.isPending,
           ),
+          invite: grant(
+            invitation,
+            () =>
+              write(
+                () => inviteMutation.mutateAsync({ communityId, userId }),
+                invalidateRoster,
+                STALE_ROW_CODES.invite,
+              ),
+            inviteMutation.isPending,
+          ),
+          resendInvitation: grant(
+            invitation,
+            () =>
+              write(
+                () => resendMutation.mutateAsync({ communityId, userId }),
+                invalidateRoster,
+                STALE_ROW_CODES.resend,
+              ),
+            resendMutation.isPending,
+          ),
+          revokeInvitation: grant(
+            invitation,
+            () =>
+              write(
+                () => revokeMutation.mutateAsync({ communityId, userId }),
+                invalidateRoster,
+                STALE_ROW_CODES.revoke,
+              ),
+            revokeMutation.isPending,
+          ),
         },
         outcomes: {
           changeRole,
@@ -229,6 +350,9 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
           editRecord,
           enable,
           disable,
+          invite: invitation,
+          resendInvitation: invitation,
+          revokeInvitation: invitation,
         },
       };
     },

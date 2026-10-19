@@ -130,6 +130,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import KeyIcon from "@mui/icons-material/Key";
 import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
 import LinkIcon from "@mui/icons-material/Link";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
 import LocalPhoneIcon from "@mui/icons-material/LocalPhone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
@@ -171,6 +172,7 @@ import SavingsRoundedIcon from "@mui/icons-material/SavingsRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import SearchIcon from "@mui/icons-material/Search";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import SendIcon from "@mui/icons-material/Send";
 import SensorsIcon from "@mui/icons-material/Sensors";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SolarPowerOutlinedIcon from "@mui/icons-material/SolarPowerOutlined";
@@ -324,6 +326,7 @@ export const Icons = {
   Key: KeyIcon,
   LightbulbRounded: LightbulbRoundedIcon,
   Link: LinkIcon,
+  LinkOff: LinkOffIcon,
   LocalPhone: LocalPhoneIcon,
   LocationOn: LocationOnIcon,
   LockOpenOutlined: LockOpenOutlinedIcon,
@@ -365,6 +368,7 @@ export const Icons = {
   ScheduleRounded: ScheduleRoundedIcon,
   Search: SearchIcon,
   SearchOff: SearchOffIcon,
+  Send: SendIcon,
   Sensors: SensorsIcon,
   SolarPower: SolarPowerIcon,
   SolarPowerOutlined: SolarPowerOutlinedIcon,

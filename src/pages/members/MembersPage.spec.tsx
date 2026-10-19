@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import userEvent from "@testing-library/user-event";
 import type { QueryClient } from "@tanstack/react-query";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -19,7 +19,6 @@ import type { CommunityCapabilitiesResponse } from "../../api/models";
 
 const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
-const mockCreateMutate = vi.fn().mockResolvedValue({});
 const mockDeleteMutate = vi.fn().mockResolvedValue({});
 const mockUpdateMutate = vi.fn().mockResolvedValue({});
 
@@ -63,20 +62,12 @@ const MOCK_MEMBERSHIPS = [
   }),
 ];
 
-const MOCK_ALL_USERS = {
-  items: [
-    buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com", enabled: true }),
-    buildUser({ id: "u2", fullName: "Bruno Leal", email: "bruno@example.com", enabled: true }),
-    buildUser({ id: "u3", fullName: "Carlos Ruiz", email: "carlos@example.com", enabled: true }),
-  ],
-};
-
 vi.mock(import("react-router"), async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => mockNavigate,
 }));
 
-// Only the reads are replaced, plus the three mutations these tests assert the
+// Only the reads are replaced, plus the two mutations these tests assert the
 // arguments of. The actions layer runs for real -- which is the point: what is
 // under test is that the toolbar and each row menu follow the capabilities on
 // the payload, and stubbing the action hooks would mean restating that rule in
@@ -85,7 +76,6 @@ vi.mock(import("react-router"), async (importOriginal) => ({
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMemberships: vi.fn(),
-  useCreateMembership: vi.fn(),
   useDeleteMembership: vi.fn(),
   useUpdateMembershipRole: vi.fn(),
 }));
@@ -121,7 +111,6 @@ function expectNamesTheCommunity(dialog: HTMLElement, title: string) {
 // choice is never what the page sees; its read is left unanswered.
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useGetAllUsers: vi.fn(),
   useGetSuppliesByUserId: vi.fn(),
 }));
 
@@ -145,17 +134,18 @@ import {
 import {
   getGetMembershipsQueryKey,
   getMemberships,
-  useCreateMembership,
   useDeleteMembership,
   useGetMemberships,
   useUpdateMembershipRole,
 } from "../../api/memberships/memberships";
-import { getAllUsers, getGetCurrentUserQueryKey, useGetAllUsers, useGetSuppliesByUserId } from "../../api/users/users";
+import { getGetCurrentUserQueryKey, useGetSuppliesByUserId } from "../../api/users/users";
 import { MembersPage } from "./MembersPage";
 
 const ADMIN_COMMUNITY: Partial<CommunityCapabilitiesResponse> = {
   canManageMemberships: true,
   canCreateUsers: true,
+  canRegisterMembers: true,
+  canInviteMembers: true,
 };
 
 describe("MembersPage", () => {
@@ -163,9 +153,7 @@ describe("MembersPage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>(MOCK_ALL_USERS));
     vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
-    vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: mockCreateMutate }));
     vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutate }));
     vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutate }));
     vi.mocked(useGetAllCommunities).mockReturnValue(
@@ -219,55 +207,6 @@ describe("MembersPage", () => {
     const brunoRow = screen.getByText("Bruno Leal").closest("tr") as HTMLElement;
     expect(within(anaRow).getByText("Miembro")).toBeInTheDocument();
     expect(within(brunoRow).getByText("Administrador")).toBeInTheDocument();
-  });
-
-  it("add dialog offers only non-members (Carlos but not Ana/Bruno)", async () => {
-    const user = userEvent.setup();
-    setup();
-
-    await user.click(screen.getByText("Añadir miembro"));
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
-
-    const dialog = screen.getByRole("dialog");
-    expectNamesTheCommunity(dialog, `Añadir miembro a ${COMMUNITY_NAME}`);
-    // Open first combobox (user picker) inside the dialog
-    const comboboxes = within(dialog).getAllByRole("combobox");
-    await user.click(comboboxes[0]);
-
-    await waitFor(() => {
-      expect(screen.getByText("Carlos Ruiz (carlos@example.com)")).toBeInTheDocument();
-    });
-    expect(screen.queryByText("Ana García (ana@example.com)")).not.toBeInTheDocument();
-    expect(screen.queryByText("Bruno Leal (bruno@example.com)")).not.toBeInTheDocument();
-  });
-
-  it("add dialog calls createMembership and invalidates queries on submit", async () => {
-    const user = userEvent.setup();
-    setup();
-
-    await user.click(screen.getByText("Añadir miembro"));
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
-
-    const dialog = screen.getByRole("dialog");
-    const comboboxes = within(dialog).getAllByRole("combobox");
-    await user.click(comboboxes[0]);
-    await waitFor(() => screen.getByText("Carlos Ruiz (carlos@example.com)"));
-    await user.click(screen.getByText("Carlos Ruiz (carlos@example.com)"));
-
-    await user.click(within(dialog).getByRole("button", { name: "Añadir" }));
-
-    await waitFor(() =>
-      expect(mockCreateMutate).toHaveBeenCalledWith({
-        communityId: "c1",
-        data: { userId: "u3", role: "COMMUNITY_MEMBER" },
-      }),
-    );
-    expect(mockInvalidateQueries).toHaveBeenCalledTimes(3);
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey("c1") });
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
-    // The third key: the membership changed may be the caller's own, and their
-    // memberships live on the current user (#203).
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
 
   it("row menu opens confirmation dialog with member name on Eliminar", async () => {
@@ -344,11 +283,12 @@ describe("MembersPage", () => {
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
   describe("an admin of the community", () => {
-    it("is offered both ways to bring a member in", () => {
+    it("is offered both ways to bring a member in, and the bulk send", () => {
       setup();
 
-      expect(screen.getByRole("button", { name: "Añadir miembro" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Registrar miembro" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Importar miembros" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Enviar invitaciones pendientes" })).toBeInTheDocument();
     });
 
     it("gets every row action the backend granted on the row", async () => {
@@ -377,7 +317,8 @@ describe("MembersPage", () => {
     it("is offered no way to add or import", () => {
       setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: READ_ONLY });
 
-      expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
     });
 
@@ -395,7 +336,8 @@ describe("MembersPage", () => {
       // roster is the same shape of answer. Only what the backend said is read.
       setup({ community: { canManageMemberships: false, canCreateUsers: false }, memberships: [] });
 
-      expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
     });
   });
@@ -460,7 +402,8 @@ describe("MembersPage", () => {
     // the community's.
     setup({ communityLoading: true });
 
-    expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
   });
 
@@ -597,23 +540,166 @@ describe("MembersPage", () => {
       const cell = screen.getByText("Ana García").parentElement as HTMLElement;
       expect(cell).toHaveTextContent(/^Ana García$/);
     });
+  });
+  describe("pending members and their invitations (#275)", () => {
+    const INVITER = buildMembershipCapabilities({ canInvite: true });
+    const pending = (
+      id: string,
+      fullName: string,
+      overrides: Partial<MembershipResponse> = {},
+    ): MembershipResponse =>
+      buildMembership({
+        id: `m-${id}`,
+        // No supply list on the user, so a row's menu holds only membership writes.
+        user: buildUser({ id, fullName, email: `${id}@example.com` }),
+        communityId: "c1",
+        role: "COMMUNITY_MEMBER",
+        enabled: true,
+        acceptedAt: null,
+        invitedAt: null,
+        invitationExpiresAt: null,
+        capabilities: INVITER,
+        ...overrides,
+      });
 
-    it("UI-MBR-007 shows the name alone in the add-member picker", async () => {
+    /** One row per state the roster tells apart, every one inviting. */
+    const ROSTER = [
+      pending("never", "Nadia Nueva"),
+      pending("linked", "Lucas Enlace", {
+        invitedAt: "2026-10-01T10:00:00Z",
+        invitationExpiresAt: "2026-10-08T10:00:00Z",
+      }),
+      pending("lapsed", "Elena Caducada", { invitedAt: "2026-09-01T10:00:00Z" }),
+      pending("active", "Andrés Activo", { acceptedAt: "2026-02-01T10:00:00Z", invitedAt: "2026-01-25T10:00:00Z" }),
+      pending("suspended", "Sara Suspendida", { acceptedAt: "2026-02-01T10:00:00Z", enabled: false }),
+      pending("suspended-pending", "Pablo Pausado", {
+        enabled: false,
+        invitedAt: "2026-10-01T10:00:00Z",
+        invitationExpiresAt: "2026-10-08T10:00:00Z",
+      }),
+    ];
+
+    const rowOf = (name: string) => screen.getByText(name).closest("tr") as HTMLElement;
+
+    const menuItemsFor = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
+      await user.click(screen.getByRole("button", { name: `Más acciones para ${name}` }));
+      const menu = await screen.findByRole("menu");
+      const items = within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent);
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+      return items;
+    };
+
+    it("UI-MBR-010 tells active, pending and suspended apart, and a suspended pending member is suspended", () => {
+      setup({ memberships: ROSTER });
+
+      expect(within(rowOf("Nadia Nueva")).getByText("Pendiente")).toBeInTheDocument();
+      expect(within(rowOf("Lucas Enlace")).getByText("Pendiente")).toBeInTheDocument();
+      expect(within(rowOf("Elena Caducada")).getByText("Pendiente")).toBeInTheDocument();
+      expect(within(rowOf("Andrés Activo")).getByText("Activo")).toBeInTheDocument();
+      expect(within(rowOf("Sara Suspendida")).getByText("Suspendido")).toBeInTheDocument();
+      expect(within(rowOf("Pablo Pausado")).getByText("Suspendido")).toBeInTheDocument();
+      expect(within(rowOf("Pablo Pausado")).queryByText("Pendiente")).not.toBeInTheDocument();
+    });
+
+    it("UI-MBR-010 counts as active only the accepted, enabled members", () => {
+      setup({ memberships: ROSTER });
+
+      const activeFact = screen.getByText("Activos").parentElement as HTMLElement;
+      expect(activeFact).toHaveTextContent(/^Activos\s*1$/);
+    });
+
+    it("UI-MBR-011 shows where each pending member's invitation stands", () => {
+      setup({ memberships: ROSTER });
+
+      expect(within(rowOf("Nadia Nueva")).getByText("Sin invitar")).toBeInTheDocument();
+      expect(within(rowOf("Lucas Enlace")).getByText("Enlace activo hasta el 8 oct 2026")).toBeInTheDocument();
+      expect(within(rowOf("Elena Caducada")).getByText("Enlace caducado o revocado")).toBeInTheDocument();
+      // Accepted: nothing left to say about an invitation, whenever it was sent.
+      expect(within(rowOf("Andrés Activo")).queryByText(/Sin invitar|Enlace/)).not.toBeInTheDocument();
+    });
+
+    describe("on a narrow viewport", () => {
+      const setViewport = (width: number) => {
+        Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: width });
+      };
+      afterEach(() => setViewport(1024));
+
+      it("UI-MBR-010 UI-MBR-011 shows the status and the invitation state in the list too", () => {
+        setViewport(390);
+        setup({ memberships: ROSTER });
+
+        const list = screen.getByRole("list", { name: "Miembros de la comunidad" });
+        const item = within(list).getByText("Lucas Enlace").closest("li") as HTMLElement;
+        expect(within(item).getByText("Pendiente")).toBeInTheDocument();
+        expect(within(item).getByText("Invitación")).toBeInTheDocument();
+        expect(within(item).getByText("Enlace activo hasta el 8 oct 2026")).toBeInTheDocument();
+      });
+    });
+
+    it("UI-MBR-012 offers each invitation write only in the state it applies to", async () => {
       const user = userEvent.setup();
-      vi.mocked(useGetAllUsers).mockReturnValue(
-        query.success<typeof getAllUsers>({
-          ...MOCK_ALL_USERS,
-          items: [buildUser({ id: "u9", fullName: "Diana Sin Email", email: null })],
-        }),
+      setup({ memberships: ROSTER });
+
+      expect(await menuItemsFor(user, "Nadia Nueva")).toEqual(["Invitar"]);
+      expect(await menuItemsFor(user, "Lucas Enlace")).toEqual(["Reenviar", "Revocar enlace"]);
+      expect(await menuItemsFor(user, "Elena Caducada")).toEqual(["Reenviar"]);
+      // Suspended: nothing can be sent, but a live link can still be stopped.
+      expect(await menuItemsFor(user, "Pablo Pausado")).toEqual(["Revocar enlace"]);
+      // Accepted, or suspended once accepted: no invitation write applies, and
+      // the row has nothing else granted, so it has no menu at all.
+      expect(screen.queryByRole("button", { name: "Más acciones para Andrés Activo" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Más acciones para Sara Suspendida" })).not.toBeInTheDocument();
+    });
+
+    it("UI-MBR-012 offers no invitation write on a row without canInvite", () => {
+      const withoutCapability = ROSTER.map((membership) => ({
+        ...membership,
+        capabilities: buildMembershipCapabilities(),
+      }));
+      setup({ memberships: withoutCapability });
+
+      for (const { user } of withoutCapability) {
+        expect(
+          screen.queryByRole("button", { name: `Más acciones para ${user?.fullName}` }),
+        ).not.toBeInTheDocument();
+      }
+    });
+
+    it("UI-MBR-012 offers no invitation write on a roster from a backend that predates canInvite", async () => {
+      const user = userEvent.setup();
+      // As that backend serves it: the capability is simply not there.
+      const legacy = buildMembershipCapabilities({ canInvite: true, canDelete: true });
+      delete (legacy as Partial<typeof legacy>).canInvite;
+      setup({ memberships: [{ ...pending("never", "Nadia Nueva"), capabilities: legacy }] });
+
+      expect(await menuItemsFor(user, "Nadia Nueva")).toEqual(["Eliminar"]);
+    });
+
+    it("UI-MBR-008 UI-MBR-013 offers neither registration nor bulk send to a community without the capabilities", () => {
+      setup({ community: { canManageMemberships: true, canCreateUsers: true } });
+
+      expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
+    });
+
+    it("UI-MBR-008 UI-MBR-013 offers neither to a community from a backend that predates the capabilities", () => {
+      // The keys are absent, not false: setup builds on top of the defaults,
+      // so the community is mocked here as that backend serves it.
+      const legacy = buildCommunityCapabilities({ canRead: true, canManageMemberships: true });
+      delete (legacy as Partial<typeof legacy>).canRegisterMembers;
+      delete (legacy as Partial<typeof legacy>).canInviteMembers;
+      vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>(MOCK_MEMBERSHIPS));
+      vi.mocked(useGetCommunityById).mockReturnValue(
+        query.success<typeof getCommunityById>(buildCommunity({ id: "c1", capabilities: legacy })),
       );
-      setup();
+      renderWithProviders(<MembersPage />, { activeCommunityId: "c1" });
 
-      await user.click(screen.getByRole("button", { name: "Añadir miembro" }));
-      const dialog = await screen.findByRole("dialog");
-      await user.click(within(dialog).getAllByRole("combobox")[0]);
-
-      const option = await screen.findByRole("option", { name: "Diana Sin Email" });
-      expect(option).toHaveTextContent(/^Diana Sin Email$/);
+      expect(screen.getByText("Ana García")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
     });
   });
 });

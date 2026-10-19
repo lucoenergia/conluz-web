@@ -54,6 +54,7 @@
         "useDisableMembership",
         "useEnableCommunityAdmin",
         "useEnableMembership",
+        "useImportMembers",
         "useInspectInvitation",
         "useInviteCommunityAdmin",
         "useRegisterMember",

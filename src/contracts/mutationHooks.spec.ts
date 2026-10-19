@@ -106,13 +106,18 @@ const ACTION_COVERAGE: Record<string, Decision> = {
 
   // ── Memberships ───────────────────────────────────────────────────────────
   useCreateMembership: { scope: "community", capability: "canManageMemberships", hook: "useMembershipActions" },
-  useRegisterMember: { scope: "community", capability: "canRegisterMembers" },
-  useSendInvitation: { scope: "membership", capability: "canInvite" },
-  // No screen sends these yet: no action hook. The capability is the one the
-  // contract names for each endpoint, not a choice made here.
-  useResendInvitation: { scope: "membership", capability: "canInvite" },
-  useRevokeInvitation: { scope: "membership", capability: "canInvite" },
-  useSendInvitations: { scope: "community", capability: "canInviteMembers" },
+  useRegisterMember: { scope: "community", capability: "canRegisterMembers", hook: "useMembershipActions" },
+  // No screen sends it yet: no action hook.
+  useImportMembers: {
+    scope: "community",
+    capability: "canRegisterMembers",
+    approximates: "the import registers each row as registerMember does, for the same callers, and no flag names the import itself",
+  },
+  // canInvite covers the first invitation, its resends and revoking its link.
+  useSendInvitation: { scope: "membership", capability: "canInvite", hook: "useMembershipActions" },
+  useResendInvitation: { scope: "membership", capability: "canInvite", hook: "useMembershipActions" },
+  useRevokeInvitation: { scope: "membership", capability: "canInvite", hook: "useMembershipActions" },
+  useSendInvitations: { scope: "community", capability: "canInviteMembers", hook: "useMembershipActions" },
 
   // ── Community admins ──────────────────────────────────────────────────────
   useInviteCommunityAdmin: { scope: "community", capability: "canManageAdmins" },

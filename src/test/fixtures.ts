@@ -7,6 +7,7 @@ import {
   type CommunityCapabilitiesResponse,
   type CommunityResponse,
   type CurrentUserResponse,
+  type MemberResponse,
   type MembershipCapabilitiesResponse,
   type MembershipEnergyMetricsResponse,
   type MembershipHourlyProfileBucketResponse,
@@ -244,9 +245,38 @@ export function buildMembership(overrides: Partial<MembershipResponse> = {}): Me
       enabled: true,
       // Accepted: a pending membership (null) grants no access, so it is opt-in.
       acceptedAt: "2026-01-01T00:00:00Z",
+      invitedAt: null,
       invitationExpiresAt: null,
       capabilities: buildMembershipCapabilities(),
     } satisfies MembershipResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * A member as the membership writes answer it (registration, invitations): the
+ * membership and the community's record on it. Pending, never invited and
+ * without contact details by default, as a fresh registration is.
+ */
+export function buildMember(overrides: Partial<MemberResponse> = {}): MemberResponse {
+  return {
+    ...({
+      id: "TEST-MEMBERSHIP-ID",
+      user: { id: "TEST-USER-ID" },
+      community: { id: "TEST-COMMUNITY-ID", name: "TEST-COMMUNITY-NAME" },
+      role: "COMMUNITY_MEMBER",
+      personalId: "TEST-PERSONAL-ID",
+      fullName: "TEST-MEMBER-NAME",
+      memberNumber: null,
+      contactEmail: null,
+      address: null,
+      phoneNumber: null,
+      acceptedAt: null,
+      enabled: true,
+      invitedAt: null,
+      invitationExpiresAt: null,
+      capabilities: buildMembershipCapabilities(),
+    } satisfies MemberResponse),
     ...overrides,
   };
 }

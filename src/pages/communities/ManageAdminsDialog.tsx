@@ -115,7 +115,7 @@ export const ManageAdminsDialog: FC<Props> = ({ community, open, onClose }) => {
   const handleRemove = async (userId: string) => {
     const remove = forMembership(membershipByUserId.get(userId)).actions.remove;
     if (!remove) return;
-    if (await remove.run()) {
+    if ("ok" in (await remove.run())) {
       setRemoveConfirmUserId(null);
     } else {
       errorDispatch("Error al eliminar el administrador. Por favor, inténtalo de nuevo.");

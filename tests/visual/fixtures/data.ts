@@ -849,6 +849,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_ADMIN",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
     // Their own membership: the backend does not offer them their own removal
@@ -884,6 +885,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
     capabilities: {
@@ -915,6 +917,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitedAt: null,
     invitationExpiresAt: null,
     enabled: false,
     capabilities: {
@@ -928,6 +931,65 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canEditRecord: true,
     },
   },
+];
+
+/** A member registered with the community but not yet accepted (#275): pending, never invited by default. */
+function pendingMembership(
+  id: string,
+  fullName: string,
+  overrides: Partial<MembershipResponse> = {},
+): MembershipResponse {
+  return {
+    id: `membership-${id}`,
+    communityId: FIXED_COMMUNITY_ID,
+    user: {
+      id,
+      fullName,
+      email: `${id}@example.com`,
+      personalId: `PENDING-${id}`,
+      number: null,
+      address: null,
+      phoneNumber: null,
+      enabled: true,
+      isPlatformAdmin: false,
+      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
+      capabilities: MANAGED_USER_CAPABILITIES,
+    },
+    role: "COMMUNITY_MEMBER",
+    acceptedAt: null,
+    invitedAt: null,
+    invitationExpiresAt: null,
+    enabled: true,
+    capabilities: {
+      canUpdateRole: true,
+      canDelete: true,
+      canManageInvestment: false,
+      canReadPayback: false,
+      canInvite: true,
+      canEnable: true,
+      canDisable: true,
+      canEditRecord: true,
+    },
+    ...overrides,
+  };
+}
+
+/**
+ * Every status and invitation state the roster tells apart, side by side
+ * (#275): active and suspended members from FIXED_MEMBERSHIPS, and pending
+ * ones never invited, with an active link, with an expired one, and suspended.
+ * Fixed instants, so the expiry renders the same on every run.
+ */
+export const FIXED_ROSTER_INVITATION_STATES: MembershipResponse[] = [
+  FIXED_MEMBERSHIPS[0],
+  pendingMembership("pending-never", "Nadia Nueva Fernández"),
+  pendingMembership("pending-linked", "Lucas Enlace Martín", {
+    invitedAt: "2026-10-01T10:00:00Z",
+    invitationExpiresAt: "2026-10-08T10:00:00Z",
+  }),
+  pendingMembership("pending-lapsed", "Elena Caducada Ruiz", { invitedAt: "2026-09-01T10:00:00Z" }),
+  pendingMembership("pending-suspended", "Pablo Pausado Gil", { enabled: false }),
+  FIXED_MEMBERSHIPS[2],
 ];
 
 /** Datadis configured and on, which is the state the integration card shows most. */

@@ -1,0 +1,89 @@
+import { describe, expect, it } from "vitest";
+import { apiError } from "../test/apiError";
+import { invitationRefusalMessage, removalRefusalMessage } from "./membershipErrors";
+import { resendLimitMessage } from "./membershipErrorMessages";
+
+const REFRESHED = "Hemos actualizado la lista.";
+
+describe("invitationRefusalMessage (#275)", () => {
+  it("UI-MBR-014 points a refusal for want of a contact email to the record edit", () => {
+    expect(invitationRefusalMessage(apiError(400, { code: "MEMBERSHIP_WITHOUT_CONTACT_EMAIL" }), "invite")).toBe(
+      "Este miembro no tiene email de contacto. Añádelo desde «Editar ficha» y vuelve a intentarlo.",
+    );
+  });
+
+  it("UI-MBR-014 says the member is suspended, and that the list was refreshed", () => {
+    expect(invitationRefusalMessage(apiError(409, { code: "MEMBERSHIP_DISABLED" }), "resend")).toBe(
+      `Este miembro está suspendido, así que no se le puede invitar. ${REFRESHED}`,
+    );
+  });
+
+  it("UI-MBR-014 says invitations cannot be sent right now", () => {
+    expect(invitationRefusalMessage(apiError(503, { code: "MEMBERSHIP_INVITATION_UNAVAILABLE" }), "bulk")).toBe(
+      "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde.",
+    );
+  });
+
+  it("UI-MBR-014 reads the wait before another resend from the Retry-After header", () => {
+    const error = apiError(429, { code: "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED" }, { "retry-after": "7200" });
+    expect(invitationRefusalMessage(error, "resend")).toBe(
+      "Has alcanzado el límite de reenvíos para este miembro. Podrás volver a reenviar la invitación dentro de 2 horas.",
+    );
+  });
+
+  it("UI-MBR-014 reads the wait before another resend from params.retryAfterSeconds", () => {
+    const error = apiError(429, {
+      code: "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED",
+      params: { retryAfterSeconds: "1500" },
+    });
+    expect(invitationRefusalMessage(error, "resend")).toBe(
+      "Has alcanzado el límite de reenvíos para este miembro. Podrás volver a reenviar la invitación dentro de 25 minutos.",
+    );
+  });
+
+  it.each([
+    ["invite", "MEMBERSHIP_ALREADY_INVITED", "Este miembro ya tenía una invitación enviada."],
+    ["resend", "MEMBERSHIP_NOT_INVITED", "Este miembro todavía no tiene ninguna invitación que reenviar."],
+    ["invite", "MEMBERSHIP_ALREADY_EXISTS", "Este miembro ya ha aceptado la invitación."],
+    ["revoke", "MEMBERSHIP_ALREADY_EXISTS", "Este miembro ya ha aceptado la invitación."],
+  ] as const)("UI-MBR-014 %s refused with %s says why and that the list was refreshed", (write, code, message) => {
+    expect(invitationRefusalMessage(apiError(409, { code }), write)).toBe(`${message} ${REFRESHED}`);
+  });
+
+  it("falls back to a sentence per write for a refusal it does not word", () => {
+    expect(invitationRefusalMessage(apiError(500), "revoke")).toBe(
+      "No se ha podido revocar el enlace. Inténtalo de nuevo.",
+    );
+  });
+});
+
+describe("resendLimitMessage", () => {
+  it.each([
+    [60, "1 minuto"],
+    [61, "2 minutos"],
+    [3599, "60 minutos"],
+    [3600, "1 hora"],
+    [3601, "2 horas"],
+    [86400, "24 horas"],
+  ])("rounds %i s up to %s", (seconds, wait) => {
+    expect(resendLimitMessage(seconds)).toContain(`dentro de ${wait}.`);
+  });
+
+  it("asks to try later when the backend gave no wait", () => {
+    expect(resendLimitMessage(null)).toBe(
+      "Has alcanzado el límite de reenvíos para este miembro. Vuelve a intentarlo más tarde.",
+    );
+  });
+});
+
+describe("removalRefusalMessage", () => {
+  it("UI-MBR-015 gives the reason a supply owner cannot be removed, recommending suspension", () => {
+    expect(removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_OWNS_SUPPLIES" }))).toBe(
+      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+    );
+  });
+
+  it("keeps the generic sentence for any other refusal", () => {
+    expect(removalRefusalMessage(apiError(500))).toBe("Error al eliminar el miembro. Por favor, inténtalo de nuevo.");
+  });
+});

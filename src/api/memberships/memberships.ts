@@ -30,6 +30,8 @@ import type {
   CreateMembershipBody,
   GetMembershipEnergyMetricsParams,
   GetMembershipMonthlyConsumptionParams,
+  ImportMembersBody,
+  ImportMembersResponse,
   InvitationInspectionResponse,
   InvitationTokenBody,
   InviteCommunityAdminBody,
@@ -1175,6 +1177,85 @@ export const useSendInvitations = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getSendInvitationsMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Registers each data row of a CSV file as a member of the community, as `registerMember` does: a pending membership with the role COMMUNITY_MEMBER and the row as the community's member record. Only an active community admin of the community may import members; a platform admin may not.
+
+Nothing is sent to the members and no invitation is issued. Invite them afterwards with `sendInvitations`.
+
+**The file.** UTF-8 or Windows-1252, the two encodings Spanish Excel saves a CSV file in ("CSV UTF-8" and "CSV"), separated by `,` or `;`, told from the header line. A file starting with a UTF-8 byte order mark is read as UTF-8; one starting with a UTF-16 byte order mark is refused; any other is read as UTF-8 if it is valid UTF-8, and as Windows-1252 otherwise. The header line names the columns, in any order: `personalId` and `fullName` are required; `memberNumber`, `contactEmail`, `address` and `phoneNumber` are optional. No other column is accepted. Each value follows the rules of the same field of `registerMember`. At most 1000 data rows; rows whose cells are all empty are skipped.
+
+**Whole-file refusals.** If the file is neither UTF-8 nor Windows-1252, its separator cannot be told, it is not valid CSV, its header names an unknown column, a column twice or lacks a required one, or it has more than 1000 data rows, the response is 400 with a dedicated code, and nothing is registered.
+
+**Rows.** Otherwise each row is registered in a transaction of its own, so a row that fails keeps the others. The response has one result per row. A person who already has an account is registered exactly as a new one, and their result is the same. A person who already has a membership in this community, including from an earlier row of the same file, fails with `MEMBERSHIP_ALREADY_EXISTS`. Importing the same file again is therefore safe: rows already registered fail with that code, and the rest are registered.
+
+A row whose values break rules of the registration fails with `MEMBERSHIP_IMPORT_ROW_INVALID` and lists each rule broken in `errors`, by column and constraint code, for a client to write its own text. Every `message` is in the language of the request's Accept-Language.
+
+ * @summary Imports members into a community from a CSV file.
+ */
+export const importMembers = (
+    communityId: string,
+    importMembersBody: ImportMembersBody,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+formData.append(`file`, importMembersBody.file)
+
+      return customInstance<ImportMembersResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
+  
+
+
+export const getImportMembersMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importMembers>>, TError,{communityId: string;data: ImportMembersBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof importMembers>>, TError,{communityId: string;data: ImportMembersBody}, TContext> => {
+
+const mutationKey = ['importMembers'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importMembers>>, {communityId: string;data: ImportMembersBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  importMembers(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportMembersMutationResult = NonNullable<Awaited<ReturnType<typeof importMembers>>>
+    export type ImportMembersMutationBody = ImportMembersBody
+    export type ImportMembersMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Imports members into a community from a CSV file.
+ */
+export const useImportMembers = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importMembers>>, TError,{communityId: string;data: ImportMembersBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importMembers>>,
+        TError,
+        {communityId: string;data: ImportMembersBody},
+        TContext
+      > => {
+
+      const mutationOptions = getImportMembersMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

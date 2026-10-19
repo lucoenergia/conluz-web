@@ -11,6 +11,7 @@ import {
   Avatar,
   MenuItem,
   Select,
+  Stack,
   FormControl,
   InputLabel,
   Dialog,
@@ -32,6 +33,9 @@ import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import SendIcon from "@mui/icons-material/Send";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
@@ -43,13 +47,7 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
 import { useActiveCommunity } from "../../context/community.context";
 import { useGetMemberships } from "../../api/memberships/memberships";
-import { useGetAllUsers } from "../../api/users/users";
-import {
-  type MembershipResponse,
-  CreateMembershipBodyRole,
-  MembershipResponseRole,
-  UpdateMembershipRoleBodyRole,
-} from "../../api/models";
+import { type MembershipResponse, MembershipResponseRole, UpdateMembershipRoleBodyRole } from "../../api/models";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import {
   useCommunityActions,
@@ -62,7 +60,19 @@ import { useErrorDispatch } from "../../context/error.context";
 import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
+import { invitationRefusalMessage, removalRefusalMessage } from "../../errors/membershipErrors";
 import { MemberRecordDialog } from "./MemberRecordDialog";
+import { RegisterMemberDialog } from "./RegisterMemberDialog";
+import { SendPendingInvitationsDialog } from "./SendPendingInvitationsDialog";
+import { InvitationActionDialog, type InvitationWriteKind } from "./InvitationActionDialog";
+import {
+  invitationActionsFor,
+  invitationStateOf,
+  statusOf,
+  type InvitationActions,
+  type MembershipStatus,
+} from "./membershipStatus";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
@@ -86,17 +96,36 @@ function statusToggleFor(
   return actions.enable && { action: actions.enable, isSuspending: false };
 }
 
-/** A member without email is named alone: no empty parentheses. */
-const nameWithEmail = (fullName: string, email: string | null) => (email ? `${fullName} (${email})` : fullName);
+const STATUS_CHIPS: Record<MembershipStatus, { label: string; color: "success" | "warning" | "error" }> = {
+  active: { label: "Activo", color: "success" },
+  pending: { label: "Pendiente", color: "warning" },
+  suspended: { label: "Suspendido", color: "error" },
+};
 
-const MembershipStatusChip: FC<{ enabled: boolean }> = ({ enabled }) => (
-  <Chip
-    label={enabled ? "Activo" : "Suspendido"}
-    color={enabled ? "success" : "error"}
-    size="small"
-    sx={{ fontWeight: 600 }}
-  />
-);
+const MembershipStatusChip: FC<{ membership: MembershipResponse }> = ({ membership }) => {
+  const { label, color } = STATUS_CHIPS[statusOf(membership)];
+  return <Chip label={label} color={color} size="small" sx={{ fontWeight: 600 }} />;
+};
+
+/** Where a pending membership's invitation stands, or null once it is accepted (#275). */
+function invitationText(membership: MembershipResponse): string | null {
+  const state = invitationStateOf(membership);
+  if (!state) return null;
+  switch (state.kind) {
+    case "never":
+      return "Sin invitar";
+    case "active":
+      return `Enlace activo hasta el ${formatCalendarDate(state.expiresAt, SHORT_CALENDAR_DATE)}`;
+    case "lapsed":
+      return "Enlace caducado o revocado";
+  }
+}
+
+const INVITATION_ITEMS: { kind: InvitationWriteKind; key: keyof InvitationActions; label: string }[] = [
+  { kind: "invite", key: "invite", label: "Invitar" },
+  { kind: "resend", key: "resend", label: "Reenviar" },
+  { kind: "revoke", key: "revoke", label: "Revocar enlace" },
+];
 
 export const MembersPage: FC = () => {
   const { width } = useWindowDimensions();
@@ -111,10 +140,9 @@ export const MembersPage: FC = () => {
   const community = communityLabel(communityName);
   const errorDispatch = useErrorDispatch();
 
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>(CreateMembershipBodyRole.COMMUNITY_MEMBER);
   const [removeConfirmUserId, setRemoveConfirmUserId] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   // The id, not the row. A write invalidates the list, so a stored row would go
@@ -125,6 +153,7 @@ export const MembersPage: FC = () => {
   const [pendingRole, setPendingRole] = useState<string>("");
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [invitationDialog, setInvitationDialog] = useState<InvitationWriteKind | null>(null);
 
   const {
     data: memberships = [],
@@ -133,8 +162,6 @@ export const MembersPage: FC = () => {
   } = useGetMemberships(activeCommunityId ?? "", {
     query: { enabled: !!activeCommunityId },
   });
-
-  const { data: allUsersData } = useGetAllUsers({ size: 10000 });
 
   // What this caller may do, as the backend answers it. forMembership is a
   // plain function rather than a hook precisely so it can be asked once per row.
@@ -152,6 +179,8 @@ export const MembersPage: FC = () => {
     : null;
   const selectedActions = forMembership(selectedMembership ?? undefined).actions;
   const selectedStatusToggle = statusToggleFor(selectedMembership, selectedActions);
+  const selectedInvitationActions = invitationActionsFor(selectedMembership, selectedActions);
+  const selectedInvitationAction = invitationDialog ? selectedInvitationActions[invitationDialog] : undefined;
 
   // "Puntos de suministro" opens the member's own supply list, which is the
   // user's decision to make, not the membership's -- canListSupplies is
@@ -166,30 +195,21 @@ export const MembersPage: FC = () => {
     return (
       !!actions.editRecord ||
       !!statusToggleFor(membership, actions) ||
+      Object.values(invitationActionsFor(membership, actions)).some(Boolean) ||
       !!actions.changeRole ||
       !!actions.remove ||
       rowSupplies(membership).state === "allowed"
     );
   };
 
-  const handleAddMember = async () => {
-    if (!selectedUserId || !membershipActions.add) return;
-    if (await membershipActions.add.run({ userId: selectedUserId, role: selectedRole as CreateMembershipBodyRole })) {
-      setAddDialogOpen(false);
-      setSelectedUserId("");
-      setSelectedRole(CreateMembershipBodyRole.COMMUNITY_MEMBER);
-    } else {
-      errorDispatch("Error al añadir el miembro. Por favor, inténtalo de nuevo.");
-    }
-  };
-
   const handleRemoveMember = async (userId: string) => {
     const remove = forMembership(memberships.find((m) => m.user?.id === userId)).actions.remove;
     if (!remove) return;
-    if (await remove.run()) {
+    const result = await remove.run();
+    if ("ok" in result) {
       setRemoveConfirmUserId(null);
     } else {
-      errorDispatch("Error al eliminar el miembro. Por favor, inténtalo de nuevo.");
+      errorDispatch(removalRefusalMessage(result.error));
     }
   };
 
@@ -229,10 +249,8 @@ export const MembersPage: FC = () => {
     }
   };
 
-  const existingUserIds = new Set(memberships.map((m) => m.user?.id).filter(Boolean));
-  const availableUsers = allUsersData?.items?.filter((u) => u.id && !existingUserIds.has(u.id)) ?? [];
-
-  const activeCount = memberships.filter((m) => m.enabled).length;
+  // Active means accepted and enabled: a pending member has no access yet.
+  const activeCount = memberships.filter((m) => statusOf(m) === "active").length;
   const adminCount = memberships.filter((m) => m.role === MembershipResponseRole.COMMUNITY_ADMIN).length;
 
   const removeTarget = removeConfirmUserId
@@ -279,7 +297,17 @@ export const MembersPage: FC = () => {
               it -- never disabled, which would advertise something the caller
               cannot do. The action carries its own community, so there is no
               longer a "no community selected" case to disable for either. */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+          {/* Three actions do not fit one row at phone width: stacked there, in
+              the order they read, and in a row from sm up. */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "flex-end",
+              alignItems: { xs: "stretch", sm: "center" },
+              gap: 2,
+            }}
+          >
             {importUsers && (
               <Button
                 variant="outlined"
@@ -290,14 +318,24 @@ export const MembersPage: FC = () => {
                 Importar miembros
               </Button>
             )}
-            {membershipActions.add && (
+            {membershipActions.sendPendingInvitations && (
+              <Button
+                variant="outlined"
+                startIcon={<SendIcon />}
+                onClick={() => setBulkDialogOpen(true)}
+                sx={{ px: 3, py: 1.5 }}
+              >
+                Enviar invitaciones pendientes
+              </Button>
+            )}
+            {membershipActions.register && (
               <Button
                 variant="contained"
                 startIcon={<PersonAddIcon />}
-                onClick={() => setAddDialogOpen(true)}
+                onClick={() => setRegisterDialogOpen(true)}
                 sx={{ px: 3, py: 1.5 }}
               >
-                Añadir miembro
+                Registrar miembro
               </Button>
             )}
           </Box>
@@ -378,9 +416,19 @@ export const MembersPage: FC = () => {
                 {
                   key: "status",
                   header: "Estado",
-                  render: (membership) => (
-                    <MembershipStatusChip enabled={membership.enabled} />
-                  ),
+                  render: (membership) => {
+                    const invitation = invitationText(membership);
+                    return (
+                      <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
+                        <MembershipStatusChip membership={membership} />
+                        {invitation && (
+                          <Typography variant="caption" sx={{ color: colors.text.subtle }}>
+                            {invitation}
+                          </Typography>
+                        )}
+                      </Stack>
+                    );
+                  },
                 },
               ]}
             />
@@ -392,29 +440,33 @@ export const MembersPage: FC = () => {
                 label="Miembros de la comunidad"
                 isLoading={isLoading}
                 emptyMessage="No se encontraron miembros"
-                items={memberships.map((membership) => ({
-                  id: String(membership.id ?? ""),
-                  avatar: (
-                    <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                      {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
-                    </Avatar>
-                  ),
-                  title: membership.user?.fullName ?? "Miembro desconocido",
-                  status: <MembershipStatusChip enabled={membership.enabled} />,
-                  actions: hasRowActions(membership) ? (
-                    <IconButton
-                      aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
-                      onClick={(e) => handleMenuOpen(e, membership)}
-                      sx={sxStyles.touchTarget}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  ) : undefined,
-                  fields: [
-                    { label: "Email", value: membership.user?.email ?? "-" },
-                    { label: "Rol", value: ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER] },
-                  ],
-                }))}
+                items={memberships.map((membership) => {
+                  const invitation = invitationText(membership);
+                  return {
+                    id: String(membership.id ?? ""),
+                    avatar: (
+                      <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                        {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
+                      </Avatar>
+                    ),
+                    title: membership.user?.fullName ?? "Miembro desconocido",
+                    status: <MembershipStatusChip membership={membership} />,
+                    actions: hasRowActions(membership) ? (
+                      <IconButton
+                        aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
+                        onClick={(e) => handleMenuOpen(e, membership)}
+                        sx={sxStyles.touchTarget}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    ) : undefined,
+                    fields: [
+                      { label: "Email", value: membership.user?.email ?? "-" },
+                      { label: "Rol", value: ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER] },
+                      ...(invitation ? [{ label: "Invitación", value: invitation }] : []),
+                    ],
+                  };
+                })}
               />
             </Box>
             )}
@@ -451,6 +503,22 @@ export const MembersPage: FC = () => {
             <ListItemText>Editar ficha</ListItemText>
           </MenuItem>
         )}
+        {INVITATION_ITEMS.filter(({ key }) => selectedInvitationActions[key]).map(({ kind, label }) => (
+          <MenuItem
+            key={kind}
+            onClick={() => {
+              handleMenuClose();
+              setInvitationDialog(kind);
+            }}
+          >
+            <ListItemIcon>
+              {kind === "invite" && <MailOutlineIcon fontSize="small" sx={{ color: "primary.main" }} />}
+              {kind === "resend" && <SendIcon fontSize="small" sx={{ color: "primary.main" }} />}
+              {kind === "revoke" && <LinkOffIcon fontSize="small" sx={{ color: "primary.main" }} />}
+            </ListItemIcon>
+            <ListItemText>{label}</ListItemText>
+          </MenuItem>
+        ))}
         <Can outcome={rowSupplies(selectedMembership)}>
           <MenuItem
             onClick={() => {
@@ -515,6 +583,37 @@ export const MembersPage: FC = () => {
           communityName={communityName}
           editRecord={selectedActions.editRecord}
           onClose={() => setRecordDialogOpen(false)}
+        />
+      )}
+
+      {/* Mounted only while the row grants the write in its current state, so a
+          refetch that changes the state closes it rather than leaving it open
+          for a write that no longer applies. */}
+      {invitationDialog && selectedMembership && selectedInvitationAction && (
+        <InvitationActionDialog
+          kind={invitationDialog}
+          memberName={selectedMembership.user?.fullName ?? "este miembro"}
+          communityName={communityName}
+          action={selectedInvitationAction}
+          onClose={() => setInvitationDialog(null)}
+          onRefused={(refusal) => errorDispatch(invitationRefusalMessage(refusal, invitationDialog))}
+        />
+      )}
+
+      {/* Mounted with the button that opens them, and on open, so each opening starts afresh. */}
+      {registerDialogOpen && membershipActions.register && (
+        <RegisterMemberDialog
+          communityName={communityName}
+          register={membershipActions.register}
+          forMembership={forMembership}
+          onClose={() => setRegisterDialogOpen(false)}
+        />
+      )}
+      {bulkDialogOpen && membershipActions.sendPendingInvitations && (
+        <SendPendingInvitationsDialog
+          communityName={communityName}
+          sendPendingInvitations={membershipActions.sendPendingInvitations}
+          onClose={() => setBulkDialogOpen(false)}
         />
       )}
 
@@ -602,60 +701,6 @@ export const MembersPage: FC = () => {
             disabled={pendingRole === selectedMembership?.role || selectedActions.changeRole?.isPending}
           >
             {selectedActions.changeRole?.isPending ? "Guardando..." : "Confirmar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Add member dialog */}
-      <Dialog
-        open={addDialogOpen && !!membershipActions.add}
-        onClose={() => setAddDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <Box sx={{ px: 3, pt: 2.5 }}>
-          <CommunityScopeHeader name={communityName} />
-        </Box>
-        <DialogTitle sx={{ pt: 0 }}>Añadir miembro a {community}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
-          <FormControl fullWidth>
-            <InputLabel>Miembro</InputLabel>
-            <Select
-              value={selectedUserId}
-              label="Miembro"
-              onChange={(e) => setSelectedUserId(e.target.value)}
-            >
-              {availableUsers.map((u) => (
-                <MenuItem key={u.id} value={u.id}>
-                  {nameWithEmail(u.fullName, u.email)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel>Rol</InputLabel>
-            <Select
-              value={selectedRole}
-              label="Rol"
-              onChange={(e) => setSelectedRole(e.target.value)}
-            >
-              <MenuItem value={CreateMembershipBodyRole.COMMUNITY_MEMBER}>
-                {ROLE_LABELS[CreateMembershipBodyRole.COMMUNITY_MEMBER]}
-              </MenuItem>
-              <MenuItem value={CreateMembershipBodyRole.COMMUNITY_ADMIN}>
-                {ROLE_LABELS[CreateMembershipBodyRole.COMMUNITY_ADMIN]}
-              </MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancelar</Button>
-          <Button
-            variant="contained"
-            onClick={handleAddMember}
-            disabled={!selectedUserId || membershipActions.add?.isPending}
-          >
-            {membershipActions.add?.isPending ? "Añadiendo..." : "Añadir"}
           </Button>
         </DialogActions>
       </Dialog>

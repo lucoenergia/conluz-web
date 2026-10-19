@@ -329,3 +329,37 @@ describe("integration enable refusals (*_CONFIG_INCOMPLETE)", () => {
     },
   );
 });
+
+describe("member registration and invitation refusals (#275)", () => {
+  it.each([
+    ["MEMBERSHIP_ALREADY_EXISTS", "Esta persona ya es miembro de la comunidad."],
+    ["MEMBERSHIP_ALREADY_INVITED", "Este miembro ya tenía una invitación enviada."],
+    ["MEMBERSHIP_NOT_INVITED", "Este miembro todavía no tiene ninguna invitación que reenviar."],
+    ["MEMBERSHIP_DISABLED", "Este miembro está suspendido, así que no se le puede invitar."],
+    ["MEMBERSHIP_INVITATION_UNAVAILABLE", "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde."],
+    [
+      "MEMBERSHIP_OWNS_SUPPLIES",
+      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+    ],
+  ] as const)("translates %s", (code, message) => {
+    expect(translateErrorDetail({ message: "raw", code }, "fallback")).toBe(message);
+  });
+
+  it("words the resend limit with the wait in the body, or without one", () => {
+    expect(
+      translateErrorDetail(
+        { message: "raw", code: "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED", params: { retryAfterSeconds: "600" } },
+        "fallback",
+      ),
+    ).toBe("Has alcanzado el límite de reenvíos para este miembro. Podrás volver a reenviar la invitación dentro de 10 minutos.");
+    expect(translateErrorDetail({ message: "raw", code: "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED" }, "fallback")).toBe(
+      "Has alcanzado el límite de reenvíos para este miembro. Vuelve a intentarlo más tarde.",
+    );
+  });
+
+  it("keeps the record form's wording for MEMBERSHIP_WITHOUT_CONTACT_EMAIL", () => {
+    expect(translateErrorDetail({ message: "raw", code: "MEMBERSHIP_WITHOUT_CONTACT_EMAIL" }, "fallback")).toBe(
+      "Un administrador de la comunidad tiene que tener un email de contacto. Para quitárselo, cámbiale antes el rol a miembro.",
+    );
+  });
+});

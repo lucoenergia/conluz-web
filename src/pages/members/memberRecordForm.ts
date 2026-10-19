@@ -1,4 +1,4 @@
-import type { MembershipResponse, UpdateMemberRecordBody } from "../../api/models";
+import type { MembershipResponse, RegisterMemberBody, UpdateMemberRecordBody } from "../../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 import { isValidEmail } from "../../utils/email";
 
@@ -11,12 +11,26 @@ export interface MemberRecordValues {
   phoneNumber: string;
 }
 
-export type MemberRecordField = keyof MemberRecordValues;
+/** A registration: the record, and the personal ID the member is registered with (#275). */
+export interface RegistrationValues extends MemberRecordValues {
+  personalId: string;
+}
+
+export type MemberRecordField = keyof RegistrationValues;
 
 export type MemberRecordErrors = Partial<Record<MemberRecordField, string>>;
 
 /** A refused save: a message on one field, or one for the whole form. */
 export type MemberRecordRefusal = { field: MemberRecordField; message: string } | { form: string };
+
+export const EMPTY_REGISTRATION: RegistrationValues = {
+  personalId: "",
+  fullName: "",
+  memberNumber: "",
+  contactEmail: "",
+  address: "",
+  phoneNumber: "",
+};
 
 /**
  * The record the form starts from. A community-scoped response reads a member's
@@ -50,6 +64,13 @@ export function validateRecord(values: MemberRecordValues): MemberRecordErrors {
   return errors;
 }
 
+/** The record's rules, plus the personal ID, which a registration requires. */
+export function validateRegistration(values: RegistrationValues): MemberRecordErrors {
+  const errors = validateRecord(values);
+  if (values.personalId.trim() === "") errors.personalId = "Escribe el DNI/NIE";
+  return errors;
+}
+
 const orNull = (value: string) => value.trim() || null;
 
 /**
@@ -66,6 +87,15 @@ export function recordBodyOf(values: MemberRecordValues): UpdateMemberRecordBody
     address: orNull(values.address),
     phoneNumber: orNull(values.phoneNumber),
   };
+}
+
+/**
+ * The whole registration, as recordBodyOf sends a record, plus the personal ID.
+ * The ID goes as typed: the backend normalises it, so dots, hyphens or a lower
+ * case letter are not mistakes to point out.
+ */
+export function registrationBodyOf(values: RegistrationValues): RegisterMemberBody {
+  return { personalId: values.personalId.trim(), ...recordBodyOf(values) };
 }
 
 /**
@@ -98,5 +128,24 @@ export function refusalOf(error: unknown): MemberRecordRefusal {
       return { form: getFirstApiErrorMessage(error, "Revisa los datos de la ficha.") };
     default:
       return { form: "No se ha podido guardar la ficha. Inténtalo de nuevo." };
+  }
+}
+
+/**
+ * Where a refused registration is shown. Every refusal is for the whole form:
+ * MEMBERSHIP_ALREADY_EXISTS is about the person, not one field, and the
+ * backend's validation errors name no field.
+ */
+export function registrationRefusalOf(error: unknown): MemberRecordRefusal {
+  if (getFirstApiErrorCode(error) === "MEMBERSHIP_ALREADY_EXISTS") {
+    return { form: getFirstApiErrorMessage(error, "Esta persona ya es miembro de la comunidad.") };
+  }
+  switch (statusOf(error)) {
+    case 403:
+      return { form: "No tienes permiso para registrar miembros en esta comunidad." };
+    case 400:
+      return { form: getFirstApiErrorMessage(error, "Revisa los datos del miembro.") };
+    default:
+      return { form: "No se ha podido registrar al miembro. Inténtalo de nuevo." };
   }
 }

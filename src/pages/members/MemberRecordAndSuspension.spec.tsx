@@ -112,7 +112,6 @@ function serve(
     { method: "GET", url: "/api/v1/communities", respond: () => [COMMUNITY] },
     { method: "GET", url: COMMUNITY_URL, respond: () => COMMUNITY },
     { method: "GET", url: ROSTER_URL, respond: () => roster.current },
-    { method: "GET", url: "/api/v1/users", respond: () => ({ items: [] }) },
     {
       method: "PUT",
       url: /\/memberships\/[^/]+\/record$/,
