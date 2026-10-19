@@ -297,7 +297,17 @@ export const MembersPage: FC = () => {
               it -- never disabled, which would advertise something the caller
               cannot do. The action carries its own community, so there is no
               longer a "no community selected" case to disable for either. */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+          {/* Three actions do not fit one row at phone width: stacked there, in
+              the order they read, and in a row from sm up. */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "flex-end",
+              alignItems: { xs: "stretch", sm: "center" },
+              gap: 2,
+            }}
+          >
             {importUsers && (
               <Button
                 variant="outlined"
