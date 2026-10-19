@@ -296,7 +296,7 @@ describe("inviting an admin", () => {
     return screen.findByRole("dialog", { name: `Invitar administrador a ${COMMUNITY_NAME}` });
   };
   const FORM = {
-    "DNI/NIE": "12.345.678-z",
+    "DNI/NIE/NIF": "12.345.678-z",
     "Nombre completo": "Nora Nueva",
     "Email de contacto": "nora@example.com",
     Teléfono: "622 333 444",
@@ -337,7 +337,7 @@ describe("inviting an admin", () => {
     const router = serveAdminsPage({ current: [ROSA] }, { invite: () => admin("u-nora", "Nora Nueva", NEW_LINK) });
     renderPage();
     await openForm(u);
-    await fill(u, { "DNI/NIE": "12345678Z", "Nombre completo": "Nora Nueva", "Email de contacto": "nora@example.com" });
+    await fill(u, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nora Nueva", "Email de contacto": "nora@example.com" });
     await u.click(screen.getByRole("button", { name: "Invitar" }));
 
     await waitFor(() => expect(requestsTo(router, "POST", INVITE_URL)).toHaveLength(1));
@@ -345,7 +345,7 @@ describe("inviting an admin", () => {
   });
 
   it.each([
-    ["DNI/NIE", "Escribe el DNI/NIE"],
+    ["DNI/NIE/NIF", "Escribe el DNI/NIE"],
     ["Nombre completo", "Escribe el nombre completo"],
     ["Email de contacto", "Escribe el email de contacto"],
   ])("UI-ADM-003 requires the %s and sends nothing without it", async (missing, message) => {
@@ -400,7 +400,7 @@ describe("inviting an admin", () => {
     await fill(u, FORM);
     await u.click(screen.getByRole("button", { name: "Invitar" }));
 
-    const personalId = await within(dialog).findByRole("textbox", { name: /^DNI\/NIE/ });
+    const personalId = await within(dialog).findByRole("textbox", { name: /^DNI\/NIE\/NIF/ });
     await waitFor(() => expect(personalId).toHaveAttribute("aria-invalid", "true"));
     expect(personalId).toHaveAccessibleDescription("El DNI/NIE/NIF no es válido. Revisa los números y la letra.");
     expect(personalId).toHaveValue("12.345.678-z");

@@ -109,7 +109,7 @@ test.describe("Visual baselines", () => {
     await page.getByRole("button", { name: "Registrar miembro" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("heading", { name: /^Registrar miembro en/ })).toBeVisible();
-    await expect(dialog.getByLabel(/^DNI\/NIE/)).toBeEditable();
+    await expect(dialog.getByLabel(/^DNI\/NIE\/NIF/)).toBeEditable();
     await expect(dialog.getByLabel(/^Teléfono/)).toBeVisible();
     await stabilizePage(page);
 

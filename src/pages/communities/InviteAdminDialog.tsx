@@ -79,7 +79,7 @@ export const InviteAdminDialog: FC<InviteAdminDialogProps> = ({ communityName, i
             acepte la invitación.
           </Alert>
           <TextField
-            label="DNI/NIE"
+            label="DNI/NIE/NIF"
             required
             value={values.personalId}
             onChange={(event) => change("personalId", event.target.value)}

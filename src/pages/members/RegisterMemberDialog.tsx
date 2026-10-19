@@ -142,7 +142,7 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
             Registrarle no le envía nada. Quedará pendiente hasta que le invites y acepte la invitación.
           </Alert>
           <TextField
-            label="DNI/NIE"
+            label="DNI/NIE/NIF"
             required
             value={values.personalId}
             onChange={(event) => change("personalId", event.target.value)}
