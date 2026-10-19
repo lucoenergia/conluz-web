@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import type { ImportMembersResponse } from "../../src/api/models";
 import {
   test,
   expect,
@@ -114,6 +115,114 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(dialog).toHaveScreenshot("member-register-dialog.png", await hideAppBar(page));
+  });
+
+  test.describe("member import dialog", () => {
+    // The import answered as the backend would, registered last so it wins
+    // over the fixtures. What the dialog shows for each answer is asserted in
+    // Vitest (MemberImport.spec.tsx); these capture only the layout.
+    async function openImport(page: Page, answer?: { status: number; body: unknown }) {
+      await injectAuthToken(page);
+      await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+      await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+      await mockCommunityManagementRoutes(page);
+      if (answer) {
+        await page.route(
+          (url) => /\/api\/v1\/communities\/[^/]+\/memberships\/import$/.test(url.href),
+          (route) =>
+            route.request().method() === "POST"
+              ? route.fulfill({ status: answer.status, contentType: "application/json", body: JSON.stringify(answer.body) })
+              : route.continue(),
+        );
+      }
+
+      await page.goto("/members");
+      await page.getByRole("button", { name: "Importar miembros" }).click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog.getByRole("heading", { name: /^Importar miembros en/ })).toBeVisible();
+      return dialog;
+    }
+
+    async function importFile(dialog: ReturnType<Page["getByRole"]>) {
+      await dialog.getByLabel("Seleccionar archivo CSV").setInputFiles({
+        name: "miembros.csv",
+        mimeType: "text/csv",
+        buffer: Buffer.from("personalId;fullName\r\n"),
+      });
+      await dialog.getByRole("button", { name: "Importar", exact: true }).click();
+    }
+
+    // The column guide: six stacked entries with a monospace header, a
+    // requirement label and an example each, at 390 px, which is where wrapping
+    // and spacing can break. The list itself, not the dialog: its content
+    // scrolls, and at phone width the notes above would fill the capture. The
+    // notes are in the refusal's capture.
+    test("guide", async ({ page }) => {
+      const dialog = await openImport(page);
+      const columns = dialog.getByRole("list", { name: "Columnas del archivo" });
+      await expect(columns.getByRole("listitem")).toHaveCount(6);
+      await stabilizePage(page);
+
+      await expect(columns).toHaveScreenshot("member-import-dialog.png", await hideAppBar(page));
+    });
+
+    // A result with failed rows: long reasons built from several broken rules,
+    // in a scrolling list, where wrapping is what can break.
+    test("result with failed rows", async ({ page }) => {
+      const result: ImportMembersResponse = {
+        registered: 2,
+        failed: 3,
+        rows: [
+          { line: 2, outcome: "REGISTERED", code: null, message: null, errors: [] },
+          { line: 3, outcome: "REGISTERED", code: null, message: null, errors: [] },
+          {
+            line: 4,
+            outcome: "FAILED",
+            code: "MEMBERSHIP_IMPORT_ROW_INVALID",
+            message: "invalid",
+            errors: [
+              { column: "fullName", constraint: "REQUIRED", params: {} },
+              { column: "memberNumber", constraint: "NOT_AN_INTEGER", params: {} },
+              { column: "contactEmail", constraint: "EMAIL", params: {} },
+            ],
+          },
+          { line: 5, outcome: "FAILED", code: "MEMBERSHIP_ALREADY_EXISTS", message: "exists", errors: [] },
+          {
+            line: 6,
+            outcome: "FAILED",
+            code: "USER_PERSONAL_ID_INVALID",
+            message: "invalid",
+            errors: [{ column: "personalId", constraint: "INVALID_PERSONAL_ID", params: {} }],
+          },
+        ],
+      };
+      const dialog = await openImport(page, { status: 200, body: result });
+      await importFile(dialog);
+      await expect(dialog.getByRole("list", { name: "Filas no registradas" }).getByRole("listitem")).toHaveCount(3);
+      await stabilizePage(page);
+
+      await expect(dialog).toHaveScreenshot("member-import-result-failed-rows.png", await hideAppBar(page));
+    });
+
+    // A whole-file refusal listing headers: an error alert above the guide,
+    // where a long header list can wrap.
+    test("whole-file refusal", async ({ page }) => {
+      const dialog = await openImport(page, {
+        status: 400,
+        body: {
+          status: 400,
+          message: "refused",
+          errors: [
+            { message: "refused", code: "MEMBERSHIP_IMPORT_UNKNOWN_HEADERS", params: { headers: "email,role,password" } },
+          ],
+        },
+      });
+      await importFile(dialog);
+      await expect(dialog.getByText(/Estas columnas no se reconocen: «email», «role», «password»/)).toBeVisible();
+      await stabilizePage(page);
+
+      await expect(dialog).toHaveScreenshot("member-import-refused.png", await hideAppBar(page));
+    });
   });
 
   test("integrations page", async ({ page }) => {

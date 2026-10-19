@@ -59,6 +59,17 @@ function withOptionalCups(full: (cups: string) => string, generic: string): ApiE
   };
 }
 
+/** `full` gets `params.headers` (comma-separated) as «a», «b»; without any, `generic`. */
+function withHeaders(full: (headers: string) => string, generic: string): ApiErrorTemplate {
+  return (params) => {
+    const headers = (params?.headers ?? "")
+      .split(",")
+      .map((header) => header.trim())
+      .filter(Boolean);
+    return headers.length > 0 ? full(headers.map((header) => `«${header}»`).join(", ")) : generic;
+  };
+}
+
 const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, ApiErrorTemplate>> = {
   SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, así que esta acción no está disponible.",
   SHARING_AGREEMENT_HAS_NO_COEFFICIENTS:
@@ -198,6 +209,32 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // Removing a member who owns supplies in the community (lucoenergia/conluz#412).
   MEMBERSHIP_OWNS_SUPPLIES:
     "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+
+  // A member import refused as a whole (lucoenergia/conluz#397; #284). Function
+  // templates where the code carries params, so an absent one degrades to a
+  // sentence without the list or the limit rather than a literal placeholder.
+  MEMBERSHIP_IMPORT_INVALID_ENCODING:
+    "No se ha podido leer el archivo. Guárdalo desde Excel como «CSV UTF-8» o «CSV (delimitado por punto y coma)»; «Texto Unicode» no sirve.",
+  MEMBERSHIP_IMPORT_AMBIGUOUS_SEPARATOR:
+    "No se ha podido saber si las columnas se separan con «;» o con «,». Usa un solo separador, como en la plantilla.",
+  MEMBERSHIP_IMPORT_MALFORMED_FILE:
+    "El archivo no es un CSV válido. Revisa que no haya comillas sin cerrar.",
+  MEMBERSHIP_IMPORT_UNKNOWN_HEADERS: withHeaders(
+    (headers) => `Estas columnas no se reconocen: ${headers}. Usa las cabeceras de la plantilla, con las mismas mayúsculas.`,
+    "Hay columnas que no se reconocen. Usa las cabeceras de la plantilla, con las mismas mayúsculas.",
+  ),
+  MEMBERSHIP_IMPORT_DUPLICATED_HEADERS: withHeaders(
+    (headers) => `Estas columnas aparecen más de una vez: ${headers}. Deja cada una solo una vez.`,
+    "Hay columnas que aparecen más de una vez. Deja cada una solo una vez.",
+  ),
+  MEMBERSHIP_IMPORT_MISSING_HEADERS: withHeaders(
+    (headers) => `Faltan estas columnas obligatorias: ${headers}.`,
+    "Faltan columnas obligatorias. Usa las cabeceras de la plantilla.",
+  ),
+  MEMBERSHIP_IMPORT_TOO_MANY_ROWS: (params) =>
+    params?.maxRows
+      ? `El archivo tiene más de ${params.maxRows} filas. Divídelo en varios archivos.`
+      : "El archivo tiene demasiadas filas. Divídelo en varios archivos.",
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

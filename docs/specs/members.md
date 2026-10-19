@@ -5,17 +5,18 @@
 | **Prefix** | `UI-MBR` |
 | **Status** | Active |
 | **Routes** | `/members` |
-| **Roles** | A caller whose active community carries `canManageMemberships`; registration, invitations and the bulk send need their own capabilities (UI-MBR-008, UI-MBR-012, UI-MBR-013) |
-| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, ACC-003, ACC-008, ACC-010 |
+| **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the bulk send need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-013) |
+| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #276 |
+| **Last reviewed against code** | #284 |
 
 ## Purpose
 
-Let an admin of a community keep its roster: register members and invite them to join, see which
-members are still pending and where their invitation stands, correct the record the community
-keeps on each member, and suspend or reactivate a member's access to the community. This document
-covers only the rules #272, #275 and #276 introduced; the rest of the members page is not covered yet.
+Let an admin of a community keep its roster: register members, one by one or from a CSV file, and
+invite them to join, see which members are still pending and where their invitation stands, correct
+the record the community keeps on each member, and suspend or reactivate a member's access to the
+community. This document
+covers only the rules #272, #275, #276 and #284 introduced; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -269,6 +270,107 @@ covers only the rules #272, #275 and #276 introduced; the rest of the members pa
 - **Implements:** ACC-010
 - **Source:** #276 (maintainer decision; lucoenergia/conluz#398)
 
+### UI-MBR-018 — The import is offered from canRegisterMembers
+
+- **Status:** Active
+- **Rule:** "Importar miembros" MUST be offered when the active community's
+  `capabilities.canRegisterMembers` is true, and only then; a capability absent from the payload MUST
+  count as false.
+- **Rationale:** The import registers each row as a registration does, for the same callers, and no
+  capability names the import itself. `canCreateUsers` gated the legacy user import, which created
+  accounts rather than memberships; it is not the answer for this one.
+- **Implements:** MEM-030
+- **Source:** #284
+
+### UI-MBR-019 — The dialog explains each column and offers a header-only template
+
+- **Status:** Active
+- **Rule:**
+  - The import dialog MUST list each accepted column with its header exactly as the file names it
+    (in English, with its case), what it means, whether it is required, and an example.
+  - It MUST offer a template to download, `plantilla-miembros.csv`: a UTF-8 byte order mark followed by
+    the header line alone, with the columns separated by `;`.
+- **Rationale:** The header is the parser's name for the column, so translating it would make the
+  admin write a header the backend refuses. A template with an example row would register that
+  example whenever an admin forgot to delete it. The byte order mark makes Excel open the template
+  as UTF-8, so accented names typed into it survive.
+- **Implements:** MEM-030
+- **Source:** #284 (maintainer decision on the template)
+
+### UI-MBR-020 — The dialog states what the import does and accepts
+
+- **Status:** Active
+- **Rule:** Before the import, the dialog MUST say that importing registers members and sends
+  nothing, and that invitations are sent afterwards one by one or with "Enviar invitaciones
+  pendientes"; that spaces, dots and hyphens in the DNI/NIE/NIF are ignored; that both Excel exports,
+  "CSV UTF-8" and "CSV (delimitado por punto y coma)", are accepted and "Texto Unicode" is not; that a
+  file holds at most 1000 members; and that importing the same file again is safe.
+- **Rationale:** Each answers a question an admin preparing a file would otherwise answer by trial:
+  whether the members are emailed, whether the DNI must be retyped, which "Guardar como" choice to
+  make, how large a file may be, and whether retrying after a partial failure duplicates anyone.
+- **Implements:** MEM-030
+- **Source:** #284 (maintainer decision on the encoding note)
+
+### UI-MBR-021 — The import sends the file and cannot be interrupted
+
+- **Status:** Active
+- **Rule:**
+  - The import MUST send the chosen file as the `file` part of a multipart request to `importMembers`,
+    and MUST NOT send `POST /api/v1/users/import`.
+  - While the request runs, the dialog MUST show that it is importing and MUST NOT be closable.
+- **Rationale:** The legacy user import created accounts with passwords from the file and is being
+  retired (lucoenergia/conluz#329). An import of many rows takes several seconds, and closing the
+  dialog meanwhile would hide a result that cannot be asked for again.
+- **Implements:** MEM-030
+- **Source:** #284
+
+### UI-MBR-022 — A file refused as a whole says why, and that nothing was registered
+
+- **Status:** Active
+- **Rule:**
+  - Each whole-file refusal code MUST have its own message. The header codes MUST list the headers in
+    `params.headers`, and `MEMBERSHIP_IMPORT_TOO_MANY_ROWS` MUST state `params.maxRows`.
+  - Each MUST say that no member was registered, and the dialog MUST keep the chosen file.
+  - Any other failure MUST say only that the import failed.
+- **Rationale:** Each refusal calls for a different correction to the file, and the admin needs to
+  know it is safe to send it again. A failure that is not the file's, such as a dropped connection,
+  does not tell whether anything was registered, so the dialog does not claim it.
+- **Implements:** MEM-030
+- **Source:** #284
+
+### UI-MBR-023 — Each failed row gives its line and a reason in Spanish
+
+- **Status:** Active
+- **Rule:**
+  - The result MUST say how many members were registered and how many rows failed, and MUST list each
+    failed row with its line number and its reason.
+  - The reason of a row refused for its values MUST be built from its `errors`: a Spanish label for
+    each column and a text for each constraint, with its `params`, every broken rule listed. A
+    constraint the page does not know MUST still name its column.
+  - The other row codes MUST have their own text.
+  - The server's `message` MUST NOT be shown.
+- **Rationale:** The server's message is in the request's language and words the rules its own way,
+  so it can read as a foreign error in a Spanish screen. The structured errors let the
+  page word every rule the way the rest of the screen does, and list all of them at once, so a row is
+  corrected in one pass.
+- **Implements:** MEM-030
+- **Source:** #284
+
+### UI-MBR-024 — After an import, the roster is refreshed and the bulk send is offered
+
+- **Status:** Active
+- **Rule:**
+  - After an import that succeeds, the roster MUST be refreshed.
+  - When at least one member was registered, the result MUST say that no invitation has been sent,
+    and MUST offer "Enviar invitaciones pendientes" when the active community's
+    `capabilities.canInviteMembers` is true. It MUST open the bulk send (UI-MBR-013), which asks for
+    confirmation before sending; the import dialog itself MUST NOT send anything.
+- **Rationale:** Registered members are pending until invited, and inviting is the step that
+  follows an import. Handing over to the bulk send keeps one place where invitations are sent in
+  bulk, with its confirmation and its batches.
+- **Implements:** MEM-012, MEM-030
+- **Source:** #284
+
 ## States
 
 The record dialog:
@@ -300,6 +402,15 @@ The bulk send dialog:
 | Some remain | How many were sent, and how many remain | Enviar las siguientes, Cerrar |
 | None remain | How many were sent, and that none remain | Cerrar |
 | Refused | The refusal | The same as before the request |
+
+The import dialog:
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Guide | The notes, the column guide, the template download and the file picker | Descargar plantilla, Seleccionar archivo CSV, Importar (once a file is chosen), Cancelar |
+| Importing | That the import is running | None; the dialog cannot be closed |
+| Refused | The guide, with the refusal and that nothing was registered, and the file still chosen | As in Guide |
+| Result | The counts, each failed row with its line and reason, and, with registered members, that nothing was sent | Importar otro archivo, Cerrar, and Enviar invitaciones pendientes with registered members and `canInviteMembers` |
 
 ## Accepted exceptions
 

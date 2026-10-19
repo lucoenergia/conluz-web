@@ -12,7 +12,7 @@ import {
   useCreateSupply,
 } from "../../api/supplies/supplies";
 import { useCreatePlant } from "../../api/plants/plants";
-import { getGetAllUsersQueryKey, useCreateUser, useCreateUsersWithFile } from "../../api/users/users";
+import { getGetAllUsersQueryKey, useCreateUser } from "../../api/users/users";
 import {
   getGetDatadisConfigQueryKey,
   getGetShellyConfigQueryKey,
@@ -68,7 +68,6 @@ vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useCreateUser: vi.fn(),
-  useCreateUsersWithFile: vi.fn(),
 }));
 vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -99,7 +98,6 @@ beforeEach(() => {
   vi.mocked(useCreateSuppliesWithFile).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreatePlant).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreateUser).mockReturnValue(mutation.idle({ mutateAsync }));
-  vi.mocked(useCreateUsersWithFile).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync }));
   enableDatadis = vi.fn().mockResolvedValue(undefined);
@@ -177,23 +175,11 @@ describe("useCommunityActions", () => {
       expect(result.current.actions.createUser).toBeUndefined();
     });
 
-    it("gates creating and importing users on canCreateUsers", () => {
+    it("gates creating users on canCreateUsers", () => {
       const { result } = render(communityWith({ canCreateUsers: true }));
 
       expect(result.current.actions.createUser).toBeDefined();
-      expect(result.current.actions.importUsers).toBeDefined();
       expect(result.current.actions.createSupply).toBeUndefined();
-    });
-
-    it("scopes an import to the community it was handed", async () => {
-      const { result } = render(communityWith({ canCreateUsers: true }));
-
-      await result.current.actions.importUsers?.run(IMPORT_BODY);
-
-      expect(mutateAsync).toHaveBeenCalledWith({
-        data: IMPORT_BODY,
-        params: { communityId: COMMUNITY_ID },
-      });
     });
 
     it("scopes a supply import to the community it was handed", async () => {

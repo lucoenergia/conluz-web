@@ -16,7 +16,8 @@ import {
   useUpdateSharingAgreement,
   useUploadSharingAgreementFile,
 } from "../../api/sharing-agreements/sharing-agreements";
-import { downloadSharingAgreementFile, triggerBrowserDownload } from "../../components/SharingAgreementFilePanel/downloadSharingAgreementFile";
+import { downloadSharingAgreementFile } from "../../components/SharingAgreementFilePanel/downloadSharingAgreementFile";
+import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 
 const mockErrorDispatch = vi.fn();
 const mockSuccessDispatch = vi.fn();
@@ -53,6 +54,8 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 vi.mock(import("../../components/SharingAgreementFilePanel/downloadSharingAgreementFile"), async (importOriginal) => ({
   ...(await importOriginal()),
   downloadSharingAgreementFile: vi.fn(),
+}));
+vi.mock(import("../../utils/triggerBrowserDownload"), () => ({
   triggerBrowserDownload: vi.fn(),
 }));
 
