@@ -1,4 +1,9 @@
-import type { MembershipResponse, RegisterMemberBody, UpdateMemberRecordBody } from "../../api/models";
+import type {
+  InviteCommunityAdminBody,
+  MembershipResponse,
+  RegisterMemberBody,
+  UpdateMemberRecordBody,
+} from "../../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 import { isValidEmail } from "../../utils/email";
 
@@ -15,6 +20,13 @@ export interface MemberRecordValues {
 export interface RegistrationValues extends MemberRecordValues {
   personalId: string;
 }
+
+/**
+ * An admin invitation: the personal ID and the part of the record the invite
+ * endpoint takes, the contact email required since the invitation goes to it
+ * (#276).
+ */
+export type AdminInvitationValues = Pick<RegistrationValues, "personalId" | "fullName" | "contactEmail" | "phoneNumber">;
 
 export type MemberRecordField = keyof RegistrationValues;
 
@@ -71,6 +83,24 @@ export function validateRegistration(values: RegistrationValues): MemberRecordEr
   return errors;
 }
 
+export const EMPTY_ADMIN_INVITATION: AdminInvitationValues = {
+  personalId: "",
+  fullName: "",
+  contactEmail: "",
+  phoneNumber: "",
+};
+
+/** The invitation's rules: the personal ID, the name and a valid contact email. */
+export function validateAdminInvitation(values: AdminInvitationValues): MemberRecordErrors {
+  const errors: MemberRecordErrors = {};
+  if (values.personalId.trim() === "") errors.personalId = "Escribe el DNI/NIE";
+  if (values.fullName.trim() === "") errors.fullName = "Escribe el nombre completo";
+  const email = values.contactEmail.trim();
+  if (email === "") errors.contactEmail = "Escribe el email de contacto";
+  else if (!isValidEmail(email)) errors.contactEmail = "Introduce un email válido";
+  return errors;
+}
+
 const orNull = (value: string) => value.trim() || null;
 
 /**
@@ -96,6 +126,19 @@ export function recordBodyOf(values: MemberRecordValues): UpdateMemberRecordBody
  */
 export function registrationBodyOf(values: RegistrationValues): RegisterMemberBody {
   return { personalId: values.personalId.trim(), ...recordBodyOf(values) };
+}
+
+/**
+ * The whole invitation, the personal ID as typed as registrationBodyOf sends
+ * it, and an empty phone as null, which the endpoint records as none.
+ */
+export function adminInvitationBodyOf(values: AdminInvitationValues): InviteCommunityAdminBody {
+  return {
+    personalId: values.personalId.trim(),
+    fullName: values.fullName.trim(),
+    contactEmail: values.contactEmail.trim(),
+    phoneNumber: orNull(values.phoneNumber),
+  };
 }
 
 /**
@@ -132,11 +175,27 @@ export function refusalOf(error: unknown): MemberRecordRefusal {
 }
 
 /**
- * Where a refused registration is shown. Every refusal is for the whole form:
+ * A personal ID the backend refused as no valid DNI, NIE or NIF
+ * (lucoenergia/conluz#398), on the field it is about. Shared by the member
+ * registration and the admin invitation, which both ask for it (#276).
+ */
+function personalIdRefusalOf(error: unknown): MemberRecordRefusal | undefined {
+  if (getFirstApiErrorCode(error) !== "USER_PERSONAL_ID_INVALID") return undefined;
+  return {
+    field: "personalId",
+    message: getFirstApiErrorMessage(error, "El DNI/NIE/NIF no es válido. Revisa los números y la letra."),
+  };
+}
+
+/**
+ * Where a refused registration is shown. USER_PERSONAL_ID_INVALID goes on the
+ * personal ID. Every other refusal is for the whole form:
  * MEMBERSHIP_ALREADY_EXISTS is about the person, not one field, and the
  * backend's validation errors name no field.
  */
 export function registrationRefusalOf(error: unknown): MemberRecordRefusal {
+  const personalId = personalIdRefusalOf(error);
+  if (personalId) return personalId;
   if (getFirstApiErrorCode(error) === "MEMBERSHIP_ALREADY_EXISTS") {
     return { form: getFirstApiErrorMessage(error, "Esta persona ya es miembro de la comunidad.") };
   }
@@ -147,5 +206,32 @@ export function registrationRefusalOf(error: unknown): MemberRecordRefusal {
       return { form: getFirstApiErrorMessage(error, "Revisa los datos del miembro.") };
     default:
       return { form: "No se ha podido registrar al miembro. Inténtalo de nuevo." };
+  }
+}
+
+/**
+ * Where a refused admin invitation is shown (#276): the personal ID on its
+ * field, as in a registration; the person already being in the community and
+ * invitations being unavailable for the whole form, since nothing was created
+ * or sent and no field is wrong.
+ */
+export function adminInvitationRefusalOf(error: unknown): MemberRecordRefusal {
+  const personalId = personalIdRefusalOf(error);
+  if (personalId) return personalId;
+  switch (getFirstApiErrorCode(error)) {
+    case "MEMBERSHIP_ALREADY_EXISTS":
+      return { form: getFirstApiErrorMessage(error, "Esta persona ya es miembro de la comunidad.") };
+    case "MEMBERSHIP_INVITATION_UNAVAILABLE":
+      return {
+        form: getFirstApiErrorMessage(error, "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde."),
+      };
+  }
+  switch (statusOf(error)) {
+    case 403:
+      return { form: "No tienes permiso para invitar administradores en esta comunidad." };
+    case 400:
+      return { form: getFirstApiErrorMessage(error, "Revisa los datos del administrador.") };
+    default:
+      return { form: "No se ha podido invitar al administrador. Inténtalo de nuevo." };
   }
 }

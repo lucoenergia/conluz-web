@@ -330,6 +330,14 @@ describe("integration enable refusals (*_CONFIG_INCOMPLETE)", () => {
   );
 });
 
+describe("personal ID refusals (#276)", () => {
+  it("translates USER_PERSONAL_ID_INVALID", () => {
+    expect(translateErrorDetail({ message: "raw", code: "USER_PERSONAL_ID_INVALID" }, "fallback")).toBe(
+      "El DNI/NIE/NIF no es válido. Revisa los números y la letra.",
+    );
+  });
+});
+
 describe("member registration and invitation refusals (#275)", () => {
   it.each([
     ["MEMBERSHIP_ALREADY_EXISTS", "Esta persona ya es miembro de la comunidad."],

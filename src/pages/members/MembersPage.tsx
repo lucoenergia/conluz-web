@@ -5,13 +5,11 @@ import {
   Box,
   Typography,
   Paper,
-  Chip,
   Alert,
   Button,
   Avatar,
   MenuItem,
   Select,
-  Stack,
   FormControl,
   InputLabel,
   Dialog,
@@ -52,15 +50,12 @@ import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResour
 import {
   useCommunityActions,
   useMembershipActions,
-  type Action,
-  type MembershipRowActions,
 } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useErrorDispatch } from "../../context/error.context";
 import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
-import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 import { invitationRefusalMessage, removalRefusalMessage } from "../../errors/membershipErrors";
 import { MemberRecordDialog } from "./MemberRecordDialog";
 import { RegisterMemberDialog } from "./RegisterMemberDialog";
@@ -68,58 +63,17 @@ import { SendPendingInvitationsDialog } from "./SendPendingInvitationsDialog";
 import { InvitationActionDialog, type InvitationWriteKind } from "./InvitationActionDialog";
 import {
   invitationActionsFor,
-  invitationStateOf,
+  invitationText,
   statusOf,
+  statusToggleFor,
   type InvitationActions,
-  type MembershipStatus,
 } from "./membershipStatus";
+import { MembershipStatusCell, MembershipStatusChip } from "./MembershipStatusCell";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
   [MembershipResponseRole.COMMUNITY_ADMIN]: "Administrador",
 };
-
-type StatusToggle = { action: Action<[], boolean>; isSuspending: boolean } | undefined;
-
-/**
- * Suspend or reactivate, never both. A caller who may do either is granted
- * both canEnable and canDisable, so the membership's own `enabled` picks the
- * one that applies -- resolved once, so the menu item, its confirmation and
- * the handler cannot disagree about which was chosen.
- */
-function statusToggleFor(
-  membership: MembershipResponse | null | undefined,
-  actions: MembershipRowActions["actions"],
-): StatusToggle {
-  if (!membership) return undefined;
-  if (membership.enabled) return actions.disable && { action: actions.disable, isSuspending: true };
-  return actions.enable && { action: actions.enable, isSuspending: false };
-}
-
-const STATUS_CHIPS: Record<MembershipStatus, { label: string; color: "success" | "warning" | "error" }> = {
-  active: { label: "Activo", color: "success" },
-  pending: { label: "Pendiente", color: "warning" },
-  suspended: { label: "Suspendido", color: "error" },
-};
-
-const MembershipStatusChip: FC<{ membership: MembershipResponse }> = ({ membership }) => {
-  const { label, color } = STATUS_CHIPS[statusOf(membership)];
-  return <Chip label={label} color={color} size="small" sx={{ fontWeight: 600 }} />;
-};
-
-/** Where a pending membership's invitation stands, or null once it is accepted (#275). */
-function invitationText(membership: MembershipResponse): string | null {
-  const state = invitationStateOf(membership);
-  if (!state) return null;
-  switch (state.kind) {
-    case "never":
-      return "Sin invitar";
-    case "active":
-      return `Enlace activo hasta el ${formatCalendarDate(state.expiresAt, SHORT_CALENDAR_DATE)}`;
-    case "lapsed":
-      return "Enlace caducado o revocado";
-  }
-}
 
 const INVITATION_ITEMS: { kind: InvitationWriteKind; key: keyof InvitationActions; label: string }[] = [
   { kind: "invite", key: "invite", label: "Invitar" },
@@ -416,19 +370,7 @@ export const MembersPage: FC = () => {
                 {
                   key: "status",
                   header: "Estado",
-                  render: (membership) => {
-                    const invitation = invitationText(membership);
-                    return (
-                      <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
-                        <MembershipStatusChip membership={membership} />
-                        {invitation && (
-                          <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                            {invitation}
-                          </Typography>
-                        )}
-                      </Stack>
-                    );
-                  },
+                  render: (membership) => <MembershipStatusCell membership={membership} />,
                 },
               ]}
             />

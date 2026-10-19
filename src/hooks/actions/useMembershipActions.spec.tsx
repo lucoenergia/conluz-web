@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  useCreateMembership,
   useDeleteMembership,
   useDisableMembership,
   useEnableMembership,
@@ -37,7 +36,6 @@ import { useMembershipActions } from "./useMembershipActions";
 
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useCreateMembership: vi.fn(),
   useDeleteMembership: vi.fn(),
   useUpdateMembershipRole: vi.fn(),
   useSetMembershipInvestment: vi.fn(),
@@ -70,7 +68,6 @@ let mutateAsync: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);
-  vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useDeleteMembership).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useSetMembershipInvestment).mockReturnValue(mutation.idle({ mutateAsync }));
@@ -146,21 +143,6 @@ describe("useMembershipActions", () => {
       // Sharing one mutation instance must not leak a grant sideways.
       expect(result.current.actions.changeRole).toBeUndefined();
     });
-
-    it("withholds the roster action when the community permits no membership management", () => {
-      const { result } = renderHookWithProviders(() => useMembershipActions(communityWith({})));
-
-      expect(result.current.actions.add).toBeUndefined();
-      expect(result.current.outcomes.add).toEqual({ state: "denied" });
-    });
-
-    it("hands back the roster action when the community permits it", () => {
-      const { result } = renderHookWithProviders(() =>
-        useMembershipActions(communityWith({ canManageMemberships: true })),
-      );
-
-      expect(result.current.actions.add).toBeDefined();
-    });
   });
 
   describe("a resource that has not arrived is pending, not a denial", () => {
@@ -174,14 +156,6 @@ describe("useMembershipActions", () => {
       expect(result.current.outcomes.editRecord).toEqual({ state: "pending" });
       expect(result.current.outcomes.enable).toEqual({ state: "pending" });
       expect(result.current.outcomes.disable).toEqual({ state: "pending" });
-      expect(mutateAsync).not.toHaveBeenCalled();
-    });
-
-    it("withholds the roster action and reports pending while the community is undefined", () => {
-      const { result } = renderHookWithProviders(() => useMembershipActions(undefined));
-
-      expect(result.current.actions.add).toBeUndefined();
-      expect(result.current.outcomes.add).toEqual({ state: "pending" });
       expect(mutateAsync).not.toHaveBeenCalled();
     });
   });
@@ -206,18 +180,6 @@ describe("useMembershipActions", () => {
         communityId: COMMUNITY_ID,
         userId: USER_ID,
         data: { role: "COMMUNITY_ADMIN" },
-      });
-    });
-
-    it("adds a membership with the community the hook was given", async () => {
-      const { result } = renderHookWithProviders(() =>
-        useMembershipActions(communityWith({ canManageMemberships: true })),
-      );
-
-      await result.current.actions.add?.run({ userId: USER_ID, role: "COMMUNITY_MEMBER" });
-      expect(mutateAsync).toHaveBeenCalledWith({
-        communityId: COMMUNITY_ID,
-        data: { userId: USER_ID, role: "COMMUNITY_MEMBER" },
       });
     });
 

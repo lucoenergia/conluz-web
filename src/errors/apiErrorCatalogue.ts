@@ -152,6 +152,11 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   USER_PASSWORD_UNCHANGED: PASSWORD_UNCHANGED_MESSAGE,
   USER_PASSWORD_CHANGE_REQUIRED: "Por seguridad, debes cambiar tu contraseña antes de continuar.",
 
+  // A DNI/NIE/NIF whose format or control letter is wrong
+  // (lucoenergia/conluz#398). The member registration and the admin invitation
+  // show it on the DNI field (#276).
+  USER_PERSONAL_ID_INVALID: "El DNI/NIE/NIF no es válido. Revisa los números y la letra.",
+
   // A Datadis save that omits the password when none is stored
   // (lucoenergia/conluz#404). The form shows it on the password field (#245).
   DATADIS_CONFIG_PASSWORD_REQUIRED:

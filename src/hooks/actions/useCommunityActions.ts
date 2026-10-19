@@ -21,7 +21,17 @@ import {
   useDisableDatadisConfig,
   useEnableDatadisConfig,
 } from "../../api/consumption/consumption";
+import {
+  getGetCommunityAdminsQueryKey,
+  useDisableCommunityAdmin,
+  useEnableCommunityAdmin,
+  useInviteCommunityAdmin,
+  useResendCommunityAdminInvitation,
+  useRevokeCommunityAdminInvitation,
+} from "../../api/memberships/memberships";
+import { getGetCurrentUserQueryKey } from "../../api/users/users";
 import type {
+  CommunityAdminResponse,
   CommunityResponse,
   ConfigureDatadisBody,
   CreationInBulkResponse,
@@ -32,13 +42,18 @@ import type {
   CreateSupplyBody,
   CreateUserBody,
   CreateUsersWithFileBody,
+  InviteCommunityAdminBody,
   PlantResponse,
+  RestErrorDetailCode,
   SupplyResponse,
   UpdateCommunityBody,
   UserResponse,
 } from "../../api/models";
-import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
+import { getFirstApiErrorCode } from "../../errors/apiErrorCatalogue";
+import { STALE_ROW_CODES } from "../../errors/membershipErrors";
+import { outcomeFromResource, PENDING, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
+import type { MembershipWriteResult } from "./useMembershipActions";
 
 /**
  * What the caller may do in one community -- including the things that have no
@@ -59,6 +74,12 @@ import { grant, type MaybeAction } from "./action";
  *   Datadis and Shelly configuration". `enableDatadis` and `disableDatadis` are
  *   an opposite pair, both handed over to a caller who may do either; the
  *   stored `enabled` picks which one applies.
+ *
+ * A community's admins are managed here too (#276), on `canManageAdmins`, a
+ * platform-wide decision: being a community admin does not confer it. Their
+ * rows carry no capabilities of their own, so every admin action is the
+ * community's answer, and whether it applies right now is the row's state,
+ * which the screen reads.
  *
  * The Huawei configuration is NOT here. Its endpoint is plant-scoped, so it
  * lives in usePlantActions, and its form on plant detail (#192).
@@ -92,13 +113,33 @@ export interface CommunityRowActions {
     configureShelly: MaybeAction<[ConfigureShellyBody], boolean>;
     enableDatadis: MaybeAction<[], DatadisToggleResult>;
     disableDatadis: MaybeAction<[], DatadisToggleResult>;
+    inviteAdmin: MaybeAction<[InviteCommunityAdminBody], MembershipWriteResult<CommunityAdminResponse>>;
   };
   outcomes: Record<keyof CommunityRowActions["actions"], CapabilityOutcome>;
+}
+
+/** What the caller may do to one admin of a community, by the names useMembershipActions gives a member's. */
+export interface CommunityAdminRowActions {
+  actions: {
+    resendInvitation: MaybeAction<[], MembershipWriteResult<CommunityAdminResponse>>;
+    revokeInvitation: MaybeAction<[], MembershipWriteResult<CommunityAdminResponse>>;
+    enable: MaybeAction<[], boolean>;
+    disable: MaybeAction<[], boolean>;
+  };
+  outcomes: Record<keyof CommunityAdminRowActions["actions"], CapabilityOutcome>;
 }
 
 export interface CommunityActions {
   /** See useMembershipActions for why this is a plain function and not a hook. */
   forCommunity: (community: CommunityResponse | undefined) => CommunityRowActions;
+  /**
+   * The per-row gate of a community's admins page: the community's
+   * `canManageAdmins`, asked once per admin row, which names whom to act on.
+   */
+  forCommunityAdmin: (
+    community: CommunityResponse | undefined,
+    admin: Pick<CommunityAdminResponse, "user"> | undefined,
+  ) => CommunityAdminRowActions;
 }
 
 export function useCommunityActions(): CommunityActions {
@@ -116,6 +157,41 @@ export function useCommunityActions(): CommunityActions {
   const configureShellyMutation = useConfigureShelly();
   const enableDatadisMutation = useEnableDatadisConfig();
   const disableDatadisMutation = useDisableDatadisConfig();
+  const inviteAdminMutation = useInviteCommunityAdmin();
+  const resendAdminInvitationMutation = useResendCommunityAdminInvitation();
+  const revokeAdminInvitationMutation = useRevokeCommunityAdminInvitation();
+  const enableAdminMutation = useEnableCommunityAdmin();
+  const disableAdminMutation = useDisableCommunityAdmin();
+
+  const invalidateAdmins = (communityId: string) =>
+    queryClient.invalidateQueries({ queryKey: getGetCommunityAdminsQueryKey(communityId) });
+  // The communities list names each community's admins, so a write to them
+  // refreshes it along with the admins themselves.
+  const invalidateAfterAdminWrite = (communityId: string) => {
+    invalidateAdmins(communityId);
+    queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
+  };
+
+  /**
+   * An admin write whose refusal the screen words itself. A refusal in
+   * `staleRowCodes` says the row changed under the screen, so the list is
+   * refetched as well, as useMembershipActions does for the roster.
+   */
+  const writeAdmins = async <T>(
+    communityId: string,
+    call: () => Promise<T>,
+    staleRowCodes: readonly RestErrorDetailCode[],
+  ): Promise<MembershipWriteResult<T>> => {
+    try {
+      const value = await call();
+      invalidateAfterAdminWrite(communityId);
+      return { ok: true, value };
+    } catch (error) {
+      const code = getFirstApiErrorCode(error);
+      if (code && staleRowCodes.includes(code)) invalidateAdmins(communityId);
+      return { error };
+    }
+  };
 
   return {
     forCommunity: (community) => {
@@ -128,6 +204,7 @@ export function useCommunityActions(): CommunityActions {
       const createPlant = outcomeFromResource(capabilities, "canCreatePlants");
       const createUsers = outcomeFromResource(capabilities, "canCreateUsers");
       const manage = outcomeFromResource(capabilities, "canManage");
+      const manageAdmins = outcomeFromResource(capabilities, "canManageAdmins");
 
       const invalidateCommunity = () => {
         queryClient.invalidateQueries({ queryKey: getGetCommunityByIdQueryKey(communityId) });
@@ -263,6 +340,17 @@ export function useCommunityActions(): CommunityActions {
             () => toggleDatadis(() => disableDatadisMutation.mutateAsync({ communityId })),
             disableDatadisMutation.isPending,
           ),
+          // Somebody already in the community, in any role, is refused with
+          // MEMBERSHIP_ALREADY_EXISTS: they may be an admin this list has not
+          // shown yet, so the refusal refetches it.
+          inviteAdmin: grant(
+            manageAdmins,
+            (data: InviteCommunityAdminBody) =>
+              writeAdmins(communityId, () => inviteAdminMutation.mutateAsync({ communityId, data }), [
+                "MEMBERSHIP_ALREADY_EXISTS",
+              ]),
+            inviteAdminMutation.isPending,
+          ),
         },
         outcomes: {
           update,
@@ -277,6 +365,69 @@ export function useCommunityActions(): CommunityActions {
           configureShelly: manage,
           enableDatadis: manage,
           disableDatadis: manage,
+          inviteAdmin: manageAdmins,
+        },
+      };
+    },
+
+    forCommunityAdmin: (community, admin) => {
+      const communityId = community?.id ?? "";
+      const userId = admin?.user.id ?? "";
+      // No row, nobody to act on: not yet known, like a community not yet loaded.
+      const manageAdmins = admin ? outcomeFromResource(community?.capabilities, "canManageAdmins") : PENDING;
+
+      // The admin's own membership may be the caller's: a platform admin can
+      // be an admin of the community too, and suspending that membership
+      // changes what the caller may reach.
+      const toggle = async (call: () => Promise<unknown>) => {
+        try {
+          await call();
+          invalidateAfterAdminWrite(communityId);
+          queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      return {
+        actions: {
+          resendInvitation: grant(
+            manageAdmins,
+            () =>
+              writeAdmins(
+                communityId,
+                () => resendAdminInvitationMutation.mutateAsync({ communityId, userId }),
+                STALE_ROW_CODES.resend,
+              ),
+            resendAdminInvitationMutation.isPending,
+          ),
+          revokeInvitation: grant(
+            manageAdmins,
+            () =>
+              writeAdmins(
+                communityId,
+                () => revokeAdminInvitationMutation.mutateAsync({ communityId, userId }),
+                STALE_ROW_CODES.revoke,
+              ),
+            revokeAdminInvitationMutation.isPending,
+          ),
+          enable: grant(
+            manageAdmins,
+            () => toggle(() => enableAdminMutation.mutateAsync({ communityId, userId })),
+            enableAdminMutation.isPending,
+          ),
+          disable: grant(
+            manageAdmins,
+            () => toggle(() => disableAdminMutation.mutateAsync({ communityId, userId })),
+            disableAdminMutation.isPending,
+          ),
+        },
+        outcomes: {
+          resendInvitation: manageAdmins,
+          revokeInvitation: manageAdmins,
+          enable: manageAdmins,
+          disable: manageAdmins,
         },
       };
     },

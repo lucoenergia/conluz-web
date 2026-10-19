@@ -6,16 +6,16 @@
 | **Status** | Active |
 | **Routes** | `/members` |
 | **Roles** | A caller whose active community carries `canManageMemberships`; registration, invitations and the bulk send need their own capabilities (UI-MBR-008, UI-MBR-012, UI-MBR-013) |
-| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, ACC-003, ACC-008 |
+| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #275 |
+| **Last reviewed against code** | #276 |
 
 ## Purpose
 
 Let an admin of a community keep its roster: register members and invite them to join, see which
 members are still pending and where their invitation stands, correct the record the community
 keeps on each member, and suspend or reactivate a member's access to the community. This document
-covers only the rules #272 and #275 introduced; the rest of the members page is not covered yet.
+covers only the rules #272, #275 and #276 introduced; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -101,11 +101,12 @@ covers only the rules #272 and #275 introduced; the rest of the members page is 
 
 - **Status:** Active
 - **Rule:** Wherever a member's email is shown next to their name (the roster, the community admins
-  list), a member without email MUST be shown by name alone, with no empty parentheses, separators
+  page), a member without email MUST be shown by name alone, with no empty parentheses, separators
   or blank line.
 - **Rationale:** An account, and a member record, may have no email.
 - **Implements:** ACC-003
-- **Source:** #272; changed in #275 (the add-member picker it also covered was removed, UI-MBR-016)
+- **Source:** #272; changed in #275 (the add-member picker it also covered was removed, UI-MBR-016);
+  changed in #276 (the community admins dialog became the community admins page, UI-ADM-002)
 
 ### UI-MBR-008 — A registration sends the whole record and the personal ID
 
@@ -256,6 +257,18 @@ covers only the rules #272 and #275 introduced; the rest of the members page is 
 - **Implements:** MEM-007, MEM-008
 - **Source:** #275
 
+### UI-MBR-017 — An invalid DNI/NIE/NIF is shown on its field
+
+- **Status:** Active
+- **Rule:** When a registration is refused with `USER_PERSONAL_ID_INVALID`, the refusal MUST be
+  shown on the personal ID field, not for the whole form, and the form MUST keep every value as
+  typed.
+- **Rationale:** The refusal is about that one field: the personal ID's format or its control
+  letter is wrong, and the admin corrects it there. The page still sends the ID as typed
+  (UI-MBR-008); the backend decides whether it is valid.
+- **Implements:** ACC-010
+- **Source:** #276 (maintainer decision; lucoenergia/conluz#398)
+
 ## States
 
 The record dialog:
@@ -274,7 +287,7 @@ The registration dialog:
 | --- | --- | --- |
 | Form | The empty form, with a notice that registering sends nothing | Registrar, Cancelar |
 | Field errors | The errors on their fields | Registrar, Cancelar |
-| Refused | An error for the whole form, with the values as typed | Registrar, Cancelar |
+| Refused | An error for the whole form, or on the personal ID, with the values as typed | Registrar, Cancelar |
 | Registered, with a contact email and `canInvite` | What happened, and where the invitation would go | Invitar ahora, Cerrar |
 | Registered, without a contact email | What happened, and a pointer to "Editar ficha" | Cerrar |
 | Invitation refused | The registered state, with the refusal | Invitar ahora, Cerrar |

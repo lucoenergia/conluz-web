@@ -11,11 +11,13 @@ import {
   DASHBOARD_COMMUNITIES,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_COMMUNITY_ID,
+  hideAppBar,
   FIXED_PLATFORM_ADMIN_USER,
   FIXED_USER_2,
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
+  mockCommunityAdminsRoutes,
   seedActiveCommunity,
   stabilizePage,
 } from "./fixtures";
@@ -280,6 +282,52 @@ test.describe("Visual baselines", () => {
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("edit-community-page.png", await mainRegion(page));
+  });
+
+  // A community's admins (#276): the status chips with their invitation
+  // captions, and a missing phone, side by side in one table -- the
+  // composition is what a pixel change can break. Each state's behaviour is
+  // asserted in Vitest.
+  test("community admins page", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    await mockCommunityAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/admins`);
+    // Each state's text, before the capture: a list that failed to load, or a
+    // fixture that lost a state, would otherwise make a plausible baseline.
+    const main = page.getByRole("main");
+    await expect(main.getByText("Rosa Activa Gómez")).toBeVisible();
+    await expect(main.getByText("Activo", { exact: true })).toBeVisible();
+    await expect(main.getByText("Pendiente", { exact: true })).toHaveCount(2);
+    await expect(main.getByText("Suspendido", { exact: true })).toBeVisible();
+    await expect(main.getByText("Enlace activo hasta el 8 oct 2026")).toBeVisible();
+    await expect(main.getByText("Enlace caducado o revocado")).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("community-admins-page.png", await mainRegion(page));
+  });
+
+  // The admin invitation form (#276): an editable DNI and three of the record's
+  // fields, two of them required, under a notice -- a field set of its own,
+  // whose layout at 390 px is what can break. Its validation and requests are
+  // asserted in Vitest.
+  test("community admin invite dialog", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    await mockCommunityAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/admins`);
+    await expect(page.getByRole("main").getByText("Rosa Activa Gómez")).toBeVisible();
+    await page.getByRole("button", { name: "Invitar administrador" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("heading", { name: /^Invitar administrador a/ })).toBeVisible();
+    await expect(dialog.getByLabel(/^DNI\/NIE\/NIF/)).toBeEditable();
+    await expect(dialog.getByLabel(/^Teléfono/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("community-admin-invite-dialog.png", await hideAppBar(page));
   });
 
   test("create user page", async ({ page }) => {

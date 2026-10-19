@@ -1,4 +1,5 @@
 import type {
+  CommunityAdminResponse,
   GetDatadisConfigResponse,
   GetHuaweiConfigResponse,
   GetShellyConfigResponse,
@@ -203,10 +204,13 @@ const SHARING_AGREEMENT_CAPABILITIES = { canRead: true, canManage: true };
  * the membership flags. MembershipAccessPolicy.canManageMemberships allows any
  * platform admin who can see the community, and CallerMemberships.canSeeCommunity
  * is true for a platform admin on every community -- so a fixture that inherited
- * `false` from the member shape was stating the opposite of the rule, and would
- * have hidden "Gestionar administradores" from the communities row menu in every
- * capture. Its stricter sibling canManageMembershipInvestment has no platform
- * bypass and stays false.
+ * `false` from the member shape was stating the opposite of the rule. Its
+ * stricter sibling canManageMembershipInvestment has no platform bypass and
+ * stays false.
+ *
+ * canManageAdmins is a platform admin's alone (lucoenergia/conluz#395): it is
+ * what offers "Gestionar administradores" in the communities row menu and opens
+ * the community's admins page (#276).
  */
 export const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
   ...MEMBER_COMMUNITY_CAPABILITIES,
@@ -214,6 +218,7 @@ export const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
   canEnable: true,
   canDisable: true,
   canManageMemberships: true,
+  canManageAdmins: true,
   canListPlants: false,
   canReadProduction: false,
   canListSupplies: false,
@@ -990,6 +995,59 @@ export const FIXED_ROSTER_INVITATION_STATES: MembershipResponse[] = [
   pendingMembership("pending-lapsed", "Elena Caducada Ruiz", { invitedAt: "2026-09-01T10:00:00Z" }),
   pendingMembership("pending-suspended", "Pablo Pausado Gil", { enabled: false }),
   FIXED_MEMBERSHIPS[2],
+];
+
+/**
+ * A community's admins as GET …/admins lists them (#276), one per state the
+ * page tells apart: active, pending with an active link, pending with an
+ * expired one, and suspended -- and one without a phone, which the table
+ * shows as a dash. Fixed instants, so the expiry renders the same on every run.
+ */
+export const FIXED_COMMUNITY_ADMINS: CommunityAdminResponse[] = [
+  {
+    user: { id: "admin-active" },
+    personalId: "11111111H",
+    fullName: "Rosa Activa Gómez",
+    contactEmail: "rosa@conluz.test",
+    phoneNumber: "611 222 333",
+    acceptedAt: "2026-02-01T09:00:00Z",
+    enabled: true,
+    invitedAt: "2026-01-25T09:00:00Z",
+    invitationExpiresAt: null,
+  },
+  {
+    user: { id: "admin-linked" },
+    personalId: "22222222J",
+    fullName: "Pablo Pendiente Ruiz",
+    contactEmail: "pablo@conluz.test",
+    phoneNumber: null,
+    acceptedAt: null,
+    enabled: true,
+    invitedAt: "2026-10-01T10:00:00Z",
+    invitationExpiresAt: "2026-10-08T10:00:00Z",
+  },
+  {
+    user: { id: "admin-lapsed" },
+    personalId: "X1234567L",
+    fullName: "Laura Caducada Pérez",
+    contactEmail: "laura@conluz.test",
+    phoneNumber: "622 333 444",
+    acceptedAt: null,
+    enabled: true,
+    invitedAt: "2026-09-01T10:00:00Z",
+    invitationExpiresAt: null,
+  },
+  {
+    user: { id: "admin-suspended" },
+    personalId: "33333333P",
+    fullName: "Sergio Suspendido Martín",
+    contactEmail: "sergio@conluz.test",
+    phoneNumber: "633 444 555",
+    acceptedAt: "2026-03-01T09:00:00Z",
+    enabled: false,
+    invitedAt: "2026-02-20T09:00:00Z",
+    invitationExpiresAt: null,
+  },
 ];
 
 /** Datadis configured and on, which is the state the integration card shows most. */

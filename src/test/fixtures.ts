@@ -4,6 +4,7 @@ import {
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementReferenceResponseStatus,
   SharingAgreementResponseStatus,
+  type CommunityAdminResponse,
   type CommunityCapabilitiesResponse,
   type CommunityResponse,
   type CurrentUserResponse,
@@ -277,6 +278,24 @@ export function buildMember(overrides: Partial<MemberResponse> = {}): MemberResp
       invitationExpiresAt: null,
       capabilities: buildMembershipCapabilities(),
     } satisfies MemberResponse),
+    ...overrides,
+  };
+}
+
+/** A community admin as GET …/admins lists them (#276): pending and never invited by default. */
+export function buildCommunityAdmin(overrides: Partial<CommunityAdminResponse> = {}): CommunityAdminResponse {
+  return {
+    ...({
+      user: { id: "TEST-USER-ID" },
+      personalId: "TEST-PERSONAL-ID",
+      fullName: "TEST-ADMIN-NAME",
+      contactEmail: null,
+      phoneNumber: null,
+      acceptedAt: null,
+      enabled: true,
+      invitedAt: null,
+      invitationExpiresAt: null,
+    } satisfies CommunityAdminResponse),
     ...overrides,
   };
 }

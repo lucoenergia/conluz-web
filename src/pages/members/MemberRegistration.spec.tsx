@@ -91,7 +91,7 @@ async function openRegistration(u: ReturnType<typeof userEvent.setup>) {
 async function fill(
   u: ReturnType<typeof userEvent.setup>,
   dialog: HTMLElement,
-  fields: Partial<Record<"DNI/NIE" | "Nombre completo" | "Número de socio" | "Email de contacto" | "Dirección" | "Teléfono", string>>,
+  fields: Partial<Record<"DNI/NIE/NIF" | "Nombre completo" | "Número de socio" | "Email de contacto" | "Dirección" | "Teléfono", string>>,
 ) {
   for (const [label, value] of Object.entries(fields)) {
     if (value) await u.type(within(dialog).getByLabelText(new RegExp(`^${label}`)), value);
@@ -114,7 +114,7 @@ describe("registering a member", () => {
 
     const dialog = await openRegistration(u);
     await fill(u, dialog, {
-      "DNI/NIE": "12.345.678-z",
+      "DNI/NIE/NIF": "12.345.678-z",
       "Nombre completo": "  Nuria Nueva  ",
       "Número de socio": "12",
       "Email de contacto": "nuria@example.com",
@@ -161,7 +161,7 @@ describe("registering a member", () => {
     await renderPage();
 
     const dialog = await openRegistration(u);
-    await fill(u, dialog, { "DNI/NIE": "12345678Z", "Nombre completo": "Nuria Nueva", "Email de contacto": "nuria@example.com" });
+    await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva", "Email de contacto": "nuria@example.com" });
     await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
     const done = await screen.findByRole("dialog", { name: `Miembro registrado en ${COMMUNITY_NAME}` });
     expect(within(done).getByText(/nuria@example\.com/)).toBeInTheDocument();
@@ -179,7 +179,7 @@ describe("registering a member", () => {
     await renderPage();
 
     const dialog = await openRegistration(u);
-    await fill(u, dialog, { "DNI/NIE": "12345678Z", "Nombre completo": "Nuria Nueva" });
+    await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva" });
     await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
 
     const done = await screen.findByRole("dialog", { name: `Miembro registrado en ${COMMUNITY_NAME}` });
@@ -200,7 +200,7 @@ describe("registering a member", () => {
     await renderPage();
 
     const dialog = await openRegistration(u);
-    await fill(u, dialog, { "DNI/NIE": "12345678Z", "Nombre completo": "Nuria Nueva", "Email de contacto": "nuria@example.com" });
+    await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva", "Email de contacto": "nuria@example.com" });
     await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
     const done = await screen.findByRole("dialog", { name: `Miembro registrado en ${COMMUNITY_NAME}` });
     await u.click(within(done).getByRole("button", { name: "Invitar ahora" }));
@@ -221,25 +221,54 @@ describe("registering a member", () => {
     await renderPage();
 
     const dialog = await openRegistration(u);
-    await fill(u, dialog, { "DNI/NIE": "12345678Z", "Nombre completo": "Ana García" });
+    await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Ana García" });
     await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
 
     expect(await within(dialog).findByText("Esta persona ya es miembro de la comunidad.")).toBeInTheDocument();
-    expect(within(dialog).getByLabelText(/^DNI\/NIE/)).toHaveValue("12345678Z");
+    expect(within(dialog).getByLabelText(/^DNI\/NIE\/NIF/)).toHaveValue("12345678Z");
+  });
+
+  it("UI-MBR-017 shows an invalid DNI/NIE/NIF on its field, and the other fields keep their values", async () => {
+    const u = user();
+    serveMembersPage(mockCustomInstance, { current: [ANA] }, {
+      register: () => {
+        throw restError(400, "USER_PERSONAL_ID_INVALID");
+      },
+    });
+    await renderPage();
+
+    const dialog = await openRegistration(u);
+    await fill(u, dialog, {
+      "DNI/NIE/NIF": "12345678A",
+      "Nombre completo": "Nuria Nueva",
+      "Email de contacto": "nuria@example.com",
+      Teléfono: "600 111 222",
+    });
+    await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
+
+    const personalId = within(dialog).getByLabelText(/^DNI\/NIE\/NIF/);
+    await waitFor(() => expect(personalId).toHaveAttribute("aria-invalid", "true"));
+    expect(personalId).toHaveAccessibleDescription("El DNI/NIE/NIF no es válido. Revisa los números y la letra.");
+    expect(personalId).toHaveValue("12345678A");
+    expect(within(dialog).getByLabelText(/^Nombre completo/)).toHaveValue("Nuria Nueva");
+    expect(within(dialog).getByLabelText(/^Email de contacto/)).toHaveValue("nuria@example.com");
+    expect(within(dialog).getByLabelText(/^Teléfono/)).toHaveValue("600 111 222");
+    // On the field only, not repeated for the whole form.
+    expect(within(dialog).getAllByText("El DNI/NIE/NIF no es válido. Revisa los números y la letra.")).toHaveLength(1);
   });
 
   it.each([
-    ["no DNI", { "Nombre completo": "Nuria Nueva" }, /^DNI\/NIE/, "Escribe el DNI/NIE"],
-    ["no name", { "DNI/NIE": "12345678Z" }, /^Nombre completo/, "Escribe el nombre completo"],
+    ["no DNI", { "Nombre completo": "Nuria Nueva" }, /^DNI\/NIE\/NIF/, "Escribe el DNI/NIE"],
+    ["no name", { "DNI/NIE/NIF": "12345678Z" }, /^Nombre completo/, "Escribe el nombre completo"],
     [
       "a number that is not an integer",
-      { "DNI/NIE": "12345678Z", "Nombre completo": "Nuria Nueva", "Número de socio": "1.5" },
+      { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva", "Número de socio": "1.5" },
       /^Número de socio/,
       "Escribe un número entero igual o mayor que 0",
     ],
     [
       "an invalid email",
-      { "DNI/NIE": "12345678Z", "Nombre completo": "Nuria Nueva", "Email de contacto": "nope@" },
+      { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva", "Email de contacto": "nope@" },
       /^Email de contacto/,
       "Introduce un email válido",
     ],
@@ -267,7 +296,7 @@ describe("the add-member picker is gone", () => {
 
     expect(screen.queryByRole("button", { name: "Añadir miembro" })).not.toBeInTheDocument();
     const dialog = await openRegistration(u);
-    await fill(u, dialog, { "DNI/NIE": "12345678Z", "Nombre completo": "Nuria Nueva" });
+    await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva" });
     await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
     await screen.findByRole("dialog", { name: `Miembro registrado en ${COMMUNITY_NAME}` });
 
