@@ -1,6 +1,6 @@
 import type { ImportMembersRowErrorResponse, ImportMembersRowResponse } from "../../api/models";
 import { translateErrorDetail } from "../../errors/apiErrorCatalogue";
-import { triggerBrowserDownload } from "../../components/SharingAgreementFilePanel/downloadSharingAgreementFile";
+import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 
 /**
  * The member import's columns (lucoenergia/conluz#397; #284), in the order the

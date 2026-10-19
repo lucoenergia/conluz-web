@@ -5,7 +5,7 @@ import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { AppModal } from "../Modals/AppModal";
 import { fontSizes, shadows } from "../../theme/tokens";
 import type { Action } from "../../hooks/actions";
-import { triggerBrowserDownload } from "../SharingAgreementFilePanel/downloadSharingAgreementFile";
+import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 
 const MIN_YEAR = 2000;
 const MAX_YEAR = 2100;

@@ -14,10 +14,8 @@ import type { SharingAgreementResponse, UpdateSharingAgreementBody } from "../..
 import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
 import { getFirstApiErrorMessage, getGroupedApiErrorDetails, type GroupedApiErrors } from "../../errors/apiErrorCatalogue";
-import {
-  downloadSharingAgreementFile,
-  triggerBrowserDownload,
-} from "../../components/SharingAgreementFilePanel/downloadSharingAgreementFile";
+import { downloadSharingAgreementFile } from "../../components/SharingAgreementFilePanel/downloadSharingAgreementFile";
+import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
 
