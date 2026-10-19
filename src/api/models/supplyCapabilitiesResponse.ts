@@ -14,6 +14,8 @@ export interface SupplyCapabilitiesResponse {
   canRead: boolean;
   /** Whether the caller may update, enable or disable this supply. Narrower than canRead: the owner can read their supply but only a community admin may change it. */
   canEdit: boolean;
+  /** Whether the caller may delete this supply (DELETE /api/v1/supplies/{supplyId}). Authorization only: a supply with plants or partition coefficients is still refused with 409. */
+  canDelete: boolean;
   /** Whether the caller may read this supply's partition coefficients. The same access reading the supply requires -- the coefficients describe the owner's own share. */
   canReadPartitionCoefficients: boolean;
   /** Whether the caller may create a plant on this supply (POST /api/v1/plants). */

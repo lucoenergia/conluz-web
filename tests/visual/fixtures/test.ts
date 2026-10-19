@@ -56,6 +56,15 @@ export const ALLOWED_DENIALS: AllowedDenial[] = [
       "404 is the answer 'not configured yet' -- the Datadis card renders its create form, with no " +
       "switch, from it (UI-INT-014). mockDatadisConfigRoutes takes config: null for exactly this.",
   },
+  {
+    method: "POST",
+    path: /\/api\/v1\/users\/current\/invitations\/accept$/,
+    status: 403,
+    reason:
+      "a caller who must change their password is answered 403 USER_PASSWORD_CHANGE_REQUIRED, and " +
+      "the accept-invitation screen renders its password-change state from exactly that answer " +
+      "(UI-INV-013); accept-invitation.spec.ts serves it on purpose.",
+  },
 ];
 
 /**

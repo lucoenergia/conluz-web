@@ -48,6 +48,8 @@ type Decision =
        * and anything else must name the issue that replaces it with a gate.
        */
       ungated: string;
+      /** The action hook that hands it out, when one exists yet. */
+      hook?: string;
     };
 
 const SYNC_JOB = "canManage covers 'triggering its synchronisation endpoints'; no per-job flag exists, and no screen calls this yet";
@@ -120,9 +122,9 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useRevokeCommunityAdminInvitation: { scope: "community", capability: "canManageAdmins" },
 
   // ── Invitations ───────────────────────────────────────────────────────────
-  useInspectInvitation: { ungated: "no session: the holder of an emailed invitation link may not have an account to sign in with yet, and the token is the only credential" },
-  useAcceptInvitation: { ungated: "no session: it sets the account's first password, so nobody can be signed in as it, and the token is the only credential" },
-  useAcceptInvitationAsCurrentUser: { ungated: "open to any authenticated caller: it accepts one of the caller's own memberships, named by the token, and takes no id" },
+  useInspectInvitation: { ungated: "no session: the holder of an emailed invitation link may not have an account to sign in with yet, and the token is the only credential", hook: "useInvitationActions" },
+  useAcceptInvitation: { ungated: "no session: it sets the account's first password, so nobody can be signed in as it, and the token is the only credential", hook: "useInvitationActions" },
+  useAcceptInvitationAsCurrentUser: { ungated: "open to any authenticated caller: it accepts one of the caller's own memberships, named by the token, and takes no id", hook: "useInvitationActions" },
   useDeleteMembership: { scope: "membership", capability: "canDelete", hook: "useMembershipActions" },
   useUpdateMembershipRole: { scope: "membership", capability: "canUpdateRole", hook: "useMembershipActions" },
   useSetMembershipInvestment: { scope: "membership", capability: "canManageInvestment", hook: "useMembershipActions" },
@@ -256,6 +258,9 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     approximates: "canEdit covers update, enable and disable together, by its own doc; the UI cannot offer edit without disable",
   },
   useDisableSupply: { scope: "supply", capability: "canEdit", hook: "useSupplyActions", approximates: "as useEnableSupply" },
+  // No screen deletes a supply yet: no action hook. The capability is the one
+  // the contract names for the endpoint (lucoenergia/conluz#412).
+  useDeleteSupply: { scope: "supply", capability: "canDelete" },
   useSyncDatadisSupplies: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
 
   // ── Users ─────────────────────────────────────────────────────────────────

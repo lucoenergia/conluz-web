@@ -6,9 +6,15 @@ import {
   useResetPassword,
 } from "../../api/authentication/authentication";
 import { getGetCurrentUserQueryKey, useChangePassword, useUpdateProfile } from "../../api/users/users";
+import {
+  useAcceptInvitation,
+  useAcceptInvitationAsCurrentUser,
+  useInspectInvitation,
+} from "../../api/memberships/memberships";
 import { mutation } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
+import { useInvitationActions } from "./useInvitationActions";
 import { useProfileActions } from "./useProfileActions";
 import { useSessionActions } from "./useSessionActions";
 
@@ -17,10 +23,12 @@ const CREDENTIALS = { username: "TEST-USERNAME", password: "TEST-PASSWORD" };
 const PROFILE_BODY = { email: "test@example.invalid" };
 const RECOVER_BODY = { personalId: "TEST-PERSONAL-ID" };
 const RESET_BODY = { token: "TEST-RESET-TOKEN", newPassword: "TEST-NEW-PASSWORD-LONG-ENOUGH" };
+const INVITATION_TOKEN_BODY = { token: "TEST-INVITATION-TOKEN" };
+const INVITATION_ACCEPT_BODY = { token: "TEST-INVITATION-TOKEN", newPassword: "TEST-NEW-PASSWORD-LONG-ENOUGH" };
 const PASSWORD_BODY = { currentPassword: "TEST-CURRENT-PASSWORD", newPassword: "TEST-NEW-PASSWORD-LONG-ENOUGH" };
 
 /**
- * The two hooks with no capability behind them.
+ * The hooks with no capability behind them.
  *
  * Their point is that "no gate" is a decision someone made and wrote down, not
  * an omission -- so what is worth asserting is that the action is always
@@ -34,6 +42,12 @@ vi.mock(import("../../api/authentication/authentication"), async (importOriginal
   useLogout: vi.fn(),
   useRequestPasswordReset: vi.fn(),
   useResetPassword: vi.fn(),
+}));
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useInspectInvitation: vi.fn(),
+  useAcceptInvitation: vi.fn(),
+  useAcceptInvitationAsCurrentUser: vi.fn(),
 }));
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -51,6 +65,9 @@ beforeEach(() => {
   vi.mocked(useResetPassword).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useUpdateProfile).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useChangePassword).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useInspectInvitation).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useAcceptInvitation).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useAcceptInvitationAsCurrentUser).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
 describe("useSessionActions", () => {
@@ -209,5 +226,57 @@ describe("useProfileActions -- changing the password (#196)", () => {
       ok: false,
       failure: { kind: "currentPasswordIncorrect" },
     });
+  });
+});
+
+describe("useInvitationActions (#274)", () => {
+  it("hands back every action with no session and no capabilities at all", () => {
+    const { result } = renderHookWithProviders(() => useInvitationActions(), {
+      token: undefined,
+      activeCommunityId: null,
+    });
+
+    expect(result.current.actions.inspect).toBeDefined();
+    expect(result.current.actions.accept).toBeDefined();
+    expect(result.current.actions.acceptAsCurrentUser).toBeDefined();
+  });
+
+  it("inspects with the body as given and returns the invitation", async () => {
+    const invitation = { community: { id: "TEST-COMMUNITY-ID", name: "TEST-COMMUNITY-NAME" }, loginRequired: false };
+    mutateAsync.mockResolvedValue(invitation);
+    const { result } = renderHookWithProviders(() => useInvitationActions());
+
+    await expect(result.current.actions.inspect.run(INVITATION_TOKEN_BODY)).resolves.toEqual({ ok: true, invitation });
+    expect(mutateAsync).toHaveBeenCalledWith({ data: INVITATION_TOKEN_BODY });
+  });
+
+  it("accepts without a session with the body as given and touches no cache", async () => {
+    const { result, queryClient } = renderHookWithProviders(() => useInvitationActions());
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.accept.run(INVITATION_ACCEPT_BODY)).resolves.toEqual({ ok: true });
+    expect(mutateAsync).toHaveBeenCalledWith({ data: INVITATION_ACCEPT_BODY });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("accepts signed in and refreshes the current user, where the new membership lives", async () => {
+    const { result, queryClient } = renderHookWithProviders(() => useInvitationActions());
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.acceptAsCurrentUser.run(INVITATION_TOKEN_BODY)).resolves.toEqual({ ok: true });
+    expect(mutateAsync).toHaveBeenCalledWith({ data: INVITATION_TOKEN_BODY });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
+  });
+
+  it("reports why an acceptance was refused, and leaves the cache alone", async () => {
+    mutateAsync.mockRejectedValue(apiError(400, { code: "MEMBERSHIP_INVITATION_TOKEN_INVALID" }));
+    const { result, queryClient } = renderHookWithProviders(() => useInvitationActions());
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await expect(result.current.actions.acceptAsCurrentUser.run(INVITATION_TOKEN_BODY)).resolves.toEqual({
+      ok: false,
+      failure: { kind: "tokenInvalid" },
+    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

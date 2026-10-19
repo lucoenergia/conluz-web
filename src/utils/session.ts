@@ -85,3 +85,41 @@ export function hasPasswordReset(): boolean {
 export function clearPasswordReset(): void {
   window.sessionStorage.removeItem(PASSWORD_RESET_FLAG_KEY);
 }
+
+/**
+ * An accepted invitation (#274). The person now belongs to a community, and
+ * the next screen says so: the login page, when the invitation set the
+ * account's first password, or the landing, when it was accepted signed in.
+ *
+ * A flag in `sessionStorage`, as above, holding the community's name and
+ * nothing else -- never the token. The login page reads it in two steps, like
+ * the reset flag and for the same reason; the landing takes it in an effect,
+ * which runs only once the page has committed.
+ */
+const INVITATION_ACCEPTED_KEY = "invitationAccepted";
+
+export function invitationAcceptedLoginMessage(communityName: string): string {
+  return `Ya formas parte de ${communityName}. Inicia sesión con tu nueva contraseña.`;
+}
+
+export function invitationAcceptedMessage(communityName: string): string {
+  return `Ya formas parte de ${communityName}.`;
+}
+
+export function markInvitationAccepted(communityName: string): void {
+  window.sessionStorage.setItem(INVITATION_ACCEPTED_KEY, communityName);
+}
+
+export function peekInvitationAccepted(): string | null {
+  return window.sessionStorage.getItem(INVITATION_ACCEPTED_KEY) || null;
+}
+
+export function clearInvitationAccepted(): void {
+  window.sessionStorage.removeItem(INVITATION_ACCEPTED_KEY);
+}
+
+export function takeInvitationAccepted(): string | null {
+  const communityName = peekInvitationAccepted();
+  clearInvitationAccepted();
+  return communityName;
+}

@@ -114,6 +114,7 @@
       "hooks": [
         "useCreateSuppliesWithFile",
         "useCreateSupply",
+        "useDeleteSupply",
         "useDisableSupply",
         "useEnableSupply",
         "useSyncDatadisSupplies",
