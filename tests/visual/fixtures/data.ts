@@ -150,6 +150,7 @@ export const COMMUNITY_ADMIN_CAPABILITIES = {
 export const OWNER_SUPPLY_CAPABILITIES = {
   canRead: true,
   canEdit: false,
+  canDelete: false,
   canReadPartitionCoefficients: true,
   canCreatePlant: false,
 };
@@ -158,6 +159,7 @@ export const OWNER_SUPPLY_CAPABILITIES = {
 export const COMMUNITY_ADMIN_SUPPLY_CAPABILITIES = {
   ...OWNER_SUPPLY_CAPABILITIES,
   canEdit: true,
+  canDelete: true,
   canCreatePlant: true,
 };
 

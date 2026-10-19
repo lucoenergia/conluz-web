@@ -23,8 +23,11 @@ import {
   PASSWORD_CHANGED_MESSAGE,
   PASSWORD_RESET_MESSAGE,
   SESSION_EXPIRED_MESSAGE,
+  clearInvitationAccepted,
   clearPasswordReset,
   hasPasswordReset,
+  invitationAcceptedLoginMessage,
+  peekInvitationAccepted,
   takePasswordChanged,
   takeSessionExpired,
 } from "../../utils/session";
@@ -47,6 +50,12 @@ export const Login: FC = () => {
    */
   const [passwordReset] = useState(hasPasswordReset);
   useEffect(clearPasswordReset, []);
+  /**
+   * Same, for an invitation that has just set this account's first password
+   * (#274): the community the person now belongs to.
+   */
+  const [invitationCommunity] = useState(peekInvitationAccepted);
+  useEffect(clearInvitationAccepted, []);
   const [formErrors, setFormErrors] = useState<{ id: boolean; password: boolean }>({
     id: false,
     password: false,
@@ -191,6 +200,18 @@ export const Login: FC = () => {
               }}
             >
               {PASSWORD_RESET_MESSAGE}
+            </Alert>
+          )}
+
+          {invitationCommunity && !loginError && (
+            <Alert
+              severity="success"
+              sx={{
+                mb: 3,
+                borderRadius: radii.default,
+              }}
+            >
+              {invitationAcceptedLoginMessage(invitationCommunity)}
             </Alert>
           )}
 

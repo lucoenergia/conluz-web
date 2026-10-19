@@ -1,9 +1,11 @@
-import type { FC } from "react";
+import { useEffect, type FC } from "react";
 import { Navigate } from "react-router";
 import { useLoggedUser } from "../../context/logged-user.context";
+import { useSuccessDispatch } from "../../context/success.context";
 import { useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { CapabilityLoadError } from "../../components/Auth/CapabilityLoadError";
 import { resolveLandingRoute } from "../../utils/routes";
+import { invitationAcceptedMessage, takeInvitationAccepted } from "../../utils/session";
 
 /**
  * "/": where every caller lands, and where every denial redirects. It has no
@@ -20,10 +22,21 @@ import { resolveLandingRoute } from "../../utils/routes";
  *   There is nothing to choose here: a caller with memberships always has a
  *   community active once it is worked out (#237), and the community switch
  *   changes it.
+ *
+ * An invitation accepted signed in lands here (#274), and the confirmation is
+ * handed to the layout's success messages, which sit above the routed page and
+ * so outlive the redirect below.
  */
 export const LandingRoute: FC = () => {
   const loggedUser = useLoggedUser();
   const canRead = useActiveCommunityCapabilities("canRead");
+  const dispatchSuccess = useSuccessDispatch();
+
+  // Taken on commit: under StrictMode the second run finds nothing to show.
+  useEffect(() => {
+    const communityName = takeInvitationAccepted();
+    if (communityName) dispatchSuccess(invitationAcceptedMessage(communityName));
+  }, [dispatchSuccess]);
 
   // The layout renders no route until the user is known.
   if (!loggedUser) return null;

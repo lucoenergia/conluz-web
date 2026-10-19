@@ -27,6 +27,7 @@ function lazyPage<M, K extends keyof M>(loader: () => Promise<M>, name: K) {
 const Login = lazyPage(() => import("./pages/auth/Login"), "Login");
 const ForgotPassword = lazyPage(() => import("./pages/auth/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyPage(() => import("./pages/auth/ResetPassword"), "ResetPassword");
+const AcceptInvitation = lazyPage(() => import("./pages/auth/AcceptInvitation"), "AcceptInvitation");
 const ChangePasswordPage = lazyPage(() => import("./pages/auth/ChangePassword"), "ChangePasswordPage");
 const NotFoundPage = lazyPage(() => import("./pages/not-found/NotFoundPage"), "NotFoundPage");
 
@@ -71,7 +72,9 @@ function App() {
         {/*
           Recovering a password works with or without a session (#233): the
           reset link carries its token in the URL fragment, and the redirect a
-          signed-in caller gets from the login page would lose it.
+          signed-in caller gets from the login page would lose it. Accepting an
+          invitation (#274) is the same: its link carries the token the same
+          way, and the screen serves both a new account and a signed-in one.
 
           A path that matches no route lands here too (#234): the not-found
           page is the same for every caller and reads nothing.
@@ -79,6 +82,7 @@ function App() {
         <Route element={<LoginLayout allowSignedIn />}>
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="accept-invitation" element={<AcceptInvitation />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route element={<AuthenticatedLayout />}>

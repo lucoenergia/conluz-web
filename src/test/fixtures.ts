@@ -119,6 +119,7 @@ export function buildSupplyCapabilities(
   return {
     canRead: false,
     canEdit: false,
+    canDelete: false,
     canReadPartitionCoefficients: false,
     canCreatePlant: false,
     ...overrides,
