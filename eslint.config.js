@@ -197,7 +197,7 @@ const ACTION_LAYER_REPLACEMENTS = {
   "src/api/communities/communities": "usePlatformActions / useCommunityActions",
   "src/api/configuration/configuration": "the actions layer (no hook yet -- first-run bootstrap)",
   "src/api/consumption/consumption": "useCommunityActions",
-  "src/api/memberships/memberships": "useMembershipActions",
+  "src/api/memberships/memberships": "useMembershipActions / useCommunityActions",
   "src/api/plants/plants": "usePlantActions / useSupplyActions / useCommunityActions",
   "src/api/production/production": "usePlantActions",
   "src/api/sharing-agreements/sharing-agreements":

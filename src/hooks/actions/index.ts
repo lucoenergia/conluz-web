@@ -18,7 +18,12 @@
  */
 export { type Action, type MaybeAction, type ActionBundle, grant, ungated } from "./action";
 
-export { useCommunityActions, type ConfigureDatadisResult, type DatadisToggleResult } from "./useCommunityActions";
+export {
+  useCommunityActions,
+  type CommunityAdminRowActions,
+  type ConfigureDatadisResult,
+  type DatadisToggleResult,
+} from "./useCommunityActions";
 export {
   useInvitationActions,
   type InvitationAcceptanceResult,

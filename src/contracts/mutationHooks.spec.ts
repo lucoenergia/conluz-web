@@ -105,7 +105,9 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useSyncMonthlyDatadisConsumptions: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
 
   // ── Memberships ───────────────────────────────────────────────────────────
-  useCreateMembership: { scope: "community", capability: "canManageMemberships", hook: "useMembershipActions" },
+  // No screen sends it: the communities page appointed admins with it until
+  // they were invited through the admin endpoints instead (#276). No action hook.
+  useCreateMembership: { scope: "community", capability: "canManageMemberships" },
   useRegisterMember: { scope: "community", capability: "canRegisterMembers", hook: "useMembershipActions" },
   // No screen sends it yet: no action hook.
   useImportMembers: {
@@ -120,11 +122,11 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useSendInvitations: { scope: "community", capability: "canInviteMembers", hook: "useMembershipActions" },
 
   // ── Community admins ──────────────────────────────────────────────────────
-  useInviteCommunityAdmin: { scope: "community", capability: "canManageAdmins" },
-  useEnableCommunityAdmin: { scope: "community", capability: "canManageAdmins" },
-  useDisableCommunityAdmin: { scope: "community", capability: "canManageAdmins" },
-  useResendCommunityAdminInvitation: { scope: "community", capability: "canManageAdmins" },
-  useRevokeCommunityAdminInvitation: { scope: "community", capability: "canManageAdmins" },
+  useInviteCommunityAdmin: { scope: "community", capability: "canManageAdmins", hook: "useCommunityActions" },
+  useEnableCommunityAdmin: { scope: "community", capability: "canManageAdmins", hook: "useCommunityActions" },
+  useDisableCommunityAdmin: { scope: "community", capability: "canManageAdmins", hook: "useCommunityActions" },
+  useResendCommunityAdminInvitation: { scope: "community", capability: "canManageAdmins", hook: "useCommunityActions" },
+  useRevokeCommunityAdminInvitation: { scope: "community", capability: "canManageAdmins", hook: "useCommunityActions" },
 
   // ── Invitations ───────────────────────────────────────────────────────────
   useInspectInvitation: { ungated: "no session: the holder of an emailed invitation link may not have an account to sign in with yet, and the token is the only credential", hook: "useInvitationActions" },
