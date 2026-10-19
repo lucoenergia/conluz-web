@@ -3,6 +3,7 @@ import {
   useDeleteMembership,
   useDisableMembership,
   useEnableMembership,
+  useImportMembers,
   useRegisterMember,
   useResendInvitation,
   useRevokeInvitation,
@@ -44,6 +45,7 @@ vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => (
   useEnableMembership: vi.fn(),
   useDisableMembership: vi.fn(),
   useRegisterMember: vi.fn(),
+  useImportMembers: vi.fn(),
   useSendInvitations: vi.fn(),
   useSendInvitation: vi.fn(),
   useResendInvitation: vi.fn(),
@@ -76,6 +78,7 @@ beforeEach(() => {
   vi.mocked(useEnableMembership).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useDisableMembership).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useRegisterMember).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useImportMembers).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useSendInvitations).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useSendInvitation).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useResendInvitation).mockReturnValue(mutation.idle({ mutateAsync }));
@@ -474,6 +477,65 @@ describe("useMembershipActions", () => {
 
       await result.current.actions[action]?.run();
 
+      expect(invalidateQueries).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("importing members (#284)", () => {
+    const FILE = new File(["personalId;fullName\r\n"], "miembros.csv", { type: "text/csv" });
+
+    it("withholds the import unless the community grants canRegisterMembers", () => {
+      const { result } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canManageMemberships: true, canInviteMembers: true })),
+      );
+
+      expect(result.current.actions.importMembers).toBeUndefined();
+      expect(result.current.outcomes.importMembers).toEqual({ state: "denied" });
+    });
+
+    it("denies the import when canRegisterMembers is missing, as from a backend that predates it", () => {
+      const capabilities = buildCommunityCapabilities({ canManageMemberships: true });
+      delete (capabilities as Partial<typeof capabilities>).canRegisterMembers;
+      const { result } = renderHookWithProviders(() =>
+        useMembershipActions(buildCommunity({ id: COMMUNITY_ID, capabilities })),
+      );
+
+      expect(result.current.actions.importMembers).toBeUndefined();
+      expect(result.current.outcomes.importMembers).toEqual({ state: "denied" });
+    });
+
+    it("reports the import pending while the community is undefined", () => {
+      const { result } = renderHookWithProviders(() => useMembershipActions(undefined));
+
+      expect(result.current.outcomes.importMembers).toEqual({ state: "pending" });
+    });
+
+    it("imports the file into the community, answers the result, and refreshes the roster and the member count", async () => {
+      const response = { registered: 1, failed: 0, rows: [] };
+      mutateAsync.mockResolvedValue(response);
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canRegisterMembers: true })),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.importMembers?.run({ file: FILE })).resolves.toEqual({
+        ok: true,
+        value: response,
+      });
+      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, data: { file: FILE } });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+    });
+
+    it("hands a refused file back to the screen and leaves the cache alone", async () => {
+      const error = { response: { status: 400, data: { status: 400, errors: [{ message: "x", code: "MEMBERSHIP_IMPORT_MALFORMED_FILE" }] } } };
+      mutateAsync.mockRejectedValue(error);
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({ canRegisterMembers: true })),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.importMembers?.run({ file: FILE })).resolves.toEqual({ error });
       expect(invalidateQueries).not.toHaveBeenCalled();
     });
   });

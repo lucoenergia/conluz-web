@@ -109,12 +109,8 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   // they were invited through the admin endpoints instead (#276). No action hook.
   useCreateMembership: { scope: "community", capability: "canManageMemberships" },
   useRegisterMember: { scope: "community", capability: "canRegisterMembers", hook: "useMembershipActions" },
-  // No screen sends it yet: no action hook.
-  useImportMembers: {
-    scope: "community",
-    capability: "canRegisterMembers",
-    approximates: "the import registers each row as registerMember does, for the same callers, and no flag names the import itself",
-  },
+  // The import registers each row as useRegisterMember does, for the same callers (#284).
+  useImportMembers: { scope: "community", capability: "canRegisterMembers", hook: "useMembershipActions" },
   // canInvite covers the first invitation, its resends and revoking its link.
   useSendInvitation: { scope: "membership", capability: "canInvite", hook: "useMembershipActions" },
   useResendInvitation: { scope: "membership", capability: "canInvite", hook: "useMembershipActions" },

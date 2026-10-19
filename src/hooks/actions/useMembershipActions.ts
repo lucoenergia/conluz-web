@@ -4,6 +4,7 @@ import {
   useDeleteMembership,
   useDisableMembership,
   useEnableMembership,
+  useImportMembers,
   useRegisterMember,
   useResendInvitation,
   useRevokeInvitation,
@@ -24,6 +25,8 @@ import {
 } from "../../api/users/users";
 import type {
   CommunityResponse,
+  ImportMembersBody,
+  ImportMembersResponse,
   MemberResponse,
   MembershipCapabilitiesResponse,
   RegisterMemberBody,
@@ -109,9 +112,14 @@ const SUPPLY_DETAIL_QUERY_URL = /^\/api\/v1\/supplies\/[^/]+$/;
 export interface MembershipActions {
   actions: {
     register: MaybeAction<[RegisterMemberBody], MembershipWriteResult<MemberResponse>>;
+    importMembers: MaybeAction<[ImportMembersBody], MembershipWriteResult<ImportMembersResponse>>;
     sendPendingInvitations: MaybeAction<[], MembershipWriteResult<SendInvitationsResponse>>;
   };
-  outcomes: { register: CapabilityOutcome; sendPendingInvitations: CapabilityOutcome };
+  outcomes: {
+    register: CapabilityOutcome;
+    importMembers: CapabilityOutcome;
+    sendPendingInvitations: CapabilityOutcome;
+  };
   /**
    * The per-row gate.
    *
@@ -136,6 +144,7 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   const enableMutation = useEnableMembership();
   const disableMutation = useDisableMembership();
   const registerMutation = useRegisterMember();
+  const importMutation = useImportMembers();
   const sendInvitationsMutation = useSendInvitations();
   const inviteMutation = useSendInvitation();
   const resendMutation = useResendInvitation();
@@ -227,13 +236,32 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
           ),
         registerMutation.isPending,
       ),
+      // The import registers each row as a registration does (#284), for the
+      // same callers, so it is gated and refreshed the same way. The whole-file
+      // refusals and the per-row results are the screen's to word.
+      importMembers: grant(
+        registerOutcome,
+        (data: ImportMembersBody) =>
+          write(
+            () => importMutation.mutateAsync({ communityId, data }),
+            () => {
+              invalidateRoster();
+              queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
+            },
+          ),
+        importMutation.isPending,
+      ),
       sendPendingInvitations: grant(
         sendPendingOutcome,
         () => write(() => sendInvitationsMutation.mutateAsync({ communityId }), invalidateRoster),
         sendInvitationsMutation.isPending,
       ),
     },
-    outcomes: { register: registerOutcome, sendPendingInvitations: sendPendingOutcome },
+    outcomes: {
+      register: registerOutcome,
+      importMembers: registerOutcome,
+      sendPendingInvitations: sendPendingOutcome,
+    },
 
     forMembership: (membership) => {
       const userId = membership?.user?.id ?? "";
