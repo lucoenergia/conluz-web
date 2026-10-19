@@ -1,5 +1,6 @@
 import type { MembershipResponse } from "../../api/models";
-import type { MembershipRowActions } from "../../hooks/actions";
+import type { Action } from "../../hooks/actions";
+import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 
 /** The three states the roster tells apart (#275). */
 export type MembershipStatus = "active" | "pending" | "suspended";
@@ -34,12 +35,40 @@ export function invitationStateOf(
   return { kind: "lapsed" };
 }
 
-type RowActions = MembershipRowActions["actions"];
+/** What the status and invitation rules read of a row: a roster row and a community admin both carry it. */
+export type MembershipState = Pick<MembershipResponse, "enabled" | "acceptedAt" | "invitedAt" | "invitationExpiresAt">;
 
-export interface InvitationActions {
-  invite?: NonNullable<RowActions["invite"]>;
-  resend?: NonNullable<RowActions["resendInvitation"]>;
-  revoke?: NonNullable<RowActions["revokeInvitation"]>;
+/** Where a pending membership's invitation stands, or null once it is accepted (#275). */
+export function invitationText(
+  membership: Pick<MembershipResponse, "acceptedAt" | "invitedAt" | "invitationExpiresAt">,
+): string | null {
+  const state = invitationStateOf(membership);
+  if (!state) return null;
+  switch (state.kind) {
+    case "never":
+      return "Sin invitar";
+    case "active":
+      return `Enlace activo hasta el ${formatCalendarDate(state.expiresAt, SHORT_CALENDAR_DATE)}`;
+    case "lapsed":
+      return "Enlace caducado o revocado";
+  }
+}
+
+/**
+ * The invitation writes a row's caller was handed, by the names the action
+ * hooks use. A community admin's row has no first invitation to send: inviting
+ * an admin registers and sends in one step (#276).
+ */
+interface InvitationRowActions<Invite, Resend, Revoke> {
+  invite?: Invite;
+  resendInvitation?: Resend;
+  revokeInvitation?: Revoke;
+}
+
+export interface InvitationActions<Invite = never, Resend = never, Revoke = never> {
+  invite?: Invite;
+  resend?: Resend;
+  revoke?: Revoke;
 }
 
 /**
@@ -51,10 +80,10 @@ export interface InvitationActions {
  * - "Reenviar" sends a new link to one invited before, active or not.
  * - "Revocar enlace" only while a link is active, suspended or not.
  */
-export function invitationActionsFor(
-  membership: MembershipResponse | null | undefined,
-  actions: RowActions,
-): InvitationActions {
+export function invitationActionsFor<Invite = never, Resend = never, Revoke = never>(
+  membership: MembershipState | null | undefined,
+  actions: InvitationRowActions<Invite, Resend, Revoke>,
+): InvitationActions<Invite, Resend, Revoke> {
   const state = membership ? invitationStateOf(membership) : null;
   if (!membership || !state) return {};
   return {
@@ -62,4 +91,22 @@ export function invitationActionsFor(
     resend: membership.enabled && state.kind !== "never" ? actions.resendInvitation : undefined,
     revoke: state.kind === "active" ? actions.revokeInvitation : undefined,
   };
+}
+
+/** The suspend or reactivate a row offers, and which of the two it is. */
+export type StatusToggle = { action: Action<[], boolean>; isSuspending: boolean } | undefined;
+
+/**
+ * Suspend or reactivate, never both. A caller who may do either is granted
+ * both halves of the pair, so the row's own `enabled` picks the one that
+ * applies -- resolved once, so the menu item, its confirmation and the handler
+ * cannot disagree about which was chosen.
+ */
+export function statusToggleFor(
+  membership: Pick<MembershipResponse, "enabled"> | null | undefined,
+  actions: { enable?: Action<[], boolean>; disable?: Action<[], boolean> },
+): StatusToggle {
+  if (!membership) return undefined;
+  if (membership.enabled) return actions.disable && { action: actions.disable, isSuspending: true };
+  return actions.enable && { action: actions.enable, isSuspending: false };
 }

@@ -1,6 +1,5 @@
 import type { FC } from "react";
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
-import type { MemberResponse } from "../../api/models";
 import type { Action, MembershipWriteResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel } from "../../hooks/useActiveCommunityName";
@@ -41,15 +40,20 @@ interface InvitationActionDialogProps {
   kind: InvitationWriteKind;
   memberName: string;
   communityName: string | undefined;
-  /** The action itself: the dialog is mounted only while the row grants it in its current state. */
-  action: Action<[], MembershipWriteResult<MemberResponse>>;
+  /**
+   * The action itself: the dialog is mounted only while the row grants it in
+   * its current state. A member's or a community admin's (#276): the dialog
+   * reads only whether it was refused.
+   */
+  action: Action<[], MembershipWriteResult<unknown>>;
   onClose: () => void;
   /** Called with the refusal, after the dialog has closed. */
   onRefused: (error: unknown) => void;
 }
 
 /**
- * The confirmation for the three invitation writes on a roster row (#275).
+ * The confirmation for the three invitation writes on a roster row (#275),
+ * and for the two on a community admin's row (#276).
  * Every one emails the member or stops a link from working, so none is sent on
  * a single click of the menu item.
  */

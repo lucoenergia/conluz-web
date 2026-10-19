@@ -228,6 +228,35 @@ describe("registering a member", () => {
     expect(within(dialog).getByLabelText(/^DNI\/NIE/)).toHaveValue("12345678Z");
   });
 
+  it("UI-MBR-017 shows an invalid DNI/NIE/NIF on its field, and the other fields keep their values", async () => {
+    const u = user();
+    serveMembersPage(mockCustomInstance, { current: [ANA] }, {
+      register: () => {
+        throw restError(400, "USER_PERSONAL_ID_INVALID");
+      },
+    });
+    await renderPage();
+
+    const dialog = await openRegistration(u);
+    await fill(u, dialog, {
+      "DNI/NIE": "12345678A",
+      "Nombre completo": "Nuria Nueva",
+      "Email de contacto": "nuria@example.com",
+      Teléfono: "600 111 222",
+    });
+    await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
+
+    const personalId = within(dialog).getByLabelText(/^DNI\/NIE/);
+    await waitFor(() => expect(personalId).toHaveAttribute("aria-invalid", "true"));
+    expect(personalId).toHaveAccessibleDescription("El DNI/NIE/NIF no es válido. Revisa los números y la letra.");
+    expect(personalId).toHaveValue("12345678A");
+    expect(within(dialog).getByLabelText(/^Nombre completo/)).toHaveValue("Nuria Nueva");
+    expect(within(dialog).getByLabelText(/^Email de contacto/)).toHaveValue("nuria@example.com");
+    expect(within(dialog).getByLabelText(/^Teléfono/)).toHaveValue("600 111 222");
+    // On the field only, not repeated for the whole form.
+    expect(within(dialog).getAllByText("El DNI/NIE/NIF no es válido. Revisa los números y la letra.")).toHaveLength(1);
+  });
+
   it.each([
     ["no DNI", { "Nombre completo": "Nuria Nueva" }, /^DNI\/NIE/, "Escribe el DNI/NIE"],
     ["no name", { "DNI/NIE": "12345678Z" }, /^Nombre completo/, "Escribe el nombre completo"],
