@@ -115,7 +115,8 @@
     "DisableConfirmationModal": "../groups/dialogs.md",
     "EnableConfirmationModal": "../groups/dialogs.md",
     "PublishSharingAgreementConfirmationModal": "../groups/dialogs.md",
-    "RevertSharingAgreementToDraftConfirmationModal": "../groups/dialogs.md"
+    "RevertSharingAgreementToDraftConfirmationModal": "../groups/dialogs.md",
+    "NextStepBanner": "../groups/layout.md"
   },
   "overrides": {
     "RowActionsMenu": {
@@ -300,6 +301,9 @@
       "cardMode": "column"
     },
     "SupplyDetailHeader": {
+      "cardMode": "column"
+    },
+    "NextStepBanner": {
       "cardMode": "column"
     }
   },

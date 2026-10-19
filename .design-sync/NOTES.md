@@ -14,6 +14,9 @@
   SupplyForm, Csv/Import modals, SharingAgreement{CoefficientSet,DetailHeader,FilePanel,FormDialog,
   GenerateDialog,UploadDialog}, CoefficientHistoryDrawer, SupplyCoefficientHistorySection,
   ScopeContext, AddSupplyDialog).
+- `GraphFilterDates` (src/components/Graph) is deliberately not exported: it takes the internal
+  `useGraphFilterRange` state object and only exists as a piece of `GraphFilter` / the plant period
+  control. `NextStepBanner` (the "Siguiente paso" shell) IS synced, in the layout group.
 - `ConluzProvider` (`.design-sync/pkg/ConluzProvider.tsx`) mirrors `src/main.tsx`: ThemeProvider +
   StyledEngineProvider(enableCssLayer) + the shell's GlobalStyles + LocalizationProvider(dayjs, es) +
   MemoryRouter, plus an inert QueryClient and `CommunityProvider`. Without the last two, every
