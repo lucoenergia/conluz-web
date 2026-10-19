@@ -41,3 +41,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-AGR` | Sharing agreements: the list, the detail page, the coefficient editor and their dialogs | [`sharing-agreements.md`](sharing-agreements.md) |
 | `UI-INV` | Invitation acceptance: joining a community from the emailed link | [`invitation-acceptance.md`](invitation-acceptance.md) |
 | `UI-HOM` | Home: the member and management home views | [`home.md`](home.md) |
+| `UI-ADM` | Community admins: the platform admin's list, invitation and management of a community's admins | [`community-admins.md`](community-admins.md) |
