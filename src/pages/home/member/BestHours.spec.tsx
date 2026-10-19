@@ -227,7 +227,7 @@ describe("BestHours (#201)", () => {
   });
 
   describe("AC8 -- nothing to show yet", () => {
-    it("explains it neutrally when no month resolves", () => {
+    it("UI-HOM-007 explains it neutrally when no month resolves", () => {
       answer(buildMembershipHourlyProfile());
       open();
 
@@ -356,7 +356,7 @@ describe("BestHours (#201)", () => {
     it.each([
       ["fewer hours with data than the month has", { hoursWithData: 1300, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 }],
       ["fewer supplies with data than the member has", { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 1 }],
-    ])("with %s, says the best hours cannot be worked out, and names and shades none", (_, coverage) => {
+    ])("UI-HOM-006 with %s, says the best hours cannot be worked out, and names and shades none", (_, coverage) => {
       answer({ ...profileWith(), coverage });
       open();
 
@@ -373,7 +373,7 @@ describe("BestHours (#201)", () => {
       expect(text(lead())).toBe("Mejores horas: de 16 h a 20 h");
     });
 
-    it("with complete coverage and no assigned energy in any hour, says so as a fact about the energy", () => {
+    it("UI-HOM-006 with complete coverage and no assigned energy in any hour, says so as a fact about the energy", () => {
       answer(onlyAt({}));
       open();
 

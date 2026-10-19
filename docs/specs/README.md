@@ -40,3 +40,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-FMT` | Formatting of figures with units, dates and chart time labels | [`formatting.md`](formatting.md) |
 | `UI-AGR` | Sharing agreements: the list, the detail page, the coefficient editor and their dialogs | [`sharing-agreements.md`](sharing-agreements.md) |
 | `UI-INV` | Invitation acceptance: joining a community from the emailed link | [`invitation-acceptance.md`](invitation-acceptance.md) |
+| `UI-HOM` | Home: the member and management home views | [`home.md`](home.md) |
