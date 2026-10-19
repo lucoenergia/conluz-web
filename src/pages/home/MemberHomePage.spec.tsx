@@ -21,6 +21,7 @@ import {
   type MembershipPaybackResponse,
 } from "../../api/models";
 import { customInstance } from "../../api/custom-instance";
+import { useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../test/capturedResponses";
 import {
@@ -30,6 +31,8 @@ import {
   buildMembershipHourlyProfileBucket,
   buildMembershipMonthlyConsumptionBucket,
   buildMembershipPayback,
+  buildSupply,
+  buildUser,
 } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { declaredStyle } from "../../test/declaredStyle";
@@ -65,6 +68,11 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: vi.fn(),
+}));
+// A community admin's member view asks which supplies the caller owns here.
+vi.mock(import("../../api/users/users"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetSuppliesByUserId: vi.fn(),
 }));
 
 const USER_ID = "member-user";
@@ -233,8 +241,10 @@ describe("MemberHomePage (#199)", () => {
     vi.mocked(useLoggedUser).mockReturnValue(
       buildCurrentUser({ id: USER_ID, memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_MEMBER } }),
     );
-    // A plain member: the community grants no management, so no switch.
+    // A plain member: the community grants no management, so no switch, and
+    // no ownership read.
     answerCommunities({ adminOf: [] });
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
     answer();
   });
 
@@ -242,11 +252,45 @@ describe("MemberHomePage (#199)", () => {
     expect(customInstance).not.toHaveBeenCalled();
   });
 
-  it("reads the caller's own membership in the active community", () => {
+  it("UI-HOM-010 reads the caller's own membership in the active community", () => {
     openHome();
 
     expect(vi.mocked(useGetMembershipEnergyMetrics).mock.lastCall?.slice(0, 2)).toEqual([COMMUNITY_ID, USER_ID]);
     expect(vi.mocked(useGetMembershipPayback).mock.lastCall?.slice(0, 2)).toEqual([COMMUNITY_ID, USER_ID]);
+  });
+
+  it("UI-HOM-010 a community admin who owns a supply here reads and sees their own membership", () => {
+    const adminId = "admin-user";
+    vi.mocked(useLoggedUser).mockReturnValue(
+      buildCurrentUser({ id: adminId, memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_ADMIN } }),
+    );
+    answerCommunities({ adminOf: [COMMUNITY_ID] });
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(
+      query.success<typeof getSuppliesByUserId>([buildSupply({ user: buildUser({ id: adminId }), community: { id: COMMUNITY_ID, name: "Comunidad" } })]),
+    );
+    // Only the admin's own membership answers with their figures.
+    vi.mocked(useGetMembershipPayback).mockImplementation((communityId, userId) =>
+      query.success<typeof getMembershipPayback>(
+        communityId === COMMUNITY_ID && userId === adminId
+          ? paybackWith({ investmentEur: 600, savedEur: 150, remainingEur: 450, progressRatio: 0.25 })
+          : paybackWith(),
+      ),
+    );
+
+    openHome();
+
+    for (const hook of [
+      useGetMembershipEnergyMetrics,
+      useGetMembershipPayback,
+      useGetMembershipMonthlyConsumption,
+      useGetMembershipHourlyProfile,
+    ]) {
+      const calls = vi.mocked(hook).mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+      expect(calls.every((call) => call[0] === COMMUNITY_ID && call[1] === adminId)).toBe(true);
+    }
+    expect(screen.getByRole("tab", { name: "Tu energía" })).toHaveAttribute("aria-selected", "true");
+    expect(text(paybackCard())).toContain("Has recuperado el 25 % de tu inversión de 600,00 €; te faltan 450,00 €");
   });
 
   describe("AC1 -- a member with data sees the month and every figure", () => {

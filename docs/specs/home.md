@@ -122,11 +122,21 @@ view may present a missing figure as a zero or a normal setup stage as a failure
 - **Implements:** n/a
 - **Source:** #280
 
+### UI-HOM-010 — The member view reads the caller's own membership
+
+- **Status:** Active
+- **Rule:** The member view MUST show the figures of the caller's own membership in the active
+  community, whatever other role the caller holds there.
+- **Rationale:** A community admin who is also a member must see their own energy and payback, never
+  the community's or another member's.
+- **Implements:** n/a
+- **Source:** #280
+
 ## States
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
-| Normal | Every block, each priced as its response says (UI-HOM-001), the comparison with its directions (UI-HOM-003) | The view switch, for a caller with both views (UI-HOM-008) |
+| Normal | Every block, from the caller's own membership (UI-HOM-010), each priced as its response says (UI-HOM-001), the comparison with its directions (UI-HOM-003) | The view switch, for a caller with both views (UI-HOM-008) |
 | Nothing resolved yet | The payback sentence without a large figure (UI-HOM-002); neutral notices in place of empty blocks (UI-HOM-007) | — |
 | Incomplete month | The comparison said to be affected (UI-HOM-004); no best hours named (UI-HOM-006) | — |
 | Management setup | No plant, or a plant without an agreement, explained without an alert (UI-HOM-009) | — |
