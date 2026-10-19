@@ -47,17 +47,14 @@ import { useActiveCommunity } from "../../context/community.context";
 import { useGetMemberships } from "../../api/memberships/memberships";
 import { type MembershipResponse, MembershipResponseRole, UpdateMembershipRoleBodyRole } from "../../api/models";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
-import {
-  useCommunityActions,
-  useMembershipActions,
-} from "../../hooks/actions";
+import { useMembershipActions } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useErrorDispatch } from "../../context/error.context";
-import { ImportPartnersModal } from "../../components/Modals/ImportPartnersModal";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { invitationRefusalMessage, removalRefusalMessage } from "../../errors/membershipErrors";
 import { MemberRecordDialog } from "./MemberRecordDialog";
+import { ImportMembersDialog } from "./ImportMembersDialog";
 import { RegisterMemberDialog } from "./RegisterMemberDialog";
 import { SendPendingInvitationsDialog } from "./SendPendingInvitationsDialog";
 import { InvitationActionDialog, type InvitationWriteKind } from "./InvitationActionDialog";
@@ -96,7 +93,7 @@ export const MembersPage: FC = () => {
 
   const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [removeConfirmUserId, setRemoveConfirmUserId] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   // The id, not the row. A write invalidates the list, so a stored row would go
@@ -120,11 +117,6 @@ export const MembersPage: FC = () => {
   // What this caller may do, as the backend answers it. forMembership is a
   // plain function rather than a hook precisely so it can be asked once per row.
   const { actions: membershipActions, forMembership } = useMembershipActions(activeCommunity);
-  // The CSV import creates users, not memberships: POST /users/import is
-  // guarded on canCreateUserIn, which the community reports as canCreateUsers.
-  // It is a different answer from canManageMemberships even where the two
-  // coincide today.
-  const { importUsers } = useCommunityActions().forCommunity(activeCommunity).actions;
 
   // Resolved from the list on every render rather than stored, so the row the
   // menu and its dialogs act on is the one the cache currently holds.
@@ -262,11 +254,11 @@ export const MembersPage: FC = () => {
               gap: 2,
             }}
           >
-            {importUsers && (
+            {membershipActions.importMembers && (
               <Button
                 variant="outlined"
                 startIcon={<CloudUploadIcon />}
-                onClick={() => setShowImportModal(true)}
+                onClick={() => setImportDialogOpen(true)}
                 sx={{ px: 3, py: 1.5 }}
               >
                 Importar miembros
@@ -417,16 +409,6 @@ export const MembersPage: FC = () => {
         </Paper>
       </Box>
 
-      {/* Mounted with its button: no import action, nothing that can open it.
-          The action invalidates the roster itself, so there is nothing left for
-          the page to do when it completes. */}
-      {importUsers && (
-        <ImportPartnersModal
-          isOpen={showImportModal}
-          onClose={() => setShowImportModal(false)}
-          importUsers={importUsers}
-        />
-      )}
 
       {/* Every item is the selected row's own answer, including when that row is
           the caller's: the backend decides per membership, so there is no
@@ -549,6 +531,23 @@ export const MembersPage: FC = () => {
           register={membershipActions.register}
           forMembership={forMembership}
           onClose={() => setRegisterDialogOpen(false)}
+        />
+      )}
+      {/* The import refreshes the roster itself. Its result hands over to the
+          bulk send, when the community grants it, rather than sending anything. */}
+      {importDialogOpen && membershipActions.importMembers && (
+        <ImportMembersDialog
+          communityName={communityName}
+          importMembers={membershipActions.importMembers}
+          onSendPending={
+            membershipActions.sendPendingInvitations
+              ? () => {
+                  setImportDialogOpen(false);
+                  setBulkDialogOpen(true);
+                }
+              : undefined
+          }
+          onClose={() => setImportDialogOpen(false)}
         />
       )}
       {bulkDialogOpen && membershipActions.sendPendingInvitations && (

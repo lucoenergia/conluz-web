@@ -273,7 +273,8 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     hook: "usePlatformActions",
     approximates: "two surfaces: the platform route /users/new gates on the platform flag, a community's own member creation on community.canCreateUsers in useCommunityActions",
   },
-  useCreateUsersWithFile: { scope: "community", capability: "canCreateUsers", hook: "useCommunityActions" },
+  // No screen sends it: the members page imports through useImportMembers (#284). No action hook.
+  useCreateUsersWithFile: { scope: "community", capability: "canCreateUsers" },
   useUpdateUser: {
     scope: "user",
     capability: "canEdit",

@@ -12,7 +12,7 @@ import {
   useCreateSupply,
 } from "../../api/supplies/supplies";
 import { getGetAllPlantsQueryKey, useCreatePlant } from "../../api/plants/plants";
-import { getGetAllUsersQueryKey, useCreateUser, useCreateUsersWithFile } from "../../api/users/users";
+import { getGetAllUsersQueryKey, useCreateUser } from "../../api/users/users";
 import {
   getGetDatadisConfigQueryKey,
   getGetShellyConfigQueryKey,
@@ -35,13 +35,11 @@ import type {
   CommunityResponse,
   ConfigureDatadisBody,
   CreationInBulkResponse,
-  CreateUsersInBulkResponse,
   ConfigureShellyBody,
   CreatePlantBody,
   CreateSuppliesWithFileBody,
   CreateSupplyBody,
   CreateUserBody,
-  CreateUsersWithFileBody,
   InviteCommunityAdminBody,
   PlantResponse,
   RestErrorDetailCode,
@@ -106,7 +104,6 @@ export interface CommunityRowActions {
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
     createUser: MaybeAction<[CreateUserBody], UserResponse | undefined>;
-    importUsers: MaybeAction<[CreateUsersWithFileBody], CreateUsersInBulkResponse | undefined>;
     createSupply: MaybeAction<[CreateSupplyBody], SupplyResponse | undefined>;
     importSupplies: MaybeAction<[CreateSuppliesWithFileBody], CreationInBulkResponse | undefined>;
     configureDatadis: MaybeAction<[ConfigureDatadisBody], ConfigureDatadisResult>;
@@ -150,7 +147,6 @@ export function useCommunityActions(): CommunityActions {
   const disableMutation = useDisableCommunity();
   const createPlantMutation = useCreatePlant();
   const createUserMutation = useCreateUser();
-  const importUsersMutation = useCreateUsersWithFile();
   const createSupplyMutation = useCreateSupply();
   const importSuppliesMutation = useCreateSuppliesWithFile();
   const configureDatadisMutation = useConfigureDatadis();
@@ -279,15 +275,6 @@ export function useCommunityActions(): CommunityActions {
               runCreating(() => createUserMutation.mutateAsync({ data }), invalidateUsers),
             createUserMutation.isPending,
           ),
-          importUsers: grant(
-            createUsers,
-            (data: CreateUsersWithFileBody) =>
-              runCreating(
-                () => importUsersMutation.mutateAsync({ data, params: { communityId } }),
-                invalidateUsers,
-              ),
-            importUsersMutation.isPending,
-          ),
           // Approximation: canManage, for want of a canCreateSupplies.
           createSupply: grant(
             manage,
@@ -358,7 +345,6 @@ export function useCommunityActions(): CommunityActions {
           disable,
           createPlant,
           createUser: createUsers,
-          importUsers: createUsers,
           createSupply: manage,
           importSupplies: manage,
           configureDatadis: manage,

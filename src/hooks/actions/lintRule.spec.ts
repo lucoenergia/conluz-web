@@ -122,16 +122,15 @@ describe("the mutation guard rail", () => {
       expect(members).toHaveLength(1);
       expect(members[0]).toContain("useMembershipActions");
 
-      // The import modal came off the list with the page that mounts it, so its
-      // own entry had to go too -- a modal that still reached for the mutation
-      // would have been exempt in a file nobody was looking at.
-      const importModal = await restrictedImportErrors(
-        `import { useCreateUsersWithFile } from "../../api/users/users";\nexport const x = useCreateUsersWithFile;\n`,
-        "src/components/Modals/ImportPartnersModal.tsx",
+      // The import dialog is a file of its own beside the page that mounts it,
+      // and reaching for the mutation there is refused just the same (#284).
+      const importDialog = await restrictedImportErrors(
+        `import { useImportMembers } from "../../api/memberships/memberships";\nexport const x = useImportMembers;\n`,
+        "src/pages/members/ImportMembersDialog.tsx",
       );
 
-      expect(importModal).toHaveLength(1);
-      expect(importModal[0]).toContain("useCommunityActions");
+      expect(importDialog).toHaveLength(1);
+      expect(importDialog[0]).toContain("useMembershipActions");
 
       const integrations = await restrictedImportErrors(
         `import { useConfigureDatadis } from "../../api/consumption/consumption";\nexport const x = useConfigureDatadis;\n`,

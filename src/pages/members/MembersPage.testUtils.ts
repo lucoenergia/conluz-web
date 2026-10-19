@@ -14,8 +14,8 @@ import {
  * registration and invitations (#275). Mock-free: each spec mocks
  * custom-instance itself and hands `serveMembersPage` its mock.
  *
- * The routes cover what the page reads and the writes #275 sends, and nothing
- * else: a GET of the user list or a POST that links an existing account
+ * The routes cover what the page reads and the writes #275 and #284 send, and
+ * nothing else: a GET of the user list or a POST that links an existing account
  * matches no route, so it fails the test that sent it.
  */
 export const COMMUNITY_ID = "community-1";
@@ -24,6 +24,7 @@ export const COMMUNITY_URL = `/api/v1/communities/${COMMUNITY_ID}`;
 export const ROSTER_URL = `${COMMUNITY_URL}/memberships`;
 export const REGISTER_URL = `${ROSTER_URL}/register`;
 export const BULK_INVITE_URL = `${ROSTER_URL}/invite`;
+export const IMPORT_URL = `${ROSTER_URL}/import`;
 export const inviteUrl = (userId: string) => `${ROSTER_URL}/${userId}/invite`;
 export const resendUrl = (userId: string) => `${ROSTER_URL}/${userId}/invitation/resend`;
 export const revokeUrl = (userId: string) => `${ROSTER_URL}/${userId}/invitation/revoke`;
@@ -79,7 +80,7 @@ export function rosterRow(
 /** What the next roster GET serves, so a write's handler can change it as the backend would. */
 export type Roster = { current: MembershipResponse[] };
 
-export type Write = "register" | "invite" | "resend" | "revoke" | "bulk" | "remove";
+export type Write = "register" | "import" | "invite" | "resend" | "revoke" | "bulk" | "remove";
 
 export type Writes = Partial<Record<Write, (config: RequestConfig) => unknown>>;
 
@@ -102,6 +103,7 @@ export function serveMembersPage(
     { method: "GET", url: COMMUNITY_URL, respond: () => community },
     { method: "GET", url: ROSTER_URL, respond: () => roster.current },
     { method: "POST", url: REGISTER_URL, respond: write("register") },
+    { method: "POST", url: IMPORT_URL, respond: write("import") },
     { method: "POST", url: BULK_INVITE_URL, respond: write("bulk") },
     { method: "POST", url: /\/memberships\/[^/]+\/invite$/, respond: write("invite") },
     { method: "POST", url: /\/memberships\/[^/]+\/invitation\/resend$/, respond: write("resend") },
