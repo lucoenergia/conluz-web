@@ -34,7 +34,7 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-INT` | Integrations: the community integrations page and the plant's Huawei integration | [`integrations.md`](integrations.md) |
 | `UI-PLT` | Plant detail: the plant's production, and the status of its agreements and integration | [`plant-detail.md`](plant-detail.md) |
 | `UI-USR` | Users: the edit screen | [`users.md`](users.md) |
-| `UI-MBR` | Members: the member record edit and suspension on the members page | [`members.md`](members.md) |
+| `UI-MBR` | Members: registration, invitations, member status, the member record edit and suspension on the members page | [`members.md`](members.md) |
 | `UI-PRF` | Profile: the email field | [`profile.md`](profile.md) |
 | `UI-ROUTE` | Routing: what an unknown path renders | [`routing.md`](routing.md) |
 | `UI-FMT` | Formatting of figures with units, dates and chart time labels | [`formatting.md`](formatting.md) |
