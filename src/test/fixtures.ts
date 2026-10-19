@@ -244,6 +244,7 @@ export function buildMembership(overrides: Partial<MembershipResponse> = {}): Me
       enabled: true,
       // Accepted: a pending membership (null) grants no access, so it is opt-in.
       acceptedAt: "2026-01-01T00:00:00Z",
+      invitedAt: null,
       invitationExpiresAt: null,
       capabilities: buildMembershipCapabilities(),
     } satisfies MembershipResponse),

@@ -107,6 +107,12 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   // ── Memberships ───────────────────────────────────────────────────────────
   useCreateMembership: { scope: "community", capability: "canManageMemberships", hook: "useMembershipActions" },
   useRegisterMember: { scope: "community", capability: "canRegisterMembers" },
+  // No screen sends it yet: no action hook.
+  useImportMembers: {
+    scope: "community",
+    capability: "canRegisterMembers",
+    approximates: "the import registers each row as registerMember does, for the same callers, and no flag names the import itself",
+  },
   useSendInvitation: { scope: "membership", capability: "canInvite" },
   // No screen sends these yet: no action hook. The capability is the one the
   // contract names for each endpoint, not a choice made here.

@@ -849,6 +849,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_ADMIN",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
     // Their own membership: the backend does not offer them their own removal
@@ -884,6 +885,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
     capabilities: {
@@ -915,6 +917,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     },
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
+    invitedAt: null,
     invitationExpiresAt: null,
     enabled: false,
     capabilities: {
