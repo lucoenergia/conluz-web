@@ -84,6 +84,9 @@ const ROUTE_ACCESS: Record<string, Access> = {
   // The community named in the URL, not the active one: a platform admin
   // editing a community administers it without being a member.
   "/communities/:communityId/edit": { require: { scope: "communityById", capability: "canUpdate" } },
+  // The community named in the URL as well: its admins are managed by the
+  // platform admin, who need not be a member of it (#276).
+  "/communities/:communityId/admins": { require: { scope: "communityById", capability: "canManageAdmins" } },
 
   "/platform": { require: { scope: "platform", capability: "canAdministerPlatform" } },
   "/users": { require: { scope: "platform", capability: "canListUsers" } },

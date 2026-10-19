@@ -1,7 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetMembershipsQueryKey,
-  useCreateMembership,
   useDeleteMembership,
   useDisableMembership,
   useEnableMembership,
@@ -25,7 +24,6 @@ import {
 } from "../../api/users/users";
 import type {
   CommunityResponse,
-  CreateMembershipBody,
   MemberResponse,
   MembershipCapabilitiesResponse,
   RegisterMemberBody,
@@ -44,15 +42,14 @@ import { grant, type MaybeAction } from "./action";
  * What the caller may do to the memberships of one community.
  *
  * Takes the community rather than its id because the id alone cannot be gated:
- * `ManageAdminsDialog` manages a community the caller is not currently working
- * in, so reading the active community's capabilities would answer about the
- * wrong one. The resource carries its own answer, which is the point of the
- * capabilities model.
+ * the resource carries its own answer, which is the point of the capabilities
+ * model.
  *
- * Nothing here raises a toast. The two call sites word the same failure
- * differently -- "Error al añadir el miembro" on the members page, "Error al
- * asignar el administrador" in the communities dialog -- so the wording belongs
- * to the screen. An action reports false and leaves it there.
+ * Nothing here raises a toast: the wording belongs to the screen. An action
+ * reports false, or the refusal itself, and leaves it there.
+ *
+ * A community's admins are not managed here: the platform admin invites and
+ * suspends them through the admin endpoints, in useCommunityActions (#276).
  */
 export interface MembershipRowActions {
   actions: {
@@ -111,11 +108,10 @@ const SUPPLY_DETAIL_QUERY_URL = /^\/api\/v1\/supplies\/[^/]+$/;
 
 export interface MembershipActions {
   actions: {
-    add: MaybeAction<[CreateMembershipBody], boolean>;
     register: MaybeAction<[RegisterMemberBody], MembershipWriteResult<MemberResponse>>;
     sendPendingInvitations: MaybeAction<[], MembershipWriteResult<SendInvitationsResponse>>;
   };
-  outcomes: { add: CapabilityOutcome; register: CapabilityOutcome; sendPendingInvitations: CapabilityOutcome };
+  outcomes: { register: CapabilityOutcome; sendPendingInvitations: CapabilityOutcome };
   /**
    * The per-row gate.
    *
@@ -132,7 +128,6 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   const queryClient = useQueryClient();
   const communityId = community?.id ?? "";
 
-  const createMutation = useCreateMembership();
   const deleteMutation = useDeleteMembership();
   const updateRoleMutation = useUpdateMembershipRole();
   const setInvestmentMutation = useSetMembershipInvestment();
@@ -165,8 +160,7 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   // name and contact details from (lucoenergia/conluz#396), so besides the
   // roster it refreshes every read here that shows the member: the community's
   // supplies and each supply's detail (their owner), the member's own supplies
-  // and the member as a user (the supply list names them), and the user list
-  // the community admins dialog offers.
+  // and the member as a user (the supply list names them), and the user list.
   const invalidateMemberReads = (userId: string) => {
     queryClient.invalidateQueries({ queryKey: getGetAllSuppliesQueryKey(communityId) });
     queryClient.invalidateQueries({
@@ -214,17 +208,11 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
     }
   };
 
-  const addOutcome = outcomeFromResource(community?.capabilities, "canManageMemberships");
   const registerOutcome = outcomeFromResource(community?.capabilities, "canRegisterMembers");
   const sendPendingOutcome = outcomeFromResource(community?.capabilities, "canInviteMembers");
 
   return {
     actions: {
-      add: grant(
-        addOutcome,
-        (data: CreateMembershipBody) => run(() => createMutation.mutateAsync({ communityId, data })),
-        createMutation.isPending,
-      ),
       // A registration adds a member, so the community's member count moves
       // with the roster. It cannot be the caller's: they are a member already.
       register: grant(
@@ -245,7 +233,7 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
         sendInvitationsMutation.isPending,
       ),
     },
-    outcomes: { add: addOutcome, register: registerOutcome, sendPendingInvitations: sendPendingOutcome },
+    outcomes: { register: registerOutcome, sendPendingInvitations: sendPendingOutcome },
 
     forMembership: (membership) => {
       const userId = membership?.user?.id ?? "";

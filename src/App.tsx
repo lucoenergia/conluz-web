@@ -56,6 +56,7 @@ const MembersPage = lazyPage(() => import("./pages/members/MembersPage"), "Membe
 const CommunitiesPage = lazyPage(() => import("./pages/communities/CommunitiesPage"), "CommunitiesPage");
 const CreateCommunityPage = lazyPage(() => import("./pages/communities/CreateCommunityPage"), "CreateCommunityPage");
 const EditCommunityPage = lazyPage(() => import("./pages/communities/EditCommunityPage"), "EditCommunityPage");
+const CommunityAdminsPage = lazyPage(() => import("./pages/communities/CommunityAdminsPage"), "CommunityAdminsPage");
 
 const PlatformPage = lazyPage(() => import("./pages/platform/PlatformPage"), "PlatformPage");
 const UsersPage = lazyPage(() => import("./pages/users/UsersPage"), "UsersPage");
@@ -161,6 +162,10 @@ function App() {
             <Route
               path=":communityId/edit"
               element={<CapabilityRoute require={{ scope: "communityById", capability: "canUpdate" }}><EditCommunityPage /></CapabilityRoute>}
+            />
+            <Route
+              path=":communityId/admins"
+              element={<CapabilityRoute require={{ scope: "communityById", capability: "canManageAdmins" }}><CommunityAdminsPage /></CapabilityRoute>}
             />
           </Route>
           <Route

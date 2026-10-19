@@ -33,7 +33,6 @@ import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
 import { useCommunityActions, usePlatformActions } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
-import { ManageAdminsDialog } from "./ManageAdminsDialog";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
 
@@ -74,7 +73,6 @@ export const CommunitiesPage: FC = () => {
   // on answering from before the change -- and it is that row's capabilities
   // that now decide what its menu offers.
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
-  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
 
   // What this caller may do, as the backend answers it. forCommunity is a plain
   // function rather than a hook precisely so it can be asked once per row, and
@@ -87,17 +85,17 @@ export const CommunitiesPage: FC = () => {
   const totalInactive = communities.filter((c) => !c.enabled).length;
 
   // Resolved from the list on every render rather than stored, so the row the
-  // menu and its dialog act on is the one the cache currently holds.
+  // menu acts on is the one the cache currently holds.
   const selectedCommunity = selectedCommunityId
     ? (communities.find((community) => community.id === selectedCommunityId) ?? null)
     : null;
 
-  // Managing a community's admins is its canManageMemberships. The menu item
-  // opens a dialog rather than performing the write itself, so it reads the
-  // capability directly; the writes inside the dialog come from the actions
-  // layer.
+  // Managing a community's admins is its canManageAdmins (#276), the
+  // requirement of the page the item leads to. The item navigates rather than
+  // performing a write, so it reads the capability directly; the writes on the
+  // page come from the actions layer.
   const rowAdmins = (community: CommunityResponse | null) =>
-    outcomeFromResource(community?.capabilities, "canManageMemberships");
+    outcomeFromResource(community?.capabilities, "canManageAdmins");
 
   // No permitted action means no menu at all, rather than a menu with nothing
   // in it or items the backend would refuse.
@@ -124,7 +122,9 @@ export const CommunitiesPage: FC = () => {
 
   const handleManageAdminsClick = () => {
     handleMenuClose();
-    setAdminDialogOpen(true);
+    if (selectedCommunity?.id) {
+      navigate(`/communities/${selectedCommunity.id}/admins`);
+    }
   };
 
   return (
@@ -361,9 +361,8 @@ export const CommunitiesPage: FC = () => {
 
       {/* Every item is the selected row's own answer. Editing is the
           community's canUpdate, a platform-wide decision that being its admin
-          does not confer; managing its admins is canManageMemberships, which a
-          community admin does have. The two differ, so they are asked
-          separately. */}
+          does not confer; so is managing its admins, canManageAdmins. The two
+          are separate answers, so they are asked separately. */}
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
         {selectedUpdate && (
           <MenuItem onClick={handleEditClick}>
@@ -383,13 +382,6 @@ export const CommunitiesPage: FC = () => {
         </Can>
       </RowActionsMenu>
 
-      {/* Mounted inside the same gate as the item that opens it: a dialog for an
-          action the caller was never given has no way to be reached. */}
-      <ManageAdminsDialog
-        community={selectedCommunity}
-        open={adminDialogOpen && rowAdmins(selectedCommunity).state === "allowed"}
-        onClose={() => setAdminDialogOpen(false)}
-      />
     </Box>
   );
 };
