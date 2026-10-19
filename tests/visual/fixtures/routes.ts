@@ -1,5 +1,6 @@
 import type { Page, Route } from "@playwright/test";
 import type {
+  CommunityAdminResponse,
   CommunityCapabilitiesResponse,
   GetDatadisConfigResponse,
   MembershipEnergyMetricsResponse,
@@ -33,6 +34,7 @@ import {
   FIXED_SUPPLY_2,
   FIXED_SUPPLY_OTHER_COMMUNITY,
   FIXED_MEMBERSHIPS,
+  FIXED_COMMUNITY_ADMINS,
   FIXED_DATADIS_CONFIG,
   FIXED_HUAWEI_CONFIG,
   FIXED_SHELLY_CONFIG,
@@ -96,6 +98,7 @@ type CurrentUserFixture = { memberships?: Record<string, string>; isPlatformAdmi
  */
 const COMMUNITY_SUBRESOURCE: { pattern: RegExp; capability: keyof CommunityCapabilitiesResponse }[] = [
   { pattern: /\/communities\/[^/]+\/memberships/, capability: "canManageMemberships" },
+  { pattern: /\/communities\/[^/]+\/admins/, capability: "canManageAdmins" },
   { pattern: /\/communities\/[^/]+\/config/, capability: "canManage" },
   { pattern: /\/communities\/[^/]+\/supplies\/datadis/, capability: "canManage" },
   { pattern: /\/communities\/[^/]+\/supplies/, capability: "canListSupplies" },
@@ -800,6 +803,28 @@ export async function mockCommunityAdminOwnsSupply(page: Page) {
         contentType: "application/json",
         body: JSON.stringify([FIXED_ADMIN_OWNED_SUPPLY]),
       }),
+  );
+}
+
+/**
+ * A community's admins page (#276): the admins list, FIXED_COMMUNITY_ADMINS
+ * unless a capture needs another.
+ *
+ * Registered AFTER mockAllApiRoutes so it wins, and refusing as that handler
+ * does: 403 unless the community served carries canManageAdmins.
+ */
+export async function mockCommunityAdminsRoutes(
+  page: Page,
+  currentUser: object,
+  { admins = FIXED_COMMUNITY_ADMINS }: { admins?: CommunityAdminResponse[] } = {},
+) {
+  const capabilities = communityCapabilitiesFor(currentUser);
+  await page.route(
+    (url) => /\/api\/v1\/communities\/[^/]+\/admins(\?|$)/.test(url.href),
+    (route: Route) =>
+      refusal(capabilities, "canManageAdmins")
+        ? refuse(route, "canManageAdmins")
+        : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(admins) }),
   );
 }
 

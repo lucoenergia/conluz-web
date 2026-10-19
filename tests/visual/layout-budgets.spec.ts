@@ -37,6 +37,7 @@ import {
   MEMBER_HOURLY_PROFILE_GAPS,
   MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
   mockAllApiRoutes,
+  mockCommunityAdminsRoutes,
   mockCommunityManagementRoutes,
   mockMemberHome,
   mockPlantDetailRoutes,
@@ -504,11 +505,13 @@ test.describe("Visual baselines", () => {
       ["/communities", "/communities"],
       ["/communities/new", "/communities/new"],
       ["/communities/:communityId/edit", `/communities/${FIXED_COMMUNITY_ID}/edit`],
+      ["/communities/:communityId/admins", `/communities/${FIXED_COMMUNITY_ID}/admins`],
     ].map(([name, path]) => ({
       name,
       open: async (page: Page) => {
         await injectAuthToken(page);
         await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await mockCommunityAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
         await page.goto(path);
       },
     })),
