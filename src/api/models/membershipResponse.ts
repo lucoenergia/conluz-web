@@ -8,6 +8,7 @@
 import type { MembershipResponseUser } from './membershipResponseUser';
 import type { MembershipResponseRole } from './membershipResponseRole';
 import type { MembershipResponseAcceptedAt } from './membershipResponseAcceptedAt';
+import type { MembershipResponseInvitedAt } from './membershipResponseInvitedAt';
 import type { MembershipResponseInvitationExpiresAt } from './membershipResponseInvitationExpiresAt';
 import type { MembershipCapabilitiesResponse } from './membershipCapabilitiesResponse';
 
@@ -20,6 +21,8 @@ export interface MembershipResponse {
   enabled: boolean;
   /** When the membership was accepted. Null while it is pending: a pending membership grants no access until it is accepted. Independent of enabled. */
   acceptedAt: MembershipResponseAcceptedAt;
+  /** When the membership was last sent an invitation. Null if none has been sent. */
+  invitedAt: MembershipResponseInvitedAt;
   /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
   invitationExpiresAt: MembershipResponseInvitationExpiresAt;
   /** What the caller may do with this membership. */
