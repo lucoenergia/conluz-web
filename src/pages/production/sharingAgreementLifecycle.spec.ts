@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponseStatus as StatusValue } from "../../api/models";
 import { selectSharingAgreementLifecycleView, EXTERNAL_STAGE } from "./sharingAgreementLifecycle";
@@ -75,7 +76,7 @@ describe("selectSharingAgreementLifecycleView", () => {
     const view = selectSharingAgreementLifecycleView(nextStep, DRAFT);
 
     expect(view.isSpanActive).toBe(true);
-    expect(view.current?.requirement).toBe("La planta no tiene CAU configurado. Sin él no se puede generar el fichero.");
+    expect(view.current?.requirement).toBe(MISSING_CAU_MESSAGE);
     expect(view.current?.secondaryLine).toBe("Cuando la distribuidora confirme que lo ha aplicado, pon el acuerdo en vigor.");
   });
 
@@ -225,9 +226,7 @@ describe("selectSharingAgreementLifecycleView", () => {
 
       expect(view.primary?.kind).toBe("PUBLISH");
       expect(view.secondary).toBeUndefined();
-      expect(view.current?.requirement).toBe(
-        "La planta no tiene CAU configurado. Sin él no se puede generar el fichero.",
-      );
+      expect(view.current?.requirement).toBe(MISSING_CAU_MESSAGE);
     });
 
     it("offers recording the outstanding dates, counting them in the label", () => {

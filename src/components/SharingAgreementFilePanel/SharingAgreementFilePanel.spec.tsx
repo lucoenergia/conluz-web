@@ -14,13 +14,16 @@ import {
   computeSharingAgreementCoefficientSums,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
+import { selectSharingAgreementNextStep } from "../../pages/production/selectSharingAgreementNextStep";
+import { selectSharingAgreementLifecycleView } from "../../pages/production/sharingAgreementLifecycle";
+import { MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 import { SharingAgreementFilePanel } from "./SharingAgreementFilePanel";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
-import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
+import { buildCoefficient, buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 
 const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -176,7 +179,7 @@ describe("SharingAgreementFilePanel", () => {
     it("gates on a missing regulatory code with its own visible reason", () => {
       renderPanel({ plantRegulatoryCode: undefined });
       expect(screen.getByRole("button", { name: GENERATE })).toHaveAttribute("aria-disabled", "true");
-      expect(screen.getByText("Esta planta no tiene código regulatorio (CAU) asignado.")).toBeVisible();
+      expect(screen.getByText(MISSING_CAU_MESSAGE)).toBeVisible();
     });
 
     it("is not offered at all to a caller the agreement does not let manage it", () => {
@@ -194,6 +197,34 @@ describe("SharingAgreementFilePanel", () => {
       renderPanel();
       await user.click(screen.getByRole("button", { name: GENERATE }));
       expect(await screen.findByRole("heading", { name: "Generar fichero" })).toBeInTheDocument();
+    });
+  });
+
+  // #149: the panel and the next step used to word the missing CAU apart and
+  // decide it apart; one constant and one predicate now serve both.
+  describe("a plant without a CAU", () => {
+    const missingCauNextStep = (regulatoryCode: string | undefined) =>
+      selectSharingAgreementLifecycleView(
+        selectSharingAgreementNextStep(makeAgreement(), [buildCoefficient({ coefficient: 1 })], regulatoryCode),
+        SharingAgreementResponseStatus.DRAFT,
+      );
+
+    it("is worded the same in the file panel, the banner and the lifecycle rail", () => {
+      renderPanel({ plantRegulatoryCode: undefined });
+      const view = missingCauNextStep(undefined);
+
+      expect(screen.getByText(MISSING_CAU_MESSAGE)).toBeVisible();
+      expect(view.current?.requirement).toBe(MISSING_CAU_MESSAGE);
+      expect(view.blockedNote).toBe(MISSING_CAU_MESSAGE);
+    });
+
+    it("counts a whitespace-only CAU as missing in the panel and the next step alike, since generating with it 409s", () => {
+      renderPanel({ plantRegulatoryCode: "   " });
+      const view = missingCauNextStep("   ");
+
+      expect(screen.getByRole("button", { name: GENERATE })).toHaveAttribute("aria-disabled", "true");
+      expect(screen.getByText(MISSING_CAU_MESSAGE)).toBeVisible();
+      expect(view.current?.requirement).toBe(MISSING_CAU_MESSAGE);
     });
   });
 

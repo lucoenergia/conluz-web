@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RestErrorDetailCode } from "../api/models";
 import { getFirstApiErrorMessage, getGroupedApiErrorDetails, translateErrorDetail } from "./apiErrorCatalogue";
+import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 
 const DISTRIBUTOR_FILE_CODES: RestErrorDetailCode[] = [
   "DISTRIBUTOR_FILE_LINE_MALFORMED",
@@ -33,8 +34,14 @@ describe("translateErrorDetail", () => {
 
   it("falls back to detail.message when code has no registered template", () => {
     expect(
-      translateErrorDetail({ message: "server message", code: "PLANT_MISSING_REGULATORY_CODE" }, "fallback"),
+      translateErrorDetail({ message: "server message", code: "SUPPLY_CUPS_NOT_NORMALIZABLE" }, "fallback"),
     ).toBe("server message");
+  });
+
+  it("sends a refused generation for a plant with no CAU to the plant, in the words the panels use", () => {
+    expect(
+      translateErrorDetail({ message: "server message", code: "PLANT_MISSING_REGULATORY_CODE" }, "fallback"),
+    ).toBe(MISSING_CAU_MESSAGE);
   });
 
   it("falls back to the fallback when code is unrecognised and message is empty", () => {

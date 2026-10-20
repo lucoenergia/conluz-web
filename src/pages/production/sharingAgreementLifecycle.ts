@@ -3,6 +3,7 @@ import type { SharingAgreementResponseStatus as StatusValue } from "../../api/mo
 import type { SharingAgreementNextStep } from "./selectSharingAgreementNextStep";
 import { formatCoefficientGapMessage } from "./sharingAgreementGapMessage";
 import { pluralize } from "../../utils/pluralize";
+import { MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 
 export type StageNumber = 1 | 2 | 3 | 4 | 5;
 
@@ -156,7 +157,7 @@ function currentStepFor(
       }
       return {
         title: "Genera el fichero y envíalo a la distribuidora",
-        requirement: "La planta no tiene CAU configurado. Sin él no se puede generar el fichero.",
+        requirement: MISSING_CAU_MESSAGE,
         secondaryLine: "Cuando la distribuidora confirme que lo ha aplicado, pon el acuerdo en vigor.",
       };
 
@@ -274,7 +275,7 @@ export function selectSharingAgreementLifecycleView(
       secondary: nextStep.canGenerate ? { kind: "DOWNLOAD_FILE", label: "Descargar fichero" } : undefined,
       blockedNote: nextStep.canGenerate
         ? undefined
-        : "La planta no tiene CAU configurado. Sin él no se puede generar el fichero.",
+        : MISSING_CAU_MESSAGE,
     };
   }
 
