@@ -88,6 +88,7 @@ export function buildPlatformCapabilities(
     canListUsers: false,
     canAdministerPlatform: false,
     canCreateUsers: false,
+    canListPlatformAdmins: false,
     ...overrides,
   };
 }

@@ -55,6 +55,7 @@ const NO_PLATFORM_CAPABILITIES = {
   canListUsers: false,
   canAdministerPlatform: false,
   canCreateUsers: false,
+  canListPlatformAdmins: false,
 };
 
 const FULL_PLATFORM_CAPABILITIES = {
@@ -62,6 +63,7 @@ const FULL_PLATFORM_CAPABILITIES = {
   canListUsers: true,
   canAdministerPlatform: true,
   canCreateUsers: true,
+  canListPlatformAdmins: true,
 };
 
 /**
