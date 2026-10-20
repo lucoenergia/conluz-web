@@ -33,7 +33,7 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-ENT` | Community entry: which community is active and where a caller lands | [`community-entry.md`](community-entry.md) |
 | `UI-INT` | Integrations: the community integrations page and the plant's Huawei integration | [`integrations.md`](integrations.md) |
 | `UI-PLT` | Plant detail: the plant's production, and the status of its agreements and integration | [`plant-detail.md`](plant-detail.md) |
-| `UI-USR` | Users: the edit screen | [`users.md`](users.md) |
+| `UI-USR` | Users: the edit screen (removed in #285; tombstones only) | [`users.md`](users.md) |
 | `UI-MBR` | Members: registration, the CSV import, invitations, member status, the member record edit and suspension on the members page | [`members.md`](members.md) |
 | `UI-PRF` | Profile: the email field | [`profile.md`](profile.md) |
 | `UI-ROUTE` | Routing: what an unknown path renders | [`routing.md`](routing.md) |
@@ -42,3 +42,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-INV` | Invitation acceptance: joining a community from the emailed link | [`invitation-acceptance.md`](invitation-acceptance.md) |
 | `UI-HOM` | Home: the member and management home views | [`home.md`](home.md) |
 | `UI-ADM` | Community admins: the platform admin's list, invitation and management of a community's admins | [`community-admins.md`](community-admins.md) |
+| `UI-PAD` | Platform admins: the list and revoking the role, and what a platform admin with no membership can reach | [`platform-admins.md`](platform-admins.md) |
