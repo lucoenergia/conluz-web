@@ -10,6 +10,8 @@ import type {
   MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
+  PlatformAdminResponse,
+  PlatformCapabilitiesResponse,
   SharingAgreementResponse,
 } from "../../../src/api/models";
 import {
@@ -35,6 +37,7 @@ import {
   FIXED_SUPPLY_OTHER_COMMUNITY,
   FIXED_MEMBERSHIPS,
   FIXED_COMMUNITY_ADMINS,
+  FIXED_PLATFORM_ADMINS,
   FIXED_DATADIS_CONFIG,
   FIXED_HUAWEI_CONFIG,
   FIXED_SHELLY_CONFIG,
@@ -58,7 +61,11 @@ import {
 // All other responses are fixture-independent.
 // ---------------------------------------------------------------------------
 
-type CurrentUserFixture = { memberships?: Record<string, string>; isPlatformAdmin?: boolean };
+type CurrentUserFixture = {
+  memberships?: Record<string, string>;
+  isPlatformAdmin?: boolean;
+  platformCapabilities?: PlatformCapabilitiesResponse;
+};
 
 // ---------------------------------------------------------------------------
 // Authorization, derived rather than restated
@@ -824,6 +831,25 @@ export async function mockCommunityAdminsRoutes(
     (route: Route) =>
       refusal(capabilities, "canManageAdmins")
         ? refuse(route, "canManageAdmins")
+        : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(admins) }),
+  );
+}
+
+/**
+ * The platform admins list (#285): 403 unless the caller's own platform
+ * capabilities allow listing them, as the backend does.
+ */
+export async function mockPlatformAdminsRoutes(
+  page: Page,
+  currentUser: object,
+  { admins = FIXED_PLATFORM_ADMINS }: { admins?: PlatformAdminResponse[] } = {},
+) {
+  const capabilities = (currentUser as CurrentUserFixture).platformCapabilities;
+  await page.route(
+    (url) => /\/api\/v1\/platform-admins(\?|$)/.test(url.href),
+    (route: Route) =>
+      refusal(capabilities ?? ({} as PlatformCapabilitiesResponse), "canListPlatformAdmins")
+        ? refuse(route, "canListPlatformAdmins")
         : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(admins) }),
   );
 }

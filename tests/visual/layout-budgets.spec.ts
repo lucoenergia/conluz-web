@@ -32,12 +32,12 @@ import {
   FIXED_PLATFORM_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
   FIXED_SUPPLY_ID,
-  FIXED_USER_2,
   injectAuthToken,
   MEMBER_HOURLY_PROFILE_GAPS,
   MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
   mockAllApiRoutes,
   mockCommunityAdminsRoutes,
+  mockPlatformAdminsRoutes,
   mockCommunityManagementRoutes,
   mockMemberHome,
   mockPlantDetailRoutes,
@@ -107,8 +107,8 @@ test.describe("Visual baselines", () => {
   /**
    * Every list page whose header carries counters.
    *
-   * /members is absent because its header is the same three-counter shape as
-   * /users, which IS measured below — not because it cannot be reached. It has
+   * /members is absent because its header is the same counter-strip shape as
+   * the lists measured below — not because it cannot be reached. It has
    * a roster fixture and a capture of its own now
    * (community-management.spec.ts), and CapabilityRoute waits for the
    * capability answer, so a cold goto lands.
@@ -136,11 +136,12 @@ test.describe("Visual baselines", () => {
       },
     },
     {
-      name: "/users",
+      name: "/platform-admins",
       open: async (page) => {
         await injectAuthToken(page);
         await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
-        await page.goto("/users");
+        await mockPlatformAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await page.goto("/platform-admins");
         await stabilizePage(page);
       },
     },
@@ -499,9 +500,7 @@ test.describe("Visual baselines", () => {
       },
     })),
     ...[
-      ["/users", "/users"],
-      ["/users/new", "/users/new"],
-      ["/users/:userId/edit", `/users/${FIXED_USER_2.id}/edit`],
+      ["/platform-admins", "/platform-admins"],
       ["/communities", "/communities"],
       ["/communities/new", "/communities/new"],
       ["/communities/:communityId/edit", `/communities/${FIXED_COMMUNITY_ID}/edit`],
@@ -512,6 +511,7 @@ test.describe("Visual baselines", () => {
         await injectAuthToken(page);
         await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
         await mockCommunityAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await mockPlatformAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
         await page.goto(path);
       },
     })),

@@ -10,6 +10,8 @@ import type {
   MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
+  PlatformAdminResponse,
+  PlatformCapabilitiesResponse,
   SharingAgreementResponse,
   SupplyResponse,
 } from "../../../src/api/models";
@@ -50,7 +52,7 @@ export const FIXED_COMMUNITY_ID = "cccccccc-dddd-eeee-ffff-000000000001";
 //     decisions, so a community admin does not get them.
 // ---------------------------------------------------------------------------
 
-const NO_PLATFORM_CAPABILITIES = {
+const NO_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canCreateCommunity: false,
   canListUsers: false,
   canAdministerPlatform: false,
@@ -58,7 +60,7 @@ const NO_PLATFORM_CAPABILITIES = {
   canListPlatformAdmins: false,
 };
 
-const FULL_PLATFORM_CAPABILITIES = {
+const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canCreateCommunity: true,
   canListUsers: true,
   canAdministerPlatform: true,
@@ -270,7 +272,7 @@ export const FIXED_COMMUNITY_ADMIN_USER = {
 
 /**
  * Platform-admin fixture — no community memberships, isPlatformAdmin=true.
- * Use for: /platform (platform welcome), /users (users page).
+ * Use for: /platform (platform welcome), the communities and /platform-admins.
  */
 export const FIXED_PLATFORM_ADMIN_USER = {
   id: "33333333-4444-5555-6666-777777777777",
@@ -1393,3 +1395,45 @@ export const MANAGEMENT_DRAFT_AGREEMENT: SharingAgreementResponse = {
   installedPowerKw: 35,
   createdAt: "2026-07-01T09:00:00Z",
 };
+
+/**
+ * The platform admins as GET /platform-admins lists them (#285), one per
+ * treatment the page tells apart: the caller's own row (no row actions), an
+ * enabled admin the caller may revoke, a disabled one, and the last enabled
+ * admin the platform would not let go -- who also has no email, which the
+ * table shows as an empty cell.
+ */
+export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
+  {
+    user: { id: FIXED_PLATFORM_ADMIN_USER.id },
+    fullName: FIXED_PLATFORM_ADMIN_USER.fullName,
+    email: FIXED_PLATFORM_ADMIN_USER.email,
+    enabled: true,
+    revocable: true,
+    capabilities: { canRevoke: false },
+  },
+  {
+    user: { id: "platform-admin-revocable" },
+    fullName: "Javier Ruiz Pardo",
+    email: "javier.ruiz@conluz.test",
+    enabled: true,
+    revocable: true,
+    capabilities: { canRevoke: true },
+  },
+  {
+    user: { id: "platform-admin-disabled" },
+    fullName: "Elena Soto Vidal",
+    email: "elena.soto@conluz.test",
+    enabled: false,
+    revocable: true,
+    capabilities: { canRevoke: true },
+  },
+  {
+    user: { id: "platform-admin-last" },
+    fullName: "Tomás Herrera Gil",
+    email: null,
+    enabled: true,
+    revocable: false,
+    capabilities: { canRevoke: true },
+  },
+];

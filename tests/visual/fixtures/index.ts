@@ -34,8 +34,9 @@
  *                                with the switch to the member view only under
  *                                mockCommunityAdminOwnsSupply, since owning a supply here is
  *                                what grants it
- *   FIXED_PLATFORM_ADMIN_USER  → /platform (populated + empty), /users, /users/new,
- *                                /users/:id/edit, /communities, /communities/:id/edit
+ *   FIXED_PLATFORM_ADMIN_USER  → /platform (populated + empty), /communities,
+ *                                /communities/:id/edit, /communities/:id/admins,
+ *                                /platform-admins
  *   FIXED_NO_COMMUNITY_USER    → /no-community (asserts the screen renders correctly)
  *
  * The sharing-agreement specs still navigate by clicking from /production rather

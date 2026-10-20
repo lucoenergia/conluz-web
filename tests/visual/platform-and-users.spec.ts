@@ -1,5 +1,6 @@
 /**
- * Visual baselines — Platform-admin screens: the platform dashboard and user management.
+ * Visual baselines — Platform-admin screens: the platform dashboard, the communities and the
+ * platform admins.
  *
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
@@ -13,17 +14,17 @@ import {
   FIXED_COMMUNITY_ID,
   hideAppBar,
   FIXED_PLATFORM_ADMIN_USER,
-  FIXED_USER_2,
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
   mockCommunityAdminsRoutes,
+  mockPlatformAdminsRoutes,
   seedActiveCommunity,
   stabilizePage,
 } from "./fixtures";
 
 test.describe("Visual baselines", () => {
-  // Platform-admin fixture tests: /platform (welcome) and /users (users management).
+  // Platform-admin fixture tests: /platform (welcome), the communities and /platform-admins.
   // Platform capabilities come off the current user, with no community
   // selection to wait for, so a direct page.goto() has always worked here.
 
@@ -71,17 +72,6 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("platform-dashboard-empty.png", await mainRegion(page));
   });
 
-  test("users page", async ({ page }) => {
-    await injectAuthToken(page);
-    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
-
-    await page.goto("/users");
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar masked (see mainRegion).
-    await expect(page).toHaveScreenshot("users-page.png", await mainRegion(page));
-  });
-
   /**
    * Not a baseline: an assertion, so it writes no PNG and nothing has to be
    * regenerated for it. The subject is reachability, which a screenshot would
@@ -106,69 +96,6 @@ test.describe("Visual baselines", () => {
   });
 
   /**
-   * An assertion rather than a baseline, because a screenshot cannot carry this
-   * one: removing the kebab from a row changes 12 pixels on desktop -- the
-   * MoreVert icon is three ~2 px dots -- and every layout capture allows 100.
-   * The mobile capture does move, because the card reflows 8 px shorter, but
-   * relying on that would leave the desktop half of the rule untested.
-   *
-   * The row is the caller's own. canEdit, canDisable and canRevokePlatformAdmin
-   * are all false for one's own account by documented design, so the backend
-   * hands over nothing and the row has no menu at all -- while the row beside it
-   * keeps one. UsersPage.spec.tsx owns the same rule against the component; this
-   * owns it against the fixtures the baselines are taken from.
-   */
-  test("a platform admin's own row offers no actions, while another user's does", async ({ page }) => {
-    await injectAuthToken(page);
-    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
-
-    await page.goto("/users");
-    await stabilizePage(page);
-
-    await expect(
-      page.getByRole("button", { name: `Más acciones para ${FIXED_PLATFORM_ADMIN_USER.fullName}` }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByRole("button", { name: `Más acciones para ${FIXED_USER_2.fullName}` }),
-    ).toBeVisible();
-  });
-
-  /**
-   * An assertion rather than a baseline, because no capture opens this menu --
-   * which is exactly why nothing caught the defect it covers. The fixtures were
-   * already right: MANAGED_USER_CAPABILITIES grants canEnable AND canDisable,
-   * as the backend does, since both are permission answers that fold in only
-   * whether the user is the caller.
-   *
-   * The screen used to render the two halves as separately gated items, so an
-   * active user was offered Habilitar beside Deshabilitar -- and its handler
-   * picked with `??`, so Habilitar disabled the user it named. The row's own
-   * `enabled` is what decides which half applies.
-   *
-   * UsersPage.spec.tsx owns this rule against the component; this owns it
-   * against the fixtures the baselines are taken from.
-   */
-  test("a row offers only the half of each paired action that applies to it", async ({ page }) => {
-    await injectAuthToken(page);
-    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
-
-    await page.goto("/users");
-    await stabilizePage(page);
-
-    await page.getByRole("button", { name: `Más acciones para ${FIXED_USER_2.fullName}` }).click();
-
-    // Enabled, so disabling is the operation that applies. `exact` matters here:
-    // Playwright matches an accessible name by substring by default, and
-    // "Habilitar" is a substring of "Deshabilitar".
-    await expect(page.getByRole("menuitem", { name: "Deshabilitar", exact: true })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: "Habilitar", exact: true })).toHaveCount(0);
-
-    // Not a platform admin, so granting is.
-    await expect(page.getByRole("menuitem", { name: "Conceder admin de plataforma" })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: "Revocar admin de plataforma" })).toHaveCount(0);
-  });
-
-  /**
    * Assertions, not baselines, for the same reason as the one above: the subject
    * is which capability each route asks for, and no screenshot records that.
    *
@@ -190,33 +117,6 @@ test.describe("Visual baselines", () => {
 
     await expect(page).not.toHaveURL(/\/platform$/);
     await expect(page.getByRole("heading", { name: "Administración de plataforma" })).toHaveCount(0);
-  });
-
-  test("editing a user asks that account's canEdit, not the caller's canListUsers", async ({ page }) => {
-    // The route used to gate on canListUsers, which answers a different
-    // question: anyone who could list users reached a live edit form for an
-    // account they may not change, and found out on submit. The fixture answers
-    // canEdit per caller (UserAccessPolicy.canEdit allows a platform admin, or a
-    // community admin of one of the target's communities), so these two cases
-    // differ only in who is asking.
-    await injectAuthToken(page);
-    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
-
-    await page.goto(`/users/${FIXED_USER_2.id}/edit`);
-    await stabilizePage(page);
-
-    await expect(page.getByRole("heading", { name: "Editar usuario" })).toBeVisible();
-  });
-
-  test("and refuses a community admin who administers none of that user's communities", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-
-    await page.goto(`/users/${FIXED_USER_2.id}/edit`);
-    await stabilizePage(page);
-
-    await expect(page.getByRole("heading", { name: "Editar usuario" })).toHaveCount(0);
   });
 
   test("editing a community asks that community's canUpdate, not canAdministerPlatform", async ({ page }) => {
@@ -330,28 +230,27 @@ test.describe("Visual baselines", () => {
     await expect(dialog).toHaveScreenshot("community-admin-invite-dialog.png", await hideAppBar(page));
   });
 
-  test("create user page", async ({ page }) => {
+  // The platform admins (#285): the caller's own row without a kebab, an
+  // enabled and a disabled chip, and an admin with no email, side by side in
+  // one table -- the composition is what a pixel change can break. Each row's
+  // behaviour, revoke included, is asserted in Vitest.
+  test("platform admins page", async ({ page }) => {
     await injectAuthToken(page);
     await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    await mockPlatformAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
 
-    await page.goto("/users/new");
-    await expect(page.getByRole("main")).toBeVisible();
+    await page.goto("/platform-admins");
+    // Each treatment's text, before the capture: a list that failed to load,
+    // or a fixture that lost a row, would otherwise make a plausible baseline.
+    const main = page.getByRole("main");
+    await expect(main.getByText("Javier Ruiz Pardo")).toBeVisible();
+    await expect(main.getByText("Tomás Herrera Gil")).toBeVisible();
+    await expect(main.getByText("Habilitado", { exact: true })).toHaveCount(3);
+    await expect(main.getByText("Deshabilitado", { exact: true })).toBeVisible();
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("create-user-page.png", await mainRegion(page));
-  });
-
-  test("edit user page", async ({ page }) => {
-    await injectAuthToken(page);
-    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
-
-    await page.goto(`/users/${FIXED_USER_2.id}/edit`);
-    await expect(page.getByRole("main")).toBeVisible();
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("edit-user-page.png", await mainRegion(page));
+    await expect(page).toHaveScreenshot("platform-admins-page.png", await mainRegion(page));
   });
 
 });
