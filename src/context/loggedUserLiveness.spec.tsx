@@ -47,7 +47,7 @@ const ADMIN = buildCurrentUser({
   id: "user-1",
   fullName: "Ada",
   memberships: {},
-  platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true, canListUsers: true }),
+  platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true, canListPlatformAdmins: true }),
 });
 const DEMOTED: CurrentUserResponse = { ...ADMIN, platformCapabilities: buildPlatformCapabilities({}) };
 
@@ -145,11 +145,11 @@ describe("the signed-in user is live", () => {
     await waitFor(() => expect(served).toBe(2));
 
     // The section goes because BOTH its items do: a section survives on any one
-    // permitted item, so asserting the title alone would not say that Usuarios
-    // went too.
+    // permitted item, so asserting the title alone would not say that
+    // Administradores de plataforma went too.
     await waitFor(() => expect(screen.queryByText(PLATFORM_SECTION)).not.toBeInTheDocument());
     expect(screen.queryByText("Comunidades")).not.toBeInTheDocument();
-    expect(screen.queryByText("Usuarios")).not.toBeInTheDocument();
+    expect(screen.queryByText("Administradores de plataforma")).not.toBeInTheDocument();
 
     // And the guard starts refusing the page it was already showing. Waiting
     // for the destination rather than for the page to vanish: the redirect
@@ -191,7 +191,7 @@ describe("the signed-in user is live", () => {
     await waitFor(() => expect(served).toBe(2));
     expect(await screen.findByText(PLATFORM_SECTION)).toBeInTheDocument();
     expect(screen.getByText("Comunidades")).toBeInTheDocument();
-    expect(screen.getByText("Usuarios")).toBeInTheDocument();
+    expect(screen.getByText("Administradores de plataforma")).toBeInTheDocument();
   });
 
   it("keeps the menu and the guarded page while a refetch is in flight", async () => {

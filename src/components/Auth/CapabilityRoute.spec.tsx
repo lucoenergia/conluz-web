@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { AxiosError, AxiosHeaders } from "axios";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildPlatformCapabilities, buildPlant, buildPlantCapabilities, buildSupply, buildSupplyCapabilities, buildUser, buildUserCapabilities } from "../../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildPlatformCapabilities, buildPlatformCapabilitiesWithout, buildPlant, buildPlantCapabilities, buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import type { CommunityCapabilitiesResponse, PlatformCapabilitiesResponse } from "../../api/models";
 
@@ -15,14 +15,6 @@ import type { CommunityCapabilitiesResponse, PlatformCapabilitiesResponse } from
 vi.mock(import("../../api/communities/communities"), () => ({
   useGetCommunityById: vi.fn(),
   useGetAllCommunities: vi.fn(),
-}));
-
-// Spread, not replaced: the real LoggedUserProvider in the harness imports
-// useGetCurrentUser from this module (#203). No token is seeded here, so that
-// query stays disabled and reaches no network.
-vi.mock(import("../../api/users/users"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useGetUserById: vi.fn(),
 }));
 
 vi.mock(import("../../pages/production/usePlantInActiveCommunity"), () => ({
@@ -41,7 +33,6 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 }));
 
 import { getCommunityById, useGetAllCommunities, useGetCommunityById } from "../../api/communities/communities";
-import { getUserById, useGetUserById } from "../../api/users/users";
 import { usePlantInActiveCommunity } from "../../pages/production/usePlantInActiveCommunity";
 import { useSupplyInActiveCommunity } from "../../pages/supply-points/useSupplyInActiveCommunity";
 import { CapabilityRoute, type CapabilityRequirement } from "./CapabilityRoute";
@@ -49,7 +40,6 @@ import { CapabilityRoute, type CapabilityRequirement } from "./CapabilityRoute";
 const COMMUNITY_ID = "community-A";
 const PLANT_ID = "plant-1";
 const SUPPLY_ID = "supply-1";
-const USER_ID = "user-1";
 // Deliberately not COMMUNITY_ID: the communityById scope must answer about the
 // community in the URL, never about the one the caller happens to be in.
 const OTHER_COMMUNITY_ID = "community-Z";
@@ -102,14 +92,6 @@ function setSupplyCapabilities(capabilities: Partial<Parameters<typeof buildSupp
   });
 }
 
-function setUserCapabilities(capabilities: Partial<Parameters<typeof buildUserCapabilities>[0]>) {
-  vi.mocked(useGetUserById).mockReturnValue(
-    query.success<typeof getUserById>(
-      buildUser({ id: USER_ID, capabilities: buildUserCapabilities(capabilities) }),
-    ),
-  );
-}
-
 function setup(require: CapabilityRequirement, { route = "/protected" }: { route?: string } = {}) {
   return renderWithProviders(
     <Routes>
@@ -132,14 +114,6 @@ function setup(require: CapabilityRequirement, { route = "/protected" }: { route
       />
       <Route
         path="/supply-points/:supplyPointId/edit"
-        element={
-          <CapabilityRoute require={require}>
-            <span>protected</span>
-          </CapabilityRoute>
-        }
-      />
-      <Route
-        path="/users/:userId/edit"
         element={
           <CapabilityRoute require={require}>
             <span>protected</span>
@@ -188,28 +162,37 @@ beforeEach(() => {
     error: null,
     refetch: vi.fn(),
   });
-  vi.mocked(useGetUserById).mockReturnValue(query.loading());
 });
 
 describe("CapabilityRoute — platform scope", () => {
   // Carried from PlatformAdminRoute.spec.
   it("renders children when the platform capability is granted", () => {
-    setPlatformCapabilities({ canListUsers: true });
-    setup({ scope: "platform", capability: "canListUsers" });
+    setPlatformCapabilities({ canListPlatformAdmins: true });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" });
     expectProtected();
   });
 
   it("redirects when the platform capability is refused", () => {
-    setPlatformCapabilities({ canListUsers: false });
-    setup({ scope: "platform", capability: "canListUsers" });
+    setPlatformCapabilities({ canListPlatformAdmins: false });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" });
     expectRedirected();
   });
 
   // The drift this epic fixes: the platform flag is no longer a master key, so
   // each platform route asks for the capability that names its own decision.
   it("does not let one platform capability stand in for another", () => {
-    setPlatformCapabilities({ canListUsers: true, canCreateUsers: false });
-    setup({ scope: "platform", capability: "canCreateUsers" });
+    setPlatformCapabilities({ canListPlatformAdmins: true, canCreateCommunity: false });
+    setup({ scope: "platform", capability: "canCreateCommunity" });
+    expectRedirected();
+  });
+
+  // A backend that predates the capability sends no key at all: that is a
+  // refusal, never a reason to let the caller through.
+  it("redirects when the platform capability is missing from the response", () => {
+    loggedUser.current = buildCurrentUser({
+      platformCapabilities: buildPlatformCapabilitiesWithout("canListPlatformAdmins"),
+    });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" });
     expectRedirected();
   });
 });
@@ -281,8 +264,8 @@ describe("CapabilityRoute — plant scope", () => {
   });
 
   it("fires no plant request on a route that has no plant", () => {
-    setPlatformCapabilities({ canListUsers: true });
-    setup({ scope: "platform", capability: "canListUsers" });
+    setPlatformCapabilities({ canListPlatformAdmins: true });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" });
     expect(vi.mocked(usePlantInActiveCommunity)).toHaveBeenCalledWith("");
   });
 
@@ -290,8 +273,8 @@ describe("CapabilityRoute — plant scope", () => {
   // it. Without that, every guarded route under /production/:plantId would
   // fetch the plant to answer a question that has nothing to do with it.
   it("fires no plant request when the requirement is not a plant one, even on a plant URL", () => {
-    setPlatformCapabilities({ canListUsers: true });
-    setup({ scope: "platform", capability: "canListUsers" }, { route: plantRoute });
+    setPlatformCapabilities({ canListPlatformAdmins: true });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" }, { route: plantRoute });
     expect(vi.mocked(usePlantInActiveCommunity)).toHaveBeenCalledWith("");
     expect(vi.mocked(usePlantInActiveCommunity)).not.toHaveBeenCalledWith(PLANT_ID);
   });
@@ -329,78 +312,16 @@ describe("CapabilityRoute — supply scope", () => {
   });
 
   it("fires no supply request on a route that has no supply", () => {
-    setPlatformCapabilities({ canListUsers: true });
-    setup({ scope: "platform", capability: "canListUsers" });
+    setPlatformCapabilities({ canListPlatformAdmins: true });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" });
     expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith("");
   });
 
   it("fires no supply request when the requirement is not a supply one, even on a supply URL", () => {
-    setPlatformCapabilities({ canListUsers: true });
-    setup({ scope: "platform", capability: "canListUsers" }, { route: editRoute });
+    setPlatformCapabilities({ canListPlatformAdmins: true });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" }, { route: editRoute });
     expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith("");
     expect(vi.mocked(useSupplyInActiveCommunity)).not.toHaveBeenCalledWith(SUPPLY_ID);
-  });
-});
-
-describe("CapabilityRoute — user scope", () => {
-  const editRoute = `/users/${USER_ID}/edit`;
-
-  it("renders children when the user capability is granted", () => {
-    setUserCapabilities({ canEdit: true });
-    setup({ scope: "user", capability: "canEdit" }, { route: editRoute });
-    expectProtected();
-  });
-
-  // The route used to gate on canListUsers, which answers a different question:
-  // anyone who may list users reached a live edit form for an account they may
-  // not change, and found out on submit.
-  it("redirects a caller who may read the user but not edit them", () => {
-    setUserCapabilities({ canRead: true, canEdit: false });
-    setup({ scope: "user", capability: "canEdit" }, { route: editRoute });
-    expectRedirected();
-  });
-
-  // An ordinary member looking at their own record: canEdit is false there by
-  // documented design, because changing one's own details is PUT /users/profile.
-  it("redirects a member editing their own record administratively", () => {
-    setUserCapabilities({ canRead: true, canEdit: false });
-    setup({ scope: "user", capability: "canEdit" }, { route: editRoute });
-    expectRedirected();
-  });
-
-  it.each([403, 404])("redirects on %i, which hides the account rather than admitting it", (status) => {
-    vi.mocked(useGetUserById).mockReturnValue(query.error(httpError(status)));
-    setup({ scope: "user", capability: "canEdit" }, { route: editRoute });
-    expectRedirected();
-  });
-
-  it("offers a retry instead of redirecting when the user fails to load", () => {
-    vi.mocked(useGetUserById).mockReturnValue(query.error(httpError(500)));
-    setup({ scope: "user", capability: "canEdit" }, { route: editRoute });
-    expectNeither();
-    expect(screen.getByRole("button", { name: "Reintentar" })).toBeInTheDocument();
-  });
-
-  it("shows neither the page nor a redirect while the user is in flight", () => {
-    vi.mocked(useGetUserById).mockReturnValue(query.loading());
-    setup({ scope: "user", capability: "canEdit" }, { route: editRoute });
-    expectNeither();
-  });
-
-  it("fires no user request on a route that has no user", () => {
-    setPlatformCapabilities({ canListUsers: true });
-    setup({ scope: "platform", capability: "canListUsers" });
-    expect(vi.mocked(useGetUserById)).toHaveBeenCalledWith("", { query: { enabled: false } });
-  });
-
-  // The URL carries a user id, so only `enabled` stops the resolver fetching
-  // it. Without that, every guarded route under /users/:userId would fetch the
-  // account to answer a question that has nothing to do with it.
-  it("fires no user request when the requirement is not a user one, even on a user URL", () => {
-    setPlatformCapabilities({ canListUsers: true });
-    setup({ scope: "platform", capability: "canListUsers" }, { route: editRoute });
-    expect(vi.mocked(useGetUserById)).toHaveBeenCalledWith("", { query: { enabled: false } });
-    expect(vi.mocked(useGetUserById)).not.toHaveBeenCalledWith(USER_ID, expect.anything());
   });
 });
 

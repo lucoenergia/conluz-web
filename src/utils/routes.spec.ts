@@ -135,7 +135,7 @@ describe("resolveCommunityScopedTarget", () => {
   });
 
   it("leaves community-agnostic routes alone", () => {
-    for (const pathname of ["/", "/profile", "/members", "/integrations", "/users", "/users/user-1/edit", "/platform", "/communities/community-1/edit", "/no-community"]) {
+    for (const pathname of ["/", "/profile", "/members", "/integrations", "/platform-admins", "/platform", "/communities/community-1/edit", "/no-community"]) {
       expect(resolveCommunityScopedTarget(pathname, "")).toBeNull();
     }
   });

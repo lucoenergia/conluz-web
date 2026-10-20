@@ -8,6 +8,7 @@ import {
   buildCommunityCapabilities,
   buildCurrentUser,
   buildPlatformCapabilities,
+  buildPlatformCapabilitiesWithout,
 } from "../../test/fixtures";
 import type { CommunityResponse, PlatformCapabilitiesResponse } from "../../api/models";
 
@@ -18,6 +19,7 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
   useGetAllCommunities: vi.fn(),
 }));
 
+// Mocked so a spec can show the page never lists users (#285).
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
@@ -31,7 +33,7 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 }));
 
 import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
-import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
+import { useGetAllUsers } from "../../api/users/users";
 import { PlatformPage } from "./PlatformPage";
 
 const COMMUNITIES: CommunityResponse[] = [
@@ -50,6 +52,8 @@ const COMMUNITIES: CommunityResponse[] = [
 const FULL_PLATFORM: Partial<PlatformCapabilitiesResponse> = {
   canAdministerPlatform: true,
   canCreateCommunity: true,
+  canListPlatformAdmins: true,
+  // Still reported by the backend; the page no longer reads it (#285).
   canListUsers: true,
 };
 
@@ -74,18 +78,11 @@ function setup(
 }
 
 const CREATE = /Crear comunidad/i;
-const MANAGE_USERS = /Gestionar usuarios/i;
-const GRANT_ADMIN = /Otorgar admin/i;
+const PLATFORM_ADMINS = /Administradores de plataforma/i;
 
 describe("PlatformPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useGetAllUsers).mockReturnValue(
-      // Not a number any community fixture also carries: this page renders the
-      // preview twice (a table and a stacked list, one hidden by CSS), so a
-      // colliding value would match in four places.
-      query.success<typeof getAllUsers>({ items: [], totalElements: 137 }),
-    );
   });
 
   it("shows the community preview whatever else it offers", () => {
@@ -96,48 +93,44 @@ describe("PlatformPage", () => {
   });
 
   describe("a platform admin who holds everything", () => {
-    it("offers all three quick actions", () => {
+    it("offers both quick actions", () => {
       setup();
 
       expect(screen.getByRole("link", { name: CREATE })).toHaveAttribute("href", "/communities/new");
-      expect(screen.getByRole("link", { name: MANAGE_USERS })).toHaveAttribute("href", "/users");
-      expect(screen.getByRole("link", { name: GRANT_ADMIN })).toHaveAttribute("href", "/users");
+      expect(screen.getByRole("link", { name: PLATFORM_ADMINS })).toHaveAttribute("href", "/platform-admins");
     });
 
-    it("shows the Usuarios KPI with the count", () => {
+    // The users page is gone, and with it the platform admin's reading of
+    // users: no count of them, and no request for one, whatever the backend
+    // still reports.
+    it("neither counts users nor asks for them, even with canListUsers", () => {
       setup();
 
-      expect(screen.getByText("Usuarios")).toBeInTheDocument();
-      expect(screen.getByText("137")).toBeInTheDocument();
+      expect(screen.queryByText("Usuarios")).not.toBeInTheDocument();
+      expect(vi.mocked(useGetAllUsers)).not.toHaveBeenCalled();
+      expect(screen.queryByRole("link", { name: /usuarios/i })).not.toBeInTheDocument();
     });
   });
 
   // Each quick action leads somewhere the router gates, so offering one that
   // redirects home is worse than offering nothing.
-  describe("a caller who may not list users", () => {
-    const platform = { ...FULL_PLATFORM, canListUsers: false };
-
-    it("offers neither of the two actions that lead to /users", () => {
-      setup({ platform });
+  describe("a caller who may not list the platform admins", () => {
+    it("offers no link to them", () => {
+      setup({ platform: { ...FULL_PLATFORM, canListPlatformAdmins: false } });
 
       expect(screen.getByRole("link", { name: CREATE })).toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: MANAGE_USERS })).not.toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: GRANT_ADMIN })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: PLATFORM_ADMINS })).not.toBeInTheDocument();
     });
 
-    it("drops the Usuarios KPI, which is the answer to a question they may not ask", () => {
-      setup({ platform });
+    // A backend that predates the capability sends no key: a refusal.
+    it("offers no link to them when the backend does not report the capability", () => {
+      loggedUser.current = buildCurrentUser({
+        platformCapabilities: buildPlatformCapabilitiesWithout("canListPlatformAdmins", FULL_PLATFORM),
+      });
+      vi.mocked(useGetAllCommunities).mockReturnValue(query.success<typeof getAllCommunities>(COMMUNITIES));
+      renderWithProviders(<PlatformPage />);
 
-      expect(screen.queryByText("Usuarios")).not.toBeInTheDocument();
-    });
-
-    // The page used to fire the request regardless and read its 403 back off
-    // isError to hide the KPI. That made a refused request part of how the page
-    // decided what to render, and could not tell a refusal from a network failure.
-    it("does not ask for the users page at all", () => {
-      setup({ platform });
-
-      expect(vi.mocked(useGetAllUsers)).toHaveBeenCalledWith({ size: 1 }, { query: { enabled: false } });
+      expect(screen.queryByRole("link", { name: PLATFORM_ADMINS })).not.toBeInTheDocument();
     });
   });
 
@@ -148,7 +141,7 @@ describe("PlatformPage", () => {
       setup({ platform });
 
       expect(screen.queryByRole("link", { name: CREATE })).not.toBeInTheDocument();
-      expect(screen.getByRole("link", { name: MANAGE_USERS })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: PLATFORM_ADMINS })).toBeInTheDocument();
     });
 
     // Inviting somebody to create one they may not create is an instruction they
@@ -173,9 +166,7 @@ describe("PlatformPage", () => {
       setup({ platform: null });
 
       expect(screen.queryByRole("link", { name: CREATE })).not.toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: MANAGE_USERS })).not.toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: GRANT_ADMIN })).not.toBeInTheDocument();
-      expect(screen.queryByText("Usuarios")).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: PLATFORM_ADMINS })).not.toBeInTheDocument();
     });
   });
 });

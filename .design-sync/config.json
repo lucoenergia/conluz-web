@@ -63,7 +63,6 @@
     "PasswordPolicyHint": "../groups/forms.md",
     "SearchBar": "../groups/forms.md",
     "FilterChipsBar": "../groups/forms.md",
-    "UserForm": "../groups/forms.md",
     "Graph": "../groups/charts.md",
     "GraphBar": "../groups/charts.md",
     "GraphCard": "../groups/charts.md",
@@ -75,14 +74,8 @@
     "BasicModal": "../groups/dialogs.md",
     "ConfirmationModal": "../groups/dialogs.md",
     "DeleteSuccessModal": "../groups/dialogs.md",
-    "DisablePartnerConfirmationModal": "../groups/dialogs.md",
-    "DisablePartnerSuccessModal": "../groups/dialogs.md",
     "DisableSuccessModal": "../groups/dialogs.md",
-    "EnablePartnerConfirmationModal": "../groups/dialogs.md",
     "EnableSuccessModal": "../groups/dialogs.md",
-    "GrantPlatformAdminConfirmationModal": "../groups/dialogs.md",
-    "PlatformAdminSuccessModal": "../groups/dialogs.md",
-    "RevokePlatformAdminConfirmationModal": "../groups/dialogs.md",
     "CoefficientDialogErrorPanel": "../groups/dialogs.md",
     "CoefficientTargetSummary": "../groups/dialogs.md",
     "SupplyCard": "../groups/supplies-and-plants.md",
@@ -155,14 +148,6 @@
       "cardMode": "single",
       "viewport": "720x440"
     },
-    "DisablePartnerConfirmationModal": {
-      "cardMode": "single",
-      "viewport": "720x360"
-    },
-    "DisablePartnerSuccessModal": {
-      "cardMode": "single",
-      "viewport": "720x400"
-    },
     "DisableSuccessModal": {
       "cardMode": "single",
       "viewport": "720x400"
@@ -171,25 +156,9 @@
       "cardMode": "single",
       "viewport": "720x420"
     },
-    "EnablePartnerConfirmationModal": {
-      "cardMode": "single",
-      "viewport": "720x340"
-    },
     "EnableSuccessModal": {
       "cardMode": "single",
       "viewport": "720x400"
-    },
-    "GrantPlatformAdminConfirmationModal": {
-      "cardMode": "single",
-      "viewport": "720x420"
-    },
-    "PlatformAdminSuccessModal": {
-      "cardMode": "single",
-      "viewport": "720x400"
-    },
-    "RevokePlatformAdminConfirmationModal": {
-      "cardMode": "single",
-      "viewport": "720x420"
     },
     "RevertSharingAgreementToDraftConfirmationModal": {
       "cardMode": "single",
@@ -246,10 +215,6 @@
       "cardMode": "single",
       "primaryStory": "CommunityAdmin",
       "viewport": "900x800"
-    },
-    "UserForm": {
-      "cardMode": "column",
-      "viewport": "900x1000"
     },
     "MenuTemplate": {
       "cardMode": "single",

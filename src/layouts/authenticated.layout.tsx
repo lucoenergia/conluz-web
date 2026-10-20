@@ -136,7 +136,7 @@ const FullLayout: FC = () => {
   const canManageCommunity = useActiveCommunityCapabilities("canManage");
   const canManageMemberships = useActiveCommunityCapabilities("canManageMemberships");
   const canAdministerPlatform = usePlatformCapabilities("canAdministerPlatform");
-  const canListUsers = usePlatformCapabilities("canListUsers");
+  const canListPlatformAdmins = usePlatformCapabilities("canListPlatformAdmins");
 
   const visibleSections = useMemo(() => {
     // Only "allowed" offers an entry. Pending and error both hide it: a menu is
@@ -144,13 +144,13 @@ const FullLayout: FC = () => {
     // appears before the answer arrives would flicker away again.
     // Keyed rather than a chain of comparisons. The chain ended in a
     // fall-through on both scopes, so a menu entry naming a capability with no
-    // call of its own was answered by canListUsers or canReadCommunity -- a
+    // call of its own was answered by the last platform or community call -- a
     // confident wrong answer. A Record over the menu capability unions cannot
     // fall through: widening either union is a type error here until the
     // matching call above exists.
     const platformOutcomes: Record<MenuPlatformCapability, CapabilityOutcome> = {
       canAdministerPlatform,
-      canListUsers,
+      canListPlatformAdmins,
     };
     const communityOutcomes: Record<MenuCommunityCapability, CapabilityOutcome> = {
       canRead: canReadCommunity,
@@ -168,7 +168,7 @@ const FullLayout: FC = () => {
     };
 
     return selectVisibleSections(MENU_SECTIONS, isAllowed);
-  }, [canReadCommunity, canManageCommunity, canManageMemberships, canAdministerPlatform, canListUsers]);
+  }, [canReadCommunity, canManageCommunity, canManageMemberships, canAdministerPlatform, canListPlatformAdmins]);
 
   const contentMargin = useMemo(() => {
     return isMenuOpened && width > MIN_DESKTOP_WIDTH ? SIDEMENU_WIDTH : 0;

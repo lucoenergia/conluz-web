@@ -72,7 +72,7 @@
   Community-scoped dialogs read "Comunidad · cargando…" / "en la comunidad activa" — no user in the
   provider; expected.
 - Capture width is 900px; the default grid cell is ~650–670px wide and clips at ~490px tall. Page-width
-  sections (detail headers, CardGrid, SideMenu, UserForm, sharing-agreement panels) use
+  sections (detail headers, CardGrid, SideMenu, sharing-agreement panels) use
   `cardMode: "column"`; previews use `width: "100%"`, never a fixed 900.
 - `CardGrid` fades/grows its cards in: pass `fadeTimeout={0}` and `animationDelay={0}` or a capture can
   come out blank.

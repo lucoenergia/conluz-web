@@ -23,7 +23,7 @@ function menuFor(granted: string[]): MenuSection[] {
 
 const MEMBER = ["canRead"];
 const COMMUNITY_ADMIN = ["canRead", "canManage", "canManageMemberships"];
-const PLATFORM_ADMIN = ["canAdministerPlatform", "canListUsers"];
+const PLATFORM_ADMIN = ["canAdministerPlatform", "canListPlatformAdmins"];
 
 function setup(sections: MenuSection[]) {
   render(
@@ -45,7 +45,7 @@ describe("SideMenu visibility", () => {
     hides("Miembros");
     hides("Integraciones");
     hides("Comunidades");
-    hides("Usuarios");
+    hides("Administradores de plataforma");
   });
 
   test("a community admin also sees the community-management entries, but no platform ones", () => {
@@ -54,7 +54,7 @@ describe("SideMenu visibility", () => {
     shows("Miembros");
     shows("Integraciones");
     hides("Comunidades");
-    hides("Usuarios");
+    hides("Administradores de plataforma");
   });
 
   // The golden rule, as a test: the platform flag grants nothing inside a
@@ -62,7 +62,7 @@ describe("SideMenu visibility", () => {
   test("a platform admin with no membership sees only the platform entries", () => {
     setup(menuFor(PLATFORM_ADMIN));
     shows("Comunidades");
-    shows("Usuarios");
+    shows("Administradores de plataforma");
     hides("Inicio");
     hides("Miembros");
     hides("Integraciones");
@@ -105,7 +105,7 @@ describe("SideMenu visibility", () => {
     for (const label of ["Inicio", "Producción", "Consumo", "Miembros", "Integraciones"]) {
       expect(within(community).getByText(label)).toBeInTheDocument();
     }
-    for (const label of ["Comunidades", "Usuarios"]) {
+    for (const label of ["Comunidades", "Administradores de plataforma"]) {
       expect(within(platform).getByText(label)).toBeInTheDocument();
     }
   });

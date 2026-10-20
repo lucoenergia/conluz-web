@@ -38,6 +38,12 @@ export {
   type MembershipWriteResult,
 } from "./useMembershipActions";
 export { usePlantActions, type HuaweiWriteResult } from "./usePlantActions";
+export {
+  usePlatformAdminActions,
+  type PlatformAdminActions,
+  type PlatformAdminRowActions,
+  type PlatformAdminWriteResult,
+} from "./usePlatformAdminActions";
 export { usePlatformActions } from "./usePlatformActions";
 export { useProfileActions } from "./useProfileActions";
 export { useSessionActions } from "./useSessionActions";
@@ -55,4 +61,3 @@ export {
   type ReplaceCoefficientsResult,
 } from "./useSharingAgreementCoefficientActions";
 export { useSupplyActions } from "./useSupplyActions";
-export { useUserActions, type UserRowActions } from "./useUserActions";

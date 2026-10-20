@@ -19,7 +19,7 @@ const sections = [
     title: "Plataforma",
     items: [
       { to: "/communities", id: "communities", icon: Icons.BusinessRounded, label: "Comunidades", requires: always },
-      { to: "/users", id: "users", icon: Icons.ManageAccountsRounded, label: "Usuarios", requires: always },
+      { to: "/platform-admins", id: "platform-admins", icon: Icons.AdminPanelSettingsRounded, label: "Administradores de plataforma", requires: always },
     ],
   },
 ];

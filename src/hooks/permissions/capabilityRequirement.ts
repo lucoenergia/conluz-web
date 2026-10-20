@@ -3,7 +3,6 @@ import type {
   PlantCapabilitiesResponse,
   PlatformCapabilitiesResponse,
   SupplyCapabilitiesResponse,
-  UserCapabilitiesResponse,
 } from "../../api/models";
 
 /**
@@ -22,8 +21,6 @@ export type CapabilityRequirement =
   | { scope: "plant"; capability: keyof PlantCapabilitiesResponse }
   /** Reads `:supplyPointId` from the route. */
   | { scope: "supply"; capability: keyof SupplyCapabilitiesResponse }
-  /** Reads `:userId` from the route. */
-  | { scope: "user"; capability: keyof UserCapabilitiesResponse }
   /**
    * Reads `:communityId` from the route. Distinct from `community`, which is
    * the ACTIVE one: administering a community is not working in it, and a
@@ -43,7 +40,7 @@ export type CapabilityRequirement =
  * here means adding one is a type error in MENU_SECTIONS, and widening it is a
  * type error in the layout until the matching call exists.
  */
-export type MenuPlatformCapability = "canAdministerPlatform" | "canListUsers";
+export type MenuPlatformCapability = "canAdministerPlatform" | "canListPlatformAdmins";
 
 /** The community capabilities navigation can ask about. Same reasoning. */
 export type MenuCommunityCapability = "canRead" | "canManage" | "canManageMemberships";
@@ -55,7 +52,7 @@ export type MenuCommunityCapability = "canRead" | "canManage" | "canManageMember
  * which src/contracts/routeAccess.spec.ts checks entry by entry.
  *
  * No scope keyed by a route parameter -- a menu entry is a fixed destination,
- * so it has no `:plantId`, `:supplyPointId`, `:userId` or `:communityId` to
+ * so it has no `:plantId`, `:supplyPointId` or `:communityId` to
  * resolve. Excluding them here is what stops one being written.
  */
 export type MenuRequirement =

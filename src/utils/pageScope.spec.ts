@@ -65,7 +65,7 @@ describe("resolvePageScope", () => {
     const paths = authenticatedPaths();
     expect(paths).toContain("/");
     expect(paths).toContain("/production/sample-id/sharing-agreements/sample-id");
-    expect(paths).toContain("/users/sample-id/edit");
+    expect(paths).toContain("/communities/sample-id/edit");
     expect(paths).toContain("/contact");
     expect(paths).not.toContain("/login");
   });
@@ -90,8 +90,7 @@ describe("resolvePageScope", () => {
     ["/platform", "platform"],
     ["/communities", "platform"],
     ["/communities/c-1/edit", "platform"],
-    ["/users", "platform"],
-    ["/users/new", "platform"],
+    ["/platform-admins", "platform"],
     ["/profile", "personal"],
     ["/change-password", "personal"],
     ["/contact", "personal"],
@@ -103,6 +102,6 @@ describe("resolvePageScope", () => {
   test("an unlisted route is unknown, never defaulted to a stated scope", () => {
     expect(resolvePageScope("/something-new")).toBe("unknown");
     // A prefix only matches whole segments.
-    expect(resolvePageScope("/usersettings")).toBe("unknown");
+    expect(resolvePageScope("/platformish")).toBe("unknown");
   });
 });

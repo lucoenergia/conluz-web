@@ -65,7 +65,7 @@ function renderAt(route: string) {
         {/* Where a community member lands from "/", as in App.tsx. */}
         <Route path="home" element={<p>Inicio de la comunidad</p>} />
         <Route path="production" element={<p>Página de producción</p>} />
-        <Route path="users" element={<p>Página de usuarios</p>} />
+        <Route path="platform-admins" element={<p>Página de administradores de plataforma</p>} />
         <Route path="profile" element={<p>Página de perfil</p>} />
         <Route path="no-community" element={<p>Sin comunidad</p>} />
       </Route>
@@ -154,7 +154,7 @@ describe("AuthenticatedLayout — the page scope is stated exactly once (AC4)", 
   });
 
   test.each([
-    ["/users", "Toda la plataforma"],
+    ["/platform-admins", "Toda la plataforma"],
     ["/profile", "Tu cuenta"],
   ])("%s states '%s' once, in either menu state, and never the community", async (route, statement) => {
     const user = userEvent.setup();
