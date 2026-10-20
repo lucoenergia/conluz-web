@@ -1403,7 +1403,13 @@ export const MANAGEMENT_DRAFT_AGREEMENT: SharingAgreementResponse = {
  * treatment the page tells apart: the caller's own row (no row actions), an
  * enabled admin the caller may revoke, a disabled one, and the last enabled
  * admin the platform would not let go -- who also has no email, which the
- * table shows as an empty cell.
+ * table shows as an empty cell. Then two pending invitations to the role
+ * (#288), listed after the admins as the backend lists them: one with a link
+ * still active, and one whose link expired or was revoked.
+ *
+ * Every row authorizes the invitation writes, and every row but the caller's
+ * own the role's revoke, as the backend serves them to a platform admin
+ * (lucoenergia/conluz#452): the row's `invitation` is what tells them apart.
  */
 export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
   {
@@ -1442,4 +1448,28 @@ export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
     invitation: null,
     capabilities: { canRevoke: true, canResendInvitation: true, canRevokeInvitation: true },
   },
+  {
+    user: { id: "platform-admin-invited" },
+    fullName: "Irene Campos Leal",
+    email: "irene.campos@conluz.test",
+    enabled: null,
+    revocable: null,
+    invitation: { invitedAt: "2026-07-01T09:00:00Z", expiresAt: "2026-07-08T09:00:00Z" },
+    capabilities: { canRevoke: true, canResendInvitation: true, canRevokeInvitation: true },
+  },
+  {
+    user: { id: "platform-admin-lapsed" },
+    fullName: "Óscar Prieto Ruiz",
+    email: "oscar.prieto@conluz.test",
+    enabled: null,
+    revocable: null,
+    invitation: { invitedAt: "2026-06-01T09:00:00Z", expiresAt: null },
+    capabilities: { canRevoke: true, canResendInvitation: true, canRevokeInvitation: true },
+  },
 ];
+
+/**
+ * The confirmation code an invite answers with (#288): eight characters from
+ * the backend's alphabet, fixed so the code dialog's capture is stable.
+ */
+export const FIXED_PLATFORM_ADMIN_CONFIRMATION_CODE = "K7Q2M9XZ";

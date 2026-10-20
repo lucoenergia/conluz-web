@@ -232,8 +232,9 @@ test.describe("Visual baselines", () => {
 
   // The platform admins (#285): the caller's own row without a kebab, an
   // enabled and a disabled chip, and an admin with no email, side by side in
-  // one table -- the composition is what a pixel change can break. Each row's
-  // behaviour, revoke included, is asserted in Vitest.
+  // one table, with two pending invitations and their link captions (#288) --
+  // the composition is what a pixel change can break. Each row's behaviour,
+  // revoke and the invitation writes included, is asserted in Vitest.
   test("platform admins page", async ({ page }) => {
     await injectAuthToken(page);
     await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
@@ -247,10 +248,57 @@ test.describe("Visual baselines", () => {
     await expect(main.getByText("Tomás Herrera Gil")).toBeVisible();
     await expect(main.getByText("Habilitado", { exact: true })).toHaveCount(3);
     await expect(main.getByText("Deshabilitado", { exact: true })).toBeVisible();
+    await expect(main.getByText("Pendiente", { exact: true })).toHaveCount(2);
+    await expect(main.getByText("Enlace activo hasta el 8 jul 2026")).toBeVisible();
+    await expect(main.getByText("Enlace caducado o revocado")).toBeVisible();
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("platform-admins-page.png", await mainRegion(page));
+  });
+
+  // The platform-admin invitation's form (#288): the community admin form's
+  // fields without the phone, and an explanation of the code. Its behaviour is
+  // asserted in PlatformAdminsPage.invitations.spec.tsx.
+  test("platform admin invite dialog", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    await mockPlatformAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/platform-admins");
+    await expect(page.getByRole("main").getByText("Javier Ruiz Pardo")).toBeVisible();
+    await page.getByRole("button", { name: "Invitar administrador de plataforma" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("heading", { name: "Invitar administrador de plataforma" })).toBeVisible();
+    await expect(dialog.getByLabel(/^DNI\/NIE\/NIF/)).toBeEditable();
+    await expect(dialog.getByLabel(/^Email de contacto/)).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("platform-admin-invite-dialog.png", await hideAppBar(page));
+  });
+
+  // The confirmation code, shown once after an invitation (#288): a grouped,
+  // monospace code with its copy button and the warnings -- a treatment no
+  // other dialog has. What it holds and when it closes is asserted in Vitest.
+  test("platform admin confirmation code dialog", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+    await mockPlatformAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/platform-admins");
+    await expect(page.getByRole("main").getByText("Javier Ruiz Pardo")).toBeVisible();
+    await page.getByRole("button", { name: "Invitar administrador de plataforma" }).click();
+    const form = page.getByRole("dialog");
+    await form.getByLabel(/^DNI\/NIE\/NIF/).fill("12345678Z");
+    await form.getByLabel(/^Nombre completo/).fill("Marta Gil Sanz");
+    await form.getByLabel(/^Email de contacto/).fill("marta.gil@conluz.test");
+    await form.getByRole("button", { name: "Invitar" }).click();
+    const dialog = page.getByRole("dialog", { name: "Código de confirmación" });
+    await expect(dialog.getByText("K7Q2-M9XZ")).toBeVisible();
+    await expect(dialog.getByText("Marta Gil Sanz")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("platform-admin-code-dialog.png", await hideAppBar(page));
   });
 
 });
