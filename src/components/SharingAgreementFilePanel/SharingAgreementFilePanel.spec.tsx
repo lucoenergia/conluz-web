@@ -259,6 +259,40 @@ describe("SharingAgreementFilePanel", () => {
     });
   });
 
+  // #149: the generated call asks for a Blob, and axios applies that to error
+  // bodies too, so a typed 409 arrives as JSON inside a Blob. Each refusal the
+  // contract documents with a known code gets its own sentence, and the dialog
+  // stays open with the year the user typed.
+  describe("a refused generation", () => {
+    const refusal = (code: string) => ({
+      response: {
+        status: 409,
+        data: new Blob([JSON.stringify({ errors: [{ code, message: "raw server message" }] })], {
+          type: "application/json",
+        }),
+      },
+    });
+
+    it.each([
+      ["PLANT_MISSING_REGULATORY_CODE", MISSING_CAU_MESSAGE],
+      ["SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID", "La suma de los coeficientes del acuerdo no es válida."],
+      [
+        "SHARING_AGREEMENT_DUPLICATE_CUPS",
+        "Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.",
+      ],
+    ])("words %s in Spanish and keeps the dialog open", async (code, message) => {
+      mockGenerateMutateAsync.mockRejectedValue(refusal(code));
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole("button", { name: GENERATE }));
+      await user.click(await screen.findByRole("button", { name: "Generar" }));
+
+      await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(message));
+      expect(screen.getByRole("heading", { name: "Generar fichero" })).toBeInTheDocument();
+    });
+  });
+
   // AC9 — importing authors coefficients, so it lives in the split section now.
   it("offers no import action at all", () => {
     renderPanel();
