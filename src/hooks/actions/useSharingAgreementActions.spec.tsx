@@ -353,6 +353,21 @@ describe("useSharingAgreementActions", () => {
       expect(mockErrorDispatch).toHaveBeenCalledWith(MISSING_CAU_MESSAGE);
     });
 
+    // A body that cannot be parsed must leave the real failure as it was: the
+    // generic sentence, never a parsing error in its place (#149).
+    it.each([
+      ["an unparseable Blob body", { response: { status: 500, data: new Blob(["<html>Error</html>"], { type: "text/html" }) } }],
+      ["no response at all", new Error("Network Error")],
+    ])("falls back to the generic sentence for a failure with %s", async (_, failure) => {
+      mockGenerateMutateAsync.mockRejectedValue(failure);
+      const { result } = renderActions();
+
+      expect(await result.current.actions.generateFile!.run(2026)).toBeUndefined();
+      expect(mockErrorDispatch).toHaveBeenCalledWith(
+        "Ha habido un problema al generar el fichero. Por favor, inténtalo más tarde",
+      );
+    });
+
     it("saves the imported file under the name the response carries", async () => {
       const blob = new Blob(["TXT"]);
       vi.mocked(downloadSharingAgreementFile).mockResolvedValue({ blob, filename: "ES1234_2026.txt" });

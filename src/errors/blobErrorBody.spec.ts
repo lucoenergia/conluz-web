@@ -24,6 +24,22 @@ describe("withParsedBlobErrorBody", () => {
     expect(await withParsedBlobErrorBody(error)).toBe(error);
   });
 
+  it.each([
+    ["empty", new Blob([], { type: "application/json" })],
+    ["truncated", new Blob(['{"errors":[{"code":"PLANT_MISSING_REG'], { type: "application/json" })],
+    ["unreadable", Object.assign(new Blob(["{}"]), { text: () => Promise.reject(new Error("read failed")) })],
+  ])("leaves the error as it is when the Blob body is %s, and never throws", async (_, data) => {
+    const error = { response: { status: 409, data } };
+
+    await expect(withParsedBlobErrorBody(error)).resolves.toBe(error);
+  });
+
+  it("degrades a JSON body with no typed errors to the caller's fallback", async () => {
+    const parsed = await withParsedBlobErrorBody({ response: { status: 500, data: jsonBlob({ status: 500 }) } });
+
+    expect(getFirstApiErrorMessage(parsed, "fallback")).toBe("fallback");
+  });
+
   it("leaves the error as it is when its body is not a Blob", async () => {
     const network = new Error("network error");
     const json = { response: { status: 409, data: { errors: [] } } };
