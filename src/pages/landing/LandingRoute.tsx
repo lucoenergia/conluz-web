@@ -5,7 +5,12 @@ import { useSuccessDispatch } from "../../context/success.context";
 import { useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { CapabilityLoadError } from "../../components/Auth/CapabilityLoadError";
 import { resolveLandingRoute } from "../../utils/routes";
-import { invitationAcceptedMessage, takeInvitationAccepted } from "../../utils/session";
+import {
+  invitationAcceptedMessage,
+  PLATFORM_INVITATION_ACCEPTED_MESSAGE,
+  takeInvitationAccepted,
+  takePlatformInvitationAccepted,
+} from "../../utils/session";
 
 /**
  * "/": where every caller lands, and where every denial redirects. It has no
@@ -23,9 +28,9 @@ import { invitationAcceptedMessage, takeInvitationAccepted } from "../../utils/s
  *   community active once it is worked out (#237), and the community switch
  *   changes it.
  *
- * An invitation accepted signed in lands here (#274), and the confirmation is
- * handed to the layout's success messages, which sit above the routed page and
- * so outlive the redirect below.
+ * An invitation accepted signed in lands here (#274), a platform-admin one
+ * too (#288), and the confirmation is handed to the layout's success messages,
+ * which sit above the routed page and so outlive the redirect below.
  */
 export const LandingRoute: FC = () => {
   const loggedUser = useLoggedUser();
@@ -36,6 +41,7 @@ export const LandingRoute: FC = () => {
   useEffect(() => {
     const communityName = takeInvitationAccepted();
     if (communityName) dispatchSuccess(invitationAcceptedMessage(communityName));
+    if (takePlatformInvitationAccepted()) dispatchSuccess(PLATFORM_INVITATION_ACCEPTED_MESSAGE);
   }, [dispatchSuccess]);
 
   // The layout renders no route until the user is known.

@@ -13,6 +13,10 @@ export type InvitationFailure =
   | { kind: "tokenInvalid" }
   /** The account already has a password: accept it signed in instead. */
   | { kind: "loginRequired" }
+  /** A platform-admin invitation's confirmation code was missing or wrong; the link still works (#288). */
+  | { kind: "codeInvalid" }
+  /** The fifth wrong code revoked the platform-admin invitation's link: it must be sent again (#288). */
+  | { kind: "codeExhausted" }
   /** The caller must change their password before anything else. */
   | { kind: "passwordChangeRequired" }
   | { kind: "policyViolation"; rule: PasswordRule | null }
@@ -27,7 +31,12 @@ function codeOf(error: unknown) {
 export function classifyInvitationError(error: unknown): InvitationFailure {
   const code = codeOf(error);
   if (code === "MEMBERSHIP_INVITATION_TOKEN_INVALID") return { kind: "tokenInvalid" };
-  if (code === "MEMBERSHIP_INVITATION_LOGIN_REQUIRED") return { kind: "loginRequired" };
+  // A platform-admin invitation answers its own code for the same case (#288).
+  if (code === "MEMBERSHIP_INVITATION_LOGIN_REQUIRED" || code === "PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED") {
+    return { kind: "loginRequired" };
+  }
+  if (code === "PLATFORM_ADMIN_INVITATION_CODE_INVALID") return { kind: "codeInvalid" };
+  if (code === "PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED") return { kind: "codeExhausted" };
   if (code === "USER_PASSWORD_CHANGE_REQUIRED") return { kind: "passwordChangeRequired" };
 
   const failure = classifyAuthError(error);

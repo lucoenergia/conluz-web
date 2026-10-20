@@ -22,12 +22,15 @@ import { useAuthDispatch } from "../../context/auth.context";
 import {
   PASSWORD_CHANGED_MESSAGE,
   PASSWORD_RESET_MESSAGE,
+  PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE,
   SESSION_EXPIRED_MESSAGE,
   clearInvitationAccepted,
   clearPasswordReset,
+  clearPlatformInvitationAccepted,
   hasPasswordReset,
   invitationAcceptedLoginMessage,
   peekInvitationAccepted,
+  peekPlatformInvitationAccepted,
   takePasswordChanged,
   takeSessionExpired,
 } from "../../utils/session";
@@ -56,6 +59,9 @@ export const Login: FC = () => {
    */
   const [invitationCommunity] = useState(peekInvitationAccepted);
   useEffect(clearInvitationAccepted, []);
+  /** Same, for a platform-admin invitation (#288). */
+  const [platformInvitationAccepted] = useState(peekPlatformInvitationAccepted);
+  useEffect(clearPlatformInvitationAccepted, []);
   const [formErrors, setFormErrors] = useState<{ id: boolean; password: boolean }>({
     id: false,
     password: false,
@@ -212,6 +218,18 @@ export const Login: FC = () => {
               }}
             >
               {invitationAcceptedLoginMessage(invitationCommunity)}
+            </Alert>
+          )}
+
+          {platformInvitationAccepted && !loginError && (
+            <Alert
+              severity="success"
+              sx={{
+                mb: 3,
+                borderRadius: radii.default,
+              }}
+            >
+              {PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE}
             </Alert>
           )}
 

@@ -16,7 +16,8 @@ import { useAuth, useAuthDispatch } from "../../context/auth.context";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { checkPasswordPolicy, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
 import { throttledMessage } from "../../errors/authErrors";
-import { markInvitationAccepted } from "../../utils/session";
+import { markInvitationAccepted, markPlatformInvitationAccepted } from "../../utils/session";
+import { isWellFormedConfirmationCode } from "../../utils/confirmationCode";
 
 type Field = "newPassword" | "confirmPassword";
 type FieldErrors = Partial<Record<Field, string>>;
@@ -31,13 +32,21 @@ type Mode =
   | "invalid"
   | "setPassword"
   | "login"
-  | "passwordChangeRequired";
+  | "passwordChangeRequired"
+  | "codeExhausted";
 
 const POLICY_HINT_ID = "invitation-new-password-policy";
 
 export const INCOMPLETE_LINK_MESSAGE = "El enlace está incompleto. Ábrelo tal y como aparece en el email.";
 export const INVALID_LINK_MESSAGE =
   "Este enlace no es válido o ha caducado. Pide a tu comunidad que te lo vuelva a enviar.";
+export const PLATFORM_INVALID_LINK_MESSAGE =
+  "Este enlace no es válido o ha caducado. Pide a quien te invitó que te lo vuelva a enviar.";
+export const CODE_REQUIRED_MESSAGE = "Escribe el código de confirmación";
+export const CODE_MALFORMED_MESSAGE = "El código tiene 8 letras o números";
+export const CODE_INVALID_MESSAGE = "El código no es correcto. Revisa que sea el que te dio quien te invitó.";
+export const CODE_EXHAUSTED_MESSAGE =
+  "Esta invitación se ha cancelado tras demasiados códigos incorrectos. Pide a quien te invitó que te envíe una nueva.";
 export const OTHER_ACCOUNT_MESSAGE =
   "Si la invitación es para otra cuenta, cierra sesión e inicia sesión con ella aquí.";
 export const PASSWORD_CHANGE_REQUIRED_MESSAGE =
@@ -61,6 +70,19 @@ function readTokenFromFragment(): string | null {
 }
 
 /**
+ * The confirmation code a platform-admin invitation needs (#288), as each
+ * acceptance path uses it: the field to render, the check before sending, and
+ * the part of the body it adds. Absent for a community invitation, whose
+ * paths and bodies stay exactly as they were.
+ */
+interface ConfirmationCodeControl {
+  field: ReactNode;
+  /** False, with the reason on the field, when the typed value cannot be a code. */
+  check: () => boolean;
+  body: () => { confirmationCode: string };
+}
+
+/**
  * Accepting an invitation from an emailed link (#274).
  *
  * The token follows the reset link's rules (#233): it travels only in the URL
@@ -76,6 +98,12 @@ function readTokenFromFragment(): string | null {
  * page reacts to a new session -- the layout serves signed-in callers, and the
  * providers always render their children -- so the page stays mounted through
  * the login and accepts with the token it still holds.
+ *
+ * A platform-admin invitation (#288) also needs the confirmation code that
+ * whoever invited gave the person, on both paths. Like the token it lives only
+ * in this component's state -- the field's value -- and in the body of the
+ * request that sends it, so it survives a login on this page and a wrong
+ * code, and is gone when the page closes.
  */
 export const AcceptInvitation: FC = () => {
   const [token] = useState(readTokenFromFragment);
@@ -84,6 +112,8 @@ export const AcceptInvitation: FC = () => {
   const [notice, setNotice] = useState<string | null>(null);
   const [offerLogout, setOfferLogout] = useState(false);
   const [acceptAfterLogin, setAcceptAfterLogin] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
@@ -138,16 +168,63 @@ export const AcceptInvitation: FC = () => {
     }
   };
 
+  const isPlatform = invitation?.kind === "PLATFORM";
+  // A missing field, from a backend that predates it, asks for no code.
+  const codeRequired = invitation?.confirmationCodeRequired === true;
+
+  const checkCode = (): boolean => {
+    const typed = confirmationCode.trim();
+    const error = typed === "" ? CODE_REQUIRED_MESSAGE : isWellFormedConfirmationCode(typed) ? null : CODE_MALFORMED_MESSAGE;
+    setCodeError(error);
+    return error === null;
+  };
+
+  const code: ConfirmationCodeControl | undefined = codeRequired
+    ? {
+        field: (
+          <ConfirmationCodeField
+            value={confirmationCode}
+            autoFocus={mode === "setPassword"}
+            error={codeError}
+            onChange={(value) => {
+              setConfirmationCode(value);
+              setCodeError(null);
+            }}
+          />
+        ),
+        check: checkCode,
+        // As typed, trimmed: the backend ignores case, spaces and hyphens.
+        body: () => ({ confirmationCode: confirmationCode.trim() }),
+      }
+    : undefined;
+
+  const markAccepted = () => {
+    if (isPlatform) markPlatformInvitationAccepted();
+    else if (invitation?.community) markInvitationAccepted(invitation.community.name);
+  };
+
+  const handleCodeRefused = (kind: "codeInvalid" | "codeExhausted") => {
+    if (kind === "codeInvalid") {
+      setCodeError(CODE_INVALID_MESSAGE);
+    } else {
+      setMode("codeExhausted");
+    }
+  };
+
   const acceptSignedIn = async (linkToken: string) => {
     setNotice(null);
-    const result = await acceptAsCurrentUser.run({ token: linkToken });
+    const result = await acceptAsCurrentUser.run({ token: linkToken, ...code?.body() });
     if (result.ok) {
-      if (invitation?.community) markInvitationAccepted(invitation.community.name);
+      markAccepted();
       navigate("/", { replace: true });
       return;
     }
     const { failure } = result;
     switch (failure.kind) {
+      case "codeInvalid":
+      case "codeExhausted":
+        handleCodeRefused(failure.kind);
+        break;
       case "tokenInvalid":
         // The backend answers an invitation for another account with the same
         // code as an expired one, so the screen cannot tell them apart either:
@@ -208,7 +285,7 @@ export const AcceptInvitation: FC = () => {
   };
 
   const handlePasswordSet = async () => {
-    if (invitation?.community) markInvitationAccepted(invitation.community.name);
+    markAccepted();
     // A session in this browser belongs to somebody else: the invited account
     // had no password until now. The login page would send it to "/" and
     // never show the notice, so it ends here, revoked like any logout.
@@ -235,15 +312,24 @@ export const AcceptInvitation: FC = () => {
     acceptAfterLogin && !loggedUser && currentUser.isError && statusOf(currentUser.error) !== 401;
 
   const communityName = invitation?.community?.name;
+  // A platform invitation names no community (#288).
+  const heading = isPlatform
+    ? "Únete como administrador de la plataforma"
+    : communityName
+      ? `Únete a ${communityName}`
+      : "Aceptar invitación";
+  const ofTheInvitation = isPlatform
+    ? "Acepta la invitación para administrar la plataforma"
+    : "Acepta la invitación de tu comunidad";
   const subtitle = !token
-    ? "Acepta la invitación de tu comunidad"
+    ? ofTheInvitation
     : mode === "setPassword"
       ? "Elige una contraseña para tu cuenta"
       : mode === "login"
         ? authToken
           ? "Acepta la invitación con tu cuenta"
           : "Inicia sesión para aceptar la invitación"
-        : "Acepta la invitación de tu comunidad";
+        : ofTheInvitation;
 
   let body: ReactNode;
   if (!token) {
@@ -266,7 +352,9 @@ export const AcceptInvitation: FC = () => {
   } else if (mode === "invalid") {
     body = (
       <Box sx={sxStyles.flexColumnGap3}>
-        <Alert severity="error" sx={{ borderRadius: radii.default }}>{INVALID_LINK_MESSAGE}</Alert>
+        <Alert severity="error" sx={{ borderRadius: radii.default }}>
+          {isPlatform ? PLATFORM_INVALID_LINK_MESSAGE : INVALID_LINK_MESSAGE}
+        </Alert>
         {offerLogout && authToken && (
           <>
             <Typography sx={{ fontSize: fontSizes.md, color: "text.secondary" }}>{OTHER_ACCOUNT_MESSAGE}</Typography>
@@ -286,14 +374,19 @@ export const AcceptInvitation: FC = () => {
         </Button>
       </Box>
     );
+  } else if (mode === "codeExhausted") {
+    // Final: the link is revoked, so nothing here can be tried again.
+    body = <Alert severity="error" sx={{ borderRadius: radii.default }}>{CODE_EXHAUSTED_MESSAGE}</Alert>;
   } else if (mode === "setPassword") {
     body = (
       <SetPasswordForm
         token={token}
         accept={accept}
+        code={code}
         onAccepted={handlePasswordSet}
         onInvalid={() => setMode("invalid")}
         onLoginRequired={handleLoginRequired}
+        onCodeRefused={handleCodeRefused}
       />
     );
   } else if (authToken && loginIncomplete) {
@@ -314,11 +407,15 @@ export const AcceptInvitation: FC = () => {
             Has iniciado sesión como <strong>{loggedUser.fullName}</strong>.
           </Typography>
         )}
+        {code?.field}
         <Button
           variant="contained"
           fullWidth
           disabled={!loggedUser || acceptAfterLogin || acceptAsCurrentUser.isPending}
-          onClick={() => void acceptSignedIn(token)}
+          onClick={() => {
+            if (code && !code.check()) return;
+            void acceptSignedIn(token);
+          }}
           sx={submitSx}
         >
           Aceptar invitación
@@ -326,7 +423,7 @@ export const AcceptInvitation: FC = () => {
       </Box>
     );
   } else {
-    body = <InvitationLoginForm login={login} notice={notice} onLoggedIn={handleLoggedIn} />;
+    body = <InvitationLoginForm login={login} code={code} notice={notice} onLoggedIn={handleLoggedIn} />;
   }
 
   return (
@@ -353,7 +450,7 @@ export const AcceptInvitation: FC = () => {
             <GroupAddOutlinedIcon sx={{ fontSize: 36 }} />
           </Avatar>
           <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
-            {communityName ? `Únete a ${communityName}` : "Aceptar invitación"}
+            {heading}
           </Typography>
           <Typography variant="body1" sx={{ opacity: 0.95 }}>
             {subtitle}
@@ -396,16 +493,61 @@ const submitSx = {
 
 type InvitationActionsBundle = ReturnType<typeof useInvitationActions>["actions"];
 
+interface ConfirmationCodeFieldProps {
+  value: string;
+  error: string | null;
+  onChange: (value: string) => void;
+  autoFocus?: boolean;
+}
+
+/**
+ * The confirmation code of a platform-admin invitation (#288). Never
+ * autocompleted, and accepted in any case, with spaces and hyphens.
+ */
+const ConfirmationCodeField: FC<ConfirmationCodeFieldProps> = ({ value, error, onChange, autoFocus }) => (
+  <Box>
+    <Typography component="label" htmlFor="confirmationCode" sx={labelSx}>
+      Código de confirmación
+    </Typography>
+    <TextField
+      error={!!error}
+      helperText={error ?? "Te lo ha dado quien te invitó. No llega por email."}
+      id="confirmationCode"
+      name="confirmationCode"
+      placeholder="ABCD-EFGH"
+      autoComplete="off"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      autoFocus={autoFocus}
+      required
+      fullWidth
+      variant="outlined"
+      slotProps={{ htmlInput: { autoCapitalize: "characters", autoCorrect: "off", spellCheck: false } }}
+    />
+  </Box>
+);
+
 interface SetPasswordFormProps {
   token: string;
   accept: InvitationActionsBundle["accept"];
+  /** The code a platform-admin invitation needs; absent for a community one. */
+  code: ConfirmationCodeControl | undefined;
   onAccepted: () => Promise<void>;
   onInvalid: () => void;
   onLoginRequired: () => void;
+  onCodeRefused: (kind: "codeInvalid" | "codeExhausted") => void;
 }
 
 /** Path for an account with no password yet: choosing the first one accepts the invitation. */
-const SetPasswordForm: FC<SetPasswordFormProps> = ({ token, accept, onAccepted, onInvalid, onLoginRequired }) => {
+const SetPasswordForm: FC<SetPasswordFormProps> = ({
+  token,
+  accept,
+  code,
+  onAccepted,
+  onInvalid,
+  onLoginRequired,
+  onCodeRefused,
+}) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -433,10 +575,11 @@ const SetPasswordForm: FC<SetPasswordFormProps> = ({ token, accept, onAccepted, 
 
     const errors = validate();
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    const codeOk = code ? code.check() : true;
+    if (Object.keys(errors).length > 0 || !codeOk) return;
 
     // Sent exactly as typed: never trimmed.
-    const result = await accept.run({ token, newPassword });
+    const result = await accept.run({ token, newPassword, ...code?.body() });
     if (result.ok) {
       await onAccepted();
       return;
@@ -450,6 +593,10 @@ const SetPasswordForm: FC<SetPasswordFormProps> = ({ token, accept, onAccepted, 
       case "loginRequired":
         // The account has a password after all: accept it signed in.
         onLoginRequired();
+        break;
+      case "codeInvalid":
+      case "codeExhausted":
+        onCodeRefused(failure.kind);
         break;
       case "policyViolation":
         setFieldErrors({
@@ -473,6 +620,8 @@ const SetPasswordForm: FC<SetPasswordFormProps> = ({ token, accept, onAccepted, 
         </Alert>
       )}
 
+      {code?.field}
+
       <Box>
         <Typography component="label" htmlFor="newPassword" sx={labelSx}>
           Nueva contraseña
@@ -486,7 +635,8 @@ const SetPasswordForm: FC<SetPasswordFormProps> = ({ token, accept, onAccepted, 
           autoComplete="new-password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          autoFocus
+          // The code comes first when there is one, and takes the focus.
+          autoFocus={!code}
           required
           fullWidth
           variant="outlined"
@@ -531,6 +681,8 @@ const SetPasswordForm: FC<SetPasswordFormProps> = ({ token, accept, onAccepted, 
 
 interface InvitationLoginFormProps {
   login: ReturnType<typeof useSessionActions>["actions"]["login"];
+  /** The code a platform-admin invitation needs, checked before logging in; absent for a community one. */
+  code: ConfirmationCodeControl | undefined;
   notice: string | null;
   onLoggedIn: (sessionToken: string) => void;
 }
@@ -541,7 +693,7 @@ interface InvitationLoginFormProps {
  * There is no "Recordarme": the session is kept for this tab, as a login that
  * does not ask to be remembered is.
  */
-const InvitationLoginForm: FC<InvitationLoginFormProps> = ({ login, notice, onLoggedIn }) => {
+const InvitationLoginForm: FC<InvitationLoginFormProps> = ({ login, code, notice, onLoggedIn }) => {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [formErrors, setFormErrors] = useState({ id: false, password: false });
@@ -551,7 +703,9 @@ const InvitationLoginForm: FC<InvitationLoginFormProps> = ({ login, notice, onLo
     event.preventDefault();
     const errors = { id: !id, password: !password };
     setFormErrors(errors);
-    if (errors.id || errors.password) return;
+    // Checked before logging in: no session is opened for a code that cannot be one.
+    const codeOk = code ? code.check() : true;
+    if (errors.id || errors.password || !codeOk) return;
 
     // The username may be trimmed: the backend normalises the identity
     // document anyway. The password may not.
@@ -615,6 +769,8 @@ const InvitationLoginForm: FC<InvitationLoginFormProps> = ({ login, notice, onLo
           variant="outlined"
         />
       </Box>
+
+      {code?.field}
 
       <Button type="submit" variant="contained" fullWidth disabled={login.isPending} sx={submitSx}>
         Entrar y aceptar

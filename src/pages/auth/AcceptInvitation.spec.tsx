@@ -385,6 +385,25 @@ describe("UI-INV-004 inspection", () => {
     expect(await findCommunityHeading()).toBeInTheDocument();
     expect(screen.getByText("Elige una contraseña para tu cuenta")).toBeInTheDocument();
   });
+
+  // A platform-admin invitation's code (#288) is never asked of a community's.
+  it.each([
+    ["the new-password path", false, undefined],
+    ["the login form", true, undefined],
+    ["the signed-in button", true, "invited-session"],
+  ])("UI-INV-014 AC7 asks for no confirmation code on %s", async (_, loginRequired, token) => {
+    const router = routeRequests([
+      { method: "POST", url: INSPECT, respond: () => inspection(loginRequired) },
+      { method: "GET", url: CURRENT_USER, respond: () => INVITED_BEFORE },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`, { token });
+    await findCommunityHeading();
+    await screen.findByRole("button", { name: loginRequired && !token ? "Entrar y aceptar" : "Aceptar invitación" });
+
+    expect(screen.queryByLabelText("Código de confirmación")).not.toBeInTheDocument();
+  });
 });
 
 describe("UI-INV-007 an account without a password (AC1)", () => {

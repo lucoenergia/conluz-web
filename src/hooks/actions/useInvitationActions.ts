@@ -40,11 +40,20 @@ export interface InvitationActions {
   };
 }
 
+/**
+ * Kept out of the mutation cache. A mutation's variables stay in TanStack's
+ * MutationCache after it settles, for `gcTime`, and an acceptance's carry the
+ * token, the password and a platform-admin invitation's confirmation code
+ * (#288): with no `gcTime`, and the observer reset once the call settles, they
+ * are gone from the cache as soon as the request is answered.
+ */
+const FORGET_VARIABLES = { mutation: { gcTime: 0 } } as const;
+
 export function useInvitationActions(): InvitationActions {
   const queryClient = useQueryClient();
   const inspectMutation = useInspectInvitation();
-  const acceptMutation = useAcceptInvitation();
-  const acceptAsCurrentUserMutation = useAcceptInvitationAsCurrentUser();
+  const acceptMutation = useAcceptInvitation(FORGET_VARIABLES);
+  const acceptAsCurrentUserMutation = useAcceptInvitationAsCurrentUser(FORGET_VARIABLES);
 
   return {
     actions: {
@@ -68,6 +77,8 @@ export function useInvitationActions(): InvitationActions {
             return { ok: true };
           } catch (error) {
             return { ok: false, failure: classifyInvitationError(error) };
+          } finally {
+            acceptMutation.reset();
           }
         },
         acceptMutation.isPending,
@@ -84,6 +95,8 @@ export function useInvitationActions(): InvitationActions {
             return { ok: true };
           } catch (error) {
             return { ok: false, failure: classifyInvitationError(error) };
+          } finally {
+            acceptAsCurrentUserMutation.reset();
           }
         },
         acceptAsCurrentUserMutation.isPending,
