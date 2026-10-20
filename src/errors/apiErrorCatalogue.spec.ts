@@ -33,9 +33,11 @@ describe("translateErrorDetail", () => {
   });
 
   it("falls back to detail.message when code has no registered template", () => {
-    expect(
-      translateErrorDetail({ message: "server message", code: "SUPPLY_CUPS_NOT_NORMALIZABLE" }, "fallback"),
-    ).toBe("server message");
+    // Not in the generated enum, as when the backend adds a code before the
+    // client is regenerated, so cataloguing a real code can never turn this
+    // into a test of a translation.
+    const unknownCode = "CODE_UNKNOWN_TO_THIS_CLIENT" as RestErrorDetailCode;
+    expect(translateErrorDetail({ message: "server message", code: unknownCode }, "fallback")).toBe("server message");
   });
 
   it("UI-AGR-013 sends a refused generation for a plant with no CAU to the plant, in the words the panels use", () => {
