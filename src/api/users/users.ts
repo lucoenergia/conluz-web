@@ -33,6 +33,7 @@ import type {
   CurrentUserResponse,
   GetAllUsersParams,
   PagedResultUserResponse,
+  PlatformAdminResponse,
   RestError,
   SupplyResponse,
   UpdateProfileBody,
@@ -685,7 +686,9 @@ export const useCreateUser = <TError = ErrorType<RestError>,
 Proper authentication, through an authentication token, is required for secure access.
 **Required: Platform Admin. You cannot revoke your own privileges.**
 
-Two safety rails apply: the system can never be left with zero platform admins (the last platform admin cannot be revoked), and a platform admin cannot revoke their own privileges.
+Once the caller is allowed, the target is checked: an unknown user answers 404, and a user who is not a platform admin answers 409 USER_NOT_PLATFORM_ADMIN.
+
+Two safety rails apply: a platform admin cannot revoke their own privileges, and the system can never be left without an enabled platform admin. Revoking the last enabled platform admin answers 409 USER_LAST_PLATFORM_ADMIN; since the caller is themselves an enabled platform admin, this can only happen when two revokes run at the same time. Revoking a disabled platform admin is always allowed, since it leaves the number of enabled platform admins as it is.
 
 Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user is no longer a platform administrator.
 
@@ -1245,6 +1248,100 @@ export function useGetCurrentUser<TData = Awaited<ReturnType<typeof getCurrentUs
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetCurrentUserQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Every user with the platform-admin role, enabled or not, by full name and then id: the user id, and the full name, email and state of their own account. No personal id, no member record and no memberships. Each one says whether revoking the role would be accepted right now, and whether the caller may revoke it. Only a platform admin may list them.
+
+ * @summary Lists the platform admins.
+ */
+export const getPlatformAdmins = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PlatformAdminResponse[]>(
+      {url: `/api/v1/platform-admins`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetPlatformAdminsQueryKey = () => {
+    return [
+    `/api/v1/platform-admins`
+    ] as const;
+    }
+
+    
+export const getGetPlatformAdminsQueryOptions = <TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlatformAdminsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlatformAdmins>>> = ({ signal }) => getPlatformAdmins(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlatformAdminsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlatformAdmins>>>
+export type GetPlatformAdminsQueryError = ErrorType<RestError>
+
+
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlatformAdmins>>,
+          TError,
+          Awaited<ReturnType<typeof getPlatformAdmins>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlatformAdmins>>,
+          TError,
+          Awaited<ReturnType<typeof getPlatformAdmins>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lists the platform admins.
+ */
+
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlatformAdminsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
