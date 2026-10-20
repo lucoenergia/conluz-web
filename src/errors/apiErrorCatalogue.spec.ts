@@ -38,7 +38,7 @@ describe("translateErrorDetail", () => {
     ).toBe("server message");
   });
 
-  it("sends a refused generation for a plant with no CAU to the plant, in the words the panels use", () => {
+  it("UI-AGR-013 sends a refused generation for a plant with no CAU to the plant, in the words the panels use", () => {
     expect(
       translateErrorDetail({ message: "server message", code: "PLANT_MISSING_REGULATORY_CODE" }, "fallback"),
     ).toBe(MISSING_CAU_MESSAGE);

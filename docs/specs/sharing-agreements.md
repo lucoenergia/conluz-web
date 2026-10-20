@@ -159,6 +159,49 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #277
 
+### UI-AGR-011 — The distributor file can be generated in every status
+
+- **Status:** Active
+- **Rule:** The file panel MUST offer "Generar y descargar TXT" to a caller who may manage the
+  agreement, on a DRAFT, a PUBLISHED and a SUPERSEDED agreement alike, whether or not a file is stored.
+- **Rationale:** The file is built from the complete coefficient set and nothing is persisted, so the
+  contract allows generating it in any status. It is an optional action, never a step that blocks the
+  agreement.
+- **Implements:** n/a
+- **Source:** #149
+
+### UI-AGR-012 — A sealed agreement without a stored file says one can still be generated
+
+- **Status:** Active
+- **Rule:** On a PUBLISHED or SUPERSEDED agreement with no stored file, the file panel MUST say that the
+  file may have been sent to the distributor outside Conluz and that one can be generated from the
+  coefficients. On a DRAFT with no stored file, it MUST say that none has been imported.
+- **Rationale:** The draft wording reads as a missing step on an agreement that is already complete.
+- **Implements:** n/a
+- **Source:** #149
+
+### UI-AGR-013 — A plant without a CAU is decided and worded once
+
+- **Status:** Active
+- **Rule:** The file panel's reason for not generating, the next-step banner, the lifecycle rail and a
+  refused generation (`PLANT_MISSING_REGULATORY_CODE`) MUST show the same sentence. A CAU that is only
+  whitespace MUST count as missing on every one of them.
+- **Rationale:** The backend refuses to generate the file with a whitespace-only CAU. While the panel
+  and the next step decided this separately, the panel offered a request guaranteed to fail next to a
+  banner saying the CAU was missing.
+- **Implements:** n/a
+- **Source:** #149
+
+### UI-AGR-014 — The generate dialog says the year only names the file
+
+- **Status:** Active
+- **Rule:** The generate dialog MUST state that the year is used only to name the file and that the
+  content does not change with it.
+- **Rationale:** Without it, the year field reads as changing the data, but the file content encodes no
+  year or period.
+- **Implements:** n/a
+- **Source:** #149
+
 ## States
 
 | State | Rendered | Actions available |

@@ -34,7 +34,7 @@ describe("SharingAgreementGenerateDialog", () => {
     expect(screen.getByText(`CAU0001_${currentYear}.txt`)).toBeInTheDocument();
   });
 
-  it("says the year only names the file, so it does not read as changing the coefficients", () => {
+  it("UI-AGR-014 says the year only names the file, so it does not read as changing the coefficients", () => {
     renderDialog();
     expect(
       screen.getByText("El año solo se usa para nombrar el fichero; el contenido no cambia según el año."),

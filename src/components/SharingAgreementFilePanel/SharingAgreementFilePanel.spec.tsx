@@ -154,7 +154,7 @@ describe("SharingAgreementFilePanel", () => {
     // #149: generating builds the TXT from the complete coefficient set and
     // persists nothing, so the contract allows it in every status, whether or
     // not a file is stored.
-    it("stays available on a PUBLISHED agreement with a stored file, since generating never touches it", () => {
+    it("UI-AGR-011 stays available on a PUBLISHED agreement with a stored file, since generating never touches it", () => {
       renderPanel({
         agreement: makeAgreement({
           status: SharingAgreementResponseStatus.PUBLISHED,
@@ -166,14 +166,14 @@ describe("SharingAgreementFilePanel", () => {
       expect(screen.getByText("CAU0001_2026.txt")).toBeInTheDocument();
     });
 
-    it("stays available on a PUBLISHED agreement with no stored file, which may have been sent outside Conluz", () => {
+    it("UI-AGR-011 UI-AGR-012 stays available on a PUBLISHED agreement with no stored file, which may have been sent outside Conluz", () => {
       renderPanel({ agreement: makeAgreement({ status: SharingAgreementResponseStatus.PUBLISHED }) });
 
       expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
       expect(screen.getByText(SEALED_NO_FILE)).toBeVisible();
     });
 
-    it("stays available on a SUPERSEDED agreement, since its coefficient set is still complete and nothing is stored", () => {
+    it("UI-AGR-011 UI-AGR-012 stays available on a SUPERSEDED agreement, since its coefficient set is still complete and nothing is stored", () => {
       renderPanel({ agreement: makeAgreement({ status: SharingAgreementResponseStatus.SUPERSEDED }) });
 
       expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
@@ -240,7 +240,7 @@ describe("SharingAgreementFilePanel", () => {
         SharingAgreementResponseStatus.DRAFT,
       );
 
-    it("is worded the same in the file panel, the banner and the lifecycle rail", () => {
+    it("UI-AGR-013 is worded the same in the file panel, the banner and the lifecycle rail", () => {
       renderPanel({ plantRegulatoryCode: undefined });
       const view = missingCauNextStep(undefined);
 
@@ -249,7 +249,7 @@ describe("SharingAgreementFilePanel", () => {
       expect(view.blockedNote).toBe(MISSING_CAU_MESSAGE);
     });
 
-    it("counts a whitespace-only CAU as missing in the panel and the next step alike, since generating with it 409s", () => {
+    it("UI-AGR-013 counts a whitespace-only CAU as missing in the panel and the next step alike, since generating with it 409s", () => {
       renderPanel({ plantRegulatoryCode: "   " });
       const view = missingCauNextStep("   ");
 
