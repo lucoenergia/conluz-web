@@ -102,6 +102,11 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // file-path DISTRIBUTOR_FILE_CUPS_DUPLICATE (keyed by CUPS) above.
   SHARING_AGREEMENT_DUPLICATE_SUPPLY: "Hay un suministro repetido en el conjunto de coeficientes.",
 
+  // Two of the community's supply codes normalize to the same CUPS. Refused by
+  // the file upload and by file generation (#149), so it names neither.
+  SHARING_AGREEMENT_DUPLICATE_CUPS:
+    "Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.",
+
   SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID: "La suma de los coeficientes del acuerdo no es válida.",
 
   // Generating the distributor file for a plant with no CAU (#149). Not the
