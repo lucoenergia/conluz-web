@@ -217,6 +217,11 @@ baseline turns a regression into the new expected result — and a new name's fi
 accepted sight unseen unless you look, so check that a newly added capture shows a populated screen
 rather than an empty table or a card still loading.
 
+When a change removes a capture, its baselines stay behind: no Playwright run deletes a PNG.
+`make visual-get-orphans` lists every baseline whose name no visual test spec captures any more,
+and `make visual-delete-orphans` removes them with `git rm`. A baseline left for only one project,
+by a test that now runs on the other alone, is not detected.
+
 ### Regenerating the API client
 
 Never set `clean: true` in `orval.config.js`. It empties `src/api/` before generating, which would delete the hand-written `src/api/custom-instance.ts`.
