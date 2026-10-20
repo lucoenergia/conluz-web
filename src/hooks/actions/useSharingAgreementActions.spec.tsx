@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 import { waitFor } from "@testing-library/react";
 import { createTestQueryClient, renderHookWithProviders } from "../../test/renderWithProviders";
 import { mutation } from "../../test/queryState";
@@ -333,6 +334,23 @@ describe("useSharingAgreementActions", () => {
 
       expect(await result.current.actions.generateFile!.run(2026)).toBeUndefined();
       await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
+    });
+
+    // The generated call asks for a Blob, and axios applies that to error
+    // bodies too: this is the shape a typed 409 really arrives in (#149).
+    it("translates a refusal whose typed body arrives as a Blob", async () => {
+      mockGenerateMutateAsync.mockRejectedValue({
+        response: {
+          status: 409,
+          data: new Blob([JSON.stringify({ errors: [{ code: "PLANT_MISSING_REGULATORY_CODE", message: "raw" }] })], {
+            type: "application/json",
+          }),
+        },
+      });
+      const { result } = renderActions();
+
+      expect(await result.current.actions.generateFile!.run(2026)).toBeUndefined();
+      expect(mockErrorDispatch).toHaveBeenCalledWith(MISSING_CAU_MESSAGE);
     });
 
     it("saves the imported file under the name the response carries", async () => {
