@@ -32,6 +32,8 @@ import type {
   CreateUsersWithFileParams,
   CurrentUserResponse,
   GetAllUsersParams,
+  InvitePlatformAdminBody,
+  InvitedPlatformAdminResponse,
   PagedResultUserResponse,
   PlatformAdminResponse,
   RestError,
@@ -1061,6 +1063,210 @@ export const useCreateUsersWithFile = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Revokes the invitation's current link, whether or not it had expired. The invitation stays pending, listed with no valid link, and can be sent again with `resendPlatformAdminInvitation`. Works when the server cannot send emails.
+
+An unknown user is answered 404, and a user without a pending invitation 409 with the `PLATFORM_ADMIN_NOT_INVITED` code. Only a platform admin may revoke.
+
+ * @summary Stops a platform-admin invitation's link from working.
+ */
+export const revokePlatformAdminInvitation = (
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PlatformAdminResponse>(
+      {url: `/api/v1/platform-admins/${userId}/invitation/revoke`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getRevokePlatformAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['revokePlatformAdminInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  revokePlatformAdminInvitation(userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokePlatformAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>>
+    
+    export type RevokePlatformAdminInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Stops a platform-admin invitation's link from working.
+ */
+export const useRevokePlatformAdminInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokePlatformAdminInvitation>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRevokePlatformAdminInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Emails the person a new invitation link, at the address the invitation was sent to, and generates a new confirmation code, returned only in this response. The previous link and the previous code stop working, and the count of wrong codes starts again. At most 4 sends in any 24 hours, the first one included: further resends are answered 429 with the `PLATFORM_ADMIN_INVITATION_RESEND_LIMIT_REACHED` code and a `Retry-After` header.
+
+An unknown user is answered 404, and a user without a pending invitation 409 with the `PLATFORM_ADMIN_NOT_INVITED` code. If the server cannot send emails right now, it responds 503 with the `PLATFORM_ADMIN_INVITATION_UNAVAILABLE` code before anything is recorded. Only a platform admin may resend.
+
+ * @summary Sends a platform-admin invitation again, with a new link and a new confirmation code.
+ */
+export const resendPlatformAdminInvitation = (
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<InvitedPlatformAdminResponse>(
+      {url: `/api/v1/platform-admins/${userId}/invitation/resend`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getResendPlatformAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['resendPlatformAdminInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  resendPlatformAdminInvitation(userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResendPlatformAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>>
+    
+    export type ResendPlatformAdminInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Sends a platform-admin invitation again, with a new link and a new confirmation code.
+ */
+export const useResendPlatformAdminInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resendPlatformAdminInvitation>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getResendPlatformAdminInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Invites a person with their DNI/NIE/NIF, full name and email, and emails them a link to accept, valid for 7 days. Inviting grants nothing: the role is granted only when the person accepts with the link and the confirmation code in this response, which the inviter gives them by another channel, such as by phone or in person. The code is shown only in this response: no endpoint returns it again, and the email never contains it. Until the person accepts, the invitation is listed by `getPlatformAdmins` as pending, and never counts as a platform admin.
+
+The account is found with the DNI/NIE/NIF, or created without a password. An existing account is never written, and the response is the same whether or not it existed: the row carries the name and email typed here, nothing from the account. Only a platform admin may invite.
+
+The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code, and nothing is created or sent. A person who already holds the role is answered 409 with the `USER_ALREADY_PLATFORM_ADMIN` code, and one with a pending invitation 409 with the `PLATFORM_ADMIN_ALREADY_INVITED` code: resend that one instead.
+
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `PLATFORM_ADMIN_INVITATION_UNAVAILABLE` code before anything is looked up or created.
+
+ * @summary Invites a person to the platform-admin role.
+ */
+export const invitePlatformAdmin = (
+    invitePlatformAdminBody: InvitePlatformAdminBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<InvitedPlatformAdminResponse>(
+      {url: `/api/v1/platform-admins/invite`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: invitePlatformAdminBody, signal
+    },
+      );
+    }
+  
+
+
+export const getInvitePlatformAdminMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext> => {
+
+const mutationKey = ['invitePlatformAdmin'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitePlatformAdmin>>, {data: InvitePlatformAdminBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  invitePlatformAdmin(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InvitePlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof invitePlatformAdmin>>>
+    export type InvitePlatformAdminMutationBody = InvitePlatformAdminBody
+    export type InvitePlatformAdminMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Invites a person to the platform-admin role.
+ */
+export const useInvitePlatformAdmin = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof invitePlatformAdmin>>,
+        TError,
+        {data: InvitePlatformAdminBody},
+        TContext
+      > => {
+
+      const mutationOptions = getInvitePlatformAdminMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint retrieves all supplies associated with a specific user by their unique identifier.
 
 **Authorization Rules:**
@@ -1261,6 +1467,8 @@ export function useGetCurrentUser<TData = Awaited<ReturnType<typeof getCurrentUs
 
 /**
  * Every user with the platform-admin role, enabled or not, by full name and then id: the user id, and the full name, email and state of their own account. No personal id, no member record and no memberships. Each one says whether revoking the role would be accepted right now, and whether the caller may revoke it. Only a platform admin may list them.
+
+They are followed by the pending invitations to the role, by the full name typed by the inviter and then id: the user id, the full name and email typed by the inviter, nothing from the account, and `invitation` with when it was sent and when its link expires, null once it has expired or been revoked. `enabled` and `revocable` are null on those rows, and `invitation` is null on the others. A pending invitation never counts as a platform admin, for `revocable` or anything else, and the list never shows a confirmation code.
 
  * @summary Lists the platform admins.
  */

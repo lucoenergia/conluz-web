@@ -5,6 +5,7 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { AcceptInvitationBodyConfirmationCode } from './acceptInvitationBodyConfirmationCode';
 
 export interface AcceptInvitationBody {
   /** The token from the invitation link: everything after the `#` of `<web client>/accept-invitation#<token>`, exactly as it appears there. */
@@ -14,4 +15,6 @@ export interface AcceptInvitationBody {
    * @minLength 15
    */
   newPassword: string;
+  /** The confirmation code of a platform-admin invitation, as whoever invited gave it: 8 characters, in any case, with or without spaces and hyphens. Required when `inspectInvitation` answers `confirmationCodeRequired`; ignored for a community invitation. */
+  confirmationCode?: AcceptInvitationBodyConfirmationCode;
 }

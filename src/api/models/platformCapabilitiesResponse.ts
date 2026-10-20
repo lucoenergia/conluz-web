@@ -20,4 +20,6 @@ export interface PlatformCapabilitiesResponse {
   canCreateUsers: boolean;
   /** Whether the caller may list the platform admins (GET /api/v1/platform-admins). */
   canListPlatformAdmins: boolean;
+  /** Whether the caller may invite a person to the platform-admin role (POST /api/v1/platform-admins/invite). */
+  canInvitePlatformAdmins: boolean;
 }

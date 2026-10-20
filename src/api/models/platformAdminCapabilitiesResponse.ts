@@ -12,4 +12,8 @@
 export interface PlatformAdminCapabilitiesResponse {
   /** Whether the caller may revoke this user's platform-admin flag (POST /api/v1/users/{userId}/revoke-platform-admin). Always false when the user is the caller: an admin may not strip their own flag. Whether the revoke would be accepted right now is the platform admin's revocable field. */
   canRevoke: boolean;
+  /** Whether the caller may resend this row's pending invitation (POST /api/v1/platform-admins/{userId}/invitation/resend). Authorization only: true on every row for a platform admin, including rows without an invitation, where the resend is refused. Whether the row has a pending invitation is its invitation field. */
+  canResendInvitation: boolean;
+  /** Whether the caller may revoke this row's pending invitation link (POST /api/v1/platform-admins/{userId}/invitation/revoke). Authorization only: true on every row for a platform admin, including rows without an invitation, where the revoke is refused. Whether the row has a pending invitation is its invitation field. */
+  canRevokeInvitation: boolean;
 }
