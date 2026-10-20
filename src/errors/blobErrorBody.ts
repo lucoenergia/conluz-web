@@ -7,7 +7,20 @@
  * (#149, generating the distributor file).
  *
  * Returns the error with `response.data` replaced by the parsed body, or the
- * error itself when there is no Blob body or it is not JSON.
+ * error itself when there is no Blob body or it cannot be read as JSON. It
+ * never throws: a body it cannot parse leaves the real failure in place.
+ *
+ * Accepted exception (#149): this is parsed at the call site, not in
+ * `customInstance`, the same way the Content-Disposition note in
+ * src/components/SharingAgreementFilePanel/downloadSharingAgreementFile.ts
+ * handles the response headers. `customInstance` hands back only `data` and
+ * rethrows failures untouched, and every generated call passes through it, so
+ * changing it there has a repo-wide blast radius for one endpoint. The cost is
+ * that a new blob endpoint shows the generic fallback for its typed refusals
+ * until its caller uses this too.
+ *
+ * Revisit when a second endpoint needs the same parsing, when `customInstance`
+ * changes for any other reason, or if Orval starts exposing the raw response.
  */
 export async function withParsedBlobErrorBody(error: unknown): Promise<unknown> {
   const response = (error as { response?: { data?: unknown } } | null | undefined)?.response;
