@@ -68,6 +68,12 @@ describe("SideMenu visibility", () => {
     hides("Integraciones");
   });
 
+  test("UI-PAD-001 offers Administradores de plataforma only with canListPlatformAdmins", () => {
+    setup(menuFor(["canAdministerPlatform"]));
+    shows("Comunidades");
+    hides("Administradores de plataforma");
+  });
+
   test("a platform admin who also belongs to a community sees both", () => {
     setup(menuFor([...COMMUNITY_ADMIN, ...PLATFORM_ADMIN]));
     shows("Inicio");

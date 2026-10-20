@@ -115,7 +115,7 @@ describe("PlatformPage", () => {
   // Each quick action leads somewhere the router gates, so offering one that
   // redirects home is worse than offering nothing.
   describe("a caller who may not list the platform admins", () => {
-    it("offers no link to them", () => {
+    it("UI-PAD-001 offers no link to them", () => {
       setup({ platform: { ...FULL_PLATFORM, canListPlatformAdmins: false } });
 
       expect(screen.getByRole("link", { name: CREATE })).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe("PlatformPage", () => {
     });
 
     // A backend that predates the capability sends no key: a refusal.
-    it("offers no link to them when the backend does not report the capability", () => {
+    it("UI-PAD-001 offers no link to them when the backend does not report the capability", () => {
       loggedUser.current = buildCurrentUser({
         platformCapabilities: buildPlatformCapabilitiesWithout("canListPlatformAdmins", FULL_PLATFORM),
       });
