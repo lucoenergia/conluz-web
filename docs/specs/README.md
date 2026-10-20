@@ -39,7 +39,7 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-ROUTE` | Routing: what an unknown path renders | [`routing.md`](routing.md) |
 | `UI-FMT` | Formatting of figures with units, dates and chart time labels | [`formatting.md`](formatting.md) |
 | `UI-AGR` | Sharing agreements: the list, the detail page, the coefficient editor and their dialogs | [`sharing-agreements.md`](sharing-agreements.md) |
-| `UI-INV` | Invitation acceptance: joining a community from the emailed link | [`invitation-acceptance.md`](invitation-acceptance.md) |
+| `UI-INV` | Invitation acceptance: joining a community, or the platform admins, from the emailed link | [`invitation-acceptance.md`](invitation-acceptance.md) |
 | `UI-HOM` | Home: the member and management home views | [`home.md`](home.md) |
 | `UI-ADM` | Community admins: the platform admin's list, invitation and management of a community's admins | [`community-admins.md`](community-admins.md) |
-| `UI-PAD` | Platform admins: the list and revoking the role, and what a platform admin with no membership can reach | [`platform-admins.md`](platform-admins.md) |
+| `UI-PAD` | Platform admins: the list, inviting to the role and the pending invitations, revoking the role, and what a platform admin with no membership can reach | [`platform-admins.md`](platform-admins.md) |
