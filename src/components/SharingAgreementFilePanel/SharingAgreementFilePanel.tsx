@@ -172,7 +172,11 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
           </>
         ) : (
           <Typography sx={{ ...BODY_SX, color: colors.text.secondary }}>
-            No has importado ningún fichero en este acuerdo.
+            {/* A sealed agreement may have reached the distributor without
+                Conluz ever storing its file; generating stays available. */}
+            {isDraft
+              ? "No has importado ningún fichero en este acuerdo."
+              : "Este acuerdo no tiene ningún fichero guardado: puede que se enviara a la distribuidora fuera de Conluz. Puedes generar uno a partir de los coeficientes cuando lo necesites."}
           </Typography>
         )}
       </Box>

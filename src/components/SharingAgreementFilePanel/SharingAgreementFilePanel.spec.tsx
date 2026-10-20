@@ -111,6 +111,8 @@ describe("SharingAgreementFilePanel", () => {
   });
 
   const GENERATE = "Generar y descargar TXT";
+  const SEALED_NO_FILE =
+    "Este acuerdo no tiene ningún fichero guardado: puede que se enviara a la distribuidora fuera de Conluz. Puedes generar uno a partir de los coeficientes cuando lo necesites.";
 
   it("names the section and says what the file is for, in every status", () => {
     renderPanel();
@@ -147,6 +149,35 @@ describe("SharingAgreementFilePanel", () => {
         expect(screen.getByRole("button", { name: GENERATE })).toBeInTheDocument();
         unmount();
       }
+    });
+
+    // #149: generating builds the TXT from the complete coefficient set and
+    // persists nothing, so the contract allows it in every status, whether or
+    // not a file is stored.
+    it("stays available on a PUBLISHED agreement with a stored file, since generating never touches it", () => {
+      renderPanel({
+        agreement: makeAgreement({
+          status: SharingAgreementResponseStatus.PUBLISHED,
+          file: { id: "file-1", filename: "CAU0001_2026.txt", uploadedAt: "2026-01-15T10:00:00Z" },
+        }),
+      });
+
+      expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
+      expect(screen.getByText("CAU0001_2026.txt")).toBeInTheDocument();
+    });
+
+    it("stays available on a PUBLISHED agreement with no stored file, which may have been sent outside Conluz", () => {
+      renderPanel({ agreement: makeAgreement({ status: SharingAgreementResponseStatus.PUBLISHED }) });
+
+      expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
+      expect(screen.getByText(SEALED_NO_FILE)).toBeVisible();
+    });
+
+    it("stays available on a SUPERSEDED agreement, since its coefficient set is still complete and nothing is stored", () => {
+      renderPanel({ agreement: makeAgreement({ status: SharingAgreementResponseStatus.SUPERSEDED }) });
+
+      expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
+      expect(screen.getByText(SEALED_NO_FILE)).toBeVisible();
     });
 
     // AC4 — the panel used to use a real `disabled`, which takes the reason out
