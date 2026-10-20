@@ -142,7 +142,7 @@ export const AcceptInvitation: FC = () => {
     setNotice(null);
     const result = await acceptAsCurrentUser.run({ token: linkToken });
     if (result.ok) {
-      if (invitation) markInvitationAccepted(invitation.community.name);
+      if (invitation?.community) markInvitationAccepted(invitation.community.name);
       navigate("/", { replace: true });
       return;
     }
@@ -208,7 +208,7 @@ export const AcceptInvitation: FC = () => {
   };
 
   const handlePasswordSet = async () => {
-    if (invitation) markInvitationAccepted(invitation.community.name);
+    if (invitation?.community) markInvitationAccepted(invitation.community.name);
     // A session in this browser belongs to somebody else: the invited account
     // had no password until now. The login page would send it to "/" and
     // never show the notice, so it ends here, revoked like any logout.
@@ -234,7 +234,7 @@ export const AcceptInvitation: FC = () => {
   const loginIncomplete =
     acceptAfterLogin && !loggedUser && currentUser.isError && statusOf(currentUser.error) !== 401;
 
-  const communityName = invitation?.community.name;
+  const communityName = invitation?.community?.name;
   const subtitle = !token
     ? "Acepta la invitación de tu comunidad"
     : mode === "setPassword"

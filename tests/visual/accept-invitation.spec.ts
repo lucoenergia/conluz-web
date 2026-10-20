@@ -34,7 +34,12 @@ const FULL_PAGE = { fullPage: true, maxDiffPixels: LAYOUT_MAX_DIFF_PIXELS };
 const COMMUNITY_HEADING = "Únete a Sol de Lavapiés";
 
 function inspection(loginRequired: boolean) {
-  return { community: { id: "community-invited", name: "Sol de Lavapiés" }, loginRequired };
+  return {
+    kind: "COMMUNITY",
+    community: { id: "community-invited", name: "Sol de Lavapiés" },
+    loginRequired,
+    confirmationCodeRequired: false,
+  };
 }
 
 /** Registered after mockAllApiRoutes when both are used: the later route wins. */

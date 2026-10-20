@@ -58,6 +58,7 @@ const NO_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canAdministerPlatform: false,
   canCreateUsers: false,
   canListPlatformAdmins: false,
+  canInvitePlatformAdmins: false,
 };
 
 const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
@@ -66,6 +67,7 @@ const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canAdministerPlatform: true,
   canCreateUsers: true,
   canListPlatformAdmins: true,
+  canInvitePlatformAdmins: true,
 };
 
 /**
@@ -1410,7 +1412,8 @@ export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
     email: FIXED_PLATFORM_ADMIN_USER.email,
     enabled: true,
     revocable: true,
-    capabilities: { canRevoke: false },
+    invitation: null,
+    capabilities: { canRevoke: false, canResendInvitation: true, canRevokeInvitation: true },
   },
   {
     user: { id: "platform-admin-revocable" },
@@ -1418,7 +1421,8 @@ export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
     email: "javier.ruiz@conluz.test",
     enabled: true,
     revocable: true,
-    capabilities: { canRevoke: true },
+    invitation: null,
+    capabilities: { canRevoke: true, canResendInvitation: true, canRevokeInvitation: true },
   },
   {
     user: { id: "platform-admin-disabled" },
@@ -1426,7 +1430,8 @@ export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
     email: "elena.soto@conluz.test",
     enabled: false,
     revocable: true,
-    capabilities: { canRevoke: true },
+    invitation: null,
+    capabilities: { canRevoke: true, canResendInvitation: true, canRevokeInvitation: true },
   },
   {
     user: { id: "platform-admin-last" },
@@ -1434,6 +1439,7 @@ export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
     email: null,
     enabled: true,
     revocable: false,
-    capabilities: { canRevoke: true },
+    invitation: null,
+    capabilities: { canRevoke: true, canResendInvitation: true, canRevokeInvitation: true },
   },
 ];

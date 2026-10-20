@@ -63,7 +63,12 @@ vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
 }));
 
 function inspection(loginRequired: boolean): InvitationInspectionResponse {
-  return { community: { id: COMMUNITY_ID, name: COMMUNITY_NAME }, loginRequired };
+  return {
+    kind: "COMMUNITY",
+    community: { id: COMMUNITY_ID, name: COMMUNITY_NAME },
+    loginRequired,
+    confirmationCodeRequired: false,
+  };
 }
 
 /** The invited account, before and after accepting: the membership is what the acceptance adds. */

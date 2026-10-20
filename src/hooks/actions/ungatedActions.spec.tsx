@@ -242,7 +242,12 @@ describe("useInvitationActions (#274)", () => {
   });
 
   it("inspects with the body as given and returns the invitation", async () => {
-    const invitation = { community: { id: "TEST-COMMUNITY-ID", name: "TEST-COMMUNITY-NAME" }, loginRequired: false };
+    const invitation = {
+      kind: "COMMUNITY" as const,
+      community: { id: "TEST-COMMUNITY-ID", name: "TEST-COMMUNITY-NAME" },
+      loginRequired: false,
+      confirmationCodeRequired: false,
+    };
     mutateAsync.mockResolvedValue(invitation);
     const { result } = renderHookWithProviders(() => useInvitationActions());
 

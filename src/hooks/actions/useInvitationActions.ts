@@ -5,7 +5,12 @@ import {
   useInspectInvitation,
 } from "../../api/memberships/memberships";
 import { getGetCurrentUserQueryKey } from "../../api/users/users";
-import type { AcceptInvitationBody, InvitationInspectionResponse, InvitationTokenBody } from "../../api/models";
+import type {
+  AcceptInvitationAsCurrentUserBody,
+  AcceptInvitationBody,
+  InvitationInspectionResponse,
+  InvitationTokenBody,
+} from "../../api/models";
 import { type InvitationFailure, classifyInvitationError } from "../../errors/invitationErrors";
 import { type Action, ungated } from "./action";
 
@@ -20,8 +25,9 @@ export type InvitationAcceptanceResult = { ok: true } | { ok: false; failure: In
  *
  * No capability can answer any of these. The token in the link is the only
  * credential: inspecting it and accepting it without a session happen before
- * the invited account can sign in, and accepting it signed in acts on the
- * caller's own membership, named by the token. The reasons below are the ones
+ * the invited account can sign in, and accepting it signed in acts on an
+ * invitation addressed to the caller -- a membership or the platform-admin
+ * role (#288) -- named by the token. The reasons below are the ones
  * src/contracts/mutationHooks.spec.ts records for each mutation.
  *
  * The token travels in the request body and nowhere else.
@@ -30,7 +36,7 @@ export interface InvitationActions {
   actions: {
     inspect: Action<[InvitationTokenBody], InvitationInspectionResult>;
     accept: Action<[AcceptInvitationBody], InvitationAcceptanceResult>;
-    acceptAsCurrentUser: Action<[InvitationTokenBody], InvitationAcceptanceResult>;
+    acceptAsCurrentUser: Action<[AcceptInvitationAsCurrentUserBody], InvitationAcceptanceResult>;
   };
 }
 
@@ -67,8 +73,8 @@ export function useInvitationActions(): InvitationActions {
         acceptMutation.isPending,
       ),
       acceptAsCurrentUser: ungated(
-        "open to any authenticated caller: it accepts one of the caller's own memberships, named by the token, and takes no id",
-        async (data: InvitationTokenBody): Promise<InvitationAcceptanceResult> => {
+        "open to any authenticated caller: it accepts an invitation addressed to the caller, named by the token, and takes no id",
+        async (data: AcceptInvitationAsCurrentUserBody): Promise<InvitationAcceptanceResult> => {
           try {
             await acceptAsCurrentUserMutation.mutateAsync({ data });
             // The accepted membership lives on the current user, which the

@@ -23,7 +23,12 @@ import { routeRequests } from "../../test/requestRouter";
 const CURRENT_USER = "/api/v1/users/current";
 const INSPECT = "/api/v1/invitations/inspect";
 const TOKEN = "Qx47-invitation-token_kM";
-const INSPECTION = { community: { id: "community-invited", name: "Sol de Lavapiés" }, loginRequired: true };
+const INSPECTION = {
+  kind: "COMMUNITY",
+  community: { id: "community-invited", name: "Sol de Lavapiés" },
+  loginRequired: true,
+  confirmationCodeRequired: false,
+};
 
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 

@@ -43,6 +43,7 @@ export {
   type PlatformAdminActions,
   type PlatformAdminRowActions,
   type PlatformAdminWriteResult,
+  type PlatformInvitationSentResult,
 } from "./usePlatformAdminActions";
 export { usePlatformActions } from "./usePlatformActions";
 export { useProfileActions } from "./useProfileActions";

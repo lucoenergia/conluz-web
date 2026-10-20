@@ -91,6 +91,7 @@ export function buildPlatformCapabilities(
     canAdministerPlatform: false,
     canCreateUsers: false,
     canListPlatformAdmins: false,
+    canInvitePlatformAdmins: false,
     ...overrides,
   };
 }
@@ -114,6 +115,8 @@ export function buildPlatformAdminCapabilities(
 ): PlatformAdminCapabilitiesResponse {
   return {
     canRevoke: false,
+    canResendInvitation: false,
+    canRevokeInvitation: false,
     ...overrides,
   };
 }
@@ -339,10 +342,28 @@ export function buildPlatformAdmin(overrides: Partial<PlatformAdminResponse> = {
       email: null,
       enabled: true,
       revocable: false,
+      invitation: null,
       capabilities: buildPlatformAdminCapabilities(),
     } satisfies PlatformAdminResponse),
     ...overrides,
   };
+}
+
+/**
+ * A pending invitation to the platform-admin role as GET /platform-admins
+ * lists it (#288): the name and email the inviter typed, `enabled` and
+ * `revocable` null because the row tells nothing about the account, and a
+ * link that can still be used.
+ */
+export function buildPlatformAdminInvitation(overrides: Partial<PlatformAdminResponse> = {}): PlatformAdminResponse {
+  return buildPlatformAdmin({
+    fullName: "TEST-INVITED-PLATFORM-ADMIN-NAME",
+    email: "TEST-INVITED@example.test",
+    enabled: null,
+    revocable: null,
+    invitation: { invitedAt: "2026-01-02T09:00:00Z", expiresAt: "2026-01-09T09:00:00Z" },
+    ...overrides,
+  });
 }
 
 export function buildCommunity(overrides: Partial<CommunityResponse> = {}): CommunityResponse {
