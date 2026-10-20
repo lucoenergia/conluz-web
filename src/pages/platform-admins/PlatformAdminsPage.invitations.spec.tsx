@@ -12,8 +12,15 @@ import {
   buildPlatformAdminCapabilities,
   buildPlatformAdminInvitation,
   buildPlatformCapabilities,
+  buildPlatformCapabilitiesWithout,
 } from "../../test/fixtures";
-import type { InvitedPlatformAdminResponse, PlatformAdminResponse, RestErrorDetailCode } from "../../api/models";
+import type {
+  CurrentUserResponse,
+  InvitedPlatformAdminResponse,
+  InvitePlatformAdminBody,
+  PlatformAdminResponse,
+  RestErrorDetailCode,
+} from "../../api/models";
 import { getGetPlatformAdminsQueryKey } from "../../api/users/users";
 import { CapabilityRoute } from "../../components/Auth/CapabilityRoute";
 import { PlatformAdminsPage } from "./PlatformAdminsPage";
@@ -49,7 +56,9 @@ const CURRENT_USER_URL = "/api/v1/users/current";
 const PLATFORM_ADMINS_URL = "/api/v1/platform-admins";
 const resendUrl = (userId: string) => `/api/v1/platform-admins/${userId}/invitation/resend`;
 const revokeLinkUrl = (userId: string) => `/api/v1/platform-admins/${userId}/invitation/revoke`;
+const INVITE_URL = "/api/v1/platform-admins/invite";
 
+const CODE = "K7Q2M9XZ";
 const NEW_CODE = "B4N8R2TW";
 
 const CALLER = buildCurrentUser({
@@ -59,6 +68,7 @@ const CALLER = buildCurrentUser({
   memberships: {},
   platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true, canListPlatformAdmins: true }),
 });
+const INVITER = { ...CALLER, platformCapabilities: { ...CALLER.platformCapabilities, canInvitePlatformAdmins: true } };
 
 // As the backend serves them to a platform admin (lucoenergia/conluz#452):
 // every row authorizes resending and revoking an invitation, and every row but
@@ -107,10 +117,26 @@ const withLink = (row: PlatformAdminResponse, expiresAt: string | null): Platfor
 type Admins = { current: PlatformAdminResponse[] };
 type Write = (userId: string) => unknown;
 
-function servePage(admins: Admins, { resend, revokeLink }: { resend?: Write; revokeLink?: Write } = {}): RequestRouter {
+function servePage(
+  admins: Admins,
+  {
+    resend,
+    revokeLink,
+    invite,
+    caller = CALLER,
+  }: { resend?: Write; revokeLink?: Write; invite?: (body: InvitePlatformAdminBody) => unknown; caller?: CurrentUserResponse } = {},
+): RequestRouter {
   const userIdOf = (url: string | undefined) => url?.split("/")[4] ?? "";
   const router = routeRequests([
-    { method: "GET", url: CURRENT_USER_URL, respond: () => CALLER },
+    { method: "GET", url: CURRENT_USER_URL, respond: () => caller },
+    {
+      method: "POST",
+      url: INVITE_URL,
+      respond: (config) => {
+        if (!invite) throw new Error("unexpected invite");
+        return invite(config.data as InvitePlatformAdminBody);
+      },
+    },
     { method: "GET", url: PLATFORM_ADMINS_URL, respond: () => admins.current },
     {
       method: "POST",
@@ -188,6 +214,32 @@ async function confirmFromMenu(u: ReturnType<typeof userEvent.setup>, name: stri
   const dialog = await screen.findByRole("dialog", { name: dialogTitle });
   expect(within(dialog).getByText(name)).toBeInTheDocument();
   await u.click(within(dialog).getByRole("button", { name: item === "Reenviar" ? "Reenviar" : "Revocar enlace" }));
+}
+
+const invitesSent = (router: RequestRouter) => router.requests.filter((r) => r.url === INVITE_URL).map((r) => r.data);
+
+const NEW_INVITATION = buildPlatformAdminInvitation({
+  user: { id: "u-irene" },
+  fullName: "Irene Invitada",
+  email: "irene@example.com",
+  invitation: { invitedAt: "2026-10-19T10:00:00Z", expiresAt: ACTIVE_UNTIL },
+  capabilities: ALL_ROW_CAPABILITIES,
+});
+const INVITE_BODY: InvitePlatformAdminBody = {
+  personalId: "12345678Z",
+  fullName: "Irene Invitada",
+  email: "irene@example.com",
+};
+
+async function openInviteForm(u: ReturnType<typeof userEvent.setup>) {
+  await u.click(await screen.findByRole("button", { name: "Invitar administrador de plataforma" }));
+  return screen.findByRole("dialog", { name: "Invitar administrador de plataforma" });
+}
+
+async function fillInviteForm(u: ReturnType<typeof userEvent.setup>, dialog: HTMLElement, body = INVITE_BODY) {
+  await u.type(within(dialog).getByRole("textbox", { name: "DNI/NIE/NIF" }), body.personalId);
+  await u.type(within(dialog).getByRole("textbox", { name: "Nombre completo" }), body.fullName);
+  await u.type(within(dialog).getByRole("textbox", { name: "Email de contacto" }), body.email);
 }
 
 const codeDialog = () => screen.findByRole("dialog", { name: "Código de confirmación" });
@@ -524,5 +576,188 @@ describe("revoking an invitation's link", () => {
       ),
     );
     await waitFor(() => expect(listReads(router)).toBe(readsBefore + 1));
+  });
+});
+
+describe("inviting a platform admin", () => {
+  it("UI-PAD-009 AC8 offers no invitation without canInvitePlatformAdmins", async () => {
+    servePage({ current: [PAULA] });
+    renderPage();
+    await screen.findByText("Paula Plataforma");
+
+    expect(screen.queryByRole("button", { name: "Invitar administrador de plataforma" })).not.toBeInTheDocument();
+  });
+
+  it("UI-PAD-009 AC8 offers no invitation from a backend that does not report the capability", async () => {
+    const caller = buildCurrentUser({
+      ...CALLER,
+      platformCapabilities: buildPlatformCapabilitiesWithout("canInvitePlatformAdmins", {
+        canAdministerPlatform: true,
+        canListPlatformAdmins: true,
+      }),
+    });
+    servePage({ current: [PAULA] }, { caller });
+    renderPage();
+    await screen.findByText("Paula Plataforma");
+
+    expect(screen.queryByRole("button", { name: "Invitar administrador de plataforma" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["", false],
+    [" under StrictMode", true],
+  ])(
+    "UI-PAD-009 UI-PAD-010 AC1 AC2 sends the whole body, shows the code once, lists the person as pending, and the code is gone once closed%s",
+    async (_, strict) => {
+      const u = userEvent.setup();
+      const admins = { current: [PAULA] };
+      const router = servePage(admins, {
+        caller: INVITER,
+        invite: () => {
+          admins.current = [PAULA, NEW_INVITATION];
+          return { platformAdmin: NEW_INVITATION, confirmationCode: CODE } satisfies InvitedPlatformAdminResponse;
+        },
+      });
+      const { queryClient } = renderPage({ strict });
+
+      const form = await openInviteForm(u);
+      await fillInviteForm(u, form);
+      await u.click(within(form).getByRole("button", { name: "Invitar" }));
+
+      const dialog = await codeDialog();
+      expect(within(dialog).getByText("K7Q2-M9XZ")).toBeInTheDocument();
+      expect(within(dialog).getByText("Irene Invitada")).toBeInTheDocument();
+      expect(invitesSent(router)).toEqual([INVITE_BODY]);
+      const irene = await waitFor(() => rowOf("Irene Invitada"));
+      expect(within(irene).getByText("Pendiente")).toBeInTheDocument();
+      expect(within(irene).getByText("Enlace activo hasta el 26 oct 2026")).toBeInTheDocument();
+
+      await u.click(within(dialog).getByRole("button", { name: "Hecho" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+      // Nowhere on screen, never written, logged or put in the URL, and in no cache.
+      expect(document.body.textContent).not.toContain(CODE);
+      expect(screen.queryByText("K7Q2-M9XZ")).not.toBeInTheDocument();
+      expect(secrets.leaksOf(CODE)).toEqual([]);
+      await waitFor(() => expect(cachesHold(queryClient, CODE)).toBe(false));
+      // Neither the email the inviter typed reaches the console.
+      expect(secrets.consoleOutput()).not.toContain(INVITE_BODY.email);
+    },
+  );
+
+  it("UI-PAD-010 keeps the invitation's code on screen on Escape or a backdrop click, and closes only with Hecho", async () => {
+    const u = userEvent.setup();
+    servePage({ current: [PAULA] }, { caller: INVITER, invite: () => ({ platformAdmin: NEW_INVITATION, confirmationCode: CODE }) });
+    renderPage();
+    const form = await openInviteForm(u);
+    await fillInviteForm(u, form);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+    const dialog = await codeDialog();
+
+    await u.keyboard("{Escape}");
+    // Structural: the backdrop has neither a role nor a name. MUI closes a
+    // dialog on a click on its container, outside the paper.
+    await u.click(document.querySelector(".MuiDialog-container") as HTMLElement);
+
+    expect(within(dialog).getByText("K7Q2-M9XZ")).toBeInTheDocument();
+    await u.click(within(dialog).getByRole("button", { name: "Hecho" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("UI-PAD-009 closes the form itself on Escape, as before any code exists, and sends nothing", async () => {
+    const u = userEvent.setup();
+    const router = servePage({ current: [PAULA] }, { caller: INVITER });
+    renderPage();
+    await openInviteForm(u);
+
+    await u.keyboard("{Escape}");
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(writeLines(router)).toEqual([]);
+  });
+
+  it("UI-PAD-009 requires all three fields before sending", async () => {
+    const u = userEvent.setup();
+    const router = servePage({ current: [PAULA] }, { caller: INVITER });
+    renderPage();
+    const form = await openInviteForm(u);
+
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+
+    expect(within(form).getByText("Escribe el DNI/NIE")).toBeInTheDocument();
+    expect(within(form).getByText("Escribe el nombre completo")).toBeInTheDocument();
+    expect(within(form).getByText("Escribe el email de contacto")).toBeInTheDocument();
+    expect(writeLines(router)).toEqual([]);
+  });
+
+  it("UI-PAD-013 shows an invalid DNI/NIE/NIF on its field, keeping every value", async () => {
+    const u = userEvent.setup();
+    const router = servePage(
+      { current: [PAULA] },
+      {
+        caller: INVITER,
+        invite: () => {
+          throw restError(400, "USER_PERSONAL_ID_INVALID");
+        },
+      },
+    );
+    renderPage();
+    await screen.findByText("Paula Plataforma");
+    const readsBefore = listReads(router);
+    const form = await openInviteForm(u);
+    await fillInviteForm(u, form);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+
+    const personalId = within(form).getByRole("textbox", { name: "DNI/NIE/NIF" });
+    await waitFor(() => expect(personalId).toHaveAccessibleDescription("El DNI/NIE/NIF no es válido. Revisa los números y la letra."));
+    expect(personalId).toHaveValue(INVITE_BODY.personalId);
+    expect(within(form).getByRole("textbox", { name: "Nombre completo" })).toHaveValue(INVITE_BODY.fullName);
+    expect(within(form).getByRole("textbox", { name: "Email de contacto" })).toHaveValue(INVITE_BODY.email);
+    expect(listReads(router)).toBe(readsBefore);
+  });
+
+  it.each<[RestErrorDetailCode, number, string, boolean]>([
+    [
+      "USER_ALREADY_PLATFORM_ADMIN",
+      409,
+      "Esta persona ya es administradora de la plataforma. Hemos actualizado la lista.",
+      true,
+    ],
+    [
+      "PLATFORM_ADMIN_ALREADY_INVITED",
+      409,
+      "Esta persona ya tiene una invitación pendiente: reenvíasela desde la lista. Hemos actualizado la lista.",
+      true,
+    ],
+    [
+      "PLATFORM_ADMIN_INVITATION_UNAVAILABLE",
+      503,
+      "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde.",
+      false,
+    ],
+  ])("UI-PAD-013 shows %s for the whole form, keeping every value", async (code, status, message, refetches) => {
+    const u = userEvent.setup();
+    const router = servePage(
+      { current: [PAULA] },
+      {
+        caller: INVITER,
+        invite: () => {
+          throw restError(status, code);
+        },
+      },
+    );
+    renderPage();
+    await screen.findByText("Paula Plataforma");
+    const form = await openInviteForm(u);
+    const readsBefore = listReads(router);
+    await fillInviteForm(u, form);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+
+    expect(await within(form).findByText(message)).toBeInTheDocument();
+    expect(within(form).getByRole("textbox", { name: "DNI/NIE/NIF" })).toHaveValue(INVITE_BODY.personalId);
+    expect(within(form).getByRole("textbox", { name: "Nombre completo" })).toHaveValue(INVITE_BODY.fullName);
+    expect(within(form).getByRole("textbox", { name: "Email de contacto" })).toHaveValue(INVITE_BODY.email);
+    if (refetches) await waitFor(() => expect(listReads(router)).toBe(readsBefore + 1));
+    else expect(listReads(router)).toBe(readsBefore);
   });
 });

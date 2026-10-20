@@ -21,6 +21,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RemoveModeratorIcon from "@mui/icons-material/RemoveModerator";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
@@ -44,6 +45,7 @@ import { MembershipStatusCell, MembershipStatusChip } from "../members/Membershi
 import { invitationText } from "../members/membershipStatus";
 import { hasAnyOffer, isPendingInvitation, membershipStateOf, platformAdminRowOffer } from "./platformAdminStatus";
 import { PlatformInvitationActionDialog, type PlatformInvitationWriteKind } from "./PlatformInvitationActionDialog";
+import { InvitePlatformAdminDialog } from "./InvitePlatformAdminDialog";
 
 const EMPTY_MESSAGE = "No hay administradores de plataforma";
 const NOT_REVOCABLE_EXPLANATION = "La plataforma necesita al menos un administrador de plataforma habilitado.";
@@ -75,8 +77,9 @@ const INVITATION_ITEMS: { kind: PlatformInvitationWriteKind; label: string; Icon
 ];
 
 /**
- * The platform admins, and revoking the role (#285); pending invitations to
- * the role, resending them and revoking their links (#288).
+ * The platform admins, and revoking the role (#285); inviting a person to the
+ * role, and the pending invitations, resending them and revoking their links
+ * (#288).
  *
  * Read from GET /api/v1/platform-admins only: each row is the admin's own
  * account -- name, email and whether it is enabled -- or a pending invitation,
@@ -106,7 +109,9 @@ export const PlatformAdminsPage: FC = () => {
     error,
   } = useGetPlatformAdmins({ query: { enabled: mayList.state === "allowed" } });
 
-  const { forPlatformAdmin } = usePlatformAdminActions();
+  const { invite, forPlatformAdmin } = usePlatformAdminActions();
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteCodeShown, setInviteCodeShown] = useState(false);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   // The user id, not the row: a revoke refetches the list, and the row's
@@ -149,6 +154,11 @@ export const PlatformAdminsPage: FC = () => {
     if ("error" in result) {
       errorDispatch(revokePlatformAdminRefusalMessage(revokePlatformAdminRefusal(result.error)));
     }
+  };
+
+  const closeInviteDialog = () => {
+    setInviteDialogOpen(false);
+    setInviteCodeShown(false);
   };
 
   const closeInvitationDialog = () => {
@@ -201,6 +211,23 @@ export const PlatformAdminsPage: FC = () => {
               ]
         }
       />
+
+      {invite && (
+        <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
+          <Paper elevation={0} sx={sxStyles.softPanel}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="contained"
+                startIcon={<PersonAddIcon />}
+                onClick={() => setInviteDialogOpen(true)}
+                sx={{ px: 3, py: 1.5 }}
+              >
+                Invitar administrador de plataforma
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      )}
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <Paper
@@ -373,6 +400,16 @@ export const PlatformAdminsPage: FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Mounted on open, so each opening starts empty; kept while it shows a
+          code, which only "Hecho" closes. */}
+      {inviteDialogOpen && (inviteCodeShown || invite) && (
+        <InvitePlatformAdminDialog
+          inviteAdmin={invite}
+          onCodeShown={() => setInviteCodeShown(true)}
+          onClose={closeInviteDialog}
+        />
+      )}
 
       {/* Gated like the item that opens it, so a refetch that takes the action
           away closes it -- except while it shows a code, which only "Hecho"

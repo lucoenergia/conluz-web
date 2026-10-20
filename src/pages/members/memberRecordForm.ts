@@ -177,9 +177,9 @@ export function refusalOf(error: unknown): MemberRecordRefusal {
 /**
  * A personal ID the backend refused as no valid DNI, NIE or NIF
  * (lucoenergia/conluz#398), on the field it is about. Shared by the member
- * registration and the admin invitation, which both ask for it (#276).
+ * registration and the admin invitations, which all ask for it (#276, #288).
  */
-function personalIdRefusalOf(error: unknown): MemberRecordRefusal | undefined {
+export function personalIdRefusalOf(error: unknown): MemberRecordRefusal | undefined {
   if (getFirstApiErrorCode(error) !== "USER_PERSONAL_ID_INVALID") return undefined;
   return {
     field: "personalId",
