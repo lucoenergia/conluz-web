@@ -55,11 +55,10 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
   };
 
   const handleConfirm = async () => {
-    // The generated hook's customInstance wrapper discards Content-Disposition
-    // (same open issue as downloadSharingAgreementFile.ts), so the filename is
-    // built client-side from the same {regulatoryCode}_{year}.txt convention
-    // the backend uses — fixing that header issue will require touching this
-    // code too.
+    // The generated hook's customInstance wrapper discards Content-Disposition,
+    // so the filename is built client-side from the same
+    // {regulatoryCode}_{year}.txt convention the backend uses. Why, and when to
+    // revisit it: the note in downloadSharingAgreementFile.ts.
     const blob = await generateFile.run(year);
     if (!blob) return;
     triggerBrowserDownload(blob, filename);
