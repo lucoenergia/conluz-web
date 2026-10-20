@@ -53,6 +53,8 @@ const REVIEWED: Record<string, Scope> = {
   "/api/v1/plants": "global",
   "/api/v1/supplies": "global",
   "/api/v1/users": "global",
+  // Platform administration: the platform admins, who belong to no community.
+  "/api/v1/platform-admins": "global",
   "/api/v1/supplies/import": "community-query",
   "/api/v1/users/import": "community-query",
   // Acts on the caller and takes no user id, so it is user-scoped for the same

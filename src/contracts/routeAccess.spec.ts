@@ -51,17 +51,18 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/profile": { authenticated: "acts on the caller and takes no id" },
   "/change-password": { authenticated: "acts on the caller and takes no id" },
 
-  // GET /supplies/{id} authorises the supply's own community admin OR its
-  // owner, so a member reaching either of these is entitled to what the page
-  // shows. The page scopes its own data to the active community; the route
-  // cannot, because the capability that would answer belongs to the resource.
-  "/supply-points": { authenticated: "a member sees their own supplies; the page scopes its data" },
-  "/supply-points/:supplyPointId": { authenticated: "the endpoint authorises the owner or the community admin" },
+  // Supplies and plants are a community's operational data: every page under
+  // them needs an active community the caller may read, from the guard on the
+  // parent route (#285). Before, the list and detail pages were open to any
+  // signed-in caller, and one with no membership could open a supply by URL.
+  // The pages still scope their own data to the active community.
+  "/supply-points": { require: { scope: "community", capability: "canRead" } },
+  "/supply-points/:supplyPointId": { require: { scope: "community", capability: "canRead" } },
   "/supply-points/new": { require: { scope: "community", capability: "canManage" } },
   "/supply-points/:supplyPointId/edit": { require: { scope: "supply", capability: "canEdit" } },
 
-  "/production": { authenticated: "a member may list the community's plants; the page scopes its data" },
-  "/production/:plantId": { authenticated: "the endpoint authorises any member of the plant's community" },
+  "/production": { require: { scope: "community", capability: "canRead" } },
+  "/production/:plantId": { require: { scope: "community", capability: "canRead" } },
   "/production/new": { require: { scope: "community", capability: "canCreatePlants" } },
   "/production/:plantId/edit": { require: { scope: "plant", capability: "canManage" } },
   "/production/:plantId/sharing-agreements": {
@@ -89,9 +90,8 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/communities/:communityId/admins": { require: { scope: "communityById", capability: "canManageAdmins" } },
 
   "/platform": { require: { scope: "platform", capability: "canAdministerPlatform" } },
-  "/users": { require: { scope: "platform", capability: "canListUsers" } },
-  "/users/new": { require: { scope: "platform", capability: "canCreateUsers" } },
-  "/users/:userId/edit": { require: { scope: "user", capability: "canEdit" } },
+  // Only the platform admins' own accounts (#285); it replaces the users page.
+  "/platform-admins": { require: { scope: "platform", capability: "canListPlatformAdmins" } },
 };
 
 /**
@@ -99,12 +99,7 @@ const ROUTE_ACCESS: Record<string, Access> = {
  * reason. Anything else must name the same requirement as its route, so an
  * entry and its destination cannot drift apart.
  */
-const STRICTER_THAN_ROUTE: Record<string, string> = {
-  "/production":
-    "the page is open to any signed-in caller and scopes its own data, but the entry is offered only with an active community the caller may read: without one there are no plants to list",
-  "/supply-points":
-    "the page is open to any signed-in caller and scopes its own data, but the entry is offered only with an active community the caller may read: without one there are no supplies to list",
-};
+const STRICTER_THAN_ROUTE: Record<string, string> = {};
 
 // ---------------------------------------------------------------------------
 // Reading App.tsx

@@ -16,7 +16,6 @@ import {
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import PersonOffRoundedIcon from "@mui/icons-material/PersonOffRounded";
 import GroupOffRoundedIcon from "@mui/icons-material/GroupOffRounded";
@@ -30,11 +29,12 @@ import { PlatformKpiCard } from "../../components/PlatformKpiCard";
 import { CommunityStatusChip } from "../../components/CommunityStatusChip";
 import { AttentionPanel, type AttentionItem } from "../../components/AttentionPanel";
 import { usePlatformActions } from "../../hooks/actions";
+import { usePlatformCapabilities } from "../../hooks/permissions";
 import { deriveStatus, usePlatformOverview } from "./usePlatformOverview";
 
 const COMMUNITIES_LIST_ROUTE = "/communities";
 const CREATE_COMMUNITY_ROUTE = "/communities/new";
-const USERS_ROUTE = "/users";
+const PLATFORM_ADMINS_ROUTE = "/platform-admins";
 const PREVIEW_LIMIT = 5;
 
 const communityWord = (n: number) => (n === 1 ? "comunidad" : "comunidades");
@@ -48,20 +48,14 @@ interface KpiDef {
 
 export const PlatformPage: FC = () => {
   const navigate = useNavigate();
-  const {
-    kpis,
-    attention,
-    communities,
-    usersCount,
-    mayListUsers,
-    isLoading,
-    error,
-  } = usePlatformOverview();
+  const { kpis, attention, communities, isLoading, error } = usePlatformOverview();
 
-  // Creating a community is the platform's own answer; the two buttons that lead
-  // to /users answer to the capability that route requires. Both are mounted
-  // only when granted -- a button that redirects home is worse than no button.
+  // Creating a community is the platform's own answer; the button that leads to
+  // /platform-admins answers to the capability that route requires. Both are
+  // mounted only when granted -- a button that redirects home is worse than no
+  // button.
   const { createCommunity } = usePlatformActions().actions;
+  const mayListPlatformAdmins = usePlatformCapabilities("canListPlatformAdmins").state === "allowed";
 
   const kpiCards: KpiDef[] = [
     {
@@ -76,18 +70,6 @@ export const PlatformPage: FC = () => {
       value: kpis.supplyPoints,
       sublabel: "suma de todas las comunidades",
     },
-    // Usuarios is dropped for a caller who may not list users: the number is the
-    // answer to a question they were not allowed to ask.
-    ...(mayListUsers
-      ? [
-          {
-            key: "users",
-            label: "Usuarios",
-            value: usersCount,
-            sublabel: "personas distintas",
-          },
-        ]
-      : []),
     {
       key: "members",
       label: "Socios",
@@ -165,7 +147,7 @@ export const PlatformPage: FC = () => {
   } else {
     body = (
       <>
-        {/* KPI row — 4 light cards, or 3 without the Usuarios one */}
+        {/* KPI row — 3 light cards */}
         <Box
           sx={{
             display: "grid",
@@ -191,7 +173,7 @@ export const PlatformPage: FC = () => {
         {/* Quick actions — one primary only. Each leads somewhere the router
             gates, so each is mounted on the same answer that route requires:
             offering one that redirects home is worse than offering nothing. */}
-        {(createCommunity || mayListUsers) && (
+        {(createCommunity || mayListPlatformAdmins) && (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             {createCommunity && (
               <Button
@@ -203,25 +185,15 @@ export const PlatformPage: FC = () => {
                 Crear comunidad
               </Button>
             )}
-            {mayListUsers && (
-              <>
-                <Button
-                  variant="outlined"
-                  component={Link}
-                  to={USERS_ROUTE}
-                  startIcon={<ManageAccountsRoundedIcon />}
-                >
-                  Gestionar usuarios
-                </Button>
-                <Button
-                  variant="outlined"
-                  component={Link}
-                  to={USERS_ROUTE}
-                  startIcon={<AdminPanelSettingsRoundedIcon />}
-                >
-                  Otorgar admin
-                </Button>
-              </>
+            {mayListPlatformAdmins && (
+              <Button
+                variant="outlined"
+                component={Link}
+                to={PLATFORM_ADMINS_ROUTE}
+                startIcon={<AdminPanelSettingsRoundedIcon />}
+              >
+                Administradores de plataforma
+              </Button>
             )}
           </Stack>
         )}

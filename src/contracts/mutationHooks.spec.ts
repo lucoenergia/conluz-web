@@ -26,7 +26,7 @@ const ACTIONS_DIR = "src/hooks/actions";
 
 const MUTATION_METHODS = ["post", "put", "patch", "delete"];
 
-type Scope = "platform" | "community" | "supply" | "plant" | "user" | "membership" | "sharingAgreement";
+type Scope = "platform" | "community" | "supply" | "plant" | "user" | "platformAdmin" | "membership" | "sharingAgreement";
 
 type Decision =
   | {
@@ -267,28 +267,26 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useSyncDatadisSupplies: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
 
   // ── Users ─────────────────────────────────────────────────────────────────
-  useCreateUser: {
-    scope: "platform",
-    capability: "canCreateUsers",
-    hook: "usePlatformActions",
-    approximates: "two surfaces: the platform route /users/new gates on the platform flag, a community's own member creation on community.canCreateUsers in useCommunityActions",
-  },
+  // The platform route /users/new is gone (#285). useCommunityActions still
+  // hands out a community's own creation, which no screen sends.
+  useCreateUser: { scope: "community", capability: "canCreateUsers", hook: "useCommunityActions" },
   // No screen sends it: the members page imports through useImportMembers (#284). No action hook.
   useCreateUsersWithFile: { scope: "community", capability: "canCreateUsers" },
-  useUpdateUser: {
-    scope: "user",
-    capability: "canEdit",
-    hook: "useUserActions",
-    // canEdit is false for an ordinary member looking at their own record, by
-    // design: self-service goes to PUT /users/profile. Nothing on the profile
-    // screen reads this entry.
-    approximates: "administrative edit of any user; the profile screen saves its own caller through useProfileActions / PUT /users/profile, which asks no capability",
-  },
-  useDeleteUser: { scope: "user", capability: "canDelete", hook: "useUserActions" },
-  useEnableUser: { scope: "user", capability: "canEnable", hook: "useUserActions" },
-  useDisableUser: { scope: "user", capability: "canDisable", hook: "useUserActions" },
-  useGrantPlatformAdmin: { scope: "user", capability: "canGrantPlatformAdmin", hook: "useUserActions" },
-  useRevokePlatformAdmin: { scope: "user", capability: "canRevokePlatformAdmin", hook: "useUserActions" },
+  // No screen sends it: the users pages are gone (#285). No action hook. The
+  // profile screen saves its own caller through PUT /users/profile instead.
+  useUpdateUser: { scope: "user", capability: "canEdit" },
+  // No screen sends it: the users pages are gone (#285). No action hook.
+  useDeleteUser: { scope: "user", capability: "canDelete" },
+  // No screen sends it: the users pages are gone (#285). No action hook.
+  useEnableUser: { scope: "user", capability: "canEnable" },
+  // No screen sends it: the users pages are gone (#285). No action hook.
+  useDisableUser: { scope: "user", capability: "canDisable" },
+  // No screen sends it: the users pages are gone (#285), and granting comes
+  // back with the platform-admin invitation. No action hook.
+  useGrantPlatformAdmin: { scope: "user", capability: "canGrantPlatformAdmin" },
+  // Read off the platform-admins row, not the user: GET /platform-admins
+  // carries its own canRevoke (#285).
+  useRevokePlatformAdmin: { scope: "platformAdmin", capability: "canRevoke", hook: "usePlatformAdminActions" },
   useUpdateProfile: { ungated: "open to any authenticated caller: PUT /users/profile acts on the caller and takes no id" },
   useChangePassword: { ungated: "open to any authenticated caller: PUT /users/current/password acts on the caller and takes no id" },
 };

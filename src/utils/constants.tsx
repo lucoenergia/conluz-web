@@ -5,7 +5,7 @@ import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import ExtensionRoundedIcon from "@mui/icons-material/ExtensionRounded";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
 import PeopleRoundedIcon from "@mui/icons-material/PeopleRounded";
-import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded";
+import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { MenuRequirement } from "../hooks/permissions";
 
@@ -65,7 +65,7 @@ export const MENU_SECTIONS: MenuSection[] = [
     title: "Plataforma",
     items: [
       { to: "/communities", id: "communities", icon: BusinessRoundedIcon, label: "Comunidades", requires: { scope: "platform", capability: "canAdministerPlatform" } },
-      { to: "/users", id: "users", icon: ManageAccountsRoundedIcon, label: "Usuarios", requires: { scope: "platform", capability: "canListUsers" } },
+      { to: "/platform-admins", id: "platform-admins", icon: AdminPanelSettingsRoundedIcon, label: "Administradores de plataforma", requires: { scope: "platform", capability: "canListPlatformAdmins" } },
     ],
   },
 ];

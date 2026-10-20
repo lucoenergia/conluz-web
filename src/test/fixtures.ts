@@ -20,6 +20,8 @@ import {
   type PlantCapabilitiesResponse,
   type PlantResponse,
   type PartitionCoefficientCapabilitiesResponse,
+  type PlatformAdminCapabilitiesResponse,
+  type PlatformAdminResponse,
   type PlatformCapabilitiesResponse,
   type SharingAgreementCapabilitiesResponse,
   type SharingAgreementPartitionCoefficientResponse,
@@ -88,6 +90,30 @@ export function buildPlatformCapabilities(
     canListUsers: false,
     canAdministerPlatform: false,
     canCreateUsers: false,
+    canListPlatformAdmins: false,
+    ...overrides,
+  };
+}
+
+/**
+ * Platform capabilities as a backend that predates one of them sends them:
+ * without that key at all. The cast is the point -- the generated type says
+ * the key is always there, and an older backend is exactly what breaks that.
+ */
+export function buildPlatformCapabilitiesWithout(
+  missing: keyof PlatformCapabilitiesResponse,
+  overrides: Partial<PlatformCapabilitiesResponse> = {},
+): PlatformCapabilitiesResponse {
+  const capabilities: Partial<PlatformCapabilitiesResponse> = buildPlatformCapabilities(overrides);
+  delete capabilities[missing];
+  return capabilities as PlatformCapabilitiesResponse;
+}
+
+export function buildPlatformAdminCapabilities(
+  overrides: Partial<PlatformAdminCapabilitiesResponse> = {},
+): PlatformAdminCapabilitiesResponse {
+  return {
+    canRevoke: false,
     ...overrides,
   };
 }
@@ -296,6 +322,25 @@ export function buildCommunityAdmin(overrides: Partial<CommunityAdminResponse> =
       invitedAt: null,
       invitationExpiresAt: null,
     } satisfies CommunityAdminResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * A platform admin as GET /platform-admins lists them (#285): enabled, with no
+ * email, and not revocable by default -- `revocable` is a state that would
+ * enable a control, so it starts at least privilege like a capability.
+ */
+export function buildPlatformAdmin(overrides: Partial<PlatformAdminResponse> = {}): PlatformAdminResponse {
+  return {
+    ...({
+      user: { id: "TEST-USER-ID" },
+      fullName: "TEST-PLATFORM-ADMIN-NAME",
+      email: null,
+      enabled: true,
+      revocable: false,
+      capabilities: buildPlatformAdminCapabilities(),
+    } satisfies PlatformAdminResponse),
     ...overrides,
   };
 }

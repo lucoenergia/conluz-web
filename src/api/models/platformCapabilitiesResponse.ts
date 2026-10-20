@@ -18,4 +18,6 @@ export interface PlatformCapabilitiesResponse {
   canAdministerPlatform: boolean;
   /** Whether the caller may create a user attached to no community (POST /api/v1/users with no communityId). CommunityCapabilitiesResponse.canCreateUsers answers the same question for one community. */
   canCreateUsers: boolean;
+  /** Whether the caller may list the platform admins (GET /api/v1/platform-admins). */
+  canListPlatformAdmins: boolean;
 }

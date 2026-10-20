@@ -195,7 +195,7 @@ describe("ScopeContext — platform and personal pages (AC7, AC13)", () => {
   // states apart without colour.
   test("a platform page shows 'Toda la plataforma' with a globe and is not interactive", () => {
     setUp(TWO_COMMUNITIES, "community-a");
-    renderWithProviders(<ScopeContext variant="strip" />, { route: "/users" });
+    renderWithProviders(<ScopeContext variant="strip" />, { route: "/platform-admins" });
 
     const region = scopeRegion();
     expect(within(region).getByText("Toda la plataforma")).toBeInTheDocument();

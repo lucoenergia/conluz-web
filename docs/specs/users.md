@@ -3,23 +3,28 @@
 | | |
 | --- | --- |
 | **Prefix** | `UI-USR` |
-| **Status** | Active |
-| **Routes** | `/users/:userId/edit` |
-| **Roles** | A caller whose target account carries `canEdit` |
+| **Status** | Removed |
+| **Routes** | None. `/users/:userId/edit` was removed in #285 |
+| **Roles** | n/a |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #192 |
+| **Last reviewed against code** | #285 |
 
 ## Purpose
 
-Let an administrator correct another user's personal details. This document covers only the rule
-#192 introduced on the edit screen; the rest of the users screens are not covered yet.
+Let an administrator correct another user's personal details. This document covered only the rule
+#192 introduced on the edit screen.
+
+The users screens (`/users`, `/users/new`, `/users/:userId/edit`) were removed in #285, so the
+platform admin no longer reads other users' personal data. Platform admins are now managed on
+`/platform-admins` (`platform-admins.md`). The rule below stays as a tombstone so its ID is not
+reused.
 
 ## Rules
 
 ### UI-USR-001 — A user with no partner number cannot be saved from the edit screen
 
-- **Status:** Active
+- **Status:** Removed (#285: the edit screen no longer exists)
 - **Rule:**
   - When the loaded account has no `number` (`null`), the edit screen MUST show visible text saying
     that the user has no partner number and that their details cannot be saved from here.
@@ -28,18 +33,11 @@ Let an administrator correct another user's personal details. This document cove
   the edit form has no field for it. Any save would be refused, so the screen says why instead of
   offering one.
 - **Implements:** n/a
-- **Source:** #192
+- **Source:** #192; removed in #285
 
 ## States
 
-The edit screen only.
-
-| State | Rendered | Actions available |
-| --- | --- | --- |
-| Loading | A spinner | None |
-| Load failed | An error message | None |
-| Editable | The form | Guardar cambios |
-| No partner number | The form and a warning naming the missing number | None |
+None: the screen was removed in #285.
 
 ## Accepted exceptions
 

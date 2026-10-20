@@ -35,8 +35,8 @@ directly. **Read the matching one before starting:**
 ## Commands
 
 Scripts are in `package.json`; the root `Makefile` wraps them and the test commands below, and
-`make help` lists its targets. Agents never run `make visual-update` or `make generate-client`. What
-the scripts do not tell you:
+`make help` lists its targets. Agents never run `make visual-update`, `make visual-delete-orphans` or
+`make generate-client`. What the scripts do not tell you:
 
 - `npm test` runs Vitest in watch mode in an interactive terminal and once in CI or non-interactive
   shells; `npx vitest run` (`make test`) runs once anywhere.

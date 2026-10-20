@@ -3,12 +3,7 @@ import {
   getGetAllCommunitiesQueryKey,
   useCreateCommunity,
 } from "../../api/communities/communities";
-import {
-  getGetAllUsersQueryKey,
-  useCreateUser,
-  useGetCurrentUser,
-  type getCurrentUser,
-} from "../../api/users/users";
+import { useGetCurrentUser, type getCurrentUser } from "../../api/users/users";
 import { buildCurrentUser, buildPlatformCapabilities } from "../../test/fixtures";
 import { mutation, query } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
@@ -17,13 +12,6 @@ import type { PlatformCapabilitiesResponse } from "../../api/models";
 
 /** Complete bodies: a cast would hide a field the screen must supply. */
 const CREATE_COMMUNITY_BODY = { name: "TEST-COMMUNITY-NAME", code: "TEST-CODE" };
-const CREATE_USER_BODY = {
-  personalId: "TEST-PERSONAL-ID",
-  number: 90001,
-  fullName: "TEST-FULL-NAME",
-  email: "test@example.invalid",
-  password: "TEST-PASSWORD",
-};
 
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -31,7 +19,6 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
 }));
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useCreateUser: vi.fn(),
   useGetCurrentUser: vi.fn(),
 }));
 
@@ -55,21 +42,19 @@ let mutateAsync: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);
   vi.mocked(useCreateCommunity).mockReturnValue(mutation.idle({ mutateAsync }));
-  vi.mocked(useCreateUser).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
 describe("usePlatformActions", () => {
-  it("withholds both actions when the platform permits neither", () => {
+  it("withholds the action when the platform does not permit it", () => {
     const { result } = renderWith(buildPlatformCapabilities({}));
 
     expect(result.current.actions.createCommunity).toBeUndefined();
-    expect(result.current.actions.createUser).toBeUndefined();
     expect(result.current.outcomes.createCommunity).toEqual({ state: "denied" });
   });
 
   // No signed-in user yet is not a denial: deciding before the answer arrives is
   // what the four-state model exists to prevent.
-  it("withholds both actions and reports pending before the signed-in user has loaded", () => {
+  it("withholds the action and reports pending before the signed-in user has loaded", () => {
     const { result } = renderWith(undefined);
 
     expect(result.current.actions.createCommunity).toBeUndefined();
@@ -77,11 +62,10 @@ describe("usePlatformActions", () => {
     expect(mutateAsync).not.toHaveBeenCalled();
   });
 
-  it("hands back only the action its own flag permits", () => {
+  it("hands back the action its own flag permits", () => {
     const { result } = renderWith(buildPlatformCapabilities({ canCreateCommunity: true }));
 
     expect(result.current.actions.createCommunity).toBeDefined();
-    expect(result.current.actions.createUser).toBeUndefined();
   });
 
   it("creates a community and returns it, refreshing the list it appears in", async () => {
@@ -97,30 +81,6 @@ describe("usePlatformActions", () => {
 
     expect(mutateAsync).toHaveBeenCalledWith({ data: CREATE_COMMUNITY_BODY });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
-  });
-
-  it("creates a user and refreshes the user list", async () => {
-    const { result, queryClient } = renderWith(buildPlatformCapabilities({ canCreateUsers: true }));
-    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
-
-    mutateAsync.mockResolvedValue({ id: "TEST-USER-ID" });
-
-    await expect(result.current.actions.createUser?.run(CREATE_USER_BODY)).resolves.toEqual({
-      user: { id: "TEST-USER-ID" },
-    });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllUsersQueryKey() });
-  });
-
-  // #196: the screen needs the API's reason -- a password that breaks the
-  // policy says which rule -- so a refused creation hands the error back.
-  it("hands back the error of a refused user creation and leaves the cache alone", async () => {
-    const error = new Error("refused");
-    mutateAsync.mockRejectedValue(error);
-    const { result, queryClient } = renderWith(buildPlatformCapabilities({ canCreateUsers: true }));
-    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
-
-    await expect(result.current.actions.createUser?.run(CREATE_USER_BODY)).resolves.toEqual({ error });
-    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("reports failure as undefined and leaves the cache alone", async () => {

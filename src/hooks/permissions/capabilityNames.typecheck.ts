@@ -12,7 +12,6 @@ import { useCommunityCapabilities } from "./useCommunityCapabilities";
 import { usePlantCapabilities } from "./usePlantCapabilities";
 import { usePlatformCapabilities } from "./usePlatformCapabilities";
 import { useSupplyCapabilities } from "./useSupplyCapabilities";
-import { useUserCapabilities } from "./useUserCapabilities";
 
 // Valid names compile.
 export function useValidCapabilityNames() {
@@ -20,7 +19,6 @@ export function useValidCapabilityNames() {
   useActiveCommunityCapabilities("canManageMemberships");
   usePlantCapabilities("plant-id", "canListSharingAgreements");
   useSupplyCapabilities("supply-id", "canEdit");
-  useUserCapabilities("user-id", "canGrantPlatformAdmin");
   useCommunityCapabilities("community-id", "canUpdate");
 }
 
@@ -37,10 +35,8 @@ export function useRejectedCapabilityNames() {
   useSupplyCapabilities("supply-id", "canListSharingAgreements");
   // @ts-expect-error -- the community's flag is plural and answers for the community
   useSupplyCapabilities("supply-id", "canCreatePlants");
-  // @ts-expect-error -- a real capability, but on the community, not the user
-  useUserCapabilities("user-id", "canManageMemberships");
-  // @ts-expect-error -- a real capability, but on the user, not the community
-  useCommunityCapabilities("community-id", "canGrantPlatformAdmin");
+  // @ts-expect-error -- a real capability, but on the platform, not the community
+  useCommunityCapabilities("community-id", "canListPlatformAdmins");
   // @ts-expect-error -- the platform asks whether ANY community may be created; a
   // named community cannot be asked that about itself
   useCommunityCapabilities("community-id", "canCreateCommunity");

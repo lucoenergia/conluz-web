@@ -59,9 +59,7 @@ const EditCommunityPage = lazyPage(() => import("./pages/communities/EditCommuni
 const CommunityAdminsPage = lazyPage(() => import("./pages/communities/CommunityAdminsPage"), "CommunityAdminsPage");
 
 const PlatformPage = lazyPage(() => import("./pages/platform/PlatformPage"), "PlatformPage");
-const UsersPage = lazyPage(() => import("./pages/users/UsersPage"), "UsersPage");
-const CreateUserPage = lazyPage(() => import("./pages/users/CreateUser"), "CreateUserPage");
-const EditUserPage = lazyPage(() => import("./pages/users/EditUser"), "EditUserPage");
+const PlatformAdminsPage = lazyPage(() => import("./pages/platform-admins/PlatformAdminsPage"), "PlatformAdminsPage");
 
 function App() {
   return (
@@ -104,7 +102,17 @@ function App() {
             <Route path="member" element={<HomeViewRoute view="member"><MemberHomePage /></HomeViewRoute>} />
             <Route path="management" element={<HomeViewRoute view="management"><CommunityManagementPage /></HomeViewRoute>} />
           </Route>
-          <Route path="supply-points">
+          {/*
+            Supplies and plants are a community's operational data, so every
+            page under them needs an active community the caller may read
+            (#285). Without the guard the index and detail pages were open to
+            any signed-in caller, and one with no membership -- a platform
+            admin -- could still open a supply or plant by URL.
+          */}
+          <Route
+            path="supply-points"
+            element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><Outlet /></CapabilityRoute>}
+          >
             <Route index element={<SupplyPointsPage />}></Route>
             <Route
               path="new"
@@ -118,7 +126,10 @@ function App() {
               />
             </Route>
           </Route>
-          <Route path="production">
+          <Route
+            path="production"
+            element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><Outlet /></CapabilityRoute>}
+          >
             <Route index element={<PlantsPage />}></Route>
             <Route
               path="new"
@@ -172,11 +183,15 @@ function App() {
             path="platform"
             element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><PlatformPage /></CapabilityRoute>}
           />
-          <Route path="users">
-            <Route index element={<CapabilityRoute require={{ scope: "platform", capability: "canListUsers" }}><UsersPage /></CapabilityRoute>} />
-            <Route path="new" element={<CapabilityRoute require={{ scope: "platform", capability: "canCreateUsers" }}><CreateUserPage /></CapabilityRoute>} />
-            <Route path=":userId/edit" element={<CapabilityRoute require={{ scope: "user", capability: "canEdit" }}><EditUserPage /></CapabilityRoute>} />
-          </Route>
+          {/*
+            The platform admins and revoking the role (#285). It replaces the
+            users page, which read every user's personal data; this one reads
+            only the platform admins' own accounts.
+          */}
+          <Route
+            path="platform-admins"
+            element={<CapabilityRoute require={{ scope: "platform", capability: "canListPlatformAdmins" }}><PlatformAdminsPage /></CapabilityRoute>}
+          />
           <Route path="no-community" element={<NoCommunityPage />} />
         </Route>
         {/*

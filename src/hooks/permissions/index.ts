@@ -27,7 +27,6 @@ export type {
 export { usePlatformCapabilities } from "./usePlatformCapabilities";
 export { useActiveCommunityCapabilities } from "./useActiveCommunityCapabilities";
 export { useCommunityCapabilities } from "./useCommunityCapabilities";
-export { useUserCapabilities } from "./useUserCapabilities";
 export { usePlantCapabilities } from "./usePlantCapabilities";
 export { useSupplyCapabilities } from "./useSupplyCapabilities";
 export { Can } from "./Can";

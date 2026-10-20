@@ -142,8 +142,9 @@ describe("the mutation guard rail", () => {
     });
 
     it("stop being exempt once they migrate, for communities, platform and users too", async () => {
-      // The six files that made up the last large block on the list. Each is
-      // named with the hook that replaced it, because the message is what tells
+      // Files from the last large block on the list, plus the platform admins
+      // page that replaced the users pages (#285). Each is named with the hook
+      // that hands its write out, because the message is what tells
       // the next author where to go -- a bare refusal would send them looking.
       const cases: [string, string, string, string][] = [
         [
@@ -164,13 +165,11 @@ describe("the mutation guard rail", () => {
           "src/pages/communities/ManageAdminsDialog.tsx",
           "useMembershipActions",
         ],
-        ["useCreateUser", "../../api/users/users", "src/pages/users/CreateUser.tsx", "usePlatformActions"],
-        ["useUpdateUser", "../../api/users/users", "src/pages/users/EditUser.tsx", "useUserActions"],
         [
-          "useGrantPlatformAdmin",
+          "useRevokePlatformAdmin",
           "../../api/users/users",
-          "src/pages/users/UsersPage.tsx",
-          "useUserActions",
+          "src/pages/platform-admins/PlatformAdminsPage.tsx",
+          "usePlatformAdminActions",
         ],
       ];
 
