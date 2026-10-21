@@ -684,7 +684,7 @@ describe("inviting a platform admin", () => {
 
     await u.click(within(form).getByRole("button", { name: "Invitar" }));
 
-    expect(within(form).getByText("Escribe el DNI/NIE")).toBeInTheDocument();
+    expect(within(form).getByText("Escribe el DNI/NIE/NIF")).toBeInTheDocument();
     expect(within(form).getByText("Escribe el nombre completo")).toBeInTheDocument();
     expect(within(form).getByText("Escribe el email de contacto")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([]);
