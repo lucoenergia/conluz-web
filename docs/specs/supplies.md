@@ -24,11 +24,11 @@ This document covers only the rules #290 introduced.
 
 - **Status:** Active
 - **Rule:**
-  - "Eliminar suministro" MUST be offered on a supply's card menu, in the community's supply list
-    and in a member's supplies, and on the supply detail page, only when that supply's
-    `capabilities.canDelete` is `true`.
+  - "Eliminar punto de suministro" MUST be offered on a supply's card menu, in the community's
+    supply list and in a member's supplies, and on the supply detail page, only when that
+    supply's `capabilities.canDelete` is `true`.
   - A `canDelete` absent from the payload MUST count as `false`.
-  - On the card menu, "Eliminar suministro" goes last, below a divider, in the error colour.
+  - On the card menu, "Eliminar punto de suministro" goes last, below a divider, in the error colour.
 - **Rationale:** The backend answers per supply who may delete it. A backend that predates the
   endpoint does not report the capability, and offering the action there would send a request the
   backend cannot answer.
@@ -39,7 +39,7 @@ This document covers only the rules #290 introduced.
 
 - **Status:** Active
 - **Rule:**
-  - "Eliminar suministro" MUST open a confirmation before any request is sent.
+  - "Eliminar punto de suministro" MUST open a confirmation before any request is sent.
   - The confirmation MUST name the supply's CUPS, its name when it has one, and its owner, and say
     that the deletion cannot be undone.
   - Cancelling or dismissing the confirmation MUST send nothing.
