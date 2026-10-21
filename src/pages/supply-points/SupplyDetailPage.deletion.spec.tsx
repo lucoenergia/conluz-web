@@ -68,7 +68,7 @@ function renderDetail(onDelete: () => unknown) {
 
 async function confirmDeletion(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole("button", { name: "Más opciones del punto de suministro" }));
-  await user.click(screen.getByRole("menuitem", { name: "Eliminar suministro" }));
+  await user.click(screen.getByRole("menuitem", { name: "Eliminar punto de suministro" }));
   await screen.findByRole("heading", { name: /^Eliminar punto de suministro de / });
   await user.click(screen.getByRole("button", { name: "Eliminar" }));
 }

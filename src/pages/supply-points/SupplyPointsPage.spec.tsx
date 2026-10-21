@@ -181,8 +181,8 @@ describe("SupplyPointsPage", () => {
    * the communities they administer -- so the active community still has to be
    * applied here.
    */
-  describe("UI-SUP-001 Eliminar suministro on the card menu", () => {
-    const DELETE_ITEM = "Eliminar suministro";
+  describe("UI-SUP-001 Eliminar punto de suministro on the card menu", () => {
+    const DELETE_ITEM = "Eliminar punto de suministro";
 
     it("UI-SUP-001 is offered for a supply that reports canDelete", async () => {
       setup({ supplies: [supply({ canEdit: true, canDelete: true })] });
@@ -275,7 +275,7 @@ describe("SupplyPointsPage", () => {
     it.each([
       ["reports canDelete", true],
       ["does not report canDelete", false],
-    ])("UI-SUP-001 offers Eliminar suministro on a member's supply only when it %s", async (_, canDelete) => {
+    ])("UI-SUP-001 offers Eliminar punto de suministro on a member's supply only when it %s", async (_, canDelete) => {
       setupPerson([
         {
           ...inCommunity("supply-a1", COMMUNITY_ID, "Casa en Sol Común"),
@@ -285,7 +285,7 @@ describe("SupplyPointsPage", () => {
 
       await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
 
-      expect(!!screen.queryByRole("menuitem", { name: "Eliminar suministro" })).toBe(canDelete);
+      expect(!!screen.queryByRole("menuitem", { name: "Eliminar punto de suministro" })).toBe(canDelete);
     });
 
     it("asks for nothing until the active community is known", () => {

@@ -19,7 +19,7 @@ export const Active = () => (
   </Mui.Box>
 );
 
-/** For a caller the supply reports canDelete to: the menu holds "Eliminar suministro". */
+/** For a caller the supply reports canDelete to: the menu holds "Eliminar punto de suministro". */
 export const Deletable = () => (
   <Mui.Box sx={{ width: "100%" }}>
     <SupplyDetailHeader supplyPoint={supply} onDeleteRequest={() => {}} />

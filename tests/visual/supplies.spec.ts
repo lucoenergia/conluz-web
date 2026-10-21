@@ -253,7 +253,7 @@ test.describe("Visual baselines", () => {
     // by offering "Deshabilitar" rather than "Activar".
     await page.getByRole("button", { name: "Más acciones del punto de suministro" }).first().click();
     await expect(page.getByRole("menuitem", { name: "Deshabilitar" })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: "Eliminar suministro" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Eliminar punto de suministro" })).toBeVisible();
     await stabilizePage(page);
 
     await expect(page.getByRole("menu")).toHaveScreenshot("supply-card-actions-menu-admin.png", await hideAppBar(page));
@@ -272,7 +272,7 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await page.getByRole("button", { name: "Más opciones del punto de suministro" }).click();
-    await page.getByRole("menuitem", { name: "Eliminar suministro" }).click();
+    await page.getByRole("menuitem", { name: "Eliminar punto de suministro" }).click();
     await expect(page.getByRole("heading", { name: /^Eliminar punto de suministro de / })).toBeVisible();
     await expect(page.getByTestId("modal-panel").getByText("ES0021000000000000AA")).toBeVisible();
     await stabilizePage(page);

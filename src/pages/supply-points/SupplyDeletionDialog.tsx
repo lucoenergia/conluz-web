@@ -19,9 +19,10 @@ interface SupplyDeletionDialogProps {
 }
 
 /**
- * The confirmation of "Eliminar suministro" and what follows it (#290), shared
- * by the supply list and the detail page. Mounted only while the supply grants
- * the deletion, so it cannot stay open across a refresh that revokes it.
+ * The confirmation of "Eliminar punto de suministro" and what follows it
+ * (#290), shared by the supply list and the detail page. Mounted only while the
+ * supply grants the deletion, so it cannot stay open across a refresh that
+ * revokes it.
  */
 export const SupplyDeletionDialog: FC<SupplyDeletionDialogProps> = ({ supply, onClose, onGone }) => {
   const { remove } = useSupplyActions().forSupply(supply).actions;

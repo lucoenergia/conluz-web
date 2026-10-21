@@ -111,7 +111,7 @@ describe("SupplyDetailPage", () => {
     expect(screen.queryByText("HISTORIAL")).not.toBeInTheDocument();
   });
 
-  describe("UI-SUP-001 Eliminar suministro on the header menu", () => {
+  describe("UI-SUP-001 Eliminar punto de suministro on the header menu", () => {
     const MENU_BUTTON = "Más opciones del punto de suministro";
 
     it("UI-SUP-001 is offered for a supply that reports canDelete", async () => {
@@ -119,7 +119,7 @@ describe("SupplyDetailPage", () => {
 
       await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
 
-      expect(screen.getByRole("menuitem", { name: "Eliminar suministro" })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: "Eliminar punto de suministro" })).toBeInTheDocument();
     });
 
     // The only item, so without it there is no menu at all.

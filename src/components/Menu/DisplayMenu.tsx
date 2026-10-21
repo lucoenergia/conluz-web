@@ -126,7 +126,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
             </MenuItem>
           ))}
 
-          {/* Eliminar suministro: destructive, so last */}
+          {/* Eliminar punto de suministro: destructive, so last */}
           {deleteSupplyPoint && (
             <MenuItem
               onClick={handleDeleteSupplyPoint}
@@ -134,7 +134,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
             >
               <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: colors.error.dark, flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: colors.error.dark, fontWeight: 500, textAlign: 'left' }}>
-                Eliminar suministro
+                Eliminar punto de suministro
               </Typography>
             </MenuItem>
           )}

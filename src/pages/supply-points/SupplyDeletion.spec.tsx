@@ -163,7 +163,7 @@ function renderPage(route: string, onDelete: (state: ServerState) => unknown) {
 
 async function openDeletion(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole("button", { name: MENU_BUTTON }));
-  await user.click(screen.getByRole("menuitem", { name: "Eliminar suministro" }));
+  await user.click(screen.getByRole("menuitem", { name: "Eliminar punto de suministro" }));
   // The community it names is supplyCommunityConfirmations.spec.tsx's subject.
   return screen.findByRole("heading", { name: DELETE_TITLE });
 }
