@@ -44,3 +44,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-HOM` | Home: the member and management home views | [`home.md`](home.md) |
 | `UI-ADM` | Community admins: the platform admin's list, invitation and management of a community's admins | [`community-admins.md`](community-admins.md) |
 | `UI-PAD` | Platform admins: the list, inviting to the role and the pending invitations, revoking the role, and what a platform admin with no membership can reach | [`platform-admins.md`](platform-admins.md) |
+| `UI-ERR` | API errors: where and in whose words a refused request's message is shown, across screens | [`api-errors.md`](api-errors.md) |
