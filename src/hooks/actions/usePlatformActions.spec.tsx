@@ -77,14 +77,15 @@ describe("usePlatformActions", () => {
 
     await expect(
       result.current.actions.createCommunity?.run(CREATE_COMMUNITY_BODY),
-    ).resolves.toEqual({ id: "TEST-COMMUNITY-ID" });
+    ).resolves.toEqual({ ok: true, value: { id: "TEST-COMMUNITY-ID" } });
 
     expect(mutateAsync).toHaveBeenCalledWith({ data: CREATE_COMMUNITY_BODY });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
   });
 
-  it("reports failure as undefined and leaves the cache alone", async () => {
-    mutateAsync.mockRejectedValue(new Error("boom"));
+  it("reports failure with its error and leaves the cache alone", async () => {
+    const error = new Error("boom");
+    mutateAsync.mockRejectedValue(error);
     const { result, queryClient } = renderWith(
       buildPlatformCapabilities({ canCreateCommunity: true }),
     );
@@ -92,7 +93,7 @@ describe("usePlatformActions", () => {
 
     await expect(
       result.current.actions.createCommunity?.run(CREATE_COMMUNITY_BODY),
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual({ error });
     expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

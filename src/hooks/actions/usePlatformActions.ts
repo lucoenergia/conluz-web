@@ -3,6 +3,7 @@ import { getGetAllCommunitiesQueryKey, useCreateCommunity } from "../../api/comm
 import type { CommunityResponse, CreateCommunityBody } from "../../api/models";
 import { usePlatformCapabilities, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
+import type { CommunityWriteResult } from "./useCommunityActions";
 
 /**
  * The creation that has no resource to hang off, because nothing exists yet to
@@ -14,7 +15,7 @@ import { grant, type MaybeAction } from "./action";
  */
 export interface PlatformActions {
   actions: {
-    createCommunity: MaybeAction<[CreateCommunityBody], CommunityResponse | undefined>;
+    createCommunity: MaybeAction<[CreateCommunityBody], CommunityWriteResult<CommunityResponse>>;
   };
   outcomes: {
     createCommunity: CapabilityOutcome;
@@ -32,13 +33,13 @@ export function usePlatformActions(): PlatformActions {
     actions: {
       createCommunity: grant(
         createCommunity,
-        async (data: CreateCommunityBody) => {
+        async (data: CreateCommunityBody): Promise<CommunityWriteResult<CommunityResponse>> => {
           try {
             const created = await createCommunityMutation.mutateAsync({ data });
             queryClient.invalidateQueries({ queryKey: getGetAllCommunitiesQueryKey() });
-            return created;
-          } catch {
-            return undefined;
+            return { ok: true, value: created };
+          } catch (error) {
+            return { error };
           }
         },
         createCommunityMutation.isPending,

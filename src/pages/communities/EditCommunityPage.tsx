@@ -17,6 +17,7 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { useGetCommunityById } from "../../api/communities/communities";
 import { useCommunityActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
+import { communityRefusalOf, type CommunityField } from "./communityForm";
 
 export const EditCommunityPage: FC = () => {
   const { communityId = "" } = useParams();
@@ -35,6 +36,8 @@ export const EditCommunityPage: FC = () => {
   const [address, setAddress] = useState<string | null>(null);
   const [nameError, setNameError] = useState("");
   const [codeError, setCodeError] = useState("");
+  // A refusal from the API, on the input it names. Editing that input clears it.
+  const [apiErrors, setApiErrors] = useState<Partial<Record<CommunityField, string>>>({});
 
   const currentName = name ?? communityData?.name ?? "";
   const currentCode = code ?? communityData?.code ?? "";
@@ -65,17 +68,25 @@ export const EditCommunityPage: FC = () => {
     // render before the community itself has arrived.
     if (!update) return;
 
-    if (
-      await update.run({
-        name: currentName.trim(),
-        code: currentCode.trim(),
-        legalId: currentLegalId.trim() || undefined,
-        address: currentAddress.trim() || undefined,
-      })
-    ) {
+    setApiErrors({});
+    const result = await update.run({
+      name: currentName.trim(),
+      code: currentCode.trim(),
+      legalId: currentLegalId.trim() || undefined,
+      address: currentAddress.trim() || undefined,
+    });
+    if ("ok" in result) {
       navigate("/communities");
+      return;
+    }
+    const refusal = communityRefusalOf(
+      result.error,
+      "Ha habido un problema al editar la comunidad. Por favor, inténtalo más tarde.",
+    );
+    if ("field" in refusal) {
+      setApiErrors({ [refusal.field]: refusal.message });
     } else {
-      errorDispatch("Ha habido un problema al editar la comunidad. Por favor, inténtalo más tarde.");
+      errorDispatch(refusal.form);
     }
   };
 
@@ -164,15 +175,23 @@ export const EditCommunityPage: FC = () => {
               label="Código *"
               fullWidth
               value={currentCode}
-              onChange={(e) => setCode(e.target.value)}
-              error={!!codeError}
-              helperText={codeError || "Identificador corto único para la comunidad"}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setApiErrors((errors) => ({ ...errors, code: undefined }));
+              }}
+              error={!!(codeError || apiErrors.code)}
+              helperText={codeError || apiErrors.code || "Identificador corto único para la comunidad"}
             />
             <TextField
               label="NIF/CIF"
               fullWidth
               value={currentLegalId}
-              onChange={(e) => setLegalId(e.target.value)}
+              onChange={(e) => {
+                setLegalId(e.target.value);
+                setApiErrors((errors) => ({ ...errors, legalId: undefined }));
+              }}
+              error={!!apiErrors.legalId}
+              helperText={apiErrors.legalId}
             />
             <TextField
               label="Dirección"

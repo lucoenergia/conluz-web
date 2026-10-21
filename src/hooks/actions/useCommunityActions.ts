@@ -97,9 +97,17 @@ export type ConfigureDatadisResult = { ok: true } | { error: unknown };
  */
 export type DatadisToggleResult = { ok: true } | { error: unknown };
 
+/**
+ * A community write: the response, or the refusal itself rather than a bare
+ * `false`. The create and edit screens place COMMUNITY_ALREADY_EXISTS on the
+ * input its `field` names (#232), so they need the error. `value` is the
+ * response, when the screen needs it.
+ */
+export type CommunityWriteResult<T = void> = { ok: true; value: T } | { error: unknown };
+
 export interface CommunityRowActions {
   actions: {
-    update: MaybeAction<[UpdateCommunityBody], boolean>;
+    update: MaybeAction<[UpdateCommunityBody], CommunityWriteResult>;
     enable: MaybeAction<[], boolean>;
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
@@ -249,8 +257,15 @@ export function useCommunityActions(): CommunityActions {
         actions: {
           update: grant(
             update,
-            (data: UpdateCommunityBody) =>
-              runOnCommunity(() => updateMutation.mutateAsync({ communityId, data })),
+            async (data: UpdateCommunityBody): Promise<CommunityWriteResult> => {
+              try {
+                await updateMutation.mutateAsync({ communityId, data });
+                invalidateCommunity();
+                return { ok: true, value: undefined };
+              } catch (error) {
+                return { error };
+              }
+            },
             updateMutation.isPending,
           ),
           enable: grant(

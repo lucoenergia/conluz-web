@@ -14,6 +14,7 @@ import { sxStyles } from "../../theme/sx";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { usePlatformActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
+import { communityRefusalOf, type CommunityField } from "./communityForm";
 
 export const CreateCommunityPage: FC = () => {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ export const CreateCommunityPage: FC = () => {
   const [address, setAddress] = useState("");
   const [nameError, setNameError] = useState("");
   const [codeError, setCodeError] = useState("");
+  // A refusal from the API, on the input it names. Editing that input clears it.
+  const [apiErrors, setApiErrors] = useState<Partial<Record<CommunityField, string>>>({});
 
   const validate = (): boolean => {
     let valid = true;
@@ -51,16 +54,25 @@ export const CreateCommunityPage: FC = () => {
     // covers the render before the current user has arrived.
     if (!createCommunity) return;
 
-    const created = await createCommunity.run({
+    setApiErrors({});
+    const result = await createCommunity.run({
       name: name.trim(),
       code: code.trim(),
       legalId: legalId.trim() || undefined,
       address: address.trim() || undefined,
     });
-    if (created) {
+    if ("ok" in result) {
       navigate("/communities");
+      return;
+    }
+    const refusal = communityRefusalOf(
+      result.error,
+      "Ha habido un problema al crear la comunidad. Por favor, inténtalo más tarde.",
+    );
+    if ("field" in refusal) {
+      setApiErrors({ [refusal.field]: refusal.message });
     } else {
-      errorDispatch("Ha habido un problema al crear la comunidad. Por favor, inténtalo más tarde.");
+      errorDispatch(refusal.form);
     }
   };
 
@@ -132,15 +144,23 @@ export const CreateCommunityPage: FC = () => {
               label="Código *"
               fullWidth
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              error={!!codeError}
-              helperText={codeError || "Identificador corto único para la comunidad"}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setApiErrors((errors) => ({ ...errors, code: undefined }));
+              }}
+              error={!!(codeError || apiErrors.code)}
+              helperText={codeError || apiErrors.code || "Identificador corto único para la comunidad"}
             />
             <TextField
               label="NIF/CIF"
               fullWidth
               value={legalId}
-              onChange={(e) => setLegalId(e.target.value)}
+              onChange={(e) => {
+                setLegalId(e.target.value);
+                setApiErrors((errors) => ({ ...errors, legalId: undefined }));
+              }}
+              error={!!apiErrors.legalId}
+              helperText={apiErrors.legalId}
             />
             <TextField
               label="Dirección"

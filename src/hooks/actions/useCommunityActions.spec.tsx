@@ -285,11 +285,12 @@ describe("useCommunityActions", () => {
   });
 
   it("reports failure and leaves the cache alone", async () => {
-    mutateAsync.mockRejectedValue(new Error("boom"));
+    const error = new Error("boom");
+    mutateAsync.mockRejectedValue(error);
     const { result, queryClient } = render(communityWith({ canUpdate: true }));
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-    await expect(result.current.actions.update?.run({ name: "TEST-COMMUNITY-NAME", code: "TEST-CODE" })).resolves.toBe(false);
+    await expect(result.current.actions.update?.run({ name: "TEST-COMMUNITY-NAME", code: "TEST-CODE" })).resolves.toEqual({ error });
     expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });
