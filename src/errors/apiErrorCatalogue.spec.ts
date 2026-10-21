@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RestErrorDetailCode } from "../api/models";
 import { getFirstApiErrorMessage, getGroupedApiErrorDetails, translateErrorDetail } from "./apiErrorCatalogue";
+import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 
 const DISTRIBUTOR_FILE_CODES: RestErrorDetailCode[] = [
   "DISTRIBUTOR_FILE_LINE_MALFORMED",
@@ -32,9 +33,17 @@ describe("translateErrorDetail", () => {
   });
 
   it("falls back to detail.message when code has no registered template", () => {
+    // Not in the generated enum, as when the backend adds a code before the
+    // client is regenerated, so cataloguing a real code can never turn this
+    // into a test of a translation.
+    const unknownCode = "CODE_UNKNOWN_TO_THIS_CLIENT" as RestErrorDetailCode;
+    expect(translateErrorDetail({ message: "server message", code: unknownCode }, "fallback")).toBe("server message");
+  });
+
+  it("UI-AGR-013 sends a refused generation for a plant with no CAU to the plant, in the words the panels use", () => {
     expect(
       translateErrorDetail({ message: "server message", code: "PLANT_MISSING_REGULATORY_CODE" }, "fallback"),
-    ).toBe("server message");
+    ).toBe(MISSING_CAU_MESSAGE);
   });
 
   it("falls back to the fallback when code is unrecognised and message is empty", () => {
@@ -81,6 +90,12 @@ describe("distributor-file and sharing-agreement error templates", () => {
     );
     expect(message).not.toBe("");
     expect(message).not.toBe("raw server message");
+  });
+
+  it("translates SHARING_AGREEMENT_DUPLICATE_CUPS to Spanish that names neither the upload nor the generation refusing it", () => {
+    expect(
+      translateErrorDetail({ message: "raw server message", code: "SHARING_AGREEMENT_DUPLICATE_CUPS" }, "fallback"),
+    ).toBe("Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.");
   });
 
   it("interpolates the actual filename into DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID, with no leftover placeholder", () => {

@@ -2,6 +2,7 @@ import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/mod
 import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 import { resendLimitMessage } from "./membershipErrorMessages";
+import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
 
 /**
@@ -9,8 +10,8 @@ import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from ".
  * placeholders, interpolated from the detail's `params` map.
  *
  * Scoped to the codes reachable from the endpoints this app actually calls
- * today. Codes belonging to file generation (e.g. PLANT_MISSING_REGULATORY_CODE)
- * are deliberately absent — add them when the issue that reaches them lands.
+ * today. File generation (#149) reaches PLANT_MISSING_REGULATORY_CODE, worded
+ * by the same constant the file panel and the next step show before the call.
  *
  * SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID was added ahead of the
  * publish/file-validate flow that surfaces it, so the catalogue didn't need
@@ -101,7 +102,16 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // file-path DISTRIBUTOR_FILE_CUPS_DUPLICATE (keyed by CUPS) above.
   SHARING_AGREEMENT_DUPLICATE_SUPPLY: "Hay un suministro repetido en el conjunto de coeficientes.",
 
+  // Two of the community's supply codes normalize to the same CUPS. Refused by
+  // the file upload and by file generation (#149), so it names neither.
+  SHARING_AGREEMENT_DUPLICATE_CUPS:
+    "Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.",
+
   SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID: "La suma de los coeficientes del acuerdo no es válida.",
+
+  // Generating the distributor file for a plant with no CAU (#149). Not the
+  // agreement's fault: the sentence sends the user to the plant.
+  PLANT_MISSING_REGULATORY_CODE: MISSING_CAU_MESSAGE,
 
   // Coefficient date-lifecycle codes (activate/deactivate/close/reopen). See
   // the file-level doc comment above for why these use withOptionalCups

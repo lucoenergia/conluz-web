@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -120,7 +121,7 @@ describe("SharingAgreementNextStepBanner", () => {
       expect(screen.getByRole("button", { name: "Poner en vigor" })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Descargar fichero" })).not.toBeInTheDocument();
       expect(
-        screen.getByText("La planta no tiene CAU configurado. Sin él no se puede generar el fichero."),
+        screen.getByText(MISSING_CAU_MESSAGE),
       ).toBeVisible();
     });
   });

@@ -95,6 +95,22 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     mockSuccessDispatch.mockClear();
   });
 
+  // Importing replaces the whole coefficient set, and POST .../file 409s
+  // outside DRAFT, so offering it on a sealed agreement would be an action
+  // guaranteed to fail (#149).
+  it("offers importing a TXT on a DRAFT, where it authors the coefficient set", () => {
+    renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT, onImportRequest: vi.fn(), showAuthoringActions: true });
+    expect(screen.getByRole("button", { name: "Importar TXT" })).toBeInTheDocument();
+  });
+
+  it.each([SharingAgreementResponseStatus.PUBLISHED, SharingAgreementResponseStatus.SUPERSEDED])(
+    "import is unavailable once the coefficient set is sealed (%s)",
+    (agreementStatus) => {
+      renderWithTheme({ coefficients, agreementStatus, onImportRequest: vi.fn(), showAuthoringActions: true });
+      expect(screen.queryByRole("button", { name: "Importar TXT" })).not.toBeInTheDocument();
+    },
+  );
+
   it("shows the edit action only for a DRAFT agreement", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.PUBLISHED });
     expect(screen.queryByRole("button", { name: "Editar a mano" })).not.toBeInTheDocument();

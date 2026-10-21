@@ -19,6 +19,7 @@ import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementActions } from "../../hooks/actions";
 import { SharingAgreementGenerateDialog } from "../SharingAgreementGenerateDialog";
+import { hasPlantRegulatoryCode, MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 
 export interface SharingAgreementFilePanelProps {
   plantId: string;
@@ -70,8 +71,8 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   // say "exactamente 100 %" while the lifecycle said "Faltan X para llegar al
   // 100,0000 %" — two forms of the same rule, one of them at a precision the
   // coefficients do not actually use.
-  const generateDisabledReason = !plantRegulatoryCode
-    ? "Esta planta no tiene código regulatorio (CAU) asignado."
+  const generateDisabledReason = !hasPlantRegulatoryCode(plantRegulatoryCode)
+    ? MISSING_CAU_MESSAGE
     : !isFullSum(fileSumUnits)
       ? (formatCoefficientGapMessage(COEFFICIENT_SCALE - fileSumUnits) ?? undefined)
       : undefined;
@@ -171,12 +172,16 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
           </>
         ) : (
           <Typography sx={{ ...BODY_SX, color: colors.text.secondary }}>
-            No has importado ningún fichero en este acuerdo.
+            {/* A sealed agreement may have reached the distributor without
+                Conluz ever storing its file; generating stays available. */}
+            {isDraft
+              ? "No has importado ningún fichero en este acuerdo."
+              : "Este acuerdo no tiene ningún fichero guardado: puede que se enviara a la distribuidora fuera de Conluz. Puedes generar uno a partir de los coeficientes cuando lo necesites."}
           </Typography>
         )}
       </Box>
 
-      {plantRegulatoryCode && generateFile && (
+      {hasPlantRegulatoryCode(plantRegulatoryCode) && generateFile && (
         <SharingAgreementGenerateDialog
           isOpen={isGenerateDialogOpen}
           generateFile={generateFile}

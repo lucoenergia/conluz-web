@@ -5,6 +5,7 @@ import {
 import type { SharingAgreementPartitionCoefficientResponse, SharingAgreementResponse } from "../../api/models";
 import { COEFFICIENT_SCALE, computeSharingAgreementCoefficientSums, isFullSum } from "./sharingAgreementCoefficientSums";
 import { summarizeApplicationProgress } from "./sharingAgreementApplicationProgress";
+import { hasPlantRegulatoryCode } from "../../errors/sharingAgreementFileCopy";
 
 export type SharingAgreementNextStep =
   | { kind: "AUTHOR_COEFFICIENTS"; blockedReason: "NO_COEFFICIENTS" }
@@ -49,7 +50,7 @@ export function selectSharingAgreementNextStep(
       };
     }
 
-    if (!plantRegulatoryCode?.trim()) {
+    if (!hasPlantRegulatoryCode(plantRegulatoryCode)) {
       return { kind: "GENERATE_AND_SEND", canGenerate: false, blockedReason: "NO_REGULATORY_CODE" };
     }
 

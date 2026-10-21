@@ -14,6 +14,7 @@ import type { SharingAgreementResponse, UpdateSharingAgreementBody } from "../..
 import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
 import { getFirstApiErrorMessage, getGroupedApiErrorDetails, type GroupedApiErrors } from "../../errors/apiErrorCatalogue";
+import { withParsedBlobErrorBody } from "../../errors/blobErrorBody";
 import { downloadSharingAgreementFile } from "../../components/SharingAgreementFilePanel/downloadSharingAgreementFile";
 import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
@@ -198,8 +199,12 @@ export function useSharingAgreementActions(plantId: string): SharingAgreementAct
         try {
           return await generateMutation.mutateAsync({ plantId, sharingAgreementId, data: { year } });
         } catch (error) {
+          // The request asks for a Blob, so a refusal's typed body is a Blob too.
           errorDispatch(
-            getFirstApiErrorMessage(error, "Ha habido un problema al generar el fichero. Por favor, inténtalo más tarde"),
+            getFirstApiErrorMessage(
+              await withParsedBlobErrorBody(error),
+              "Ha habido un problema al generar el fichero. Por favor, inténtalo más tarde",
+            ),
           );
           return undefined;
         }

@@ -14,13 +14,16 @@ import {
   computeSharingAgreementCoefficientSums,
 } from "../../pages/production/sharingAgreementCoefficientSums";
 import { formatCoefficientGapMessage } from "../../pages/production/sharingAgreementGapMessage";
+import { selectSharingAgreementNextStep } from "../../pages/production/selectSharingAgreementNextStep";
+import { selectSharingAgreementLifecycleView } from "../../pages/production/sharingAgreementLifecycle";
+import { MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 import { SharingAgreementFilePanel } from "./SharingAgreementFilePanel";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
 } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
-import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
+import { buildCoefficient, buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 
 const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -108,6 +111,8 @@ describe("SharingAgreementFilePanel", () => {
   });
 
   const GENERATE = "Generar y descargar TXT";
+  const SEALED_NO_FILE =
+    "Este acuerdo no tiene ningún fichero guardado: puede que se enviara a la distribuidora fuera de Conluz. Puedes generar uno a partir de los coeficientes cuando lo necesites.";
 
   it("names the section and says what the file is for, in every status", () => {
     renderPanel();
@@ -146,6 +151,35 @@ describe("SharingAgreementFilePanel", () => {
       }
     });
 
+    // #149: generating builds the TXT from the complete coefficient set and
+    // persists nothing, so the contract allows it in every status, whether or
+    // not a file is stored.
+    it("UI-AGR-011 stays available on a PUBLISHED agreement with a stored file, since generating never touches it", () => {
+      renderPanel({
+        agreement: makeAgreement({
+          status: SharingAgreementResponseStatus.PUBLISHED,
+          file: { id: "file-1", filename: "CAU0001_2026.txt", uploadedAt: "2026-01-15T10:00:00Z" },
+        }),
+      });
+
+      expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
+      expect(screen.getByText("CAU0001_2026.txt")).toBeInTheDocument();
+    });
+
+    it("UI-AGR-011 UI-AGR-012 stays available on a PUBLISHED agreement with no stored file, which may have been sent outside Conluz", () => {
+      renderPanel({ agreement: makeAgreement({ status: SharingAgreementResponseStatus.PUBLISHED }) });
+
+      expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
+      expect(screen.getByText(SEALED_NO_FILE)).toBeVisible();
+    });
+
+    it("UI-AGR-011 UI-AGR-012 stays available on a SUPERSEDED agreement, since its coefficient set is still complete and nothing is stored", () => {
+      renderPanel({ agreement: makeAgreement({ status: SharingAgreementResponseStatus.SUPERSEDED }) });
+
+      expect(screen.getByRole("button", { name: GENERATE })).not.toHaveAttribute("aria-disabled");
+      expect(screen.getByText(SEALED_NO_FILE)).toBeVisible();
+    });
+
     // AC4 — the panel used to use a real `disabled`, which takes the reason out
     // of reach of the keyboard. It now gates the way every other control does.
     it("stays focusable when gated, with its reason as visible text bound via aria-describedby", async () => {
@@ -176,7 +210,7 @@ describe("SharingAgreementFilePanel", () => {
     it("gates on a missing regulatory code with its own visible reason", () => {
       renderPanel({ plantRegulatoryCode: undefined });
       expect(screen.getByRole("button", { name: GENERATE })).toHaveAttribute("aria-disabled", "true");
-      expect(screen.getByText("Esta planta no tiene código regulatorio (CAU) asignado.")).toBeVisible();
+      expect(screen.getByText(MISSING_CAU_MESSAGE)).toBeVisible();
     });
 
     it("is not offered at all to a caller the agreement does not let manage it", () => {
@@ -194,6 +228,68 @@ describe("SharingAgreementFilePanel", () => {
       renderPanel();
       await user.click(screen.getByRole("button", { name: GENERATE }));
       expect(await screen.findByRole("heading", { name: "Generar fichero" })).toBeInTheDocument();
+    });
+  });
+
+  // #149: the panel and the next step used to word the missing CAU apart and
+  // decide it apart; one constant and one predicate now serve both.
+  describe("a plant without a CAU", () => {
+    const missingCauNextStep = (regulatoryCode: string | undefined) =>
+      selectSharingAgreementLifecycleView(
+        selectSharingAgreementNextStep(makeAgreement(), [buildCoefficient({ coefficient: 1 })], regulatoryCode),
+        SharingAgreementResponseStatus.DRAFT,
+      );
+
+    it("UI-AGR-013 is worded the same in the file panel, the banner and the lifecycle rail", () => {
+      renderPanel({ plantRegulatoryCode: undefined });
+      const view = missingCauNextStep(undefined);
+
+      expect(screen.getByText(MISSING_CAU_MESSAGE)).toBeVisible();
+      expect(view.current?.requirement).toBe(MISSING_CAU_MESSAGE);
+      expect(view.blockedNote).toBe(MISSING_CAU_MESSAGE);
+    });
+
+    it("UI-AGR-013 counts a whitespace-only CAU as missing in the panel and the next step alike, since generating with it 409s", () => {
+      renderPanel({ plantRegulatoryCode: "   " });
+      const view = missingCauNextStep("   ");
+
+      expect(screen.getByRole("button", { name: GENERATE })).toHaveAttribute("aria-disabled", "true");
+      expect(screen.getByText(MISSING_CAU_MESSAGE)).toBeVisible();
+      expect(view.current?.requirement).toBe(MISSING_CAU_MESSAGE);
+    });
+  });
+
+  // #149: the generated call asks for a Blob, and axios applies that to error
+  // bodies too, so a typed 409 arrives as JSON inside a Blob. Each refusal the
+  // contract documents with a known code gets its own sentence, and the dialog
+  // stays open with the year the user typed.
+  describe("a refused generation", () => {
+    const refusal = (code: string) => ({
+      response: {
+        status: 409,
+        data: new Blob([JSON.stringify({ errors: [{ code, message: "raw server message" }] })], {
+          type: "application/json",
+        }),
+      },
+    });
+
+    it.each([
+      ["PLANT_MISSING_REGULATORY_CODE", MISSING_CAU_MESSAGE],
+      ["SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID", "La suma de los coeficientes del acuerdo no es válida."],
+      [
+        "SHARING_AGREEMENT_DUPLICATE_CUPS",
+        "Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.",
+      ],
+    ])("words %s in Spanish and keeps the dialog open", async (code, message) => {
+      mockGenerateMutateAsync.mockRejectedValue(refusal(code));
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole("button", { name: GENERATE }));
+      await user.click(await screen.findByRole("button", { name: "Generar" }));
+
+      await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(message));
+      expect(screen.getByRole("heading", { name: "Generar fichero" })).toBeInTheDocument();
     });
   });
 
