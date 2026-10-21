@@ -55,7 +55,7 @@ This document covers only the rules #290 introduced.
   - After a successful deletion, every read that names or counts the supply MUST be refreshed:
     the community's supply list, its owner's supplies, the communities' supply count, and the
     owner's energy metrics.
-  - The supply's own detail MUST be dropped rather than refetched.
+  - The supply's own detail MUST NOT be refetched. It is dropped where no screen reads it.
   - From the detail page, the screen MUST return to the supply list.
   - A success message MUST name the deleted supply's CUPS.
 - **Rationale:** A supply left in a list after its deletion would offer actions that can only fail.
