@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FC } from "react";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { Box } from "@mui/material";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { LoadingGraphCard } from "../../components/Graph/LoadingGraphCard";
 import { Graph } from "../../components/Graph";
 import { GraphCard } from "../../components/Graph/GraphCard";
@@ -31,6 +31,8 @@ import PercentIcon from "@mui/icons-material/Percent";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
+import { useSupplyActions } from "../../hooks/actions";
+import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 
 export const SupplyDetailPage: FC = () => {
   const { supplyPointId = "" } = useParams();
@@ -122,6 +124,9 @@ export const SupplyDetailPage: FC = () => {
   // canEdit. Asking it here also keeps the history request from firing for a
   // supply the caller could not read in the first place.
   const canReadSupply = outcomeFromResource(supplyPoint?.capabilities, "canRead");
+  const { remove } = useSupplyActions().forSupply(supplyPoint).actions;
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch hourly production data when DAY filter is selected
   const {
@@ -552,8 +557,17 @@ export const SupplyDetailPage: FC = () => {
           supplyPoint={supplyPoint}
           isLoading={supplyPointLoading}
           error={supplyPointError}
+          onDeleteRequest={remove && (() => setIsDeleteOpen(true))}
         />
       </Box>
+
+      {/* Once the supply is gone -- deleted now, or already (a 404) -- there is
+          nothing left to show here, so the screen returns to the list. */}
+      <SupplyDeletionDialog
+        supply={isDeleteOpen ? supplyPoint : undefined}
+        onClose={() => setIsDeleteOpen(false)}
+        onGone={() => navigate("/supply-points")}
+      />
 
       {/* Coefficient history. Sits above the filter on purpose: it is contract
           information about the supply, not telemetry, so placing it below
