@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-PLT` |
 | **Status** | Active |
-| **Routes** | `/production/:plantId` |
+| **Routes** | `/production/:plantId`; `/production` for the plant deletion (UI-PLT-008) |
 | **Roles** | Any member of the plant's community (the plant's `canRead`). Agreements: a caller with the plant's `canListSharingAgreements`. Integration and "Siguiente paso": a caller with the plant's `canManage` |
-| **Domain rules** | n/a |
+| **Domain rules** | `lucoenergia/conluz`: PLT-001 (UI-PLT-008) |
 | **Design reference** | Claude Design canvas "Conluz · Detalle de planta"; visual language of the member home ("Tu energía") |
-| **Last reviewed against code** | #260 |
+| **Last reviewed against code** | #290 |
 
 ## Purpose
 
@@ -132,6 +132,21 @@ keep those in [`formatting.md`](formatting.md).
 - **Rationale:** The raw value (`Rango: hour`) leaked an internal enum into the Spanish UI.
 - **Implements:** n/a
 - **Source:** #260
+
+### UI-PLT-008 — A plant that holds the sharing history is kept, and the refusal says so
+
+- **Status:** Active
+- **Rule:**
+  - A plant deletion refused with `PLANT_HAS_SHARING_AGREEMENTS` or
+    `PLANT_HAS_PARTITION_COEFFICIENTS` MUST show its own message: the plant holds the community's
+    sharing history and must be kept.
+  - That message MUST NOT suggest trying again, and the plant MUST stay in the list.
+  - Any other failure keeps the generic message.
+- **Rationale:** The backend refuses these deletions for good: the agreements and coefficients are
+  the community's records, and a plant cannot be disabled instead. A message inviting a retry
+  would send the admin round in circles.
+- **Implements:** PLT-001
+- **Source:** #290, lucoenergia/conluz#437
 
 ## States
 
