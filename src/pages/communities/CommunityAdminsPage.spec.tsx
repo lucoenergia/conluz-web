@@ -373,7 +373,7 @@ describe("inviting an admin", () => {
     const readsBefore = adminReads(router);
     await u.click(screen.getByRole("button", { name: "Invitar" }));
 
-    expect(await within(dialog).findByText("Esta persona ya es miembro de la comunidad.")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Ya forma parte de esta comunidad.")).toBeInTheDocument();
     expect(within(dialog).getByRole("textbox", { name: /^Nombre completo/ })).toHaveValue("Nora Nueva");
     await waitFor(() => expect(adminReads(router)).toBeGreaterThan(readsBefore));
   });

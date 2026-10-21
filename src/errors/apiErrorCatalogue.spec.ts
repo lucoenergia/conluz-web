@@ -92,12 +92,6 @@ describe("distributor-file and sharing-agreement error templates", () => {
     expect(message).not.toBe("raw server message");
   });
 
-  it("translates SHARING_AGREEMENT_DUPLICATE_CUPS to Spanish that names neither the upload nor the generation refusing it", () => {
-    expect(
-      translateErrorDetail({ message: "raw server message", code: "SHARING_AGREEMENT_DUPLICATE_CUPS" }, "fallback"),
-    ).toBe("Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.");
-  });
-
   it("interpolates the actual filename into DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID, with no leftover placeholder", () => {
     const message = translateErrorDetail(
       {
@@ -355,7 +349,7 @@ describe("personal ID refusals (#276)", () => {
 
 describe("member registration and invitation refusals (#275)", () => {
   it.each([
-    ["MEMBERSHIP_ALREADY_EXISTS", "Esta persona ya es miembro de la comunidad."],
+    ["MEMBERSHIP_ALREADY_EXISTS", "Ya forma parte de esta comunidad."],
     ["MEMBERSHIP_ALREADY_INVITED", "Este miembro ya tenía una invitación enviada."],
     ["MEMBERSHIP_NOT_INVITED", "Este miembro todavía no tiene ninguna invitación que reenviar."],
     ["MEMBERSHIP_DISABLED", "Este miembro está suspendido, así que no se le puede invitar."],

@@ -102,16 +102,22 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // file-path DISTRIBUTOR_FILE_CUPS_DUPLICATE (keyed by CUPS) above.
   SHARING_AGREEMENT_DUPLICATE_SUPPLY: "Hay un suministro repetido en el conjunto de coeficientes.",
 
-  // Two of the community's supply codes normalize to the same CUPS. Refused by
-  // the file upload and by file generation (#149), so it names neither.
-  SHARING_AGREEMENT_DUPLICATE_CUPS:
-    "Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.",
-
   SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID: "La suma de los coeficientes del acuerdo no es válida.",
 
   // Generating the distributor file for a plant with no CAU (#149). Not the
   // agreement's fault: the sentence sends the user to the plant.
   PLANT_MISSING_REGULATORY_CODE: MISSING_CAU_MESSAGE,
+
+  // Generating the distributor file when supply codes are not valid CUPS
+  // (#232). params.codes lists them, comma-separated, whenever the code fires.
+  SUPPLY_CUPS_NOT_NORMALIZABLE:
+    "El código de estos suministros no es un CUPS válido: {codes}. Un CUPS tiene 22 caracteres, o 20 si se completa con 0F, y no lleva espacios. Corrígelos y vuelve a intentarlo.",
+
+  // Several of the community's supply codes normalize to the same CUPS
+  // (#232). Refused by file generation and by the file upload, so it names
+  // neither; params.cups is the CUPS, params.codes the supply codes.
+  SUPPLY_CUPS_COLLISION:
+    "Los suministros {codes} tienen el mismo CUPS ({cups}). Corrígelos para que cada uno tenga uno distinto.",
 
   // Deleting a plant that holds the community's sharing history
   // (lucoenergia/conluz#437; #290). A plant cannot be disabled, so neither
@@ -216,10 +222,12 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     "Un administrador de la comunidad tiene que tener un email de contacto. Para quitárselo, cámbiale antes el rol a miembro.",
 
   // Registering and inviting members (lucoenergia/conluz#392, #393; #275).
-  // Worded for registration: from an invitation write it means the member
-  // accepted meanwhile, which src/errors/membershipErrors.ts words itself, as
-  // it does the invite case of MEMBERSHIP_WITHOUT_CONTACT_EMAIL above.
-  MEMBERSHIP_ALREADY_EXISTS: "Esta persona ya es miembro de la comunidad.",
+  // Worded for registering a member and inviting a community admin who is
+  // already in the community, whether a person, a local entity or a company
+  // (#232). From a member invitation write it means the member accepted
+  // meanwhile, which src/errors/membershipErrors.ts words itself, as it does
+  // the invite case of MEMBERSHIP_WITHOUT_CONTACT_EMAIL above.
+  MEMBERSHIP_ALREADY_EXISTS: "Ya forma parte de esta comunidad.",
   MEMBERSHIP_ALREADY_INVITED: "Este miembro ya tenía una invitación enviada.",
   MEMBERSHIP_NOT_INVITED: "Este miembro todavía no tiene ninguna invitación que reenviar.",
   MEMBERSHIP_DISABLED: "Este miembro está suspendido, así que no se le puede invitar.",
@@ -260,6 +268,15 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     params?.maxRows
       ? `El archivo tiene más de ${params.maxRows} filas. Divídelo en varios archivos.`
       : "El archivo tiene demasiadas filas. Divídelo en varios archivos.",
+
+  // Creating or editing a community whose code or NIF another community
+  // already has (#232). params.field names which: `code` or `legalId`. A
+  // function template, so a missing or other value words both.
+  COMMUNITY_ALREADY_EXISTS: (params) => {
+    if (params?.field === "code") return "Ya hay otra comunidad con ese código.";
+    if (params?.field === "legalId") return "Ya hay otra comunidad con ese NIF.";
+    return "Ya hay otra comunidad con ese código o ese NIF.";
+  },
 };
 
 function interpolate(template: string, params?: Record<string, string>): string {

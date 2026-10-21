@@ -276,10 +276,6 @@ describe("SharingAgreementFilePanel", () => {
     it.each([
       ["PLANT_MISSING_REGULATORY_CODE", MISSING_CAU_MESSAGE],
       ["SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID", "La suma de los coeficientes del acuerdo no es válida."],
-      [
-        "SHARING_AGREEMENT_DUPLICATE_CUPS",
-        "Hay dos puntos de suministro con el mismo CUPS. Revisa los puntos de suministro de la comunidad.",
-      ],
     ])("words %s in Spanish and keeps the dialog open", async (code, message) => {
       mockGenerateMutateAsync.mockRejectedValue(refusal(code));
       const user = userEvent.setup();

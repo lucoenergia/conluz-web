@@ -224,7 +224,7 @@ describe("registering a member", () => {
     await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Ana García" });
     await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
 
-    expect(await within(dialog).findByText("Esta persona ya es miembro de la comunidad.")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Ya forma parte de esta comunidad.")).toBeInTheDocument();
     expect(within(dialog).getByLabelText(/^DNI\/NIE\/NIF/)).toHaveValue("12345678Z");
   });
 
