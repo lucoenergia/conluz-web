@@ -271,6 +271,12 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
           body: JSON.stringify(EMPTY_PRODUCTION),
         });
       }
+      // DELETE /supplies/{id} (#290). Derived like the read below: refused
+      // whenever the supply we serve does not report canDelete.
+      if (route.request().method() === "DELETE") {
+        if (refusal(fixedSupply.capabilities, "canDelete")) return refuse(route, "canDelete");
+        return route.fulfill({ status: 200, contentType: "application/json", body: "" });
+      }
       // Derived: the object we are about to hand over says whether its own
       // read is allowed. GET /supplies/{id} answers 404 rather than 403 for a
       // caller outside the supply's community, so that is what is mirrored.
