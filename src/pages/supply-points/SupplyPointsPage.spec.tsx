@@ -181,6 +181,49 @@ describe("SupplyPointsPage", () => {
    * the communities they administer -- so the active community still has to be
    * applied here.
    */
+  describe("UI-SUP-001 Eliminar punto de suministro on the card menu", () => {
+    const DELETE_ITEM = "Eliminar punto de suministro";
+
+    it("UI-SUP-001 is offered for a supply that reports canDelete", async () => {
+      setup({ supplies: [supply({ canEdit: true, canDelete: true })] });
+
+      await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
+
+      expect(screen.getByRole("menuitem", { name: DELETE_ITEM })).toBeInTheDocument();
+    });
+
+    it("UI-SUP-001 is not offered without canDelete, even with canEdit", async () => {
+      setup({ supplies: [supply({ canEdit: true, canDelete: false })] });
+
+      await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
+
+      expect(screen.getByRole("menuitem", { name: "Deshabilitar" })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: DELETE_ITEM })).not.toBeInTheDocument();
+    });
+
+    it("UI-SUP-001 is not offered by a backend that does not report canDelete", async () => {
+      const legacy = supply({ canEdit: true });
+      delete (legacy.capabilities as Partial<SupplyCapabilitiesResponse>).canDelete;
+      setup({ supplies: [legacy] });
+
+      await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
+
+      expect(screen.getByRole("menuitem", { name: "Deshabilitar" })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: DELETE_ITEM })).not.toBeInTheDocument();
+    });
+
+    // The menu now mounts for either answer, so each item must carry its own.
+    it("UI-SUP-001 offers a caller who may only delete nothing that needs canEdit", async () => {
+      setup({ supplies: [supply({ canDelete: true })] });
+
+      await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
+
+      expect(screen.getByRole("menuitem", { name: DELETE_ITEM })).toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: "Editar" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: "Deshabilitar" })).not.toBeInTheDocument();
+    });
+  });
+
   describe("one member's supplies, reached from the members screen", () => {
     const OTHER_COMMUNITY_ID = "community-b";
     const PERSON_ID = "person-1";
@@ -227,6 +270,22 @@ describe("SupplyPointsPage", () => {
       // The caller may read this one -- it is theirs to administer elsewhere --
       // but it does not belong under this community's heading.
       expect(screen.queryByRole("heading", { name: "Casa en otra comunidad" })).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ["reports canDelete", true],
+      ["does not report canDelete", false],
+    ])("UI-SUP-001 offers Eliminar punto de suministro on a member's supply only when it %s", async (_, canDelete) => {
+      setupPerson([
+        {
+          ...inCommunity("supply-a1", COMMUNITY_ID, "Casa en Sol Común"),
+          capabilities: buildSupplyCapabilities({ canRead: true, canEdit: true, canDelete }),
+        },
+      ]);
+
+      await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
+
+      expect(!!screen.queryByRole("menuitem", { name: "Eliminar punto de suministro" })).toBe(canDelete);
     });
 
     it("asks for nothing until the active community is known", () => {

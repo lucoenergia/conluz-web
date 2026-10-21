@@ -105,6 +105,7 @@
     "DeactivateOrReopenCoefficientConfirmationModal": "../groups/dialogs.md",
     "DeleteConfirmationModal": "../groups/dialogs.md",
     "DeleteSharingAgreementConfirmationModal": "../groups/dialogs.md",
+    "DeleteSupplyConfirmationModal": "../groups/dialogs.md",
     "DisableConfirmationModal": "../groups/dialogs.md",
     "EnableConfirmationModal": "../groups/dialogs.md",
     "PublishSharingAgreementConfirmationModal": "../groups/dialogs.md",
@@ -139,6 +140,10 @@
     "DeleteSharingAgreementConfirmationModal": {
       "cardMode": "single",
       "viewport": "720x440"
+    },
+    "DeleteSupplyConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x520"
     },
     "DeleteSuccessModal": {
       "cardMode": "single",
@@ -222,7 +227,7 @@
     },
     "DisplayMenu": {
       "cardMode": "single",
-      "viewport": "640x320"
+      "viewport": "640x360"
     },
     "GraphBar": {
       "cardMode": "column"

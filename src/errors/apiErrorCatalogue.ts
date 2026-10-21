@@ -113,6 +113,21 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // agreement's fault: the sentence sends the user to the plant.
   PLANT_MISSING_REGULATORY_CODE: MISSING_CAU_MESSAGE,
 
+  // Deleting a plant that holds the community's sharing history
+  // (lucoenergia/conluz#437; #290). A plant cannot be disabled, so neither
+  // offers a way round it, nor a retry.
+  PLANT_HAS_SHARING_AGREEMENTS:
+    "No puedes eliminar esta planta porque tiene acuerdos de reparto: guarda el historial de reparto de la comunidad y hay que conservarla.",
+  PLANT_HAS_PARTITION_COEFFICIENTS:
+    "No puedes eliminar esta planta porque tiene coeficientes de reparto: guarda el historial de reparto de la comunidad y hay que conservarla.",
+
+  // Deleting a supply that a plant or a sharing agreement still references
+  // (lucoenergia/conluz#412; #290). Disabling is what stops using it.
+  SUPPLY_HAS_PLANTS:
+    "No puedes eliminar este punto de suministro porque tiene una planta asociada. Si quieres dejar de usarlo, deshabilítalo con «Deshabilitar» en su menú de la lista de puntos de suministro.",
+  SUPPLY_HAS_PARTITION_COEFFICIENTS:
+    "No puedes eliminar este punto de suministro porque forma parte de un acuerdo de reparto. Si quieres dejar de usarlo, deshabilítalo con «Deshabilitar» en su menú de la lista de puntos de suministro.",
+
   // Coefficient date-lifecycle codes (activate/deactivate/close/reopen). See
   // the file-level doc comment above for why these use withOptionalCups
   // instead of a plain interpolated string.

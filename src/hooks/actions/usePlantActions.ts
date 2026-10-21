@@ -47,10 +47,18 @@ import { grant, type MaybeAction } from "./action";
  */
 export type HuaweiWriteResult = { ok: true } | { error: unknown };
 
+/**
+ * A plant deletion: success, or the refusal itself rather than a bare `false`.
+ * A plant that holds the community's sharing history is refused with a code of
+ * its own (lucoenergia/conluz#437), which the screen words apart from any
+ * other failure (#290).
+ */
+export type PlantDeleteResult = { ok: true } | { error: unknown };
+
 export interface PlantRowActions {
   actions: {
     edit: MaybeAction<[UpdatePlantBody], boolean>;
-    remove: MaybeAction<[], boolean>;
+    remove: MaybeAction<[], PlantDeleteResult>;
     configureHuawei: MaybeAction<[ConfigureHuaweiBody], HuaweiWriteResult>;
     enableHuawei: MaybeAction<[], HuaweiWriteResult>;
     disableHuawei: MaybeAction<[], HuaweiWriteResult>;
@@ -123,7 +131,7 @@ export function usePlantActions(): PlantActions {
           ),
           remove: grant(
             manage,
-            async () => {
+            async (): Promise<PlantDeleteResult> => {
               try {
                 await deleteMutation.mutateAsync({ plantId });
                 // Removed, not invalidated: the plant no longer exists, so an
@@ -132,9 +140,9 @@ export function usePlantActions(): PlantActions {
                 // useSharingAgreementMutations.
                 queryClient.removeQueries({ queryKey: getGetPlantByIdQueryKey(plantId) });
                 invalidateList();
-                return true;
-              } catch {
-                return false;
+                return { ok: true };
+              } catch (error) {
+                return { error };
               }
             },
             deleteMutation.isPending,

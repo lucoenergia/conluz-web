@@ -8,12 +8,20 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 interface DisplayMenuProps {
   disableSupplyPoint: () => void;
   enableSupplyPoint: () => void;
   supplyPointId: string;
   enabled: boolean;
+  /**
+   * Whether the caller may edit, enable and disable the supply (its canEdit).
+   * Without it, "Editar" and "Deshabilitar"/"Activar" are not offered.
+   */
+  canEdit?: boolean;
+  /** Opens the deletion's confirmation. Given only when the supply reports canDelete (#290). */
+  deleteSupplyPoint?: () => void;
 }
 
 export const DisplayMenu: FC<DisplayMenuProps> = ({
@@ -21,6 +29,8 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
   disableSupplyPoint,
   enableSupplyPoint,
   enabled,
+  canEdit = false,
+  deleteSupplyPoint,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 
@@ -44,6 +54,12 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
     event.preventDefault();
     handleCloseUserMenu();
     enableSupplyPoint();
+  };
+
+  const handleDeleteSupplyPoint = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    handleCloseUserMenu();
+    deleteSupplyPoint?.();
   };
 
   return (
@@ -73,17 +89,19 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
           </MenuItem>
 
           {/* Editar */}
-          <MenuItem component={Link} to={`/supply-points/${supplyPointId}/edit`} sx={{ textDecoration: "none", color: "inherit" }}>
-            <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
-              Editar
-            </Typography>
-          </MenuItem>
+          {canEdit && (
+            <MenuItem component={Link} to={`/supply-points/${supplyPointId}/edit`} sx={{ textDecoration: "none", color: "inherit" }}>
+              <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
+                Editar
+              </Typography>
+            </MenuItem>
+          )}
 
           <Divider sx={{ my: 1 }} />
 
           {/* Deshabilitar/Activar */}
-          {enabled ? (
+          {canEdit && (enabled ? (
             <MenuItem
               onClick={handleDisableSupplyPoint}
               sx={{ '&:hover': { backgroundColor: colors.background.errorFaint } }}
@@ -104,6 +122,19 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
               {/* eslint-disable-next-line no-restricted-syntax -- success-dark green; CSS keyword unavailable, no matching token */}
               <Typography variant="body2" sx={{ color: '#16a34a', fontWeight: 500, textAlign: 'left' }}>
                 Activar
+              </Typography>
+            </MenuItem>
+          ))}
+
+          {/* Eliminar punto de suministro: destructive, so last */}
+          {deleteSupplyPoint && (
+            <MenuItem
+              onClick={handleDeleteSupplyPoint}
+              sx={{ '&:hover': { backgroundColor: colors.background.errorFaint } }}
+            >
+              <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: colors.error.dark, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.error.dark, fontWeight: 500, textAlign: 'left' }}>
+                Eliminar punto de suministro
               </Typography>
             </MenuItem>
           )}

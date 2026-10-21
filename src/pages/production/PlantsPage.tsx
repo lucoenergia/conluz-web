@@ -15,6 +15,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { Link, useNavigate } from "react-router";
 import { useErrorDispatch } from "../../context/error.context";
+import { plantDeletionRefusalMessage } from "../../errors/plantErrors";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import { useActiveCommunity } from "../../context/community.context";
@@ -172,11 +173,10 @@ export const PlantsPage: FC = () => {
                   onDelete={
                     remove &&
                     (async () => {
-                      const deleted = await remove.run();
-                      if (!deleted) {
-                        errorDispatch("Ha habido un problema al eliminar la planta. Por favor inténtalo más tarde");
-                      }
-                      return deleted;
+                      const result = await remove.run();
+                      if ("ok" in result) return true;
+                      errorDispatch(plantDeletionRefusalMessage(result.error));
+                      return false;
                     })
                   }
                 />

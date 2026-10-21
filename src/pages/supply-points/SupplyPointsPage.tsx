@@ -24,6 +24,7 @@ import { useActiveCommunity } from "../../context/community.context";
 import { isSupplyOutsideActiveCommunity } from "./supplyCommunityScope";
 import { useCommunityActions, useSupplyActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 
 export const SupplyPointsPage: FC = () => {
   const theme = useTheme();
@@ -31,6 +32,10 @@ export const SupplyPointsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [showImportModal, setShowImportModal] = useState(false);
+  // The id, not the supply: the supply is resolved from the list on every
+  // render, so the dialog answers from the current read, and closes once a
+  // deleted supply has left it.
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
   const [searchParams] = useSearchParams();
@@ -249,7 +254,7 @@ export const SupplyPointsPage: FC = () => {
             renderCard={(item) => {
               // Destructured so TypeScript narrows them: an action the caller
               // was not given is undefined, and the card is handed nothing.
-              const { disable, enable, edit } = forSupply(item).actions;
+              const { disable, enable, edit, remove } = forSupply(item).actions;
               return (
                 <SupplyCard
                   id={item.id}
@@ -262,6 +267,7 @@ export const SupplyPointsPage: FC = () => {
                   canEdit={!!edit}
                   onDisable={disable && (() => disable.run())}
                   onEnable={enable && (() => enable.run())}
+                  onDeleteRequest={remove && (() => setDeleteTargetId(item.id))}
                 />
               );
             }}
@@ -313,6 +319,11 @@ export const SupplyPointsPage: FC = () => {
           importSupplies={communityActions.importSupplies}
         />
       )}
+
+      <SupplyDeletionDialog
+        supply={responseFromApi.find((supply) => supply.id === deleteTargetId)}
+        onClose={() => setDeleteTargetId(null)}
+      />
     </Box>
   );
 };

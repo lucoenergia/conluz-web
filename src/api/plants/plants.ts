@@ -218,19 +218,12 @@ export const useUpdatePlant = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- *     This endpoint enables the removal of a plant from the system by specifying the plant's unique
-    identifier within the endpoint path.
+ * Deletes the plant with its Huawei configuration.
+**Required: Community Admin of the plant's community.**
 
-    To utilize this endpoint, clients send a DELETE request with the targeted plant's ID, requiring
-    authentication for secure access.
-    **Required: Community Admin**
+A plant that a sharing agreement, in any status, or a partition coefficient references is not deleted: the request is answered 409 with `PLANT_HAS_SHARING_AGREEMENTS` or `PLANT_HAS_PARTITION_COEFFICIENTS`, and nothing is deleted. Such a plant holds the community's sharing history and must be kept; a plant cannot be disabled.
 
-    Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the
-    plant has been successfully removed.
-
-    In cases where the deletion process encounters errors, the server returns an appropriate error
-    status code, along with a descriptive error message to guide clients in diagnosing and addressing
-    the issue.
+The plant's production series are not deleted.
 
  * @summary Removes a plant by ID
  */

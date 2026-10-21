@@ -233,4 +233,68 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("edit-supply-page.png", await mainRegion(page));
   });
 
+  // Deleting a supply (#290). Each state below is asserted in Vitest first
+  // (SupplyPointsPage.spec.tsx, SupplyDetailPage.spec.tsx, SupplyDeletion.spec.tsx);
+  // these capture what only pixels show.
+
+  // Admitted: the card menu gained a destructive item, its icon and colour, and
+  // its height grew. A layout regression there is a pixel change.
+  test("supply card actions menu (community admin)", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto("/supply-points");
+    await expect(page.getByRole("heading", { name: "Casa Principal" })).toBeVisible();
+    await stabilizePage(page);
+
+    // Every card's menu button shares one accessible name, so the first is
+    // taken: the fixture lists the enabled supply first, and the menu proves it
+    // by offering "Deshabilitar" rather than "Activar".
+    await page.getByRole("button", { name: "Más acciones del punto de suministro" }).first().click();
+    await expect(page.getByRole("menuitem", { name: "Deshabilitar" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Eliminar punto de suministro" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page.getByRole("menu")).toHaveScreenshot("supply-card-actions-menu-admin.png", await hideAppBar(page));
+  });
+
+  // Admitted: a new destructive dialog whose layout (CUPS block, name, owner,
+  // consequence) has no other capture. Opened from the detail page, whose menu
+  // button names the supply uniquely; the dialog is the same from the list.
+  test("delete supply confirmation modal open", async ({ page }) => {
+    await freezeClock(page);
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await stabilizePage(page);
+
+    await page.getByRole("button", { name: "Más opciones del punto de suministro" }).click();
+    await page.getByRole("menuitem", { name: "Eliminar punto de suministro" }).click();
+    await expect(page.getByRole("heading", { name: /^Eliminar punto de suministro de / })).toBeVisible();
+    await expect(page.getByTestId("modal-panel").getByText("ES0021000000000000AA")).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("delete-supply-confirmation-modal.png", await hideAppBar(page));
+  });
+
+  // Admitted: the detail header gained a menu button beside the title for a
+  // caller who may delete, which moves the title's wrapping on a phone. The
+  // member capture above is the header without it.
+  test("supply detail page (community admin)", async ({ page }) => {
+    // The capture includes GraphFilter's date input, which defaults to today.
+    await freezeClock(page);
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expect(page.getByRole("button", { name: "Más opciones del punto de suministro" })).toBeVisible();
+    await stabilizePage(page);
+
+    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    await expect(page).toHaveScreenshot("supply-detail-admin.png", await mainRegion(page));
+  });
 });
