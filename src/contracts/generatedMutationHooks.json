@@ -133,7 +133,10 @@
         "useDisableUser",
         "useEnableUser",
         "useGrantPlatformAdmin",
+        "useInvitePlatformAdmin",
+        "useResendPlatformAdminInvitation",
         "useRevokePlatformAdmin",
+        "useRevokePlatformAdminInvitation",
         "useUpdateProfile",
         "useUpdateUser"
       ]

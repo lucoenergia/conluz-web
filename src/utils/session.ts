@@ -123,3 +123,34 @@ export function takeInvitationAccepted(): string | null {
   clearInvitationAccepted();
   return communityName;
 }
+
+/**
+ * An accepted platform-admin invitation (#288). The same two screens say so as
+ * for a community, under a key of its own, so the community's flag and its
+ * readers are untouched. It holds only "true": never the token, the code or a
+ * name.
+ */
+const PLATFORM_INVITATION_ACCEPTED_KEY = "platformInvitationAccepted";
+
+export const PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE =
+  "Ya eres administrador de la plataforma. Inicia sesión con tu nueva contraseña.";
+
+export const PLATFORM_INVITATION_ACCEPTED_MESSAGE = "Ya eres administrador de la plataforma.";
+
+export function markPlatformInvitationAccepted(): void {
+  window.sessionStorage.setItem(PLATFORM_INVITATION_ACCEPTED_KEY, "true");
+}
+
+export function peekPlatformInvitationAccepted(): boolean {
+  return window.sessionStorage.getItem(PLATFORM_INVITATION_ACCEPTED_KEY) === "true";
+}
+
+export function clearPlatformInvitationAccepted(): void {
+  window.sessionStorage.removeItem(PLATFORM_INVITATION_ACCEPTED_KEY);
+}
+
+export function takePlatformInvitationAccepted(): boolean {
+  const accepted = peekPlatformInvitationAccepted();
+  clearPlatformInvitationAccepted();
+  return accepted;
+}

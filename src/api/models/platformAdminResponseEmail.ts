@@ -7,6 +7,6 @@
  */
 
 /**
- * The email address of the platform admin's account. Null if there is none.
+ * The email address of the platform admin's account. Null if there is none. For a pending invitation, the address the invitation was sent to.
  */
 export type PlatformAdminResponseEmail = string | null;

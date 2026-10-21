@@ -38,6 +38,7 @@ import {
   FIXED_MEMBERSHIPS,
   FIXED_COMMUNITY_ADMINS,
   FIXED_PLATFORM_ADMINS,
+  FIXED_PLATFORM_ADMIN_CONFIRMATION_CODE,
   FIXED_DATADIS_CONFIG,
   FIXED_HUAWEI_CONFIG,
   FIXED_SHELLY_CONFIG,
@@ -851,6 +852,31 @@ export async function mockPlatformAdminsRoutes(
       refusal(capabilities ?? ({} as PlatformCapabilitiesResponse), "canListPlatformAdmins")
         ? refuse(route, "canListPlatformAdmins")
         : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(admins) }),
+  );
+  // Inviting (#288), refused as the served platform capabilities refuse it.
+  // The answer is a pending row with an active link and the fixed code.
+  await page.route(
+    (url) => /\/api\/v1\/platform-admins\/invite$/.test(url.pathname),
+    (route: Route) => {
+      if (refusal(capabilities ?? ({} as PlatformCapabilitiesResponse), "canInvitePlatformAdmins")) {
+        return refuse(route, "canInvitePlatformAdmins");
+      }
+      const body = route.request().postDataJSON() as { fullName: string; email: string };
+      const platformAdmin: PlatformAdminResponse = {
+        user: { id: "platform-admin-new" },
+        fullName: body.fullName,
+        email: body.email,
+        enabled: null,
+        revocable: null,
+        invitation: { invitedAt: "2026-07-01T09:00:00Z", expiresAt: "2026-07-08T09:00:00Z" },
+        capabilities: { canRevoke: true, canResendInvitation: true, canRevokeInvitation: true },
+      };
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ platformAdmin, confirmationCode: FIXED_PLATFORM_ADMIN_CONFIRMATION_CODE }),
+      });
+    },
   );
 }
 

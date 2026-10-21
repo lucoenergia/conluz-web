@@ -55,6 +55,11 @@ const REVIEWED: Record<string, Scope> = {
   "/api/v1/users": "global",
   // Platform administration: the platform admins, who belong to no community.
   "/api/v1/platform-admins": "global",
+  // Inviting a person to the role, and resending or revoking that invitation's
+  // link (#288): named by a user id under /platform-admins, never by a community.
+  "/api/v1/platform-admins/invite": "global",
+  "/api/v1/platform-admins/{userId}/invitation/resend": "global",
+  "/api/v1/platform-admins/{userId}/invitation/revoke": "global",
   "/api/v1/supplies/import": "community-query",
   "/api/v1/users/import": "community-query",
   // Acts on the caller and takes no user id, so it is user-scoped for the same
@@ -74,8 +79,8 @@ const REVIEWED: Record<string, Scope> = {
   // the forgotten-password flow.
   "/api/v1/invitations/inspect": "global",
   "/api/v1/invitations/accept": "global",
-  // Accepts one of the caller's own memberships: user-scoped like
-  // /api/v1/users/current/password.
+  // Accepts an invitation addressed to the caller -- a membership, or the
+  // platform-admin role (#288): user-scoped like /api/v1/users/current/password.
   "/api/v1/users/current/invitations/accept": "user",
 };
 

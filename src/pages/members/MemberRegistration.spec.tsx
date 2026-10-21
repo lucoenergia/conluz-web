@@ -258,7 +258,7 @@ describe("registering a member", () => {
   });
 
   it.each([
-    ["no DNI", { "Nombre completo": "Nuria Nueva" }, /^DNI\/NIE\/NIF/, "Escribe el DNI/NIE"],
+    ["no DNI", { "Nombre completo": "Nuria Nueva" }, /^DNI\/NIE\/NIF/, "Escribe el DNI/NIE/NIF"],
     ["no name", { "DNI/NIE/NIF": "12345678Z" }, /^Nombre completo/, "Escribe el nombre completo"],
     [
       "a number that is not an integer",

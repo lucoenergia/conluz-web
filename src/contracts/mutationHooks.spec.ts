@@ -127,7 +127,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   // ── Invitations ───────────────────────────────────────────────────────────
   useInspectInvitation: { ungated: "no session: the holder of an emailed invitation link may not have an account to sign in with yet, and the token is the only credential", hook: "useInvitationActions" },
   useAcceptInvitation: { ungated: "no session: it sets the account's first password, so nobody can be signed in as it, and the token is the only credential", hook: "useInvitationActions" },
-  useAcceptInvitationAsCurrentUser: { ungated: "open to any authenticated caller: it accepts one of the caller's own memberships, named by the token, and takes no id", hook: "useInvitationActions" },
+  useAcceptInvitationAsCurrentUser: { ungated: "open to any authenticated caller: it accepts an invitation addressed to the caller, named by the token, and takes no id", hook: "useInvitationActions" },
   useDeleteMembership: { scope: "membership", capability: "canDelete", hook: "useMembershipActions" },
   useUpdateMembershipRole: { scope: "membership", capability: "canUpdateRole", hook: "useMembershipActions" },
   useSetMembershipInvestment: { scope: "membership", capability: "canManageInvestment", hook: "useMembershipActions" },
@@ -281,12 +281,18 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useEnableUser: { scope: "user", capability: "canEnable" },
   // No screen sends it: the users pages are gone (#285). No action hook.
   useDisableUser: { scope: "user", capability: "canDisable" },
-  // No screen sends it: the users pages are gone (#285), and granting comes
-  // back with the platform-admin invitation. No action hook.
+  // No screen sends it: the users pages are gone (#285), and the role is now
+  // given by invitation, accepted with its confirmation code (#288). No action hook.
   useGrantPlatformAdmin: { scope: "user", capability: "canGrantPlatformAdmin" },
   // Read off the platform-admins row, not the user: GET /platform-admins
   // carries its own canRevoke (#285).
   useRevokePlatformAdmin: { scope: "platformAdmin", capability: "canRevoke", hook: "usePlatformAdminActions" },
+  // Inviting is a platform-wide decision, on the caller's platformCapabilities (#288).
+  useInvitePlatformAdmin: { scope: "platform", capability: "canInvitePlatformAdmins", hook: "usePlatformAdminActions" },
+  // Read off the platform-admins row (#288). Authorization only: true on every
+  // row, so the screen offers them on rows with an invitation alone.
+  useResendPlatformAdminInvitation: { scope: "platformAdmin", capability: "canResendInvitation", hook: "usePlatformAdminActions" },
+  useRevokePlatformAdminInvitation: { scope: "platformAdmin", capability: "canRevokeInvitation", hook: "usePlatformAdminActions" },
   useUpdateProfile: { ungated: "open to any authenticated caller: PUT /users/profile acts on the caller and takes no id" },
   useChangePassword: { ungated: "open to any authenticated caller: PUT /users/current/password acts on the caller and takes no id" },
 };

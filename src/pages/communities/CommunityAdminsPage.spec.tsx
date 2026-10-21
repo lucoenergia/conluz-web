@@ -345,7 +345,7 @@ describe("inviting an admin", () => {
   });
 
   it.each([
-    ["DNI/NIE/NIF", "Escribe el DNI/NIE"],
+    ["DNI/NIE/NIF", "Escribe el DNI/NIE/NIF"],
     ["Nombre completo", "Escribe el nombre completo"],
     ["Email de contacto", "Escribe el email de contacto"],
   ])("UI-ADM-003 requires the %s and sends nothing without it", async (missing, message) => {

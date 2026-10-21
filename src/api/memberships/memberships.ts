@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AcceptInvitationAsCurrentUserBody,
   AcceptInvitationBody,
   CommunityAdminResponse,
   CreateMembershipBody,
@@ -294,6 +295,15 @@ has already been accepted, or whose account has been disabled, is answered 400 w
 A caller who must change their password is answered 403 with the `USER_PASSWORD_CHANGE_REQUIRED`
 code before the token is looked at; the link stays usable once the password has been changed.
 
+A platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:
+the code whoever invited gives the person by another channel. A community invitation ignores it.
+On success the platform-admin role is granted, and, when the account had no email, the
+invitation's destination email becomes its email. A missing or wrong code is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the
+client address and against the invitation, and the link can be used again. The fifth missing or
+wrong code on one invitation revokes its link and is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again.
+
 Every unusable token counts against the client address, together with failed logins, password
 changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a
 Retry-After header until the 15 minutes that started with the first failure have passed.
@@ -302,7 +312,7 @@ Retry-After header until the 15 minutes that started with the first failure have
  * @summary Accepts an invitation of the logged-in user
  */
 export const acceptInvitationAsCurrentUser = (
-    invitationTokenBody: InvitationTokenBody,
+    acceptInvitationAsCurrentUserBody: AcceptInvitationAsCurrentUserBody,
  signal?: AbortSignal
 ) => {
       
@@ -310,7 +320,7 @@ export const acceptInvitationAsCurrentUser = (
       return customInstance<void>(
       {url: `/api/v1/users/current/invitations/accept`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: invitationTokenBody, signal
+      data: acceptInvitationAsCurrentUserBody, signal
     },
       );
     }
@@ -318,8 +328,8 @@ export const acceptInvitationAsCurrentUser = (
 
 
 export const getAcceptInvitationAsCurrentUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: InvitationTokenBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: InvitationTokenBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext> => {
 
 const mutationKey = ['acceptInvitationAsCurrentUser'];
 const {mutation: mutationOptions} = options ?
@@ -331,7 +341,7 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, {data: InvitationTokenBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, {data: AcceptInvitationAsCurrentUserBody}> = (props) => {
           const {data} = props ?? {};
 
           return  acceptInvitationAsCurrentUser(data,)
@@ -343,18 +353,18 @@ const {mutation: mutationOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type AcceptInvitationAsCurrentUserMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>>
-    export type AcceptInvitationAsCurrentUserMutationBody = InvitationTokenBody
+    export type AcceptInvitationAsCurrentUserMutationBody = AcceptInvitationAsCurrentUserBody
     export type AcceptInvitationAsCurrentUserMutationError = ErrorType<RestError>
 
     /**
  * @summary Accepts an invitation of the logged-in user
  */
 export const useAcceptInvitationAsCurrentUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: InvitationTokenBody}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>,
         TError,
-        {data: InvitationTokenBody},
+        {data: AcceptInvitationAsCurrentUserBody},
         TContext
       > => {
 
@@ -371,6 +381,13 @@ usable.
 When `loginRequired` is false, the account has no password: the client asks for a first password
 and accepts with `acceptInvitation`. When it is true, the account already has a password: the
 client asks the person to log in and accepts with `acceptInvitationAsCurrentUser`.
+
+`kind` tells what the invitation is for: `COMMUNITY`, a membership of the community in
+`community`; or `PLATFORM`, the platform-admin role, with `community` null. When
+`confirmationCodeRequired` is true, as it is for every `PLATFORM` invitation, the client also asks
+for the confirmation code that whoever invited gives the person by another channel, and sends it
+as `confirmationCode` when accepting. A platform-admin invitation whose account is disabled can be
+inspected and accepted too.
 
 A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
 has already been accepted, or whose account has been disabled, is answered 400 with the
@@ -464,6 +481,20 @@ the token can be used again.
 A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
 has already been accepted, or whose account has been disabled, is answered 400 with the
 `MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.
+
+A platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:
+the code whoever invited gives the person by another channel. A community invitation ignores it.
+On success the platform-admin role is granted as well, and, when the account had no email, the
+invitation's destination email becomes its email. A missing or wrong code is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the
+client address and against the invitation, and the link can be used again. The fifth missing or
+wrong code on one invitation revokes its link and is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again. The
+code is checked after the checks above, which neither count nor use it; for a platform-admin
+invitation, an account that already has a password is answered 409 with the
+`PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED` code instead. A platform-admin
+invitation whose account is disabled is accepted too: the role is granted, and the account still
+cannot log in.
 
 Every unusable token counts against the client address, together with failed logins, password
 changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a

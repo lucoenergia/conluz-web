@@ -79,7 +79,7 @@ export function validateRecord(values: MemberRecordValues): MemberRecordErrors {
 /** The record's rules, plus the personal ID, which a registration requires. */
 export function validateRegistration(values: RegistrationValues): MemberRecordErrors {
   const errors = validateRecord(values);
-  if (values.personalId.trim() === "") errors.personalId = "Escribe el DNI/NIE";
+  if (values.personalId.trim() === "") errors.personalId = "Escribe el DNI/NIE/NIF";
   return errors;
 }
 
@@ -93,7 +93,7 @@ export const EMPTY_ADMIN_INVITATION: AdminInvitationValues = {
 /** The invitation's rules: the personal ID, the name and a valid contact email. */
 export function validateAdminInvitation(values: AdminInvitationValues): MemberRecordErrors {
   const errors: MemberRecordErrors = {};
-  if (values.personalId.trim() === "") errors.personalId = "Escribe el DNI/NIE";
+  if (values.personalId.trim() === "") errors.personalId = "Escribe el DNI/NIE/NIF";
   if (values.fullName.trim() === "") errors.fullName = "Escribe el nombre completo";
   const email = values.contactEmail.trim();
   if (email === "") errors.contactEmail = "Escribe el email de contacto";
@@ -177,9 +177,9 @@ export function refusalOf(error: unknown): MemberRecordRefusal {
 /**
  * A personal ID the backend refused as no valid DNI, NIE or NIF
  * (lucoenergia/conluz#398), on the field it is about. Shared by the member
- * registration and the admin invitation, which both ask for it (#276).
+ * registration and the admin invitations, which all ask for it (#276, #288).
  */
-function personalIdRefusalOf(error: unknown): MemberRecordRefusal | undefined {
+export function personalIdRefusalOf(error: unknown): MemberRecordRefusal | undefined {
   if (getFirstApiErrorCode(error) !== "USER_PERSONAL_ID_INVALID") return undefined;
   return {
     field: "personalId",

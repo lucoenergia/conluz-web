@@ -15,6 +15,18 @@ describe("classifyInvitationError (#274)", () => {
     });
   });
 
+  it("reads the platform-admin invitation's codes (#288)", () => {
+    expect(classifyInvitationError(apiError(400, { code: "PLATFORM_ADMIN_INVITATION_CODE_INVALID" }))).toEqual({
+      kind: "codeInvalid",
+    });
+    expect(
+      classifyInvitationError(apiError(400, { code: "PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED" })),
+    ).toEqual({ kind: "codeExhausted" });
+    expect(classifyInvitationError(apiError(409, { code: "PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED" }))).toEqual({
+      kind: "loginRequired",
+    });
+  });
+
   it("reads a refused password with its rule, or without one", () => {
     expect(
       classifyInvitationError(apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "TOO_SHORT" } })),

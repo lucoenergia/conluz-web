@@ -8,7 +8,9 @@
  * main landmark and no app bar, so the page is the content.
  *
  * Each state's behaviour is asserted in src/pages/auth/AcceptInvitation.spec.tsx;
- * what these add is how each one looks.
+ * what these add is how each one looks. A platform-admin invitation (#288)
+ * has its own heading and a code field on each path, a layout of its own
+ * asserted in src/pages/auth/AcceptInvitation.platform.spec.tsx.
  */
 
 import type { Page } from "@playwright/test";
@@ -34,8 +36,22 @@ const FULL_PAGE = { fullPage: true, maxDiffPixels: LAYOUT_MAX_DIFF_PIXELS };
 const COMMUNITY_HEADING = "Únete a Sol de Lavapiés";
 
 function inspection(loginRequired: boolean) {
-  return { community: { id: "community-invited", name: "Sol de Lavapiés" }, loginRequired };
+  return {
+    kind: "COMMUNITY",
+    community: { id: "community-invited", name: "Sol de Lavapiés" },
+    loginRequired,
+    confirmationCodeRequired: false,
+  };
 }
+
+const PLATFORM_HEADING = "Únete como administrador de la plataforma";
+
+const PLATFORM_INSPECTION = (loginRequired: boolean) => ({
+  kind: "PLATFORM",
+  community: null,
+  loginRequired,
+  confirmationCodeRequired: true,
+});
 
 /** Registered after mockAllApiRoutes when both are used: the later route wins. */
 async function answer(page: Page, path: string, status: number, body?: unknown) {
@@ -126,5 +142,43 @@ test.describe("Visual baselines — accept invitation", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("accept-invitation-password-change-required.png", FULL_PAGE);
+  });
+
+  // A platform-admin invitation (#288): the code field above the first
+  // password, a layout no community invitation has.
+  test("platform invitation, set-password form", async ({ page }) => {
+    await answer(page, INSPECT, 200, PLATFORM_INSPECTION(false));
+    await page.goto(INVITATION_LINK);
+    await expect(page.getByRole("heading", { level: 1, name: PLATFORM_HEADING })).toBeVisible();
+    await expect(page.getByLabel("Código de confirmación", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Nueva contraseña", { exact: true })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("accept-invitation-platform-set-password.png", FULL_PAGE);
+  });
+
+  // The code field under the in-page login.
+  test("platform invitation, login form", async ({ page }) => {
+    await answer(page, INSPECT, 200, PLATFORM_INSPECTION(true));
+    await page.goto(INVITATION_LINK);
+    await expect(page.getByRole("heading", { level: 1, name: PLATFORM_HEADING })).toBeVisible();
+    await expect(page.getByLabel("DNI/NIF", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Código de confirmación", { exact: true })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("accept-invitation-platform-login.png", FULL_PAGE);
+  });
+
+  // The code field above the signed-in button.
+  test("platform invitation, accept button, signed in", async ({ page }) => {
+    await signIn(page, FIXED_MEMBER_USER);
+    await answer(page, INSPECT, 200, PLATFORM_INSPECTION(true));
+    await page.goto(INVITATION_LINK);
+    await expect(page.getByRole("heading", { level: 1, name: PLATFORM_HEADING })).toBeVisible();
+    await expect(page.getByText(FIXED_MEMBER_USER.fullName)).toBeVisible();
+    await expect(page.getByLabel("Código de confirmación", { exact: true })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("accept-invitation-platform-accept-button.png", FULL_PAGE);
   });
 });

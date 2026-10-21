@@ -19,6 +19,9 @@ import {
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RemoveModeratorIcon from "@mui/icons-material/RemoveModerator";
+import SendIcon from "@mui/icons-material/Send";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
@@ -33,7 +36,16 @@ import type { PlatformAdminResponse } from "../../api/models";
 import { usePlatformAdminActions } from "../../hooks/actions";
 import { usePlatformCapabilities } from "../../hooks/permissions";
 import { useErrorDispatch } from "../../context/error.context";
-import { revokePlatformAdminRefusal, revokePlatformAdminRefusalMessage } from "../../errors/platformAdminErrors";
+import {
+  platformInvitationWriteMessage,
+  revokePlatformAdminRefusal,
+  revokePlatformAdminRefusalMessage,
+} from "../../errors/platformAdminErrors";
+import { MembershipStatusCell, MembershipStatusChip } from "../members/MembershipStatusCell";
+import { invitationText } from "../members/membershipStatus";
+import { hasAnyOffer, isPendingInvitation, membershipStateOf, platformAdminRowOffer } from "./platformAdminStatus";
+import { PlatformInvitationActionDialog, type PlatformInvitationWriteKind } from "./PlatformInvitationActionDialog";
+import { InvitePlatformAdminDialog } from "./InvitePlatformAdminDialog";
 
 const EMPTY_MESSAGE = "No hay administradores de plataforma";
 const NOT_REVOCABLE_EXPLANATION = "La plataforma necesita al menos un administrador de plataforma habilitado.";
@@ -50,12 +62,33 @@ const StateChip: FC<{ admin: PlatformAdminResponse }> = ({ admin }) => (
 );
 
 /**
- * The platform admins, and revoking the role (#285).
+ * A holder's account state, or a pending invitation's state with its link's
+ * caption (#288). A pending row's `enabled` is null and never read: it says
+ * nothing about the account.
+ */
+const StateCell: FC<{ admin: PlatformAdminResponse }> = ({ admin }) => {
+  const invitation = membershipStateOf(admin);
+  return invitation ? <MembershipStatusCell membership={invitation} /> : <StateChip admin={admin} />;
+};
+
+const INVITATION_ITEMS: { kind: PlatformInvitationWriteKind; label: string; Icon: typeof SendIcon }[] = [
+  { kind: "resend", label: "Reenviar", Icon: SendIcon },
+  { kind: "revoke", label: "Revocar enlace", Icon: LinkOffIcon },
+];
+
+/**
+ * The platform admins, and revoking the role (#285); inviting a person to the
+ * role, and the pending invitations, resending them and revoking their links
+ * (#288).
  *
  * Read from GET /api/v1/platform-admins only: each row is the admin's own
- * account -- name, email and whether it is enabled -- and nothing about any
- * community or member. Granting the role is not here: it arrives with the
- * platform-admin invitation.
+ * account -- name, email and whether it is enabled -- or a pending invitation,
+ * with the name and email the inviter typed and its link's state; nothing
+ * about any community or member.
+ *
+ * What a row offers is decided by whether it has an `invitation`, and each
+ * action by its capability: the row capabilities are true on every row, so
+ * they cannot tell an invitation from a holder (platformAdminRowOffer).
  *
  * "Revocar rol" reads two answers off the row, and never one for the other:
  * `capabilities.canRevoke` says whether the caller may ever revoke this admin
@@ -76,19 +109,37 @@ export const PlatformAdminsPage: FC = () => {
     error,
   } = useGetPlatformAdmins({ query: { enabled: mayList.state === "allowed" } });
 
-  const { forPlatformAdmin } = usePlatformAdminActions();
+  const { invite, forPlatformAdmin } = usePlatformAdminActions();
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteCodeShown, setInviteCodeShown] = useState(false);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   // The user id, not the row: a revoke refetches the list, and the row's
   // `revocable` decides whether its item is enabled, so it is resolved afresh.
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+  // The invitation write being confirmed, with the name it was opened for: a
+  // resend's code must stay on screen even if the refetch that follows it
+  // changes or removes the row.
+  const [invitationDialog, setInvitationDialog] = useState<{
+    kind: PlatformInvitationWriteKind;
+    fullName: string;
+  } | null>(null);
+  const [codeShown, setCodeShown] = useState(false);
 
   const selectedAdmin = selectedUserId ? (admins.find((admin) => admin.user.id === selectedUserId) ?? null) : null;
-  const selectedRevoke = selectedAdmin ? forPlatformAdmin(selectedAdmin).actions.revoke : undefined;
+  const offerOf = (admin: PlatformAdminResponse) => platformAdminRowOffer(admin, forPlatformAdmin(admin).actions);
+  const selectedOffer = selectedAdmin ? offerOf(selectedAdmin) : {};
+  const selectedRevoke = selectedOffer.revokeRole;
+  const selectedInvitationAction =
+    invitationDialog?.kind === "resend"
+      ? selectedOffer.resend
+      : invitationDialog?.kind === "revoke"
+        ? selectedOffer.revokeLink
+        : undefined;
 
   // No permitted action means no menu at all.
-  const hasRowActions = (admin: PlatformAdminResponse) => !!forPlatformAdmin(admin).actions.revoke;
+  const hasRowActions = (admin: PlatformAdminResponse) => hasAnyOffer(offerOf(admin));
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, admin: PlatformAdminResponse) => {
     setAnchorEl(event.currentTarget);
@@ -105,7 +156,21 @@ export const PlatformAdminsPage: FC = () => {
     }
   };
 
-  const enabledCount = admins.filter((admin) => admin.enabled).length;
+  const closeInviteDialog = () => {
+    setInviteDialogOpen(false);
+    setInviteCodeShown(false);
+  };
+
+  const closeInvitationDialog = () => {
+    setInvitationDialog(null);
+    setCodeShown(false);
+  };
+
+  // A pending invitation is not a platform admin (ADR-0004): the counters
+  // count holders of the role, and the invitations apart.
+  const holderCount = admins.filter((admin) => !isPendingInvitation(admin)).length;
+  const pendingCount = admins.length - holderCount;
+  const enabledCount = admins.filter((admin) => admin.enabled === true).length;
 
   return (
     <Box
@@ -133,11 +198,36 @@ export const PlatformAdminsPage: FC = () => {
         icon={<AdminPanelSettingsIcon />}
         title="Administradores de plataforma"
         subtitle="Quién administra la plataforma"
-        keyFacts={[
-          { label: "Total", value: admins.length },
-          { label: "Habilitados", value: enabledCount },
-        ]}
+        keyFacts={
+          pendingCount > 0
+            ? [
+                { label: "Total", value: holderCount },
+                { label: "Habilitados", value: enabledCount },
+                { label: "Pendientes", value: pendingCount },
+              ]
+            : [
+                { label: "Total", value: holderCount },
+                { label: "Habilitados", value: enabledCount },
+              ]
+        }
       />
+
+      {invite && (
+        <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
+          <Paper elevation={0} sx={sxStyles.softPanel}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="contained"
+                startIcon={<PersonAddIcon />}
+                onClick={() => setInviteDialogOpen(true)}
+                sx={{ px: 3, py: 1.5 }}
+              >
+                Invitar administrador de plataforma
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      )}
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <Paper
@@ -158,7 +248,7 @@ export const PlatformAdminsPage: FC = () => {
             <>
               <ResultStatus
                 isLoading={isLoading}
-                count={admins.length}
+                count={holderCount}
                 noun={{ one: "administrador", other: "administradores" }}
                 emptyMessage={EMPTY_MESSAGE}
               />
@@ -196,7 +286,7 @@ export const PlatformAdminsPage: FC = () => {
                     {
                       key: "state",
                       header: "Estado",
-                      render: (admin) => <StateChip admin={admin} />,
+                      render: (admin) => <StateCell admin={admin} />,
                     },
                   ]}
                 />
@@ -208,26 +298,33 @@ export const PlatformAdminsPage: FC = () => {
                     label="Administradores de plataforma"
                     isLoading={isLoading}
                     emptyMessage={EMPTY_MESSAGE}
-                    items={admins.map((admin) => ({
-                      id: admin.user.id,
-                      avatar: (
-                        <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                          {initialOf(admin)}
-                        </Avatar>
-                      ),
-                      title: admin.fullName,
-                      status: <StateChip admin={admin} />,
-                      actions: hasRowActions(admin) ? (
-                        <IconButton
-                          aria-label={`Más acciones para ${admin.fullName}`}
-                          onClick={(event) => handleMenuOpen(event, admin)}
-                          sx={sxStyles.touchTarget}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      ) : undefined,
-                      fields: admin.email ? [{ label: "Email", value: admin.email }] : [],
-                    }))}
+                    items={admins.map((admin) => {
+                      const invitation = membershipStateOf(admin);
+                      const invitationCaption = invitation && invitationText(invitation);
+                      return {
+                        id: admin.user.id,
+                        avatar: (
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                            {initialOf(admin)}
+                          </Avatar>
+                        ),
+                        title: admin.fullName,
+                        status: invitation ? <MembershipStatusChip membership={invitation} /> : <StateChip admin={admin} />,
+                        actions: hasRowActions(admin) ? (
+                          <IconButton
+                            aria-label={`Más acciones para ${admin.fullName}`}
+                            onClick={(event) => handleMenuOpen(event, admin)}
+                            sx={sxStyles.touchTarget}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        ) : undefined,
+                        fields: [
+                          ...(admin.email ? [{ label: "Email", value: admin.email }] : []),
+                          ...(invitationCaption ? [{ label: "Invitación", value: invitationCaption }] : []),
+                        ],
+                      };
+                    })}
                   />
                 </Box>
               )}
@@ -237,6 +334,23 @@ export const PlatformAdminsPage: FC = () => {
       </Box>
 
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
+        {selectedAdmin &&
+          INVITATION_ITEMS.filter(({ kind }) => (kind === "resend" ? selectedOffer.resend : selectedOffer.revokeLink)).map(
+            ({ kind, label, Icon }) => (
+              <MenuItem
+                key={kind}
+                onClick={() => {
+                  handleMenuClose();
+                  setInvitationDialog({ kind, fullName: selectedAdmin.fullName });
+                }}
+              >
+                <ListItemIcon>
+                  <Icon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary={label} />
+              </MenuItem>
+            ),
+          )}
         {selectedAdmin && selectedRevoke && (
           <MenuItem
             disabled={!selectedAdmin.revocable}
@@ -286,6 +400,30 @@ export const PlatformAdminsPage: FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Mounted on open, so each opening starts empty; kept while it shows a
+          code, which only "Hecho" closes. */}
+      {inviteDialogOpen && (inviteCodeShown || invite) && (
+        <InvitePlatformAdminDialog
+          inviteAdmin={invite}
+          onCodeShown={() => setInviteCodeShown(true)}
+          onClose={closeInviteDialog}
+        />
+      )}
+
+      {/* Gated like the item that opens it, so a refetch that takes the action
+          away closes it -- except while it shows a code, which only "Hecho"
+          closes. */}
+      {invitationDialog && (codeShown || selectedInvitationAction) && (
+        <PlatformInvitationActionDialog
+          kind={invitationDialog.kind}
+          fullName={invitationDialog.fullName}
+          action={selectedInvitationAction}
+          onCodeShown={() => setCodeShown(true)}
+          onClose={closeInvitationDialog}
+          onRefused={(refusal) => errorDispatch(platformInvitationWriteMessage(refusal, invitationDialog.kind))}
+        />
+      )}
     </Box>
   );
 };
