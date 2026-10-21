@@ -151,7 +151,7 @@ describe("usePlantActions", () => {
     const removeQueries = vi.spyOn(queryClient, "removeQueries");
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-    await result.current.actions.remove?.run();
+    await expect(result.current.actions.remove?.run()).resolves.toEqual({ ok: true });
 
     expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetPlantByIdQueryKey(PLANT_ID) });
     expect(invalidateQueries).not.toHaveBeenCalledWith({
@@ -194,13 +194,16 @@ describe("usePlantActions", () => {
     });
   });
 
-  it("reports failure and leaves the cache alone", async () => {
-    mutateAsync.mockRejectedValue(new Error("boom"));
+  it("UI-PLT-008 hands back the refusal and leaves the cache alone", async () => {
+    const error = new Error("boom");
+    mutateAsync.mockRejectedValue(error);
     const { result, queryClient } = render(plantWith({ canManage: true }));
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+    const removeQueries = vi.spyOn(queryClient, "removeQueries");
 
-    await expect(result.current.actions.remove?.run()).resolves.toBe(false);
+    await expect(result.current.actions.remove?.run()).resolves.toEqual({ error });
     expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(removeQueries).not.toHaveBeenCalled();
   });
 
   describe("the Huawei switch's actions", () => {

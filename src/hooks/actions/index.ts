@@ -37,7 +37,7 @@ export {
   type MembershipRowActions,
   type MembershipWriteResult,
 } from "./useMembershipActions";
-export { usePlantActions, type HuaweiWriteResult } from "./usePlantActions";
+export { usePlantActions, type HuaweiWriteResult, type PlantDeleteResult } from "./usePlantActions";
 export {
   usePlatformAdminActions,
   type PlatformAdminActions,
@@ -61,4 +61,4 @@ export {
   type CoefficientActivationResult,
   type ReplaceCoefficientsResult,
 } from "./useSharingAgreementCoefficientActions";
-export { useSupplyActions } from "./useSupplyActions";
+export { useSupplyActions, type SupplyDeleteResult } from "./useSupplyActions";
