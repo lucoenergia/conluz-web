@@ -29,7 +29,7 @@ export interface SupplyCardProps {
   /**
    * Whether this caller may change the supply, from its own canEdit -- which by
    * its own documentation covers update, enable and disable together, so one
-   * flag decides the whole menu rather than three.
+   * flag decides those three items rather than three flags.
    *
    * Defaults to false: a card rendered without being told stays read-only.
    * The opposite default would make every new call site permissive until
@@ -38,6 +38,12 @@ export interface SupplyCardProps {
   canEdit?: boolean;
   onDisable?: (id: string) => Promise<boolean>;
   onEnable?: (id: string) => Promise<boolean>;
+  /**
+   * Asks to delete the supply. Given only when the supply reports canDelete
+   * (#290). The page owns the confirmation, not the card: a deleted card
+   * unmounts when the list refreshes, and would take its dialogs with it.
+   */
+  onDeleteRequest?: (id: string) => void;
 }
 
 export const SupplyCard: FC<SupplyCardProps> = ({
@@ -51,6 +57,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   canEdit = false,
   onDisable,
   onEnable,
+  onDeleteRequest,
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -149,13 +156,15 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                   with nothing in it or items that would be refused. The card
                   itself still navigates, so the chevron keeps that affordance
                   visible where the menu button used to be. */}
-              {canEdit ? (
+              {canEdit || onDeleteRequest ? (
                 <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
                   <DisplayMenu
                     supplyPointId={id}
                     disableSupplyPoint={() => setOpenDisableConfirmation(true)}
                     enableSupplyPoint={() => setOpenEnableConfirmation(true)}
                     enabled={enabled}
+                    canEdit={canEdit}
+                    deleteSupplyPoint={onDeleteRequest && (() => onDeleteRequest(id))}
                   />
                 </Box>
               ) : (

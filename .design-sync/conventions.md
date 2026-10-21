@@ -44,7 +44,8 @@ community context the dialogs read. There is no signed-in user, so community-sco
 - Lists: desktop `ListTable` + `RowActionsMenu`; row actions live **only** in the kebab menu. Mobile:
   `RecordList`. Card grids: `CardGrid` (pass `fadeTimeout={0}` for static mockups).
 - Any action that changes data opens a confirmation dialog (`ConfirmationModal`,
-  `DeleteConfirmationModal`, …); success is confirmed with the matching `*SuccessModal`.
+  `DeleteConfirmationModal`, …); success is confirmed with the matching `*SuccessModal`, or with a
+  toast when the item leaves the screen (deleting a supply: `DeleteSupplyConfirmationModal`).
 - Pages open with `DetailHeader` / `SupplyDetailHeader` / `PlantDetailHeader` and `BreadCrumb`;
   empty, loading and error states use `EmptyState`, the `Loading*` skeletons and `LoadErrorAlert`.
 - Components that take API records (`SharingAgreementCard`, `PlantDetailHeader`, the coefficient

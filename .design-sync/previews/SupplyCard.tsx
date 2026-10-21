@@ -43,6 +43,7 @@ export const Editable = () => (
       canEdit
       onDisable={ok}
       onEnable={ok}
+      onDeleteRequest={() => {}}
     />
   </Mui.Box>
 );
