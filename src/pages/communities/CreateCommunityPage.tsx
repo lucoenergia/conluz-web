@@ -51,13 +51,13 @@ export const CreateCommunityPage: FC = () => {
     // covers the render before the current user has arrived.
     if (!createCommunity) return;
 
-    const created = await createCommunity.run({
+    const result = await createCommunity.run({
       name: name.trim(),
       code: code.trim(),
       legalId: legalId.trim() || undefined,
       address: address.trim() || undefined,
     });
-    if (created) {
+    if ("ok" in result) {
       navigate("/communities");
     } else {
       errorDispatch("Ha habido un problema al crear la comunidad. Por favor, inténtalo más tarde.");

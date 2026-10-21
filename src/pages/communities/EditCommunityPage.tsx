@@ -65,14 +65,13 @@ export const EditCommunityPage: FC = () => {
     // render before the community itself has arrived.
     if (!update) return;
 
-    if (
-      await update.run({
-        name: currentName.trim(),
-        code: currentCode.trim(),
-        legalId: currentLegalId.trim() || undefined,
-        address: currentAddress.trim() || undefined,
-      })
-    ) {
+    const result = await update.run({
+      name: currentName.trim(),
+      code: currentCode.trim(),
+      legalId: currentLegalId.trim() || undefined,
+      address: currentAddress.trim() || undefined,
+    });
+    if ("ok" in result) {
       navigate("/communities");
     } else {
       errorDispatch("Ha habido un problema al editar la comunidad. Por favor, inténtalo más tarde.");

@@ -21,6 +21,7 @@ export { type Action, type MaybeAction, type ActionBundle, grant, ungated } from
 export {
   useCommunityActions,
   type CommunityAdminRowActions,
+  type CommunityWriteResult,
   type ConfigureDatadisResult,
   type DatadisToggleResult,
 } from "./useCommunityActions";
