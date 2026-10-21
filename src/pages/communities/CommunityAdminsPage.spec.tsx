@@ -378,6 +378,21 @@ describe("inviting an admin", () => {
     await waitFor(() => expect(adminReads(router)).toBeGreaterThan(readsBefore));
   });
 
+  it("UI-ERR-001 shows the catalogue's text for MEMBERSHIP_ALREADY_EXISTS, not the server's message", async () => {
+    const u = user();
+    serveAdminsPage(
+      { current: [ROSA] },
+      { invite: () => { throw restError(409, "MEMBERSHIP_ALREADY_EXISTS", { message: "TEST-SERVER-MESSAGE" }); } },
+    );
+    renderPage();
+    const dialog = await openForm(u);
+    await fill(u, FORM);
+    await u.click(screen.getByRole("button", { name: "Invitar" }));
+
+    expect(await within(dialog).findByText("Ya forma parte de esta comunidad.")).toBeInTheDocument();
+    expect(screen.queryByText("TEST-SERVER-MESSAGE")).not.toBeInTheDocument();
+  });
+
   it("UI-ADM-004 says invitations cannot be sent right now, and keeps what was typed", async () => {
     const u = user();
     serveAdminsPage({ current: [ROSA] }, { invite: () => { throw restError(503, "MEMBERSHIP_INVITATION_UNAVAILABLE"); } });

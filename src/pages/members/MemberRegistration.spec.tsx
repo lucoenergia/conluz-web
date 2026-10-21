@@ -228,6 +228,24 @@ describe("registering a member", () => {
     expect(within(dialog).getByLabelText(/^DNI\/NIE\/NIF/)).toHaveValue("12345678Z");
   });
 
+  it("UI-ERR-001 shows the catalogue's text for MEMBERSHIP_ALREADY_EXISTS, not the server's message", async () => {
+    const u = user();
+    serveMembersPage(mockCustomInstance, { current: [ANA] }, {
+      register: () => {
+        throw restError(409, "MEMBERSHIP_ALREADY_EXISTS");
+      },
+    });
+    await renderPage();
+
+    const dialog = await openRegistration(u);
+    await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Ana García" });
+    await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
+
+    expect(await within(dialog).findByText("Ya forma parte de esta comunidad.")).toBeInTheDocument();
+    // restError's server message.
+    expect(screen.queryByText("refused")).not.toBeInTheDocument();
+  });
+
   it("UI-MBR-017 shows an invalid DNI/NIE/NIF on its field, and the other fields keep their values", async () => {
     const u = user();
     serveMembersPage(mockCustomInstance, { current: [ANA] }, {

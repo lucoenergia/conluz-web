@@ -287,6 +287,50 @@ describe("SharingAgreementFilePanel", () => {
       await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(message));
       expect(screen.getByRole("heading", { name: "Generar fichero" })).toBeInTheDocument();
     });
+
+    // #232: the refusals about the supplies' codes name every supply they list.
+    const refusalWith = (code: string, params: Record<string, string>) => ({
+      response: {
+        status: 409,
+        data: new Blob([JSON.stringify({ errors: [{ code, message: "TEST-SERVER-MESSAGE", params }] })], {
+          type: "application/json",
+        }),
+      },
+    });
+
+    it.each([
+      [
+        "SUPPLY_CUPS_NOT_NORMALIZABLE",
+        { codes: "ES0031 1234, ES0031ABC" },
+        "El código de estos suministros no es un CUPS válido: ES0031 1234, ES0031ABC. Un CUPS tiene 22 caracteres, o 20 si se completa con 0F, y no lleva espacios. Corrígelos y vuelve a intentarlo.",
+      ],
+      [
+        "SUPPLY_CUPS_COLLISION",
+        { cups: "ES0031405000000001AB0F", codes: "ES0031405000000001AB, ES0031405000000001AB0F" },
+        "Los suministros ES0031405000000001AB, ES0031405000000001AB0F tienen el mismo CUPS (ES0031405000000001AB0F). Corrígelos para que cada uno tenga uno distinto.",
+      ],
+    ])("UI-ERR-001 words %s with every supply it names, not the server's message", async (code, params, message) => {
+      mockGenerateMutateAsync.mockRejectedValue(refusalWith(code, params));
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole("button", { name: GENERATE }));
+      await user.click(await screen.findByRole("button", { name: "Generar" }));
+
+      await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(message));
+      expect(mockErrorDispatch).not.toHaveBeenCalledWith("TEST-SERVER-MESSAGE");
+    });
+
+    it("UI-ERR-003 shows the server's message for a code with no catalogue entry", async () => {
+      mockGenerateMutateAsync.mockRejectedValue(refusalWith("USER_ALREADY_EXISTS", {}));
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole("button", { name: GENERATE }));
+      await user.click(await screen.findByRole("button", { name: "Generar" }));
+
+      await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith("TEST-SERVER-MESSAGE"));
+    });
   });
 
   // AC9 — importing authors coefficients, so it lives in the split section now.

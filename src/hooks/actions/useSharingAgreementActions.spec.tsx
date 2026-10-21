@@ -3,6 +3,7 @@ import { MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
 import { waitFor } from "@testing-library/react";
 import { createTestQueryClient, renderHookWithProviders } from "../../test/renderWithProviders";
 import { mutation } from "../../test/queryState";
+import { apiError } from "../../test/apiError";
 import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import { useSharingAgreementActions } from "./useSharingAgreementActions";
 import type { SharingAgreementResponse } from "../../api/models";
@@ -313,6 +314,26 @@ describe("useSharingAgreementActions", () => {
 
       expect(outcome).toEqual({ success: false, groupedErrors: null });
       await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
+    });
+
+    it("UI-ERR-001 words an upload's SUPPLY_CUPS_COLLISION with every supply it names, not the server's message", async () => {
+      mockUploadMutateAsync.mockRejectedValue(
+        apiError(409, {
+          code: "SUPPLY_CUPS_COLLISION",
+          message: "TEST-SERVER-MESSAGE",
+          params: { cups: "ES0031405000000001AB0F", codes: "ES0031405000000001AB, ES0031405000000001AB0F" },
+        }),
+      );
+      const { result } = renderActions();
+
+      await result.current.actions.uploadFile!.run(file);
+
+      await waitFor(() =>
+        expect(mockErrorDispatch).toHaveBeenCalledWith(
+          "Los suministros ES0031405000000001AB, ES0031405000000001AB0F tienen el mismo CUPS (ES0031405000000001AB0F). Corrígelos para que cada uno tenga uno distinto.",
+        ),
+      );
+      expect(mockErrorDispatch).not.toHaveBeenCalledWith("TEST-SERVER-MESSAGE");
     });
 
     it("returns the generated blob for the caller to save", async () => {
