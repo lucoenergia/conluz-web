@@ -215,8 +215,13 @@ describe("useSupplyActions", () => {
 
       await result.current.actions.remove?.run();
 
-      // Removed, not invalidated: a refetch would 404 straight after the delete.
-      expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(SUPPLY_ID) });
+      // Never refetched: that could only answer 404. Dropped where nobody reads
+      // it; only marked stale where the detail page, which is leaving, does.
+      expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(SUPPLY_ID), type: "inactive" });
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: getGetSupplyQueryKey(SUPPLY_ID),
+        refetchType: "none",
+      });
       expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(SUPPLY_ID) });
       for (const queryKey of [
         getGetAllSuppliesQueryKey(COMMUNITY_ID),
@@ -250,7 +255,7 @@ describe("useSupplyActions", () => {
       const removeQueries = vi.spyOn(queryClient, "removeQueries");
 
       await expect(result.current.actions.remove?.run()).resolves.toEqual({ error });
-      expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(SUPPLY_ID) });
+      expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(SUPPLY_ID), type: "inactive" });
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllSuppliesQueryKey(COMMUNITY_ID) });
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetSuppliesByUserIdQueryKey(OWNER_ID) });
     });

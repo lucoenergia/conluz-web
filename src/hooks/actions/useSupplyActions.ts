@@ -90,10 +90,14 @@ export function useSupplyActions(): SupplyActions {
   };
 
   // Everything that names or counts a supply once it is gone. The detail is
-  // removed, not invalidated: a refetch would 404 straight after the delete.
+  // never refetched: that could only answer 404. Where nobody reads it, it is
+  // dropped. Where somebody does -- the detail page, which is leaving -- it is
+  // only marked stale: dropping a query its page still watches makes the page
+  // fetch it again before the navigation lands.
   const forgetSupply = (supplyId: string, ownerId: string | undefined) => {
     const communityId = activeCommunityId ?? "";
-    queryClient.removeQueries({ queryKey: getGetSupplyQueryKey(supplyId) });
+    queryClient.removeQueries({ queryKey: getGetSupplyQueryKey(supplyId), type: "inactive" });
+    queryClient.invalidateQueries({ queryKey: getGetSupplyQueryKey(supplyId), refetchType: "none" });
     invalidateLists(ownerId);
     // CommunityResponse.supplyPointCount, read by the communities page and the
     // platform overview.
