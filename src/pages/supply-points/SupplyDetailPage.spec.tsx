@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import type { SupplyCapabilitiesResponse } from "../../api/models";
@@ -108,5 +109,38 @@ describe("SupplyDetailPage", () => {
 
     expect(screen.getByText("Punto de suministro no encontrado")).toBeInTheDocument();
     expect(screen.queryByText("HISTORIAL")).not.toBeInTheDocument();
+  });
+
+  describe("UI-SUP-001 Eliminar suministro on the header menu", () => {
+    const MENU_BUTTON = "Más opciones del punto de suministro";
+
+    it("UI-SUP-001 is offered for a supply that reports canDelete", async () => {
+      setup({ capabilities: { canRead: true, canDelete: true } });
+
+      await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
+
+      expect(screen.getByRole("menuitem", { name: "Eliminar suministro" })).toBeInTheDocument();
+    });
+
+    // The only item, so without it there is no menu at all.
+    it("UI-SUP-001 is not offered without canDelete, even with canEdit", () => {
+      setup({ capabilities: { canRead: true, canEdit: true, canDelete: false } });
+
+      expect(screen.queryByRole("button", { name: MENU_BUTTON })).not.toBeInTheDocument();
+    });
+
+    it("UI-SUP-001 is not offered by a backend that does not report canDelete", () => {
+      const capabilities = buildSupplyCapabilities({ canRead: true, canEdit: true });
+      delete (capabilities as Partial<SupplyCapabilitiesResponse>).canDelete;
+      setup({
+        supply: buildSupply({
+          id: SUPPLY_ID,
+          community: { id: COMMUNITY_ID, name: "Sol Común" },
+          capabilities,
+        }),
+      });
+
+      expect(screen.queryByRole("button", { name: MENU_BUTTON })).not.toBeInTheDocument();
+    });
   });
 });
