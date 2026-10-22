@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "generate-client": "orval",
     "generate-mutation-hook-list": "node scripts/generate-mutation-hook-list.mjs",
+    "sync-api": "node scripts/sync-api.mjs",
     "test": "vitest",
     "test:visual": "playwright test",
     "test:visual:mobile": "playwright test --project=mobile",

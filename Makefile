@@ -4,11 +4,12 @@
 # testing skill, with nothing added: the npm scripts and the documented raw commands keep working
 # without `make`.
 #
-# Agents never run `visual-update`, `visual-delete-orphans` or `generate-client` (AGENTS.md).
+# Agents never run `visual-update`, `visual-delete-orphans`, `generate-client` or `sync-api` (AGENTS.md).
 
 SPEC    ?=
 PROJECT ?=
 FILES   ?=
+REF     ?=
 
 PROJECT_FLAG := $(if $(PROJECT),--project=$(PROJECT),)
 
@@ -21,7 +22,7 @@ VISUAL_ORPHANS = perl -0777 -e 'my %used; for my $$file (@ARGV) { open my $$fh, 
 
 .PHONY: help install dev build lint typecheck test test-watch test-related check \
         visual visual-failed visual-exact visual-names visual-get-orphans visual-delete-orphans \
-        visual-update mutation-hook-list generate-client
+        visual-update mutation-hook-list generate-client sync-api
 
 help:
 	@echo "conluz-web common commands"
@@ -49,6 +50,7 @@ help:
 	@echo "  make visual-update [SPEC=…] [PROJECT=…]  Regenerate changed and missing baselines"
 	@echo "  make visual-delete-orphans       git rm the baselines visual-get-orphans lists"
 	@echo "  make generate-client             Regenerate src/api/ from api-docs.json"
+	@echo "  make sync-api [REF=<tag|branch|sha>]  Download api-docs.json from conluz (default main), regenerate src/api/"
 
 install:
 	npm ci
@@ -107,3 +109,6 @@ visual-update:
 
 generate-client:
 	npm run generate-client
+
+sync-api:
+	npm run sync-api$(if $(REF), -- --ref $(REF),)
