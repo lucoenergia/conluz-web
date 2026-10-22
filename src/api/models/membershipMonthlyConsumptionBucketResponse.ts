@@ -14,13 +14,13 @@ export interface MembershipMonthlyConsumptionBucketResponse {
   /** Local time the month starts at in the community's time zone: always midnight. */
   time: string;
   /** Energy taken from the grid by every supply of the membership over the month. Does not include self-consumed energy. In kWh, rounded to 3 decimals. 0 when no supply stored a record. */
-  consumptionKWh: number;
+  gridImportKWh: number;
   /** Energy assigned to every supply of the membership and fed back to the grid over the month. In kWh, rounded to 3 decimals. */
-  surplusEnergyKWh: number;
-  /** Energy generated and assigned to every supply of the membership over the month, in kWh, rounded to 3 decimals. */
-  generationEnergyKWh: number;
+  surplusKWh: number;
   /** Energy produced by the community and consumed by every supply of the membership over the month, as reported by the distributor. In kWh, rounded to 3 decimals. */
-  selfConsumptionEnergyKWh: number;
+  selfConsumptionKWh: number;
+  /** Energy assigned to every supply of the membership over the month: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
+  assignedProductionKWh: number;
   /** Estimated amount the month's self-consumed energy saved across every supply that stored a record, in euros, rounded to cents. Null when no supply stored a record that month: a month with nothing stored is not a month that saved nothing. Unlike the per-supply series, which never reports null here. A supply that did store a record with no self-consumption is a measured zero and makes the amount 0.00, not null. Null exactly when tariffSource is null. */
   savingsEur: MembershipMonthlyConsumptionBucketResponseSavingsEur;
   /** Whether the prices behind savingsEur are the supplies' contracted tariffs or an estimate. A single estimated stretch of any supply makes the whole amount an estimate. Null exactly when savingsEur is null: with no amount there is nothing whose prices to describe. */

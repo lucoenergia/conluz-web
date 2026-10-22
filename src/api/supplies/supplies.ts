@@ -1466,7 +1466,7 @@ export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getS
 - Supply owners can only retrieve consumption data for their own supplies
 
 The consumption data includes:
-- Total consumption in kWh
+- Energy taken from the grid
 - Surplus energy (energy sent to grid)
 - Self-consumption energy
 - Obtain method (Real/Estimated)
@@ -1745,7 +1745,7 @@ export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof
 - Supply owners can only retrieve consumption data for their own supplies
 
 The consumption data includes:
-- Total consumption in kWh
+- Energy taken from the grid
 - Surplus energy (energy sent to grid)
 - Self-consumption energy
 - Obtain method (Real/Estimated)

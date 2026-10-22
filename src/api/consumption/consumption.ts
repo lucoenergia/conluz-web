@@ -872,7 +872,7 @@ The CSV includes:
 - cups: Supply point identifier
 - date: Date of the consumption record
 - time: Time of the consumption record
-- consumptionKWh: Total consumption in kWh
+- consumptionKWh: Energy taken from the grid
 - obtainMethod: Real or Estimated
 - surplusEnergyKWh: Energy sent to the grid in kWh
 - generationEnergyKWh: Generated energy in kWh

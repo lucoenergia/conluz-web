@@ -148,6 +148,7 @@ export * from './membershipEnergyMetricsSavingsResponseTariffSource';
 export * from './membershipHourlyProfileBucketResponse';
 export * from './membershipHourlyProfileBucketResponseAverageAssignedProductionKWh';
 export * from './membershipHourlyProfileBucketResponseAverageConsumptionKWh';
+export * from './membershipHourlyProfileBucketResponseAverageTotalConsumptionKWh';
 export * from './membershipHourlyProfileResponse';
 export * from './membershipMonthlyConsumptionBucketResponse';
 export * from './membershipMonthlyConsumptionBucketResponseSavingsEur';
