@@ -146,6 +146,7 @@ npm run preview      # Preview production build
 npm run lint         # Run ESLint
 npm test            # Run tests
 npm run generate-client  # Regenerate API client from OpenAPI spec
+npm run sync-api     # Download api-docs.json from conluz and regenerate the client
 ```
 
 The root `Makefile` wraps these scripts and the test commands; `make help` lists its targets.
@@ -211,16 +212,44 @@ The models and methods to interact with the backend API are auto-generated from 
 
 ### Updating API Definitions
 
-1. **Get the latest OpenAPI spec** from the backend:
-   - Download from Swagger UI of a running backend instance
-   - Save as `api-docs.json` in the project root
+`api-docs.json` is taken from [lucoenergia/conluz](https://github.com/lucoenergia/conluz), which
+commits the OpenAPI document at `src/main/resources/api/docs/api-docs.json`. Sync it and regenerate
+the client in one command:
 
-2. **Regenerate the API client**:
+```bash
+make sync-api                          # conluz main
+make sync-api REF=<tag|branch|sha>     # any other ref
+npm run sync-api -- --ref <ref>        # the same, without make
+```
+
+The script:
+
+1. Resolves the ref to a commit SHA with `git ls-remote`. A full 40-character SHA is used as is.
+   Abbreviated SHAs are not supported. A name that is both a branch and a tag is refused: pass the
+   full SHA instead.
+2. Downloads the document at that SHA, never at the symbolic ref, and checks that it is JSON with a
+   top-level `openapi` field.
+3. Writes it to `api-docs.json` byte for byte, through a temporary file and a rename.
+4. Writes the SHA to `.api-ref`.
+5. Runs `npm run generate-client`. Its Orval hook also rewrites
+   `src/contracts/generatedMutationHooks.json`, the list the mutation lint rule reads.
+
+`.api-ref` holds the conluz commit the committed `api-docs.json` was taken from. Commit
+`api-docs.json`, `.api-ref`, `src/api/` and `src/contracts/generatedMutationHooks.json` together.
+
+- Refs older than lucoenergia/conluz#464, which moved the document to its current path, are not
+  supported. The download returns HTTP 404 and the script says so.
+- If any step before the write fails, no file changes. If `generate-client` fails, `api-docs.json`
+  and `.api-ref` are already updated: fix the cause and run `make generate-client`.
+- `main` can be ahead of the deployed backend. Before deploying the web, check that the deployed
+  backend contains the commit in `.api-ref`.
+
+To regenerate the client from the `api-docs.json` already present, without syncing:
 ```bash
 npm run generate-client
 ```
 
-This will update all TypeScript interfaces, models, and API methods in the `src/api/` directory.
+This updates all TypeScript interfaces, models, and API methods in the `src/api/` directory.
 
 ## 🔑 Environment Variables
 

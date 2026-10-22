@@ -36,6 +36,15 @@ export default defineConfig({
           isolate: true,
         },
       },
+      {
+        // Specs of the Node tooling under scripts/ (#299).
+        extends: true,
+        test: {
+          name: "scripts",
+          include: ["scripts/**/*.spec.mjs"],
+          environment: "node",
+        },
+      },
     ],
   },
   envPrefix: "CONLUZ_",

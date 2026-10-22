@@ -52,3 +52,6 @@ npm-debug.log*
 /.design-sync/learnings
 /.design-sync/node_modules
 /.design-sync/pkg/types
+
+# Temporary file sync-api writes before renaming it to api-docs.json
+.api-docs.json.*.tmp
