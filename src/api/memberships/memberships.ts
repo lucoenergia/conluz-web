@@ -28,7 +28,6 @@ import type {
   AcceptInvitationAsCurrentUserBody,
   AcceptInvitationBody,
   CommunityAdminResponse,
-  CreateMembershipBody,
   GetMembershipEnergyMetricsParams,
   GetMembershipMonthlyConsumptionParams,
   ImportMembersBody,
@@ -559,171 +558,6 @@ export const useAcceptInvitation = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getAcceptInvitationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Returns the list of memberships for the specified community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
- * @summary Lists all memberships of a community.
- */
-export const getMemberships = (
-    communityId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MembershipResponse[]>(
-      {url: `/api/v1/communities/${communityId}/memberships`, method: 'GET', signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetMembershipsQueryKey = (communityId?: string,) => {
-    return [
-    `/api/v1/communities/${communityId}/memberships`
-    ] as const;
-    }
-
-    
-export const getGetMembershipsQueryOptions = <TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetMembershipsQueryKey(communityId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMemberships>>> = ({ signal }) => getMemberships(communityId, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetMembershipsQueryResult = NonNullable<Awaited<ReturnType<typeof getMemberships>>>
-export type GetMembershipsQueryError = ErrorType<RestError>
-
-
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
- communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMemberships>>,
-          TError,
-          Awaited<ReturnType<typeof getMemberships>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMemberships>>,
-          TError,
-          Awaited<ReturnType<typeof getMemberships>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Lists all memberships of a community.
- */
-
-export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetMembershipsQueryOptions(communityId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Adds a user as a member of the specified community with the given role.
-Requires COMMUNITY_ADMIN role in the community or PLATFORM_ADMIN.
-
-A user can hold at most one membership per community, so adding one who is
-already a member responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code. Use
-the role PATCH to change an existing member's role.
-
- * @summary Creates a new membership in a community.
- */
-export const createMembership = (
-    communityId: string,
-    createMembershipBody: CreateMembershipBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MembershipResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createMembershipBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateMembershipMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext> => {
-
-const mutationKey = ['createMembership'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMembership>>, {communityId: string;data: CreateMembershipBody}> = (props) => {
-          const {communityId,data} = props ?? {};
-
-          return  createMembership(communityId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof createMembership>>>
-    export type CreateMembershipMutationBody = CreateMembershipBody
-    export type CreateMembershipMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates a new membership in a community.
- */
-export const useCreateMembership = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createMembership>>,
-        TError,
-        {communityId: string;data: CreateMembershipBody},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateMembershipMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -1630,7 +1464,7 @@ export const useInviteCommunityAdmin = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Deletes the membership of the specified user in the community, with its member record and its invitation tokens. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Deletes the membership of the specified user in the community, with its member record and its invitation tokens. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
 
 The membership of a user who owns supplies in the community is not deleted: the request is answered 409 with `MEMBERSHIP_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`); to delete it, delete their supplies in the community first (`DELETE /api/v1/supplies/{supplyId}`). Supplies the user owns in other communities do not prevent it.
 
@@ -1696,7 +1530,7 @@ export const useDeleteMembership = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Changes the role of a user within a community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Changes the role of a user within a community. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
 
 Giving a membership the `COMMUNITY_ADMIN` role requires a contact email on its member record: without one it responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and the role is left as it was.
 
@@ -1765,6 +1599,99 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Returns the list of memberships for the specified community. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
+ * @summary Lists all memberships of a community.
+ */
+export const getMemberships = (
+    communityId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MembershipResponse[]>(
+      {url: `/api/v1/communities/${communityId}/memberships`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetMembershipsQueryKey = (communityId?: string,) => {
+    return [
+    `/api/v1/communities/${communityId}/memberships`
+    ] as const;
+    }
+
+    
+export const getGetMembershipsQueryOptions = <TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipsQueryKey(communityId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMemberships>>> = ({ signal }) => getMemberships(communityId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMembershipsQueryResult = NonNullable<Awaited<ReturnType<typeof getMemberships>>>
+export type GetMembershipsQueryError = ErrorType<RestError>
+
+
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
+ communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMemberships>>,
+          TError,
+          Awaited<ReturnType<typeof getMemberships>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMemberships>>,
+          TError,
+          Awaited<ReturnType<typeof getMemberships>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lists all memberships of a community.
+ */
+
+export function useGetMemberships<TData = Awaited<ReturnType<typeof getMemberships>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberships>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMembershipsQueryOptions(communityId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * How much of the member's recorded investment their share of the community's
 energy has recovered, and roughly how long the rest would take.
 
@@ -2235,9 +2162,21 @@ export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof 
 
 /**
  * For each month of the requested period, the energy and the estimated savings of
-**every** supply the member owns in this community, added up: each figure is the
-sum of what the per-supply monthly series reports for that supply and month.
-Supplies in the member's other communities are not counted.
+**every** supply the member owns in this community, added up. Each energy figure
+sums the unrounded per-supply monthly totals and is rounded once, to 3 decimals,
+on the result; the savings are likewise summed unrounded and rounded once, to
+cents. A figure can therefore differ from adding up the rounded figures of the
+per-supply monthly series. Supplies in the member's other communities are not
+counted.
+
+**Source and freshness:**
+Each supply's month is read from a monthly total pre-aggregated from its hourly
+records. That total is rewritten once a day for every month in the Datadis sync
+window (by default, the current month and the 12 before it), and on demand through
+`POST /api/v1/communities/{communityId}/consumption/datadis/sync/monthly`. Nothing
+else refreshes it: in particular, synchronising the hourly records does not. Until
+the next refresh, a month can therefore lag the energy metrics, which sum the
+hourly records when they are read.
 
 **Every month is emitted:**
 A bucket is returned for every month in range, in chronological order, whether or

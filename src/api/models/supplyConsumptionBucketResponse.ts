@@ -15,15 +15,15 @@ export interface SupplyConsumptionBucketResponse {
   date: string;
   /** Local time the bucket starts at, in the zone the application is configured with. */
   time: string;
-  /** Energy consumed from the grid over the bucket, in kWh. */
+  /** Energy taken from the grid by this supply over the bucket. Does not include self-consumed energy. In kWh, rounded to 3 decimals. */
   consumptionKWh: number;
   /** How the underlying records were obtained, as reported by Datadis. Null on a bucket with no stored record. */
   obtainMethod: SupplyConsumptionBucketResponseObtainMethod;
-  /** Energy exported to the grid over the bucket, in kWh. */
+  /** Energy assigned to this supply and fed back to the grid over the bucket. In kWh, rounded to 3 decimals. */
   surplusEnergyKWh: number;
-  /** Energy generated and assigned to the supply over the bucket, in kWh. */
+  /** Energy generated and assigned to the supply over the bucket, in kWh, rounded to 3 decimals. */
   generationEnergyKWh: number;
-  /** Energy generated and consumed on site over the bucket, in kWh. */
+  /** Energy produced by the community and consumed by this supply over the bucket, as reported by the distributor. In kWh, rounded to 3 decimals. */
   selfConsumptionEnergyKWh: number;
   /** Estimated amount the bucket's self-consumed energy saved, in euros, rounded to cents. A bucket with no self-consumption -- and a bucket with no stored record at all -- reports 0.00. */
   savingsEur: number;

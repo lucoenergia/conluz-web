@@ -7,14 +7,14 @@
  */
 
 export interface MembershipEnergyMetricsEnergyResponse {
-  /** Energy consumed, whatever its origin: gridImportKWh plus selfConsumptionKWh */
+  /** Energy consumed, whatever its origin: gridImportKWh plus selfConsumptionKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
   totalConsumptionKWh: number;
-  /** Energy taken from the grid. Does not include self-consumed energy. */
+  /** Energy taken from the grid by every supply of the membership over the period. Does not include self-consumed energy. In kWh, rounded to 3 decimals. */
   gridImportKWh: number;
-  /** Energy produced by the community and consumed by the membership's supplies, as reported by the distributor */
+  /** Energy produced by the community and consumed by every supply of the membership over the period, as reported by the distributor. In kWh, rounded to 3 decimals. */
   selfConsumptionKWh: number;
-  /** Energy assigned to the membership's supplies and fed back to the grid */
+  /** Energy assigned to every supply of the membership and fed back to the grid over the period. In kWh, rounded to 3 decimals. */
   surplusKWh: number;
-  /** Energy assigned to the membership's supplies: selfConsumptionKWh plus surplusKWh */
+  /** Energy assigned to every supply of the membership: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
   assignedProductionKWh: number;
 }

@@ -26,10 +26,6 @@ import type {
 
 import type {
   ChangePasswordBody,
-  CreateUserBody,
-  CreateUsersInBulkResponse,
-  CreateUsersWithFileBody,
-  CreateUsersWithFileParams,
   CurrentUserResponse,
   GetAllUsersParams,
   InvitePlatformAdminBody,
@@ -39,7 +35,6 @@ import type {
   RestError,
   SupplyResponse,
   UpdateProfileBody,
-  UpdateUserBody,
   UserResponse
 } from '.././models';
 
@@ -50,267 +45,13 @@ import type { ErrorType } from '.././custom-instance';
 
 
 /**
- * This endpoint retrieves detailed information about a specific user by their unique identifier.
-
-**Required: Platform Admin, Community Admin, or the user themselves**
-
-**What `memberships` contains:** platform admins see every membership, and a user reading
-themselves sees all of their own; otherwise only the memberships in communities the
-caller administers.
-
-Authentication is required using a Bearer token.
-
- * @summary Retrieves a single user by ID
- */
-export const getUserById = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<UserResponse>(
-      {url: `/api/v1/users/${userId}`, method: 'GET', signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetUserByIdQueryKey = (userId?: string,) => {
-    return [
-    `/api/v1/users/${userId}`
-    ] as const;
-    }
-
-    
-export const getGetUserByIdQueryOptions = <TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetUserByIdQueryKey(userId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserById>>> = ({ signal }) => getUserById(userId, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetUserByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUserById>>>
-export type GetUserByIdQueryError = ErrorType<RestError>
-
-
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getUserById>>,
-          TError,
-          Awaited<ReturnType<typeof getUserById>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getUserById>>,
-          TError,
-          Awaited<ReturnType<typeof getUserById>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves a single user by ID
- */
-
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetUserByIdQueryOptions(userId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint enables the update of user information by specifying the user's unique identifier in the endpoint path.
-
-Clients send a request containing the updated user details, and authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin. A Community Admin may use it only on their own account.**
-
-Community admins cannot change another user's account: the account belongs to the person, it is shared by every community they belong to, and its email receives the password recovery link (#415). A member's data in a community is edited on their member record (#416).
-
-A successful update results in an HTTP status code of 200, indicating that the user information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
-
-The `personalId` is normalised before it is stored or compared: surrounding and inner whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased. If another user already has the same normalised `personalId`, the server responds 409 with the `USER_ALREADY_EXISTS` code; the error does not repeat the value.
-
-If you don't provide some of the optional parameters, they will be considered as null value so their values will be updated with a null value.
- * @summary Updates user information
- */
-export const updateUser = (
-    userId: string,
-    updateUserBody: UpdateUserBody,
- ) => {
-      
-      
-      return customInstance<UserResponse>(
-      {url: `/api/v1/users/${userId}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: updateUserBody
-    },
-      );
-    }
-  
-
-
-export const getUpdateUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext> => {
-
-const mutationKey = ['updateUser'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUser>>, {userId: string;data: UpdateUserBody}> = (props) => {
-          const {userId,data} = props ?? {};
-
-          return  updateUser(userId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateUserMutationResult = NonNullable<Awaited<ReturnType<typeof updateUser>>>
-    export type UpdateUserMutationBody = UpdateUserBody
-    export type UpdateUserMutationError = ErrorType<RestError>
-
-    /**
- * @summary Updates user information
- */
-export const useUpdateUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateUser>>,
-        TError,
-        {userId: string;data: UpdateUserBody},
-        TContext
-      > => {
-
-      const mutationOptions = getUpdateUserMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- *     This endpoint enables the removal of a user from the system by specifying the user's unique identifier within the endpoint path.
-
-    To utilize this endpoint, clients send a DELETE request with the targeted user's ID, requiring authentication for secure access.
-    **Required: Platform Admin. You cannot delete your own account.**
-
-    Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To remove a member from one community, delete their membership instead (`DELETE /api/v1/communities/{communityId}/memberships/{userId}`); to suspend them, disable it (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`).
-
-    Deleting the account also deletes every membership of the user, in every community, with its member record, and every token of the user. Memberships the user invited are kept, with no inviter, and sharing agreements and distributor files the user created, edited or uploaded are kept, with no creator, editor or uploader.
-
-    The account of a user who owns supplies, in any community, is not deleted: the request is answered 409 with `USER_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the account instead (`POST /api/v1/users/{userId}/disable`); to delete it, delete their supplies first (`DELETE /api/v1/supplies/{supplyId}`). The last enabled platform admin is not deleted either (409 `USER_LAST_PLATFORM_ADMIN`).
-
-    Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the user has been successfully removed.
-
-    In cases where the deletion process encounters errors, the server returns an appropriate error status code, along with a descriptive error message to guide clients in diagnosing and addressing the issue.
-
- * @summary Removes a user by ID
- */
-export const deleteUser = (
-    userId: string,
- ) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/${userId}`, method: 'DELETE'
-    },
-      );
-    }
-  
-
-
-export const getDeleteUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['deleteUser'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  deleteUser(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUser>>>
-    
-    export type DeleteUserMutationError = ErrorType<RestError>
-
-    /**
- * @summary Removes a user by ID
- */
-export const useDeleteUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteUser>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDeleteUserMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * This endpoint lets the authenticated user change how the community reaches them: email,
 postal address and phone number. It always acts on the caller — there is no
 user identifier to supply — so it cannot be used to edit anybody else.
 
 Name, DNI and member number are not editable here: they identify the member to the
-community and to the distributor, so changing them is an administrative operation
-performed through `PUT /api/v1/users/{userId}`.
+community and to the distributor. A community keeps its own name and member number for
+the member on the membership's member record.
 
 Omitting `email`, `address` or `phoneNumber` clears the stored value. An empty or blank
 `email` also clears it; any other value must be a valid email address.
@@ -473,216 +214,6 @@ export const useChangePassword = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a
-comprehensive list of user details.
-
-**Required: Platform Admin or Community Admin**
-
-**What the listing contains:** only the users the caller may read one by one
-(`GET /api/v1/users/{userId}`). Platform admins see every user; anyone else sees themselves
-and the users with an enabled membership in a community they administer — not those of
-communities they merely belong to.
-
-**What each user's `memberships` contains:** platform admins see every membership, and
-every caller sees all of their own; otherwise only the memberships in communities the
-caller administers.
-
-Features:
-- Pagination support through page and limit parameters
-- Sorting options for customized result ordering
-
-Authentication:
-- Requires valid authentication token
-- Bearer token authorization
-
- * @summary Retrieves all registered users in the system with support for pagination, filtering, and sorting.
- */
-export const getAllUsers = (
-    params?: GetAllUsersParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PagedResultUserResponse>(
-      {url: `/api/v1/users`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetAllUsersQueryKey = (params?: GetAllUsersParams,) => {
-    return [
-    `/api/v1/users`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetAllUsersQueryOptions = <TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetAllUsersQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllUsers>>> = ({ signal }) => getAllUsers(params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetAllUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getAllUsers>>>
-export type GetAllUsersQueryError = ErrorType<RestError>
-
-
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
- params: undefined |  GetAllUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllUsers>>,
-          TError,
-          Awaited<ReturnType<typeof getAllUsers>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
- params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllUsers>>,
-          TError,
-          Awaited<ReturnType<typeof getAllUsers>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
- params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves all registered users in the system with support for pagination, filtering, and sorting.
- */
-
-export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
- params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetAllUsersQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint facilitates the creation of a new user within the system.
-
-This endpoint requires clients to send a request containing essential user details, including username, password, and any additional relevant information.
-
-Optionally, a communityId and communityRole can be specified to automatically create a membership
-for the new user in the given community. If communityId is not provided and the caller is a
-COMMUNITY_ADMIN, the community is derived from the caller's active context. If the caller is a
-PLATFORM_ADMIN and communityId is not provided, a user with no memberships is created
-(they can be attached later).
-
-The `personalId` is normalised before it is stored or compared: surrounding and inner whitespace
-(including the no-break space), dots and hyphens are removed and letters are upper-cased, so
-`x1234567-l` is stored as `X1234567L`. If a user with the same normalised `personalId` already
-exists, the server responds 409 with the `USER_ALREADY_EXISTS` code; the error does not repeat
-the value.
-
-The `password` must satisfy the password policy: between 15 and 64 characters, counting each
-Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is
-accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is
-never trimmed or transformed. A password that breaks the policy is answered 400 with the
-`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:
-`TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`. Because the password is chosen by the creator, the new
-user is flagged as having to change it (`mustChangePassword` on `GET /api/v1/users/current`).
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Platform Admin, or Community Admin of the target community**
-
-Upon successful user creation, the server responds with an HTTP status code of 200, along with comprehensive details about the newly created user, such as a unique identifier and username.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Creates a new user within the system.
- */
-export const createUser = (
-    createUserBody: CreateUserBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<UserResponse>(
-      {url: `/api/v1/users`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createUserBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext> => {
-
-const mutationKey = ['createUser'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUser>>, {data: CreateUserBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createUser(data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>
-    export type CreateUserMutationBody = CreateUserBody
-    export type CreateUserMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates a new user within the system.
- */
-export const useCreateUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createUser>>,
-        TError,
-        {data: CreateUserBody},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateUserMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * This endpoint removes platform-administrator privileges from the user identified in the endpoint path.
 
 Proper authentication, through an authentication token, is required for secure access.
@@ -757,84 +288,12 @@ export const useRevokePlatformAdmin = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint promotes the user identified in the endpoint path to platform administrator.
-
-Proper authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin.**
-
-The operation is idempotent: granting the flag to a user who is already a platform admin has no effect.
-
-Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user is now a platform administrator.
-
-In situations where the operation encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
- * @summary Grants platform-admin privileges to a user by ID
- */
-export const grantPlatformAdmin = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/${userId}/grant-platform-admin`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getGrantPlatformAdminMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['grantPlatformAdmin'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof grantPlatformAdmin>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  grantPlatformAdmin(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type GrantPlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof grantPlatformAdmin>>>
-    
-    export type GrantPlatformAdminMutationError = ErrorType<RestError>
-
-    /**
- * @summary Grants platform-admin privileges to a user by ID
- */
-export const useGrantPlatformAdmin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof grantPlatformAdmin>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getGrantPlatformAdminMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * This endpoint serves the purpose of enabling a previously disabled user within the system, with the user's unique identifier specified in the endpoint path.
 
 Proper authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin. You cannot enable your own account.**
+**Required: nobody may use it on another user's account, and you cannot enable your own account.** Nobody may enable another user's account: neither a Community Admin, whatever their role in the user's communities (#415), nor a Platform Admin (#446). A caller who cannot see the user is answered 404; one who can is answered 403.
 
-Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
+The account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
 
 Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been successfully enabled.
 
@@ -906,9 +365,9 @@ export const useEnableUser = <TError = ErrorType<RestError>,
  *     This endpoint is designed to disable a user within the system by specifying the user's unique identifier in the endpoint path.
 
     This operation requires proper authentication, through an authentication token, to ensure secure access.
-    **Required: Platform Admin. You cannot disable your own account.**
+    **Required: nobody may use it on another user's account, and you cannot disable your own account.** Nobody may disable another user's account: neither a Community Admin, whatever their role in the user's communities (#415), nor a Platform Admin (#446). A caller who cannot see the user is answered 404; one who can is answered 403.
 
-    Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
+    The account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
 
     Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been disabled.
 
@@ -974,91 +433,6 @@ export const useDisableUser = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getDisableUserMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint facilitates the creation of a set of users within the system by importing a CSV file.
-
-This endpoint requires clients to send a request containing a file with essential details for each user, including username, password, and any additional relevant information.
-
-The `personalId` of every row is normalised before it is stored or compared: surrounding and inner whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so `12.345.678-a` is stored as `12345678A`. A row whose normalised `personalId` already belongs to a user is not created and is reported in `errors`; the error message does not repeat the value.
-
-Every row is applied only to the community given by the `communityId` query parameter. A row whose `communityId` column is present and differs from the query parameter, or is not a valid UUID, is rejected and reported in `errors`; no user and no membership are created for it.
-
-The `password` of every row must satisfy the password policy: between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters, and there are no composition rules. A row whose password breaks the policy is not created and is reported in `errors` with a message naming the rule that failed; the other rows are still processed. Every user created by an import is flagged as having to change their password.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Platform Admin or Community Admin**
-
-Upon successful file processing, the server responds with an HTTP status code of 200, along with comprehensive details about the result of the bulk operation, including what users have been created or any potential error.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Creates users in bulk importing a CSV file.
- */
-export const createUsersWithFile = (
-    createUsersWithFileBody: CreateUsersWithFileBody,
-    params?: CreateUsersWithFileParams,
- signal?: AbortSignal
-) => {
-      
-      const formData = new FormData();
-formData.append(`file`, createUsersWithFileBody.file)
-
-      return customInstance<CreateUsersInBulkResponse>(
-      {url: `/api/v1/users/import`, method: 'POST',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateUsersWithFileMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext> => {
-
-const mutationKey = ['createUsersWithFile'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUsersWithFile>>, {data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}> = (props) => {
-          const {data,params} = props ?? {};
-
-          return  createUsersWithFile(data,params,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateUsersWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createUsersWithFile>>>
-    export type CreateUsersWithFileMutationBody = CreateUsersWithFileBody
-    export type CreateUsersWithFileMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates users in bulk importing a CSV file.
- */
-export const useCreateUsersWithFile = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createUsersWithFile>>,
-        TError,
-        {data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateUsersWithFileMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -1267,13 +641,304 @@ export const useInvitePlatformAdmin = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a
+comprehensive list of user details.
+
+**Required: Community Admin of at least one community.** Being a Platform Admin is not enough (#446): any other caller is answered 403.
+
+**What the listing contains:** only the users the caller may read one by one
+(`GET /api/v1/users/{userId}`). The caller sees themselves
+and the users with an enabled membership in a community they administer — not those of
+communities they merely belong to.
+
+**What each user's `memberships` contains:** every caller sees all of their own; otherwise only the memberships in communities the
+caller administers.
+
+Features:
+- Pagination support through page and limit parameters
+- Sorting options for customized result ordering
+
+Authentication:
+- Requires valid authentication token
+- Bearer token authorization
+
+ * @summary Retrieves all registered users in the system with support for pagination, filtering, and sorting.
+ */
+export const getAllUsers = (
+    params?: GetAllUsersParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PagedResultUserResponse>(
+      {url: `/api/v1/users`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetAllUsersQueryKey = (params?: GetAllUsersParams,) => {
+    return [
+    `/api/v1/users`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetAllUsersQueryOptions = <TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAllUsersQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllUsers>>> = ({ signal }) => getAllUsers(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAllUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getAllUsers>>>
+export type GetAllUsersQueryError = ErrorType<RestError>
+
+
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
+ params: undefined |  GetAllUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllUsers>>,
+          TError,
+          Awaited<ReturnType<typeof getAllUsers>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
+ params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllUsers>>,
+          TError,
+          Awaited<ReturnType<typeof getAllUsers>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
+ params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves all registered users in the system with support for pagination, filtering, and sorting.
+ */
+
+export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, TError = ErrorType<RestError>>(
+ params?: GetAllUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllUsers>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAllUsersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint retrieves detailed information about a specific user by their unique identifier.
+
+**Required: the user themselves, or a Community Admin of one of the user's communities.** Being a Platform Admin is not enough (#446): any other caller is answered 404.
+
+**What `memberships` contains:** a user reading themselves sees all of their own; otherwise only the memberships in communities the
+caller administers.
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves a single user by ID
+ */
+export const getUserById = (
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/${userId}`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetUserByIdQueryKey = (userId?: string,) => {
+    return [
+    `/api/v1/users/${userId}`
+    ] as const;
+    }
+
+    
+export const getGetUserByIdQueryOptions = <TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserByIdQueryKey(userId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserById>>> = ({ signal }) => getUserById(userId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUserById>>>
+export type GetUserByIdQueryError = ErrorType<RestError>
+
+
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserById>>,
+          TError,
+          Awaited<ReturnType<typeof getUserById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserById>>,
+          TError,
+          Awaited<ReturnType<typeof getUserById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves a single user by ID
+ */
+
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserByIdQueryOptions(userId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ *     This endpoint enables the removal of a user from the system by specifying the user's unique identifier within the endpoint path.
+
+    To utilize this endpoint, clients send a DELETE request with the targeted user's ID, requiring authentication for secure access.
+    **Required: nobody may use it on another user's account, and you cannot delete your own account.** Nobody may delete another user's account: neither a Community Admin, whatever their role in the user's communities (#415), nor a Platform Admin (#446). A caller who cannot see the user is answered 404; one who can is answered 403.
+
+    The account is shared by every community the person belongs to (#415). To remove a member from one community, delete their membership instead (`DELETE /api/v1/communities/{communityId}/memberships/{userId}`); to suspend them, disable it (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`).
+
+    Deleting the account also deletes every membership of the user, in every community, with its member record, and every token of the user. Memberships the user invited are kept, with no inviter, and sharing agreements and distributor files the user created, edited or uploaded are kept, with no creator, editor or uploader.
+
+    The account of a user who owns supplies, in any community, is not deleted: the request is answered 409 with `USER_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the account instead (`POST /api/v1/users/{userId}/disable`); to delete it, delete their supplies first (`DELETE /api/v1/supplies/{supplyId}`). The last enabled platform admin is not deleted either (409 `USER_LAST_PLATFORM_ADMIN`).
+
+    Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the user has been successfully removed.
+
+    In cases where the deletion process encounters errors, the server returns an appropriate error status code, along with a descriptive error message to guide clients in diagnosing and addressing the issue.
+
+ * @summary Removes a user by ID
+ */
+export const deleteUser = (
+    userId: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${userId}`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getDeleteUserMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['deleteUser'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  deleteUser(userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUser>>>
+    
+    export type DeleteUserMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Removes a user by ID
+ */
+export const useDeleteUser = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUser>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteUserMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint retrieves all supplies associated with a specific user by their unique identifier.
 
 **Authorization Rules:**
 - Community Admins (of the target user's community) can retrieve supplies for that user
 - A user can retrieve their own supplies
-- Being a Platform Admin is **not** sufficient: these are supplies, and a Platform Admin
-  who administers none of the user's communities cannot read them one by one either
+- Being a Platform Admin is **not** sufficient (#446): a Platform Admin who administers none of
+  the user's communities cannot see the user, and is answered 404
 
 **What the listing contains:** only the supplies the caller may read one by one
 (`GET /api/v1/supplies/{supplyId}`) — all of them for the user themselves, otherwise only

@@ -10,20 +10,16 @@
  * What the caller may do with this user.
  */
 export interface UserCapabilitiesResponse {
-  /** Whether the caller may read this user (GET /api/v1/users/{userId}). */
+  /** Whether the caller may read this user (GET /api/v1/users/{userId}): the user themselves, or an active community admin of one of their communities. A platform admin is no exception. */
   canRead: boolean;
-  /** Whether the caller may edit this user administratively (PUT /api/v1/users/{userId}). This is false for an ordinary member looking at their own record: changing one's own contact details goes through PUT /api/v1/users/profile, which any authenticated caller may use. False for a community admin on any other user: only the platform admin may change another user's account. */
-  canEdit: boolean;
-  /** Whether the caller may delete this user. Always false when the user is the caller: nobody may delete themselves, admins included. False for a community admin: only the platform admin may delete another user's account. */
+  /** Whether the caller may delete this user. Always false when the user is the caller: nobody may delete themselves, admins included. False on any other user, for every caller: nobody may delete another user's account. */
   canDelete: boolean;
-  /** Whether the caller may enable this user. Always false when the user is the caller. False for a community admin: only the platform admin may enable another user's account. */
+  /** Whether the caller may enable this user. Always false when the user is the caller. False on any other user, for every caller: nobody may enable another user's account. */
   canEnable: boolean;
-  /** Whether the caller may disable this user. Always false when the user is the caller. False for a community admin: only the platform admin may disable another user's account; a community admin disables the membership instead. */
+  /** Whether the caller may disable this user. Always false when the user is the caller. False on any other user, for every caller: nobody may disable another user's account; a community admin disables the membership instead. */
   canDisable: boolean;
-  /** Whether the caller may grant this user the platform-admin flag. */
-  canGrantPlatformAdmin: boolean;
   /** Whether the caller may revoke this user's platform-admin flag. Always false when the user is the caller: an admin may not strip their own flag. */
   canRevokePlatformAdmin: boolean;
-  /** Whether the caller may list this user's supplies (GET /api/v1/users/{userId}/supplies). Deliberately narrower than canRead: reading a user is not reading their supply data, so a platform admin who administers none of their communities may not. Predicts whether the call is allowed, not what it returns: the listing carries only the supplies the caller may read one by one — all of them for the user themselves, otherwise those in communities the caller administers. */
+  /** Whether the caller may list this user's supplies (GET /api/v1/users/{userId}/supplies). Deliberately narrower than canRead: reading a user is not reading their supply data, so a community admin may list only the supplies in the communities they administer. Predicts whether the call is allowed, not what it returns: the listing carries only the supplies the caller may read one by one — all of them for the user themselves, otherwise those in communities the caller administers. */
   canListSupplies: boolean;
 }
