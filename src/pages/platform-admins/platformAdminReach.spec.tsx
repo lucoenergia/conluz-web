@@ -45,9 +45,9 @@ const COMMUNITY_ID = "community-1";
 const COMMUNITY_NAME = "Comunidad Solar";
 
 /**
- * Everything the backend still reports to a platform admin, including the
- * capabilities the web client no longer reads (canListUsers, canCreateUsers):
- * the screens must stay away from users whatever the payload says.
+ * Everything the backend still reports to a platform admin, including a
+ * capability the web client no longer reads (canListUsers): the screens must
+ * stay away from users whatever the payload says.
  */
 const PLATFORM_ADMIN = buildCurrentUser({
   id: "u-paula",
@@ -59,7 +59,6 @@ const PLATFORM_ADMIN = buildCurrentUser({
     canCreateCommunity: true,
     canListPlatformAdmins: true,
     canListUsers: true,
-    canCreateUsers: true,
   }),
 });
 

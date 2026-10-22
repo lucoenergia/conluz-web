@@ -203,7 +203,7 @@ const ACTION_LAYER_REPLACEMENTS = {
   "src/api/sharing-agreements/sharing-agreements":
     "usePlantActions / useSharingAgreementActions / useSharingAgreementCoefficientActions",
   "src/api/supplies/supplies": "useSupplyActions / useCommunityActions",
-  "src/api/users/users": "usePlatformAdminActions / useProfileActions / useCommunityActions",
+  "src/api/users/users": "usePlatformAdminActions / useProfileActions",
 };
 
 const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) => ({

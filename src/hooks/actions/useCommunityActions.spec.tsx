@@ -12,7 +12,6 @@ import {
   useCreateSupply,
 } from "../../api/supplies/supplies";
 import { useCreatePlant } from "../../api/plants/plants";
-import { getGetAllUsersQueryKey, useCreateUser } from "../../api/users/users";
 import {
   getGetDatadisConfigQueryKey,
   getGetShellyConfigQueryKey,
@@ -34,13 +33,6 @@ const CREATE_SUPPLY_BODY = {
   address: "TEST-ADDRESS",
   addressRef: "TEST-ADDRESS-REF",
   communityId: "TEST-COMMUNITY-ID",
-};
-const CREATE_USER_BODY = {
-  personalId: "TEST-PERSONAL-ID",
-  number: 90001,
-  fullName: "TEST-FULL-NAME",
-  email: "test@example.invalid",
-  password: "TEST-PASSWORD",
 };
 const DATADIS_BODY = {
   username: "TEST-USERNAME",
@@ -64,10 +56,6 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useCreatePlant: vi.fn(),
-}));
-vi.mock(import("../../api/users/users"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useCreateUser: vi.fn(),
 }));
 vi.mock(import("../../api/consumption/consumption"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -97,7 +85,6 @@ beforeEach(() => {
   vi.mocked(useCreateSupply).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreateSuppliesWithFile).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreatePlant).mockReturnValue(mutation.idle({ mutateAsync }));
-  vi.mocked(useCreateUser).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync }));
   enableDatadis = vi.fn().mockResolvedValue(undefined);
@@ -162,24 +149,16 @@ describe("useCommunityActions", () => {
   });
 
   describe("the creations that have no resource of their own", () => {
-    // There is no canCreateSupplies, unlike the sibling canCreatePlants and
-    // canCreateUsers. canManage's own doc names "creating and importing its
-    // supplies", so it is the backend's stated umbrella rather than a guess --
-    // and it must not leak a grant to the flags that do exist.
+    // There is no canCreateSupplies, unlike the sibling canCreatePlants.
+    // canManage's own doc names "creating and importing its supplies", so it is
+    // the backend's stated umbrella rather than a guess -- and it must not leak
+    // a grant to the flag that does exist.
     it("gates creating and importing supplies on canManage, for want of a narrower flag", () => {
       const { result } = render(communityWith({ canManage: true }));
 
       expect(result.current.actions.createSupply).toBeDefined();
       expect(result.current.actions.importSupplies).toBeDefined();
       expect(result.current.actions.createPlant).toBeUndefined();
-      expect(result.current.actions.createUser).toBeUndefined();
-    });
-
-    it("gates creating users on canCreateUsers", () => {
-      const { result } = render(communityWith({ canCreateUsers: true }));
-
-      expect(result.current.actions.createUser).toBeDefined();
-      expect(result.current.actions.createSupply).toBeUndefined();
     });
 
     it("scopes a supply import to the community it was handed", async () => {
@@ -203,11 +182,6 @@ describe("useCommunityActions", () => {
       expect(invalidateQueries).toHaveBeenCalledWith({
         queryKey: getGetAllSuppliesQueryKey(COMMUNITY_ID),
       });
-
-      const users = render(communityWith({ canCreateUsers: true }));
-      const invalidateUsers = vi.spyOn(users.queryClient, "invalidateQueries");
-      await users.result.current.actions.createUser?.run(CREATE_USER_BODY);
-      expect(invalidateUsers).toHaveBeenCalledWith({ queryKey: getGetAllUsersQueryKey() });
     });
   });
 

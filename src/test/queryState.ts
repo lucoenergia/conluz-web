@@ -186,7 +186,7 @@ function mutationBase() {
 export const mutation = {
   /**
    * A mutation that has not run. Its type parameters are inferred from the
-   * hook being mocked: `vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync }))`.
+   * hook being mocked: `vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync }))`.
    */
   idle<TData = unknown, TError = unknown, TVariables = unknown, TContext = unknown>(
     fns: MutationFns<TData, TError, TVariables, TContext> = {},

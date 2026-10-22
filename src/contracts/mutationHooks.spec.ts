@@ -105,9 +105,6 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useSyncMonthlyDatadisConsumptions: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
 
   // ── Memberships ───────────────────────────────────────────────────────────
-  // No screen sends it: the communities page appointed admins with it until
-  // they were invited through the admin endpoints instead (#276). No action hook.
-  useCreateMembership: { scope: "community", capability: "canManageMemberships" },
   useRegisterMember: { scope: "community", capability: "canRegisterMembers", hook: "useMembershipActions" },
   // The import registers each row as useRegisterMember does, for the same callers (#284).
   useImportMembers: { scope: "community", capability: "canRegisterMembers", hook: "useMembershipActions" },
@@ -250,7 +247,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     scope: "community",
     capability: "canManage",
     hook: "useCommunityActions",
-    approximates: "there is no canCreateSupplies, unlike the sibling canCreatePlants and canCreateUsers; canManage's doc names 'creating and importing its supplies'",
+    approximates: "there is no canCreateSupplies, unlike the sibling canCreatePlants; canManage's doc names 'creating and importing its supplies'",
   },
   useCreateSuppliesWithFile: { scope: "community", capability: "canManage", hook: "useCommunityActions", approximates: "as useCreateSupply" },
   useUpdateSupply: { scope: "supply", capability: "canEdit", hook: "useSupplyActions" },
@@ -266,23 +263,12 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useSyncDatadisSupplies: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
 
   // ── Users ─────────────────────────────────────────────────────────────────
-  // The platform route /users/new is gone (#285). useCommunityActions still
-  // hands out a community's own creation, which no screen sends.
-  useCreateUser: { scope: "community", capability: "canCreateUsers", hook: "useCommunityActions" },
-  // No screen sends it: the members page imports through useImportMembers (#284). No action hook.
-  useCreateUsersWithFile: { scope: "community", capability: "canCreateUsers" },
-  // No screen sends it: the users pages are gone (#285). No action hook. The
-  // profile screen saves its own caller through PUT /users/profile instead.
-  useUpdateUser: { scope: "user", capability: "canEdit" },
   // No screen sends it: the users pages are gone (#285). No action hook.
   useDeleteUser: { scope: "user", capability: "canDelete" },
   // No screen sends it: the users pages are gone (#285). No action hook.
   useEnableUser: { scope: "user", capability: "canEnable" },
   // No screen sends it: the users pages are gone (#285). No action hook.
   useDisableUser: { scope: "user", capability: "canDisable" },
-  // No screen sends it: the users pages are gone (#285), and the role is now
-  // given by invitation, accepted with its confirmation code (#288). No action hook.
-  useGrantPlatformAdmin: { scope: "user", capability: "canGrantPlatformAdmin" },
   // Read off the platform-admins row, not the user: GET /platform-admins
   // carries its own canRevoke (#285).
   useRevokePlatformAdmin: { scope: "platformAdmin", capability: "canRevoke", hook: "usePlatformAdminActions" },
@@ -476,7 +462,7 @@ describe("who may perform each mutation", () => {
  */
 const TEST_HELPER_MUTATION_IMPORTS: Record<string, { hooks: string[]; reason: string }> = {
   "src/test/queryState.typecheck.ts": {
-    hooks: ["useCreateMembership"],
+    hooks: ["useUpdateMembershipRole"],
     reason: "types the mutation builders against a real generated hook; never called",
   },
   "src/components/SharingAgreementCoefficientSet/SharingAgreementCoefficientSet.testUtils.tsx": {

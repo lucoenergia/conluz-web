@@ -56,7 +56,6 @@ const NO_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canCreateCommunity: false,
   canListUsers: false,
   canAdministerPlatform: false,
-  canCreateUsers: false,
   canListPlatformAdmins: false,
   canInvitePlatformAdmins: false,
 };
@@ -65,7 +64,6 @@ const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canCreateCommunity: true,
   canListUsers: true,
   canAdministerPlatform: true,
-  canCreateUsers: true,
   canListPlatformAdmins: true,
   canInvitePlatformAdmins: true,
 };
@@ -77,11 +75,9 @@ const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
  */
 export const UNMANAGEABLE_USER_CAPABILITIES = {
   canRead: true,
-  canEdit: false,
   canDelete: false,
   canEnable: false,
   canDisable: false,
-  canGrantPlatformAdmin: false,
   canRevokePlatformAdmin: false,
   canListSupplies: false,
 };
@@ -89,11 +85,9 @@ export const UNMANAGEABLE_USER_CAPABILITIES = {
 /** What an ordinary caller may do with their own user record. */
 const OWN_USER_CAPABILITIES = {
   canRead: true,
-  canEdit: false,
   canDelete: false,
   canEnable: false,
   canDisable: false,
-  canGrantPlatformAdmin: false,
   canRevokePlatformAdmin: false,
   canListSupplies: true,
 };
@@ -101,18 +95,15 @@ const OWN_USER_CAPABILITIES = {
 /**
  * What a platform admin may do with somebody else's user record.
  *
- * Exported because the route mocks have to serve it conditionally:
- * UserAccessPolicy.canEdit allows a platform admin, or a community admin of one
- * of the target's communities, and nobody else -- so another user's record
- * cannot carry one fixed answer for every caller.
+ * Exported because the route mocks have to serve it conditionally: what a
+ * caller may do with another user's record depends on who is asking, so the
+ * record cannot carry one fixed answer for every caller.
  */
 export const MANAGED_USER_CAPABILITIES = {
   canRead: true,
-  canEdit: true,
   canDelete: true,
   canEnable: true,
   canDisable: true,
-  canGrantPlatformAdmin: true,
   canRevokePlatformAdmin: false,
   canListSupplies: false,
 };
@@ -131,7 +122,6 @@ export const MEMBER_COMMUNITY_CAPABILITIES = {
   canManageAdmins: false,
   canListPlants: true,
   canCreatePlants: false,
-  canCreateUsers: false,
   canReadProduction: true,
   canListSupplies: true,
 };
@@ -145,7 +135,6 @@ export const COMMUNITY_ADMIN_CAPABILITIES = {
   canRegisterMembers: true,
   canInviteMembers: true,
   canCreatePlants: true,
-  canCreateUsers: true,
 };
 
 /**

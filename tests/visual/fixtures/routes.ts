@@ -362,18 +362,13 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
           body: JSON.stringify(currentUser),
         });
       }
-      // GET /users/{uuid} -- somebody else. This used to answer with the caller's
-      // own record whatever id was asked for, which was harmless while nothing
-      // read the response's capabilities. It is not any more: /users/:userId/edit
-      // gates on that account's canEdit, and one's own record reports canEdit
-      // false by design, so serving it here would send a platform admin home
-      // from every user they tried to edit.
+      // GET /users/{uuid} -- somebody else, never the caller's own record: one's
+      // own record and another's carry different capabilities.
       //
       // And it carries what THIS caller may do with it, exactly as the supply and
-      // plant fixtures do. UserAccessPolicy.canEdit allows a platform admin, or a
-      // community admin of one of the target's communities; FIXED_USER_2 belongs
-      // to none, so nobody else gets it. One fixed answer here would let every
-      // caller through that guard.
+      // plant fixtures do. FIXED_USER_2 belongs to no community, so only a
+      // platform admin is served the managed answer. One fixed answer here would
+      // grant every caller the same.
       if (url.match(/\/api\/v1\/users\/[a-z0-9-]+$/)) {
         return route.fulfill({
           status: 200,

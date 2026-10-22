@@ -12,7 +12,7 @@ import { vi } from "vitest";
 import { AxiosError } from "axios";
 import { getAllUsers, useGetAllUsers } from "../api/users/users";
 // eslint-disable-next-line no-restricted-imports -- test infrastructure: imported only to type the mutation builders against a real generated hook, never called. Not numbered: this file is not migrating to the actions layer.
-import { useCreateMembership } from "../api/memberships/memberships";
+import { useUpdateMembershipRole } from "../api/memberships/memberships";
 import { buildUser } from "./fixtures";
 import { mutation, query } from "./queryState";
 
@@ -24,9 +24,9 @@ vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>({ it
 vi.mocked(useGetAllUsers).mockReturnValue(query.loading());
 vi.mocked(useGetAllUsers).mockReturnValue(query.disabled());
 vi.mocked(useGetAllUsers).mockReturnValue(query.error(new AxiosError("boom")));
-vi.mocked(useCreateMembership).mockReturnValue(mutation.idle({ mutateAsync: vi.fn() }));
-vi.mocked(useCreateMembership).mockReturnValue(
-  mutation.pending({ communityId: "c1", data: { userId: "u1", role: "COMMUNITY_MEMBER" } }),
+vi.mocked(useUpdateMembershipRole).mockReturnValue(mutation.idle({ mutateAsync: vi.fn() }));
+vi.mocked(useUpdateMembershipRole).mockReturnValue(
+  mutation.pending({ communityId: "c1", userId: "u1", data: { role: "COMMUNITY_MEMBER" } }),
 );
 
 // ── The impossible states and slips the harness exists to stop ──────────────
@@ -46,7 +46,7 @@ query.success<typeof getAllUsers>([buildUser()]);
 // @ts-expect-error -- the factory is typed against the real module, so a misspelled export fails
 vi.mock(import("../api/users/users"), () => ({ useGetAllUserz: vi.fn() }));
 
-vi.mocked(useCreateMembership).mockReturnValue(
+vi.mocked(useUpdateMembershipRole).mockReturnValue(
   // @ts-expect-error -- mutation variables are checked against the hook's signature
-  mutation.pending({ communityId: "c1", data: { userId: "u1", role: "OWNER" } }),
+  mutation.pending({ communityId: "c1", userId: "u1", data: { role: "OWNER" } }),
 );

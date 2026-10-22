@@ -164,9 +164,9 @@ describe("useSessionActions -- recovering a forgotten password (#233)", () => {
 
 describe("useProfileActions", () => {
   it("hands back the save for a caller with no capabilities, which is the whole point", () => {
-    // The screen this is for edits the signed-in user. Gating it on the
-    // administrative canEdit would hide the save button from every ordinary
-    // member, since that flag is false on their own record.
+    // The screen this is for edits the signed-in user, through an endpoint open
+    // to any authenticated caller. Gating it on any capability would hide the
+    // save button from the people who use it most.
     const { result } = renderHookWithProviders(() => useProfileActions());
 
     expect(result.current.actions.save).toBeDefined();

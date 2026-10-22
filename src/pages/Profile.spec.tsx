@@ -97,22 +97,20 @@ describe("ProfilePage role label", () => {
 /**
  * Saving the profile.
  *
- * The screen used to save through PUT /users/{userId}, whose canEdit the API
- * documents as false for an ordinary member looking at their own record. It
- * now goes through PUT /users/profile, which acts on the caller and takes no
- * id -- so these tests are mostly about who it does NOT ask.
+ * The screen saves through PUT /users/profile, which acts on the caller, takes
+ * no id and is open to any authenticated caller -- so these tests are mostly
+ * about who it does NOT ask. Every persona's record grants nothing, because
+ * nothing on this page may consult a capability.
  */
 describe("ProfilePage save", () => {
   const PERSONAS: [string, CurrentUserResponse][] = [
     [
-      // The release blocker: canEdit false on their own record, and they still
-      // save. Nothing on this page may consult it.
-      "a plain member who may not be edited administratively",
+      "a plain member",
       buildCurrentUser({
         ...mockCurrentUser,
         isPlatformAdmin: false,
         memberships: { "community-1": CommunityRole.COMMUNITY_MEMBER },
-        capabilities: buildUserCapabilities({ canEdit: false }),
+        capabilities: buildUserCapabilities(),
       }),
     ],
     [
@@ -121,7 +119,7 @@ describe("ProfilePage save", () => {
         ...mockCurrentUser,
         isPlatformAdmin: false,
         memberships: { "community-1": CommunityRole.COMMUNITY_ADMIN },
-        capabilities: buildUserCapabilities({ canEdit: false }),
+        capabilities: buildUserCapabilities(),
       }),
     ],
     [
@@ -130,7 +128,7 @@ describe("ProfilePage save", () => {
         ...mockCurrentUser,
         isPlatformAdmin: true,
         memberships: {},
-        capabilities: buildUserCapabilities({ canEdit: true }),
+        capabilities: buildUserCapabilities(),
       }),
     ],
   ];

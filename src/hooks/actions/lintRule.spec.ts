@@ -85,7 +85,7 @@ describe("the mutation guard rail", () => {
 
     it("holds the profile screen to the rule now that it has migrated", async () => {
       const errors = await restrictedImportErrors(
-        `import { useUpdateUser } from "../api/users/users";\nexport const x = useUpdateUser;\n`,
+        `import { useUpdateProfile } from "../api/users/users";\nexport const x = useUpdateProfile;\n`,
         "src/pages/Profile.tsx",
       );
 
