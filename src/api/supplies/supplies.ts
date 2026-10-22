@@ -53,13 +53,428 @@ import type {
   UpdateSupplyBody
 } from '.././models';
 
-import { customInstance } from '.././custom-instance';
-import type { ErrorType } from '.././custom-instance';
+import { customInstance } from '../../http/custom-instance';
+import type { ErrorType } from '../../http/custom-instance';
 
 
 
 
 /**
+ * Retrieves the supplies of the community identified by the path `communityId`, with pagination,
+filtering and sorting. Requires authentication through a Bearer Token.
+
+**Visibility:** Community admins of the community see all of its supplies.
+Regular members see only the supplies they own within the community. **Required: any member of the
+community.** Returns 404 if the community does not exist or the caller is not a member of it, and
+403 for a non-member platform admin.
+ * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
+ */
+export const getAllSupplies = (
+    communityId: string,
+    params?: GetAllSuppliesParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PagedResultSupplyResponse>(
+      {url: `/api/v1/communities/${communityId}/supplies`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetAllSuppliesQueryKey = (communityId?: string,
+    params?: GetAllSuppliesParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/supplies`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAllSuppliesQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllSupplies>>> = ({ signal }) => getAllSupplies(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAllSuppliesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllSupplies>>>
+export type GetAllSuppliesQueryError = ErrorType<RestError>
+
+
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: undefined |  GetAllSuppliesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllSupplies>>,
+          TError,
+          Awaited<ReturnType<typeof getAllSupplies>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllSupplies>>,
+          TError,
+          Awaited<ReturnType<typeof getAllSupplies>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
+ */
+
+export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAllSuppliesQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint enables users to synchronize the active supplies of the community identified by the
+path `communityId`, retrieving the information from datadis.
+
+Proper authentication, through an authentication token, is required for secure access to this
+endpoint.
+**Required: Community Admin of the community. Returns 404 if the community does not exist or the
+caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+A successful request returns an HTTP status code of 200.
+
+In cases of errors, the server responds with an appropriate error status code accompanied by a
+descriptive message to guide users in resolving any issues.
+
+ * @summary Synchronize supplies retrieving the information from datadis.
+ */
+export const syncDatadisSupplies = (
+    communityId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/supplies/datadis/sync`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext> => {
+
+const mutationKey = ['syncDatadisSupplies'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisSupplies>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
+
+          return  syncDatadisSupplies(communityId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncDatadisSuppliesMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisSupplies>>>
+    
+    export type SyncDatadisSuppliesMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Synchronize supplies retrieving the information from datadis.
+ */
+export const useSyncDatadisSupplies = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncDatadisSupplies>>,
+        TError,
+        {communityId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncDatadisSuppliesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint is designed to create a new supply within the system.
+
+To utilize this endpoint, a client sends a request containing essential details such as the supply's address, partition coefficient, and any relevant parameters.
+
+The supply's community is provided in the body via the required `communityId` field.
+
+Proper authentication, through authentication tokens, is required to access this endpoint.
+**Required: Community Admin of the community. Returns 400 if `communityId` is missing, 404 if the
+community does not exist or the caller is not a member of it, or 403 if the caller is a member but
+not one of its admins.**
+
+The owner identified by `personalId` must be a member of the supply's community. An owner who is
+not a member of it is reported as not found (404), exactly like a `personalId` that matches no user.
+
+Upon successful creation, the server responds with a status code of 200, providing comprehensive details about the newly created supply, including its unique identifier.
+
+In case of failure, the server returns an appropriate error status code along with a descriptive error message, aiding the client in diagnosing and addressing the issue. This endpoint plays a pivotal role in dynamically expanding the system's repertoire of energy supplies.
+
+ * @summary Creates a new supply within the system.
+ */
+export const createSupply = (
+    createSupplyBody: CreateSupplyBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyResponse>(
+      {url: `/api/v1/supplies`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createSupplyBody, signal
+    },
+      );
+    }
+  
+
+
+export const getCreateSupplyMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext> => {
+
+const mutationKey = ['createSupply'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSupply>>, {data: CreateSupplyBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSupply(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof createSupply>>>
+    export type CreateSupplyMutationBody = CreateSupplyBody
+    export type CreateSupplyMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Creates a new supply within the system.
+ */
+export const useCreateSupply = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createSupply>>,
+        TError,
+        {data: CreateSupplyBody},
+        TContext
+      > => {
+
+      const mutationOptions = getCreateSupplyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint facilitates the creation of a set of supplies within the system by importing a
+CSV file.
+
+This endpoint requires clients to send a request containing a file with essential details for each
+supply, including code, address, users and any additional relevant information.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required: Community Admin**
+
+Upon successful file processing, the server responds with an HTTP status code of 200, along with
+comprehensive details about the result of the bulk operation, including what users have been created
+or any potential error.
+
+In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
+
+ * @summary Creates supplies in bulk importing a CSV file.
+ */
+export const createSuppliesWithFile = (
+    createSuppliesWithFileBody: CreateSuppliesWithFileBody,
+    params?: CreateSuppliesWithFileParams,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+formData.append(`file`, createSuppliesWithFileBody.file)
+
+      return customInstance<CreationInBulkResponse>(
+      {url: `/api/v1/supplies/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      );
+    }
+  
+
+
+export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext> => {
+
+const mutationKey = ['createSuppliesWithFile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  createSuppliesWithFile(data,params,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSuppliesWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createSuppliesWithFile>>>
+    export type CreateSuppliesWithFileMutationBody = CreateSuppliesWithFileBody
+    export type CreateSuppliesWithFileMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Creates supplies in bulk importing a CSV file.
+ */
+export const useCreateSuppliesWithFile = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createSuppliesWithFile>>,
+        TError,
+        {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams},
+        TContext
+      > => {
+
+      const mutationOptions = getCreateSuppliesWithFileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Deletes the supply with its contract, distributor and Shelly details.
+**Required: Community Admin of the supply's community.** A platform admin who does not administer it is answered 404, as for any other access to a supply.
+
+A supply that a plant is attached to, or for which a sharing agreement holds partition coefficients, is not deleted: the request is answered 409 with `SUPPLY_HAS_PLANTS` or `SUPPLY_HAS_PARTITION_COEFFICIENTS`, and nothing is deleted. To stop using such a supply, disable it instead (`POST /api/v1/supplies/{supplyId}/disable`).
+
+The supply's consumption and production series are not deleted.
+
+ * @summary Removes a supply by ID
+ */
+export const deleteSupply = (
+    supplyId: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/supplies/${supplyId}`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getDeleteSupplyMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext> => {
+
+const mutationKey = ['deleteSupply'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSupply>>, {supplyId: string}> = (props) => {
+          const {supplyId} = props ?? {};
+
+          return  deleteSupply(supplyId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSupply>>>
+    
+    export type DeleteSupplyMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Removes a supply by ID
+ */
+export const useDeleteSupply = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSupply>>,
+        TError,
+        {supplyId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteSupplyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint retrieves a supply by its unique identifier.
 
 **Required: Community Admin of the supply's community, or the supply owner.**
@@ -227,1149 +642,60 @@ export const useUpdateSupply = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Deletes the supply with its contract, distributor and Shelly details.
-**Required: Community Admin of the supply's community.** A platform admin who does not administer it is answered 404, as for any other access to a supply.
-
-A supply that a plant is attached to, or for which a sharing agreement holds partition coefficients, is not deleted: the request is answered 409 with `SUPPLY_HAS_PLANTS` or `SUPPLY_HAS_PARTITION_COEFFICIENTS`, and nothing is deleted. To stop using such a supply, disable it instead (`POST /api/v1/supplies/{supplyId}/disable`).
-
-The supply's consumption and production series are not deleted.
-
- * @summary Removes a supply by ID
- */
-export const deleteSupply = (
-    supplyId: string,
- ) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/supplies/${supplyId}`, method: 'DELETE'
-    },
-      );
-    }
-  
-
-
-export const getDeleteSupplyMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext> => {
-
-const mutationKey = ['deleteSupply'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSupply>>, {supplyId: string}> = (props) => {
-          const {supplyId} = props ?? {};
-
-          return  deleteSupply(supplyId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSupply>>>
-    
-    export type DeleteSupplyMutationError = ErrorType<RestError>
-
-    /**
- * @summary Removes a supply by ID
- */
-export const useDeleteSupply = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupply>>, TError,{supplyId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteSupply>>,
-        TError,
-        {supplyId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDeleteSupplyMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint is designed to create a new supply within the system.
-
-To utilize this endpoint, a client sends a request containing essential details such as the supply's address, partition coefficient, and any relevant parameters.
-
-The supply's community is provided in the body via the required `communityId` field.
-
-Proper authentication, through authentication tokens, is required to access this endpoint.
-**Required: Community Admin of the community. Returns 400 if `communityId` is missing, 404 if the
-community does not exist or the caller is not a member of it, or 403 if the caller is a member but
-not one of its admins.**
-
-The owner identified by `personalId` must be a member of the supply's community. An owner who is
-not a member of it is reported as not found (404), exactly like a `personalId` that matches no user.
-
-Upon successful creation, the server responds with a status code of 200, providing comprehensive details about the newly created supply, including its unique identifier.
-
-In case of failure, the server returns an appropriate error status code along with a descriptive error message, aiding the client in diagnosing and addressing the issue. This endpoint plays a pivotal role in dynamically expanding the system's repertoire of energy supplies.
-
- * @summary Creates a new supply within the system.
- */
-export const createSupply = (
-    createSupplyBody: CreateSupplyBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<SupplyResponse>(
-      {url: `/api/v1/supplies`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createSupplyBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateSupplyMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext> => {
-
-const mutationKey = ['createSupply'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSupply>>, {data: CreateSupplyBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createSupply(data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof createSupply>>>
-    export type CreateSupplyMutationBody = CreateSupplyBody
-    export type CreateSupplyMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates a new supply within the system.
- */
-export const useCreateSupply = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSupply>>, TError,{data: CreateSupplyBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createSupply>>,
-        TError,
-        {data: CreateSupplyBody},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateSupplyMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint enables a supply by its unique identifier.
-
-Authentication via bearer token is required.
-Required: Community Admin
-
-The operation is idempotent: enabling an already enabled supply will not fail and will return the current state.
-
- * @summary Enables a supply by ID
- */
-export const enableSupply = (
-    supplyId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<SupplyResponse>(
-      {url: `/api/v1/supplies/${supplyId}/enable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getEnableSupplyMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext> => {
-
-const mutationKey = ['enableSupply'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableSupply>>, {supplyId: string}> = (props) => {
-          const {supplyId} = props ?? {};
-
-          return  enableSupply(supplyId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EnableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof enableSupply>>>
-    
-    export type EnableSupplyMutationError = ErrorType<RestError>
-
-    /**
- * @summary Enables a supply by ID
- */
-export const useEnableSupply = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof enableSupply>>,
-        TError,
-        {supplyId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getEnableSupplyMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint disables a supply by its unique identifier.
-
-Authentication via bearer token is required.
-Required: Community Admin
-
-The operation is idempotent: disabling an already disabled supply will not fail and will return the current state.
-
- * @summary Disables a supply by ID
- */
-export const disableSupply = (
-    supplyId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<SupplyResponse>(
-      {url: `/api/v1/supplies/${supplyId}/disable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getDisableSupplyMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext> => {
-
-const mutationKey = ['disableSupply'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableSupply>>, {supplyId: string}> = (props) => {
-          const {supplyId} = props ?? {};
-
-          return  disableSupply(supplyId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DisableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof disableSupply>>>
-    
-    export type DisableSupplyMutationError = ErrorType<RestError>
-
-    /**
- * @summary Disables a supply by ID
- */
-export const useDisableSupply = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disableSupply>>,
-        TError,
-        {supplyId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDisableSupplyMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint facilitates the creation of a set of supplies within the system by importing a
-CSV file.
-
-This endpoint requires clients to send a request containing a file with essential details for each
-supply, including code, address, users and any additional relevant information.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Community Admin**
-
-Upon successful file processing, the server responds with an HTTP status code of 200, along with
-comprehensive details about the result of the bulk operation, including what users have been created
-or any potential error.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Creates supplies in bulk importing a CSV file.
- */
-export const createSuppliesWithFile = (
-    createSuppliesWithFileBody: CreateSuppliesWithFileBody,
-    params?: CreateSuppliesWithFileParams,
- signal?: AbortSignal
-) => {
-      
-      const formData = new FormData();
-formData.append(`file`, createSuppliesWithFileBody.file)
-
-      return customInstance<CreationInBulkResponse>(
-      {url: `/api/v1/supplies/import`, method: 'POST',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext> => {
-
-const mutationKey = ['createSuppliesWithFile'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}> = (props) => {
-          const {data,params} = props ?? {};
-
-          return  createSuppliesWithFile(data,params,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateSuppliesWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createSuppliesWithFile>>>
-    export type CreateSuppliesWithFileMutationBody = CreateSuppliesWithFileBody
-    export type CreateSuppliesWithFileMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates supplies in bulk importing a CSV file.
- */
-export const useCreateSuppliesWithFile = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createSuppliesWithFile>>,
-        TError,
-        {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateSuppliesWithFileMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint enables users to synchronize the active supplies of the community identified by the
-path `communityId`, retrieving the information from datadis.
-
-Proper authentication, through an authentication token, is required for secure access to this
-endpoint.
-**Required: Community Admin of the community. Returns 404 if the community does not exist or the
-caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
-
-A successful request returns an HTTP status code of 200.
-
-In cases of errors, the server responds with an appropriate error status code accompanied by a
-descriptive message to guide users in resolving any issues.
-
- * @summary Synchronize supplies retrieving the information from datadis.
- */
-export const syncDatadisSupplies = (
-    communityId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<unknown>(
-      {url: `/api/v1/communities/${communityId}/supplies/datadis/sync`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getSyncDatadisSuppliesMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext> => {
-
-const mutationKey = ['syncDatadisSupplies'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisSupplies>>, {communityId: string}> = (props) => {
-          const {communityId} = props ?? {};
-
-          return  syncDatadisSupplies(communityId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SyncDatadisSuppliesMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisSupplies>>>
-    
-    export type SyncDatadisSuppliesMutationError = ErrorType<RestError>
-
-    /**
- * @summary Synchronize supplies retrieving the information from datadis.
- */
-export const useSyncDatadisSupplies = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisSupplies>>, TError,{communityId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof syncDatadisSupplies>>,
-        TError,
-        {communityId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getSyncDatadisSuppliesMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint retrieves monthly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
- * @summary Retrieves monthly production data assigned to a specific supply
- */
-export const getSupplyMonthlyProduction = (
-    supplyId: string,
-    params: GetSupplyMonthlyProductionParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<ProductionByTime[]>(
-      {url: `/api/v1/supplies/${supplyId}/production/monthly`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetSupplyMonthlyProductionQueryKey = (supplyId?: string,
-    params?: GetSupplyMonthlyProductionParams,) => {
-    return [
-    `/api/v1/supplies/${supplyId}/production/monthly`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetSupplyMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
-    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetSupplyMonthlyProductionQueryKey(supplyId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>> = ({ signal }) => getSupplyMonthlyProduction(supplyId,params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetSupplyMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>>
-export type GetSupplyMonthlyProductionQueryError = ErrorType<RestError>
-
-
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>,
-          TError,
-          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>,
-          TError,
-          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves monthly production data assigned to a specific supply
- */
-
-export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetSupplyMonthlyProductionQueryOptions(supplyId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint retrieves hourly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
- * @summary Retrieves hourly production data assigned to a specific supply
- */
-export const getSupplyHourlyProduction = (
-    supplyId: string,
-    params: GetSupplyHourlyProductionParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<ProductionByTime[]>(
-      {url: `/api/v1/supplies/${supplyId}/production/hourly`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetSupplyHourlyProductionQueryKey = (supplyId?: string,
-    params?: GetSupplyHourlyProductionParams,) => {
-    return [
-    `/api/v1/supplies/${supplyId}/production/hourly`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetSupplyHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
-    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetSupplyHourlyProductionQueryKey(supplyId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyHourlyProduction>>> = ({ signal }) => getSupplyHourlyProduction(supplyId,params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetSupplyHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyProduction>>>
-export type GetSupplyHourlyProductionQueryError = ErrorType<RestError>
-
-
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyHourlyProduction>>,
-          TError,
-          Awaited<ReturnType<typeof getSupplyHourlyProduction>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyHourlyProduction>>,
-          TError,
-          Awaited<ReturnType<typeof getSupplyHourlyProduction>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves hourly production data assigned to a specific supply
- */
-
-export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetSupplyHourlyProductionQueryOptions(supplyId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint retrieves daily energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
- * @summary Retrieves daily production data assigned to a specific supply
- */
-export const getSupplyDailyProduction = (
-    supplyId: string,
-    params: GetSupplyDailyProductionParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<ProductionByTime[]>(
-      {url: `/api/v1/supplies/${supplyId}/production/daily`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetSupplyDailyProductionQueryKey = (supplyId?: string,
-    params?: GetSupplyDailyProductionParams,) => {
-    return [
-    `/api/v1/supplies/${supplyId}/production/daily`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetSupplyDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
-    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetSupplyDailyProductionQueryKey(supplyId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyDailyProduction>>> = ({ signal }) => getSupplyDailyProduction(supplyId,params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetSupplyDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyProduction>>>
-export type GetSupplyDailyProductionQueryError = ErrorType<RestError>
-
-
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyDailyProduction>>,
-          TError,
-          Awaited<ReturnType<typeof getSupplyDailyProduction>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyDailyProduction>>,
-          TError,
-          Awaited<ReturnType<typeof getSupplyDailyProduction>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves daily production data assigned to a specific supply
- */
-
-export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetSupplyDailyProductionQueryOptions(supplyId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Returns the coefficient periods of the supply, across every plant it participates in,
-ordered by validFrom ascending.
-
-Each period carries the plant it belongs to, so a supply participating in more than
-one plant yields several interleaved timelines that a caller can group by plant.
-Pass plantId to restrict the result to a single plant's timeline; a plant the
-supply has no coefficient in yields an empty list rather than an error.
-
-Pending periods (validFrom = null) are authored inside a draft agreement and have
-never been applied by the distributor. They are returned only to Community Admins
-of the supply's community; every other caller receives the applied periods alone.
-
-**Required: Community Admin of the supply's community, or the supply owner.**
-
- * @summary Returns the partition coefficient history for a supply.
- */
-export const getPartitionCoefficientHistory = (
-    supplyId: string,
-    params?: GetPartitionCoefficientHistoryParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PartitionCoefficientResponse[]>(
-      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetPartitionCoefficientHistoryQueryKey = (supplyId?: string,
-    params?: GetPartitionCoefficientHistoryParams,) => {
-    return [
-    `/api/v1/supplies/${supplyId}/partition-coefficients`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(supplyId: string,
-    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientHistoryQueryKey(supplyId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>> = ({ signal }) => getPartitionCoefficientHistory(supplyId,params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetPartitionCoefficientHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>>
-export type GetPartitionCoefficientHistoryQueryError = ErrorType<RestError>
-
-
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: undefined |  GetPartitionCoefficientHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
-          TError,
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
-          TError,
-          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Returns the partition coefficient history for a supply.
- */
-
-export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetPartitionCoefficientHistoryQueryOptions(supplyId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Returns one entry per plant whose coefficient for the supply covers the given
-instant. Boundary convention: validFrom inclusive, validTo exclusive, so at an
-instant shared by two consecutive periods the later one applies.
-
-A supply may hold a coefficient in several plants at once, so this is a list, and
-it is empty when no period covers the instant -- a normal result, not an error.
-Pass plantId to restrict the result to a single plant.
-Pending coefficients are excluded: one the distributor never applied covered no
-instant.
-
-**Required: Community Admin of the supply's community, or the supply owner.**
-
- * @summary Returns the coefficients that were active at the given point in time, one per plant.
- */
-export const getPartitionCoefficientAtTimestamp = (
-    supplyId: string,
-    params: GetPartitionCoefficientAtTimestampParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<CoefficientAtTimestampResponse[]>(
-      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/at`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetPartitionCoefficientAtTimestampQueryKey = (supplyId?: string,
-    params?: GetPartitionCoefficientAtTimestampParams,) => {
-    return [
-    `/api/v1/supplies/${supplyId}/partition-coefficients/at`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetPartitionCoefficientAtTimestampQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(supplyId: string,
-    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientAtTimestampQueryKey(supplyId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>> = ({ signal }) => getPartitionCoefficientAtTimestamp(supplyId,params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetPartitionCoefficientAtTimestampQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>>
-export type GetPartitionCoefficientAtTimestampQueryError = ErrorType<RestError>
-
-
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetPartitionCoefficientAtTimestampParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>,
-          TError,
-          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>,
-          TError,
-          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Returns the coefficients that were active at the given point in time, one per plant.
- */
-
-export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetPartitionCoefficientAtTimestampQueryOptions(supplyId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Returns one active coefficient per plant the supply participates in. Active means
-validFrom is set and validTo is not: a pending coefficient (never applied by the
-distributor) also has a null validTo and is deliberately excluded.
-
-A supply may be active in several plants at once, so this is a list. It is empty
-when the supply has no active coefficient anywhere, which is a normal result
-rather than an error. Pass plantId to restrict the result to a single plant.
-
-**Required: Community Admin of the supply's community, or the supply owner.**
-
- * @summary Returns the active partition coefficients of a supply, one per plant.
- */
-export const getActivePartitionCoefficient = (
-    supplyId: string,
-    params?: GetActivePartitionCoefficientParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PartitionCoefficientResponse[]>(
-      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/active`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetActivePartitionCoefficientQueryKey = (supplyId?: string,
-    params?: GetActivePartitionCoefficientParams,) => {
-    return [
-    `/api/v1/supplies/${supplyId}/partition-coefficients/active`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetActivePartitionCoefficientQueryOptions = <TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(supplyId: string,
-    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetActivePartitionCoefficientQueryKey(supplyId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivePartitionCoefficient>>> = ({ signal }) => getActivePartitionCoefficient(supplyId,params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetActivePartitionCoefficientQueryResult = NonNullable<Awaited<ReturnType<typeof getActivePartitionCoefficient>>>
-export type GetActivePartitionCoefficientQueryError = ErrorType<RestError>
-
-
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params: undefined |  GetActivePartitionCoefficientParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
-          TError,
-          Awaited<ReturnType<typeof getActivePartitionCoefficient>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
-          TError,
-          Awaited<ReturnType<typeof getActivePartitionCoefficient>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Returns the active partition coefficients of a supply, one per plant.
- */
-
-export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
- supplyId: string,
-    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetActivePartitionCoefficientQueryOptions(supplyId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint aggregates the consumption data stored for a specific supply into energy
-totals and two ratios, on a 0-1 scale:
-
-- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.
-- `selfConsumptionRatio`: self-consumed energy divided by the energy assigned to the supply.
-
-Both ratios are computed by summing every record first and dividing once, so hours of
-different magnitude weigh differently. A ratio whose denominator is zero is returned as
-`null`, never as `0`.
+ * This endpoint retrieves daily consumption data from Datadis for a specific supply within a given date range.
 
 **Authorization Rules:**
-- Community Admins can retrieve energy metrics for any supply they administer
-- Supply owners can only retrieve energy metrics for their own supplies
+- Community Admins can retrieve consumption data for any supply they administer
+- Supply owners can only retrieve consumption data for their own supplies
 
-**Period:**
-`startDate` and `endDate` are optional and must be supplied together; supplying exactly
-one of them is a bad request, as is a `startDate` after the `endDate`. When neither is
-supplied the period spans from the supply's earliest stored record to its latest, and a
-supply with no record at all returns a successful response with null period bounds, zero
-totals and null ratios.
+The consumption data includes:
+- Energy taken from the grid
+- Surplus energy (energy fed back to the grid)
+- Self-consumption energy
+- Obtain method (Real/Estimated)
 
-**Both bounds are inclusive.** A caller wanting a single calendar day must pass `00:00`
-to `23:00` of that day, not `00:00` to the following `00:00`, which would count the
-boundary hour in both days.
+Data is aggregated by day, from the hourly records, within the specified date
+range. Every energy figure is in kWh, rounded to 3 decimals.
 
-The `coverage` object reports how many hourly records were found against how many hours
-the period spans, so a partially synchronised period can be told apart from a genuinely
-low ratio. Hours without a record are left out of the sums; they are never counted as
-zero.
+**Time zone:** days follow the local calendar of the time zone the application is
+configured with, not UTC. A day therefore lasts 23 hours on the spring daylight
+saving transition and 25 hours on the autumn one.
 
-**Savings:**
-`savings.amountEur` is an **estimate** of what the self-consumed energy of the period
-was worth. It prices the **energy term before taxes** only: the power term, access
-tolls, charges and electricity tax are all excluded, and VAT is applied only where the
-resolved tariff carries a rate. `savings.tariffSource` says where the prices came from
--- `ESTIMATE` for a computed approximation, `REAL_TARIFF` for the supply's contracted
-tariff -- and a single estimated stretch of the period makes the whole amount an
-estimate.
+**Range bounds:** `startDate` and `endDate` are both inclusive and are taken as
+given, without being rounded to a day boundary. Bounds that fall in the middle of
+a local day produce a partial first and last bucket, so a caller wanting whole
+local days must pass them at local midnight and at 23:59:59 local time, offset
+included -- for example `2023-04-01T00:00:00+02:00` to
+`2023-04-30T23:59:59+02:00` for April 2023 in Europe/Madrid. A day with no stored
+record is returned with zero energy rather than omitted.
 
-The amount **does not distinguish missing data from genuine zeros**: an hour with no
-stored record contributes nothing, exactly as it contributes nothing to the energy
-totals, so a partially synchronised period yields a proportionally low figure rather
-than a flagged one. `coverage` is the field that tells the two apart. Consistently
-with that, an explicitly requested period containing no record at all is worth `0.00`,
-while `null` is reserved for the one case where no period could be resolved: a supply
-with no stored record and no requested period.
+Each day is priced over its own local day, clipped to the requested bounds, so a
+partial edge bucket's savings cover exactly the hours its energy fields cover.
 
- * @summary Retrieves aggregated energy metrics for a specific supply
+**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed
+energy was worth. It prices the **energy term before taxes** only: the power
+term, access tolls, charges and electricity tax are all excluded, and VAT is
+applied only where the resolved tariff carries a rate. `tariffSource` says where
+the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
+for the supply's contracted tariff -- and a single estimated stretch of the
+bucket makes the whole amount an estimate. A bucket with no self-consumption,
+and a bucket with no stored record at all, reports `0.00`.
+
+Datadis publishes a month's self-consumption around the 10th of the following
+month, so the current month has no self-consumption data yet and its savings
+come back as zero.
+
+ * @summary Retrieves daily consumption data for a specific supply
  */
-export const getSupplyEnergyMetrics = (
+export const getSupplyDailyConsumption = (
     supplyId: string,
-    params?: GetSupplyEnergyMetricsParams,
+    params: GetSupplyDailyConsumptionParams,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<SupplyEnergyMetricsResponse>(
-      {url: `/api/v1/supplies/${supplyId}/energy-metrics`, method: 'GET',
+      return customInstance<SupplyConsumptionBucketResponse[]>(
+      {url: `/api/v1/supplies/${supplyId}/consumption/daily`, method: 'GET',
         params, signal
     },
       );
@@ -1378,75 +704,75 @@ export const getSupplyEnergyMetrics = (
 
 
 
-export const getGetSupplyEnergyMetricsQueryKey = (supplyId?: string,
-    params?: GetSupplyEnergyMetricsParams,) => {
+export const getGetSupplyDailyConsumptionQueryKey = (supplyId?: string,
+    params?: GetSupplyDailyConsumptionParams,) => {
     return [
-    `/api/v1/supplies/${supplyId}/energy-metrics`, ...(params ? [params]: [])
+    `/api/v1/supplies/${supplyId}/consumption/daily`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetSupplyEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(supplyId: string,
-    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
+export const getGetSupplyDailyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSupplyEnergyMetricsQueryKey(supplyId,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyDailyConsumptionQueryKey(supplyId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>> = ({ signal }) => getSupplyEnergyMetrics(supplyId,params, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyDailyConsumption>>> = ({ signal }) => getSupplyDailyConsumption(supplyId,params, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetSupplyEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>>
-export type GetSupplyEnergyMetricsQueryError = ErrorType<RestError>
+export type GetSupplyDailyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyConsumption>>>
+export type GetSupplyDailyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: undefined |  GetSupplyEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
+    params: GetSupplyDailyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>,
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>,
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>
+          Awaited<ReturnType<typeof getSupplyDailyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves aggregated energy metrics for a specific supply
+ * @summary Retrieves daily consumption data for a specific supply
  */
 
-export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
+export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
+    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetSupplyEnergyMetricsQueryOptions(supplyId,params,options)
+  const queryOptions = getGetSupplyDailyConsumptionQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1459,7 +785,7 @@ export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getS
 
 
 /**
- * This endpoint retrieves yearly consumption data from Datadis for a specific supply within a given date range.
+ * This endpoint retrieves hourly consumption data from Datadis for a specific supply within a given date range.
 
 **Authorization Rules:**
 - Community Admins can retrieve consumption data for any supply they administer
@@ -1471,30 +797,19 @@ The consumption data includes:
 - Self-consumption energy
 - Obtain method (Real/Estimated)
 
-Data is aggregated by year within the specified date range.
+Data is aggregated by hour within the specified date range.
 
-**Time zone:** each year covers the local calendar year of the time zone the
-application is configured with, not the UTC one, so its total includes the first
-and last local hours of the year and nothing from its neighbours.
-
-**Range bounds:** `startDate` and `endDate` are both inclusive, and they select
-pre-aggregated points by the instant each one is stamped at, which is local
-midnight on the first day of its year. Pass them with the zone's offset to
-select the years intended: local `2023-01-01T00:00:00+01:00` is
-`2022-12-31T23:00:00Z`, so a bound expressed in UTC can select one year too few
-or too many.
-
- * @summary Retrieves yearly consumption data for a specific supply
+ * @summary Retrieves hourly consumption data for a specific supply
  */
-export const getSupplyYearlyConsumption = (
+export const getSupplyHourlyConsumption = (
     supplyId: string,
-    params: GetSupplyYearlyConsumptionParams,
+    params: GetSupplyHourlyConsumptionParams,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<DatadisConsumption[]>(
-      {url: `/api/v1/supplies/${supplyId}/consumption/yearly`, method: 'GET',
+      {url: `/api/v1/supplies/${supplyId}/consumption/hourly`, method: 'GET',
         params, signal
     },
       );
@@ -1503,75 +818,75 @@ export const getSupplyYearlyConsumption = (
 
 
 
-export const getGetSupplyYearlyConsumptionQueryKey = (supplyId?: string,
-    params?: GetSupplyYearlyConsumptionParams,) => {
+export const getGetSupplyHourlyConsumptionQueryKey = (supplyId?: string,
+    params?: GetSupplyHourlyConsumptionParams,) => {
     return [
-    `/api/v1/supplies/${supplyId}/consumption/yearly`, ...(params ? [params]: [])
+    `/api/v1/supplies/${supplyId}/consumption/hourly`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetSupplyYearlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
-    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
+export const getGetSupplyHourlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSupplyYearlyConsumptionQueryKey(supplyId,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyHourlyConsumptionQueryKey(supplyId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>> = ({ signal }) => getSupplyYearlyConsumption(supplyId,params, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>> = ({ signal }) => getSupplyHourlyConsumption(supplyId,params, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetSupplyYearlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>>
-export type GetSupplyYearlyConsumptionQueryError = ErrorType<RestError>
+export type GetSupplyHourlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>>
+export type GetSupplyHourlyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyYearlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
+    params: GetSupplyHourlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>,
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>,
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>
+          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves yearly consumption data for a specific supply
+ * @summary Retrieves hourly consumption data for a specific supply
  */
 
-export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
+    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetSupplyYearlyConsumptionQueryOptions(supplyId,params,options)
+  const queryOptions = getGetSupplyHourlyConsumptionQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1738,7 +1053,7 @@ export function useGetSupplyMonthlyConsumption<TData = Awaited<ReturnType<typeof
 
 
 /**
- * This endpoint retrieves hourly consumption data from Datadis for a specific supply within a given date range.
+ * This endpoint retrieves yearly consumption data from Datadis for a specific supply within a given date range.
 
 **Authorization Rules:**
 - Community Admins can retrieve consumption data for any supply they administer
@@ -1750,19 +1065,30 @@ The consumption data includes:
 - Self-consumption energy
 - Obtain method (Real/Estimated)
 
-Data is aggregated by hour within the specified date range.
+Data is aggregated by year within the specified date range.
 
- * @summary Retrieves hourly consumption data for a specific supply
+**Time zone:** each year covers the local calendar year of the time zone the
+application is configured with, not the UTC one, so its total includes the first
+and last local hours of the year and nothing from its neighbours.
+
+**Range bounds:** `startDate` and `endDate` are both inclusive, and they select
+pre-aggregated points by the instant each one is stamped at, which is local
+midnight on the first day of its year. Pass them with the zone's offset to
+select the years intended: local `2023-01-01T00:00:00+01:00` is
+`2022-12-31T23:00:00Z`, so a bound expressed in UTC can select one year too few
+or too many.
+
+ * @summary Retrieves yearly consumption data for a specific supply
  */
-export const getSupplyHourlyConsumption = (
+export const getSupplyYearlyConsumption = (
     supplyId: string,
-    params: GetSupplyHourlyConsumptionParams,
+    params: GetSupplyYearlyConsumptionParams,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<DatadisConsumption[]>(
-      {url: `/api/v1/supplies/${supplyId}/consumption/hourly`, method: 'GET',
+      {url: `/api/v1/supplies/${supplyId}/consumption/yearly`, method: 'GET',
         params, signal
     },
       );
@@ -1771,75 +1097,75 @@ export const getSupplyHourlyConsumption = (
 
 
 
-export const getGetSupplyHourlyConsumptionQueryKey = (supplyId?: string,
-    params?: GetSupplyHourlyConsumptionParams,) => {
+export const getGetSupplyYearlyConsumptionQueryKey = (supplyId?: string,
+    params?: GetSupplyYearlyConsumptionParams,) => {
     return [
-    `/api/v1/supplies/${supplyId}/consumption/hourly`, ...(params ? [params]: [])
+    `/api/v1/supplies/${supplyId}/consumption/yearly`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetSupplyHourlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
-    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
+export const getGetSupplyYearlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSupplyHourlyConsumptionQueryKey(supplyId,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyYearlyConsumptionQueryKey(supplyId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>> = ({ signal }) => getSupplyHourlyConsumption(supplyId,params, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>> = ({ signal }) => getSupplyYearlyConsumption(supplyId,params, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetSupplyHourlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>>
-export type GetSupplyHourlyConsumptionQueryError = ErrorType<RestError>
+export type GetSupplyYearlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>>
+export type GetSupplyYearlyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyHourlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
+    params: GetSupplyYearlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>,
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>> & Pick<
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>,
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyHourlyConsumption>>
+          Awaited<ReturnType<typeof getSupplyYearlyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves hourly consumption data for a specific supply
+ * @summary Retrieves yearly consumption data for a specific supply
  */
 
-export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyYearlyConsumption<TData = Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyConsumption>>, TError, TData>>, }
+    params: GetSupplyYearlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyYearlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetSupplyHourlyConsumptionQueryOptions(supplyId,params,options)
+  const queryOptions = getGetSupplyYearlyConsumptionQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1852,60 +1178,202 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
 
 
 /**
- * This endpoint retrieves daily consumption data from Datadis for a specific supply within a given date range.
+ * This endpoint disables a supply by its unique identifier.
+
+Authentication via bearer token is required.
+Required: Community Admin
+
+The operation is idempotent: disabling an already disabled supply will not fail and will return the current state.
+
+ * @summary Disables a supply by ID
+ */
+export const disableSupply = (
+    supplyId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyResponse>(
+      {url: `/api/v1/supplies/${supplyId}/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getDisableSupplyMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext> => {
+
+const mutationKey = ['disableSupply'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableSupply>>, {supplyId: string}> = (props) => {
+          const {supplyId} = props ?? {};
+
+          return  disableSupply(supplyId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof disableSupply>>>
+    
+    export type DisableSupplyMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Disables a supply by ID
+ */
+export const useDisableSupply = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableSupply>>, TError,{supplyId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableSupply>>,
+        TError,
+        {supplyId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDisableSupplyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint enables a supply by its unique identifier.
+
+Authentication via bearer token is required.
+Required: Community Admin
+
+The operation is idempotent: enabling an already enabled supply will not fail and will return the current state.
+
+ * @summary Enables a supply by ID
+ */
+export const enableSupply = (
+    supplyId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyResponse>(
+      {url: `/api/v1/supplies/${supplyId}/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableSupplyMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext> => {
+
+const mutationKey = ['enableSupply'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableSupply>>, {supplyId: string}> = (props) => {
+          const {supplyId} = props ?? {};
+
+          return  enableSupply(supplyId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableSupplyMutationResult = NonNullable<Awaited<ReturnType<typeof enableSupply>>>
+    
+    export type EnableSupplyMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Enables a supply by ID
+ */
+export const useEnableSupply = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableSupply>>, TError,{supplyId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableSupply>>,
+        TError,
+        {supplyId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableSupplyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint aggregates the consumption data stored for a specific supply into energy
+totals and two ratios, on a 0-1 scale:
+
+- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.
+- `selfConsumptionRatio`: self-consumed energy divided by the energy assigned to the supply.
+
+Both ratios are computed by summing every record first and dividing once, so hours of
+different magnitude weigh differently. A ratio whose denominator is zero is returned as
+`null`, never as `0`.
 
 **Authorization Rules:**
-- Community Admins can retrieve consumption data for any supply they administer
-- Supply owners can only retrieve consumption data for their own supplies
+- Community Admins can retrieve energy metrics for any supply they administer
+- Supply owners can only retrieve energy metrics for their own supplies
 
-The consumption data includes:
-- Energy taken from the grid
-- Surplus energy (energy fed back to the grid)
-- Self-consumption energy
-- Obtain method (Real/Estimated)
+**Period:**
+`startDate` and `endDate` are optional and must be supplied together; supplying exactly
+one of them is a bad request, as is a `startDate` after the `endDate`. When neither is
+supplied the period spans from the supply's earliest stored record to its latest, and a
+supply with no record at all returns a successful response with null period bounds, zero
+totals and null ratios.
 
-Data is aggregated by day, from the hourly records, within the specified date
-range. Every energy figure is in kWh, rounded to 3 decimals.
+**Both bounds are inclusive.** A caller wanting a single calendar day must pass `00:00`
+to `23:00` of that day, not `00:00` to the following `00:00`, which would count the
+boundary hour in both days.
 
-**Time zone:** days follow the local calendar of the time zone the application is
-configured with, not UTC. A day therefore lasts 23 hours on the spring daylight
-saving transition and 25 hours on the autumn one.
+The `coverage` object reports how many hourly records were found against how many hours
+the period spans, so a partially synchronised period can be told apart from a genuinely
+low ratio. Hours without a record are left out of the sums; they are never counted as
+zero.
 
-**Range bounds:** `startDate` and `endDate` are both inclusive and are taken as
-given, without being rounded to a day boundary. Bounds that fall in the middle of
-a local day produce a partial first and last bucket, so a caller wanting whole
-local days must pass them at local midnight and at 23:59:59 local time, offset
-included -- for example `2023-04-01T00:00:00+02:00` to
-`2023-04-30T23:59:59+02:00` for April 2023 in Europe/Madrid. A day with no stored
-record is returned with zero energy rather than omitted.
+**Savings:**
+`savings.amountEur` is an **estimate** of what the self-consumed energy of the period
+was worth. It prices the **energy term before taxes** only: the power term, access
+tolls, charges and electricity tax are all excluded, and VAT is applied only where the
+resolved tariff carries a rate. `savings.tariffSource` says where the prices came from
+-- `ESTIMATE` for a computed approximation, `REAL_TARIFF` for the supply's contracted
+tariff -- and a single estimated stretch of the period makes the whole amount an
+estimate.
 
-Each day is priced over its own local day, clipped to the requested bounds, so a
-partial edge bucket's savings cover exactly the hours its energy fields cover.
+The amount **does not distinguish missing data from genuine zeros**: an hour with no
+stored record contributes nothing, exactly as it contributes nothing to the energy
+totals, so a partially synchronised period yields a proportionally low figure rather
+than a flagged one. `coverage` is the field that tells the two apart. Consistently
+with that, an explicitly requested period containing no record at all is worth `0.00`,
+while `null` is reserved for the one case where no period could be resolved: a supply
+with no stored record and no requested period.
 
-**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed
-energy was worth. It prices the **energy term before taxes** only: the power
-term, access tolls, charges and electricity tax are all excluded, and VAT is
-applied only where the resolved tariff carries a rate. `tariffSource` says where
-the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
-for the supply's contracted tariff -- and a single estimated stretch of the
-bucket makes the whole amount an estimate. A bucket with no self-consumption,
-and a bucket with no stored record at all, reports `0.00`.
-
-Datadis publishes a month's self-consumption around the 10th of the following
-month, so the current month has no self-consumption data yet and its savings
-come back as zero.
-
- * @summary Retrieves daily consumption data for a specific supply
+ * @summary Retrieves aggregated energy metrics for a specific supply
  */
-export const getSupplyDailyConsumption = (
+export const getSupplyEnergyMetrics = (
     supplyId: string,
-    params: GetSupplyDailyConsumptionParams,
+    params?: GetSupplyEnergyMetricsParams,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<SupplyConsumptionBucketResponse[]>(
-      {url: `/api/v1/supplies/${supplyId}/consumption/daily`, method: 'GET',
+      return customInstance<SupplyEnergyMetricsResponse>(
+      {url: `/api/v1/supplies/${supplyId}/energy-metrics`, method: 'GET',
         params, signal
     },
       );
@@ -1914,75 +1382,75 @@ export const getSupplyDailyConsumption = (
 
 
 
-export const getGetSupplyDailyConsumptionQueryKey = (supplyId?: string,
-    params?: GetSupplyDailyConsumptionParams,) => {
+export const getGetSupplyEnergyMetricsQueryKey = (supplyId?: string,
+    params?: GetSupplyEnergyMetricsParams,) => {
     return [
-    `/api/v1/supplies/${supplyId}/consumption/daily`, ...(params ? [params]: [])
+    `/api/v1/supplies/${supplyId}/energy-metrics`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetSupplyDailyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(supplyId: string,
-    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
+export const getGetSupplyEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(supplyId: string,
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSupplyDailyConsumptionQueryKey(supplyId,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyEnergyMetricsQueryKey(supplyId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyDailyConsumption>>> = ({ signal }) => getSupplyDailyConsumption(supplyId,params, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>> = ({ signal }) => getSupplyEnergyMetrics(supplyId,params, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetSupplyDailyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyConsumption>>>
-export type GetSupplyDailyConsumptionQueryError = ErrorType<RestError>
+export type GetSupplyEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>>
+export type GetSupplyEnergyMetricsQueryError = ErrorType<RestError>
 
 
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyDailyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
+    params: undefined |  GetSupplyEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyDailyConsumption>>,
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyDailyConsumption>>
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>> & Pick<
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSupplyDailyConsumption>>,
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>,
           TError,
-          Awaited<ReturnType<typeof getSupplyDailyConsumption>>
+          Awaited<ReturnType<typeof getSupplyEnergyMetrics>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves daily consumption data for a specific supply
+ * @summary Retrieves aggregated energy metrics for a specific supply
  */
 
-export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError = ErrorType<RestError>>(
  supplyId: string,
-    params: GetSupplyDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyConsumption>>, TError, TData>>, }
+    params?: GetSupplyEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyEnergyMetrics>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetSupplyDailyConsumptionQueryOptions(supplyId,params,options)
+  const queryOptions = getGetSupplyEnergyMetricsQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1995,24 +1463,31 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
 
 
 /**
- * Retrieves the supplies of the community identified by the path `communityId`, with pagination,
-filtering and sorting. Requires authentication through a Bearer Token.
+ * Returns the coefficient periods of the supply, across every plant it participates in,
+ordered by validFrom ascending.
 
-**Visibility:** Community admins of the community see all of its supplies.
-Regular members see only the supplies they own within the community. **Required: any member of the
-community.** Returns 404 if the community does not exist or the caller is not a member of it, and
-403 for a non-member platform admin.
- * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
+Each period carries the plant it belongs to, so a supply participating in more than
+one plant yields several interleaved timelines that a caller can group by plant.
+Pass plantId to restrict the result to a single plant's timeline; a plant the
+supply has no coefficient in yields an empty list rather than an error.
+
+Pending periods (validFrom = null) are authored inside a draft agreement and have
+never been applied by the distributor. They are returned only to Community Admins
+of the supply's community; every other caller receives the applied periods alone.
+
+**Required: Community Admin of the supply's community, or the supply owner.**
+
+ * @summary Returns the partition coefficient history for a supply.
  */
-export const getAllSupplies = (
-    communityId: string,
-    params?: GetAllSuppliesParams,
+export const getPartitionCoefficientHistory = (
+    supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<PagedResultSupplyResponse>(
-      {url: `/api/v1/communities/${communityId}/supplies`, method: 'GET',
+      return customInstance<PartitionCoefficientResponse[]>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients`, method: 'GET',
         params, signal
     },
       );
@@ -2021,75 +1496,600 @@ export const getAllSupplies = (
 
 
 
-export const getGetAllSuppliesQueryKey = (communityId?: string,
-    params?: GetAllSuppliesParams,) => {
+export const getGetPartitionCoefficientHistoryQueryKey = (supplyId?: string,
+    params?: GetPartitionCoefficientHistoryParams,) => {
     return [
-    `/api/v1/communities/${communityId}/supplies`, ...(params ? [params]: [])
+    `/api/v1/supplies/${supplyId}/partition-coefficients`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetAllSuppliesQueryOptions = <TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(communityId: string,
-    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+export const getGetPartitionCoefficientHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAllSuppliesQueryKey(communityId,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientHistoryQueryKey(supplyId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllSupplies>>> = ({ signal }) => getAllSupplies(communityId,params, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>> = ({ signal }) => getPartitionCoefficientHistory(supplyId,params, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetAllSuppliesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllSupplies>>>
-export type GetAllSuppliesQueryError = ErrorType<RestError>
+export type GetPartitionCoefficientHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>>
+export type GetPartitionCoefficientHistoryQueryError = ErrorType<RestError>
 
 
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params: undefined |  GetAllSuppliesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: undefined |  GetPartitionCoefficientHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllSupplies>>,
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
           TError,
-          Awaited<ReturnType<typeof getAllSupplies>>
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>> & Pick<
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllSupplies>>,
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>,
           TError,
-          Awaited<ReturnType<typeof getAllSupplies>>
+          Awaited<ReturnType<typeof getPartitionCoefficientHistory>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves the supplies of a community visible to the current user, with pagination support.
+ * @summary Returns the partition coefficient history for a supply.
  */
 
-export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSupplies>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params?: GetAllSuppliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllSupplies>>, TError, TData>>, }
+export function useGetPartitionCoefficientHistory<TData = Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params?: GetPartitionCoefficientHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientHistory>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetAllSuppliesQueryOptions(communityId,params,options)
+  const queryOptions = getGetPartitionCoefficientHistoryQueryOptions(supplyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Returns one active coefficient per plant the supply participates in. Active means
+validFrom is set and validTo is not: a pending coefficient (never applied by the
+distributor) also has a null validTo and is deliberately excluded.
+
+A supply may be active in several plants at once, so this is a list. It is empty
+when the supply has no active coefficient anywhere, which is a normal result
+rather than an error. Pass plantId to restrict the result to a single plant.
+
+**Required: Community Admin of the supply's community, or the supply owner.**
+
+ * @summary Returns the active partition coefficients of a supply, one per plant.
+ */
+export const getActivePartitionCoefficient = (
+    supplyId: string,
+    params?: GetActivePartitionCoefficientParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PartitionCoefficientResponse[]>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/active`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetActivePartitionCoefficientQueryKey = (supplyId?: string,
+    params?: GetActivePartitionCoefficientParams,) => {
+    return [
+    `/api/v1/supplies/${supplyId}/partition-coefficients/active`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetActivePartitionCoefficientQueryOptions = <TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetActivePartitionCoefficientQueryKey(supplyId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivePartitionCoefficient>>> = ({ signal }) => getActivePartitionCoefficient(supplyId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetActivePartitionCoefficientQueryResult = NonNullable<Awaited<ReturnType<typeof getActivePartitionCoefficient>>>
+export type GetActivePartitionCoefficientQueryError = ErrorType<RestError>
+
+
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: undefined |  GetActivePartitionCoefficientParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
+          TError,
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>,
+          TError,
+          Awaited<ReturnType<typeof getActivePartitionCoefficient>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the active partition coefficients of a supply, one per plant.
+ */
+
+export function useGetActivePartitionCoefficient<TData = Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params?: GetActivePartitionCoefficientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivePartitionCoefficient>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetActivePartitionCoefficientQueryOptions(supplyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Returns one entry per plant whose coefficient for the supply covers the given
+instant. Boundary convention: validFrom inclusive, validTo exclusive, so at an
+instant shared by two consecutive periods the later one applies.
+
+A supply may hold a coefficient in several plants at once, so this is a list, and
+it is empty when no period covers the instant -- a normal result, not an error.
+Pass plantId to restrict the result to a single plant.
+Pending coefficients are excluded: one the distributor never applied covered no
+instant.
+
+**Required: Community Admin of the supply's community, or the supply owner.**
+
+ * @summary Returns the coefficients that were active at the given point in time, one per plant.
+ */
+export const getPartitionCoefficientAtTimestamp = (
+    supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CoefficientAtTimestampResponse[]>(
+      {url: `/api/v1/supplies/${supplyId}/partition-coefficients/at`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetPartitionCoefficientAtTimestampQueryKey = (supplyId?: string,
+    params?: GetPartitionCoefficientAtTimestampParams,) => {
+    return [
+    `/api/v1/supplies/${supplyId}/partition-coefficients/at`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetPartitionCoefficientAtTimestampQueryOptions = <TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPartitionCoefficientAtTimestampQueryKey(supplyId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>> = ({ signal }) => getPartitionCoefficientAtTimestamp(supplyId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPartitionCoefficientAtTimestampQueryResult = NonNullable<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>>
+export type GetPartitionCoefficientAtTimestampQueryError = ErrorType<RestError>
+
+
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>,
+          TError,
+          Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the coefficients that were active at the given point in time, one per plant.
+ */
+
+export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetPartitionCoefficientAtTimestampParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPartitionCoefficientAtTimestamp>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPartitionCoefficientAtTimestampQueryOptions(supplyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint retrieves daily energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
+ * @summary Retrieves daily production data assigned to a specific supply
+ */
+export const getSupplyDailyProduction = (
+    supplyId: string,
+    params: GetSupplyDailyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ProductionByTime[]>(
+      {url: `/api/v1/supplies/${supplyId}/production/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetSupplyDailyProductionQueryKey = (supplyId?: string,
+    params?: GetSupplyDailyProductionParams,) => {
+    return [
+    `/api/v1/supplies/${supplyId}/production/daily`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetSupplyDailyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyDailyProductionQueryKey(supplyId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyDailyProduction>>> = ({ signal }) => getSupplyDailyProduction(supplyId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyDailyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyDailyProduction>>>
+export type GetSupplyDailyProductionQueryError = ErrorType<RestError>
+
+
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyDailyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyDailyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves daily production data assigned to a specific supply
+ */
+
+export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyDailyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyDailyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyDailyProductionQueryOptions(supplyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint retrieves hourly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
+ * @summary Retrieves hourly production data assigned to a specific supply
+ */
+export const getSupplyHourlyProduction = (
+    supplyId: string,
+    params: GetSupplyHourlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ProductionByTime[]>(
+      {url: `/api/v1/supplies/${supplyId}/production/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetSupplyHourlyProductionQueryKey = (supplyId?: string,
+    params?: GetSupplyHourlyProductionParams,) => {
+    return [
+    `/api/v1/supplies/${supplyId}/production/hourly`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetSupplyHourlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyHourlyProductionQueryKey(supplyId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyHourlyProduction>>> = ({ signal }) => getSupplyHourlyProduction(supplyId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyHourlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyHourlyProduction>>>
+export type GetSupplyHourlyProductionQueryError = ErrorType<RestError>
+
+
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyHourlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyHourlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves hourly production data assigned to a specific supply
+ */
+
+export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyHourlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyHourlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyHourlyProductionQueryOptions(supplyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint retrieves monthly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
+ * @summary Retrieves monthly production data assigned to a specific supply
+ */
+export const getSupplyMonthlyProduction = (
+    supplyId: string,
+    params: GetSupplyMonthlyProductionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ProductionByTime[]>(
+      {url: `/api/v1/supplies/${supplyId}/production/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetSupplyMonthlyProductionQueryKey = (supplyId?: string,
+    params?: GetSupplyMonthlyProductionParams,) => {
+    return [
+    `/api/v1/supplies/${supplyId}/production/monthly`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetSupplyMonthlyProductionQueryOptions = <TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(supplyId: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSupplyMonthlyProductionQueryKey(supplyId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>> = ({ signal }) => getSupplyMonthlyProduction(supplyId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(supplyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSupplyMonthlyProductionQueryResult = NonNullable<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>>
+export type GetSupplyMonthlyProductionQueryError = ErrorType<RestError>
+
+
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyMonthlyProductionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>,
+          TError,
+          Awaited<ReturnType<typeof getSupplyMonthlyProduction>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves monthly production data assigned to a specific supply
+ */
+
+export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError = ErrorType<RestError>>(
+ supplyId: string,
+    params: GetSupplyMonthlyProductionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupplyMonthlyProduction>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSupplyMonthlyProductionQueryOptions(supplyId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

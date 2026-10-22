@@ -5,12 +5,12 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { SupplyEnergyMetricsPeriodResponseStartDate } from './supplyEnergyMetricsPeriodResponseStartDate';
 import type { SupplyEnergyMetricsPeriodResponseEndDate } from './supplyEnergyMetricsPeriodResponseEndDate';
+import type { SupplyEnergyMetricsPeriodResponseStartDate } from './supplyEnergyMetricsPeriodResponseStartDate';
 
 export interface SupplyEnergyMetricsPeriodResponse {
-  /** First instant included in the aggregation, inclusive */
-  startDate: SupplyEnergyMetricsPeriodResponseStartDate;
   /** Last instant included in the aggregation, inclusive */
   endDate: SupplyEnergyMetricsPeriodResponseEndDate;
+  /** First instant included in the aggregation, inclusive */
+  startDate: SupplyEnergyMetricsPeriodResponseStartDate;
 }

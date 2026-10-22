@@ -5,26 +5,26 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { MembershipResponseUser } from './membershipResponseUser';
-import type { MembershipResponseRole } from './membershipResponseRole';
 import type { MembershipResponseAcceptedAt } from './membershipResponseAcceptedAt';
-import type { MembershipResponseInvitedAt } from './membershipResponseInvitedAt';
-import type { MembershipResponseInvitationExpiresAt } from './membershipResponseInvitationExpiresAt';
 import type { MembershipCapabilitiesResponse } from './membershipCapabilitiesResponse';
+import type { MembershipResponseInvitationExpiresAt } from './membershipResponseInvitationExpiresAt';
+import type { MembershipResponseInvitedAt } from './membershipResponseInvitedAt';
+import type { MembershipResponseRole } from './membershipResponseRole';
+import type { MembershipResponseUser } from './membershipResponseUser';
 
 export interface MembershipResponse {
-  id: string;
-  /** User associated with the membership */
-  user: MembershipResponseUser;
-  communityId: string;
-  role: MembershipResponseRole;
-  enabled: boolean;
   /** When the membership was accepted. Null while it is pending: a pending membership grants no access until it is accepted. Independent of enabled. */
   acceptedAt: MembershipResponseAcceptedAt;
-  /** When the membership was last sent an invitation. Null if none has been sent. */
-  invitedAt: MembershipResponseInvitedAt;
-  /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
-  invitationExpiresAt: MembershipResponseInvitationExpiresAt;
   /** What the caller may do with this membership. */
   capabilities: MembershipCapabilitiesResponse;
+  communityId: string;
+  enabled: boolean;
+  id: string;
+  /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
+  invitationExpiresAt: MembershipResponseInvitationExpiresAt;
+  /** When the membership was last sent an invitation. Null if none has been sent. */
+  invitedAt: MembershipResponseInvitedAt;
+  role: MembershipResponseRole;
+  /** User associated with the membership */
+  user: MembershipResponseUser;
 }

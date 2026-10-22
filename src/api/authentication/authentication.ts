@@ -23,59 +23,37 @@ import type {
   Token
 } from '.././models';
 
-import { customInstance } from '.././custom-instance';
-import type { ErrorType } from '.././custom-instance';
+import { customInstance } from '../../http/custom-instance';
+import type { ErrorType } from '../../http/custom-instance';
 
 
 
 
 /**
- * This endpoint completes the recovery of a forgotten password with the token from the emailed link
-`<web client>/reset-password#<token>`. It requires no authentication, and any token presented with
-it is ignored.
-
-The new password must meet the same policy as a password change: between 15 and 64 characters,
-counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. It must
-differ from the current password.
-
-On success the server answers 204 with no body: the token is used up, the password is replaced,
-the "must change password" flag is cleared, and every session opened before is ended. The user is
-not logged in; the client must log in with the new password. The account's failed login attempts
-are forgotten, so a user throttled for them can log in at once.
-
-A token that is unknown, malformed, expired, already used or replaced by a newer one, or whose user
-has been disabled, is answered 400 with the `USER_PASSWORD_RESET_TOKEN_INVALID` code, the same in
-every case. A new password that breaks the policy is answered 400 with the
-`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter, and one equal to the current password
-with the `USER_PASSWORD_UNCHANGED` code; in both cases nothing changes and the token can be used
-again.
-
-Every invalid token counts against the client address, together with failed logins and password
-changes: after 20 within 15 minutes, further resets are answered 429 with a Retry-After header
-until the 15 minutes that started with the first failure have passed.
- * @summary Sets a new password with a password reset token
+ * This endpoint is dedicated to user authentication, requiring clients to provide a valid username and password in the request body. Upon successful authentication, the server generates and returns an authentication token, utilizing JSON Web Tokens (JWT). This token serves as a secure means for subsequent authorized access to protected resources within the system. The server responds with an HTTP status code of 200, along with the generated token. In case of authentication failure or invalid credentials, the server issues an appropriate error status code, accompanied by a descriptive error message. After 5 failed attempts on the same account, or 20 from the same client address, within 15 minutes, further attempts are answered 429 with a Retry-After header, without checking the password, until the 15 minutes that started with the first failure have passed.
+ * @summary User authentication
  */
-export const resetPassword = (
-    passwordResetBody: PasswordResetBody,
+export const login = (
+    loginRequest: LoginRequest,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<void>(
-      {url: `/api/v1/users/password/reset`, method: 'POST',
+      return customInstance<Token>(
+      {url: `/api/v1/login`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: passwordResetBody, signal
+      data: loginRequest, signal
     },
       );
     }
   
 
 
-export const getResetPasswordMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: PasswordResetBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: PasswordResetBody}, TContext> => {
+export const getLoginMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext> => {
 
-const mutationKey = ['resetPassword'];
+const mutationKey = ['login'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -85,10 +63,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetPassword>>, {data: PasswordResetBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: LoginRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  resetPassword(data,)
+          return  login(data,)
         }
 
         
@@ -96,23 +74,98 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ResetPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetPassword>>>
-    export type ResetPasswordMutationBody = PasswordResetBody
-    export type ResetPasswordMutationError = ErrorType<RestError>
+    export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
+    export type LoginMutationBody = LoginRequest
+    export type LoginMutationError = ErrorType<RestError>
 
     /**
- * @summary Sets a new password with a password reset token
+ * @summary User authentication
  */
-export const useResetPassword = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: PasswordResetBody}, TContext>, }
+export const useLogin = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof resetPassword>>,
+        Awaited<ReturnType<typeof login>>,
         TError,
-        {data: PasswordResetBody},
+        {data: LoginRequest},
         TContext
       > => {
 
-      const mutationOptions = getResetPasswordMutationOptions(options);
+      const mutationOptions = getLoginMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint handles user logout operations, invalidating the current user session.
+
+ Upon successful logout, the server invalidates the existing authentication token (JWT)
+ and removes the associated authentication cookie from the client.
+
+ This ensures that subsequent requests can no longer access protected resources
+ using the invalidated credentials.
+
+ The server responds with an HTTP status code of 200 to indicate successful logout.
+
+ In case of any errors during the logout process, the server returns an appropriate
+ error status code along with a descriptive error message.
+
+ * @summary User de-authentication
+ */
+export const logout = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/logout`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getLogoutMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext> => {
+
+const mutationKey = ['logout'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logout>>, void> = () => {
+          
+
+          return  logout()
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogoutMutationResult = NonNullable<Awaited<ReturnType<typeof logout>>>
+    
+    export type LogoutMutationError = ErrorType<unknown>
+
+    /**
+ * @summary User de-authentication
+ */
+export const useLogout = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logout>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getLogoutMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -196,105 +249,52 @@ export const useRequestPasswordReset = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint handles user logout operations, invalidating the current user session.
+ * This endpoint completes the recovery of a forgotten password with the token from the emailed link
+`<web client>/reset-password#<token>`. It requires no authentication, and any token presented with
+it is ignored.
 
- Upon successful logout, the server invalidates the existing authentication token (JWT)
- and removes the associated authentication cookie from the client.
+The new password must meet the same policy as a password change: between 15 and 64 characters,
+counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. It must
+differ from the current password.
 
- This ensures that subsequent requests can no longer access protected resources
- using the invalidated credentials.
+On success the server answers 204 with no body: the token is used up, the password is replaced,
+the "must change password" flag is cleared, and every session opened before is ended. The user is
+not logged in; the client must log in with the new password. The account's failed login attempts
+are forgotten, so a user throttled for them can log in at once.
 
- The server responds with an HTTP status code of 200 to indicate successful logout.
+A token that is unknown, malformed, expired, already used or replaced by a newer one, or whose user
+has been disabled, is answered 400 with the `USER_PASSWORD_RESET_TOKEN_INVALID` code, the same in
+every case. A new password that breaks the policy is answered 400 with the
+`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter, and one equal to the current password
+with the `USER_PASSWORD_UNCHANGED` code; in both cases nothing changes and the token can be used
+again.
 
- In case of any errors during the logout process, the server returns an appropriate
- error status code along with a descriptive error message.
-
- * @summary User de-authentication
+Every invalid token counts against the client address, together with failed logins and password
+changes: after 20 within 15 minutes, further resets are answered 429 with a Retry-After header
+until the 15 minutes that started with the first failure have passed.
+ * @summary Sets a new password with a password reset token
  */
-export const logout = (
-    
+export const resetPassword = (
+    passwordResetBody: PasswordResetBody,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<void>(
-      {url: `/api/v1/logout`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getLogoutMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext> => {
-
-const mutationKey = ['logout'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logout>>, void> = () => {
-          
-
-          return  logout()
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type LogoutMutationResult = NonNullable<Awaited<ReturnType<typeof logout>>>
-    
-    export type LogoutMutationError = ErrorType<unknown>
-
-    /**
- * @summary User de-authentication
- */
-export const useLogout = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof logout>>,
-        TError,
-        void,
-        TContext
-      > => {
-
-      const mutationOptions = getLogoutMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint is dedicated to user authentication, requiring clients to provide a valid username and password in the request body. Upon successful authentication, the server generates and returns an authentication token, utilizing JSON Web Tokens (JWT). This token serves as a secure means for subsequent authorized access to protected resources within the system. The server responds with an HTTP status code of 200, along with the generated token. In case of authentication failure or invalid credentials, the server issues an appropriate error status code, accompanied by a descriptive error message. After 5 failed attempts on the same account, or 20 from the same client address, within 15 minutes, further attempts are answered 429 with a Retry-After header, without checking the password, until the 15 minutes that started with the first failure have passed.
- * @summary User authentication
- */
-export const login = (
-    loginRequest: LoginRequest,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<Token>(
-      {url: `/api/v1/login`, method: 'POST',
+      {url: `/api/v1/users/password/reset`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: loginRequest, signal
+      data: passwordResetBody, signal
     },
       );
     }
   
 
 
-export const getLoginMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext> => {
+export const getResetPasswordMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: PasswordResetBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: PasswordResetBody}, TContext> => {
 
-const mutationKey = ['login'];
+const mutationKey = ['resetPassword'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -304,10 +304,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: LoginRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetPassword>>, {data: PasswordResetBody}> = (props) => {
           const {data} = props ?? {};
 
-          return  login(data,)
+          return  resetPassword(data,)
         }
 
         
@@ -315,23 +315,23 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
-    export type LoginMutationBody = LoginRequest
-    export type LoginMutationError = ErrorType<RestError>
+    export type ResetPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetPassword>>>
+    export type ResetPasswordMutationBody = PasswordResetBody
+    export type ResetPasswordMutationError = ErrorType<RestError>
 
     /**
- * @summary User authentication
+ * @summary Sets a new password with a password reset token
  */
-export const useLogin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginRequest}, TContext>, }
+export const useResetPassword = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: PasswordResetBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof login>>,
+        Awaited<ReturnType<typeof resetPassword>>,
         TError,
-        {data: LoginRequest},
+        {data: PasswordResetBody},
         TContext
       > => {
 
-      const mutationOptions = getLoginMutationOptions(options);
+      const mutationOptions = getResetPasswordMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

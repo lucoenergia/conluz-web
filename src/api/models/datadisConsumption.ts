@@ -7,13 +7,13 @@
  */
 
 export interface DatadisConsumption {
+  consumptionKWh?: number;
   cups?: string;
   date?: string;
-  time?: string;
-  consumptionKWh?: number;
-  obtainMethod?: string;
-  surplusEnergyKWh?: number;
-  generationEnergyKWh?: number;
-  selfConsumptionEnergyKWh?: number;
   empty?: boolean;
+  generationEnergyKWh?: number;
+  obtainMethod?: string;
+  selfConsumptionEnergyKWh?: number;
+  surplusEnergyKWh?: number;
+  time?: string;
 }

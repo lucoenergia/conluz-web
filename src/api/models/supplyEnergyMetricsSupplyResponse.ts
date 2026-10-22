@@ -8,10 +8,10 @@
 import type { SupplyEnergyMetricsSupplyResponseName } from './supplyEnergyMetricsSupplyResponseName';
 
 export interface SupplyEnergyMetricsSupplyResponse {
-  /** Internal unique identifier of the supply */
-  id: string;
   /** Code that identifies the supply */
   code: string;
+  /** Internal unique identifier of the supply */
+  id: string;
   /** Name of the supply */
   name: SupplyEnergyMetricsSupplyResponseName;
 }

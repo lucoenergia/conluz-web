@@ -5,29 +5,29 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { UserReferenceResponse } from './userReferenceResponse';
+import type { PlatformAdminCapabilitiesResponse } from './platformAdminCapabilitiesResponse';
 import type { PlatformAdminResponseEmail } from './platformAdminResponseEmail';
 import type { PlatformAdminResponseEnabled } from './platformAdminResponseEnabled';
-import type { PlatformAdminResponseRevocable } from './platformAdminResponseRevocable';
 import type { PlatformAdminResponseInvitation } from './platformAdminResponseInvitation';
-import type { PlatformAdminCapabilitiesResponse } from './platformAdminCapabilitiesResponse';
+import type { PlatformAdminResponseRevocable } from './platformAdminResponseRevocable';
+import type { UserReferenceResponse } from './userReferenceResponse';
 
 /**
  * A platform admin, identified by their own account, or a pending invitation to the role.
  */
 export interface PlatformAdminResponse {
-  /** The account, by id only: the {userId} the platform-admin endpoints take. */
-  user: UserReferenceResponse;
-  /** The platform admin's full name, as their account records it. For a pending invitation, the full name the inviter typed. */
-  fullName: string;
+  /** What the caller may do with this platform admin. */
+  capabilities: PlatformAdminCapabilitiesResponse;
   /** The email address of the platform admin's account. Null if there is none. For a pending invitation, the address the invitation was sent to. */
   email: PlatformAdminResponseEmail;
   /** Whether the account is enabled. A disabled platform admin keeps the role but cannot log in. Null for a pending invitation, which tells nothing about the account. */
   enabled: PlatformAdminResponseEnabled;
-  /** Whether revoking this user's platform-admin flag would be accepted right now. False only for the last enabled platform admin, whose revoke is refused with USER_LAST_PLATFORM_ADMIN; a disabled platform admin is always revocable. Independent of capabilities.canRevoke, which says whether the caller may ask for it. Null for a pending invitation, which holds no role to revoke. */
-  revocable: PlatformAdminResponseRevocable;
+  /** The platform admin's full name, as their account records it. For a pending invitation, the full name the inviter typed. */
+  fullName: string;
   /** The pending invitation to the role. Null for a user holding the role. A pending invitation never counts as a platform admin. */
   invitation: PlatformAdminResponseInvitation;
-  /** What the caller may do with this platform admin. */
-  capabilities: PlatformAdminCapabilitiesResponse;
+  /** Whether revoking this user's platform-admin flag would be accepted right now. False only for the last enabled platform admin, whose revoke is refused with USER_LAST_PLATFORM_ADMIN; a disabled platform admin is always revocable. Independent of capabilities.canRevoke, which says whether the caller may ask for it. Null for a pending invitation, which holds no role to revoke. */
+  revocable: PlatformAdminResponseRevocable;
+  /** The account, by id only: the {userId} the platform-admin endpoints take. */
+  user: UserReferenceResponse;
 }

@@ -9,20 +9,20 @@ import type { InviteCommunityAdminBodyPhoneNumber } from './inviteCommunityAdmin
 
 export interface InviteCommunityAdminBody {
   /**
-   * The admin's DNI/NIE/NIF. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same person. A value made only of those removed characters is refused.
+   * The email address this community contacts the admin at. The invitation is sent to it.
    * @minLength 1
    */
-  personalId: string;
+  contactEmail: string;
   /**
    * The admin's full name, as this community records it.
    * @minLength 1
    */
   fullName: string;
   /**
-   * The email address this community contacts the admin at. The invitation is sent to it.
+   * The admin's DNI/NIE/NIF. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same person. A value made only of those removed characters is refused.
    * @minLength 1
    */
-  contactEmail: string;
+  personalId: string;
   /** The admin's phone number, as this community records it. An empty or blank value is recorded as none. */
   phoneNumber?: InviteCommunityAdminBodyPhoneNumber;
 }

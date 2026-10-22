@@ -9,8 +9,8 @@ import type { UserResponse } from './userResponse';
 
 export interface PagedResultUserResponse {
   items?: UserResponse[];
+  number?: number;
   size?: number;
   totalElements?: number;
   totalPages?: number;
-  number?: number;
 }

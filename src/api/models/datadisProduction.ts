@@ -9,7 +9,7 @@
 export interface DatadisProduction {
   cups?: string;
   date?: string;
-  time?: string;
-  productionKWh?: number;
   obtainMethod?: string;
+  productionKWh?: number;
+  time?: string;
 }

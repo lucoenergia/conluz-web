@@ -7,12 +7,12 @@
  */
 
 export interface MembershipEnergyMetricsCoverageResponse {
-  /** Number of hourly consumption records found in the period, summed across every supply of the membership */
-  hoursWithData: number;
   /** Number of hours the period spans, times the number of supplies of the membership. A supply without any record therefore lowers coverage even when the rest are complete. Accounts for daylight saving transitions. */
   expectedHours: number;
-  /** Number of supplies of the membership in this community */
-  supplyCount: number;
+  /** Number of hourly consumption records found in the period, summed across every supply of the membership */
+  hoursWithData: number;
   /** Number of those supplies with at least one hourly record in the period */
   suppliesWithData: number;
+  /** Number of supplies of the membership in this community */
+  supplyCount: number;
 }

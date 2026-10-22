@@ -7,10 +7,10 @@
  */
 
 export interface SharingAgreementFileResponse {
-  /** Internal unique identifier of the stored file */
-  id: string;
   /** Original filename as uploaded */
   filename: string;
+  /** Internal unique identifier of the stored file */
+  id: string;
   /** Date and time the file was uploaded */
   uploadedAt: string;
 }

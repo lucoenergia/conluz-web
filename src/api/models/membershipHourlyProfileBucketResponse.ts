@@ -5,18 +5,18 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { MembershipHourlyProfileBucketResponseAverageTotalConsumptionKWh } from './membershipHourlyProfileBucketResponseAverageTotalConsumptionKWh';
 import type { MembershipHourlyProfileBucketResponseAverageAssignedProductionKWh } from './membershipHourlyProfileBucketResponseAverageAssignedProductionKWh';
+import type { MembershipHourlyProfileBucketResponseAverageTotalConsumptionKWh } from './membershipHourlyProfileBucketResponseAverageTotalConsumptionKWh';
 
 export interface MembershipHourlyProfileBucketResponse {
-  /** Hour of the local day in the community's time zone, from 0 to 23 */
-  hour: number;
-  /** Average energy consumed by every supply of the membership in this hour, whatever its origin: grid import plus self-consumed energy. Averaged over the total consumption samples found. Null when there is no sample, never 0. */
-  averageTotalConsumptionKWh: MembershipHourlyProfileBucketResponseAverageTotalConsumptionKWh;
-  /** Number of hourly records carrying total consumption found for this hour across every supply and every day of the month. A sample count, not a day count: on a daylight saving day one local hour holds two samples and another none. */
-  totalConsumptionSampleCount: number;
-  /** Average energy assigned to every supply of the membership in this hour: self-consumed plus surplus energy. Averaged over the assigned production samples found. Null when there is no sample; 0 when there are samples and all of them are zero. */
-  averageAssignedProductionKWh: MembershipHourlyProfileBucketResponseAverageAssignedProductionKWh;
   /** Number of hourly records carrying assigned production found for this hour across every supply and every day of the month. A sample count, not a day count, and independent of totalConsumptionSampleCount, since a record can carry consumption alone. */
   assignedProductionSampleCount: number;
+  /** Average energy assigned to every supply of the membership in this hour: self-consumed plus surplus energy. Averaged over the assigned production samples found. Null when there is no sample; 0 when there are samples and all of them are zero. */
+  averageAssignedProductionKWh: MembershipHourlyProfileBucketResponseAverageAssignedProductionKWh;
+  /** Average energy consumed by every supply of the membership in this hour, whatever its origin: grid import plus self-consumed energy. Averaged over the total consumption samples found. Null when there is no sample, never 0. */
+  averageTotalConsumptionKWh: MembershipHourlyProfileBucketResponseAverageTotalConsumptionKWh;
+  /** Hour of the local day in the community's time zone, from 0 to 23 */
+  hour: number;
+  /** Number of hourly records carrying total consumption found for this hour across every supply and every day of the month. A sample count, not a day count: on a daylight saving day one local hour holds two samples and another none. */
+  totalConsumptionSampleCount: number;
 }

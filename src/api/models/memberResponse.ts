@@ -5,48 +5,48 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { UserReferenceResponse } from './userReferenceResponse';
-import type { CommunityReferenceResponse } from './communityReferenceResponse';
-import type { MemberResponseRole } from './memberResponseRole';
-import type { MemberResponseMemberNumber } from './memberResponseMemberNumber';
-import type { MemberResponseContactEmail } from './memberResponseContactEmail';
-import type { MemberResponseAddress } from './memberResponseAddress';
-import type { MemberResponsePhoneNumber } from './memberResponsePhoneNumber';
 import type { MemberResponseAcceptedAt } from './memberResponseAcceptedAt';
-import type { MemberResponseInvitedAt } from './memberResponseInvitedAt';
-import type { MemberResponseInvitationExpiresAt } from './memberResponseInvitationExpiresAt';
+import type { MemberResponseAddress } from './memberResponseAddress';
 import type { MembershipCapabilitiesResponse } from './membershipCapabilitiesResponse';
+import type { CommunityReferenceResponse } from './communityReferenceResponse';
+import type { MemberResponseContactEmail } from './memberResponseContactEmail';
+import type { MemberResponseInvitationExpiresAt } from './memberResponseInvitationExpiresAt';
+import type { MemberResponseInvitedAt } from './memberResponseInvitedAt';
+import type { MemberResponseMemberNumber } from './memberResponseMemberNumber';
+import type { MemberResponsePhoneNumber } from './memberResponsePhoneNumber';
+import type { MemberResponseRole } from './memberResponseRole';
+import type { UserReferenceResponse } from './userReferenceResponse';
 
 /**
  * A member of a community: the membership, its state and the community's own member record.
  */
 export interface MemberResponse {
-  /** The membership's id. */
-  id: string;
-  /** The member's account, by id only: the {userId} the membership's endpoints take. Nothing else of the account is carried. */
-  user: UserReferenceResponse;
-  /** The community the membership belongs to. */
-  community: CommunityReferenceResponse;
-  role: MemberResponseRole;
-  /** The member's DNI/NIE/NIF, normalised: the one the community registered them with. */
-  personalId: string;
-  /** The member's full name, as this community records it. */
-  fullName: string;
-  /** The member's number in this community. Null if the community records none. */
-  memberNumber: MemberResponseMemberNumber;
-  /** The email address this community contacts the member at. Null if there is none. */
-  contactEmail: MemberResponseContactEmail;
-  /** The member's address, as this community records it. Null if there is none. */
-  address: MemberResponseAddress;
-  /** The member's phone number, as this community records it. Null if there is none. */
-  phoneNumber: MemberResponsePhoneNumber;
   /** When the membership was accepted. Null while it is pending: a pending membership grants no access until it is accepted. Independent of enabled. */
   acceptedAt: MemberResponseAcceptedAt;
-  enabled: boolean;
-  /** When the member was last sent an invitation. Null if none has been sent. */
-  invitedAt: MemberResponseInvitedAt;
-  /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
-  invitationExpiresAt: MemberResponseInvitationExpiresAt;
+  /** The member's address, as this community records it. Null if there is none. */
+  address: MemberResponseAddress;
   /** What the caller may do with this membership. */
   capabilities: MembershipCapabilitiesResponse;
+  /** The community the membership belongs to. */
+  community: CommunityReferenceResponse;
+  /** The email address this community contacts the member at. Null if there is none. */
+  contactEmail: MemberResponseContactEmail;
+  enabled: boolean;
+  /** The member's full name, as this community records it. */
+  fullName: string;
+  /** The membership's id. */
+  id: string;
+  /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
+  invitationExpiresAt: MemberResponseInvitationExpiresAt;
+  /** When the member was last sent an invitation. Null if none has been sent. */
+  invitedAt: MemberResponseInvitedAt;
+  /** The member's number in this community. Null if the community records none. */
+  memberNumber: MemberResponseMemberNumber;
+  /** The member's DNI/NIE/NIF, normalised: the one the community registered them with. */
+  personalId: string;
+  /** The member's phone number, as this community records it. Null if there is none. */
+  phoneNumber: MemberResponsePhoneNumber;
+  role: MemberResponseRole;
+  /** The member's account, by id only: the {userId} the membership's endpoints take. Nothing else of the account is carried. */
+  user: UserReferenceResponse;
 }

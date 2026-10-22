@@ -8,14 +8,14 @@
 
 export interface SyncMonthlyDatadisConsumptionsBody {
   /**
-   * @minimum 2000
-   * @maximum 2100
-   */
-  year: number;
-  /**
    * @minimum 1
    * @maximum 12
    */
   month?: number;
   supplyCode?: string;
+  /**
+   * @minimum 2000
+   * @maximum 2100
+   */
+  year: number;
 }

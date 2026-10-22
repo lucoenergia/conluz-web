@@ -5,16 +5,16 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { InvitationInspectionResponseKind } from './invitationInspectionResponseKind';
 import type { InvitationInspectionResponseCommunity } from './invitationInspectionResponseCommunity';
+import type { InvitationInspectionResponseKind } from './invitationInspectionResponseKind';
 
 export interface InvitationInspectionResponse {
-  /** What the invitation is for: `COMMUNITY`, a membership of the community in `community`; or `PLATFORM`, the platform-admin role. */
-  kind: InvitationInspectionResponseKind;
   /** The community the invitation is for. Null for a `PLATFORM` invitation. */
   community: InvitationInspectionResponseCommunity;
-  /** Whether the person must log in to accept the invitation: true when the account already has a password, so the invitation is accepted through `acceptInvitationAsCurrentUser` after logging in; false when it has none, so it is accepted through `acceptInvitation`, choosing its first password. */
-  loginRequired: boolean;
   /** Whether accepting requires the confirmation code that whoever invited gives the person by another channel: true for a `PLATFORM` invitation, false for a `COMMUNITY` one. The code is never sent by email, and no endpoint returns it to the person invited. */
   confirmationCodeRequired: boolean;
+  /** What the invitation is for: `COMMUNITY`, a membership of the community in `community`; or `PLATFORM`, the platform-admin role. */
+  kind: InvitationInspectionResponseKind;
+  /** Whether the person must log in to accept the invitation: true when the account already has a password, so the invitation is accepted through `acceptInvitationAsCurrentUser` after logging in; false when it has none, so it is accepted through `acceptInvitation`, choosing its first password. */
+  loginRequired: boolean;
 }

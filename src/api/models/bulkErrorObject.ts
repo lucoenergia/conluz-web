@@ -7,6 +7,6 @@
  */
 
 export interface BulkErrorObject {
-  item?: unknown;
   errorMessage?: string;
+  item?: unknown;
 }

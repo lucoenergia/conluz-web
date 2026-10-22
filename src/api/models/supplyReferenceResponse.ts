@@ -8,10 +8,10 @@
 import type { SupplyReferenceResponseName } from './supplyReferenceResponseName';
 
 export interface SupplyReferenceResponse {
-  /** Internal unique identifier of the supply */
-  id: string;
   /** Code of the supply */
   code: string;
+  /** Internal unique identifier of the supply */
+  id: string;
   /** Display name of the supply */
   name: SupplyReferenceResponseName;
 }

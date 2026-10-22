@@ -8,8 +8,8 @@
 import type { AcceptInvitationAsCurrentUserBodyConfirmationCode } from './acceptInvitationAsCurrentUserBodyConfirmationCode';
 
 export interface AcceptInvitationAsCurrentUserBody {
-  /** The token from the invitation link: everything after the `#` of `<web client>/accept-invitation#<token>`, exactly as it appears there. */
-  token: string;
   /** The confirmation code of a platform-admin invitation, as whoever invited gave it: 8 characters, in any case, with or without spaces and hyphens. Required when `inspectInvitation` answers `confirmationCodeRequired`; ignored for a community invitation. */
   confirmationCode?: AcceptInvitationAsCurrentUserBodyConfirmationCode;
+  /** The token from the invitation link: everything after the `#` of `<web client>/accept-invitation#<token>`, exactly as it appears there. */
+  token: string;
 }

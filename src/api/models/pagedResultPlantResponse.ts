@@ -9,8 +9,8 @@ import type { PlantResponse } from './plantResponse';
 
 export interface PagedResultPlantResponse {
   items?: PlantResponse[];
+  number?: number;
   size?: number;
   totalElements?: number;
   totalPages?: number;
-  number?: number;
 }

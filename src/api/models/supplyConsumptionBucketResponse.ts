@@ -9,24 +9,24 @@ import type { SupplyConsumptionBucketResponseObtainMethod } from './supplyConsum
 import type { SupplyConsumptionBucketResponseTariffSource } from './supplyConsumptionBucketResponseTariffSource';
 
 export interface SupplyConsumptionBucketResponse {
+  /** Energy assigned to this supply over the bucket: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
+  assignedProductionKWh: number;
   /** CUPS code of the supply the bucket belongs to. */
   cups: string;
   /** Local calendar date the bucket starts on: the day itself on the daily series, the first day of the month on the monthly one. */
   date: string;
-  /** Local time the bucket starts at, in the zone the application is configured with. */
-  time: string;
   /** Energy taken from the grid by this supply over the bucket. Does not include self-consumed energy. In kWh, rounded to 3 decimals. */
   gridImportKWh: number;
   /** How the underlying records were obtained, as reported by Datadis. Null on a bucket with no stored record. */
   obtainMethod: SupplyConsumptionBucketResponseObtainMethod;
-  /** Energy assigned to this supply and fed back to the grid over the bucket. In kWh, rounded to 3 decimals. */
-  surplusKWh: number;
-  /** Energy produced by the community and consumed by this supply over the bucket, as reported by the distributor. In kWh, rounded to 3 decimals. */
-  selfConsumptionKWh: number;
-  /** Energy assigned to this supply over the bucket: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
-  assignedProductionKWh: number;
   /** Estimated amount the bucket's self-consumed energy saved, in euros, rounded to cents. A bucket with no self-consumption -- and a bucket with no stored record at all -- reports 0.00. */
   savingsEur: number;
+  /** Energy produced by the community and consumed by this supply over the bucket, as reported by the distributor. In kWh, rounded to 3 decimals. */
+  selfConsumptionKWh: number;
+  /** Energy assigned to this supply and fed back to the grid over the bucket. In kWh, rounded to 3 decimals. */
+  surplusKWh: number;
   /** Whether the prices behind the amount are the supply's contracted tariff or an estimate. A single estimated stretch of the bucket makes the whole amount an estimate. */
   tariffSource: SupplyConsumptionBucketResponseTariffSource;
+  /** Local time the bucket starts at, in the zone the application is configured with. */
+  time: string;
 }

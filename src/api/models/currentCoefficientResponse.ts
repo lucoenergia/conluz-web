@@ -10,8 +10,8 @@ import type { SharingAgreementReferenceResponse } from './sharingAgreementRefere
 export interface CurrentCoefficientResponse {
   /** The coefficient value currently in force, on a 0-1 scale */
   coefficient: number;
-  /** When this coefficient took effect (inclusive) */
-  validFrom: string;
   /** The agreement that authored the coefficient currently in force. May be the agreement being viewed, or an earlier one. */
   sharingAgreement: SharingAgreementReferenceResponse;
+  /** When this coefficient took effect (inclusive) */
+  validFrom: string;
 }

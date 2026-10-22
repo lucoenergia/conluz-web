@@ -33,13 +33,263 @@ import type {
   UpdatePlantBody
 } from '.././models';
 
-import { customInstance } from '.././custom-instance';
-import type { ErrorType } from '.././custom-instance';
+import { customInstance } from '../../http/custom-instance';
+import type { ErrorType } from '../../http/custom-instance';
 
 
 
 
 /**
+ * Retrieves the plants of the given community with pagination, filtering and sorting. Requires
+authentication through a Bearer Token.
+
+**Required: any member of the community (any role).**
+ * @summary Retrieves the plants of a community with support for pagination, filtering, and sorting.
+ */
+export const getAllPlants = (
+    communityId: string,
+    params?: GetAllPlantsParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PagedResultPlantResponse>(
+      {url: `/api/v1/communities/${communityId}/plants`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetAllPlantsQueryKey = (communityId?: string,
+    params?: GetAllPlantsParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/plants`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAllPlantsQueryKey(communityId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllPlants>>> = ({ signal }) => getAllPlants(communityId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAllPlantsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllPlants>>>
+export type GetAllPlantsQueryError = ErrorType<RestError>
+
+
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: undefined |  GetAllPlantsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllPlants>>,
+          TError,
+          Awaited<ReturnType<typeof getAllPlants>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllPlants>>,
+          TError,
+          Awaited<ReturnType<typeof getAllPlants>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the plants of a community with support for pagination, filtering, and sorting.
+ */
+
+export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAllPlantsQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint facilitates the creation of a new plant within the system.
+
+To utilize this endpoint, a client sends a request containing essential details such as the plants's
+address, its code and any relevant parameters.
+
+Proper authentication, through authentication tokens, is required to access this endpoint.
+**Required: Community Admin**
+
+Upon successful creation, the server responds with a status code of 200, providing comprehensive
+details about the newly created plant, including its unique identifier.
+
+In case of failure, the server returns an appropriate error status code along with a descriptiv
+error message, aiding the client in diagnosing and addressing the issue.
+
+ * @summary Creates a new plant within the system.
+ */
+export const createPlant = (
+    createPlantBody: CreatePlantBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PlantResponse>(
+      {url: `/api/v1/plants`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createPlantBody, signal
+    },
+      );
+    }
+  
+
+
+export const getCreatePlantMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext> => {
+
+const mutationKey = ['createPlant'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPlant>>, {data: CreatePlantBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPlant(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePlantMutationResult = NonNullable<Awaited<ReturnType<typeof createPlant>>>
+    export type CreatePlantMutationBody = CreatePlantBody
+    export type CreatePlantMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Creates a new plant within the system.
+ */
+export const useCreatePlant = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPlant>>,
+        TError,
+        {data: CreatePlantBody},
+        TContext
+      > => {
+
+      const mutationOptions = getCreatePlantMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Deletes the plant with its Huawei configuration.
+**Required: Community Admin of the plant's community.**
+
+A plant that a sharing agreement, in any status, or a partition coefficient references is not deleted: the request is answered 409 with `PLANT_HAS_SHARING_AGREEMENTS` or `PLANT_HAS_PARTITION_COEFFICIENTS`, and nothing is deleted. Such a plant holds the community's sharing history and must be kept; a plant cannot be disabled.
+
+The plant's production series are not deleted.
+
+ * @summary Removes a plant by ID
+ */
+export const deletePlant = (
+    plantId: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/plants/${plantId}`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getDeletePlantMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext> => {
+
+const mutationKey = ['deletePlant'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlant>>, {plantId: string}> = (props) => {
+          const {plantId} = props ?? {};
+
+          return  deletePlant(plantId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePlantMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlant>>>
+    
+    export type DeletePlantMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Removes a plant by ID
+ */
+export const useDeletePlant = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePlant>>,
+        TError,
+        {plantId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeletePlantMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint retrieves detailed information about a specific plant by its unique identifier.
 
 **Required: any member of the plant's community (any role).**
@@ -217,253 +467,4 @@ export const useUpdatePlant = <TError = ErrorType<RestError>,
 
       return useMutation(mutationOptions, queryClient);
     }
-    /**
- * Deletes the plant with its Huawei configuration.
-**Required: Community Admin of the plant's community.**
-
-A plant that a sharing agreement, in any status, or a partition coefficient references is not deleted: the request is answered 409 with `PLANT_HAS_SHARING_AGREEMENTS` or `PLANT_HAS_PARTITION_COEFFICIENTS`, and nothing is deleted. Such a plant holds the community's sharing history and must be kept; a plant cannot be disabled.
-
-The plant's production series are not deleted.
-
- * @summary Removes a plant by ID
- */
-export const deletePlant = (
-    plantId: string,
- ) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/plants/${plantId}`, method: 'DELETE'
-    },
-      );
-    }
-  
-
-
-export const getDeletePlantMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext> => {
-
-const mutationKey = ['deletePlant'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlant>>, {plantId: string}> = (props) => {
-          const {plantId} = props ?? {};
-
-          return  deletePlant(plantId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeletePlantMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlant>>>
     
-    export type DeletePlantMutationError = ErrorType<RestError>
-
-    /**
- * @summary Removes a plant by ID
- */
-export const useDeletePlant = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlant>>, TError,{plantId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deletePlant>>,
-        TError,
-        {plantId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDeletePlantMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint facilitates the creation of a new plant within the system.
-
-To utilize this endpoint, a client sends a request containing essential details such as the plants's
-address, its code and any relevant parameters.
-
-Proper authentication, through authentication tokens, is required to access this endpoint.
-**Required: Community Admin**
-
-Upon successful creation, the server responds with a status code of 200, providing comprehensive
-details about the newly created plant, including its unique identifier.
-
-In case of failure, the server returns an appropriate error status code along with a descriptiv
-error message, aiding the client in diagnosing and addressing the issue.
-
- * @summary Creates a new plant within the system.
- */
-export const createPlant = (
-    createPlantBody: CreatePlantBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PlantResponse>(
-      {url: `/api/v1/plants`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createPlantBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreatePlantMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext> => {
-
-const mutationKey = ['createPlant'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPlant>>, {data: CreatePlantBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createPlant(data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreatePlantMutationResult = NonNullable<Awaited<ReturnType<typeof createPlant>>>
-    export type CreatePlantMutationBody = CreatePlantBody
-    export type CreatePlantMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates a new plant within the system.
- */
-export const useCreatePlant = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlant>>, TError,{data: CreatePlantBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createPlant>>,
-        TError,
-        {data: CreatePlantBody},
-        TContext
-      > => {
-
-      const mutationOptions = getCreatePlantMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Retrieves the plants of the given community with pagination, filtering and sorting. Requires
-authentication through a Bearer Token.
-
-**Required: any member of the community (any role).**
- * @summary Retrieves the plants of a community with support for pagination, filtering, and sorting.
- */
-export const getAllPlants = (
-    communityId: string,
-    params?: GetAllPlantsParams,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PagedResultPlantResponse>(
-      {url: `/api/v1/communities/${communityId}/plants`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetAllPlantsQueryKey = (communityId?: string,
-    params?: GetAllPlantsParams,) => {
-    return [
-    `/api/v1/communities/${communityId}/plants`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getGetAllPlantsQueryOptions = <TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(communityId: string,
-    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetAllPlantsQueryKey(communityId,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllPlants>>> = ({ signal }) => getAllPlants(communityId,params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetAllPlantsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllPlants>>>
-export type GetAllPlantsQueryError = ErrorType<RestError>
-
-
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params: undefined |  GetAllPlantsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllPlants>>,
-          TError,
-          Awaited<ReturnType<typeof getAllPlants>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllPlants>>,
-          TError,
-          Awaited<ReturnType<typeof getAllPlants>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves the plants of a community with support for pagination, filtering, and sorting.
- */
-
-export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>, TError = ErrorType<RestError>>(
- communityId: string,
-    params?: GetAllPlantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllPlants>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetAllPlantsQueryOptions(communityId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-

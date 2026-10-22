@@ -10,8 +10,8 @@
  * What the caller may do with this sharing agreement.
  */
 export interface SharingAgreementCapabilitiesResponse {
-  /** Whether the caller may read this agreement, its partition coefficients and its file. */
-  canRead: boolean;
   /** Whether the caller may update, delete, publish or revert this agreement and edit its coefficients. Whether a particular one of those actions is possible right now also depends on the agreement's status, which this does not reflect. */
   canManage: boolean;
+  /** Whether the caller may read this agreement, its partition coefficients and its file. */
+  canRead: boolean;
 }

@@ -10,14 +10,14 @@
  * What the caller may do on the platform as a whole.
  */
 export interface PlatformCapabilitiesResponse {
-  /** Whether the caller may create a community (POST /api/v1/communities). */
-  canCreateCommunity: boolean;
-  /** Whether the caller may list users (GET /api/v1/users): an active community admin of at least one community. False for a platform admin who administers no community. */
-  canListUsers: boolean;
   /** Whether the caller may use the platform administration surfaces -- the communities administration page, the platform overview and the landing route. No single endpoint asks this question: it gates a surface, and the endpoints behind that surface report their own capabilities. */
   canAdministerPlatform: boolean;
-  /** Whether the caller may list the platform admins (GET /api/v1/platform-admins). */
-  canListPlatformAdmins: boolean;
+  /** Whether the caller may create a community (POST /api/v1/communities). */
+  canCreateCommunity: boolean;
   /** Whether the caller may invite a person to the platform-admin role (POST /api/v1/platform-admins/invite). */
   canInvitePlatformAdmins: boolean;
+  /** Whether the caller may list the platform admins (GET /api/v1/platform-admins). */
+  canListPlatformAdmins: boolean;
+  /** Whether the caller may list users (GET /api/v1/users): an active community admin of at least one community. False for a platform admin who administers no community. */
+  canListUsers: boolean;
 }

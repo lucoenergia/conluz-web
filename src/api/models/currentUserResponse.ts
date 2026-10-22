@@ -5,32 +5,32 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { CurrentUserResponseNumber } from './currentUserResponseNumber';
 import type { CurrentUserResponseAddress } from './currentUserResponseAddress';
-import type { CurrentUserResponseEmail } from './currentUserResponseEmail';
-import type { CurrentUserResponsePhoneNumber } from './currentUserResponsePhoneNumber';
-import type { CurrentUserResponseMemberships } from './currentUserResponseMemberships';
 import type { UserCapabilitiesResponse } from './userCapabilitiesResponse';
+import type { CurrentUserResponseEmail } from './currentUserResponseEmail';
+import type { CurrentUserResponseMemberships } from './currentUserResponseMemberships';
+import type { CurrentUserResponseNumber } from './currentUserResponseNumber';
+import type { CurrentUserResponsePhoneNumber } from './currentUserResponsePhoneNumber';
 import type { PlatformCapabilitiesResponse } from './platformCapabilitiesResponse';
 
 /**
  * The authenticated caller's own user, with what they may do.
  */
 export interface CurrentUserResponse {
-  id: string;
-  personalId: string;
-  number: CurrentUserResponseNumber;
-  fullName: string;
   address: CurrentUserResponseAddress;
-  email: CurrentUserResponseEmail;
-  phoneNumber: CurrentUserResponsePhoneNumber;
-  enabled: boolean;
-  /** Whether the caller's password was chosen by someone else and must be changed through PUT /api/v1/users/current/password. While it is true, every request other than reading the current user (GET /api/v1/users/current), changing the password and logging out (POST /api/v1/logout) is refused with 403 and the `USER_PASSWORD_CHANGE_REQUIRED` code. */
-  mustChangePassword: boolean;
-  memberships: CurrentUserResponseMemberships;
   /** What the caller may do with their own user record. */
   capabilities: UserCapabilitiesResponse;
+  email: CurrentUserResponseEmail;
+  enabled: boolean;
+  fullName: string;
+  id: string;
+  isPlatformAdmin: boolean;
+  memberships: CurrentUserResponseMemberships;
+  /** Whether the caller's password was chosen by someone else and must be changed through PUT /api/v1/users/current/password. While it is true, every request other than reading the current user (GET /api/v1/users/current), changing the password and logging out (POST /api/v1/logout) is refused with 403 and the `USER_PASSWORD_CHANGE_REQUIRED` code. */
+  mustChangePassword: boolean;
+  number: CurrentUserResponseNumber;
+  personalId: string;
+  phoneNumber: CurrentUserResponsePhoneNumber;
   /** What the caller may do on the platform as a whole, independently of any one resource. */
   platformCapabilities: PlatformCapabilitiesResponse;
-  isPlatformAdmin: boolean;
 }

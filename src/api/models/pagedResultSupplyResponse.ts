@@ -9,8 +9,8 @@ import type { SupplyResponse } from './supplyResponse';
 
 export interface PagedResultSupplyResponse {
   items?: SupplyResponse[];
+  number?: number;
   size?: number;
   totalElements?: number;
   totalPages?: number;
-  number?: number;
 }

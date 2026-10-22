@@ -7,6 +7,8 @@
  */
 
 export interface UpdateSharingAgreementBody {
+  /** Snapshot of the plant's installed power at authoring time, in kW */
+  installedPowerKw: number;
   /**
    * Human-readable label for the agreement
    * @minLength 1
@@ -14,6 +16,4 @@ export interface UpdateSharingAgreementBody {
   name: string;
   /** Free-text notes about the agreement */
   notes?: string;
-  /** Snapshot of the plant's installed power at authoring time, in kW */
-  installedPowerKw: number;
 }

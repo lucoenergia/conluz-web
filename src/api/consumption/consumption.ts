@@ -36,196 +36,13 @@ import type {
   SyncYearlyDatadisConsumptionsBody
 } from '.././models';
 
-import { customInstance } from '.././custom-instance';
-import type { ErrorType } from '.././custom-instance';
+import { customInstance } from '../../http/custom-instance';
+import type { ErrorType } from '../../http/custom-instance';
 
 
 
 
 /**
- * This endpoint returns the Shelly integration configuration for a specific community.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Community Admin**
-
-Upon successful request, the server responds with an HTTP status code of 200, along with
-the current configuration. If no configuration has been set yet, a 404 is returned.
-
- * @summary Returns the Shelly configuration for the specified community.
- */
-export const getShellyConfig = (
-    communityId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<GetShellyConfigResponse>(
-      {url: `/api/v1/communities/${communityId}/config/shelly`, method: 'GET', signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetShellyConfigQueryKey = (communityId?: string,) => {
-    return [
-    `/api/v1/communities/${communityId}/config/shelly`
-    ] as const;
-    }
-
-    
-export const getGetShellyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetShellyConfigQueryKey(communityId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getShellyConfig>>> = ({ signal }) => getShellyConfig(communityId, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetShellyConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getShellyConfig>>>
-export type GetShellyConfigQueryError = ErrorType<RestError>
-
-
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
- communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getShellyConfig>>,
-          TError,
-          Awaited<ReturnType<typeof getShellyConfig>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getShellyConfig>>,
-          TError,
-          Awaited<ReturnType<typeof getShellyConfig>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Returns the Shelly configuration for the specified community.
- */
-
-export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetShellyConfigQueryOptions(communityId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint allows to enable or disable the Shelly integration for the energy community.
-
-The request body must contain:
-- **enabled** (required, boolean): Master switch for every Shelly-related
-  services. When `false`, scheduled jobs for processing MQTT messages and
-  aggregating hourly consumption are skipped. Set this to `false` for energy
-  communities that do not have Shelly meters installed.
-
-This configuration is a mandatory step to be able to process Shelly consumption data.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Community Admin**
-
-Upon successful request, the server responds with an HTTP status code of 200, along with details
-about the configuration already set.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error
-status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Sets up the Shelly configuration for the specified community.
- */
-export const configureShelly = (
-    communityId: string,
-    configureShellyBody: ConfigureShellyBody,
- ) => {
-      
-      
-      return customInstance<unknown>(
-      {url: `/api/v1/communities/${communityId}/config/shelly`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: configureShellyBody
-    },
-      );
-    }
-  
-
-
-export const getConfigureShellyMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext> => {
-
-const mutationKey = ['configureShelly'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureShelly>>, {communityId: string;data: ConfigureShellyBody}> = (props) => {
-          const {communityId,data} = props ?? {};
-
-          return  configureShelly(communityId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ConfigureShellyMutationResult = NonNullable<Awaited<ReturnType<typeof configureShelly>>>
-    export type ConfigureShellyMutationBody = ConfigureShellyBody
-    export type ConfigureShellyMutationError = ErrorType<RestError>
-
-    /**
- * @summary Sets up the Shelly configuration for the specified community.
- */
-export const useConfigureShelly = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof configureShelly>>,
-        TError,
-        {communityId: string;data: ConfigureShellyBody},
-        TContext
-      > => {
-
-      const mutationOptions = getConfigureShellyMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * This endpoint returns the Datadis connection configuration for a specific community.
 
 The password is never returned in the response. Instead, a boolean field
@@ -428,54 +245,48 @@ export const useConfigureDatadis = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint enables users to synchronize consumption data from datadis for a specific year.
+ * This endpoint disables the community's Datadis configuration, changing nothing else: the stored
+username, password and base URL are not rewritten. The request has no body.
 
-The request body must contain:
-- **year** (required, integer): The year for which to synchronize consumption data
-- **supplyCode** (optional, string): The supply code (CUPS) to synchronize. If not provided, all active supplies will be synchronized.
+A disabled configuration switches off the community's Datadis integration: the scheduled Datadis
+sync and aggregation jobs skip the community, and the operations that sync or aggregate its
+Datadis data respond with `409 Conflict`.
 
-The synchronization will retrieve data from January 1st to December 31st of the specified year.
+Disabling never requires complete data: it succeeds whatever the stored configuration holds,
+which is how a configuration with missing credentials is switched off.
 
-**Behavior:**
-- If supplyCode is provided: Synchronizes only that specific supply
-- If supplyCode is not provided or is empty: Synchronizes all active supplies
+Disabling a configuration that is already disabled succeeds.
 
-The community is taken from the path; the configured Datadis credentials of that
-community are used and only that community's supplies are synchronized.
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required: the caller can manage the community** (the community's `canManage` capability).
 
-Proper authentication, through an authentication token, is required for secure access to this endpoint.
-**Required: Community Admin of the community. Returns 404 if the community does not exist or the
-caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+Upon successful request, the server responds with an HTTP status code of 200 and no body.
 
-A successful request returns an HTTP status code of 200.
+A rejected request changes nothing. The server responds with `404` and error code
+`DATADIS_CONFIG_NOT_FOUND` when the community has no Datadis configuration (none is created), and with
+`400` when the community id is not a valid UUID.
 
-In cases of errors, the server responds with an appropriate error status code accompanied by a
-descriptive message to guide users in resolving any issues.
-
- * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
+ * @summary Disables a community's Datadis configuration.
  */
-export const syncDatadisConsumptions = (
+export const disableDatadisConfig = (
     communityId: string,
-    syncDatadisConsumptionsBody: SyncDatadisConsumptionsBody,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<unknown>(
-      {url: `/api/v1/communities/${communityId}/consumption/datadis/sync`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: syncDatadisConsumptionsBody, signal
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/config/datadis/disable`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getSyncDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext> => {
+export const getDisableDatadisConfigMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext> => {
 
-const mutationKey = ['syncDatadisConsumptions'];
+const mutationKey = ['disableDatadisConfig'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -485,10 +296,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisConsumptions>>, {communityId: string;data: SyncDatadisConsumptionsBody}> = (props) => {
-          const {communityId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableDatadisConfig>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
 
-          return  syncDatadisConsumptions(communityId,data,)
+          return  disableDatadisConfig(communityId,)
         }
 
         
@@ -496,199 +307,23 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type SyncDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisConsumptions>>>
-    export type SyncDatadisConsumptionsMutationBody = SyncDatadisConsumptionsBody
-    export type SyncDatadisConsumptionsMutationError = ErrorType<RestError>
+    export type DisableDatadisConfigMutationResult = NonNullable<Awaited<ReturnType<typeof disableDatadisConfig>>>
+    
+    export type DisableDatadisConfigMutationError = ErrorType<RestError>
 
     /**
- * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
+ * @summary Disables a community's Datadis configuration.
  */
-export const useSyncDatadisConsumptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext>, }
+export const useDisableDatadisConfig = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof syncDatadisConsumptions>>,
+        Awaited<ReturnType<typeof disableDatadisConfig>>,
         TError,
-        {communityId: string;data: SyncDatadisConsumptionsBody},
+        {communityId: string},
         TContext
       > => {
 
-      const mutationOptions = getSyncDatadisConsumptionsMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint enables admins to sync monthly consumption data into yearly totals.
-
-The request body must contain:
-- **year** (required, integer): The year for which to aggregate data
-- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, every supply of the community is aggregated.
-
-**Behavior:**
-- If supplyCode is provided: Aggregates only that specific supply
-- If supplyCode is not provided or is empty: Aggregates every supply of the community
-
-**Note:** This aggregation requires that monthly aggregations have already been performed
-for the specified year.
-
-The community is taken from the path and only that community's supplies are aggregated.
-Disabled supplies are included: a supply that has since been switched off still
-consumed energy while it was on, and its pre-aggregates must stay recomputable.
-
-Proper authentication, through an authentication token, is required for secure access to this endpoint.
-**Required: Community Admin of the community. Returns 404 if the community does not exist or the
-caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
-
-A successful request returns an HTTP status code of 200.
-
- * @summary Sync monthly Datadis consumption data into yearly totals
- */
-export const syncYearlyDatadisConsumptions = (
-    communityId: string,
-    syncYearlyDatadisConsumptionsBody: SyncYearlyDatadisConsumptionsBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<unknown>(
-      {url: `/api/v1/communities/${communityId}/consumption/datadis/sync/yearly`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: syncYearlyDatadisConsumptionsBody, signal
-    },
-      );
-    }
-  
-
-
-export const getSyncYearlyDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext> => {
-
-const mutationKey = ['syncYearlyDatadisConsumptions'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, {communityId: string;data: SyncYearlyDatadisConsumptionsBody}> = (props) => {
-          const {communityId,data} = props ?? {};
-
-          return  syncYearlyDatadisConsumptions(communityId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SyncYearlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>>
-    export type SyncYearlyDatadisConsumptionsMutationBody = SyncYearlyDatadisConsumptionsBody
-    export type SyncYearlyDatadisConsumptionsMutationError = ErrorType<RestError>
-
-    /**
- * @summary Sync monthly Datadis consumption data into yearly totals
- */
-export const useSyncYearlyDatadisConsumptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>,
-        TError,
-        {communityId: string;data: SyncYearlyDatadisConsumptionsBody},
-        TContext
-      > => {
-
-      const mutationOptions = getSyncYearlyDatadisConsumptionsMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint enables admins to aggregate hourly consumption data into monthly totals.
-
-The request body must contain:
-- **year** (required, integer): The year for which to aggregate data
-- **month** (optional, integer 1-12): The month to aggregate. If not provided, all months of the year will be aggregated.
-- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, every supply of the community is aggregated.
-
-**Behavior:**
-- If both month and supplyCode are provided: Aggregates only that specific supply for that month
-- If only month is provided: Aggregates all supplies for that specific month
-- If only supplyCode is provided: Aggregates that supply for all months of the year
-- If neither month nor supplyCode is provided: Aggregates all supplies for all months of the year
-
-The community is taken from the path and only that community's supplies are aggregated.
-Disabled supplies are included: a supply that has since been switched off still
-consumed energy while it was on, and its pre-aggregates must stay recomputable.
-
-Proper authentication, through an authentication token, is required for secure access to this endpoint.
-**Required: Community Admin of the community. Returns 404 if the community does not exist or the
-caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
-
-A successful request returns an HTTP status code of 200.
-
- * @summary Aggregate hourly Datadis consumption data into monthly totals
- */
-export const syncMonthlyDatadisConsumptions = (
-    communityId: string,
-    syncMonthlyDatadisConsumptionsBody: SyncMonthlyDatadisConsumptionsBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<unknown>(
-      {url: `/api/v1/communities/${communityId}/consumption/datadis/sync/monthly`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: syncMonthlyDatadisConsumptionsBody, signal
-    },
-      );
-    }
-  
-
-
-export const getSyncMonthlyDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext> => {
-
-const mutationKey = ['syncMonthlyDatadisConsumptions'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, {communityId: string;data: SyncMonthlyDatadisConsumptionsBody}> = (props) => {
-          const {communityId,data} = props ?? {};
-
-          return  syncMonthlyDatadisConsumptions(communityId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SyncMonthlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>>
-    export type SyncMonthlyDatadisConsumptionsMutationBody = SyncMonthlyDatadisConsumptionsBody
-    export type SyncMonthlyDatadisConsumptionsMutationError = ErrorType<RestError>
-
-    /**
- * @summary Aggregate hourly Datadis consumption data into monthly totals
- */
-export const useSyncMonthlyDatadisConsumptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>,
-        TError,
-        {communityId: string;data: SyncMonthlyDatadisConsumptionsBody},
-        TContext
-      > => {
-
-      const mutationOptions = getSyncMonthlyDatadisConsumptionsMutationOptions(options);
+      const mutationOptions = getDisableDatadisConfigMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -777,48 +412,148 @@ export const useEnableDatadisConfig = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint disables the community's Datadis configuration, changing nothing else: the stored
-username, password and base URL are not rewritten. The request has no body.
-
-A disabled configuration switches off the community's Datadis integration: the scheduled Datadis
-sync and aggregation jobs skip the community, and the operations that sync or aggregate its
-Datadis data respond with `409 Conflict`.
-
-Disabling never requires complete data: it succeeds whatever the stored configuration holds,
-which is how a configuration with missing credentials is switched off.
-
-Disabling a configuration that is already disabled succeeds.
+ * This endpoint returns the Shelly integration configuration for a specific community.
 
 Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: the caller can manage the community** (the community's `canManage` capability).
+**Required: Community Admin**
 
-Upon successful request, the server responds with an HTTP status code of 200 and no body.
+Upon successful request, the server responds with an HTTP status code of 200, along with
+the current configuration. If no configuration has been set yet, a 404 is returned.
 
-A rejected request changes nothing. The server responds with `404` and error code
-`DATADIS_CONFIG_NOT_FOUND` when the community has no Datadis configuration (none is created), and with
-`400` when the community id is not a valid UUID.
-
- * @summary Disables a community's Datadis configuration.
+ * @summary Returns the Shelly configuration for the specified community.
  */
-export const disableDatadisConfig = (
+export const getShellyConfig = (
     communityId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/config/datadis/disable`, method: 'POST', signal
+      return customInstance<GetShellyConfigResponse>(
+      {url: `/api/v1/communities/${communityId}/config/shelly`, method: 'GET', signal
     },
       );
     }
   
 
 
-export const getDisableDatadisConfigMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext> => {
 
-const mutationKey = ['disableDatadisConfig'];
+export const getGetShellyConfigQueryKey = (communityId?: string,) => {
+    return [
+    `/api/v1/communities/${communityId}/config/shelly`
+    ] as const;
+    }
+
+    
+export const getGetShellyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetShellyConfigQueryKey(communityId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getShellyConfig>>> = ({ signal }) => getShellyConfig(communityId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetShellyConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getShellyConfig>>>
+export type GetShellyConfigQueryError = ErrorType<RestError>
+
+
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
+ communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getShellyConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getShellyConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getShellyConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getShellyConfig>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the Shelly configuration for the specified community.
+ */
+
+export function useGetShellyConfig<TData = Awaited<ReturnType<typeof getShellyConfig>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShellyConfig>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetShellyConfigQueryOptions(communityId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint allows to enable or disable the Shelly integration for the energy community.
+
+The request body must contain:
+- **enabled** (required, boolean): Master switch for every Shelly-related
+  services. When `false`, scheduled jobs for processing MQTT messages and
+  aggregating hourly consumption are skipped. Set this to `false` for energy
+  communities that do not have Shelly meters installed.
+
+This configuration is a mandatory step to be able to process Shelly consumption data.
+
+Authentication is mandated, utilizing an authentication token, to ensure secure access.
+**Required: Community Admin**
+
+Upon successful request, the server responds with an HTTP status code of 200, along with details
+about the configuration already set.
+
+In cases where the creation process encounters errors, the server responds with an appropriate error
+status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
+
+ * @summary Sets up the Shelly configuration for the specified community.
+ */
+export const configureShelly = (
+    communityId: string,
+    configureShellyBody: ConfigureShellyBody,
+ ) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/config/shelly`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: configureShellyBody
+    },
+      );
+    }
+  
+
+
+export const getConfigureShellyMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext> => {
+
+const mutationKey = ['configureShelly'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -828,10 +563,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableDatadisConfig>>, {communityId: string}> = (props) => {
-          const {communityId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof configureShelly>>, {communityId: string;data: ConfigureShellyBody}> = (props) => {
+          const {communityId,data} = props ?? {};
 
-          return  disableDatadisConfig(communityId,)
+          return  configureShelly(communityId,data,)
         }
 
         
@@ -839,23 +574,23 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DisableDatadisConfigMutationResult = NonNullable<Awaited<ReturnType<typeof disableDatadisConfig>>>
-    
-    export type DisableDatadisConfigMutationError = ErrorType<RestError>
+    export type ConfigureShellyMutationResult = NonNullable<Awaited<ReturnType<typeof configureShelly>>>
+    export type ConfigureShellyMutationBody = ConfigureShellyBody
+    export type ConfigureShellyMutationError = ErrorType<RestError>
 
     /**
- * @summary Disables a community's Datadis configuration.
+ * @summary Sets up the Shelly configuration for the specified community.
  */
-export const useDisableDatadisConfig = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableDatadisConfig>>, TError,{communityId: string}, TContext>, }
+export const useConfigureShelly = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof configureShelly>>, TError,{communityId: string;data: ConfigureShellyBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disableDatadisConfig>>,
+        Awaited<ReturnType<typeof configureShelly>>,
         TError,
-        {communityId: string},
+        {communityId: string;data: ConfigureShellyBody},
         TContext
       > => {
 
-      const mutationOptions = getDisableDatadisConfigMutationOptions(options);
+      const mutationOptions = getConfigureShellyMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -977,3 +712,269 @@ export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnTy
 
 
 
+/**
+ * This endpoint enables users to synchronize consumption data from datadis for a specific year.
+
+The request body must contain:
+- **year** (required, integer): The year for which to synchronize consumption data
+- **supplyCode** (optional, string): The supply code (CUPS) to synchronize. If not provided, all active supplies will be synchronized.
+
+The synchronization will retrieve data from January 1st to December 31st of the specified year.
+
+**Behavior:**
+- If supplyCode is provided: Synchronizes only that specific supply
+- If supplyCode is not provided or is empty: Synchronizes all active supplies
+
+The community is taken from the path; the configured Datadis credentials of that
+community are used and only that community's supplies are synchronized.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required: Community Admin of the community. Returns 404 if the community does not exist or the
+caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+A successful request returns an HTTP status code of 200.
+
+In cases of errors, the server responds with an appropriate error status code accompanied by a
+descriptive message to guide users in resolving any issues.
+
+ * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
+ */
+export const syncDatadisConsumptions = (
+    communityId: string,
+    syncDatadisConsumptionsBody: SyncDatadisConsumptionsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/consumption/datadis/sync`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncDatadisConsumptionsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext> => {
+
+const mutationKey = ['syncDatadisConsumptions'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncDatadisConsumptions>>, {communityId: string;data: SyncDatadisConsumptionsBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  syncDatadisConsumptions(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncDatadisConsumptions>>>
+    export type SyncDatadisConsumptionsMutationBody = SyncDatadisConsumptionsBody
+    export type SyncDatadisConsumptionsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
+ */
+export const useSyncDatadisConsumptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,{communityId: string;data: SyncDatadisConsumptionsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncDatadisConsumptions>>,
+        TError,
+        {communityId: string;data: SyncDatadisConsumptionsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncDatadisConsumptionsMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint enables admins to aggregate hourly consumption data into monthly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **month** (optional, integer 1-12): The month to aggregate. If not provided, all months of the year will be aggregated.
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, every supply of the community is aggregated.
+
+**Behavior:**
+- If both month and supplyCode are provided: Aggregates only that specific supply for that month
+- If only month is provided: Aggregates all supplies for that specific month
+- If only supplyCode is provided: Aggregates that supply for all months of the year
+- If neither month nor supplyCode is provided: Aggregates all supplies for all months of the year
+
+The community is taken from the path and only that community's supplies are aggregated.
+Disabled supplies are included: a supply that has since been switched off still
+consumed energy while it was on, and its pre-aggregates must stay recomputable.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required: Community Admin of the community. Returns 404 if the community does not exist or the
+caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Aggregate hourly Datadis consumption data into monthly totals
+ */
+export const syncMonthlyDatadisConsumptions = (
+    communityId: string,
+    syncMonthlyDatadisConsumptionsBody: SyncMonthlyDatadisConsumptionsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/consumption/datadis/sync/monthly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncMonthlyDatadisConsumptionsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncMonthlyDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext> => {
+
+const mutationKey = ['syncMonthlyDatadisConsumptions'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, {communityId: string;data: SyncMonthlyDatadisConsumptionsBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  syncMonthlyDatadisConsumptions(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncMonthlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>>
+    export type SyncMonthlyDatadisConsumptionsMutationBody = SyncMonthlyDatadisConsumptionsBody
+    export type SyncMonthlyDatadisConsumptionsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Aggregate hourly Datadis consumption data into monthly totals
+ */
+export const useSyncMonthlyDatadisConsumptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>, TError,{communityId: string;data: SyncMonthlyDatadisConsumptionsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncMonthlyDatadisConsumptions>>,
+        TError,
+        {communityId: string;data: SyncMonthlyDatadisConsumptionsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncMonthlyDatadisConsumptionsMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint enables admins to sync monthly consumption data into yearly totals.
+
+The request body must contain:
+- **year** (required, integer): The year for which to aggregate data
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, every supply of the community is aggregated.
+
+**Behavior:**
+- If supplyCode is provided: Aggregates only that specific supply
+- If supplyCode is not provided or is empty: Aggregates every supply of the community
+
+**Note:** This aggregation requires that monthly aggregations have already been performed
+for the specified year.
+
+The community is taken from the path and only that community's supplies are aggregated.
+Disabled supplies are included: a supply that has since been switched off still
+consumed energy while it was on, and its pre-aggregates must stay recomputable.
+
+Proper authentication, through an authentication token, is required for secure access to this endpoint.
+**Required: Community Admin of the community. Returns 404 if the community does not exist or the
+caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+A successful request returns an HTTP status code of 200.
+
+ * @summary Sync monthly Datadis consumption data into yearly totals
+ */
+export const syncYearlyDatadisConsumptions = (
+    communityId: string,
+    syncYearlyDatadisConsumptionsBody: SyncYearlyDatadisConsumptionsBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/api/v1/communities/${communityId}/consumption/datadis/sync/yearly`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncYearlyDatadisConsumptionsBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncYearlyDatadisConsumptionsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext> => {
+
+const mutationKey = ['syncYearlyDatadisConsumptions'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, {communityId: string;data: SyncYearlyDatadisConsumptionsBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  syncYearlyDatadisConsumptions(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncYearlyDatadisConsumptionsMutationResult = NonNullable<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>>
+    export type SyncYearlyDatadisConsumptionsMutationBody = SyncYearlyDatadisConsumptionsBody
+    export type SyncYearlyDatadisConsumptionsMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Sync monthly Datadis consumption data into yearly totals
+ */
+export const useSyncYearlyDatadisConsumptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>, TError,{communityId: string;data: SyncYearlyDatadisConsumptionsBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncYearlyDatadisConsumptions>>,
+        TError,
+        {communityId: string;data: SyncYearlyDatadisConsumptionsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncYearlyDatadisConsumptionsMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

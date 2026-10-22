@@ -5,29 +5,29 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { UserResponseNumber } from './userResponseNumber';
 import type { UserResponseAddress } from './userResponseAddress';
-import type { UserResponseEmail } from './userResponseEmail';
-import type { UserResponsePhoneNumber } from './userResponsePhoneNumber';
-import type { UserResponseMemberships } from './userResponseMemberships';
 import type { UserCapabilitiesResponse } from './userCapabilitiesResponse';
+import type { UserResponseEmail } from './userResponseEmail';
+import type { UserResponseMemberships } from './userResponseMemberships';
+import type { UserResponseNumber } from './userResponseNumber';
+import type { UserResponsePhoneNumber } from './userResponsePhoneNumber';
 
 export interface UserResponse {
-  id: string;
-  personalId: string;
-  /** Member number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
-  number: UserResponseNumber;
-  /** Full name. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
-  fullName: string;
   /** Address. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   address: UserResponseAddress;
-  /** Email. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
-  email: UserResponseEmail;
-  /** Phone number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
-  phoneNumber: UserResponsePhoneNumber;
-  enabled: boolean;
-  memberships: UserResponseMemberships;
   /** What the caller may do with this user. */
   capabilities: UserCapabilitiesResponse;
+  /** Email. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  email: UserResponseEmail;
+  enabled: boolean;
+  /** Full name. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  fullName: string;
+  id: string;
   isPlatformAdmin: boolean;
+  memberships: UserResponseMemberships;
+  /** Member number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  number: UserResponseNumber;
+  personalId: string;
+  /** Phone number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  phoneNumber: UserResponsePhoneNumber;
 }

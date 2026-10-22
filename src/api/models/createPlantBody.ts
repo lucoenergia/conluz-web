@@ -8,6 +8,13 @@
 import type { CreatePlantBodyInverterProvider } from './createPlantBodyInverterProvider';
 
 export interface CreatePlantBody {
+  /** @minLength 1 */
+  address: string;
+  connectionDate?: string;
+  description?: string;
+  inverterProvider: CreatePlantBodyInverterProvider;
+  /** @minLength 1 */
+  name: string;
   /**
    * The plant identifier assigned by the inverter provider (currently Huawei). Used verbatim as the station_code tag in InfluxDB: this is the join key between the PostgreSQL plant row and its time series. It is not a CUPS and not a CAU -- the regulator's code is regulatory_code.
    * @minLength 1
@@ -16,13 +23,6 @@ export interface CreatePlantBody {
   /** The identifier assigned by the regulator. In Spain this is the CAU (Codigo de Autoconsumo). It is not the provider's station code (provider_code) and not a CUPS. */
   regulatoryCode?: string;
   /** @minLength 1 */
-  name: string;
-  description?: string;
-  /** @minLength 1 */
   supplyCode: string;
-  inverterProvider: CreatePlantBodyInverterProvider;
-  connectionDate?: string;
-  /** @minLength 1 */
-  address: string;
   totalPower: number;
 }
