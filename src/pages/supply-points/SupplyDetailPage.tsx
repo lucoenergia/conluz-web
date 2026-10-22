@@ -33,6 +33,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useSupplyActions } from "../../hooks/actions";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
+import { toConsumptionRows } from "./consumptionRows";
 
 export const SupplyDetailPage: FC = () => {
   const { supplyPointId = "" } = useParams();
@@ -247,19 +248,31 @@ export const SupplyDetailPage: FC = () => {
     : filterType === "year" || filterType === "totals" || (filterType === "dates" && datesGranularity !== "daily") ? supplyMonthlyProductionData
     : supplyDailyProductionData;
 
-  const consumptionData =
-    filterType === "day" ? hourlyConsumptionData
-    : filterType === "totals" ? yearlyConsumptionData
-    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? monthlyConsumptionData
-    : filterType === "dates" && datesGranularity === "yearly" ? yearlyConsumptionData
-    : dailyConsumptionData;
+  // The hourly and yearly series are Datadis records, the daily and monthly ones
+  // buckets; each branch tags the series with the shape its endpoint answers.
+  const consumptionData = useMemo(
+    () =>
+      toConsumptionRows(
+        filterType === "day" ? { source: "datadis", rows: hourlyConsumptionData }
+        : filterType === "totals" ? { source: "datadis", rows: yearlyConsumptionData }
+        : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? { source: "bucket", rows: monthlyConsumptionData }
+        : filterType === "dates" && datesGranularity === "yearly" ? { source: "datadis", rows: yearlyConsumptionData }
+        : { source: "bucket", rows: dailyConsumptionData },
+      ),
+    [filterType, datesGranularity, hourlyConsumptionData, dailyConsumptionData, monthlyConsumptionData, yearlyConsumptionData],
+  );
 
-  const prevConsumptionData =
-    filterType === "day" ? prevHourlyConsumptionData
-    : filterType === "totals" ? prevYearlyConsumptionData
-    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? prevMonthlyConsumptionData
-    : filterType === "dates" && datesGranularity === "yearly" ? prevYearlyConsumptionData
-    : prevDailyConsumptionData;
+  const prevConsumptionData = useMemo(
+    () =>
+      toConsumptionRows(
+        filterType === "day" ? { source: "datadis", rows: prevHourlyConsumptionData }
+        : filterType === "totals" ? { source: "datadis", rows: prevYearlyConsumptionData }
+        : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? { source: "bucket", rows: prevMonthlyConsumptionData }
+        : filterType === "dates" && datesGranularity === "yearly" ? { source: "datadis", rows: prevYearlyConsumptionData }
+        : { source: "bucket", rows: prevDailyConsumptionData },
+      ),
+    [filterType, datesGranularity, prevHourlyConsumptionData, prevDailyConsumptionData, prevMonthlyConsumptionData, prevYearlyConsumptionData],
+  );
 
   // Unified loading and error states
   const isLoading =
@@ -368,15 +381,15 @@ export const SupplyDetailPage: FC = () => {
       };
     }
 
-    const totalConsumption = consumptionData.reduce((sum, item) => sum + (item.consumptionKWh || 0), 0);
-    const totalSelfConsumption = consumptionData.reduce((sum, item) => sum + (item.selfConsumptionEnergyKWh || 0), 0);
-    const totalSurplus = consumptionData.reduce((sum, item) => sum + (item.surplusEnergyKWh || 0), 0);
+    const totalConsumption = consumptionData.reduce((sum, item) => sum + item.gridImportKWh, 0);
+    const totalSelfConsumption = consumptionData.reduce((sum, item) => sum + item.selfConsumptionKWh, 0);
+    const totalSurplus = consumptionData.reduce((sum, item) => sum + item.surplusKWh, 0);
 
-    // Porcentaje de autoconsumo: SUM(selfConsumptionEnergyKWh) / (SUM(consumptionKWh) + SUM(surplusEnergyKWh))
+    // Self-consumption percentage: SUM(selfConsumptionKWh) / (SUM(gridImportKWh) + SUM(surplusKWh))
     const denominator1 = totalConsumption + totalSurplus;
     const selfConsumptionPercentage = denominator1 > 0 ? (totalSelfConsumption / denominator1) * 100 : 0;
 
-    // Porcentaje de aprovechamiento: SUM(selfConsumptionEnergyKWh) / (SUM(surplusEnergyKWh) + SUM(selfConsumptionEnergyKWh))
+    // Utilization percentage: SUM(selfConsumptionKWh) / (SUM(surplusKWh) + SUM(selfConsumptionKWh))
     const denominator2 = totalSurplus + totalSelfConsumption;
     const utilizationPercentage = denominator2 > 0 ? (totalSelfConsumption / denominator2) * 100 : 0;
 
@@ -388,9 +401,9 @@ export const SupplyDetailPage: FC = () => {
     let utilizationPercentageTrend: number | undefined = undefined;
 
     if (prevConsumptionData && prevConsumptionData.length > 0) {
-      const prevTotalConsumption = prevConsumptionData.reduce((sum, item) => sum + (item.consumptionKWh || 0), 0);
-      const prevTotalSelfConsumption = prevConsumptionData.reduce((sum, item) => sum + (item.selfConsumptionEnergyKWh || 0), 0);
-      const prevTotalSurplus = prevConsumptionData.reduce((sum, item) => sum + (item.surplusEnergyKWh || 0), 0);
+      const prevTotalConsumption = prevConsumptionData.reduce((sum, item) => sum + item.gridImportKWh, 0);
+      const prevTotalSelfConsumption = prevConsumptionData.reduce((sum, item) => sum + item.selfConsumptionKWh, 0);
+      const prevTotalSurplus = prevConsumptionData.reduce((sum, item) => sum + item.surplusKWh, 0);
 
       // Calculate previous percentages
       const prevDenominator1 = prevTotalConsumption + prevTotalSurplus;
@@ -489,17 +502,17 @@ export const SupplyDetailPage: FC = () => {
     const seriesData = [
       {
         name: "Consumo de Red",
-        data: consumptionData.map((item) => item.consumptionKWh || 0),
+        data: consumptionData.map((item) => item.gridImportKWh),
         color: colors.error.vivid, // Red
       },
       {
         name: "Autoconsumo",
-        data: consumptionData.map((item) => item.selfConsumptionEnergyKWh || 0),
+        data: consumptionData.map((item) => item.selfConsumptionKWh),
         color: colors.success.vivid, // Green
       },
       {
         name: "Excedentes",
-        data: consumptionData.map((item) => item.surplusEnergyKWh || 0),
+        data: consumptionData.map((item) => item.surplusKWh),
         color: colors.warning.vivid, // Amber
       },
     ];

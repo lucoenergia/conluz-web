@@ -1,10 +1,11 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
 import { buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
-import type { DatadisConsumption, ProductionByTime } from "../../api/models";
+import type { DatadisConsumption, ProductionByTime, SupplyConsumptionBucketResponse } from "../../api/models";
 
 // ApexCharts measures its container in jsdom; the stub records the options
 // and series each chart is handed.
@@ -62,6 +63,26 @@ const HOURLY_CONSUMPTION = [
   hour("13:00", 0, 0, 0),
 ];
 
+// The daily series is a bucket, named after the glossary rather than as Datadis
+// names its records (#294).
+const day = (date: string, gridImportKWh: number, surplusKWh: number, selfConsumptionKWh: number): SupplyConsumptionBucketResponse => ({
+  cups: "ES0021000000000000AA",
+  date,
+  time: "00:00",
+  gridImportKWh,
+  obtainMethod: "REAL",
+  surplusKWh,
+  selfConsumptionKWh,
+  assignedProductionKWh: selfConsumptionKWh + surplusKWh,
+  savingsEur: 0,
+  tariffSource: "ESTIMATE",
+});
+
+const DAILY_CONSUMPTION = [
+  day("2026/08/01", 12.5, 2, 7.25),
+  day("2026/08/02", 8.25, 0.5, 1),
+];
+
 function setup(production: ProductionByTime[] = []) {
   vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
     supply: buildSupply({
@@ -81,9 +102,10 @@ function setup(production: ProductionByTime[] = []) {
     query.success<typeof getSupplyHourlyConsumption>(HOURLY_CONSUMPTION),
   );
   vi.mocked(useGetSupplyYearlyConsumption).mockReturnValue(query.success<typeof getSupplyHourlyConsumption>([]));
-  for (const hook of [useGetSupplyDailyConsumption, useGetSupplyMonthlyConsumption]) {
-    vi.mocked(hook).mockReturnValue(query.success<typeof getSupplyDailyConsumption>([]));
-  }
+  vi.mocked(useGetSupplyDailyConsumption).mockReturnValue(
+    query.success<typeof getSupplyDailyConsumption>(DAILY_CONSUMPTION),
+  );
+  vi.mocked(useGetSupplyMonthlyConsumption).mockReturnValue(query.success<typeof getSupplyDailyConsumption>([]));
 
   return renderWithProviders(<SupplyDetailPage />, {
     route: `/supply-points/${SUPPLY_ID}`,
@@ -163,5 +185,34 @@ describe("SupplyDetailPage hourly consumption chart", () => {
     setup();
 
     expect(consumptionChart().options.xaxis.categories).toEqual(["20:00", "09:00", "13:00"]);
+  });
+});
+
+// The day view reads Datadis records and the month view buckets; both must reach
+// the same totals and bars (#294).
+describe("SupplyDetailPage daily consumption", () => {
+  // Totals: 12.5 + 8.25 consumed, 7.25 + 1 self-consumed, 2 + 0.5 surplus.
+  it("totals the daily buckets of the month view", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(screen.getByRole("button", { name: "Mes" }));
+
+    expect(screen.getByText("20,75 kWh")).toBeInTheDocument();
+    expect(screen.getByText("8,25 kWh")).toBeInTheDocument();
+    expect(screen.getByText("2,5 kWh")).toBeInTheDocument();
+  });
+
+  it("charts each daily bucket's grid import, self-consumption and surplus", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(screen.getByRole("button", { name: "Mes" }));
+
+    expect(consumptionChart().series.map(({ data }) => data)).toEqual([
+      [12.5, 8.25],
+      [7.25, 1],
+      [2, 0.5],
+    ]);
   });
 });
