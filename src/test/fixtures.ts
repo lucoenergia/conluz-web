@@ -541,10 +541,10 @@ export function buildMembershipMonthlyConsumptionBucket(
   return {
     date: "2026/01/01",
     time: "00:00",
-    consumptionKWh: 0,
-    surplusEnergyKWh: 0,
-    generationEnergyKWh: 0,
-    selfConsumptionEnergyKWh: 0,
+    gridImportKWh: 0,
+    surplusKWh: 0,
+    assignedProductionKWh: 0,
+    selfConsumptionKWh: 0,
     savingsEur: null,
     tariffSource: null,
     supplyCount: 1,
@@ -562,8 +562,8 @@ export function buildMembershipHourlyProfileBucket(
 ): MembershipHourlyProfileBucketResponse {
   return {
     hour: 0,
-    averageConsumptionKWh: null,
-    consumptionSampleCount: 0,
+    averageTotalConsumptionKWh: null,
+    totalConsumptionSampleCount: 0,
     averageAssignedProductionKWh: null,
     assignedProductionSampleCount: 0,
     ...overrides,

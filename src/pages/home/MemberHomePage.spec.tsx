@@ -146,8 +146,8 @@ function twelveMonths(): MembershipMonthlyConsumptionBucketResponse[] {
     const year = month >= 9 ? 2025 : 2026;
     return buildMembershipMonthlyConsumptionBucket({
       date: `${year}/${String(month).padStart(2, "0")}/01`,
-      consumptionKWh: 200 + index,
-      selfConsumptionEnergyKWh: 150 + index,
+      gridImportKWh: 200 + index,
+      selfConsumptionKWh: 150 + index,
       savingsEur: 20 + index,
       tariffSource: "REAL_TARIFF",
       supplyCount: 2,
@@ -164,8 +164,8 @@ function augustProfile(): MembershipHourlyProfileResponse {
     buckets: Array.from({ length: 24 }, (_, hour) =>
       buildMembershipHourlyProfileBucket({
         hour,
-        averageConsumptionKWh: 0.3,
-        consumptionSampleCount: 62,
+        averageTotalConsumptionKWh: 0.3,
+        totalConsumptionSampleCount: 62,
         ...(hour >= 8 && hour <= 19 ? { averageAssignedProductionKWh: 0.5, assignedProductionSampleCount: 62 } : {}),
       }),
     ),

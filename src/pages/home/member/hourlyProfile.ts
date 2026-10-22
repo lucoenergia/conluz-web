@@ -86,7 +86,7 @@ function bestHoursOf(hours: Omit<HourView, "best">[]): Set<number> {
 }
 
 function hourOf(bucket: MembershipHourlyProfileBucketResponse): Omit<HourView, "best"> {
-  const consumption = valueOf(bucket.averageConsumptionKWh, bucket.consumptionSampleCount);
+  const consumption = valueOf(bucket.averageTotalConsumptionKWh, bucket.totalConsumptionSampleCount);
   const production = valueOf(bucket.averageAssignedProductionKWh, bucket.assignedProductionSampleCount);
   return {
     hour: bucket.hour,

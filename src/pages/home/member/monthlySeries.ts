@@ -82,11 +82,11 @@ function monthOf(bucket: MembershipMonthlyConsumptionBucketResponse): MonthView 
   return {
     ...base,
     state: { kind: "stored", incomplete },
-    selfConsumptionKWh: bucket.selfConsumptionEnergyKWh,
-    gridImportKWh: bucket.consumptionKWh,
+    selfConsumptionKWh: bucket.selfConsumptionKWh,
+    gridImportKWh: bucket.gridImportKWh,
     savingsEur: bucket.savingsEur,
-    selfConsumptionText: formatKilowattHours(bucket.selfConsumptionEnergyKWh),
-    gridImportText: formatKilowattHours(bucket.consumptionKWh),
+    selfConsumptionText: formatKilowattHours(bucket.selfConsumptionKWh),
+    gridImportText: formatKilowattHours(bucket.gridImportKWh),
     savingsText: formatEuros(bucket.savingsEur),
     incompleteText: incomplete ? `Incompleto: ${incomplete.reported} de ${incomplete.total} suministros` : null,
   };

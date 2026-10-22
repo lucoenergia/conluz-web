@@ -60,8 +60,8 @@ function fullDay(): MembershipHourlyProfileBucketResponse[] {
   return Array.from({ length: 24 }, (_, hour) =>
     buildMembershipHourlyProfileBucket({
       hour,
-      averageConsumptionKWh: 0.25 + hour / 100,
-      consumptionSampleCount: 62,
+      averageTotalConsumptionKWh: 0.25 + hour / 100,
+      totalConsumptionSampleCount: 62,
       ...(hour >= 8 && hour <= 19
         ? { averageAssignedProductionKWh: 0.4 + hour / 100, assignedProductionSampleCount: 62 }
         : { averageAssignedProductionKWh: 0, assignedProductionSampleCount: 62 }),
@@ -154,7 +154,7 @@ describe("BestHours (#201)", () => {
     it("leaves an hour without any sample empty in both series, marks it hollow, and never as zero", () => {
       answer(
         profileWith({
-          3: { averageConsumptionKWh: null, consumptionSampleCount: 0, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 },
+          3: { averageTotalConsumptionKWh: null, totalConsumptionSampleCount: 0, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 },
         }),
       );
       open();
@@ -197,7 +197,7 @@ describe("BestHours (#201)", () => {
 
   describe("AC7 -- the two series rest on their own sample counts", () => {
     it("an hour with consumption samples and none of assigned production draws consumption and leaves production a gap", () => {
-      answer(profileWith({ 21: { averageConsumptionKWh: 0.46, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 } }));
+      answer(profileWith({ 21: { averageTotalConsumptionKWh: 0.46, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 } }));
       open();
 
       expect(consumption()[21]).toBe(0.46);
@@ -208,7 +208,7 @@ describe("BestHours (#201)", () => {
     });
 
     it("an hour with assigned production samples and none of consumption draws production and leaves consumption a gap", () => {
-      answer(profileWith({ 12: { averageConsumptionKWh: null, consumptionSampleCount: 0, averageAssignedProductionKWh: 0.52 } }));
+      answer(profileWith({ 12: { averageTotalConsumptionKWh: null, totalConsumptionSampleCount: 0, averageAssignedProductionKWh: 0.52 } }));
       open();
 
       expect(consumption()[12]).toBeNull();
@@ -219,7 +219,7 @@ describe("BestHours (#201)", () => {
 
     it("each series states its own count when both have samples, in different numbers", () => {
       // The October transition day gives one local hour two samples of that day.
-      answer(profileWith({ 2: { averageConsumptionKWh: 0.27, consumptionSampleCount: 63, averageAssignedProductionKWh: 0, assignedProductionSampleCount: 31 } }));
+      answer(profileWith({ 2: { averageTotalConsumptionKWh: 0.27, totalConsumptionSampleCount: 63, averageAssignedProductionKWh: 0, assignedProductionSampleCount: 31 } }));
       open();
 
       expect(cells(2)).toEqual(["0,27 kWh (media de 63 registros)", "0 kWh (media de 31 registros)"]);
@@ -312,7 +312,7 @@ describe("BestHours (#201)", () => {
     });
 
     it("ranks by assigned energy alone, whatever was consumed in that hour", () => {
-      answer(profileWith({ 19: { averageConsumptionKWh: 3 }, 9: { averageConsumptionKWh: 0 } }));
+      answer(profileWith({ 19: { averageTotalConsumptionKWh: 3 }, 9: { averageTotalConsumptionKWh: 0 } }));
       open();
 
       expect(text(lead())).toBe("Mejores horas: de 16 h a 20 h");
