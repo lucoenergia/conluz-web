@@ -10,7 +10,8 @@ import { LandingRoute } from "../pages/landing/LandingRoute";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
 import { buildCurrentUser, buildPlatformCapabilities } from "../test/fixtures";
-import { CommunityRole, type CurrentUserResponse } from "../api/models";
+import { type CurrentUserResponse } from "../api/models";
+import { CommunityRole } from "../hooks/permissions";
 
 /**
  * A caller who must change their password reaches nothing else until they do

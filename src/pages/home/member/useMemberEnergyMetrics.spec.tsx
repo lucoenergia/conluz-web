@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useGetMembershipEnergyMetrics, type getMembershipEnergyMetrics } from "../../../api/memberships/memberships";
-import { CommunityRole } from "../../../api/models";
+import { CommunityRole } from "../../../hooks/permissions";
 import { useLoggedUser } from "../../../context/logged-user.context";
 import { buildCurrentUser, buildMembershipEnergyMetrics } from "../../../test/fixtures";
 import { query } from "../../../test/queryState";

@@ -12,7 +12,8 @@ import {
   buildMembershipCapabilities,
   buildUser,
 } from "../../test/fixtures";
-import { CommunityRole, type MembershipResponse, type UpdateMemberRecordBody } from "../../api/models";
+import { type MembershipResponse, type UpdateMemberRecordBody } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { MembersPage } from "./MembersPage";
 
 /**

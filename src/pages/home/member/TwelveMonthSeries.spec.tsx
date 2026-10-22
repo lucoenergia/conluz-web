@@ -8,7 +8,8 @@ import {
   type getMembershipEnergyMetrics,
   type getMembershipMonthlyConsumption,
 } from "../../../api/memberships/memberships";
-import { CommunityRole, type MembershipMonthlyConsumptionBucketResponse } from "../../../api/models";
+import { type MembershipMonthlyConsumptionBucketResponse } from "../../../api/models";
+import { CommunityRole } from "../../../hooks/permissions";
 import { customInstance } from "../../../api/custom-instance";
 import { useLoggedUser } from "../../../context/logged-user.context";
 import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../../test/capturedResponses";

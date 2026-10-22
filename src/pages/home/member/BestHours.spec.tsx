@@ -3,11 +3,8 @@ import { screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { ApexOptions } from "apexcharts";
 import { useGetMembershipHourlyProfile, type getMembershipHourlyProfile } from "../../../api/memberships/memberships";
-import {
-  CommunityRole,
-  type MembershipHourlyProfileBucketResponse,
-  type MembershipHourlyProfileResponse,
-} from "../../../api/models";
+import { type MembershipHourlyProfileBucketResponse, type MembershipHourlyProfileResponse } from "../../../api/models";
+import { CommunityRole } from "../../../hooks/permissions";
 import { customInstance } from "../../../api/custom-instance";
 import { useLoggedUser } from "../../../context/logged-user.context";
 import {

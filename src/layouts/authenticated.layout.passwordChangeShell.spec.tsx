@@ -15,7 +15,7 @@ import { createAppQueryClient } from "../queryClient";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { routeRequests, type RequestConfig, type RequestRouter, type Route as RequestRoute } from "../test/requestRouter";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../test/fixtures";
-import { CommunityRole } from "../api/models";
+import { CommunityRole } from "../hooks/permissions";
 
 /**
  * While the caller must change their password, the app mounts nothing that

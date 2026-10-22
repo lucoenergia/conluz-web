@@ -13,7 +13,7 @@ import { createAppQueryClient } from "../queryClient";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { routeRequests, type RequestRouter } from "../test/requestRouter";
 import { buildCurrentUser } from "../test/fixtures";
-import { CommunityRole } from "../api/models";
+import { CommunityRole } from "../hooks/permissions";
 
 /**
  * How the authenticated app reacts to an API error status (#196):

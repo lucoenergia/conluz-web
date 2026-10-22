@@ -7,13 +7,8 @@ import { useGetAllPlants, type getAllPlants } from "../../api/plants/plants";
 import { useGetSharingAgreements, type getSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { useGetAllSupplies, type getAllSupplies } from "../../api/supplies/supplies";
 import { useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
-import {
-  CommunityRole,
-  SharingAgreementResponseStatus,
-  type MembershipResponse,
-  type PlantResponse,
-  type SharingAgreementResponse,
-} from "../../api/models";
+import { SharingAgreementResponseStatus, type MembershipResponse, type PlantResponse, type SharingAgreementResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { buildMembership, buildPlant, buildSharingAgreement, buildSupply } from "../../test/fixtures";
 import { query } from "../../test/queryState";

@@ -16,7 +16,8 @@ import {
   buildMembershipCapabilities,
   buildUser,
 } from "../../test/fixtures";
-import { CommunityRole, type CurrentUserResponse } from "../../api/models";
+import { type CurrentUserResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 
 /**
  * The one case where an in-app action changes the caller's OWN record.

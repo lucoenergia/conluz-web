@@ -13,7 +13,8 @@ import {
   type getAllCommunities,
   type getCommunityById,
 } from "../api/communities/communities";
-import { CommunityRole, type CurrentUserResponse } from "../api/models";
+import { type CurrentUserResponse } from "../api/models";
+import { CommunityRole } from "../hooks/permissions";
 import { AuthenticatedLayout } from "./authenticated.layout";
 
 let loggedUser: CurrentUserResponse;

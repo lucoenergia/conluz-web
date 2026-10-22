@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { mutation, query } from "../test/queryState";
 import { buildCurrentUser, buildUserCapabilities } from "../test/fixtures";
-import { CommunityRole } from "../api/models";
+import { CommunityRole } from "../hooks/permissions";
 import type { CurrentUserResponse } from "../api/models";
 import { useGetCurrentUser, useUpdateProfile, type getCurrentUser } from "../api/users/users";
 

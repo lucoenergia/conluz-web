@@ -7,7 +7,8 @@ import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
-import { CommunityRole, type CurrentUserResponse } from "../../api/models";
+import { type CurrentUserResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import {
   useGetAllCommunities,
   useGetCommunityById,

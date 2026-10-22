@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CommunityRole, type SupplyResponse } from "../../api/models";
+import { type SupplyResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { renderHookWithProviders } from "../../test/renderWithProviders";

@@ -11,7 +11,7 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig, type RequestRouter, type Route as RequestRoute } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
 import { buildCurrentUser } from "../../test/fixtures";
-import { CommunityRole } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { PASSWORD_UNCHANGED_MESSAGE } from "../../errors/authErrors";
 import { PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
 import { markSessionExpired, PASSWORD_RESET_MESSAGE, SESSION_EXPIRED_MESSAGE } from "../../utils/session";

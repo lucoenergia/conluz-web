@@ -13,13 +13,8 @@ import {
   type getMembershipMonthlyConsumption,
   type getMembershipPayback,
 } from "../../api/memberships/memberships";
-import {
-  CommunityRole,
-  type MembershipEnergyMetricsResponse,
-  type MembershipHourlyProfileResponse,
-  type MembershipMonthlyConsumptionBucketResponse,
-  type MembershipPaybackResponse,
-} from "../../api/models";
+import { type MembershipEnergyMetricsResponse, type MembershipHourlyProfileResponse, type MembershipMonthlyConsumptionBucketResponse, type MembershipPaybackResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { customInstance } from "../../api/custom-instance";
 import { useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
