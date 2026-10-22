@@ -5,7 +5,7 @@ import type { ApexOptions } from "apexcharts";
 import { useGetMembershipHourlyProfile, type getMembershipHourlyProfile } from "../../../api/memberships/memberships";
 import { type MembershipHourlyProfileBucketResponse, type MembershipHourlyProfileResponse } from "../../../api/models";
 import { CommunityRole } from "../../../hooks/permissions";
-import { customInstance } from "../../../api/custom-instance";
+import { customInstance } from "../../../http/custom-instance";
 import { useLoggedUser } from "../../../context/logged-user.context";
 import {
   buildCurrentUser,
@@ -33,7 +33,7 @@ const { Chart } = vi.hoisted(() => ({
 }));
 vi.mock("react-apexcharts", () => ({ default: Chart }));
 
-vi.mock(import("../../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: vi.fn(),
 }));

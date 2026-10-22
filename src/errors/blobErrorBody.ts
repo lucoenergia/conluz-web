@@ -1,7 +1,7 @@
 /**
  * A request made with `responseType: "blob"` receives its error body as a Blob
  * too: axios applies the response type to every status, and `customInstance`
- * (src/api/custom-instance.ts) rethrows the AxiosError untouched. The typed
+ * (src/http/custom-instance.ts) rethrows the AxiosError untouched. The typed
  * `RestError` the catalogue reads is then still JSON text inside that Blob, so
  * every refusal would show the generic fallback instead of its own message
  * (#149, generating the distributor file).

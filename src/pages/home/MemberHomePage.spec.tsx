@@ -15,7 +15,7 @@ import {
 } from "../../api/memberships/memberships";
 import { type MembershipEnergyMetricsResponse, type MembershipHourlyProfileResponse, type MembershipMonthlyConsumptionBucketResponse, type MembershipPaybackResponse } from "../../api/models";
 import { CommunityRole } from "../../hooks/permissions";
-import { customInstance } from "../../api/custom-instance";
+import { customInstance } from "../../http/custom-instance";
 import { useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../test/capturedResponses";
@@ -37,7 +37,7 @@ import { MemberHomePage } from "./MemberHomePage";
 import { ENERGY_COLORS, SAVINGS_COLOR } from "./member/energyColors";
 import { answerCommunities } from "./homeViews.mocks";
 
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: vi.fn(),
 }));

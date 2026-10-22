@@ -224,7 +224,7 @@ by a test that now runs on the other alone, is not detected.
 
 ### Regenerating the API client
 
-Never set `clean: true` in `orval.config.js`. It empties `src/api/` before generating, which would delete the hand-written `src/api/custom-instance.ts`.
+`orval.config.js` sets `clean: true`: every regeneration empties `src/api/` first, so a schema or endpoint the backend removes takes its generated files with it. Nothing hand-written may live under `src/api/`. The Orval mutator lives in `src/http/custom-instance.ts` for that reason.
 
 ---
 

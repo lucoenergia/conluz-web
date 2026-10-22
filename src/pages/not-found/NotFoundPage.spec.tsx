@@ -25,7 +25,7 @@ const CURRENT_USER = "/api/v1/users/current";
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));

@@ -24,7 +24,7 @@ import {
 import { useGetAllPlants } from "../../api/plants/plants";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
 import { useGetCurrentUser, useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
-import { customInstance } from "../../api/custom-instance";
+import { customInstance } from "../../http/custom-instance";
 import { ActiveCommunityResolvedContext } from "../../context/community.context";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { buildCommunity, buildCurrentUser, buildPlatformCapabilities } from "../../test/fixtures";
@@ -51,7 +51,7 @@ import {
 // Every read below is mocked, and the pages these callers reach make no other.
 // The fetcher is stubbed too, so that a read nobody mocked fails the test that
 // made it instead of trying the network.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: vi.fn(),
 }));

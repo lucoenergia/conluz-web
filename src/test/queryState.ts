@@ -8,7 +8,7 @@ import type {
   QueryObserverSuccessResult,
   UseMutationResult,
 } from "@tanstack/react-query";
-import type { ErrorType } from "../api/custom-instance";
+import type { ErrorType } from "../http/custom-instance";
 
 /**
  * Settled hook states for tier 1 specs, which replace a generated hook with

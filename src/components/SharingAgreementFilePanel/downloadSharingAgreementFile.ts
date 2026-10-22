@@ -1,4 +1,4 @@
-import { AXIOS_INSTANCE } from "../../api/custom-instance";
+import { AXIOS_INSTANCE } from "../../http/custom-instance";
 
 const DEFAULT_FILENAME = "acuerdo-de-reparto";
 
@@ -10,7 +10,7 @@ const DEFAULT_FILENAME = "acuerdo-de-reparto";
  * Orval's `customInstance` keeps only `data` and discards the response headers,
  * so the dialog rebuilds the server's name, {regulatoryCode}_{year}.txt, from
  * values it already holds. Reading the header there would mean changing
- * src/api/custom-instance.ts, which every generated call passes through.
+ * src/http/custom-instance.ts, which every generated call passes through.
  *
  * Revisit if the backend's naming convention for the generated file changes, if
  * a third blob endpoint appears, or if a generated filename ever needs a value

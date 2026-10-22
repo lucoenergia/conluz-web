@@ -67,7 +67,7 @@ The app is **multi-community**. This supersedes any older single-community assum
 - **A capability gates the call; it does not scope the rows.** A user-scoped listing still gets filtered to the active community, and the filter is declared in `USER_SCOPED_LISTINGS` (`src/contracts/userScopedReads.spec.ts`). Conflating the two produced `lucoenergia/conluz#326` and `#336`.
 
 ### API client
-- `src/api/` is **generated** by Orval from `api-docs.json`. **Never edit it.**
+- `src/api/` is **generated** by Orval from `api-docs.json`. **Never edit it.** It is fully generated and emptied on every regeneration (`clean: true` in `orval.config.js`), so nothing hand-written may live there; the Orval mutator, the single axios entry point every generated hook calls, lives in `src/http/custom-instance.ts`.
 - **For AI-agent tasks:** the updated `api-docs.json` and regenerated client are **always provided before implementation** — treat `src/api/` as current. Do **not** fetch `api-docs.json` or run `npm run generate-client` / `npm run sync-api` (or `make generate-client` / `make sync-api`), and do not list any of them as a task step. If `src/api/` looks out of sync, stop and report it.
 - `.api-ref` is the lucoenergia/conluz commit SHA the committed `api-docs.json` was taken from, written by `sync-api` (README, "Updating API Definitions").
 - Reads use the generated hooks (or their community-scope wrappers); `getGet…QueryKey()` getters are importable everywhere. Invalidation is explicit after every mutation (`removeQueries` after a delete) — see `src/hooks/actions/useSharingAgreementActions.ts`.

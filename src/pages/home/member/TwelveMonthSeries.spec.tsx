@@ -10,7 +10,7 @@ import {
 } from "../../../api/memberships/memberships";
 import { type MembershipMonthlyConsumptionBucketResponse } from "../../../api/models";
 import { CommunityRole } from "../../../hooks/permissions";
-import { customInstance } from "../../../api/custom-instance";
+import { customInstance } from "../../../http/custom-instance";
 import { useLoggedUser } from "../../../context/logged-user.context";
 import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../../test/capturedResponses";
 import {
@@ -36,7 +36,7 @@ const { Chart } = vi.hoisted(() => ({
 }));
 vi.mock("react-apexcharts", () => ({ default: Chart }));
 
-vi.mock(import("../../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: vi.fn(),
 }));

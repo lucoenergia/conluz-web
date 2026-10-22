@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Route, Routes, useLocation } from "react-router";
 import { useMutation, useQuery, type QueryClient } from "@tanstack/react-query";
-import { customInstance } from "../api/custom-instance";
+import { customInstance } from "../http/custom-instance";
 import { useAuth } from "../context/auth.context";
 import { Login } from "../pages/auth/Login";
 import { AuthenticatedLayout } from "./authenticated.layout";
@@ -36,7 +36,7 @@ const PROBE_URL = "/api/v1/probe";
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));
