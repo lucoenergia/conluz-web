@@ -35,8 +35,9 @@ directly. **Read the matching one before starting:**
 ## Commands
 
 Scripts are in `package.json`; the root `Makefile` wraps them and the test commands below, and
-`make help` lists its targets. Agents never run `make visual-update`, `make visual-delete-orphans` or
-`make generate-client`. What the scripts do not tell you:
+`make help` lists its targets. Agents never run `make visual-update`, `make visual-delete-orphans`,
+`make generate-client` or `make sync-api` (nor `npm run generate-client` or `npm run sync-api`). What
+the scripts do not tell you:
 
 - `npm test` runs Vitest in watch mode in an interactive terminal and once in CI or non-interactive
   shells; `npx vitest run` (`make test`) runs once anywhere.
@@ -67,7 +68,8 @@ The app is **multi-community**. This supersedes any older single-community assum
 
 ### API client
 - `src/api/` is **generated** by Orval from `api-docs.json`. **Never edit it.**
-- **For AI-agent tasks:** the updated `api-docs.json` and regenerated client are **always provided before implementation** — treat `src/api/` as current. Do **not** fetch `api-docs.json` or run `npm run generate-client` (or `make generate-client`), and do not list either as a task step. If `src/api/` looks out of sync, stop and report it.
+- **For AI-agent tasks:** the updated `api-docs.json` and regenerated client are **always provided before implementation** — treat `src/api/` as current. Do **not** fetch `api-docs.json` or run `npm run generate-client` / `npm run sync-api` (or `make generate-client` / `make sync-api`), and do not list any of them as a task step. If `src/api/` looks out of sync, stop and report it.
+- `.api-ref` is the lucoenergia/conluz commit SHA the committed `api-docs.json` was taken from, written by `sync-api` (README, "Updating API Definitions").
 - Reads use the generated hooks (or their community-scope wrappers); `getGet…QueryKey()` getters are importable everywhere. Invalidation is explicit after every mutation (`removeQueries` after a delete) — see `src/hooks/actions/useSharingAgreementActions.ts`.
 
 ### Routing
