@@ -49,6 +49,7 @@ const REVIEWED: Record<string, Scope> = {
   "/api/v1/init": "global",
   "/api/v1/login": "global",
   "/api/v1/logout": "global",
+  "/api/v1/operator-contact": "global",
   "/api/v1/prices": "global",
   "/api/v1/plants": "global",
   "/api/v1/supplies": "global",

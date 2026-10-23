@@ -74,6 +74,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useUpdateCommunity: { scope: "community", capability: "canUpdate", hook: "useCommunityActions" },
   useEnableCommunity: { scope: "community", capability: "canEnable", hook: "useCommunityActions" },
   useDisableCommunity: { scope: "community", capability: "canDisable", hook: "useCommunityActions" },
+  useSetCommunityContact: { ungated: "no screen writes contact channels yet; #296 adds the edit and decides its gate" },
 
   // ── Consumption ───────────────────────────────────────────────────────────
   useConfigureDatadis: {
