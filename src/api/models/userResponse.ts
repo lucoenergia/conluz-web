@@ -13,21 +13,21 @@ import type { UserResponseNumber } from './userResponseNumber';
 import type { UserResponsePhoneNumber } from './userResponsePhoneNumber';
 
 export interface UserResponse {
-  /** Address. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  /** Address. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   address: UserResponseAddress;
   /** What the caller may do with this user. */
   capabilities: UserCapabilitiesResponse;
-  /** Email. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  /** Email. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   email: UserResponseEmail;
   enabled: boolean;
-  /** Full name. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  /** Full name. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   fullName: string;
   id: string;
   isPlatformAdmin: boolean;
   memberships: UserResponseMemberships;
-  /** Member number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  /** Member number. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   number: UserResponseNumber;
   personalId: string;
-  /** Phone number. Inside a response scoped to a community, read from the user's member record in that community. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
+  /** Phone number. When a community admin reads or updates another user, read from that user's member record in the community they administer with the lowest id. Otherwise read from the account. */
   phoneNumber: UserResponsePhoneNumber;
 }

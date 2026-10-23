@@ -20,6 +20,8 @@ export interface MembershipCapabilitiesResponse {
   canEnable: boolean;
   /** Whether the caller may invite this member to accept the membership, and resend or revoke its invitation. Whether one can be sent right now depends on the membership's state, its contact email and how many invitations it has been sent in the last 24 hours. */
   canInvite: boolean;
+  /** Whether the caller may list this member's supplies (GET /api/v1/users/{userId}/supplies). Deliberately narrower than being able to manage the membership: a community admin may list only the supplies in the communities they administer. Predicts whether the call is allowed, not what it returns: the listing carries only the supplies the caller may read one by one — all of them for the member themselves, otherwise those in communities the caller administers. */
+  canListSupplies: boolean;
   /** Whether the caller may set or clear the investment recorded on this membership. */
   canManageInvestment: boolean;
   /** Whether the caller may read this membership's payback progress. Either an admin of the community, or the member themselves. */

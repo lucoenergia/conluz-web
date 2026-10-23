@@ -18,6 +18,7 @@
         "useCreateCommunity",
         "useDisableCommunity",
         "useEnableCommunity",
+        "useSetCommunityContact",
         "useUpdateCommunity"
       ]
     },

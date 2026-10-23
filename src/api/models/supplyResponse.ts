@@ -11,6 +11,7 @@ import type { CommunityReferenceResponse } from './communityReferenceResponse';
 import type { SupplyResponseContract } from './supplyResponseContract';
 import type { SupplyResponseDistributor } from './supplyResponseDistributor';
 import type { SupplyResponseName } from './supplyResponseName';
+import type { SupplyResponseOwnerRecord } from './supplyResponseOwnerRecord';
 import type { SupplyResponseShelly } from './supplyResponseShelly';
 import type { SupplyResponseUser } from './supplyResponseUser';
 
@@ -35,8 +36,10 @@ export interface SupplyResponse {
   id: string;
   /** Name of the supply */
   name: SupplyResponseName;
+  /** The owner's member record in the supply's community. Null when the supply has no owner, or its owner has no membership in that community. */
+  ownerRecord: SupplyResponseOwnerRecord;
   /** Shelly device information of the supply */
   shelly: SupplyResponseShelly;
-  /** Owner of the supply */
+  /** Owner of the supply, by id only. Null when the supply has no owner. */
   user: SupplyResponseUser;
 }
