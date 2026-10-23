@@ -50,6 +50,11 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/no-community": { authenticated: "the landing page for a caller with no membership" },
   "/profile": { authenticated: "acts on the caller and takes no id" },
   "/change-password": { authenticated: "acts on the caller and takes no id" },
+  // A caller with no community must reach it too: it is where they are told
+  // whom to ask (#295). The channels endpoint refuses a non-member itself.
+  "/community/contact": {
+    authenticated: "the active community's contact, or the fallback for a caller with no community",
+  },
 
   // Supplies and plants are a community's operational data: every page under
   // them needs an active community the caller may read, from the guard on the
@@ -328,7 +333,6 @@ describe("route access", () => {
 
     const drifted = items.flatMap((item) => {
       const access = ROUTE_ACCESS[item.to];
-      // CONTACT_ITEM leads outside AuthenticatedLayout, so it has no entry here.
       if (!access) return [];
       if (item.to in STRICTER_THAN_ROUTE) return [];
 

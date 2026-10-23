@@ -18,6 +18,7 @@ import { useGetCommunityById } from "../../api/communities/communities";
 import { useCommunityActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
 import { communityRefusalOf, type CommunityField } from "./communityForm";
+import { CommunityContactSection } from "./CommunityContactSection";
 
 export const EditCommunityPage: FC = () => {
   const { communityId = "" } = useParams();
@@ -219,6 +220,8 @@ export const EditCommunityPage: FC = () => {
           </Box>
         </Paper>
       </Box>
+
+      <CommunityContactSection communityId={communityId} />
     </Box>
   );
 };

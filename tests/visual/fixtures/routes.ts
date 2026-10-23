@@ -40,6 +40,7 @@ import {
   FIXED_PLATFORM_ADMINS,
   FIXED_PLATFORM_ADMIN_CONFIRMATION_CODE,
   FIXED_DATADIS_CONFIG,
+  FIXED_COMMUNITY_CONTACT,
   FIXED_HUAWEI_CONFIG,
   FIXED_SHELLY_CONFIG,
   type HuaweiConfigFixture,
@@ -397,6 +398,12 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
     (route: Route) => {
       const path = new URL(route.request().url()).pathname;
       const byId = path.match(/\/api\/v1\/communities\/[^/]+$/);
+
+      // Members and platform admins may read the contact channels (#295), so
+      // there is no capability to refuse on.
+      if (/\/api\/v1\/communities\/[^/]+\/contact$/.test(path)) {
+        return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FIXED_COMMUNITY_CONTACT) });
+      }
 
       // Sub-resources first: the governing capability is not canRead, and the
       // community object being served carries the answer.

@@ -24,6 +24,7 @@ export { CoefficientActionsMenuItems } from "../../src/components/CoefficientAct
 export { CoefficientHistory } from "../../src/components/CoefficientHistory/CoefficientHistory";
 export { CommunityScopeHeader } from "../../src/components/CommunityScopeHeader/CommunityScopeHeader";
 export { CommunityStatusChip } from "../../src/components/CommunityStatusChip/CommunityStatusChip";
+export { ContactChannelList } from "../../src/components/ContactChannelList/ContactChannelList";
 export { DetailHeader } from "../../src/components/DetailHeader/DetailHeader";
 export { EmptyState } from "../../src/components/EmptyState/EmptyState";
 export { FilterChipsBar } from "../../src/components/FilterChips/FilterChipsBar";

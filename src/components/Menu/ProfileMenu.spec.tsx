@@ -42,7 +42,6 @@ test("ProfileMenu renders correctly with menu hidden", async () => {
   expect(screen.getByText("Luis Mata")).not.toBeVisible();
   expect(screen.getByText("Mi perfil")).not.toBeVisible();
   expect(screen.getByText("Cambiar contraseña")).not.toBeVisible();
-  expect(screen.getByText("¿Necesitas ayuda?")).not.toBeVisible();
   expect(screen.getByText("Salir")).not.toBeVisible();
 });
 
@@ -53,8 +52,15 @@ test("ProfileMenu opens menu when clicking", async () => {
   expect(screen.getByText("Luis Mata")).toBeVisible();
   expect(screen.getByText("Mi perfil")).toBeVisible();
   expect(screen.getByText("Cambiar contraseña")).toBeVisible();
-  expect(screen.getByText("¿Necesitas ayuda?")).toBeVisible();
   expect(screen.getByText("Salir")).toBeVisible();
+});
+
+test("ProfileMenu offers no help entry: the side menu's Contacto is the one way in (#295)", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(screen.getByRole("button", { name: "Abrir menú de usuario" }));
+  expect(screen.queryByText("¿Necesitas ayuda?")).not.toBeInTheDocument();
+  expect(screen.getAllByRole("menuitem").map((item) => item.getAttribute("href"))).not.toContain("/contact");
 });
 
 test("ProfileMenu clears the query cache and navigates to login on logout", async () => {
@@ -86,7 +92,6 @@ test("ProfileMenu closes menu when removing focus", async () => {
   expect(screen.getByText("Luis Mata")).not.toBeVisible();
   expect(screen.getByText("Mi perfil")).not.toBeVisible();
   expect(screen.getByText("Cambiar contraseña")).not.toBeVisible();
-  expect(screen.getByText("¿Necesitas ayuda?")).not.toBeVisible();
   expect(screen.getByText("Salir")).not.toBeVisible();
 });
 
@@ -103,7 +108,7 @@ test("menu items are single links, never an anchor wrapping a menuitem", async (
   );
   expect(nested).toEqual([]);
 
-  for (const label of ["Mi perfil", "Cambiar contraseña", "¿Necesitas ayuda?"]) {
+  for (const label of ["Mi perfil", "Cambiar contraseña"]) {
     const item = screen.getByRole("menuitem", { name: label });
     expect(item.tagName).toBe("A");
     expect(item).toHaveAttribute("href");

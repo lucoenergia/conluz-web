@@ -111,6 +111,9 @@ function servePlatformAdmin(): RequestRouter {
     { method: "GET", url: "/api/v1/communities", respond: () => [COMMUNITY] },
     { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}`, respond: () => COMMUNITY },
     { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}/admins`, respond: () => [COMMUNITY_ADMIN] },
+    // The community's contact channels, which a platform admin may read (#295).
+    // Not member data: they are what the community publishes to its members.
+    { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}/contact`, respond: () => ({ channels: [] }) },
     { method: "GET", url: "/api/v1/platform-admins", respond: () => PLATFORM_ADMINS },
     // Served, so a screen that asked would show the member (see above).
     { method: "GET", url: /^\/api\/v1\/users(\?|$)/, respond: () => ({ items: [MEMBER], totalElements: 1 }) },

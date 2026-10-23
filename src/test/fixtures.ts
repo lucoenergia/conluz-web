@@ -7,6 +7,7 @@ import {
   type CommunityAdminResponse,
   type CommunityCapabilitiesResponse,
   type CommunityResponse,
+  type ContactChannelResponse,
   type CurrentUserResponse,
   type MemberRecordResponse,
   type MemberResponse,
@@ -17,6 +18,7 @@ import {
   type MembershipMonthlyConsumptionBucketResponse,
   type MembershipPaybackResponse,
   type MembershipResponse,
+  type OperatorContactResponse,
   type PartitionCoefficientResponse,
   type PlantCapabilitiesResponse,
   type PlantResponse,
@@ -631,6 +633,34 @@ export function buildMembershipPayback(overrides: Partial<MembershipPaybackRespo
       tariffSource: "ESTIMATE",
       estimatedPrice: null,
     } satisfies MembershipPaybackResponse),
+    ...overrides,
+  };
+}
+
+/** One of a community's contact channels. Schedule and notes are null unless a spec sets them. */
+export function buildContactChannel(overrides: Partial<ContactChannelResponse> = {}): ContactChannelResponse {
+  return {
+    ...({
+      type: "EMAIL",
+      label: "TEST-CHANNEL-LABEL",
+      value: "test-channel@conluz.test",
+      schedule: null,
+      notes: null,
+    } satisfies ContactChannelResponse),
+    ...overrides,
+  };
+}
+
+/** The instance operator's contact. Phone, schedule and notes are null unless a spec sets them. */
+export function buildOperatorContact(overrides: Partial<OperatorContactResponse> = {}): OperatorContactResponse {
+  return {
+    ...({
+      name: "TEST-OPERATOR-NAME",
+      email: "test-operator@conluz.test",
+      phone: null,
+      schedule: null,
+      notes: null,
+    } satisfies OperatorContactResponse),
     ...overrides,
   };
 }

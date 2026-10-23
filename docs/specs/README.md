@@ -45,3 +45,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-ADM` | Community admins: the platform admin's list, invitation and management of a community's admins | [`community-admins.md`](community-admins.md) |
 | `UI-PAD` | Platform admins: the list, inviting to the role and the pending invitations, revoking the role, and what a platform admin with no membership can reach | [`platform-admins.md`](platform-admins.md) |
 | `UI-ERR` | API errors: where and in whose words a refused request's message is shown, across screens | [`api-errors.md`](api-errors.md) |
+| `UI-CTU` | Contact: the in-app contact page, its fallback, the platform admin's read-only view of a community's channels, and the public sign-in help page | [`contact.md`](contact.md) |

@@ -56,12 +56,13 @@ const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "un
   { prefix: "/supply-points", scope: "community" },
   { prefix: "/members", scope: "community" },
   { prefix: "/integrations", scope: "community" },
+  { prefix: "/community", scope: "community" },
   { prefix: "/platform", scope: "platform" },
   { prefix: "/communities", scope: "platform" },
   { prefix: "/platform-admins", scope: "platform" },
   { prefix: "/profile", scope: "personal" },
   { prefix: "/change-password", scope: "personal" },
-  { prefix: "/contact", scope: "personal" },
+  { prefix: "/contact", scope: "none" },
   { prefix: "/no-community", scope: "none" },
 ];
 

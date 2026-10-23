@@ -3,7 +3,6 @@ import { useState, type FC } from "react";
 import { Link } from "react-router";
 import PersonIcon from "@mui/icons-material/Person";
 import KeyIcon from "@mui/icons-material/Key";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { MenuTemplate } from "./MenuTemplate";
 import { colors, fontSizes } from "../../theme/tokens";
@@ -71,13 +70,6 @@ export const ProfileMenu: FC<ProfileMenuProps> = ({ username }) => {
             <KeyIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
             <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
               Cambiar contraseña
-            </Typography>
-          </MenuItem>
-
-          <MenuItem component={Link} to="/contact" onClick={handleCloseUserMenu} sx={{ textDecoration: "none", color: "inherit" }}>
-            <HelpOutlineIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
-            <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: 'left' }}>
-              ¿Necesitas ayuda?
             </Typography>
           </MenuItem>
         </Box>

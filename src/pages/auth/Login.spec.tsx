@@ -184,6 +184,14 @@ describe("Login component", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("DNI/NIF o contraseña incorrectos");
   });
 
+  it("sends somebody who cannot sign in to the help page at /contact, under a label that says so (#295)", () => {
+    setup();
+
+    expect(screen.getByRole("link", { name: "Pide ayuda" })).toHaveAttribute("href", "/contact");
+    expect(screen.getByText("¿No puedes acceder a la plataforma?")).toBeVisible();
+    expect(screen.queryByText("Contacta con nosotres")).not.toBeInTheDocument();
+  });
+
   // On the flag itself: the harness clears browser storage before every
   // render, so a flag set here would not survive into one. The page showing
   // it after a real change is covered in ChangePassword.spec.tsx.

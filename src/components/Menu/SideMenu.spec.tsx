@@ -44,3 +44,8 @@ test("SideMenu shows the app version", () => {
   setup(true);
   expect(screen.getByText(`v${APP_VERSION}`)).toBeVisible();
 });
+
+test("SideMenu's Contacto leads to the in-app contact page (#295)", () => {
+  setup(true);
+  expect(screen.getByRole("link", { name: "Contacto" })).toHaveAttribute("href", "/community/contact");
+});

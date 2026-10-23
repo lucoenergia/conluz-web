@@ -24,7 +24,7 @@ const sections = [
   },
 ];
 
-const contactItem = { to: "/contact", id: "contact", icon: Icons.SupportAgentRounded, label: "Contacto", requires: always };
+const contactItem = { to: "/community/contact", id: "contact", icon: Icons.SupportAgentRounded, label: "Contacto", requires: always };
 
 // The drawer paper is position:fixed; a transformed frame becomes its containing block so it
 // renders in-cell at a sidebar's real height.

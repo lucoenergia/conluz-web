@@ -4,6 +4,7 @@ import { AuthenticatedLayout } from "./layouts/authenticated.layout";
 import { LoginLayout } from "./layouts/login.layout";
 import { PublicLayout } from "./layouts/public.layout";
 import { CapabilityRoute } from "./components/Auth/CapabilityRoute";
+import { AnonRoute } from "./components/Auth/AnonRoute";
 import { HomeIndexRedirect, HomeViewRoute } from "./pages/home/HomeViewRoute";
 
 /**
@@ -33,7 +34,8 @@ const NotFoundPage = lazyPage(() => import("./pages/not-found/NotFoundPage"), "N
 
 const LandingRoute = lazyPage(() => import("./pages/landing/LandingRoute"), "LandingRoute");
 const ProfilePage = lazyPage(() => import("./pages/Profile"), "ProfilePage");
-const ContactPage = lazyPage(() => import("./pages/Contact.page"), "ContactPage");
+const SignInHelpPage = lazyPage(() => import("./pages/contact/SignInHelpPage"), "SignInHelpPage");
+const CommunityContactPage = lazyPage(() => import("./pages/contact/CommunityContactPage"), "CommunityContactPage");
 const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityPage"), "NoCommunityPage");
 const MemberHomePage = lazyPage(() => import("./pages/home/MemberHomePage"), "MemberHomePage");
 const CommunityManagementPage = lazyPage(() => import("./pages/home/CommunityManagementPage"), "CommunityManagementPage");
@@ -193,26 +195,22 @@ function App() {
             element={<CapabilityRoute require={{ scope: "platform", capability: "canListPlatformAdmins" }}><PlatformAdminsPage /></CapabilityRoute>}
           />
           <Route path="no-community" element={<NoCommunityPage />} />
+          {/*
+            Any signed-in caller (#295): the active community's channels, or,
+            for one with no community, the instruction to contact whoever
+            manages it. The channels endpoint refuses non-members itself.
+          */}
+          <Route path="community/contact" element={<CommunityContactPage />} />
         </Route>
         {/*
-          Public for everybody, signed in or not -- not an oversight, and not a
-          decision about chrome.
-
-          /contact is to show information per energy community, which raises
-          questions this route cannot answer on its own: what a caller with no
-          session sees, when there is no community to show; and what a caller who
-          belongs to several sees -- their active community, or all of them. Those
-          belong to the contact-screen epic, together with whether the route needs
-          a community in its URL so that it behaves the same signed in and signed
-          out.
-
-          Until then it serves one page to everyone, which is what it has always
-          done in practice: the layout it used to sit under chose its chrome from
-          the signed-in user, and nothing fetched that user outside
-          AuthenticatedLayout, so it always rendered the public one.
+          Help for somebody who cannot sign in (#295). A signed-in caller is sent
+          to the in-app contact page, which knows their community.
         */}
         <Route element={<PublicLayout />}>
-          <Route path="contact" element={<ContactPage />} />
+          <Route
+            path="contact"
+            element={<AnonRoute redirectTo="/community/contact"><SignInHelpPage /></AnonRoute>}
+          />
         </Route>
       </Routes>
     </>

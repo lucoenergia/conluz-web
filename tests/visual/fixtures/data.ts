@@ -1,5 +1,6 @@
 import type {
   CommunityAdminResponse,
+  CommunityContactResponse,
   GetDatadisConfigResponse,
   GetHuaweiConfigResponse,
   GetShellyConfigResponse,
@@ -1048,6 +1049,18 @@ export const FIXED_DATADIS_CONFIG: GetDatadisConfigResponse = {
   passwordSet: true,
   baseUrl: "https://datadis.es",
   enabled: true,
+};
+
+/**
+ * The community's contact channels, as GET /communities/{id}/contact answers
+ * them: mixed types, with and without a schedule and notes (#295).
+ */
+export const FIXED_COMMUNITY_CONTACT: CommunityContactResponse = {
+  channels: [
+    { type: "PHONE", label: "Atención a socios", value: "+34 600 111 222", schedule: "Lunes a viernes, de 9:00 a 14:00", notes: null },
+    { type: "EMAIL", label: "Correo de la comunidad", value: "hola@solcomun.test", schedule: null, notes: "Respondemos en un plazo de 48 horas." },
+    { type: "ADDRESS", label: "Oficina", value: "Carrer de la Pau 12, 46002 València", schedule: null, notes: null },
+  ],
 };
 
 /** Shelly off, so the two cards do not render the same state. */
