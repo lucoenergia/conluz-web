@@ -14,7 +14,6 @@ import {
   buildCurrentUser,
   buildMembership,
   buildMembershipCapabilities,
-  buildUser,
 } from "../../test/fixtures";
 import { type CurrentUserResponse } from "../../api/models";
 import { CommunityRole } from "../../hooks/permissions";
@@ -70,7 +69,8 @@ const OWN_MEMBERSHIP = buildMembership({
   id: "membership-1",
   communityId: COMMUNITY_ID,
   role: CommunityRole.COMMUNITY_ADMIN,
-  user: buildUser({ id: USER_ID, fullName: "Ada" }),
+  user: { id: USER_ID },
+  fullName: "Ada",
   capabilities: buildMembershipCapabilities({ canDelete: true }),
 });
 

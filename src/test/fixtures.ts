@@ -8,6 +8,7 @@ import {
   type CommunityCapabilitiesResponse,
   type CommunityResponse,
   type CurrentUserResponse,
+  type MemberRecordResponse,
   type MemberResponse,
   type MembershipCapabilitiesResponse,
   type MembershipEnergyMetricsResponse,
@@ -178,6 +179,7 @@ export function buildMembershipCapabilities(
     canEnable: false,
     canDisable: false,
     canEditRecord: false,
+    canListSupplies: false,
     ...overrides,
   };
 }
@@ -265,9 +267,16 @@ export function buildMembership(overrides: Partial<MembershipResponse> = {}): Me
   return {
     ...({
       id: "TEST-MEMBERSHIP-ID",
-      user: buildUser(),
+      user: { id: "TEST-USER-ID" },
       communityId: "TEST-COMMUNITY-ID",
       role: "COMMUNITY_MEMBER",
+      // The community's member record, under its own names (lucoenergia/conluz#448).
+      personalId: "TEST-PERSONAL-ID",
+      fullName: "TEST-FULL-NAME",
+      memberNumber: 90001,
+      contactEmail: "test-user@fixture.invalid",
+      address: null,
+      phoneNumber: null,
       enabled: true,
       // Accepted: a pending membership (null) grants no access, so it is opt-in.
       acceptedAt: "2026-01-01T00:00:00Z",
@@ -380,12 +389,31 @@ export function buildCommunity(overrides: Partial<CommunityResponse> = {}): Comm
   };
 }
 
+/**
+ * A member's record in one community, as a supply carries its owner's
+ * (`SupplyResponse.ownerRecord`, lucoenergia/conluz#448).
+ */
+export function buildMemberRecord(overrides: Partial<MemberRecordResponse> = {}): MemberRecordResponse {
+  return {
+    ...({
+      fullName: "TEST-FULL-NAME",
+      memberNumber: 90001,
+      contactEmail: "test-user@fixture.invalid",
+      address: null,
+      phoneNumber: null,
+    } satisfies MemberRecordResponse),
+    ...overrides,
+  };
+}
+
 export function buildSupply(overrides: Partial<SupplyResponse> = {}): SupplyResponse {
   return {
     ...({
       id: "TEST-SUPPLY-ID",
       code: "TEST-SUPPLY-CODE",
+      // No owner, so no owner record either: a spec grants both when it needs them.
       user: null,
+      ownerRecord: null,
       name: null,
       address: "TEST-SUPPLY-ADDRESS",
       addressRef: null,

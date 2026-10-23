@@ -7,6 +7,7 @@ import type {
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
+  MemberRecordResponse,
   MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
@@ -327,6 +328,23 @@ export const FIXED_USER_2 = {
  */
 export const FIXED_SUPPLY_NAME = "Casa Principal";
 
+/**
+ * A user's member record in FIXED_COMMUNITY_ID, as a supply carries its owner's
+ * (`ownerRecord`, lucoenergia/conluz#448). The account's values, so the supply
+ * screens show the same owner as before.
+ */
+type FixtureUser = Pick<typeof FIXED_USER_2, "id" | "personalId" | "fullName" | "number" | "email" | "address" | "phoneNumber">;
+
+function ownerRecordOf(user: FixtureUser): MemberRecordResponse {
+  return {
+    fullName: user.fullName,
+    memberNumber: user.number,
+    contactEmail: user.email,
+    address: user.address,
+    phoneNumber: user.phoneNumber,
+  };
+}
+
 export const FIXED_SUPPLY: SupplyResponse = {
   id: FIXED_SUPPLY_ID,
   code: "ES0021000000000000AA",
@@ -337,7 +355,8 @@ export const FIXED_SUPPLY: SupplyResponse = {
   contract: { validDateFrom: "2024-01-01" },
   distributor: { name: "Iberdrola", code: "2", pointType: 5 },
   shelly: null,
-  user: FIXED_MEMBER_USER,
+  user: { id: FIXED_MEMBER_USER.id },
+  ownerRecord: ownerRecordOf(FIXED_MEMBER_USER),
   // The active-community guard compares this with the selected community; a
   // supply without one is never foreign, so omitting it would quietly disable
   // the guard in every baseline.
@@ -355,7 +374,8 @@ export const FIXED_SUPPLY_2: SupplyResponse = {
   contract: { validDateFrom: "2024-03-15" },
   distributor: { name: "Endesa", code: "1", pointType: 3 },
   shelly: null,
-  user: FIXED_MEMBER_USER,
+  user: { id: FIXED_MEMBER_USER.id },
+  ownerRecord: ownerRecordOf(FIXED_MEMBER_USER),
   // The active-community guard compares this with the selected community; a
   // supply without one is never foreign, so omitting it would quietly disable
   // the guard in every baseline.
@@ -378,7 +398,8 @@ export const FIXED_ADMIN_OWNED_SUPPLY: SupplyResponse = {
   contract: { validDateFrom: "2024-02-01" },
   distributor: { name: "Iberdrola", code: "2", pointType: 5 },
   shelly: null,
-  user: FIXED_COMMUNITY_ADMIN_USER,
+  user: { id: FIXED_COMMUNITY_ADMIN_USER.id },
+  ownerRecord: ownerRecordOf(FIXED_COMMUNITY_ADMIN_USER),
   community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
   capabilities: OWNER_SUPPLY_CAPABILITIES,
 };
@@ -823,6 +844,19 @@ export const PUBLISHED_AGREEMENT_EDITED = {
 // ---------------------------------------------------------------------------
 
 /**
+ * What a roster row carries of a user (lucoenergia/conluz#448): the account by id,
+ * its personal ID, and the community's record, here with the account's values so
+ * the screens show the same data as before.
+ */
+function recordRowOf(user: FixtureUser) {
+  return {
+    user: { id: user.id },
+    personalId: user.personalId,
+    ...ownerRecordOf(user),
+  };
+}
+
+/**
  * One community's roster: an admin, an active member and a disabled one, so the
  * role labels, the status chips and the counters all have something to show.
  *
@@ -834,19 +868,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
   {
     id: "membership-admin",
     communityId: FIXED_COMMUNITY_ID,
-    user: {
-      id: FIXED_COMMUNITY_ADMIN_USER.id,
-      fullName: FIXED_COMMUNITY_ADMIN_USER.fullName,
-      email: FIXED_COMMUNITY_ADMIN_USER.email,
-      personalId: FIXED_COMMUNITY_ADMIN_USER.personalId,
-      number: FIXED_COMMUNITY_ADMIN_USER.number,
-      address: FIXED_COMMUNITY_ADMIN_USER.address,
-      phoneNumber: FIXED_COMMUNITY_ADMIN_USER.phoneNumber,
-      enabled: true,
-      isPlatformAdmin: false,
-      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" },
-      capabilities: OWN_USER_CAPABILITIES,
-    },
+    ...recordRowOf(FIXED_COMMUNITY_ADMIN_USER),
     role: "COMMUNITY_ADMIN",
     acceptedAt: "2026-01-15T09:00:00Z",
     invitedAt: null,
@@ -865,24 +887,14 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canEnable: false,
       canDisable: false,
       canEditRecord: true,
+      // Their own supplies, which the embedded user reported before #448.
+      canListSupplies: true,
     },
   },
   {
     id: "membership-member",
     communityId: FIXED_COMMUNITY_ID,
-    user: {
-      id: FIXED_MEMBER_USER.id,
-      fullName: FIXED_MEMBER_USER.fullName,
-      email: FIXED_MEMBER_USER.email,
-      personalId: FIXED_MEMBER_USER.personalId,
-      number: FIXED_MEMBER_USER.number,
-      address: FIXED_MEMBER_USER.address,
-      phoneNumber: FIXED_MEMBER_USER.phoneNumber,
-      enabled: true,
-      isPlatformAdmin: false,
-      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
-      capabilities: MANAGED_USER_CAPABILITIES,
-    },
+    ...recordRowOf(FIXED_MEMBER_USER),
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
     invitedAt: null,
@@ -897,24 +909,13 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canEnable: true,
       canDisable: true,
       canEditRecord: true,
+      canListSupplies: false,
     },
   },
   {
     id: "membership-disabled",
     communityId: FIXED_COMMUNITY_ID,
-    user: {
-      id: FIXED_USER_2.id,
-      fullName: FIXED_USER_2.fullName,
-      email: FIXED_USER_2.email,
-      personalId: FIXED_USER_2.personalId,
-      number: FIXED_USER_2.number,
-      address: FIXED_USER_2.address,
-      phoneNumber: FIXED_USER_2.phoneNumber,
-      enabled: false,
-      isPlatformAdmin: false,
-      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
-      capabilities: MANAGED_USER_CAPABILITIES,
-    },
+    ...recordRowOf(FIXED_USER_2),
     role: "COMMUNITY_MEMBER",
     acceptedAt: "2026-01-15T09:00:00Z",
     invitedAt: null,
@@ -929,6 +930,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canEnable: true,
       canDisable: true,
       canEditRecord: true,
+      canListSupplies: false,
     },
   },
 ];
@@ -942,19 +944,13 @@ function pendingMembership(
   return {
     id: `membership-${id}`,
     communityId: FIXED_COMMUNITY_ID,
-    user: {
-      id,
-      fullName,
-      email: `${id}@example.com`,
-      personalId: `PENDING-${id}`,
-      number: null,
-      address: null,
-      phoneNumber: null,
-      enabled: true,
-      isPlatformAdmin: false,
-      memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_MEMBER" },
-      capabilities: MANAGED_USER_CAPABILITIES,
-    },
+    user: { id },
+    personalId: `PENDING-${id}`,
+    fullName,
+    memberNumber: null,
+    contactEmail: `${id}@example.com`,
+    address: null,
+    phoneNumber: null,
     role: "COMMUNITY_MEMBER",
     acceptedAt: null,
     invitedAt: null,
@@ -969,6 +965,7 @@ function pendingMembership(
       canEnable: true,
       canDisable: true,
       canEditRecord: true,
+      canListSupplies: false,
     },
     ...overrides,
   };

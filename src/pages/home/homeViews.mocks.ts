@@ -2,7 +2,7 @@ import { vi } from "vitest";
 import { useGetCommunityById, type getCommunityById } from "../../api/communities/communities";
 import { type CurrentUserResponse, type SupplyResponse } from "../../api/models";
 import { CommunityRole } from "../../hooks/permissions";
-import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildSupply, buildUser } from "../../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildSupply } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 
 /**
@@ -45,7 +45,7 @@ export function communitiesPending(): void {
 export function ownSupply(communityId: string): SupplyResponse {
   return buildSupply({
     id: `supply-in-${communityId}`,
-    user: buildUser({ id: USER_ID }),
+    user: { id: USER_ID },
     community: { id: communityId, name: `Name of ${communityId}` },
   });
 }

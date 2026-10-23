@@ -29,7 +29,6 @@ import {
   buildMember,
   buildMembership,
   buildMembershipCapabilities,
-  buildUser,
 } from "../../test/fixtures";
 import { mutation } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
@@ -58,7 +57,7 @@ const USER_ID = "TEST-USER-ID";
 /** Every capability false by default, so a spec grants exactly what it asserts on. */
 const membershipWith = (capabilities: Parameters<typeof buildMembershipCapabilities>[0]) =>
   buildMembership({
-    user: buildUser({ id: USER_ID }),
+    user: { id: USER_ID },
     communityId: COMMUNITY_ID,
     capabilities: buildMembershipCapabilities(capabilities),
   });

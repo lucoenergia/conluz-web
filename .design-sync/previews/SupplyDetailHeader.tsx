@@ -4,7 +4,14 @@ import { SupplyDetailHeader, Mui } from "conluz-web";
 const supply = {
   id: "sup-1",
   code: "ES0031406912345678JN0F",
-  user: { id: "user-1", fullName: "Lucía Ferrer Puig" },
+  user: { id: "user-1" },
+  ownerRecord: {
+    fullName: "Lucía Ferrer Puig",
+    memberNumber: null,
+    contactEmail: null,
+    address: null,
+    phoneNumber: null,
+  },
   name: "Casa de Lucía",
   address: "Calle del Sol 14, 46900 Torrent, Valencia",
   addressRef: "9872023VH5797S0001WX",
@@ -29,7 +36,7 @@ export const Deletable = () => (
 export const Inactive = () => (
   <Mui.Box sx={{ width: "100%" }}>
     <SupplyDetailHeader
-      supplyPoint={{ ...supply, id: "sup-2", code: "ES0031406987654321QW1A", name: null, addressRef: null, user: null, enabled: false, address: "Plaza Mayor 2, 46900 Torrent, Valencia" }}
+      supplyPoint={{ ...supply, id: "sup-2", code: "ES0031406987654321QW1A", name: null, addressRef: null, user: null, ownerRecord: null, enabled: false, address: "Plaza Mayor 2, 46900 Torrent, Valencia" }}
     />
   </Mui.Box>
 );

@@ -10,7 +10,6 @@ import {
   buildCurrentUser,
   buildMembership,
   buildMembershipCapabilities,
-  buildUser,
 } from "../../test/fixtures";
 import { type MembershipResponse, type UpdateMemberRecordBody } from "../../api/models";
 import { CommunityRole } from "../../hooks/permissions";
@@ -63,15 +62,13 @@ const ANA = buildMembership({
   role: CommunityRole.COMMUNITY_MEMBER,
   enabled: true,
   acceptedAt: "2026-01-15T09:00:00Z",
-  user: buildUser({
-    id: "u-ana",
-    personalId: "11111111A",
-    fullName: "Ana García",
-    number: 7,
-    email: "ana@example.com",
-    address: "Calle Mayor 1",
-    phoneNumber: "600000001",
-  }),
+  user: { id: "u-ana" },
+  personalId: "11111111A",
+  fullName: "Ana García",
+  memberNumber: 7,
+  contactEmail: "ana@example.com",
+  address: "Calle Mayor 1",
+  phoneNumber: "600000001",
   capabilities: ON_A_MEMBER,
 });
 
@@ -81,15 +78,13 @@ const ADA = buildMembership({
   role: CommunityRole.COMMUNITY_ADMIN,
   enabled: true,
   acceptedAt: "2026-01-15T09:00:00Z",
-  user: buildUser({
-    id: "admin",
-    personalId: "22222222B",
-    fullName: "Ada Admin",
-    number: 1,
-    email: "ada@example.com",
-    address: null,
-    phoneNumber: null,
-  }),
+  user: { id: "admin" },
+  personalId: "22222222B",
+  fullName: "Ada Admin",
+  memberNumber: 1,
+  contactEmail: "ada@example.com",
+  address: null,
+  phoneNumber: null,
   capabilities: ON_AN_ADMIN,
 });
 
@@ -178,14 +173,11 @@ describe("editing a member record", () => {
         const body = data as UpdateMemberRecordBody;
         const updated: MembershipResponse = {
           ...ANA,
-          user: {
-            ...ANA.user!,
-            fullName: body.fullName,
-            number: body.memberNumber ?? null,
-            email: body.contactEmail ?? null,
-            address: body.address ?? null,
-            phoneNumber: body.phoneNumber ?? null,
-          },
+          fullName: body.fullName,
+          memberNumber: body.memberNumber ?? null,
+          contactEmail: body.contactEmail ?? null,
+          address: body.address ?? null,
+          phoneNumber: body.phoneNumber ?? null,
         };
         roster.current = [updated, ADA];
         return {};

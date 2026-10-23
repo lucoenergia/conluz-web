@@ -45,18 +45,16 @@ export const EMPTY_REGISTRATION: RegistrationValues = {
 };
 
 /**
- * The record the form starts from. A community-scoped response reads a member's
- * name and contact details from the community's member record
- * (lucoenergia/conluz#396), so the roster row's user is that record.
+ * The record the form starts from: the roster row carries the community's member
+ * record under its own names (lucoenergia/conluz#448).
  */
 export function recordValuesOf(membership: MembershipResponse | null | undefined): MemberRecordValues {
-  const user = membership?.user;
   return {
-    fullName: user?.fullName ?? "",
-    memberNumber: user?.number == null ? "" : String(user.number),
-    contactEmail: user?.email ?? "",
-    address: user?.address ?? "",
-    phoneNumber: user?.phoneNumber ?? "",
+    fullName: membership?.fullName ?? "",
+    memberNumber: membership?.memberNumber == null ? "" : String(membership.memberNumber),
+    contactEmail: membership?.contactEmail ?? "",
+    address: membership?.address ?? "",
+    phoneNumber: membership?.phoneNumber ?? "",
   };
 }
 

@@ -41,7 +41,7 @@ test.describe("Visual baselines", () => {
     // Asserted before the capture, because a baseline of an empty roster would
     // look plausible and get regenerated -- enshrining a broken fixture rather
     // than failing. The rows have to be there for the picture to mean anything.
-    await expect(page.getByText(FIXED_MEMBERSHIPS[1].user?.fullName ?? "")).toBeVisible();
+    await expect(page.getByText(FIXED_MEMBERSHIPS[1].fullName)).toBeVisible();
     await expect(page.getByText("Suspendido")).toBeVisible();
     await stabilizePage(page);
 
@@ -58,14 +58,14 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockCommunityManagementRoutes(page);
 
-    const member = FIXED_MEMBERSHIPS[1].user;
+    const member = FIXED_MEMBERSHIPS[1];
     await page.goto("/members");
-    await page.getByRole("button", { name: `Más acciones para ${member?.fullName}` }).click();
+    await page.getByRole("button", { name: `Más acciones para ${member.fullName}` }).click();
     await page.getByRole("menuitem", { name: "Editar ficha" }).click();
     const dialog = page.getByRole("dialog");
     // Seeded from the row: a capture of empty fields would look plausible.
-    await expect(dialog.getByLabel(/Nombre completo/)).toHaveValue(member?.fullName ?? "");
-    await expect(dialog.getByLabel("DNI/NIE")).toHaveValue(member?.personalId ?? "");
+    await expect(dialog.getByLabel(/Nombre completo/)).toHaveValue(member.fullName);
+    await expect(dialog.getByLabel("DNI/NIE")).toHaveValue(member.personalId);
     await stabilizePage(page);
 
     await expect(dialog).toHaveScreenshot("member-record-dialog.png", await hideAppBar(page));

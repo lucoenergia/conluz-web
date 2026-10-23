@@ -11,6 +11,7 @@ import { apiError } from "../../test/apiError";
 import {
   buildCommunity,
   buildCommunityCapabilities,
+  buildMemberRecord,
   buildSupply,
   buildSupplyCapabilities,
   buildUser,
@@ -62,13 +63,17 @@ const COMMUNITY = buildCommunity({
   capabilities: buildCommunityCapabilities({ canRead: true }),
 });
 
+// The account GET /users/{userId} answers on the owner's supply list; a supply
+// names its owner by id and carries their record (lucoenergia/conluz#448).
 const OWNER = buildUser({ id: OWNER_ID, fullName: "Lucía Martínez Soler" });
+const OWNER_RECORD = buildMemberRecord({ fullName: "Lucía Martínez Soler" });
 
 const DELETABLE = buildSupply({
   id: DELETABLE_ID,
   code: "ES0031406912345678JN0F",
   name: "Casa de Lucía",
-  user: OWNER,
+  user: { id: OWNER_ID },
+  ownerRecord: OWNER_RECORD,
   community: { id: COMMUNITY_ID, name: "Comunidad Solar" },
   // Both halves an admin is served: canEdit and canDelete come together.
   capabilities: buildSupplyCapabilities({ canRead: true, canEdit: true, canDelete: true }),
@@ -79,7 +84,8 @@ const KEPT = buildSupply({
   id: KEPT_ID,
   code: "ES0031406987654321QW1A",
   name: "Local de la asociación",
-  user: OWNER,
+  user: { id: OWNER_ID },
+  ownerRecord: OWNER_RECORD,
   community: { id: COMMUNITY_ID, name: "Comunidad Solar" },
   capabilities: buildSupplyCapabilities({ canRead: true }),
 });
@@ -95,8 +101,8 @@ const page = (items: SupplyResponse[]) => ({
 type ServerState = { supplies: SupplyResponse[]; communityListServed: number; ownerListServed: number };
 
 /** The backend's supplies, and how often each listing was served. */
-function server(onDelete: (state: ServerState) => unknown) {
-  const state: ServerState = { supplies: [DELETABLE, KEPT], communityListServed: 0, ownerListServed: 0 };
+function server(onDelete: (state: ServerState) => unknown, supplies: SupplyResponse[] = [DELETABLE, KEPT]) {
+  const state: ServerState = { supplies, communityListServed: 0, ownerListServed: 0 };
   const routes: Route[] = [
     { method: "GET", url: COMMUNITY_URL, respond: () => COMMUNITY },
     {
@@ -146,8 +152,12 @@ const refused = (error: unknown) => () => {
   throw error;
 };
 
-function renderPage(route: string, onDelete: (state: ServerState) => unknown) {
-  const { state, routes } = server(onDelete);
+function renderPage(
+  route: string,
+  onDelete: (state: ServerState) => unknown,
+  supplies?: SupplyResponse[],
+) {
+  const { state, routes } = server(onDelete, supplies);
   const router = routeRequests(routes);
   mockCustomInstance.mockImplementation(router.handle);
   const rendered = renderWithProviders(
@@ -222,6 +232,18 @@ describe("deleting a supply from its card menu", () => {
     expect(dialog.getByText("Casa de Lucía")).toBeInTheDocument();
     expect(dialog.getByText("Lucía Martínez Soler")).toBeInTheDocument();
     expect(dialog.getByText(/Esta acción no se puede deshacer\./)).toBeInTheDocument();
+  });
+
+  it("UI-SUP-005 names no owner when the owner has no record in the supply's community", async () => {
+    const user = userEvent.setup();
+    renderPage("/supply-points", deleted, [{ ...DELETABLE, ownerRecord: null }, KEPT]);
+
+    await openDeletion(user);
+    const dialog = within(screen.getByTestId("modal-panel"));
+
+    expect(dialog.getByText("ES0031406912345678JN0F")).toBeInTheDocument();
+    expect(dialog.queryByText(/Titular/)).not.toBeInTheDocument();
+    expect(dialog.queryByText("Lucía Martínez Soler")).not.toBeInTheDocument();
   });
 
   it("UI-SUP-002 sends nothing when the confirmation is dismissed", async () => {

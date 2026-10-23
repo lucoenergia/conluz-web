@@ -75,7 +75,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
 
   const details: DetailFact[] = [
     { label: "Referencia catastral", value: supplyPoint?.addressRef || "-" },
-    { label: "Propietario", value: supplyPoint?.user?.fullName || "-" },
+    { label: "Propietario", value: supplyPoint?.ownerRecord?.fullName || "-" },
   ];
 
   return (

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import type { RequestConfig } from "../../test/requestRouter";
-import { buildMember, buildMembershipCapabilities, buildUser } from "../../test/fixtures";
+import { buildMember, buildMembershipCapabilities } from "../../test/fixtures";
 import type { MembershipResponse, RegisterMemberBody } from "../../api/models";
 import {
   COMMUNITY_ID,
@@ -42,15 +42,11 @@ const ANA = rosterRow("u-ana", "Ana García", { acceptedAt: "2026-01-15T09:00:00
 /** The new member as the roster lists them once registered: pending, never invited. */
 const registeredRow = (body: RegisterMemberBody, overrides: Partial<MembershipResponse> = {}) =>
   rosterRow("u-nuevo", body.fullName, {
-    user: buildUser({
-      id: "u-nuevo",
-      personalId: body.personalId,
-      fullName: body.fullName,
-      number: body.memberNumber ?? null,
-      email: body.contactEmail ?? null,
-      address: body.address ?? null,
-      phoneNumber: body.phoneNumber ?? null,
-    }),
+    personalId: body.personalId,
+    memberNumber: body.memberNumber ?? null,
+    contactEmail: body.contactEmail ?? null,
+    address: body.address ?? null,
+    phoneNumber: body.phoneNumber ?? null,
     ...overrides,
   });
 
