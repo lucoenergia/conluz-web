@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { useGetCommunityById, useUpdateCommunity, type getCommunityById } from "../../api/communities/communities";
+import {
+  useGetCommunityById,
+  useGetCommunityContact,
+  useUpdateCommunity,
+  type getCommunityById,
+  type getCommunityContact,
+} from "../../api/communities/communities";
 import { apiError } from "../../test/apiError";
 import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures";
 import { mutation, query } from "../../test/queryState";
@@ -18,6 +24,7 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCommunityById: vi.fn(),
+  useGetCommunityContact: vi.fn(),
   useUpdateCommunity: vi.fn(),
 }));
 
@@ -29,6 +36,7 @@ beforeEach(() => {
   mockErrorDispatch.mockClear();
   mutateAsync = vi.fn();
   vi.mocked(useUpdateCommunity).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useGetCommunityContact).mockReturnValue(query.success<typeof getCommunityContact>({ channels: [] }));
   vi.mocked(useGetCommunityById).mockReturnValue(
     query.success<typeof getCommunityById>(
       buildCommunity({
