@@ -6,9 +6,9 @@
 | **Status** | Active |
 | **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId` |
 | **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete` |
-| **Domain rules** | `lucoenergia/conluz`: SUP-001 |
+| **Domain rules** | `lucoenergia/conluz`: SUP-001, MEM-026 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #290 |
+| **Last reviewed against code** | #302 |
 
 ## Purpose
 
@@ -16,7 +16,7 @@ Let a community admin delete a supply that nothing in the community depends on, 
 to stop using one that something does. Deleting a member who owns supplies needs their supplies
 deleted first (UI-MBR-015), so this is the step that makes that possible.
 
-This document covers only the rules #290 introduced.
+This document covers only the rules #290 and #302 introduced.
 
 ## Rules
 
@@ -80,3 +80,18 @@ This document covers only the rules #290 introduced.
   A 404 means somebody else already deleted the supply, so the screen is stale.
 - **Implements:** SUP-001
 - **Source:** #290, lucoenergia/conluz#412
+
+### UI-SUP-005 — The owner shown is their record in the supply's community
+
+- **Status:** Active
+- **Rule:**
+  - The supply detail's "Propietario" and the deletion confirmation's owner (UI-SUP-002) MUST be
+    the full name of the supply's `ownerRecord`: the owner's member record in the supply's
+    community. The supply's `user` carries the owner's id only.
+  - When `ownerRecord` is null — the supply has no owner, or its owner has no membership in its
+    community — the detail MUST show no owner ("-") and the confirmation MUST name none.
+- **Rationale:** One person may own supplies in several communities, each with its own record of
+  them; the supply's community is the one whose record applies. Without a record there is nothing
+  the community may show, and falling back to the account would disclose it.
+- **Implements:** MEM-026
+- **Source:** #302, lucoenergia/conluz#448
