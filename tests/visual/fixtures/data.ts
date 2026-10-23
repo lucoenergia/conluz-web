@@ -996,6 +996,22 @@ export const FIXED_ROSTER_INVITATION_STATES: MembershipResponse[] = [
 ];
 
 /**
+ * The roster as the community's only active admin sees it since
+ * lucoenergia/conluz#449 (#309): admins manage each other, themselves
+ * included, so their own row offers the role change and the removal, and the
+ * backend reports it as the last active admin -- the row whose menu shows
+ * "Eliminar" disabled, with the reason.
+ */
+export const FIXED_ROSTER_LAST_ACTIVE_ADMIN: MembershipResponse[] = [
+  {
+    ...FIXED_MEMBERSHIPS[0],
+    lastActiveAdmin: true,
+    capabilities: { ...FIXED_MEMBERSHIPS[0].capabilities, canUpdateRole: true, canDelete: true },
+  },
+  FIXED_MEMBERSHIPS[1],
+];
+
+/**
  * A community's admins as GET …/admins lists them (#276), one per state the
  * page tells apart: active, pending with an active link, pending with an
  * expired one, and suspended -- and one without a phone, which the table
