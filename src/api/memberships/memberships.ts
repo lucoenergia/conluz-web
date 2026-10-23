@@ -800,7 +800,11 @@ export const useRegisterMember = <TError = ErrorType<RestError>,
     /**
  * Deletes the membership of the specified user in the community, with its member record and its invitation tokens. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
 
+The membership of the community's last active admin is not deleted, even when it is the caller's own: the request is answered 409 with `MEMBERSHIP_LAST_ACTIVE_ADMIN`, and nothing is deleted. An active admin is one whose membership is accepted and enabled and whose account is enabled; a pending or suspended admin does not count. Promote another active member to admin first (`PATCH /api/v1/communities/{communityId}/memberships/{userId}`). `lastActiveAdmin` on the membership says in advance whether this applies.
+
 The membership of a user who owns supplies in the community is not deleted: the request is answered 409 with `MEMBERSHIP_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`); to delete it, delete their supplies in the community first (`DELETE /api/v1/supplies/{supplyId}`). Supplies the user owns in other communities do not prevent it.
+
+When both apply, the request is answered `MEMBERSHIP_LAST_ACTIVE_ADMIN`: deleting the supplies would not make the deletion possible.
 
  * @summary Removes a user from a community.
  */
@@ -867,6 +871,8 @@ export const useDeleteMembership = <TError = ErrorType<RestError>,
  * Changes the role of a user within a community. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
 
 Giving a membership the `COMMUNITY_ADMIN` role requires a contact email on its member record: without one it responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and the role is left as it was.
+
+Demoting the community's last active admin to `COMMUNITY_MEMBER`, even when it is the caller themselves, responds 409 with the `MEMBERSHIP_LAST_ACTIVE_ADMIN` code, and the role is left as it was. An active admin is one whose membership is accepted and enabled and whose account is enabled; a pending or suspended admin does not count. Promote another active member to admin first. `lastActiveAdmin` on the membership says in advance whether this applies.
 
  * @summary Updates the role of a membership.
  */
