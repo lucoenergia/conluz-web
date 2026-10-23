@@ -875,6 +875,8 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
+    // The roster's only accepted, enabled admin (lucoenergia/conluz#449).
+    lastActiveAdmin: true,
     // Their own membership: the backend does not offer them their own removal
     // or demotion, which is the safety rail the row menu has to respect.
     capabilities: {
@@ -901,6 +903,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
+    lastActiveAdmin: false,
     capabilities: {
       canUpdateRole: true,
       canDelete: true,
@@ -922,6 +925,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: false,
+    lastActiveAdmin: false,
     capabilities: {
       canUpdateRole: true,
       canDelete: true,
@@ -957,6 +961,7 @@ function pendingMembership(
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
+    lastActiveAdmin: false,
     capabilities: {
       canUpdateRole: true,
       canDelete: true,

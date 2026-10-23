@@ -284,6 +284,8 @@ export function buildMembership(overrides: Partial<MembershipResponse> = {}): Me
       acceptedAt: "2026-01-01T00:00:00Z",
       invitedAt: null,
       invitationExpiresAt: null,
+      // Not the last active admin: a member never is (lucoenergia/conluz#449).
+      lastActiveAdmin: false,
       capabilities: buildMembershipCapabilities(),
     } satisfies MembershipResponse),
     ...overrides,
