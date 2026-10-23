@@ -34,6 +34,7 @@ const NotFoundPage = lazyPage(() => import("./pages/not-found/NotFoundPage"), "N
 const LandingRoute = lazyPage(() => import("./pages/landing/LandingRoute"), "LandingRoute");
 const ProfilePage = lazyPage(() => import("./pages/Profile"), "ProfilePage");
 const ContactPage = lazyPage(() => import("./pages/Contact.page"), "ContactPage");
+const CommunityContactPage = lazyPage(() => import("./pages/contact/CommunityContactPage"), "CommunityContactPage");
 const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityPage"), "NoCommunityPage");
 const MemberHomePage = lazyPage(() => import("./pages/home/MemberHomePage"), "MemberHomePage");
 const CommunityManagementPage = lazyPage(() => import("./pages/home/CommunityManagementPage"), "CommunityManagementPage");
@@ -193,6 +194,12 @@ function App() {
             element={<CapabilityRoute require={{ scope: "platform", capability: "canListPlatformAdmins" }}><PlatformAdminsPage /></CapabilityRoute>}
           />
           <Route path="no-community" element={<NoCommunityPage />} />
+          {/*
+            Any signed-in caller (#295): the active community's channels, or,
+            for one with no community, the instruction to contact whoever
+            manages it. The channels endpoint refuses non-members itself.
+          */}
+          <Route path="community/contact" element={<CommunityContactPage />} />
         </Route>
         {/*
           Public for everybody, signed in or not -- not an oversight, and not a

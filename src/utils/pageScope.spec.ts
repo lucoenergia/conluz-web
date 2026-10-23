@@ -87,6 +87,7 @@ describe("resolvePageScope", () => {
     ["/supply-points/s-1/edit", "community"],
     ["/members", "community"],
     ["/integrations", "community"],
+    ["/community/contact", "community"],
     ["/platform", "platform"],
     ["/communities", "platform"],
     ["/communities/c-1/edit", "platform"],

@@ -286,4 +286,17 @@ interface MenuSection {
   title: string;
   items: MenuItem[];
 }
+
+interface ContactChannelResponse {
+  /** The name shown for the channel. */
+  label: string;
+  /** Free text about the channel. Null if it has none. */
+  notes: string | null;
+  /** When the channel is attended. Null if it has no schedule. */
+  schedule: string | null;
+  /** The kind of channel. */
+  type: 'PHONE' | 'EMAIL' | 'ADDRESS';
+  /** The phone number, email address or postal address. */
+  value: string;
+}
 ```

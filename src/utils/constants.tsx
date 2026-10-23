@@ -71,7 +71,7 @@ export const MENU_SECTIONS: MenuSection[] = [
 ];
 
 export const CONTACT_ITEM: MenuItem = {
-  to: "/contact",
+  to: "/community/contact",
   id: "contact",
   icon: SupportAgentRoundedIcon,
   label: "Contacto",
