@@ -25,7 +25,7 @@ const ICONS: Record<ContactChannelResponseType, SvgIconComponent> = {
  * or an email is a link the user can tap; an address is text.
  */
 export const ContactChannelList: FC<ContactChannelListProps> = ({ channels }) => (
-  <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+  <Box component="ul" aria-label="Canales de contacto" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 2 }}>
     {channels.map((channel, index) => {
       const Icon = ICONS[channel.type];
       const href = contactHref(channel.type, channel.value);
