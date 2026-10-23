@@ -8,8 +8,8 @@
 import type { GetHuaweiConfigResponseUsername } from './getHuaweiConfigResponseUsername';
 
 export interface GetHuaweiConfigResponse {
-  username: GetHuaweiConfigResponseUsername;
-  passwordSet: boolean;
   baseUrl: string;
   enabled: boolean;
+  passwordSet: boolean;
+  username: GetHuaweiConfigResponseUsername;
 }

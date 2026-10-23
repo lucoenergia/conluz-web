@@ -26,10 +26,6 @@ import type {
 
 import type {
   ChangePasswordBody,
-  CreateUserBody,
-  CreateUsersInBulkResponse,
-  CreateUsersWithFileBody,
-  CreateUsersWithFileParams,
   CurrentUserResponse,
   GetAllUsersParams,
   InvitePlatformAdminBody,
@@ -39,37 +35,30 @@ import type {
   RestError,
   SupplyResponse,
   UpdateProfileBody,
-  UpdateUserBody,
   UserResponse
 } from '.././models';
 
-import { customInstance } from '.././custom-instance';
-import type { ErrorType } from '.././custom-instance';
+import { customInstance } from '../../http/custom-instance';
+import type { ErrorType } from '../../http/custom-instance';
 
 
 
 
 /**
- * This endpoint retrieves detailed information about a specific user by their unique identifier.
+ * Every user with the platform-admin role, enabled or not, by full name and then id: the user id, and the full name, email and state of their own account. No personal id, no member record and no memberships. Each one says whether revoking the role would be accepted right now, and whether the caller may revoke it. Only a platform admin may list them.
 
-**Required: Platform Admin, Community Admin, or the user themselves**
+They are followed by the pending invitations to the role, by the full name typed by the inviter and then id: the user id, the full name and email typed by the inviter, nothing from the account, and `invitation` with when it was sent and when its link expires, null once it has expired or been revoked. `enabled` and `revocable` are null on those rows, and `invitation` is null on the others. A pending invitation never counts as a platform admin, for `revocable` or anything else, and the list never shows a confirmation code.
 
-**What `memberships` contains:** platform admins see every membership, and a user reading
-themselves sees all of their own; otherwise only the memberships in communities the
-caller administers.
-
-Authentication is required using a Bearer token.
-
- * @summary Retrieves a single user by ID
+ * @summary Lists the platform admins.
  */
-export const getUserById = (
-    userId: string,
+export const getPlatformAdmins = (
+    
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<UserResponse>(
-      {url: `/api/v1/users/${userId}`, method: 'GET', signal
+      return customInstance<PlatformAdminResponse[]>(
+      {url: `/api/v1/platform-admins`, method: 'GET', signal
     },
       );
     }
@@ -77,69 +66,69 @@ export const getUserById = (
 
 
 
-export const getGetUserByIdQueryKey = (userId?: string,) => {
+export const getGetPlatformAdminsQueryKey = () => {
     return [
-    `/api/v1/users/${userId}`
+    `/api/v1/platform-admins`
     ] as const;
     }
 
     
-export const getGetUserByIdQueryOptions = <TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+export const getGetPlatformAdminsQueryOptions = <TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetUserByIdQueryKey(userId);
+  const queryKey =  queryOptions?.queryKey ?? getGetPlatformAdminsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserById>>> = ({ signal }) => getUserById(userId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlatformAdmins>>> = ({ signal }) => getPlatformAdmins(signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetUserByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUserById>>>
-export type GetUserByIdQueryError = ErrorType<RestError>
+export type GetPlatformAdminsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlatformAdmins>>>
+export type GetPlatformAdminsQueryError = ErrorType<RestError>
 
 
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getUserById>>,
+          Awaited<ReturnType<typeof getPlatformAdmins>>,
           TError,
-          Awaited<ReturnType<typeof getUserById>>
+          Awaited<ReturnType<typeof getPlatformAdmins>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getUserById>>,
+          Awaited<ReturnType<typeof getPlatformAdmins>>,
           TError,
-          Awaited<ReturnType<typeof getUserById>>
+          Awaited<ReturnType<typeof getPlatformAdmins>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves a single user by ID
+ * @summary Lists the platform admins.
  */
 
-export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetUserByIdQueryOptions(userId,options)
+  const queryOptions = getGetPlatformAdminsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -152,41 +141,37 @@ export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, 
 
 
 /**
- * This endpoint enables the update of user information by specifying the user's unique identifier in the endpoint path.
+ * Invites a person with their DNI/NIE/NIF, full name and email, and emails them a link to accept, valid for 7 days. Inviting grants nothing: the role is granted only when the person accepts with the link and the confirmation code in this response, which the inviter gives them by another channel, such as by phone or in person. The code is shown only in this response: no endpoint returns it again, and the email never contains it. Until the person accepts, the invitation is listed by `getPlatformAdmins` as pending, and never counts as a platform admin.
 
-Clients send a request containing the updated user details, and authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin. A Community Admin may use it only on their own account.**
+The account is found with the DNI/NIE/NIF, or created without a password. An existing account is never written, and the response is the same whether or not it existed: the row carries the name and email typed here, nothing from the account. Only a platform admin may invite.
 
-Community admins cannot change another user's account: the account belongs to the person, it is shared by every community they belong to, and its email receives the password recovery link (#415). A member's data in a community is edited on their member record (#416).
+The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code, and nothing is created or sent. A person who already holds the role is answered 409 with the `USER_ALREADY_PLATFORM_ADMIN` code, and one with a pending invitation 409 with the `PLATFORM_ADMIN_ALREADY_INVITED` code: resend that one instead.
 
-A successful update results in an HTTP status code of 200, indicating that the user information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `PLATFORM_ADMIN_INVITATION_UNAVAILABLE` code before anything is looked up or created.
 
-The `personalId` is normalised before it is stored or compared: surrounding and inner whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased. If another user already has the same normalised `personalId`, the server responds 409 with the `USER_ALREADY_EXISTS` code; the error does not repeat the value.
-
-If you don't provide some of the optional parameters, they will be considered as null value so their values will be updated with a null value.
- * @summary Updates user information
+ * @summary Invites a person to the platform-admin role.
  */
-export const updateUser = (
-    userId: string,
-    updateUserBody: UpdateUserBody,
- ) => {
+export const invitePlatformAdmin = (
+    invitePlatformAdminBody: InvitePlatformAdminBody,
+ signal?: AbortSignal
+) => {
       
       
-      return customInstance<UserResponse>(
-      {url: `/api/v1/users/${userId}`, method: 'PUT',
+      return customInstance<InvitedPlatformAdminResponse>(
+      {url: `/api/v1/platform-admins/invite`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: updateUserBody
+      data: invitePlatformAdminBody, signal
     },
       );
     }
   
 
 
-export const getUpdateUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext> => {
+export const getInvitePlatformAdminMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext> => {
 
-const mutationKey = ['updateUser'];
+const mutationKey = ['invitePlatformAdmin'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -196,10 +181,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUser>>, {userId: string;data: UpdateUserBody}> = (props) => {
-          const {userId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitePlatformAdmin>>, {data: InvitePlatformAdminBody}> = (props) => {
+          const {data} = props ?? {};
 
-          return  updateUser(userId,data,)
+          return  invitePlatformAdmin(data,)
         }
 
         
@@ -207,62 +192,52 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateUserMutationResult = NonNullable<Awaited<ReturnType<typeof updateUser>>>
-    export type UpdateUserMutationBody = UpdateUserBody
-    export type UpdateUserMutationError = ErrorType<RestError>
+    export type InvitePlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof invitePlatformAdmin>>>
+    export type InvitePlatformAdminMutationBody = InvitePlatformAdminBody
+    export type InvitePlatformAdminMutationError = ErrorType<RestError>
 
     /**
- * @summary Updates user information
+ * @summary Invites a person to the platform-admin role.
  */
-export const useUpdateUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUser>>, TError,{userId: string;data: UpdateUserBody}, TContext>, }
+export const useInvitePlatformAdmin = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateUser>>,
+        Awaited<ReturnType<typeof invitePlatformAdmin>>,
         TError,
-        {userId: string;data: UpdateUserBody},
+        {data: InvitePlatformAdminBody},
         TContext
       > => {
 
-      const mutationOptions = getUpdateUserMutationOptions(options);
+      const mutationOptions = getInvitePlatformAdminMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- *     This endpoint enables the removal of a user from the system by specifying the user's unique identifier within the endpoint path.
+ * Emails the person a new invitation link, at the address the invitation was sent to, and generates a new confirmation code, returned only in this response. The previous link and the previous code stop working, and the count of wrong codes starts again. At most 4 sends in any 24 hours, the first one included: further resends are answered 429 with the `PLATFORM_ADMIN_INVITATION_RESEND_LIMIT_REACHED` code and a `Retry-After` header.
 
-    To utilize this endpoint, clients send a DELETE request with the targeted user's ID, requiring authentication for secure access.
-    **Required: Platform Admin. You cannot delete your own account.**
+An unknown user is answered 404, and a user without a pending invitation 409 with the `PLATFORM_ADMIN_NOT_INVITED` code. If the server cannot send emails right now, it responds 503 with the `PLATFORM_ADMIN_INVITATION_UNAVAILABLE` code before anything is recorded. Only a platform admin may resend.
 
-    Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To remove a member from one community, delete their membership instead (`DELETE /api/v1/communities/{communityId}/memberships/{userId}`); to suspend them, disable it (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`).
-
-    Deleting the account also deletes every membership of the user, in every community, with its member record, and every token of the user. Memberships the user invited are kept, with no inviter, and sharing agreements and distributor files the user created, edited or uploaded are kept, with no creator, editor or uploader.
-
-    The account of a user who owns supplies, in any community, is not deleted: the request is answered 409 with `USER_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the account instead (`POST /api/v1/users/{userId}/disable`); to delete it, delete their supplies first (`DELETE /api/v1/supplies/{supplyId}`). The last enabled platform admin is not deleted either (409 `USER_LAST_PLATFORM_ADMIN`).
-
-    Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the user has been successfully removed.
-
-    In cases where the deletion process encounters errors, the server returns an appropriate error status code, along with a descriptive error message to guide clients in diagnosing and addressing the issue.
-
- * @summary Removes a user by ID
+ * @summary Sends a platform-admin invitation again, with a new link and a new confirmation code.
  */
-export const deleteUser = (
+export const resendPlatformAdminInvitation = (
     userId: string,
- ) => {
+ signal?: AbortSignal
+) => {
       
       
-      return customInstance<void>(
-      {url: `/api/v1/users/${userId}`, method: 'DELETE'
+      return customInstance<InvitedPlatformAdminResponse>(
+      {url: `/api/v1/platform-admins/${userId}/invitation/resend`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getDeleteUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext> => {
+export const getResendPlatformAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext> => {
 
-const mutationKey = ['deleteUser'];
+const mutationKey = ['resendPlatformAdminInvitation'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -272,10 +247,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {userId: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, {userId: string}> = (props) => {
           const {userId} = props ?? {};
 
-          return  deleteUser(userId,)
+          return  resendPlatformAdminInvitation(userId,)
         }
 
         
@@ -283,61 +258,52 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeleteUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUser>>>
+    export type ResendPlatformAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>>
     
-    export type DeleteUserMutationError = ErrorType<RestError>
+    export type ResendPlatformAdminInvitationMutationError = ErrorType<RestError>
 
     /**
- * @summary Removes a user by ID
+ * @summary Sends a platform-admin invitation again, with a new link and a new confirmation code.
  */
-export const useDeleteUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
+export const useResendPlatformAdminInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteUser>>,
+        Awaited<ReturnType<typeof resendPlatformAdminInvitation>>,
         TError,
         {userId: string},
         TContext
       > => {
 
-      const mutationOptions = getDeleteUserMutationOptions(options);
+      const mutationOptions = getResendPlatformAdminInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint lets the authenticated user change how the community reaches them: email,
-postal address and phone number. It always acts on the caller — there is no
-user identifier to supply — so it cannot be used to edit anybody else.
+ * Revokes the invitation's current link, whether or not it had expired. The invitation stays pending, listed with no valid link, and can be sent again with `resendPlatformAdminInvitation`. Works when the server cannot send emails.
 
-Name, DNI and member number are not editable here: they identify the member to the
-community and to the distributor, so changing them is an administrative operation
-performed through `PUT /api/v1/users/{userId}`.
+An unknown user is answered 404, and a user without a pending invitation 409 with the `PLATFORM_ADMIN_NOT_INVITED` code. Only a platform admin may revoke.
 
-Omitting `email`, `address` or `phoneNumber` clears the stored value. An empty or blank
-`email` also clears it; any other value must be a valid email address.
-
-**Required: any authenticated user (edits their own contact details).**
- * @summary Updates the contact details of the current user
+ * @summary Stops a platform-admin invitation's link from working.
  */
-export const updateProfile = (
-    updateProfileBody: UpdateProfileBody,
- ) => {
+export const revokePlatformAdminInvitation = (
+    userId: string,
+ signal?: AbortSignal
+) => {
       
       
-      return customInstance<UserResponse>(
-      {url: `/api/v1/users/profile`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: updateProfileBody
+      return customInstance<PlatformAdminResponse>(
+      {url: `/api/v1/platform-admins/${userId}/invitation/revoke`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getUpdateProfileMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext> => {
+export const getRevokePlatformAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext> => {
 
-const mutationKey = ['updateProfile'];
+const mutationKey = ['revokePlatformAdminInvitation'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -347,10 +313,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProfile>>, {data: UpdateProfileBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
 
-          return  updateProfile(data,)
+          return  revokePlatformAdminInvitation(userId,)
         }
 
         
@@ -358,117 +324,23 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateProfile>>>
-    export type UpdateProfileMutationBody = UpdateProfileBody
-    export type UpdateProfileMutationError = ErrorType<RestError>
+    export type RevokePlatformAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>>
+    
+    export type RevokePlatformAdminInvitationMutationError = ErrorType<RestError>
 
     /**
- * @summary Updates the contact details of the current user
+ * @summary Stops a platform-admin invitation's link from working.
  */
-export const useUpdateProfile = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, }
+export const useRevokePlatformAdminInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateProfile>>,
+        Awaited<ReturnType<typeof revokePlatformAdminInvitation>>,
         TError,
-        {data: UpdateProfileBody},
+        {userId: string},
         TContext
       > => {
 
-      const mutationOptions = getUpdateProfileMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint lets the authenticated user replace their own password. It always acts on the
-caller, so it cannot be used to change anybody else's password.
-
-The current password must be supplied and must match. The new password must be between 15 and
-64 characters long, counting each Unicode code point as one, and no more than 72 bytes once
-UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no
-composition rules, and the value is never trimmed or transformed. The new password must differ
-from the current one; the comparison is exact, so a value that differs only by case or by leading
-or trailing spaces is a different password.
-
-On success the server answers 204, clears the "must change password" flag and ends every
-session opened with the previous password: every token issued before the change, including the
-one used for this request, is rejected with 401 from then on, and the access cookie is removed.
-The client must log in again with the new password.
-
-A wrong current password is answered 400 with the `USER_CURRENT_PASSWORD_INCORRECT` code, never
-401, and changes nothing. A new password that breaks the policy is answered 400 with the
-`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:
-`TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`. A correct current password with a new password
-exactly equal to it is answered 400 with the `USER_PASSWORD_UNCHANGED` code: nothing is changed,
-the caller's token stays valid and the "must change password" flag stays as it was. A wrong
-current password is reported as such, whatever the new password.
-
-Neither an unchanged password nor a policy violation counts as a failed attempt. Wrong current
-passwords count together with failed logins on the same account. After 5 failures
-on the account, or 20 from the same client address, within 15 minutes, further changes are
-answered 429 with a Retry-After header, without checking the current password and without
-affecting the caller's token, until the 15 minutes that started with the first failure have
-passed.
-
-**Required: any authenticated user (changes their own password).**
- * @summary Changes the password of the current user
- */
-export const changePassword = (
-    changePasswordBody: ChangePasswordBody,
- ) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/current/password`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: changePasswordBody
-    },
-      );
-    }
-  
-
-
-export const getChangePasswordMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext> => {
-
-const mutationKey = ['changePassword'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePassword>>, {data: ChangePasswordBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  changePassword(data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changePassword>>>
-    export type ChangePasswordMutationBody = ChangePasswordBody
-    export type ChangePasswordMutationError = ErrorType<RestError>
-
-    /**
- * @summary Changes the password of the current user
- */
-export const useChangePassword = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof changePassword>>,
-        TError,
-        {data: ChangePasswordBody},
-        TContext
-      > => {
-
-      const mutationOptions = getChangePasswordMutationOptions(options);
+      const mutationOptions = getRevokePlatformAdminInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -476,15 +348,14 @@ export const useChangePassword = <TError = ErrorType<RestError>,
  * This endpoint facilitates the retrieval of all users within the system, allowing clients to access a
 comprehensive list of user details.
 
-**Required: Platform Admin or Community Admin**
+**Required: Community Admin of at least one community.** Being a Platform Admin is not enough (#446): any other caller is answered 403.
 
 **What the listing contains:** only the users the caller may read one by one
-(`GET /api/v1/users/{userId}`). Platform admins see every user; anyone else sees themselves
+(`GET /api/v1/users/{userId}`). The caller sees themselves
 and the users with an enabled membership in a community they administer — not those of
 communities they merely belong to.
 
-**What each user's `memberships` contains:** platform admins see every membership, and
-every caller sees all of their own; otherwise only the memberships in communities the
+**What each user's `memberships` contains:** every caller sees all of their own; otherwise only the memberships in communities the
 caller administers.
 
 Features:
@@ -576,791 +447,6 @@ export function useGetAllUsers<TData = Awaited<ReturnType<typeof getAllUsers>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetAllUsersQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint facilitates the creation of a new user within the system.
-
-This endpoint requires clients to send a request containing essential user details, including username, password, and any additional relevant information.
-
-Optionally, a communityId and communityRole can be specified to automatically create a membership
-for the new user in the given community. If communityId is not provided and the caller is a
-COMMUNITY_ADMIN, the community is derived from the caller's active context. If the caller is a
-PLATFORM_ADMIN and communityId is not provided, a user with no memberships is created
-(they can be attached later).
-
-The `personalId` is normalised before it is stored or compared: surrounding and inner whitespace
-(including the no-break space), dots and hyphens are removed and letters are upper-cased, so
-`x1234567-l` is stored as `X1234567L`. If a user with the same normalised `personalId` already
-exists, the server responds 409 with the `USER_ALREADY_EXISTS` code; the error does not repeat
-the value.
-
-The `password` must satisfy the password policy: between 15 and 64 characters, counting each
-Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is
-accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is
-never trimmed or transformed. A password that breaks the policy is answered 400 with the
-`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:
-`TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`. Because the password is chosen by the creator, the new
-user is flagged as having to change it (`mustChangePassword` on `GET /api/v1/users/current`).
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Platform Admin, or Community Admin of the target community**
-
-Upon successful user creation, the server responds with an HTTP status code of 200, along with comprehensive details about the newly created user, such as a unique identifier and username.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Creates a new user within the system.
- */
-export const createUser = (
-    createUserBody: CreateUserBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<UserResponse>(
-      {url: `/api/v1/users`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createUserBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext> => {
-
-const mutationKey = ['createUser'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUser>>, {data: CreateUserBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createUser(data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>
-    export type CreateUserMutationBody = CreateUserBody
-    export type CreateUserMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates a new user within the system.
- */
-export const useCreateUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createUser>>,
-        TError,
-        {data: CreateUserBody},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateUserMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint removes platform-administrator privileges from the user identified in the endpoint path.
-
-Proper authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin. You cannot revoke your own privileges.**
-
-Once the caller is allowed, the target is checked: an unknown user answers 404, and a user who is not a platform admin answers 409 USER_NOT_PLATFORM_ADMIN.
-
-Two safety rails apply: a platform admin cannot revoke their own privileges, and the system can never be left without an enabled platform admin. Revoking the last enabled platform admin answers 409 USER_LAST_PLATFORM_ADMIN; since the caller is themselves an enabled platform admin, this can only happen when two revokes run at the same time. Revoking a disabled platform admin is always allowed, since it leaves the number of enabled platform admins as it is.
-
-Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user is no longer a platform administrator.
-
-In situations where the operation encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
- * @summary Revokes platform-admin privileges from a user by ID
- */
-export const revokePlatformAdmin = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/${userId}/revoke-platform-admin`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getRevokePlatformAdminMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['revokePlatformAdmin'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokePlatformAdmin>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  revokePlatformAdmin(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RevokePlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof revokePlatformAdmin>>>
-    
-    export type RevokePlatformAdminMutationError = ErrorType<RestError>
-
-    /**
- * @summary Revokes platform-admin privileges from a user by ID
- */
-export const useRevokePlatformAdmin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof revokePlatformAdmin>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getRevokePlatformAdminMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint promotes the user identified in the endpoint path to platform administrator.
-
-Proper authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin.**
-
-The operation is idempotent: granting the flag to a user who is already a platform admin has no effect.
-
-Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user is now a platform administrator.
-
-In situations where the operation encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
- * @summary Grants platform-admin privileges to a user by ID
- */
-export const grantPlatformAdmin = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/${userId}/grant-platform-admin`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getGrantPlatformAdminMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['grantPlatformAdmin'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof grantPlatformAdmin>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  grantPlatformAdmin(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type GrantPlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof grantPlatformAdmin>>>
-    
-    export type GrantPlatformAdminMutationError = ErrorType<RestError>
-
-    /**
- * @summary Grants platform-admin privileges to a user by ID
- */
-export const useGrantPlatformAdmin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantPlatformAdmin>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof grantPlatformAdmin>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getGrantPlatformAdminMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint serves the purpose of enabling a previously disabled user within the system, with the user's unique identifier specified in the endpoint path.
-
-Proper authentication, through an authentication token, is required for secure access.
-**Required: Platform Admin. You cannot enable your own account.**
-
-Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
-
-Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been successfully enabled.
-
-This endpoint provides a crucial mechanism for restoring user access or lifting restrictions, supporting effective user management.
-
-In situations where the enabling process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
- * @summary Enables a user by ID
- */
-export const enableUser = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/${userId}/enable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getEnableUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['enableUser'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableUser>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  enableUser(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EnableUserMutationResult = NonNullable<Awaited<ReturnType<typeof enableUser>>>
-    
-    export type EnableUserMutationError = ErrorType<RestError>
-
-    /**
- * @summary Enables a user by ID
- */
-export const useEnableUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof enableUser>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getEnableUserMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- *     This endpoint is designed to disable a user within the system by specifying the user's unique identifier in the endpoint path.
-
-    This operation requires proper authentication, through an authentication token, to ensure secure access.
-    **Required: Platform Admin. You cannot disable your own account.**
-
-    Community admins cannot change another user's account: the account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
-
-    Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been disabled.
-
-    The endpoint provides an effective means to temporarily suspend user accounts or restrict access, crucial for security and user management purposes.
-
-    In cases where the disablement encounters errors, the server returns an appropriate error status code along with a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Disables a user by ID
- */
-export const disableUser = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/users/${userId}/disable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getDisableUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['disableUser'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableUser>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  disableUser(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DisableUserMutationResult = NonNullable<Awaited<ReturnType<typeof disableUser>>>
-    
-    export type DisableUserMutationError = ErrorType<RestError>
-
-    /**
- * @summary Disables a user by ID
- */
-export const useDisableUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disableUser>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDisableUserMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint facilitates the creation of a set of users within the system by importing a CSV file.
-
-This endpoint requires clients to send a request containing a file with essential details for each user, including username, password, and any additional relevant information.
-
-The `personalId` of every row is normalised before it is stored or compared: surrounding and inner whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so `12.345.678-a` is stored as `12345678A`. A row whose normalised `personalId` already belongs to a user is not created and is reported in `errors`; the error message does not repeat the value.
-
-Every row is applied only to the community given by the `communityId` query parameter. A row whose `communityId` column is present and differs from the query parameter, or is not a valid UUID, is rejected and reported in `errors`; no user and no membership are created for it.
-
-The `password` of every row must satisfy the password policy: between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters, and there are no composition rules. A row whose password breaks the policy is not created and is reported in `errors` with a message naming the rule that failed; the other rows are still processed. Every user created by an import is flagged as having to change their password.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Platform Admin or Community Admin**
-
-Upon successful file processing, the server responds with an HTTP status code of 200, along with comprehensive details about the result of the bulk operation, including what users have been created or any potential error.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Creates users in bulk importing a CSV file.
- */
-export const createUsersWithFile = (
-    createUsersWithFileBody: CreateUsersWithFileBody,
-    params?: CreateUsersWithFileParams,
- signal?: AbortSignal
-) => {
-      
-      const formData = new FormData();
-formData.append(`file`, createUsersWithFileBody.file)
-
-      return customInstance<CreateUsersInBulkResponse>(
-      {url: `/api/v1/users/import`, method: 'POST',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateUsersWithFileMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext> => {
-
-const mutationKey = ['createUsersWithFile'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUsersWithFile>>, {data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}> = (props) => {
-          const {data,params} = props ?? {};
-
-          return  createUsersWithFile(data,params,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateUsersWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createUsersWithFile>>>
-    export type CreateUsersWithFileMutationBody = CreateUsersWithFileBody
-    export type CreateUsersWithFileMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates users in bulk importing a CSV file.
- */
-export const useCreateUsersWithFile = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUsersWithFile>>, TError,{data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createUsersWithFile>>,
-        TError,
-        {data: CreateUsersWithFileBody;params?: CreateUsersWithFileParams},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateUsersWithFileMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Revokes the invitation's current link, whether or not it had expired. The invitation stays pending, listed with no valid link, and can be sent again with `resendPlatformAdminInvitation`. Works when the server cannot send emails.
-
-An unknown user is answered 404, and a user without a pending invitation 409 with the `PLATFORM_ADMIN_NOT_INVITED` code. Only a platform admin may revoke.
-
- * @summary Stops a platform-admin invitation's link from working.
- */
-export const revokePlatformAdminInvitation = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PlatformAdminResponse>(
-      {url: `/api/v1/platform-admins/${userId}/invitation/revoke`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getRevokePlatformAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['revokePlatformAdminInvitation'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  revokePlatformAdminInvitation(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RevokePlatformAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>>
-    
-    export type RevokePlatformAdminInvitationMutationError = ErrorType<RestError>
-
-    /**
- * @summary Stops a platform-admin invitation's link from working.
- */
-export const useRevokePlatformAdminInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof revokePlatformAdminInvitation>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getRevokePlatformAdminInvitationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Emails the person a new invitation link, at the address the invitation was sent to, and generates a new confirmation code, returned only in this response. The previous link and the previous code stop working, and the count of wrong codes starts again. At most 4 sends in any 24 hours, the first one included: further resends are answered 429 with the `PLATFORM_ADMIN_INVITATION_RESEND_LIMIT_REACHED` code and a `Retry-After` header.
-
-An unknown user is answered 404, and a user without a pending invitation 409 with the `PLATFORM_ADMIN_NOT_INVITED` code. If the server cannot send emails right now, it responds 503 with the `PLATFORM_ADMIN_INVITATION_UNAVAILABLE` code before anything is recorded. Only a platform admin may resend.
-
- * @summary Sends a platform-admin invitation again, with a new link and a new confirmation code.
- */
-export const resendPlatformAdminInvitation = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<InvitedPlatformAdminResponse>(
-      {url: `/api/v1/platform-admins/${userId}/invitation/resend`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getResendPlatformAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext> => {
-
-const mutationKey = ['resendPlatformAdminInvitation'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, {userId: string}> = (props) => {
-          const {userId} = props ?? {};
-
-          return  resendPlatformAdminInvitation(userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ResendPlatformAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>>
-    
-    export type ResendPlatformAdminInvitationMutationError = ErrorType<RestError>
-
-    /**
- * @summary Sends a platform-admin invitation again, with a new link and a new confirmation code.
- */
-export const useResendPlatformAdminInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendPlatformAdminInvitation>>, TError,{userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof resendPlatformAdminInvitation>>,
-        TError,
-        {userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getResendPlatformAdminInvitationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Invites a person with their DNI/NIE/NIF, full name and email, and emails them a link to accept, valid for 7 days. Inviting grants nothing: the role is granted only when the person accepts with the link and the confirmation code in this response, which the inviter gives them by another channel, such as by phone or in person. The code is shown only in this response: no endpoint returns it again, and the email never contains it. Until the person accepts, the invitation is listed by `getPlatformAdmins` as pending, and never counts as a platform admin.
-
-The account is found with the DNI/NIE/NIF, or created without a password. An existing account is never written, and the response is the same whether or not it existed: the row carries the name and email typed here, nothing from the account. Only a platform admin may invite.
-
-The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code, and nothing is created or sent. A person who already holds the role is answered 409 with the `USER_ALREADY_PLATFORM_ADMIN` code, and one with a pending invitation 409 with the `PLATFORM_ADMIN_ALREADY_INVITED` code: resend that one instead.
-
-If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `PLATFORM_ADMIN_INVITATION_UNAVAILABLE` code before anything is looked up or created.
-
- * @summary Invites a person to the platform-admin role.
- */
-export const invitePlatformAdmin = (
-    invitePlatformAdminBody: InvitePlatformAdminBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<InvitedPlatformAdminResponse>(
-      {url: `/api/v1/platform-admins/invite`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: invitePlatformAdminBody, signal
-    },
-      );
-    }
-  
-
-
-export const getInvitePlatformAdminMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext> => {
-
-const mutationKey = ['invitePlatformAdmin'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitePlatformAdmin>>, {data: InvitePlatformAdminBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  invitePlatformAdmin(data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type InvitePlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof invitePlatformAdmin>>>
-    export type InvitePlatformAdminMutationBody = InvitePlatformAdminBody
-    export type InvitePlatformAdminMutationError = ErrorType<RestError>
-
-    /**
- * @summary Invites a person to the platform-admin role.
- */
-export const useInvitePlatformAdmin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlatformAdmin>>, TError,{data: InvitePlatformAdminBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof invitePlatformAdmin>>,
-        TError,
-        {data: InvitePlatformAdminBody},
-        TContext
-      > => {
-
-      const mutationOptions = getInvitePlatformAdminMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint retrieves all supplies associated with a specific user by their unique identifier.
-
-**Authorization Rules:**
-- Community Admins (of the target user's community) can retrieve supplies for that user
-- A user can retrieve their own supplies
-- Being a Platform Admin is **not** sufficient: these are supplies, and a Platform Admin
-  who administers none of the user's communities cannot read them one by one either
-
-**What the listing contains:** only the supplies the caller may read one by one
-(`GET /api/v1/supplies/{supplyId}`) — all of them for the user themselves, otherwise only
-those in the communities the caller administers.
-
-Authentication is required using a Bearer token.
-
- * @summary Retrieves all supplies for a specific user
- */
-export const getSuppliesByUserId = (
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<SupplyResponse[]>(
-      {url: `/api/v1/users/${userId}/supplies`, method: 'GET', signal
-    },
-      );
-    }
-  
-
-
-
-export const getGetSuppliesByUserIdQueryKey = (userId?: string,) => {
-    return [
-    `/api/v1/users/${userId}/supplies`
-    ] as const;
-    }
-
-    
-export const getGetSuppliesByUserIdQueryOptions = <TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetSuppliesByUserIdQueryKey(userId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSuppliesByUserId>>> = ({ signal }) => getSuppliesByUserId(userId, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetSuppliesByUserIdQueryResult = NonNullable<Awaited<ReturnType<typeof getSuppliesByUserId>>>
-export type GetSuppliesByUserIdQueryError = ErrorType<RestError>
-
-
-export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
- userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSuppliesByUserId>>,
-          TError,
-          Awaited<ReturnType<typeof getSuppliesByUserId>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSuppliesByUserId>>,
-          TError,
-          Awaited<ReturnType<typeof getSuppliesByUserId>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves all supplies for a specific user
- */
-
-export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetSuppliesByUserIdQueryOptions(userId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1466,20 +552,270 @@ export function useGetCurrentUser<TData = Awaited<ReturnType<typeof getCurrentUs
 
 
 /**
- * Every user with the platform-admin role, enabled or not, by full name and then id: the user id, and the full name, email and state of their own account. No personal id, no member record and no memberships. Each one says whether revoking the role would be accepted right now, and whether the caller may revoke it. Only a platform admin may list them.
+ * This endpoint lets the authenticated user replace their own password. It always acts on the
+caller, so it cannot be used to change anybody else's password.
 
-They are followed by the pending invitations to the role, by the full name typed by the inviter and then id: the user id, the full name and email typed by the inviter, nothing from the account, and `invitation` with when it was sent and when its link expires, null once it has expired or been revoked. `enabled` and `revocable` are null on those rows, and `invitation` is null on the others. A pending invitation never counts as a platform admin, for `revocable` or anything else, and the list never shows a confirmation code.
+The current password must be supplied and must match. The new password must be between 15 and
+64 characters long, counting each Unicode code point as one, and no more than 72 bytes once
+UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no
+composition rules, and the value is never trimmed or transformed. The new password must differ
+from the current one; the comparison is exact, so a value that differs only by case or by leading
+or trailing spaces is a different password.
 
- * @summary Lists the platform admins.
+On success the server answers 204, clears the "must change password" flag and ends every
+session opened with the previous password: every token issued before the change, including the
+one used for this request, is rejected with 401 from then on, and the access cookie is removed.
+The client must log in again with the new password.
+
+A wrong current password is answered 400 with the `USER_CURRENT_PASSWORD_INCORRECT` code, never
+401, and changes nothing. A new password that breaks the policy is answered 400 with the
+`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:
+`TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`. A correct current password with a new password
+exactly equal to it is answered 400 with the `USER_PASSWORD_UNCHANGED` code: nothing is changed,
+the caller's token stays valid and the "must change password" flag stays as it was. A wrong
+current password is reported as such, whatever the new password.
+
+Neither an unchanged password nor a policy violation counts as a failed attempt. Wrong current
+passwords count together with failed logins on the same account. After 5 failures
+on the account, or 20 from the same client address, within 15 minutes, further changes are
+answered 429 with a Retry-After header, without checking the current password and without
+affecting the caller's token, until the 15 minutes that started with the first failure have
+passed.
+
+**Required: any authenticated user (changes their own password).**
+ * @summary Changes the password of the current user
  */
-export const getPlatformAdmins = (
+export const changePassword = (
+    changePasswordBody: ChangePasswordBody,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/current/password`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: changePasswordBody
+    },
+      );
+    }
+  
+
+
+export const getChangePasswordMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext> => {
+
+const mutationKey = ['changePassword'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePassword>>, {data: ChangePasswordBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changePassword(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changePassword>>>
+    export type ChangePasswordMutationBody = ChangePasswordBody
+    export type ChangePasswordMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Changes the password of the current user
+ */
+export const useChangePassword = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changePassword>>,
+        TError,
+        {data: ChangePasswordBody},
+        TContext
+      > => {
+
+      const mutationOptions = getChangePasswordMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint lets the authenticated user change how the community reaches them: email,
+postal address and phone number. It always acts on the caller — there is no
+user identifier to supply — so it cannot be used to edit anybody else.
+
+Name, DNI and member number are not editable here: they identify the member to the
+community and to the distributor. A community keeps its own name and member number for
+the member on the membership's member record.
+
+Omitting `email`, `address` or `phoneNumber` clears the stored value. An empty or blank
+`email` also clears it; any other value must be a valid email address.
+
+**Required: any authenticated user (edits their own contact details).**
+ * @summary Updates the contact details of the current user
+ */
+export const updateProfile = (
+    updateProfileBody: UpdateProfileBody,
+ ) => {
+      
+      
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/profile`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateProfileBody
+    },
+      );
+    }
+  
+
+
+export const getUpdateProfileMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext> => {
+
+const mutationKey = ['updateProfile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProfile>>, {data: UpdateProfileBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateProfile(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateProfile>>>
+    export type UpdateProfileMutationBody = UpdateProfileBody
+    export type UpdateProfileMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Updates the contact details of the current user
+ */
+export const useUpdateProfile = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateProfile>>,
+        TError,
+        {data: UpdateProfileBody},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateProfileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ *     This endpoint enables the removal of a user from the system by specifying the user's unique identifier within the endpoint path.
+
+    To utilize this endpoint, clients send a DELETE request with the targeted user's ID, requiring authentication for secure access.
+    **Required: nobody may use it on another user's account, and you cannot delete your own account.** Nobody may delete another user's account: neither a Community Admin, whatever their role in the user's communities (#415), nor a Platform Admin (#446). A caller who cannot see the user is answered 404; one who can is answered 403.
+
+    The account is shared by every community the person belongs to (#415). To remove a member from one community, delete their membership instead (`DELETE /api/v1/communities/{communityId}/memberships/{userId}`); to suspend them, disable it (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`).
+
+    Deleting the account also deletes every membership of the user, in every community, with its member record, and every token of the user. Memberships the user invited are kept, with no inviter, and sharing agreements and distributor files the user created, edited or uploaded are kept, with no creator, editor or uploader.
+
+    The account of a user who owns supplies, in any community, is not deleted: the request is answered 409 with `USER_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the account instead (`POST /api/v1/users/{userId}/disable`); to delete it, delete their supplies first (`DELETE /api/v1/supplies/{supplyId}`). The last enabled platform admin is not deleted either (409 `USER_LAST_PLATFORM_ADMIN`).
+
+    Upon successful deletion, the server responds with an HTTP status code of 200, indicating that the user has been successfully removed.
+
+    In cases where the deletion process encounters errors, the server returns an appropriate error status code, along with a descriptive error message to guide clients in diagnosing and addressing the issue.
+
+ * @summary Removes a user by ID
+ */
+export const deleteUser = (
+    userId: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${userId}`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getDeleteUserMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['deleteUser'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  deleteUser(userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUser>>>
     
+    export type DeleteUserMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Removes a user by ID
+ */
+export const useDeleteUser = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUser>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteUserMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint retrieves detailed information about a specific user by their unique identifier.
+
+**Required: the user themselves, or a Community Admin of one of the user's communities.** Being a Platform Admin is not enough (#446): any other caller is answered 404.
+
+**What `memberships` contains:** a user reading themselves sees all of their own; otherwise only the memberships in communities the
+caller administers.
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves a single user by ID
+ */
+export const getUserById = (
+    userId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<PlatformAdminResponse[]>(
-      {url: `/api/v1/platform-admins`, method: 'GET', signal
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/${userId}`, method: 'GET', signal
     },
       );
     }
@@ -1487,69 +823,398 @@ export const getPlatformAdmins = (
 
 
 
-export const getGetPlatformAdminsQueryKey = () => {
+export const getGetUserByIdQueryKey = (userId?: string,) => {
     return [
-    `/api/v1/platform-admins`
+    `/api/v1/users/${userId}`
     ] as const;
     }
 
     
-export const getGetPlatformAdminsQueryOptions = <TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
+export const getGetUserByIdQueryOptions = <TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetPlatformAdminsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetUserByIdQueryKey(userId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlatformAdmins>>> = ({ signal }) => getPlatformAdmins(signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserById>>> = ({ signal }) => getUserById(userId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetPlatformAdminsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlatformAdmins>>>
-export type GetPlatformAdminsQueryError = ErrorType<RestError>
+export type GetUserByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUserById>>>
+export type GetUserByIdQueryError = ErrorType<RestError>
 
 
-export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>> & Pick<
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPlatformAdmins>>,
+          Awaited<ReturnType<typeof getUserById>>,
           TError,
-          Awaited<ReturnType<typeof getPlatformAdmins>>
+          Awaited<ReturnType<typeof getUserById>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>> & Pick<
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPlatformAdmins>>,
+          Awaited<ReturnType<typeof getUserById>>,
           TError,
-          Awaited<ReturnType<typeof getPlatformAdmins>>
+          Awaited<ReturnType<typeof getUserById>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Lists the platform admins.
+ * @summary Retrieves a single user by ID
  */
 
-export function useGetPlatformAdmins<TData = Awaited<ReturnType<typeof getPlatformAdmins>>, TError = ErrorType<RestError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformAdmins>>, TError, TData>>, }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetPlatformAdminsQueryOptions(options)
+  const queryOptions = getGetUserByIdQueryOptions(userId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ *     This endpoint is designed to disable a user within the system by specifying the user's unique identifier in the endpoint path.
+
+    This operation requires proper authentication, through an authentication token, to ensure secure access.
+    **Required: nobody may use it on another user's account, and you cannot disable your own account.** Nobody may disable another user's account: neither a Community Admin, whatever their role in the user's communities (#415), nor a Platform Admin (#446). A caller who cannot see the user is answered 404; one who can is answered 403.
+
+    The account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
+
+    Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been disabled.
+
+    The endpoint provides an effective means to temporarily suspend user accounts or restrict access, crucial for security and user management purposes.
+
+    In cases where the disablement encounters errors, the server returns an appropriate error status code along with a descriptive error message to guide clients in addressing and resolving the issue.
+
+ * @summary Disables a user by ID
+ */
+export const disableUser = (
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${userId}/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getDisableUserMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['disableUser'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableUser>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  disableUser(userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableUserMutationResult = NonNullable<Awaited<ReturnType<typeof disableUser>>>
+    
+    export type DisableUserMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Disables a user by ID
+ */
+export const useDisableUser = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableUser>>, TError,{userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableUser>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDisableUserMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint serves the purpose of enabling a previously disabled user within the system, with the user's unique identifier specified in the endpoint path.
+
+Proper authentication, through an authentication token, is required for secure access.
+**Required: nobody may use it on another user's account, and you cannot enable your own account.** Nobody may enable another user's account: neither a Community Admin, whatever their role in the user's communities (#415), nor a Platform Admin (#446). A caller who cannot see the user is answered 404; one who can is answered 403.
+
+The account is shared by every community the person belongs to (#415). To suspend a member in one community, enable or disable their membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/enable` or `/disable`).
+
+Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user has been successfully enabled.
+
+This endpoint provides a crucial mechanism for restoring user access or lifting restrictions, supporting effective user management.
+
+In situations where the enabling process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
+ * @summary Enables a user by ID
+ */
+export const enableUser = (
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${userId}/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableUserMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['enableUser'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableUser>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  enableUser(userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableUserMutationResult = NonNullable<Awaited<ReturnType<typeof enableUser>>>
+    
+    export type EnableUserMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Enables a user by ID
+ */
+export const useEnableUser = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableUser>>, TError,{userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableUser>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableUserMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint removes platform-administrator privileges from the user identified in the endpoint path.
+
+Proper authentication, through an authentication token, is required for secure access.
+**Required: Platform Admin. You cannot revoke your own privileges.**
+
+Once the caller is allowed, the target is checked: an unknown user answers 404, and a user who is not a platform admin answers 409 USER_NOT_PLATFORM_ADMIN.
+
+Two safety rails apply: a platform admin cannot revoke their own privileges, and the system can never be left without an enabled platform admin. Revoking the last enabled platform admin answers 409 USER_LAST_PLATFORM_ADMIN; since the caller is themselves an enabled platform admin, this can only happen when two revokes run at the same time. Revoking a disabled platform admin is always allowed, since it leaves the number of enabled platform admins as it is.
+
+Upon a successful request, the server responds with an HTTP status code of 200, indicating that the user is no longer a platform administrator.
+
+In situations where the operation encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to assist clients in diagnosing and resolving the issue.
+ * @summary Revokes platform-admin privileges from a user by ID
+ */
+export const revokePlatformAdmin = (
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/${userId}/revoke-platform-admin`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getRevokePlatformAdminMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['revokePlatformAdmin'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokePlatformAdmin>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  revokePlatformAdmin(userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokePlatformAdminMutationResult = NonNullable<Awaited<ReturnType<typeof revokePlatformAdmin>>>
+    
+    export type RevokePlatformAdminMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Revokes platform-admin privileges from a user by ID
+ */
+export const useRevokePlatformAdmin = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokePlatformAdmin>>, TError,{userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokePlatformAdmin>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRevokePlatformAdminMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint retrieves all supplies associated with a specific user by their unique identifier.
+
+**Authorization Rules:**
+- Community Admins (of the target user's community) can retrieve supplies for that user
+- A user can retrieve their own supplies
+- Being a Platform Admin is **not** sufficient (#446): a Platform Admin who administers none of
+  the user's communities cannot see the user, and is answered 404
+
+**What the listing contains:** only the supplies the caller may read one by one
+(`GET /api/v1/supplies/{supplyId}`) — all of them for the user themselves, otherwise only
+those in the communities the caller administers.
+
+Authentication is required using a Bearer token.
+
+ * @summary Retrieves all supplies for a specific user
+ */
+export const getSuppliesByUserId = (
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SupplyResponse[]>(
+      {url: `/api/v1/users/${userId}/supplies`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetSuppliesByUserIdQueryKey = (userId?: string,) => {
+    return [
+    `/api/v1/users/${userId}/supplies`
+    ] as const;
+    }
+
+    
+export const getGetSuppliesByUserIdQueryOptions = <TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSuppliesByUserIdQueryKey(userId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSuppliesByUserId>>> = ({ signal }) => getSuppliesByUserId(userId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSuppliesByUserIdQueryResult = NonNullable<Awaited<ReturnType<typeof getSuppliesByUserId>>>
+export type GetSuppliesByUserIdQueryError = ErrorType<RestError>
+
+
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
+ userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSuppliesByUserId>>,
+          TError,
+          Awaited<ReturnType<typeof getSuppliesByUserId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSuppliesByUserId>>,
+          TError,
+          Awaited<ReturnType<typeof getSuppliesByUserId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves all supplies for a specific user
+ */
+
+export function useGetSuppliesByUserId<TData = Awaited<ReturnType<typeof getSuppliesByUserId>>, TError = ErrorType<RestError>>(
+ userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuppliesByUserId>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSuppliesByUserIdQueryOptions(userId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

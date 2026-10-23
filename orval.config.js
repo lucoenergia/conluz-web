@@ -5,9 +5,14 @@ export const conluz = {
     schemas: "./src/api/models",
     client: "react-query",
     mock: false,
+    // Empties src/api/ and src/api/models/ before every generation, so a schema
+    // or endpoint the backend removes takes its generated files with it. Nothing
+    // hand-written may live under src/api/: it would be deleted too. That is why
+    // the mutator below lives in src/http/.
+    clean: true,
     override: {
       mutator: {
-        path: "./src/api/custom-instance.ts",
+        path: "./src/http/custom-instance.ts",
         name: "customInstance",
       },
     },

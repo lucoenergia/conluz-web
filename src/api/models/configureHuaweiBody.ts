@@ -8,9 +8,9 @@
 
 export interface ConfigureHuaweiBody {
   /** @minLength 1 */
-  username: string;
+  baseUrl: string;
   /** @minLength 1 */
   password?: string;
   /** @minLength 1 */
-  baseUrl: string;
+  username: string;
 }

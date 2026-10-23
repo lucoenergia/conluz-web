@@ -8,13 +8,13 @@
 import type { AcceptInvitationBodyConfirmationCode } from './acceptInvitationBodyConfirmationCode';
 
 export interface AcceptInvitationBody {
-  /** The token from the invitation link: everything after the `#` of `<web client>/accept-invitation#<token>`, exactly as it appears there. */
-  token: string;
+  /** The confirmation code of a platform-admin invitation, as whoever invited gave it: 8 characters, in any case, with or without spaces and hyphens. Required when `inspectInvitation` answers `confirmationCodeRequired`; ignored for a community invitation. */
+  confirmationCode?: AcceptInvitationBodyConfirmationCode;
   /**
    * The account's first password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed.
    * @minLength 15
    */
   newPassword: string;
-  /** The confirmation code of a platform-admin invitation, as whoever invited gave it: 8 characters, in any case, with or without spaces and hyphens. Required when `inspectInvitation` answers `confirmationCodeRequired`; ignored for a community invitation. */
-  confirmationCode?: AcceptInvitationBodyConfirmationCode;
+  /** The token from the invitation link: everything after the `#` of `<web client>/accept-invitation#<token>`, exactly as it appears there. */
+  token: string;
 }

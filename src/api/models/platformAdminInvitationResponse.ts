@@ -11,8 +11,8 @@ import type { PlatformAdminInvitationResponseExpiresAt } from './platformAdminIn
  * A pending invitation to the platform-admin role.
  */
 export interface PlatformAdminInvitationResponse {
-  /** When the person was invited. */
-  invitedAt: string;
   /** When the invitation's current link expires. Null when it has no link that can still be used: it expired, or it was revoked, by hand or after 5 wrong confirmation codes. Resending issues a new one. */
   expiresAt: PlatformAdminInvitationResponseExpiresAt;
+  /** When the person was invited. */
+  invitedAt: string;
 }

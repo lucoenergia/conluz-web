@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
-import { AXIOS_INSTANCE } from "../api/custom-instance";
+import { AXIOS_INSTANCE } from "../http/custom-instance";
 type Dispatch = (Auth: {token: string, remember: boolean } | null) => void;
 
 type AuthProviderProps = { children: ReactNode; initialState?: string | null };

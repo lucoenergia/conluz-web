@@ -61,7 +61,6 @@ const REVIEWED: Record<string, Scope> = {
   "/api/v1/platform-admins/{userId}/invitation/resend": "global",
   "/api/v1/platform-admins/{userId}/invitation/revoke": "global",
   "/api/v1/supplies/import": "community-query",
-  "/api/v1/users/import": "community-query",
   // Acts on the caller and takes no user id, so it is user-scoped for the same
   // reason /api/v1/users/current is -- but a fixed literal rather than a shape,
   // so it is decided here rather than in structuralScope.

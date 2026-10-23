@@ -31,13 +31,180 @@ import type {
   UpdateCommunityBody
 } from '.././models';
 
-import { customInstance } from '.././custom-instance';
-import type { ErrorType } from '.././custom-instance';
+import { customInstance } from '../../http/custom-instance';
+import type { ErrorType } from '../../http/custom-instance';
 
 
 
 
 /**
+ * Returns the list of communities the current user is allowed to see.
+Platform admins see all communities. Regular users only see communities they belong to.
+
+ * @summary Retrieves all communities visible to the current user.
+ */
+export const getAllCommunities = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommunityResponse[]>(
+      {url: `/api/v1/communities`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetAllCommunitiesQueryKey = () => {
+    return [
+    `/api/v1/communities`
+    ] as const;
+    }
+
+    
+export const getGetAllCommunitiesQueryOptions = <TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAllCommunitiesQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllCommunities>>> = ({ signal }) => getAllCommunities(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAllCommunitiesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllCommunities>>>
+export type GetAllCommunitiesQueryError = ErrorType<RestError>
+
+
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllCommunities>>,
+          TError,
+          Awaited<ReturnType<typeof getAllCommunities>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllCommunities>>,
+          TError,
+          Awaited<ReturnType<typeof getAllCommunities>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves all communities visible to the current user.
+ */
+
+export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAllCommunitiesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * This endpoint facilitates the creation of a new energy community within the system.
+Requires PLATFORM_ADMIN role.
+When multi-community mode is disabled, this endpoint returns 404.
+
+`code` and `legalId` are unique across communities. Reusing either responds 409
+with the `COMMUNITY_ALREADY_EXISTS` code, whose `field` param names which of the
+two collided.
+
+ * @summary Creates a new energy community.
+ */
+export const createCommunity = (
+    createCommunityBody: CreateCommunityBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommunityResponse>(
+      {url: `/api/v1/communities`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createCommunityBody, signal
+    },
+      );
+    }
+  
+
+
+export const getCreateCommunityMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext> => {
+
+const mutationKey = ['createCommunity'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCommunity>>, {data: CreateCommunityBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCommunity(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof createCommunity>>>
+    export type CreateCommunityMutationBody = CreateCommunityBody
+    export type CreateCommunityMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Creates a new energy community.
+ */
+export const useCreateCommunity = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createCommunity>>,
+        TError,
+        {data: CreateCommunityBody},
+        TContext
+      > => {
+
+      const mutationOptions = getCreateCommunityMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Returns the community with the given ID.
 Returns 404 if the community does not exist OR if the caller is not a member of it
 (to avoid leaking community existence to non-members).
@@ -207,132 +374,28 @@ export const useUpdateCommunity = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Returns the list of communities the current user is allowed to see.
-Platform admins see all communities. Regular users only see communities they belong to.
-
- * @summary Retrieves all communities visible to the current user.
+ * Disables an existing community. Requires PLATFORM_ADMIN role.
+ * @summary Disables a community.
  */
-export const getAllCommunities = (
-    
+export const disableCommunity = (
+    communityId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<CommunityResponse[]>(
-      {url: `/api/v1/communities`, method: 'GET', signal
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/disable`, method: 'POST', signal
     },
       );
     }
   
 
 
+export const getDisableCommunityMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext> => {
 
-export const getGetAllCommunitiesQueryKey = () => {
-    return [
-    `/api/v1/communities`
-    ] as const;
-    }
-
-    
-export const getGetAllCommunitiesQueryOptions = <TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetAllCommunitiesQueryKey();
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllCommunities>>> = ({ signal }) => getAllCommunities(signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetAllCommunitiesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllCommunities>>>
-export type GetAllCommunitiesQueryError = ErrorType<RestError>
-
-
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllCommunities>>,
-          TError,
-          Awaited<ReturnType<typeof getAllCommunities>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getAllCommunities>>,
-          TError,
-          Awaited<ReturnType<typeof getAllCommunities>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieves all communities visible to the current user.
- */
-
-export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCommunities>>, TError = ErrorType<RestError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllCommunities>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetAllCommunitiesQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * This endpoint facilitates the creation of a new energy community within the system.
-Requires PLATFORM_ADMIN role.
-When multi-community mode is disabled, this endpoint returns 404.
-
-`code` and `legalId` are unique across communities. Reusing either responds 409
-with the `COMMUNITY_ALREADY_EXISTS` code, whose `field` param names which of the
-two collided.
-
- * @summary Creates a new energy community.
- */
-export const createCommunity = (
-    createCommunityBody: CreateCommunityBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<CommunityResponse>(
-      {url: `/api/v1/communities`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createCommunityBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateCommunityMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext> => {
-
-const mutationKey = ['createCommunity'];
+const mutationKey = ['disableCommunity'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -342,10 +405,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCommunity>>, {data: CreateCommunityBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableCommunity>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
 
-          return  createCommunity(data,)
+          return  disableCommunity(communityId,)
         }
 
         
@@ -353,23 +416,23 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof createCommunity>>>
-    export type CreateCommunityMutationBody = CreateCommunityBody
-    export type CreateCommunityMutationError = ErrorType<RestError>
+    export type DisableCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof disableCommunity>>>
+    
+    export type DisableCommunityMutationError = ErrorType<RestError>
 
     /**
- * @summary Creates a new energy community.
+ * @summary Disables a community.
  */
-export const useCreateCommunity = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: CreateCommunityBody}, TContext>, }
+export const useDisableCommunity = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createCommunity>>,
+        Awaited<ReturnType<typeof disableCommunity>>,
         TError,
-        {data: CreateCommunityBody},
+        {communityId: string},
         TContext
       > => {
 
-      const mutationOptions = getCreateCommunityMutationOptions(options);
+      const mutationOptions = getDisableCommunityMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -433,69 +496,6 @@ export const useEnableCommunity = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getEnableCommunityMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Disables an existing community. Requires PLATFORM_ADMIN role.
- * @summary Disables a community.
- */
-export const disableCommunity = (
-    communityId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/disable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getDisableCommunityMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext> => {
-
-const mutationKey = ['disableCommunity'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableCommunity>>, {communityId: string}> = (props) => {
-          const {communityId} = props ?? {};
-
-          return  disableCommunity(communityId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DisableCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof disableCommunity>>>
-    
-    export type DisableCommunityMutationError = ErrorType<RestError>
-
-    /**
- * @summary Disables a community.
- */
-export const useDisableCommunity = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunity>>, TError,{communityId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disableCommunity>>,
-        TError,
-        {communityId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDisableCommunityMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

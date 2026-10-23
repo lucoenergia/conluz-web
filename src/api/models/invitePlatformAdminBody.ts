@@ -8,18 +8,18 @@
 
 export interface InvitePlatformAdminBody {
   /**
-   * The person's DNI/NIE/NIF. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same person. A value made only of those removed characters is refused.
+   * The email address the invitation is sent to. An existing account keeps its own email; one without an email gets this one when the invitation is accepted.
    * @minLength 1
    */
-  personalId: string;
+  email: string;
   /**
    * The person's full name, as the invitation shows it until it is accepted. An existing account keeps its own name.
    * @minLength 1
    */
   fullName: string;
   /**
-   * The email address the invitation is sent to. An existing account keeps its own email; one without an email gets this one when the invitation is accepted.
+   * The person's DNI/NIE/NIF. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same person. A value made only of those removed characters is refused.
    * @minLength 1
    */
-  email: string;
+  personalId: string;
 }

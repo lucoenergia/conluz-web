@@ -28,7 +28,6 @@ import type {
   AcceptInvitationAsCurrentUserBody,
   AcceptInvitationBody,
   CommunityAdminResponse,
-  CreateMembershipBody,
   GetMembershipEnergyMetricsParams,
   GetMembershipMonthlyConsumptionParams,
   ImportMembersBody,
@@ -50,47 +49,139 @@ import type {
   UpdateMembershipRoleBody
 } from '.././models';
 
-import { customInstance } from '.././custom-instance';
-import type { ErrorType } from '.././custom-instance';
+import { customInstance } from '../../http/custom-instance';
+import type { ErrorType } from '../../http/custom-instance';
 
 
 
 
 /**
- * Replaces the record this community keeps on a member: full name, member number, contact email, address and phone number. The whole record is sent: an optional value that is missing, null, empty or blank is cleared. Only the record is written, never the person's account, which they share with their other communities, nor the membership's role, state or invitation.
+ * Every membership of the community with the COMMUNITY_ADMIN role, in any state, by full name: the name, contact email and phone from this community's member record, the DNI/NIE/NIF, and the state of the membership and of its invitation. Nothing about the community's members, and nothing from any other membership of the same people. Only a platform admin may list them.
 
-Any membership of the community may be edited, whatever its role and whether it is pending, accepted or disabled, the caller's own included. A user with no membership in the community responds 404.
-
-A membership with the `COMMUNITY_ADMIN` role must keep a contact email: a record without one responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and nothing is changed.
-
-An invitation link already sent stays valid; the next invitation, or resend, goes to the new contact email.
-
-**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
-
- * @summary Replaces the member record of a membership.
+ * @summary Lists a community's admins.
  */
-export const updateMemberRecord = (
+export const getCommunityAdmins = (
     communityId: string,
-    userId: string,
-    updateMemberRecordBody: UpdateMemberRecordBody,
- ) => {
+ signal?: AbortSignal
+) => {
       
       
-      return customInstance<MemberResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/record`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: updateMemberRecordBody
+      return customInstance<CommunityAdminResponse[]>(
+      {url: `/api/v1/communities/${communityId}/admins`, method: 'GET', signal
     },
       );
     }
   
 
 
-export const getUpdateMemberRecordMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext> => {
 
-const mutationKey = ['updateMemberRecord'];
+export const getGetCommunityAdminsQueryKey = (communityId?: string,) => {
+    return [
+    `/api/v1/communities/${communityId}/admins`
+    ] as const;
+    }
+
+    
+export const getGetCommunityAdminsQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityAdminsQueryKey(communityId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityAdmins>>> = ({ signal }) => getCommunityAdmins(communityId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCommunityAdminsQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityAdmins>>>
+export type GetCommunityAdminsQueryError = ErrorType<RestError>
+
+
+export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
+ communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityAdmins>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityAdmins>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityAdmins>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityAdmins>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lists a community's admins.
+ */
+
+export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCommunityAdminsQueryOptions(communityId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Registers a person as an admin of the community with their DNI/NIE/NIF, full name, contact email and optional phone, and emails them an invitation to accept it at that contact email, in one operation. The membership is created pending, with the role COMMUNITY_ADMIN: it grants no access until it is accepted. The link is valid for 7 days. Only a platform admin may invite a community admin; a community admin may not.
+
+The response is the same whether or not the person already had an account, and carries nothing from it. Inviting someone who already has a membership in this community, in any role or state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, and nothing is created or sent.
+
+The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF, with the control letter or character matching its digits; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code, and nothing is created or sent.
+
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is created.
+
+ * @summary Invites a community admin.
+ */
+export const inviteCommunityAdmin = (
+    communityId: string,
+    inviteCommunityAdminBody: InviteCommunityAdminBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommunityAdminResponse>(
+      {url: `/api/v1/communities/${communityId}/admins/invite`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: inviteCommunityAdminBody, signal
+    },
+      );
+    }
+  
+
+
+export const getInviteCommunityAdminMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteCommunityAdmin>>, TError,{communityId: string;data: InviteCommunityAdminBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof inviteCommunityAdmin>>, TError,{communityId: string;data: InviteCommunityAdminBody}, TContext> => {
+
+const mutationKey = ['inviteCommunityAdmin'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -100,10 +191,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMemberRecord>>, {communityId: string;userId: string;data: UpdateMemberRecordBody}> = (props) => {
-          const {communityId,userId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteCommunityAdmin>>, {communityId: string;data: InviteCommunityAdminBody}> = (props) => {
+          const {communityId,data} = props ?? {};
 
-          return  updateMemberRecord(communityId,userId,data,)
+          return  inviteCommunityAdmin(communityId,data,)
         }
 
         
@@ -111,63 +202,51 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateMemberRecordMutationResult = NonNullable<Awaited<ReturnType<typeof updateMemberRecord>>>
-    export type UpdateMemberRecordMutationBody = UpdateMemberRecordBody
-    export type UpdateMemberRecordMutationError = ErrorType<RestError>
+    export type InviteCommunityAdminMutationResult = NonNullable<Awaited<ReturnType<typeof inviteCommunityAdmin>>>
+    export type InviteCommunityAdminMutationBody = InviteCommunityAdminBody
+    export type InviteCommunityAdminMutationError = ErrorType<RestError>
 
     /**
- * @summary Replaces the member record of a membership.
+ * @summary Invites a community admin.
  */
-export const useUpdateMemberRecord = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext>, }
+export const useInviteCommunityAdmin = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteCommunityAdmin>>, TError,{communityId: string;data: InviteCommunityAdminBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateMemberRecord>>,
+        Awaited<ReturnType<typeof inviteCommunityAdmin>>,
         TError,
-        {communityId: string;userId: string;data: UpdateMemberRecordBody},
+        {communityId: string;data: InviteCommunityAdminBody},
         TContext
       > => {
 
-      const mutationOptions = getUpdateMemberRecordMutationOptions(options);
+      const mutationOptions = getInviteCommunityAdminMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Sets the amount, in euros, that this member initially contributed to the
-community, replacing any amount previously recorded. Only the current value is
-kept: there is no history of changes.
+ * Disables a community admin's membership of this community: from the admin's next request it grants no access to this community, while their other communities are unaffected. Only the membership is written, never the account. Disabling a disabled membership changes nothing. Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may disable them.
 
-The amount must be greater than zero with at most two decimals. Requires
-COMMUNITY_ADMIN of this community; platform admins who do not administer this
-community are not granted access, and are answered 404 rather than 403 so the
-membership's existence is not disclosed.
-
-Answers 204 with no body. Read the stored amount back through the membership's
-payback endpoint.
-
- * @summary Records a membership's initial investment.
+ * @summary Disables a community admin's membership.
  */
-export const setMembershipInvestment = (
+export const disableCommunityAdmin = (
     communityId: string,
     userId: string,
-    setMembershipInvestmentBody: SetMembershipInvestmentBody,
- ) => {
+ signal?: AbortSignal
+) => {
       
       
       return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/investment`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: setMembershipInvestmentBody
+      {url: `/api/v1/communities/${communityId}/admins/${userId}/disable`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getSetMembershipInvestmentMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext> => {
+export const getDisableCommunityAdminMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext> => {
 
-const mutationKey = ['setMembershipInvestment'];
+const mutationKey = ['disableCommunityAdmin'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -177,80 +256,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setMembershipInvestment>>, {communityId: string;userId: string;data: SetMembershipInvestmentBody}> = (props) => {
-          const {communityId,userId,data} = props ?? {};
-
-          return  setMembershipInvestment(communityId,userId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SetMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof setMembershipInvestment>>>
-    export type SetMembershipInvestmentMutationBody = SetMembershipInvestmentBody
-    export type SetMembershipInvestmentMutationError = ErrorType<RestError>
-
-    /**
- * @summary Records a membership's initial investment.
- */
-export const useSetMembershipInvestment = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof setMembershipInvestment>>,
-        TError,
-        {communityId: string;userId: string;data: SetMembershipInvestmentBody},
-        TContext
-      > => {
-
-      const mutationOptions = getSetMembershipInvestmentMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Clears the amount recorded for this member, returning the membership to having
-no investment. Payback then reports no investment rather than an investment of
-zero, which are different statements.
-
-Idempotent: clearing a membership that has no investment succeeds, because the
-end state is the one the caller asked for. Requires COMMUNITY_ADMIN of this
-community, with the same 404-not-403 mapping as the write.
-
- * @summary Removes a membership's initial investment.
- */
-export const clearMembershipInvestment = (
-    communityId: string,
-    userId: string,
- ) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/investment`, method: 'DELETE'
-    },
-      );
-    }
-  
-
-
-export const getClearMembershipInvestmentMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['clearMembershipInvestment'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearMembershipInvestment>>, {communityId: string;userId: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableCommunityAdmin>>, {communityId: string;userId: string}> = (props) => {
           const {communityId,userId} = props ?? {};
 
-          return  clearMembershipInvestment(communityId,userId,)
+          return  disableCommunityAdmin(communityId,userId,)
         }
 
         
@@ -258,80 +267,51 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ClearMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof clearMembershipInvestment>>>
+    export type DisableCommunityAdminMutationResult = NonNullable<Awaited<ReturnType<typeof disableCommunityAdmin>>>
     
-    export type ClearMembershipInvestmentMutationError = ErrorType<RestError>
+    export type DisableCommunityAdminMutationError = ErrorType<RestError>
 
     /**
- * @summary Removes a membership's initial investment.
+ * @summary Disables a community admin's membership.
  */
-export const useClearMembershipInvestment = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
+export const useDisableCommunityAdmin = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof clearMembershipInvestment>>,
+        Awaited<ReturnType<typeof disableCommunityAdmin>>,
         TError,
         {communityId: string;userId: string},
         TContext
       > => {
 
-      const mutationOptions = getClearMembershipInvestmentMutationOptions(options);
+      const mutationOptions = getDisableCommunityAdminMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint accepts an invitation of one of the caller's own memberships, with the token from
-the emailed link `<web client>/accept-invitation#<token>`. It is the way to accept for an account
-that already has a password; the password is neither read nor changed.
+ * Enables a community admin's membership of this community, so that it grants admin access again once it is accepted. Only the membership is written, never the account. Enabling an enabled membership changes nothing. Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may enable them.
 
-On success the server answers 204 with no body: the token is used up and the membership is
-accepted. The client should then read the current user again to see the new membership. A
-membership that is disabled is accepted too, but grants no access until the community enables it.
-
-A token of another account's membership is answered like any unusable token.
-A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
-has already been accepted, or whose account has been disabled, is answered 400 with the
-`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.
-
-A caller who must change their password is answered 403 with the `USER_PASSWORD_CHANGE_REQUIRED`
-code before the token is looked at; the link stays usable once the password has been changed.
-
-A platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:
-the code whoever invited gives the person by another channel. A community invitation ignores it.
-On success the platform-admin role is granted, and, when the account had no email, the
-invitation's destination email becomes its email. A missing or wrong code is answered 400 with the
-`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the
-client address and against the invitation, and the link can be used again. The fifth missing or
-wrong code on one invitation revokes its link and is answered 400 with the
-`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again.
-
-Every unusable token counts against the client address, together with failed logins, password
-changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a
-Retry-After header until the 15 minutes that started with the first failure have passed.
-
-**Required: any authenticated user (accepts their own membership).**
- * @summary Accepts an invitation of the logged-in user
+ * @summary Enables a community admin's membership.
  */
-export const acceptInvitationAsCurrentUser = (
-    acceptInvitationAsCurrentUserBody: AcceptInvitationAsCurrentUserBody,
+export const enableCommunityAdmin = (
+    communityId: string,
+    userId: string,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<void>(
-      {url: `/api/v1/users/current/invitations/accept`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: acceptInvitationAsCurrentUserBody, signal
+      {url: `/api/v1/communities/${communityId}/admins/${userId}/enable`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getAcceptInvitationAsCurrentUserMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext> => {
+export const getEnableCommunityAdminMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext> => {
 
-const mutationKey = ['acceptInvitationAsCurrentUser'];
+const mutationKey = ['enableCommunityAdmin'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -341,10 +321,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, {data: AcceptInvitationAsCurrentUserBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableCommunityAdmin>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
 
-          return  acceptInvitationAsCurrentUser(data,)
+          return  enableCommunityAdmin(communityId,userId,)
         }
 
         
@@ -352,73 +332,53 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type AcceptInvitationAsCurrentUserMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>>
-    export type AcceptInvitationAsCurrentUserMutationBody = AcceptInvitationAsCurrentUserBody
-    export type AcceptInvitationAsCurrentUserMutationError = ErrorType<RestError>
+    export type EnableCommunityAdminMutationResult = NonNullable<Awaited<ReturnType<typeof enableCommunityAdmin>>>
+    
+    export type EnableCommunityAdminMutationError = ErrorType<RestError>
 
     /**
- * @summary Accepts an invitation of the logged-in user
+ * @summary Enables a community admin's membership.
  */
-export const useAcceptInvitationAsCurrentUser = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext>, }
+export const useEnableCommunityAdmin = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>,
+        Awaited<ReturnType<typeof enableCommunityAdmin>>,
         TError,
-        {data: AcceptInvitationAsCurrentUserBody},
+        {communityId: string;userId: string},
         TContext
       > => {
 
-      const mutationOptions = getAcceptInvitationAsCurrentUserMutationOptions(options);
+      const mutationOptions = getEnableCommunityAdminMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint tells the holder of an invitation link, `<web client>/accept-invitation#<token>`,
-which community the invitation is for and how to accept it. It requires no authentication, and
-any token presented with it is ignored. It uses up nothing and changes nothing: the link stays
-usable.
+ * Emails the admin a new invitation link, at the contact email of this community's member record, and stops the previous link from working. The rules are those of `resendInvitation`: at most 4 sends in any 24 hours (429 with the `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED` code and a `Retry-After` header), and 409 with the `MEMBERSHIP_NOT_INVITED`, `MEMBERSHIP_ALREADY_EXISTS` or `MEMBERSHIP_DISABLED` code, 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded.
 
-When `loginRequired` is false, the account has no password: the client asks for a first password
-and accepts with `acceptInvitation`. When it is true, the account already has a password: the
-client asks the person to log in and accepts with `acceptInvitationAsCurrentUser`.
+Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may resend them.
 
-`kind` tells what the invitation is for: `COMMUNITY`, a membership of the community in
-`community`; or `PLATFORM`, the platform-admin role, with `community` null. When
-`confirmationCodeRequired` is true, as it is for every `PLATFORM` invitation, the client also asks
-for the confirmation code that whoever invited gives the person by another channel, and sends it
-as `confirmationCode` when accepting. A platform-admin invitation whose account is disabled can be
-inspected and accepted too.
-
-A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
-has already been accepted, or whose account has been disabled, is answered 400 with the
-`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.
-
-Every unusable token counts against the client address, together with failed logins, password
-changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a
-Retry-After header until the 15 minutes that started with the first failure have passed.
- * @summary Inspects an invitation before accepting it
+ * @summary Sends a community admin's invitation again, with a new link.
  */
-export const inspectInvitation = (
-    invitationTokenBody: InvitationTokenBody,
+export const resendCommunityAdminInvitation = (
+    communityId: string,
+    userId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<InvitationInspectionResponse>(
-      {url: `/api/v1/invitations/inspect`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: invitationTokenBody, signal
+      return customInstance<CommunityAdminResponse>(
+      {url: `/api/v1/communities/${communityId}/admins/${userId}/invitation/resend`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getInspectInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inspectInvitation>>, TError,{data: InvitationTokenBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof inspectInvitation>>, TError,{data: InvitationTokenBody}, TContext> => {
+export const getResendCommunityAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
 
-const mutationKey = ['inspectInvitation'];
+const mutationKey = ['resendCommunityAdminInvitation'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -428,10 +388,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inspectInvitation>>, {data: InvitationTokenBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
 
-          return  inspectInvitation(data,)
+          return  resendCommunityAdminInvitation(communityId,userId,)
         }
 
         
@@ -439,89 +399,53 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type InspectInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof inspectInvitation>>>
-    export type InspectInvitationMutationBody = InvitationTokenBody
-    export type InspectInvitationMutationError = ErrorType<RestError>
+    export type ResendCommunityAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>>
+    
+    export type ResendCommunityAdminInvitationMutationError = ErrorType<RestError>
 
     /**
- * @summary Inspects an invitation before accepting it
+ * @summary Sends a community admin's invitation again, with a new link.
  */
-export const useInspectInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inspectInvitation>>, TError,{data: InvitationTokenBody}, TContext>, }
+export const useResendCommunityAdminInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof inspectInvitation>>,
+        Awaited<ReturnType<typeof resendCommunityAdminInvitation>>,
         TError,
-        {data: InvitationTokenBody},
+        {communityId: string;userId: string},
         TContext
       > => {
 
-      const mutationOptions = getInspectInvitationMutationOptions(options);
+      const mutationOptions = getResendCommunityAdminInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * This endpoint accepts the invitation of an account that has no password yet, with the token from
-the emailed link `<web client>/accept-invitation#<token>` and the account's first password. It
-requires no authentication, and any token presented with it is ignored.
+ * Stops the admin's invitation link from working. The membership stays pending with its invitation instant, and can be sent a new link with `resendCommunityAdminInvitation`. The rules are those of `revokeInvitation`: it works whether or not the membership is enabled and whether or not emails can be sent, and an accepted membership responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code.
 
-The password must meet the same policy as a password change: between 15 and 64 characters,
-counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded.
+Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may revoke them.
 
-On success the server answers 204 with no body: the token is used up, the password is set, the
-membership is accepted, and, when the account had no email, the member record's contact email
-becomes its email. The person is not logged in; the client must log in with the new password. A
-membership that is disabled is accepted too, but grants no access until the community enables it.
-
-An account that already has a password is answered 409 with the
-`MEMBERSHIP_INVITATION_LOGIN_REQUIRED` code: the person must log in and accept with
-`acceptInvitationAsCurrentUser`. A new password that breaks the policy is answered 400 with the
-`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter. In both cases nothing changes and
-the token can be used again.
-
-A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
-has already been accepted, or whose account has been disabled, is answered 400 with the
-`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.
-
-A platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:
-the code whoever invited gives the person by another channel. A community invitation ignores it.
-On success the platform-admin role is granted as well, and, when the account had no email, the
-invitation's destination email becomes its email. A missing or wrong code is answered 400 with the
-`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the
-client address and against the invitation, and the link can be used again. The fifth missing or
-wrong code on one invitation revokes its link and is answered 400 with the
-`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again. The
-code is checked after the checks above, which neither count nor use it; for a platform-admin
-invitation, an account that already has a password is answered 409 with the
-`PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED` code instead. A platform-admin
-invitation whose account is disabled is accepted too: the role is granted, and the account still
-cannot log in.
-
-Every unusable token counts against the client address, together with failed logins, password
-changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a
-Retry-After header until the 15 minutes that started with the first failure have passed.
- * @summary Accepts an invitation, setting the account's first password
+ * @summary Revokes a community admin's invitation.
  */
-export const acceptInvitation = (
-    acceptInvitationBody: AcceptInvitationBody,
+export const revokeCommunityAdminInvitation = (
+    communityId: string,
+    userId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<void>(
-      {url: `/api/v1/invitations/accept`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: acceptInvitationBody, signal
+      return customInstance<CommunityAdminResponse>(
+      {url: `/api/v1/communities/${communityId}/admins/${userId}/invitation/revoke`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getAcceptInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitationBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitationBody}, TContext> => {
+export const getRevokeCommunityAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
 
-const mutationKey = ['acceptInvitation'];
+const mutationKey = ['revokeCommunityAdminInvitation'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -531,10 +455,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvitation>>, {data: AcceptInvitationBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
 
-          return  acceptInvitation(data,)
+          return  revokeCommunityAdminInvitation(communityId,userId,)
         }
 
         
@@ -542,28 +466,28 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type AcceptInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvitation>>>
-    export type AcceptInvitationMutationBody = AcceptInvitationBody
-    export type AcceptInvitationMutationError = ErrorType<RestError>
+    export type RevokeCommunityAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>>
+    
+    export type RevokeCommunityAdminInvitationMutationError = ErrorType<RestError>
 
     /**
- * @summary Accepts an invitation, setting the account's first password
+ * @summary Revokes a community admin's invitation.
  */
-export const useAcceptInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitationBody}, TContext>, }
+export const useRevokeCommunityAdminInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof acceptInvitation>>,
+        Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>,
         TError,
-        {data: AcceptInvitationBody},
+        {communityId: string;userId: string},
         TContext
       > => {
 
-      const mutationOptions = getAcceptInvitationMutationOptions(options);
+      const mutationOptions = getRevokeCommunityAdminInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Returns the list of memberships for the specified community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Returns the list of memberships for the specified community. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
  * @summary Lists all memberships of a community.
  */
 export const getMemberships = (
@@ -656,564 +580,6 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
 
 
 /**
- * Adds a user as a member of the specified community with the given role.
-Requires COMMUNITY_ADMIN role in the community or PLATFORM_ADMIN.
-
-A user can hold at most one membership per community, so adding one who is
-already a member responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code. Use
-the role PATCH to change an existing member's role.
-
- * @summary Creates a new membership in a community.
- */
-export const createMembership = (
-    communityId: string,
-    createMembershipBody: CreateMembershipBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MembershipResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createMembershipBody, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateMembershipMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext> => {
-
-const mutationKey = ['createMembership'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMembership>>, {communityId: string;data: CreateMembershipBody}> = (props) => {
-          const {communityId,data} = props ?? {};
-
-          return  createMembership(communityId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof createMembership>>>
-    export type CreateMembershipMutationBody = CreateMembershipBody
-    export type CreateMembershipMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates a new membership in a community.
- */
-export const useCreateMembership = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMembership>>, TError,{communityId: string;data: CreateMembershipBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createMembership>>,
-        TError,
-        {communityId: string;data: CreateMembershipBody},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateMembershipMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Emails the member an invitation to accept their pending membership, at the contact email of the community's member record, never the account's email. The link is valid for 7 days. Only an active community admin of the community may invite; a platform admin may not.
-
-This sends the first invitation only; every later send goes through `resendInvitation`. A membership that has already been invited responds 409 with the `MEMBERSHIP_ALREADY_INVITED` code, one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, a disabled one responds 409 with the `MEMBERSHIP_DISABLED` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
-
-If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded: `invitedAt` stays null and the same request can be repeated once sending works.
-
- * @summary Invites a registered member to accept their membership.
- */
-export const sendInvitation = (
-    communityId: string,
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MemberResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invite`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getSendInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['sendInvitation'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitation>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  sendInvitation(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SendInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof sendInvitation>>>
-    
-    export type SendInvitationMutationError = ErrorType<RestError>
-
-    /**
- * @summary Invites a registered member to accept their membership.
- */
-export const useSendInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof sendInvitation>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getSendInvitationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Stops the member's invitation link from working, for example when it was sent to a wrong address. The membership stays pending and keeps its `invitedAt`, and its invitation can be resent. A membership without a link that can still be used is answered the same. Only an active community admin of the community may revoke; a platform admin may not.
-
-A membership that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code. Revoking sends nothing, so it works whether or not the server can send emails.
-
- * @summary Withdraws a member's invitation link.
- */
-export const revokeInvitation = (
-    communityId: string,
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MemberResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invitation/revoke`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getRevokeInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['revokeInvitation'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeInvitation>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  revokeInvitation(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RevokeInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeInvitation>>>
-    
-    export type RevokeInvitationMutationError = ErrorType<RestError>
-
-    /**
- * @summary Withdraws a member's invitation link.
- */
-export const useRevokeInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof revokeInvitation>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getRevokeInvitationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Emails the member a new invitation link, at the contact email the community's member record has now, and stops the previous link from working, whether it was still valid, had expired or had been revoked. The new link is valid for 7 days, and `invitedAt` becomes the resend's instant. Only an active community admin of the community may resend; a platform admin may not.
-
-A membership is sent at most 4 invitations in any 24 hours, the first included. Over that, it responds 429 with the `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED` code and the number of seconds until a resend is accepted again in the `Retry-After` header and in `params.retryAfterSeconds`.
-
-A membership never invited responds 409 with the `MEMBERSHIP_NOT_INVITED` code (send its first invitation instead), one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, a disabled one responds 409 with the `MEMBERSHIP_DISABLED` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
-
-If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded: the previous link and `invitedAt` stay as they were.
-
- * @summary Sends a member's invitation again, with a new link.
- */
-export const resendInvitation = (
-    communityId: string,
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MemberResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invitation/resend`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getResendInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['resendInvitation'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendInvitation>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  resendInvitation(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ResendInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendInvitation>>>
-    
-    export type ResendInvitationMutationError = ErrorType<RestError>
-
-    /**
- * @summary Sends a member's invitation again, with a new link.
- */
-export const useResendInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof resendInvitation>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getResendInvitationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Enables a member's membership of this community, so that it grants access to this community again once it is accepted. Only the membership is written, never the account, which the person shares with their other communities. Enabling an enabled membership changes nothing.
-
-Only memberships with the COMMUNITY_MEMBER role, pending or accepted: a membership with any other role, or none, is answered 404. Admin memberships are enabled by the platform admin (`POST /api/v1/communities/{communityId}/admins/{userId}/enable`).
-
-**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
-
- * @summary Enables a member's membership.
- */
-export const enableMembership = (
-    communityId: string,
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/enable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getEnableMembershipMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['enableMembership'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableMembership>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  enableMembership(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EnableMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof enableMembership>>>
-    
-    export type EnableMembershipMutationError = ErrorType<RestError>
-
-    /**
- * @summary Enables a member's membership.
- */
-export const useEnableMembership = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof enableMembership>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getEnableMembershipMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Disables a member's membership of this community: from the member's next request it grants no access to this community, while their other communities are unaffected, and no invitation is sent to it. Only the membership is written, never the account, which the person shares with their other communities. Disabling a disabled membership changes nothing.
-
-This is how a community suspends a member: a community admin cannot disable the account itself (`POST /api/v1/users/{userId}/disable`).
-
-Only memberships with the COMMUNITY_MEMBER role, pending or accepted: a membership with any other role, or none, is answered 404. Admin memberships are disabled by the platform admin (`POST /api/v1/communities/{communityId}/admins/{userId}/disable`).
-
-**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
-
- * @summary Disables a member's membership.
- */
-export const disableMembership = (
-    communityId: string,
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/disable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getDisableMembershipMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['disableMembership'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableMembership>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  disableMembership(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DisableMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof disableMembership>>>
-    
-    export type DisableMembershipMutationError = ErrorType<RestError>
-
-    /**
- * @summary Disables a member's membership.
- */
-export const useDisableMembership = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disableMembership>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDisableMembershipMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Registers a person as a member of the community with their DNI/NIE/NIF and the community's own member record. The membership is created pending, with the role COMMUNITY_MEMBER: it grants no access until the member accepts it. Only an active community admin of the community may register members; a platform admin may not.
-
-Nothing is sent to the member: registering only records them. Invite them with `sendInvitation` once the community is ready for them to join; until then `invitedAt` stays null.
-
-The response is the same whether or not the person already had an account, and carries nothing from it. Registering someone who already has a membership in this community, in any state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code.
-
-The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF, with the control letter or character matching its digits; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code and nothing is created.
-
- * @summary Registers a member in a community.
- */
-export const registerMember = (
-    communityId: string,
-    registerMemberBody: RegisterMemberBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MemberResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/register`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: registerMemberBody, signal
-    },
-      );
-    }
-  
-
-
-export const getRegisterMemberMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext> => {
-
-const mutationKey = ['registerMember'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerMember>>, {communityId: string;data: RegisterMemberBody}> = (props) => {
-          const {communityId,data} = props ?? {};
-
-          return  registerMember(communityId,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RegisterMemberMutationResult = NonNullable<Awaited<ReturnType<typeof registerMember>>>
-    export type RegisterMemberMutationBody = RegisterMemberBody
-    export type RegisterMemberMutationError = ErrorType<RestError>
-
-    /**
- * @summary Registers a member in a community.
- */
-export const useRegisterMember = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof registerMember>>,
-        TError,
-        {communityId: string;data: RegisterMemberBody},
-        TContext
-      > => {
-
-      const mutationOptions = getRegisterMemberMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Invites, as `sendInvitation` does, the members of the community who are pending, enabled, have a contact email and have never been invited, up to 50 per request, in ascending user id. Every other member is skipped, not refused: an accepted or disabled membership, one without a contact email, and one already invited, including by a concurrent request. Each member is invited on their own, so a failure keeps the invitations already sent. Call again while `remaining` is above zero. Only an active community admin of the community may send; a platform admin may not.
-
-If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anyone is invited.
-
- * @summary Sends the first invitation to members registered without one, up to 50 per request.
- */
-export const sendInvitations = (
-    communityId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<SendInvitationsResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/invite`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getSendInvitationsMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext> => {
-
-const mutationKey = ['sendInvitations'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitations>>, {communityId: string}> = (props) => {
-          const {communityId} = props ?? {};
-
-          return  sendInvitations(communityId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SendInvitationsMutationResult = NonNullable<Awaited<ReturnType<typeof sendInvitations>>>
-    
-    export type SendInvitationsMutationError = ErrorType<RestError>
-
-    /**
- * @summary Sends the first invitation to members registered without one, up to 50 per request.
- */
-export const useSendInvitations = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof sendInvitations>>,
-        TError,
-        {communityId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getSendInvitationsMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * Registers each data row of a CSV file as a member of the community, as `registerMember` does: a pending membership with the role COMMUNITY_MEMBER and the row as the community's member record. Only an active community admin of the community may import members; a platform admin may not.
 
 Nothing is sent to the members and no invitation is issued. Invite them afterwards with `sendInvitations`.
@@ -1293,32 +659,31 @@ export const useImportMembers = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Stops the admin's invitation link from working. The membership stays pending with its invitation instant, and can be sent a new link with `resendCommunityAdminInvitation`. The rules are those of `revokeInvitation`: it works whether or not the membership is enabled and whether or not emails can be sent, and an accepted membership responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code.
+ * Invites, as `sendInvitation` does, the members of the community who are pending, enabled, have a contact email and have never been invited, up to 50 per request, in ascending user id. Every other member is skipped, not refused: an accepted or disabled membership, one without a contact email, and one already invited, including by a concurrent request. Each member is invited on their own, so a failure keeps the invitations already sent. Call again while `remaining` is above zero. Only an active community admin of the community may send; a platform admin may not.
 
-Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may revoke them.
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anyone is invited.
 
- * @summary Revokes a community admin's invitation.
+ * @summary Sends the first invitation to members registered without one, up to 50 per request.
  */
-export const revokeCommunityAdminInvitation = (
+export const sendInvitations = (
     communityId: string,
-    userId: string,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<CommunityAdminResponse>(
-      {url: `/api/v1/communities/${communityId}/admins/${userId}/invitation/revoke`, method: 'POST', signal
+      return customInstance<SendInvitationsResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/invite`, method: 'POST', signal
     },
       );
     }
   
 
 
-export const getRevokeCommunityAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
+export const getSendInvitationsMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext> => {
 
-const mutationKey = ['revokeCommunityAdminInvitation'];
+const mutationKey = ['sendInvitations'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1328,10 +693,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitations>>, {communityId: string}> = (props) => {
+          const {communityId} = props ?? {};
 
-          return  revokeCommunityAdminInvitation(communityId,userId,)
+          return  sendInvitations(communityId,)
         }
 
         
@@ -1339,256 +704,59 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type RevokeCommunityAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>>
+    export type SendInvitationsMutationResult = NonNullable<Awaited<ReturnType<typeof sendInvitations>>>
     
-    export type RevokeCommunityAdminInvitationMutationError = ErrorType<RestError>
+    export type SendInvitationsMutationError = ErrorType<RestError>
 
     /**
- * @summary Revokes a community admin's invitation.
+ * @summary Sends the first invitation to members registered without one, up to 50 per request.
  */
-export const useRevokeCommunityAdminInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+export const useSendInvitations = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof revokeCommunityAdminInvitation>>,
+        Awaited<ReturnType<typeof sendInvitations>>,
         TError,
-        {communityId: string;userId: string},
+        {communityId: string},
         TContext
       > => {
 
-      const mutationOptions = getRevokeCommunityAdminInvitationMutationOptions(options);
+      const mutationOptions = getSendInvitationsMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Emails the admin a new invitation link, at the contact email of this community's member record, and stops the previous link from working. The rules are those of `resendInvitation`: at most 4 sends in any 24 hours (429 with the `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED` code and a `Retry-After` header), and 409 with the `MEMBERSHIP_NOT_INVITED`, `MEMBERSHIP_ALREADY_EXISTS` or `MEMBERSHIP_DISABLED` code, 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded.
+ * Registers a person as a member of the community with their DNI/NIE/NIF and the community's own member record. The membership is created pending, with the role COMMUNITY_MEMBER: it grants no access until the member accepts it. Only an active community admin of the community may register members; a platform admin may not.
 
-Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may resend them.
+Nothing is sent to the member: registering only records them. Invite them with `sendInvitation` once the community is ready for them to join; until then `invitedAt` stays null.
 
- * @summary Sends a community admin's invitation again, with a new link.
+The response is the same whether or not the person already had an account, and carries nothing from it. Registering someone who already has a membership in this community, in any state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code.
+
+The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF, with the control letter or character matching its digits; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code and nothing is created.
+
+ * @summary Registers a member in a community.
  */
-export const resendCommunityAdminInvitation = (
+export const registerMember = (
     communityId: string,
-    userId: string,
+    registerMemberBody: RegisterMemberBody,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<CommunityAdminResponse>(
-      {url: `/api/v1/communities/${communityId}/admins/${userId}/invitation/resend`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getResendCommunityAdminInvitationMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['resendCommunityAdminInvitation'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  resendCommunityAdminInvitation(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ResendCommunityAdminInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>>
-    
-    export type ResendCommunityAdminInvitationMutationError = ErrorType<RestError>
-
-    /**
- * @summary Sends a community admin's invitation again, with a new link.
- */
-export const useResendCommunityAdminInvitation = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendCommunityAdminInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof resendCommunityAdminInvitation>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getResendCommunityAdminInvitationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Enables a community admin's membership of this community, so that it grants admin access again once it is accepted. Only the membership is written, never the account. Enabling an enabled membership changes nothing. Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may enable them.
-
- * @summary Enables a community admin's membership.
- */
-export const enableCommunityAdmin = (
-    communityId: string,
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/admins/${userId}/enable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getEnableCommunityAdminMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof enableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['enableCommunityAdmin'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableCommunityAdmin>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  enableCommunityAdmin(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EnableCommunityAdminMutationResult = NonNullable<Awaited<ReturnType<typeof enableCommunityAdmin>>>
-    
-    export type EnableCommunityAdminMutationError = ErrorType<RestError>
-
-    /**
- * @summary Enables a community admin's membership.
- */
-export const useEnableCommunityAdmin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof enableCommunityAdmin>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getEnableCommunityAdminMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Disables a community admin's membership of this community: from the admin's next request it grants no access to this community, while their other communities are unaffected. Only the membership is written, never the account. Disabling a disabled membership changes nothing. Only memberships with the COMMUNITY_ADMIN role: any other is answered 404. Only a platform admin may disable them.
-
- * @summary Disables a community admin's membership.
- */
-export const disableCommunityAdmin = (
-    communityId: string,
-    userId: string,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/api/v1/communities/${communityId}/admins/${userId}/disable`, method: 'POST', signal
-    },
-      );
-    }
-  
-
-
-export const getDisableCommunityAdminMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof disableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext> => {
-
-const mutationKey = ['disableCommunityAdmin'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableCommunityAdmin>>, {communityId: string;userId: string}> = (props) => {
-          const {communityId,userId} = props ?? {};
-
-          return  disableCommunityAdmin(communityId,userId,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DisableCommunityAdminMutationResult = NonNullable<Awaited<ReturnType<typeof disableCommunityAdmin>>>
-    
-    export type DisableCommunityAdminMutationError = ErrorType<RestError>
-
-    /**
- * @summary Disables a community admin's membership.
- */
-export const useDisableCommunityAdmin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableCommunityAdmin>>, TError,{communityId: string;userId: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disableCommunityAdmin>>,
-        TError,
-        {communityId: string;userId: string},
-        TContext
-      > => {
-
-      const mutationOptions = getDisableCommunityAdminMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * Registers a person as an admin of the community with their DNI/NIE/NIF, full name, contact email and optional phone, and emails them an invitation to accept it at that contact email, in one operation. The membership is created pending, with the role COMMUNITY_ADMIN: it grants no access until it is accepted. The link is valid for 7 days. Only a platform admin may invite a community admin; a community admin may not.
-
-The response is the same whether or not the person already had an account, and carries nothing from it. Inviting someone who already has a membership in this community, in any role or state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, and nothing is created or sent.
-
-The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF, with the control letter or character matching its digits; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code, and nothing is created or sent.
-
-If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is created.
-
- * @summary Invites a community admin.
- */
-export const inviteCommunityAdmin = (
-    communityId: string,
-    inviteCommunityAdminBody: InviteCommunityAdminBody,
- signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<CommunityAdminResponse>(
-      {url: `/api/v1/communities/${communityId}/admins/invite`, method: 'POST',
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/register`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: inviteCommunityAdminBody, signal
+      data: registerMemberBody, signal
     },
       );
     }
   
 
 
-export const getInviteCommunityAdminMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteCommunityAdmin>>, TError,{communityId: string;data: InviteCommunityAdminBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof inviteCommunityAdmin>>, TError,{communityId: string;data: InviteCommunityAdminBody}, TContext> => {
+export const getRegisterMemberMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext> => {
 
-const mutationKey = ['inviteCommunityAdmin'];
+const mutationKey = ['registerMember'];
 const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1598,10 +766,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteCommunityAdmin>>, {communityId: string;data: InviteCommunityAdminBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerMember>>, {communityId: string;data: RegisterMemberBody}> = (props) => {
           const {communityId,data} = props ?? {};
 
-          return  inviteCommunityAdmin(communityId,data,)
+          return  registerMember(communityId,data,)
         }
 
         
@@ -1609,28 +777,28 @@ const {mutation: mutationOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type InviteCommunityAdminMutationResult = NonNullable<Awaited<ReturnType<typeof inviteCommunityAdmin>>>
-    export type InviteCommunityAdminMutationBody = InviteCommunityAdminBody
-    export type InviteCommunityAdminMutationError = ErrorType<RestError>
+    export type RegisterMemberMutationResult = NonNullable<Awaited<ReturnType<typeof registerMember>>>
+    export type RegisterMemberMutationBody = RegisterMemberBody
+    export type RegisterMemberMutationError = ErrorType<RestError>
 
     /**
- * @summary Invites a community admin.
+ * @summary Registers a member in a community.
  */
-export const useInviteCommunityAdmin = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteCommunityAdmin>>, TError,{communityId: string;data: InviteCommunityAdminBody}, TContext>, }
+export const useRegisterMember = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMember>>, TError,{communityId: string;data: RegisterMemberBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof inviteCommunityAdmin>>,
+        Awaited<ReturnType<typeof registerMember>>,
         TError,
-        {communityId: string;data: InviteCommunityAdminBody},
+        {communityId: string;data: RegisterMemberBody},
         TContext
       > => {
 
-      const mutationOptions = getInviteCommunityAdminMutationOptions(options);
+      const mutationOptions = getRegisterMemberMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Deletes the membership of the specified user in the community, with its member record and its invitation tokens. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Deletes the membership of the specified user in the community, with its member record and its invitation tokens. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
 
 The membership of a user who owns supplies in the community is not deleted: the request is answered 409 with `MEMBERSHIP_OWNS_SUPPLIES`, and nothing is deleted. To stop their access, disable the membership instead (`POST /api/v1/communities/{communityId}/memberships/{userId}/disable`); to delete it, delete their supplies in the community first (`DELETE /api/v1/supplies/{supplyId}`). Supplies the user owns in other communities do not prevent it.
 
@@ -1696,7 +864,7 @@ export const useDeleteMembership = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Changes the role of a user within a community. Requires COMMUNITY_ADMIN or PLATFORM_ADMIN.
+ * Changes the role of a user within a community. Requires COMMUNITY_ADMIN of the community. Being a PLATFORM_ADMIN is not enough (#446): a platform admin who is not an admin of the community is answered 403.
 
 Giving a membership the `COMMUNITY_ADMIN` role requires a contact email on its member record: without one it responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and the role is left as it was.
 
@@ -1765,51 +933,79 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * How much of the member's recorded investment their share of the community's
-energy has recovered, and roughly how long the rest would take.
+ * For each month of the requested period, the energy and the estimated savings of
+**every** supply the member owns in this community, added up. Each energy figure
+sums the unrounded per-supply monthly totals and is rounded once, to 3 decimals,
+on the result; the savings are likewise summed unrounded and rounded once, to
+cents. A figure can therefore differ from adding up the rounded figures of the
+per-supply monthly series. Supplies in the member's other communities are not
+counted.
 
-`savedEur` is the estimated value of the self-consumed energy of **all** the
-member's supplies in this community, from `startDate` until now, priced per
-tariff segment. It prices the **energy term before taxes** only: the power term,
-access tolls, charges and electricity tax are all excluded, and VAT is applied
-only where the resolved tariff carries a rate. It is computed on each request and
-never stored, so it reflects both new consumption and any later correction.
-Supplies in the member's other communities are not counted.
+**Source and freshness:**
+Each supply's month is read from a monthly total pre-aggregated from its hourly
+records. That total is rewritten once a day for every month in the Datadis sync
+window (by default, the current month and the 12 before it), and on demand through
+`POST /api/v1/communities/{communityId}/consumption/datadis/sync/monthly`. Nothing
+else refreshes it: in particular, synchronising the hourly records does not. Until
+the next refresh, a month can therefore lag the energy metrics, which sum the
+hourly records when they are read.
 
-`startDate` is the civil date the community first activated a partition
-coefficient, and is therefore **community-wide rather than per member**. A
-member who joined later has their savings divided by the community's elapsed
-days rather than their own, so their apparent daily rate is lower than their
-real one and `estimatedRemainingMonths` is correspondingly pessimistic. This is
-a known limitation.
+**Every month is emitted:**
+A bucket is returned for every month in range, in chronological order, whether or
+not any supply stored a record in it, so the series has a regular time axis. This
+differs from the per-supply monthly series, which omits months without a stored
+record.
 
-Null and zero mean different things throughout. A null `investmentEur` means
-none has been recorded, not a contribution of zero; a null `savedEur` means the
-community has never shared energy, whereas zero means it has and this member
-consumed nothing from it. `estimatedRemainingMonths` is null whenever no rate
-can be established, and 0 once the investment is recovered.
+**Time zone and month selection:**
+Months are local calendar months of the community's time zone, not UTC ones.
+`startDate` and `endDate` are both required and both inclusive, and a month is in
+range if and only if its local midnight on day 1 falls inside them -- the rule the
+per-supply monthly series selects its pre-aggregated points by. Once in range a
+month always carries its whole energy and its whole savings: bounds falling
+mid-month never trim it. Pass the bounds with the zone's offset: a bound expressed
+in UTC can select one month too few or too many.
 
-`progressRatio` is not capped and exceeds 1 for a member who has recovered more
-than they contributed. `tariffSource` is never null and is `ESTIMATE` whenever
-any part of the amount came from an estimated tariff, or when no tariff was
-consulted at all.
+**Completeness:**
+`supplyCount` is the number of supplies the member **currently** owns in the
+community, and `suppliesWithData` how many of them stored a monthly record that
+month. A month with `suppliesWithData` below `supplyCount` is incomplete. The
+model records no date a supply joined its community, so the count is the same
+for every month, and the months before a supply started reporting show as
+incomplete. `suppliesWithData` is measured from stored monthly records, month by
+month; the aggregated energy metrics measure theirs from hourly records over the
+whole period, so the two are not comparable.
+
+**Savings:**
+`savingsEur` is an **estimate** of what the month's self-consumed energy was
+worth, pricing the **energy term before taxes** only, exactly as the per-supply
+series does. It is `null` when no supply stored a record that month, and only
+then: a month with nothing stored is a different statement from a month that
+saved nothing, which reports `0.00` -- as does a month whose stored records carry
+no self-consumption, a measured zero. This differs from the per-supply series,
+which reports `0.00` for every bucket it emits. `tariffSource` says where the
+prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
+makes the whole month an estimate; it is `null` exactly when `savingsEur` is.
 
 Readable by the member themself and by community admins of this community.
 Platform admins are **not** granted access on that basis alone and are answered
 404, as is every other caller who may not read it, so the membership's existence
-is not disclosed.
+is not disclosed. A membership without supplies is answered successfully, not
+with 404: every month in range, with zero totals, null savings and a
+`supplyCount` of 0.
 
- * @summary Retrieves a membership's payback progress.
+ * @summary Retrieves the monthly consumption of every supply of a membership, added up per month.
  */
-export const getMembershipPayback = (
+export const getMembershipMonthlyConsumption = (
     communityId: string,
     userId: string,
+    params: GetMembershipMonthlyConsumptionParams,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<MembershipPaybackResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/payback`, method: 'GET', signal
+      return customInstance<MembershipMonthlyConsumptionBucketResponse[]>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/consumption/monthly`, method: 'GET',
+        params, signal
     },
       );
     }
@@ -1817,75 +1013,81 @@ export const getMembershipPayback = (
 
 
 
-export const getGetMembershipPaybackQueryKey = (communityId?: string,
-    userId?: string,) => {
+export const getGetMembershipMonthlyConsumptionQueryKey = (communityId?: string,
+    userId?: string,
+    params?: GetMembershipMonthlyConsumptionParams,) => {
     return [
-    `/api/v1/communities/${communityId}/memberships/${userId}/payback`
+    `/api/v1/communities/${communityId}/memberships/${userId}/consumption/monthly`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetMembershipPaybackQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(communityId: string,
-    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
+export const getGetMembershipMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(communityId: string,
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetMembershipPaybackQueryKey(communityId,userId);
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipMonthlyConsumptionQueryKey(communityId,userId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipPayback>>> = ({ signal }) => getMembershipPayback(communityId,userId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>> = ({ signal }) => getMembershipMonthlyConsumption(communityId,userId,params, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetMembershipPaybackQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipPayback>>>
-export type GetMembershipPaybackQueryError = ErrorType<RestError>
+export type GetMembershipMonthlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>>
+export type GetMembershipMonthlyConsumptionQueryError = ErrorType<RestError>
 
 
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMembershipPayback>>,
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getMembershipPayback>>
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMembershipPayback>>,
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>,
           TError,
-          Awaited<ReturnType<typeof getMembershipPayback>>
+          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves a membership's payback progress.
+ * @summary Retrieves the monthly consumption of every supply of a membership, added up per month.
  */
 
-export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
+export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
+    userId: string,
+    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetMembershipPaybackQueryOptions(communityId,userId,options)
+  const queryOptions = getGetMembershipMonthlyConsumptionQueryOptions(communityId,userId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1898,6 +1100,146 @@ export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMem
 
 
 /**
+ * Disables a member's membership of this community: from the member's next request it grants no access to this community, while their other communities are unaffected, and no invitation is sent to it. Only the membership is written, never the account, which the person shares with their other communities. Disabling a disabled membership changes nothing.
+
+This is how a community suspends a member: a community admin cannot disable the account itself (`POST /api/v1/users/{userId}/disable`).
+
+Only memberships with the COMMUNITY_MEMBER role, pending or accepted: a membership with any other role, or none, is answered 404. Admin memberships are disabled by the platform admin (`POST /api/v1/communities/{communityId}/admins/{userId}/disable`).
+
+**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
+
+ * @summary Disables a member's membership.
+ */
+export const disableMembership = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/disable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getDisableMembershipMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['disableMembership'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableMembership>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  disableMembership(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof disableMembership>>>
+    
+    export type DisableMembershipMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Disables a member's membership.
+ */
+export const useDisableMembership = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableMembership>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDisableMembershipMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Enables a member's membership of this community, so that it grants access to this community again once it is accepted. Only the membership is written, never the account, which the person shares with their other communities. Enabling an enabled membership changes nothing.
+
+Only memberships with the COMMUNITY_MEMBER role, pending or accepted: a membership with any other role, or none, is answered 404. Admin memberships are enabled by the platform admin (`POST /api/v1/communities/{communityId}/admins/{userId}/enable`).
+
+**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
+
+ * @summary Enables a member's membership.
+ */
+export const enableMembership = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/enable`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getEnableMembershipMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['enableMembership'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableMembership>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  enableMembership(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof enableMembership>>>
+    
+    export type EnableMembershipMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Enables a member's membership.
+ */
+export const useEnableMembership = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableMembership>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableMembership>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEnableMembershipMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Aggregates the consumption data stored for **every** supply the member owns in
 this community into energy totals and two ratios, on a 0-1 scale. Supplies in the
 member's other communities are not counted.
@@ -2077,12 +1419,12 @@ export function useGetMembershipEnergyMetrics<TData = Awaited<ReturnType<typeof 
 
 
 /**
- * For each hour of the local day, the average energy consumed and the average
+ * For each hour of the local day, the average total consumption and the average
 energy assigned by **every** supply the member owns in this community, so the
 member can see at which hours assigned energy goes to waste. Supplies in the
 member's other communities are not counted.
 
-- `averageConsumptionKWh`: grid import plus self-consumed energy.
+- `averageTotalConsumptionKWh`: grid import plus self-consumed energy.
 - `averageAssignedProductionKWh`: self-consumed plus surplus energy.
 
 **Period:**
@@ -2109,7 +1451,7 @@ time zone.
 Every record of every supply and every day of the month counts as one sample of
 its hour, and each average **divides by the records found**: never by the days of
 the month, and never by averaging per-supply averages. Each series has its own
-sample count, `consumptionSampleCount` and `assignedProductionSampleCount`, and the
+sample count, `totalConsumptionSampleCount` and `assignedProductionSampleCount`, and the
 two can differ, since a record can carry consumption without carrying assigned
 production. An average is `null` when its hour has no sample of that series, which
 is never the same as `0`: an hour whose samples are all zero, such as a night hour
@@ -2234,67 +1576,405 @@ export function useGetMembershipHourlyProfile<TData = Awaited<ReturnType<typeof 
 
 
 /**
- * For each month of the requested period, the energy and the estimated savings of
-**every** supply the member owns in this community, added up: each figure is the
-sum of what the per-supply monthly series reports for that supply and month.
+ * Clears the amount recorded for this member, returning the membership to having
+no investment. Payback then reports no investment rather than an investment of
+zero, which are different statements.
+
+Idempotent: clearing a membership that has no investment succeeds, because the
+end state is the one the caller asked for. Requires COMMUNITY_ADMIN of this
+community, with the same 404-not-403 mapping as the write.
+
+ * @summary Removes a membership's initial investment.
+ */
+export const clearMembershipInvestment = (
+    communityId: string,
+    userId: string,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/investment`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getClearMembershipInvestmentMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['clearMembershipInvestment'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearMembershipInvestment>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  clearMembershipInvestment(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof clearMembershipInvestment>>>
+    
+    export type ClearMembershipInvestmentMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Removes a membership's initial investment.
+ */
+export const useClearMembershipInvestment = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMembershipInvestment>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clearMembershipInvestment>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getClearMembershipInvestmentMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Sets the amount, in euros, that this member initially contributed to the
+community, replacing any amount previously recorded. Only the current value is
+kept: there is no history of changes.
+
+The amount must be greater than zero with at most two decimals. Requires
+COMMUNITY_ADMIN of this community; platform admins who do not administer this
+community are not granted access, and are answered 404 rather than 403 so the
+membership's existence is not disclosed.
+
+Answers 204 with no body. Read the stored amount back through the membership's
+payback endpoint.
+
+ * @summary Records a membership's initial investment.
+ */
+export const setMembershipInvestment = (
+    communityId: string,
+    userId: string,
+    setMembershipInvestmentBody: SetMembershipInvestmentBody,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/investment`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: setMembershipInvestmentBody
+    },
+      );
+    }
+  
+
+
+export const getSetMembershipInvestmentMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext> => {
+
+const mutationKey = ['setMembershipInvestment'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setMembershipInvestment>>, {communityId: string;userId: string;data: SetMembershipInvestmentBody}> = (props) => {
+          const {communityId,userId,data} = props ?? {};
+
+          return  setMembershipInvestment(communityId,userId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetMembershipInvestmentMutationResult = NonNullable<Awaited<ReturnType<typeof setMembershipInvestment>>>
+    export type SetMembershipInvestmentMutationBody = SetMembershipInvestmentBody
+    export type SetMembershipInvestmentMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Records a membership's initial investment.
+ */
+export const useSetMembershipInvestment = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMembershipInvestment>>, TError,{communityId: string;userId: string;data: SetMembershipInvestmentBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setMembershipInvestment>>,
+        TError,
+        {communityId: string;userId: string;data: SetMembershipInvestmentBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSetMembershipInvestmentMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Emails the member a new invitation link, at the contact email the community's member record has now, and stops the previous link from working, whether it was still valid, had expired or had been revoked. The new link is valid for 7 days, and `invitedAt` becomes the resend's instant. Only an active community admin of the community may resend; a platform admin may not.
+
+A membership is sent at most 4 invitations in any 24 hours, the first included. Over that, it responds 429 with the `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED` code and the number of seconds until a resend is accepted again in the `Retry-After` header and in `params.retryAfterSeconds`.
+
+A membership never invited responds 409 with the `MEMBERSHIP_NOT_INVITED` code (send its first invitation instead), one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, a disabled one responds 409 with the `MEMBERSHIP_DISABLED` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
+
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded: the previous link and `invitedAt` stay as they were.
+
+ * @summary Sends a member's invitation again, with a new link.
+ */
+export const resendInvitation = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invitation/resend`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getResendInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['resendInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  resendInvitation(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResendInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof resendInvitation>>>
+    
+    export type ResendInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Sends a member's invitation again, with a new link.
+ */
+export const useResendInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resendInvitation>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getResendInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Stops the member's invitation link from working, for example when it was sent to a wrong address. The membership stays pending and keeps its `invitedAt`, and its invitation can be resent. A membership without a link that can still be used is answered the same. Only an active community admin of the community may revoke; a platform admin may not.
+
+A membership that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code. Revoking sends nothing, so it works whether or not the server can send emails.
+
+ * @summary Withdraws a member's invitation link.
+ */
+export const revokeInvitation = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invitation/revoke`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getRevokeInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['revokeInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  revokeInvitation(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeInvitation>>>
+    
+    export type RevokeInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Withdraws a member's invitation link.
+ */
+export const useRevokeInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeInvitation>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRevokeInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Emails the member an invitation to accept their pending membership, at the contact email of the community's member record, never the account's email. The link is valid for 7 days. Only an active community admin of the community may invite; a platform admin may not.
+
+This sends the first invitation only; every later send goes through `resendInvitation`. A membership that has already been invited responds 409 with the `MEMBERSHIP_ALREADY_INVITED` code, one that has been accepted responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code, a disabled one responds 409 with the `MEMBERSHIP_DISABLED` code, and a member record without a contact email responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code.
+
+If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anything is recorded: `invitedAt` stays null and the same request can be repeated once sending works.
+
+ * @summary Invites a registered member to accept their membership.
+ */
+export const sendInvitation = (
+    communityId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/invite`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getSendInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext> => {
+
+const mutationKey = ['sendInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitation>>, {communityId: string;userId: string}> = (props) => {
+          const {communityId,userId} = props ?? {};
+
+          return  sendInvitation(communityId,userId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof sendInvitation>>>
+    
+    export type SendInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Invites a registered member to accept their membership.
+ */
+export const useSendInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitation>>, TError,{communityId: string;userId: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendInvitation>>,
+        TError,
+        {communityId: string;userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getSendInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * How much of the member's recorded investment their share of the community's
+energy has recovered, and roughly how long the rest would take.
+
+`savedEur` is the estimated value of the self-consumed energy of **all** the
+member's supplies in this community, from `startDate` until now, priced per
+tariff segment. It prices the **energy term before taxes** only: the power term,
+access tolls, charges and electricity tax are all excluded, and VAT is applied
+only where the resolved tariff carries a rate. It is computed on each request and
+never stored, so it reflects both new consumption and any later correction.
 Supplies in the member's other communities are not counted.
 
-**Every month is emitted:**
-A bucket is returned for every month in range, in chronological order, whether or
-not any supply stored a record in it, so the series has a regular time axis. This
-differs from the per-supply monthly series, which omits months without a stored
-record.
+`startDate` is the civil date the community first activated a partition
+coefficient, and is therefore **community-wide rather than per member**. A
+member who joined later has their savings divided by the community's elapsed
+days rather than their own, so their apparent daily rate is lower than their
+real one and `estimatedRemainingMonths` is correspondingly pessimistic. This is
+a known limitation.
 
-**Time zone and month selection:**
-Months are local calendar months of the community's time zone, not UTC ones.
-`startDate` and `endDate` are both required and both inclusive, and a month is in
-range if and only if its local midnight on day 1 falls inside them -- the rule the
-per-supply monthly series selects its pre-aggregated points by. Once in range a
-month always carries its whole energy and its whole savings: bounds falling
-mid-month never trim it. Pass the bounds with the zone's offset: a bound expressed
-in UTC can select one month too few or too many.
+Null and zero mean different things throughout. A null `investmentEur` means
+none has been recorded, not a contribution of zero; a null `savedEur` means the
+community has never shared energy, whereas zero means it has and this member
+consumed nothing from it. `estimatedRemainingMonths` is null whenever no rate
+can be established, and 0 once the investment is recovered.
 
-**Completeness:**
-`supplyCount` is the number of supplies the member **currently** owns in the
-community, and `suppliesWithData` how many of them stored a monthly record that
-month. A month with `suppliesWithData` below `supplyCount` is incomplete. The
-model records no date a supply joined its community, so the count is the same
-for every month, and the months before a supply started reporting show as
-incomplete. `suppliesWithData` is measured from stored monthly records, month by
-month; the aggregated energy metrics measure theirs from hourly records over the
-whole period, so the two are not comparable.
-
-**Savings:**
-`savingsEur` is an **estimate** of what the month's self-consumed energy was
-worth, pricing the **energy term before taxes** only, exactly as the per-supply
-series does. It is `null` when no supply stored a record that month, and only
-then: a month with nothing stored is a different statement from a month that
-saved nothing, which reports `0.00` -- as does a month whose stored records carry
-no self-consumption, a measured zero. This differs from the per-supply series,
-which reports `0.00` for every bucket it emits. `tariffSource` says where the
-prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
-makes the whole month an estimate; it is `null` exactly when `savingsEur` is.
+`progressRatio` is not capped and exceeds 1 for a member who has recovered more
+than they contributed. `tariffSource` is never null and is `ESTIMATE` whenever
+any part of the amount came from an estimated tariff, or when no tariff was
+consulted at all.
 
 Readable by the member themself and by community admins of this community.
 Platform admins are **not** granted access on that basis alone and are answered
 404, as is every other caller who may not read it, so the membership's existence
-is not disclosed. A membership without supplies is answered successfully, not
-with 404: every month in range, with zero totals, null savings and a
-`supplyCount` of 0.
+is not disclosed.
 
- * @summary Retrieves the monthly consumption of every supply of a membership, added up per month.
+ * @summary Retrieves a membership's payback progress.
  */
-export const getMembershipMonthlyConsumption = (
+export const getMembershipPayback = (
     communityId: string,
     userId: string,
-    params: GetMembershipMonthlyConsumptionParams,
  signal?: AbortSignal
 ) => {
       
       
-      return customInstance<MembershipMonthlyConsumptionBucketResponse[]>(
-      {url: `/api/v1/communities/${communityId}/memberships/${userId}/consumption/monthly`, method: 'GET',
-        params, signal
+      return customInstance<MembershipPaybackResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/payback`, method: 'GET', signal
     },
       );
     }
@@ -2302,81 +1982,75 @@ export const getMembershipMonthlyConsumption = (
 
 
 
-export const getGetMembershipMonthlyConsumptionQueryKey = (communityId?: string,
-    userId?: string,
-    params?: GetMembershipMonthlyConsumptionParams,) => {
+export const getGetMembershipPaybackQueryKey = (communityId?: string,
+    userId?: string,) => {
     return [
-    `/api/v1/communities/${communityId}/memberships/${userId}/consumption/monthly`, ...(params ? [params]: [])
+    `/api/v1/communities/${communityId}/memberships/${userId}/payback`
     ] as const;
     }
 
     
-export const getGetMembershipMonthlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(communityId: string,
-    userId: string,
-    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
+export const getGetMembershipPaybackQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(communityId: string,
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetMembershipMonthlyConsumptionQueryKey(communityId,userId,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipPaybackQueryKey(communityId,userId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>> = ({ signal }) => getMembershipMonthlyConsumption(communityId,userId,params, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipPayback>>> = ({ signal }) => getMembershipPayback(communityId,userId, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetMembershipMonthlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>>
-export type GetMembershipMonthlyConsumptionQueryError = ErrorType<RestError>
+export type GetMembershipPaybackQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipPayback>>>
+export type GetMembershipPaybackQueryError = ErrorType<RestError>
 
 
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string,
-    params: GetMembershipMonthlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
+    userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>,
+          Awaited<ReturnType<typeof getMembershipPayback>>,
           TError,
-          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>
+          Awaited<ReturnType<typeof getMembershipPayback>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string,
-    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>> & Pick<
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>,
+          Awaited<ReturnType<typeof getMembershipPayback>>,
           TError,
-          Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>
+          Awaited<ReturnType<typeof getMembershipPayback>>
         > , 'initialData'
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string,
-    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Retrieves the monthly consumption of every supply of a membership, added up per month.
+ * @summary Retrieves a membership's payback progress.
  */
 
-export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError = ErrorType<RestError>>(
+export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMembershipPayback>>, TError = ErrorType<RestError>>(
  communityId: string,
-    userId: string,
-    params: GetMembershipMonthlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipMonthlyConsumption>>, TError, TData>>, }
+    userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipPayback>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetMembershipMonthlyConsumptionQueryOptions(communityId,userId,params,options)
+  const queryOptions = getGetMembershipPaybackQueryOptions(communityId,userId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2389,96 +2063,362 @@ export function useGetMembershipMonthlyConsumption<TData = Awaited<ReturnType<ty
 
 
 /**
- * Every membership of the community with the COMMUNITY_ADMIN role, in any state, by full name: the name, contact email and phone from this community's member record, the DNI/NIE/NIF, and the state of the membership and of its invitation. Nothing about the community's members, and nothing from any other membership of the same people. Only a platform admin may list them.
+ * Replaces the record this community keeps on a member: full name, member number, contact email, address and phone number. The whole record is sent: an optional value that is missing, null, empty or blank is cleared. Only the record is written, never the person's account, which they share with their other communities, nor the membership's role, state or invitation.
 
- * @summary Lists a community's admins.
+Any membership of the community may be edited, whatever its role and whether it is pending, accepted or disabled, the caller's own included. A user with no membership in the community responds 404.
+
+A membership with the `COMMUNITY_ADMIN` role must keep a contact email: a record without one responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and nothing is changed.
+
+An invitation link already sent stays valid; the next invitation, or resend, goes to the new contact email.
+
+**Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
+
+ * @summary Replaces the member record of a membership.
  */
-export const getCommunityAdmins = (
+export const updateMemberRecord = (
     communityId: string,
- signal?: AbortSignal
-) => {
+    userId: string,
+    updateMemberRecordBody: UpdateMemberRecordBody,
+ ) => {
       
       
-      return customInstance<CommunityAdminResponse[]>(
-      {url: `/api/v1/communities/${communityId}/admins`, method: 'GET', signal
+      return customInstance<MemberResponse>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/record`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateMemberRecordBody
     },
       );
     }
   
 
 
+export const getUpdateMemberRecordMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext> => {
 
-export const getGetCommunityAdminsQueryKey = (communityId?: string,) => {
-    return [
-    `/api/v1/communities/${communityId}/admins`
-    ] as const;
+const mutationKey = ['updateMemberRecord'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMemberRecord>>, {communityId: string;userId: string;data: UpdateMemberRecordBody}> = (props) => {
+          const {communityId,userId,data} = props ?? {};
+
+          return  updateMemberRecord(communityId,userId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMemberRecordMutationResult = NonNullable<Awaited<ReturnType<typeof updateMemberRecord>>>
+    export type UpdateMemberRecordMutationBody = UpdateMemberRecordBody
+    export type UpdateMemberRecordMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Replaces the member record of a membership.
+ */
+export const useUpdateMemberRecord = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRecord>>, TError,{communityId: string;userId: string;data: UpdateMemberRecordBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMemberRecord>>,
+        TError,
+        {communityId: string;userId: string;data: UpdateMemberRecordBody},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateMemberRecordMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * This endpoint accepts the invitation of an account that has no password yet, with the token from
+the emailed link `<web client>/accept-invitation#<token>` and the account's first password. It
+requires no authentication, and any token presented with it is ignored.
 
-    
-export const getGetCommunityAdminsQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>>, }
+The password must meet the same policy as a password change: between 15 and 64 characters,
+counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded.
+
+On success the server answers 204 with no body: the token is used up, the password is set, the
+membership is accepted, and, when the account had no email, the member record's contact email
+becomes its email. The person is not logged in; the client must log in with the new password. A
+membership that is disabled is accepted too, but grants no access until the community enables it.
+
+An account that already has a password is answered 409 with the
+`MEMBERSHIP_INVITATION_LOGIN_REQUIRED` code: the person must log in and accept with
+`acceptInvitationAsCurrentUser`. A new password that breaks the policy is answered 400 with the
+`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter. In both cases nothing changes and
+the token can be used again.
+
+A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
+has already been accepted, or whose account has been disabled, is answered 400 with the
+`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.
+
+A platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:
+the code whoever invited gives the person by another channel. A community invitation ignores it.
+On success the platform-admin role is granted as well, and, when the account had no email, the
+invitation's destination email becomes its email. A missing or wrong code is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the
+client address and against the invitation, and the link can be used again. The fifth missing or
+wrong code on one invitation revokes its link and is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again. The
+code is checked after the checks above, which neither count nor use it; for a platform-admin
+invitation, an account that already has a password is answered 409 with the
+`PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED` code instead. A platform-admin
+invitation whose account is disabled is accepted too: the role is granted, and the account still
+cannot log in.
+
+Every unusable token counts against the client address, together with failed logins, password
+changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a
+Retry-After header until the 15 minutes that started with the first failure have passed.
+ * @summary Accepts an invitation, setting the account's first password
+ */
+export const acceptInvitation = (
+    acceptInvitationBody: AcceptInvitationBody,
+ signal?: AbortSignal
 ) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetCommunityAdminsQueryKey(communityId);
-
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/invitations/accept`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: acceptInvitationBody, signal
+    },
+      );
+    }
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityAdmins>>> = ({ signal }) => getCommunityAdmins(communityId, signal);
+
+export const getAcceptInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitationBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitationBody}, TContext> => {
+
+const mutationKey = ['acceptInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
 
       
 
-      
 
-   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvitation>>, {data: AcceptInvitationBody}> = (props) => {
+          const {data} = props ?? {};
 
-export type GetCommunityAdminsQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityAdmins>>>
-export type GetCommunityAdminsQueryError = ErrorType<RestError>
+          return  acceptInvitation(data,)
+        }
+
+        
 
 
-export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
- communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCommunityAdmins>>,
-          TError,
-          Awaited<ReturnType<typeof getCommunityAdmins>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCommunityAdmins>>,
-          TError,
-          Awaited<ReturnType<typeof getCommunityAdmins>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Lists a community's admins.
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvitation>>>
+    export type AcceptInvitationMutationBody = AcceptInvitationBody
+    export type AcceptInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Accepts an invitation, setting the account's first password
  */
+export const useAcceptInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitationBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof acceptInvitation>>,
+        TError,
+        {data: AcceptInvitationBody},
+        TContext
+      > => {
 
-export function useGetCommunityAdmins<TData = Awaited<ReturnType<typeof getCommunityAdmins>>, TError = ErrorType<RestError>>(
- communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityAdmins>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+      const mutationOptions = getAcceptInvitationMutationOptions(options);
 
-  const queryOptions = getGetCommunityAdminsQueryOptions(communityId,options)
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint tells the holder of an invitation link, `<web client>/accept-invitation#<token>`,
+which community the invitation is for and how to accept it. It requires no authentication, and
+any token presented with it is ignored. It uses up nothing and changes nothing: the link stays
+usable.
 
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+When `loginRequired` is false, the account has no password: the client asks for a first password
+and accepts with `acceptInvitation`. When it is true, the account already has a password: the
+client asks the person to log in and accepts with `acceptInvitationAsCurrentUser`.
 
-  query.queryKey = queryOptions.queryKey ;
+`kind` tells what the invitation is for: `COMMUNITY`, a membership of the community in
+`community`; or `PLATFORM`, the platform-admin role, with `community` null. When
+`confirmationCodeRequired` is true, as it is for every `PLATFORM` invitation, the client also asks
+for the confirmation code that whoever invited gives the person by another channel, and sends it
+as `confirmationCode` when accepting. A platform-admin invitation whose account is disabled can be
+inspected and accepted too.
 
-  return query;
-}
+A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
+has already been accepted, or whose account has been disabled, is answered 400 with the
+`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.
+
+Every unusable token counts against the client address, together with failed logins, password
+changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a
+Retry-After header until the 15 minutes that started with the first failure have passed.
+ * @summary Inspects an invitation before accepting it
+ */
+export const inspectInvitation = (
+    invitationTokenBody: InvitationTokenBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<InvitationInspectionResponse>(
+      {url: `/api/v1/invitations/inspect`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: invitationTokenBody, signal
+    },
+      );
+    }
+  
 
 
+export const getInspectInvitationMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inspectInvitation>>, TError,{data: InvitationTokenBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof inspectInvitation>>, TError,{data: InvitationTokenBody}, TContext> => {
+
+const mutationKey = ['inspectInvitation'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
 
 
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inspectInvitation>>, {data: InvitationTokenBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  inspectInvitation(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InspectInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof inspectInvitation>>>
+    export type InspectInvitationMutationBody = InvitationTokenBody
+    export type InspectInvitationMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Inspects an invitation before accepting it
+ */
+export const useInspectInvitation = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inspectInvitation>>, TError,{data: InvitationTokenBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof inspectInvitation>>,
+        TError,
+        {data: InvitationTokenBody},
+        TContext
+      > => {
+
+      const mutationOptions = getInspectInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * This endpoint accepts an invitation of one of the caller's own memberships, with the token from
+the emailed link `<web client>/accept-invitation#<token>`. It is the way to accept for an account
+that already has a password; the password is neither read nor changed.
+
+On success the server answers 204 with no body: the token is used up and the membership is
+accepted. The client should then read the current user again to see the new membership. A
+membership that is disabled is accepted too, but grants no access until the community enables it.
+
+A token of another account's membership is answered like any unusable token.
+A token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership
+has already been accepted, or whose account has been disabled, is answered 400 with the
+`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.
+
+A caller who must change their password is answered 403 with the `USER_PASSWORD_CHANGE_REQUIRED`
+code before the token is looked at; the link stays usable once the password has been changed.
+
+A platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:
+the code whoever invited gives the person by another channel. A community invitation ignores it.
+On success the platform-admin role is granted, and, when the account had no email, the
+invitation's destination email becomes its email. A missing or wrong code is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the
+client address and against the invitation, and the link can be used again. The fifth missing or
+wrong code on one invitation revokes its link and is answered 400 with the
+`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again.
+
+Every unusable token counts against the client address, together with failed logins, password
+changes and password resets: after 20 within 15 minutes, further requests are answered 429 with a
+Retry-After header until the 15 minutes that started with the first failure have passed.
+
+**Required: any authenticated user (accepts their own membership).**
+ * @summary Accepts an invitation of the logged-in user
+ */
+export const acceptInvitationAsCurrentUser = (
+    acceptInvitationAsCurrentUserBody: AcceptInvitationAsCurrentUserBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/v1/users/current/invitations/accept`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: acceptInvitationAsCurrentUserBody, signal
+    },
+      );
+    }
+  
+
+
+export const getAcceptInvitationAsCurrentUserMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext> => {
+
+const mutationKey = ['acceptInvitationAsCurrentUser'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, {data: AcceptInvitationAsCurrentUserBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  acceptInvitationAsCurrentUser(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptInvitationAsCurrentUserMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>>
+    export type AcceptInvitationAsCurrentUserMutationBody = AcceptInvitationAsCurrentUserBody
+    export type AcceptInvitationAsCurrentUserMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Accepts an invitation of the logged-in user
+ */
+export const useAcceptInvitationAsCurrentUser = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>, TError,{data: AcceptInvitationAsCurrentUserBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof acceptInvitationAsCurrentUser>>,
+        TError,
+        {data: AcceptInvitationAsCurrentUserBody},
+        TContext
+      > => {
+
+      const mutationOptions = getAcceptInvitationAsCurrentUserMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

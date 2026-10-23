@@ -12,7 +12,8 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig, type RequestRouter, type Route as RequestRoute } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
-import { CommunityRole, type CurrentUserResponse, type InvitationInspectionResponse } from "../../api/models";
+import { type CurrentUserResponse, type InvitationInspectionResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { SuccessDisplay } from "../../components/Success/SuccessDisplay";
 import { invitationAcceptedLoginMessage, invitationAcceptedMessage } from "../../utils/session";
 import { LandingRoute } from "../landing/LandingRoute";
@@ -57,7 +58,7 @@ const COMMUNITY_ID = "community-invited";
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));

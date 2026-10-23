@@ -5,33 +5,33 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { UserReferenceResponse } from './userReferenceResponse';
-import type { CommunityAdminResponseContactEmail } from './communityAdminResponseContactEmail';
-import type { CommunityAdminResponsePhoneNumber } from './communityAdminResponsePhoneNumber';
 import type { CommunityAdminResponseAcceptedAt } from './communityAdminResponseAcceptedAt';
-import type { CommunityAdminResponseInvitedAt } from './communityAdminResponseInvitedAt';
+import type { CommunityAdminResponseContactEmail } from './communityAdminResponseContactEmail';
 import type { CommunityAdminResponseInvitationExpiresAt } from './communityAdminResponseInvitationExpiresAt';
+import type { CommunityAdminResponseInvitedAt } from './communityAdminResponseInvitedAt';
+import type { CommunityAdminResponsePhoneNumber } from './communityAdminResponsePhoneNumber';
+import type { UserReferenceResponse } from './userReferenceResponse';
 
 /**
  * A community's admin: this community's member record, the personal id, and the state of the membership and its invitation.
  */
 export interface CommunityAdminResponse {
-  /** The admin's account, by id only: the {userId} the admin endpoints take. */
-  user: UserReferenceResponse;
-  /** The admin's DNI/NIE/NIF, normalised. */
-  personalId: string;
-  /** The admin's full name, as this community records it. */
-  fullName: string;
-  /** The email address this community contacts the admin at. Null if there is none. */
-  contactEmail: CommunityAdminResponseContactEmail;
-  /** The admin's phone number, as this community records it. Null if there is none. */
-  phoneNumber: CommunityAdminResponsePhoneNumber;
   /** When the membership was accepted. Null while it is pending: a pending membership grants no access until it is accepted. Independent of enabled. */
   acceptedAt: CommunityAdminResponseAcceptedAt;
+  /** The email address this community contacts the admin at. Null if there is none. */
+  contactEmail: CommunityAdminResponseContactEmail;
   /** Whether the membership is enabled. A disabled one grants no access to this community, whatever its other state. */
   enabled: boolean;
-  /** When the admin was last sent an invitation. Null if none has been sent. */
-  invitedAt: CommunityAdminResponseInvitedAt;
+  /** The admin's full name, as this community records it. */
+  fullName: string;
   /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
   invitationExpiresAt: CommunityAdminResponseInvitationExpiresAt;
+  /** When the admin was last sent an invitation. Null if none has been sent. */
+  invitedAt: CommunityAdminResponseInvitedAt;
+  /** The admin's DNI/NIE/NIF, normalised. */
+  personalId: string;
+  /** The admin's phone number, as this community records it. Null if there is none. */
+  phoneNumber: CommunityAdminResponsePhoneNumber;
+  /** The admin's account, by id only: the {userId} the admin endpoints take. */
+  user: UserReferenceResponse;
 }

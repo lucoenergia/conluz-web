@@ -1,6 +1,6 @@
 import { useLoggedUser } from "../../context/logged-user.context";
 import { useActiveCommunity } from "../../context/community.context";
-import type { CommunityRole } from "../../api/models";
+import type { CommunityRole } from "./communityRole";
 
 export function useActiveCommunityRole(): CommunityRole | null {
   const loggedUser = useLoggedUser();

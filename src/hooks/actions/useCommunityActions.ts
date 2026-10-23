@@ -12,7 +12,6 @@ import {
   useCreateSupply,
 } from "../../api/supplies/supplies";
 import { getGetAllPlantsQueryKey, useCreatePlant } from "../../api/plants/plants";
-import { getGetAllUsersQueryKey, useCreateUser } from "../../api/users/users";
 import {
   getGetDatadisConfigQueryKey,
   getGetShellyConfigQueryKey,
@@ -39,13 +38,11 @@ import type {
   CreatePlantBody,
   CreateSuppliesWithFileBody,
   CreateSupplyBody,
-  CreateUserBody,
   InviteCommunityAdminBody,
   PlantResponse,
   RestErrorDetailCode,
   SupplyResponse,
   UpdateCommunityBody,
-  UserResponse,
 } from "../../api/models";
 import { getFirstApiErrorCode } from "../../errors/apiErrorCatalogue";
 import { STALE_ROW_CODES } from "../../errors/membershipErrors";
@@ -64,9 +61,9 @@ import type { MembershipWriteResult } from "./useMembershipActions";
  * Two gates are approximations, marked at the action:
  *
  * - creating and importing supplies gate on `canManage`. There is no
- *   `canCreateSupplies`, unlike the sibling `canCreatePlants` and
- *   `canCreateUsers` -- but `canManage`'s own doc names "creating and importing
- *   its supplies", so this is the backend's stated umbrella rather than a guess.
+ *   `canCreateSupplies`, unlike the sibling `canCreatePlants` -- but
+ *   `canManage`'s own doc names "creating and importing its supplies", so this
+ *   is the backend's stated umbrella rather than a guess.
  * - the Datadis and Shelly configuration, and turning Datadis on and off, gate
  *   on `canManage` for the same reason: its doc names "reading and writing its
  *   Datadis and Shelly configuration". `enableDatadis` and `disableDatadis` are
@@ -111,7 +108,6 @@ export interface CommunityRowActions {
     enable: MaybeAction<[], boolean>;
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
-    createUser: MaybeAction<[CreateUserBody], UserResponse | undefined>;
     createSupply: MaybeAction<[CreateSupplyBody], SupplyResponse | undefined>;
     importSupplies: MaybeAction<[CreateSuppliesWithFileBody], CreationInBulkResponse | undefined>;
     configureDatadis: MaybeAction<[ConfigureDatadisBody], ConfigureDatadisResult>;
@@ -154,7 +150,6 @@ export function useCommunityActions(): CommunityActions {
   const enableMutation = useEnableCommunity();
   const disableMutation = useDisableCommunity();
   const createPlantMutation = useCreatePlant();
-  const createUserMutation = useCreateUser();
   const createSupplyMutation = useCreateSupply();
   const importSuppliesMutation = useCreateSuppliesWithFile();
   const configureDatadisMutation = useConfigureDatadis();
@@ -206,7 +201,6 @@ export function useCommunityActions(): CommunityActions {
       const enable = outcomeFromResource(capabilities, "canEnable");
       const disable = outcomeFromResource(capabilities, "canDisable");
       const createPlant = outcomeFromResource(capabilities, "canCreatePlants");
-      const createUsers = outcomeFromResource(capabilities, "canCreateUsers");
       const manage = outcomeFromResource(capabilities, "canManage");
       const manageAdmins = outcomeFromResource(capabilities, "canManageAdmins");
 
@@ -237,8 +231,6 @@ export function useCommunityActions(): CommunityActions {
 
       const invalidateSupplies = () =>
         queryClient.invalidateQueries({ queryKey: getGetAllSuppliesQueryKey(communityId) });
-      const invalidateUsers = () =>
-        queryClient.invalidateQueries({ queryKey: getGetAllUsersQueryKey() });
       const invalidatePlants = () =>
         queryClient.invalidateQueries({ queryKey: getGetAllPlantsQueryKey(communityId) });
 
@@ -283,12 +275,6 @@ export function useCommunityActions(): CommunityActions {
             (data: CreatePlantBody) =>
               runCreating(() => createPlantMutation.mutateAsync({ data }), invalidatePlants),
             createPlantMutation.isPending,
-          ),
-          createUser: grant(
-            createUsers,
-            (data: CreateUserBody) =>
-              runCreating(() => createUserMutation.mutateAsync({ data }), invalidateUsers),
-            createUserMutation.isPending,
           ),
           // Approximation: canManage, for want of a canCreateSupplies.
           createSupply: grant(
@@ -359,7 +345,6 @@ export function useCommunityActions(): CommunityActions {
           enable,
           disable,
           createPlant,
-          createUser: createUsers,
           createSupply: manage,
           importSupplies: manage,
           configureDatadis: manage,

@@ -5,19 +5,19 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { SupplyReferenceResponse } from './supplyReferenceResponse';
 import type { CommunityReferenceResponse } from './communityReferenceResponse';
 import type { PlantReferenceResponse } from './plantReferenceResponse';
+import type { SupplyReferenceResponse } from './supplyReferenceResponse';
 
 export interface CoefficientAtTimestampResponse {
-  /** Supply the coefficient belongs to */
-  supply: SupplyReferenceResponse;
+  /** Coefficient active in this plant at the queried timestamp */
+  coefficient: number;
   /** Community the supply belongs to */
   community: CommunityReferenceResponse;
   /** Plant the coefficient applies in. A supply participating in several plants has one coefficient per plant at any instant. */
   plant: PlantReferenceResponse;
+  /** Supply the coefficient belongs to */
+  supply: SupplyReferenceResponse;
   /** Queried timestamp */
   timestamp: string;
-  /** Coefficient active in this plant at the queried timestamp */
-  coefficient: number;
 }

@@ -277,10 +277,9 @@ covers only the rules #272, #275, #276 and #284 introduced; the rest of the memb
   `capabilities.canRegisterMembers` is true, and only then; a capability absent from the payload MUST
   count as false.
 - **Rationale:** The import registers each row as a registration does, for the same callers, and no
-  capability names the import itself. `canCreateUsers` gated the legacy user import, which created
-  accounts rather than memberships; it is not the answer for this one.
+  capability names the import itself.
 - **Implements:** MEM-030
-- **Source:** #284
+- **Source:** #284; #300 (the legacy user import's capability was retired in lucoenergia/conluz#447)
 
 ### UI-MBR-019 — The dialog explains each column and offers a header-only template
 
@@ -318,11 +317,12 @@ covers only the rules #272, #275, #276 and #284 introduced; the rest of the memb
   - The import MUST send the chosen file as the `file` part of a multipart request to `importMembers`,
     and MUST NOT send `POST /api/v1/users/import`.
   - While the request runs, the dialog MUST show that it is importing and MUST NOT be closable.
-- **Rationale:** The legacy user import created accounts with passwords from the file and is being
-  retired (lucoenergia/conluz#329). An import of many rows takes several seconds, and closing the
-  dialog meanwhile would hide a result that cannot be asked for again.
+- **Rationale:** The legacy user import created accounts with passwords from the file; its endpoint
+  was retired in lucoenergia/conluz#447, and the import must never fall back to it. An import of
+  many rows takes several seconds, and closing the dialog meanwhile would hide a result that cannot
+  be asked for again.
 - **Implements:** MEM-030
-- **Source:** #284
+- **Source:** #284; #300 (endpoint retired in lucoenergia/conluz#447)
 
 ### UI-MBR-022 — A file refused as a whole says why, and that nothing was registered
 

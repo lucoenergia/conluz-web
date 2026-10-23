@@ -10,34 +10,32 @@
  * What the caller may do with this community.
  */
 export interface CommunityCapabilitiesResponse {
-  /** Whether the caller may read this community (GET /api/v1/communities/{communityId}). */
-  canRead: boolean;
-  /** Whether the caller may update this community (PUT /api/v1/communities/{communityId}). A platform-wide decision: being a community admin does not confer it. */
-  canUpdate: boolean;
-  /** Whether the caller may enable this community (POST /api/v1/communities/{communityId}/enable). A platform-wide decision. */
-  canEnable: boolean;
-  /** Whether the caller may disable this community (POST /api/v1/communities/{communityId}/disable). A platform-wide decision. */
-  canDisable: boolean;
-  /** Whether the caller may invite, list, re-invite, enable and disable this community's admins (/api/v1/communities/{communityId}/admins). A platform-wide decision: being a community admin does not confer it. */
-  canManageAdmins: boolean;
-  /** Whether the caller administers this community: creating and importing its supplies, reading and writing its Datadis and Shelly configuration, and triggering its synchronisation endpoints. */
-  canManage: boolean;
-  /** Whether the caller may administer this community's roster: creating, deleting and re-roling its memberships. */
-  canManageMemberships: boolean;
-  /** Whether the caller may register a member in this community (POST /api/v1/communities/{communityId}/memberships/register). Only an active community admin of it: there is no platform-admin bypass. */
-  canRegisterMembers: boolean;
-  /** Whether the caller may send the first invitation to this community's members in bulk (POST /api/v1/communities/{communityId}/memberships/invite). Only an active community admin of it: there is no platform-admin bypass. Whether any member is due one depends on the members' state. */
-  canInviteMembers: boolean;
-  /** Whether the caller may set or clear the investment recorded on this community's memberships. Stricter than canManageMemberships: an investment is the member's own money, so there is no platform-admin bypass. */
-  canManageMembershipInvestment: boolean;
-  /** Whether the caller may list this community's plants (GET /api/v1/communities/{communityId}/plants). */
-  canListPlants: boolean;
   /** Whether the caller may create plants in this community. Creating one also requires a supply the caller can see, so a true here is necessary but not sufficient for any particular supply -- SupplyCapabilitiesResponse.canCreatePlant answers that. */
   canCreatePlants: boolean;
-  /** Whether the caller may create users in this community (POST /api/v1/users, POST /api/v1/users/import). */
-  canCreateUsers: boolean;
-  /** Whether the caller may read this community's communal production data. Membership, not administration: a platform admin who is not a member may not. */
-  canReadProduction: boolean;
+  /** Whether the caller may disable this community (POST /api/v1/communities/{communityId}/disable). A platform-wide decision. */
+  canDisable: boolean;
+  /** Whether the caller may enable this community (POST /api/v1/communities/{communityId}/enable). A platform-wide decision. */
+  canEnable: boolean;
+  /** Whether the caller may send the first invitation to this community's members in bulk (POST /api/v1/communities/{communityId}/memberships/invite). Only an active community admin of it: there is no platform-admin bypass. Whether any member is due one depends on the members' state. */
+  canInviteMembers: boolean;
+  /** Whether the caller may list this community's plants (GET /api/v1/communities/{communityId}/plants). */
+  canListPlants: boolean;
   /** Whether the caller may list this community's supplies (GET /api/v1/communities/{communityId}/supplies). A non-admin member gets only their own. */
   canListSupplies: boolean;
+  /** Whether the caller administers this community: creating and importing its supplies, reading and writing its Datadis and Shelly configuration, and triggering its synchronisation endpoints. */
+  canManage: boolean;
+  /** Whether the caller may invite, list, re-invite, enable and disable this community's admins (/api/v1/communities/{communityId}/admins). A platform-wide decision: being a community admin does not confer it. */
+  canManageAdmins: boolean;
+  /** Whether the caller may set or clear the investment recorded on this community's memberships. Only an active community admin of it: an investment is the member's own money, so there is no platform-admin bypass. */
+  canManageMembershipInvestment: boolean;
+  /** Whether the caller may administer this community's roster: listing, deleting and re-roling its memberships. Only an active community admin of it: there is no platform-admin bypass. */
+  canManageMemberships: boolean;
+  /** Whether the caller may read this community (GET /api/v1/communities/{communityId}). */
+  canRead: boolean;
+  /** Whether the caller may read this community's communal production data. Membership, not administration: a platform admin who is not a member may not. */
+  canReadProduction: boolean;
+  /** Whether the caller may register a member in this community (POST /api/v1/communities/{communityId}/memberships/register). Only an active community admin of it: there is no platform-admin bypass. */
+  canRegisterMembers: boolean;
+  /** Whether the caller may update this community (PUT /api/v1/communities/{communityId}). A platform-wide decision: being a community admin does not confer it. */
+  canUpdate: boolean;
 }

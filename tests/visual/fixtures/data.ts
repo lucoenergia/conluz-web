@@ -56,7 +56,6 @@ const NO_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canCreateCommunity: false,
   canListUsers: false,
   canAdministerPlatform: false,
-  canCreateUsers: false,
   canListPlatformAdmins: false,
   canInvitePlatformAdmins: false,
 };
@@ -65,7 +64,6 @@ const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canCreateCommunity: true,
   canListUsers: true,
   canAdministerPlatform: true,
-  canCreateUsers: true,
   canListPlatformAdmins: true,
   canInvitePlatformAdmins: true,
 };
@@ -77,11 +75,9 @@ const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
  */
 export const UNMANAGEABLE_USER_CAPABILITIES = {
   canRead: true,
-  canEdit: false,
   canDelete: false,
   canEnable: false,
   canDisable: false,
-  canGrantPlatformAdmin: false,
   canRevokePlatformAdmin: false,
   canListSupplies: false,
 };
@@ -89,11 +85,9 @@ export const UNMANAGEABLE_USER_CAPABILITIES = {
 /** What an ordinary caller may do with their own user record. */
 const OWN_USER_CAPABILITIES = {
   canRead: true,
-  canEdit: false,
   canDelete: false,
   canEnable: false,
   canDisable: false,
-  canGrantPlatformAdmin: false,
   canRevokePlatformAdmin: false,
   canListSupplies: true,
 };
@@ -101,18 +95,15 @@ const OWN_USER_CAPABILITIES = {
 /**
  * What a platform admin may do with somebody else's user record.
  *
- * Exported because the route mocks have to serve it conditionally:
- * UserAccessPolicy.canEdit allows a platform admin, or a community admin of one
- * of the target's communities, and nobody else -- so another user's record
- * cannot carry one fixed answer for every caller.
+ * Exported because the route mocks have to serve it conditionally: what a
+ * caller may do with another user's record depends on who is asking, so the
+ * record cannot carry one fixed answer for every caller.
  */
 export const MANAGED_USER_CAPABILITIES = {
   canRead: true,
-  canEdit: true,
   canDelete: true,
   canEnable: true,
   canDisable: true,
-  canGrantPlatformAdmin: true,
   canRevokePlatformAdmin: false,
   canListSupplies: false,
 };
@@ -131,7 +122,6 @@ export const MEMBER_COMMUNITY_CAPABILITIES = {
   canManageAdmins: false,
   canListPlants: true,
   canCreatePlants: false,
-  canCreateUsers: false,
   canReadProduction: true,
   canListSupplies: true,
 };
@@ -145,7 +135,6 @@ export const COMMUNITY_ADMIN_CAPABILITIES = {
   canRegisterMembers: true,
   canInviteMembers: true,
   canCreatePlants: true,
-  canCreateUsers: true,
 };
 
 /**
@@ -1164,18 +1153,19 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA: MembershipEnergyMetricsResp
 /** A stored month of the member's two supplies (#201), both reporting unless stated. */
 function storedMonth(
   date: string,
-  selfConsumptionEnergyKWh: number,
-  consumptionKWh: number,
+  selfConsumptionKWh: number,
+  gridImportKWh: number,
   savingsEur: number,
   suppliesWithData = 2,
 ): MembershipMonthlyConsumptionBucketResponse {
   return {
     date,
     time: "00:00",
-    consumptionKWh,
-    surplusEnergyKWh: 0,
-    generationEnergyKWh: selfConsumptionEnergyKWh,
-    selfConsumptionEnergyKWh,
+    gridImportKWh,
+    surplusKWh: 0,
+    // Self-consumption plus a surplus of 0.
+    assignedProductionKWh: selfConsumptionKWh,
+    selfConsumptionKWh,
     savingsEur,
     tariffSource: "ESTIMATE",
     supplyCount: 2,
@@ -1188,10 +1178,10 @@ function nothingStoredMonth(date: string): MembershipMonthlyConsumptionBucketRes
   return {
     date,
     time: "00:00",
-    consumptionKWh: 0,
-    surplusEnergyKWh: 0,
-    generationEnergyKWh: 0,
-    selfConsumptionEnergyKWh: 0,
+    gridImportKWh: 0,
+    surplusKWh: 0,
+    assignedProductionKWh: 0,
+    selfConsumptionKWh: 0,
     savingsEur: null,
     tariffSource: null,
     supplyCount: 2,
@@ -1247,10 +1237,10 @@ const HOURLY_ASSIGNED_PRODUCTION = [
 export const MEMBER_HOURLY_PROFILE: MembershipHourlyProfileResponse = {
   period: REFERENCE_AUGUST_2026,
   coverage: { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 },
-  buckets: HOURLY_CONSUMPTION.map((averageConsumptionKWh, hour) => ({
+  buckets: HOURLY_CONSUMPTION.map((averageTotalConsumptionKWh, hour) => ({
     hour,
-    averageConsumptionKWh,
-    consumptionSampleCount: 62,
+    averageTotalConsumptionKWh,
+    totalConsumptionSampleCount: 62,
     averageAssignedProductionKWh: HOURLY_ASSIGNED_PRODUCTION[hour],
     assignedProductionSampleCount: 62,
   })),
@@ -1265,7 +1255,7 @@ export const MEMBER_HOURLY_PROFILE_GAPS: MembershipHourlyProfileResponse = {
   ...MEMBER_HOURLY_PROFILE,
   buckets: MEMBER_HOURLY_PROFILE.buckets.map((bucket) => {
     if (bucket.hour === 3) {
-      return { ...bucket, averageConsumptionKWh: null, consumptionSampleCount: 0, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 };
+      return { ...bucket, averageTotalConsumptionKWh: null, totalConsumptionSampleCount: 0, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 };
     }
     if ([6, 7, 20].includes(bucket.hour)) {
       return { ...bucket, averageAssignedProductionKWh: null, assignedProductionSampleCount: 0 };
@@ -1292,8 +1282,8 @@ export const MEMBER_HOURLY_PROFILE_EMPTY: MembershipHourlyProfileResponse = {
   coverage: { hoursWithData: 0, expectedHours: 0, supplyCount: 2, suppliesWithData: 0 },
   buckets: Array.from({ length: 24 }, (_, hour) => ({
     hour,
-    averageConsumptionKWh: null,
-    consumptionSampleCount: 0,
+    averageTotalConsumptionKWh: null,
+    totalConsumptionSampleCount: 0,
     averageAssignedProductionKWh: null,
     assignedProductionSampleCount: 0,
   })),

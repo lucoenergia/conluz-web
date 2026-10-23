@@ -5,7 +5,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useLocation } from "react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import App from "../../App";
-import { CommunityRole } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { createAppQueryClient } from "../../queryClient";
 import { buildCurrentUser } from "../../test/fixtures";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -25,7 +25,7 @@ const CURRENT_USER = "/api/v1/users/current";
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));

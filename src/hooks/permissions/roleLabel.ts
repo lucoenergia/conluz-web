@@ -1,4 +1,4 @@
-import { CommunityRole } from "../../api/models";
+import { CommunityRole } from "./communityRole";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { useActiveCommunityRole } from "./useActiveCommunityRole";
 

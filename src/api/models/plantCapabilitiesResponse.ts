@@ -10,14 +10,14 @@
  * What the caller may do with this plant.
  */
 export interface PlantCapabilitiesResponse {
-  /** Whether the caller may read this plant. Open to any enabled member of its community. */
-  canRead: boolean;
-  /** Whether the caller may update or delete this plant, and read and write its Huawei configuration. */
-  canManage: boolean;
   /** Whether the caller may list this plant's sharing agreements. Admin-only: their contents are not member-readable. */
   canListSharingAgreements: boolean;
+  /** Whether the caller may update or delete this plant, and read and write its Huawei configuration. */
+  canManage: boolean;
   /** Whether the caller may create a sharing agreement under this plant. */
   canManageSharingAgreements: boolean;
+  /** Whether the caller may read this plant. Open to any enabled member of its community. */
+  canRead: boolean;
   /** Whether the caller may open the supply referenced by this plant (GET /api/v1/supplies/{supplyId}). Listing plants is open to any member, but the supply behind one is not, so the reference carries no owner and this says whether following it would succeed. */
   canReadSupply: boolean;
 }

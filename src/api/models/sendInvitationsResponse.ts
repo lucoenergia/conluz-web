@@ -10,8 +10,8 @@
  * The outcome of sending first invitations in bulk.
  */
 export interface SendInvitationsResponse {
-  /** How many members were sent their first invitation by this request. */
-  sent: number;
   /** How many members of the community are still awaiting their first invitation: pending, enabled, with a contact email and never invited. Call again while it is above zero. */
   remaining: number;
+  /** How many members were sent their first invitation by this request. */
+  sent: number;
 }

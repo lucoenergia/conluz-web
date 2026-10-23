@@ -11,10 +11,10 @@ import type { ImportMembersRowResponse } from './importMembersRowResponse';
  * The outcome of importing a file of members.
  */
 export interface ImportMembersResponse {
-  /** How many rows were registered. */
-  registered: number;
   /** How many rows were not registered. Each has a code and a message in `rows`. */
   failed: number;
+  /** How many rows were registered. */
+  registered: number;
   /** One result per data row of the file, in the order of the file. Rows whose cells are all empty are skipped and have no result. */
   rows: ImportMembersRowResponse[];
 }

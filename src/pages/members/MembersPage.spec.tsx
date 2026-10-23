@@ -673,8 +673,7 @@ describe("MembersPage", () => {
     });
 
     it("UI-MBR-008 UI-MBR-013 UI-MBR-018 offers neither registration, import nor bulk send to a community without the capabilities", () => {
-      // canCreateUsers gated the legacy user import; it no longer opens anything here (#284).
-      setup({ community: { canManageMemberships: true, canCreateUsers: true } });
+      setup({ community: { canManageMemberships: true } });
 
       expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();

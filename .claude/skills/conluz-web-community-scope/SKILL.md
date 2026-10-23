@@ -103,7 +103,7 @@ community-switch bug, so classify an endpoint **before** using it:
    - **Gate on presence:** no active community → do not fire the query (`enabled` guard);
      controls that submit community-scoped data disable when none is selected. Never call
      a path-scoped hook with an empty/undefined `communityId`.
-2. **Community-scoped by QUERY parameter** — `/supplies/import`, `/users/import`. The
+2. **Community-scoped by QUERY parameter** — `/supplies/import`. The
    dangerous one: `communityId` is *optional* in the schema, so omitting it compiles,
    type-checks, and silently lets the backend choose the target community. Always pass it.
 3. **Entity-scoped** — `/plants/{plantId}/…`, `/supplies/{supplyId}/…`, and every
@@ -254,12 +254,11 @@ applicable. Both, in that order, never one standing in for the other — a shari
 agreement card needs `isDraft && canDelete`.
 
 **Two capabilities naming opposite operations are not two exclusive affordances.**
-`canEnable`/`canDisable` and `canGrantPlatformAdmin`/`canRevokePlatformAdmin` are
-*both* true for a caller who may do either, and the row's own `enabled` /
-`isPlatformAdmin` is what decides which one applies. `UsersPage` rendered them as
-two separately gated menu items and so offered Habilitar beside Deshabilitar, and
-Conceder beside Revocar; worse, its handlers picked with
-`actions.disable ?? actions.enable`, so with both present "disable" always won and
+`canEnable`/`canDisable` are *both* true for a caller who may do either, and the
+row's own `enabled` is what decides which one applies. `UsersPage` rendered them as
+two separately gated menu items and so offered Habilitar beside Deshabilitar (and
+did the same with granting and revoking the platform-admin flag); worse, its
+handlers picked with `actions.disable ?? actions.enable`, so with both present "disable" always won and
 Habilitar disabled the user it named. Resolve the pair **once** — one item labelled
 by the half that applies — so the menu item, its confirmation dialog and the handler
 that runs it cannot disagree about which operation was chosen.

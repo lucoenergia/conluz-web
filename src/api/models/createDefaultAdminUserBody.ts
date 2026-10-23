@@ -7,19 +7,19 @@
  */
 
 export interface CreateDefaultAdminUserBody {
-  /**
-   * The default admin's DNI/NIE/NIF, used as login username. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same identifier.
-   * @minLength 1
-   */
-  personalId: string;
-  /** @minLength 1 */
-  fullName: string;
   address?: string;
   /** @minLength 1 */
   email: string;
+  /** @minLength 1 */
+  fullName: string;
   /**
    * The default admin's password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. The default admin chooses it, so they are not flagged as having to change it.
    * @minLength 15
    */
   password: string;
+  /**
+   * The default admin's DNI/NIE/NIF, used as login username. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same identifier.
+   * @minLength 1
+   */
+  personalId: string;
 }

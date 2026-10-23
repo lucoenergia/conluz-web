@@ -31,3 +31,4 @@ export { usePlantCapabilities } from "./usePlantCapabilities";
 export { useSupplyCapabilities } from "./useSupplyCapabilities";
 export { Can } from "./Can";
 export { useActiveCommunityRoleLabel } from "./roleLabel";
+export { CommunityRole } from "./communityRole";

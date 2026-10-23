@@ -6,4 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CreateUsersInBulkErrorPersonalId = string | null;
+/**
+ * Average energy consumed by every supply of the membership in this hour, whatever its origin: grid import plus self-consumed energy. Averaged over the total consumption samples found. Null when there is no sample, never 0.
+ */
+export type MembershipHourlyProfileBucketResponseAverageTotalConsumptionKWh = number | null;

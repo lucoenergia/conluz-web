@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 import { useGetCommunityById, type getCommunityById } from "../../api/communities/communities";
-import { CommunityRole, type CurrentUserResponse, type SupplyResponse } from "../../api/models";
+import { type CurrentUserResponse, type SupplyResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildSupply, buildUser } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 

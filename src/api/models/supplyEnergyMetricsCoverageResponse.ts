@@ -7,8 +7,8 @@
  */
 
 export interface SupplyEnergyMetricsCoverageResponse {
-  /** Number of hourly consumption records found in the period */
-  hoursWithData: number;
   /** Number of hours the period spans. Accounts for daylight saving transitions, so a transition day contributes 23 or 25 hours rather than 24. */
   expectedHours: number;
+  /** Number of hourly consumption records found in the period */
+  hoursWithData: number;
 }

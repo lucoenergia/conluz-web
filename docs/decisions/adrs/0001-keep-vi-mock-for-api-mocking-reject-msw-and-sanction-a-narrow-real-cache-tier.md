@@ -103,7 +103,7 @@ The pre-agreed criterion required all three of its conditions. The fidelity cond
 
 ## References
 
-- `src/api/custom-instance.ts` — the single axios entry point every generated hook calls
+- `src/http/custom-instance.ts` — the single axios entry point every generated hook calls (in `src/api/` when this ADR was written; moved in #300)
 - `src/pages/production/SharingAgreementReopenInvalidation.spec.tsx`, `SupplyCoefficientHistoryInvalidation.spec.tsx`, `useSharingAgreementCoefficientMutations.staleness.spec.tsx` — tier 2 reference implementations
 - `src/theme/` — the theme `renderWithProviders` must use
 - Issue #170 — the impossible-state mock that prompted this, and the removal of the generated MSW handlers

@@ -220,7 +220,6 @@ describe("CapabilityRoute — community scope", () => {
       canAdministerPlatform: true,
       canListUsers: true,
       canCreateCommunity: true,
-      canCreateUsers: true,
     });
     setCommunityCapabilities({ canManage: false });
     setup({ scope: "community", capability: "canManage" });

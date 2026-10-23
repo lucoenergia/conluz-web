@@ -32,7 +32,7 @@ import { MembersPage } from "./MembersPage";
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));
@@ -453,10 +453,10 @@ describe("who may import", () => {
     expect(screen.getByRole("button", { name: "Importar miembros" })).toBeInTheDocument();
   });
 
-  it("UI-MBR-018 does not offer it without canRegisterMembers, even with canCreateUsers", async () => {
+  it("UI-MBR-018 does not offer it without canRegisterMembers, even with canManageMemberships", async () => {
     const community = buildCommunity({
       ...ADMIN_COMMUNITY,
-      capabilities: buildCommunityCapabilities({ canRead: true, canManageMemberships: true, canCreateUsers: true }),
+      capabilities: buildCommunityCapabilities({ canRead: true, canManageMemberships: true }),
     });
     serve({}, community);
     await renderPage();
@@ -465,7 +465,7 @@ describe("who may import", () => {
   });
 
   it("UI-MBR-018 does not offer it from a backend that does not send canRegisterMembers", async () => {
-    const capabilities = buildCommunityCapabilities({ canRead: true, canManageMemberships: true, canCreateUsers: true });
+    const capabilities = buildCommunityCapabilities({ canRead: true, canManageMemberships: true });
     delete (capabilities as Partial<typeof capabilities>).canRegisterMembers;
     serve({}, buildCommunity({ ...ADMIN_COMMUNITY, capabilities }));
     await renderPage();

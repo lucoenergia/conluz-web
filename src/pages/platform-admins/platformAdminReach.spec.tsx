@@ -5,7 +5,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useLocation } from "react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import App from "../../App";
-import { CommunityRole } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 import { createAppQueryClient } from "../../queryClient";
 import {
   buildCommunity,
@@ -36,7 +36,7 @@ import { routeRequests, type RequestConfig, type RequestRouter } from "../../tes
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));
@@ -45,9 +45,9 @@ const COMMUNITY_ID = "community-1";
 const COMMUNITY_NAME = "Comunidad Solar";
 
 /**
- * Everything the backend still reports to a platform admin, including the
- * capabilities the web client no longer reads (canListUsers, canCreateUsers):
- * the screens must stay away from users whatever the payload says.
+ * Everything the backend still reports to a platform admin, including a
+ * capability the web client no longer reads (canListUsers): the screens must
+ * stay away from users whatever the payload says.
  */
 const PLATFORM_ADMIN = buildCurrentUser({
   id: "u-paula",
@@ -59,7 +59,6 @@ const PLATFORM_ADMIN = buildCurrentUser({
     canCreateCommunity: true,
     canListPlatformAdmins: true,
     canListUsers: true,
-    canCreateUsers: true,
   }),
 });
 

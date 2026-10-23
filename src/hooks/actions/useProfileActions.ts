@@ -13,10 +13,8 @@ export type ChangePasswordResult = { ok: true } | { ok: false; failure: AuthFail
  * calling, and the API documents it as open to any authenticated caller. There
  * is no capability to read because there is no decision to make.
  *
- * This is what the profile screen saves through. The alternative, the
- * administrative PUT /users/{userId}, answers canEdit false for an ordinary
- * member looking at their own record, so a profile page built on it has no
- * save button for the people who use it most.
+ * This is what the profile screen saves through, and the only way a user
+ * changes their own contact details.
  *
  * Changing your own password is the same kind of operation (#196): PUT
  * /users/current/password acts on the caller, so it is ungated for the same

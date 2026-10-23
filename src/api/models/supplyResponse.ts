@@ -5,38 +5,38 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { SupplyResponseUser } from './supplyResponseUser';
-import type { SupplyResponseName } from './supplyResponseName';
 import type { SupplyResponseAddressRef } from './supplyResponseAddressRef';
+import type { SupplyCapabilitiesResponse } from './supplyCapabilitiesResponse';
+import type { CommunityReferenceResponse } from './communityReferenceResponse';
 import type { SupplyResponseContract } from './supplyResponseContract';
 import type { SupplyResponseDistributor } from './supplyResponseDistributor';
+import type { SupplyResponseName } from './supplyResponseName';
 import type { SupplyResponseShelly } from './supplyResponseShelly';
-import type { CommunityReferenceResponse } from './communityReferenceResponse';
-import type { SupplyCapabilitiesResponse } from './supplyCapabilitiesResponse';
+import type { SupplyResponseUser } from './supplyResponseUser';
 
 export interface SupplyResponse {
-  /** Internal unique identifier of the supply */
-  id: string;
-  /** Code that identifies the supply */
-  code: string;
-  /** Owner of the supply */
-  user: SupplyResponseUser;
-  /** Name of the supply */
-  name: SupplyResponseName;
   /** Address of the supply */
   address: string;
   /** Reference ID of the address */
   addressRef: SupplyResponseAddressRef;
-  /** Whether the supply is enabled or disabled */
-  enabled: boolean;
+  /** What the caller may do with this supply. */
+  capabilities: SupplyCapabilitiesResponse;
+  /** Code that identifies the supply */
+  code: string;
+  /** Community the supply belongs to */
+  community: CommunityReferenceResponse;
   /** Contract information of the supply */
   contract: SupplyResponseContract;
   /** Distributor information of the supply */
   distributor: SupplyResponseDistributor;
+  /** Whether the supply is enabled or disabled */
+  enabled: boolean;
+  /** Internal unique identifier of the supply */
+  id: string;
+  /** Name of the supply */
+  name: SupplyResponseName;
   /** Shelly device information of the supply */
   shelly: SupplyResponseShelly;
-  /** Community the supply belongs to */
-  community: CommunityReferenceResponse;
-  /** What the caller may do with this supply. */
-  capabilities: SupplyCapabilitiesResponse;
+  /** Owner of the supply */
+  user: SupplyResponseUser;
 }

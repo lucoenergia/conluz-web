@@ -8,11 +8,11 @@
 import type { RestErrorDetail } from './restErrorDetail';
 
 export interface RestError {
-  timestamp?: string;
-  status?: number;
-  /** Human-readable summary. When there is exactly one error, equals errors[0].message. When there are several (e.g. a batch import with per-line errors), this is a short summary (e.g. "The file contains 5 invalid lines") - never a concatenation of the individual messages. Existing clients that only read `message` keep working; new clients should read `errors` for the full, structured list. This field exists for backward compatibility and as the fallback for clients that do not understand `code`. */
-  message?: string;
-  traceId?: string;
   /** The individual errors that make up this response. Always has at least one element. */
   errors: RestErrorDetail[];
+  /** Human-readable summary. When there is exactly one error, equals errors[0].message. When there are several (e.g. a batch import with per-line errors), this is a short summary (e.g. "The file contains 5 invalid lines") - never a concatenation of the individual messages. Existing clients that only read `message` keep working; new clients should read `errors` for the full, structured list. This field exists for backward compatibility and as the fallback for clients that do not understand `code`. */
+  message?: string;
+  status?: number;
+  timestamp?: string;
+  traceId?: string;
 }

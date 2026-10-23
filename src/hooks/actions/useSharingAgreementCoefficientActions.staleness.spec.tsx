@@ -11,7 +11,7 @@ import { waitFor, act } from "@testing-library/react";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { routeRequests } from "../../test/requestRouter";
 import dayjs from "dayjs";
-import { customInstance } from "../../api/custom-instance";
+import { customInstance } from "../../http/custom-instance";
 import { useSharingAgreementCoefficientActions } from "./useSharingAgreementCoefficientActions";
 import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { EditableCoefficientRow } from "../../pages/production/sharingAgreementCoefficientEditing";
@@ -23,7 +23,7 @@ import {
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: vi.fn(),
 }));

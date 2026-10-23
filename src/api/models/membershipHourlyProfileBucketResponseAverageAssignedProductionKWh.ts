@@ -7,6 +7,6 @@
  */
 
 /**
- * Average energy assigned to the membership's supplies in this hour (self-consumed plus surplus energy), over the assigned production samples found. Null when there is no sample; 0 when there are samples and all of them are zero.
+ * Average energy assigned to every supply of the membership in this hour: self-consumed plus surplus energy. Averaged over the assigned production samples found. Null when there is no sample; 0 when there are samples and all of them are zero.
  */
 export type MembershipHourlyProfileBucketResponseAverageAssignedProductionKWh = number | null;

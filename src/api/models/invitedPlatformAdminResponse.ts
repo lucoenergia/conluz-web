@@ -11,8 +11,8 @@ import type { PlatformAdminResponse } from './platformAdminResponse';
  * A platform-admin invitation just sent, with the confirmation code generated for it.
  */
 export interface InvitedPlatformAdminResponse {
-  /** The invitation's row, as the list of platform admins shows it. */
-  platformAdmin: PlatformAdminResponse;
   /** The confirmation code the person will need to accept: 8 characters from 0-9 and A-Z without I, L, O and U. Shown only in this response, never again by any endpoint, and never sent by email: give it to the person by another channel, such as by phone or in person. */
   confirmationCode: string;
+  /** The invitation's row, as the list of platform admins shows it. */
+  platformAdmin: PlatformAdminResponse;
 }

@@ -8,8 +8,9 @@ import {
   type getMembershipEnergyMetrics,
   type getMembershipMonthlyConsumption,
 } from "../../../api/memberships/memberships";
-import { CommunityRole, type MembershipMonthlyConsumptionBucketResponse } from "../../../api/models";
-import { customInstance } from "../../../api/custom-instance";
+import { type MembershipMonthlyConsumptionBucketResponse } from "../../../api/models";
+import { CommunityRole } from "../../../hooks/permissions";
+import { customInstance } from "../../../http/custom-instance";
 import { useLoggedUser } from "../../../context/logged-user.context";
 import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../../test/capturedResponses";
 import {
@@ -35,7 +36,7 @@ const { Chart } = vi.hoisted(() => ({
 }));
 vi.mock("react-apexcharts", () => ({ default: Chart }));
 
-vi.mock(import("../../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: vi.fn(),
 }));
@@ -67,8 +68,8 @@ const MARCH = 6;
 function storedMonth(date: string, index: number): MembershipMonthlyConsumptionBucketResponse {
   return buildMembershipMonthlyConsumptionBucket({
     date,
-    consumptionKWh: 200.4 + index,
-    selfConsumptionEnergyKWh: 150.6 + index,
+    gridImportKWh: 200.4 + index,
+    selfConsumptionKWh: 150.6 + index,
     savingsEur: 20.15 + index,
     tariffSource: "REAL_TARIFF",
     supplyCount: 2,
@@ -85,10 +86,10 @@ function twelveMonthsWith(index?: number, month?: Partial<MembershipMonthlyConsu
 
 /** What a month with nothing stored looks like on the wire: zero energy, null savings and tariff. */
 const NOTHING_STORED: Partial<MembershipMonthlyConsumptionBucketResponse> = {
-  consumptionKWh: 0,
-  selfConsumptionEnergyKWh: 0,
-  surplusEnergyKWh: 0,
-  generationEnergyKWh: 0,
+  gridImportKWh: 0,
+  selfConsumptionKWh: 0,
+  surplusKWh: 0,
+  assignedProductionKWh: 0,
   savingsEur: null,
   tariffSource: null,
   suppliesWithData: 0,
@@ -96,10 +97,10 @@ const NOTHING_STORED: Partial<MembershipMonthlyConsumptionBucketResponse> = {
 
 /** A stored month whose records carry zero energy: a measured zero. */
 const MEASURED_ZERO: Partial<MembershipMonthlyConsumptionBucketResponse> = {
-  consumptionKWh: 0,
-  selfConsumptionEnergyKWh: 0,
-  surplusEnergyKWh: 0,
-  generationEnergyKWh: 0,
+  gridImportKWh: 0,
+  selfConsumptionKWh: 0,
+  surplusKWh: 0,
+  assignedProductionKWh: 0,
   savingsEur: 0,
   tariffSource: "REAL_TARIFF",
   suppliesWithData: 2,

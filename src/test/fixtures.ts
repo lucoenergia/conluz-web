@@ -58,7 +58,7 @@ import {
  * having said why. It also matches src/hooks/permissions, where an absent or
  * unknown capability reads as denied.
  *
- * A spec grants exactly what it exercises -- `buildUserCapabilities({ canEdit:
+ * A spec grants exactly what it exercises -- `buildUserCapabilities({ canRead:
  * true })` -- so the grant appears in the test that depends on it.
  *
  * Each default lists every field instead of being derived, so a capability
@@ -71,11 +71,9 @@ export function buildUserCapabilities(
 ): UserCapabilitiesResponse {
   return {
     canRead: false,
-    canEdit: false,
     canDelete: false,
     canEnable: false,
     canDisable: false,
-    canGrantPlatformAdmin: false,
     canRevokePlatformAdmin: false,
     canListSupplies: false,
     ...overrides,
@@ -89,7 +87,6 @@ export function buildPlatformCapabilities(
     canCreateCommunity: false,
     canListUsers: false,
     canAdministerPlatform: false,
-    canCreateUsers: false,
     canListPlatformAdmins: false,
     canInvitePlatformAdmins: false,
     ...overrides,
@@ -137,7 +134,6 @@ export function buildCommunityCapabilities(
     canManageAdmins: false,
     canListPlants: false,
     canCreatePlants: false,
-    canCreateUsers: false,
     canReadProduction: false,
     canListSupplies: false,
     ...overrides,
@@ -545,10 +541,10 @@ export function buildMembershipMonthlyConsumptionBucket(
   return {
     date: "2026/01/01",
     time: "00:00",
-    consumptionKWh: 0,
-    surplusEnergyKWh: 0,
-    generationEnergyKWh: 0,
-    selfConsumptionEnergyKWh: 0,
+    gridImportKWh: 0,
+    surplusKWh: 0,
+    assignedProductionKWh: 0,
+    selfConsumptionKWh: 0,
     savingsEur: null,
     tariffSource: null,
     supplyCount: 1,
@@ -566,8 +562,8 @@ export function buildMembershipHourlyProfileBucket(
 ): MembershipHourlyProfileBucketResponse {
   return {
     hour: 0,
-    averageConsumptionKWh: null,
-    consumptionSampleCount: 0,
+    averageTotalConsumptionKWh: null,
+    totalConsumptionSampleCount: 0,
     averageAssignedProductionKWh: null,
     assignedProductionSampleCount: 0,
     ...overrides,

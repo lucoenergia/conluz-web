@@ -3,7 +3,7 @@ import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { buildCurrentUser } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { useGetCurrentUser, type getCurrentUser } from "../../api/users/users";
-import { CommunityRole } from "../../api/models";
+import { CommunityRole } from "./communityRole";
 
 const mockRole = vi.hoisted(() => ({ current: null as CommunityRole | null }));
 

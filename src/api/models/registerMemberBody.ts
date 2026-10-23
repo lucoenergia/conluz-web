@@ -5,17 +5,16 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { RegisterMemberBodyMemberNumber } from './registerMemberBodyMemberNumber';
-import type { RegisterMemberBodyContactEmail } from './registerMemberBodyContactEmail';
 import type { RegisterMemberBodyAddress } from './registerMemberBodyAddress';
+import type { RegisterMemberBodyContactEmail } from './registerMemberBodyContactEmail';
+import type { RegisterMemberBodyMemberNumber } from './registerMemberBodyMemberNumber';
 import type { RegisterMemberBodyPhoneNumber } from './registerMemberBodyPhoneNumber';
 
 export interface RegisterMemberBody {
-  /**
-   * The member's DNI/NIE/NIF. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same person. A value made only of those removed characters is refused.
-   * @minLength 1
-   */
-  personalId: string;
+  /** The member's address, as this community records it. An empty or blank value is recorded as none. */
+  address?: RegisterMemberBodyAddress;
+  /** The email address this community contacts the member at. Registering sends nothing: the invitation to accept the membership is sent to this address with sendInvitation. Omit it, or send null, an empty or a blank string, if there is none. */
+  contactEmail?: RegisterMemberBodyContactEmail;
   /**
    * The member's full name, as this community records it.
    * @minLength 1
@@ -26,10 +25,11 @@ export interface RegisterMemberBody {
    * @minimum 0
    */
   memberNumber?: RegisterMemberBodyMemberNumber;
-  /** The email address this community contacts the member at. Registering sends nothing: the invitation to accept the membership is sent to this address with sendInvitation. Omit it, or send null, an empty or a blank string, if there is none. */
-  contactEmail?: RegisterMemberBodyContactEmail;
-  /** The member's address, as this community records it. An empty or blank value is recorded as none. */
-  address?: RegisterMemberBodyAddress;
+  /**
+   * The member's DNI/NIE/NIF. It is normalised before it is stored or compared: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same person. A value made only of those removed characters is refused.
+   * @minLength 1
+   */
+  personalId: string;
   /** The member's phone number, as this community records it. An empty or blank value is recorded as none. */
   phoneNumber?: RegisterMemberBodyPhoneNumber;
 }

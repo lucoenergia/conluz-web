@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { useQuery } from "@tanstack/react-query";
 import { waitFor } from "@testing-library/react";
-import { AXIOS_INSTANCE, customInstance } from "../api/custom-instance";
+import { AXIOS_INSTANCE, customInstance } from "../http/custom-instance";
 import { renderHookWithProviders } from "./renderWithProviders";
 import { takeBlockedRequests } from "./networkGuard";
 

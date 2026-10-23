@@ -7,14 +7,14 @@
  */
 
 export interface SupplyEnergyMetricsEnergyResponse {
-  /** Energy consumed, whatever its origin: gridImportKWh plus selfConsumptionKWh */
-  totalConsumptionKWh: number;
-  /** Energy taken from the grid. Does not include self-consumed energy. */
-  gridImportKWh: number;
-  /** Energy produced by the community and consumed by this supply, as reported by the distributor */
-  selfConsumptionKWh: number;
-  /** Energy assigned to this supply and fed back to the grid */
-  surplusKWh: number;
-  /** Energy assigned to this supply: selfConsumptionKWh plus surplusKWh */
+  /** Energy assigned to this supply: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
   assignedProductionKWh: number;
+  /** Energy taken from the grid by this supply over the period. Does not include self-consumed energy. In kWh, rounded to 3 decimals. */
+  gridImportKWh: number;
+  /** Energy produced by the community and consumed by this supply over the period, as reported by the distributor. In kWh, rounded to 3 decimals. */
+  selfConsumptionKWh: number;
+  /** Energy assigned to this supply and fed back to the grid over the period. In kWh, rounded to 3 decimals. */
+  surplusKWh: number;
+  /** Energy consumed, whatever its origin: gridImportKWh plus selfConsumptionKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
+  totalConsumptionKWh: number;
 }

@@ -7,6 +7,6 @@
  */
 
 export interface PriceByHour {
-  price?: number;
   hour?: string;
+  price?: number;
 }

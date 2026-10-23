@@ -15,20 +15,21 @@ import type { MembershipMonthlyConsumptionBucketResponse } from "../api/models";
  * for a member with two supplies, from 2022-10-01T00:00:00+02:00 to
  * 2023-09-30T23:00:00+02:00, captured on 2026-10-07. Seven months have nothing
  * stored and five are stored, so both shapes of a bucket are here.
+ * Field names updated to the renamed contract in #294; values unchanged except assignedProductionKWh.
  */
 export const CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION: MembershipMonthlyConsumptionBucketResponse[] = [
-  { date: "2022/10/01", time: "00:00", consumptionKWh: 0, surplusEnergyKWh: 0, generationEnergyKWh: 0, selfConsumptionEnergyKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
-  { date: "2022/11/01", time: "00:00", consumptionKWh: 0, surplusEnergyKWh: 0, generationEnergyKWh: 0, selfConsumptionEnergyKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
-  { date: "2022/12/01", time: "00:00", consumptionKWh: 0, surplusEnergyKWh: 0, generationEnergyKWh: 0, selfConsumptionEnergyKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
-  { date: "2023/01/01", time: "00:00", consumptionKWh: 0, surplusEnergyKWh: 0, generationEnergyKWh: 0, selfConsumptionEnergyKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
-  { date: "2023/02/01", time: "00:00", consumptionKWh: 0, surplusEnergyKWh: 0, generationEnergyKWh: 0, selfConsumptionEnergyKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
-  { date: "2023/03/01", time: "00:00", consumptionKWh: 0, surplusEnergyKWh: 0, generationEnergyKWh: 0, selfConsumptionEnergyKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
-  { date: "2023/04/01", time: "00:00", consumptionKWh: 0, surplusEnergyKWh: 0, generationEnergyKWh: 0, selfConsumptionEnergyKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
-  { date: "2023/05/01", time: "00:00", consumptionKWh: 0.169, surplusEnergyKWh: 0.0, generationEnergyKWh: 0.0, selfConsumptionEnergyKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
-  { date: "2023/06/01", time: "00:00", consumptionKWh: 94.211004, surplusEnergyKWh: 484.14, generationEnergyKWh: 0.0, selfConsumptionEnergyKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
-  { date: "2023/07/01", time: "00:00", consumptionKWh: 73.008, surplusEnergyKWh: 616.642, generationEnergyKWh: 0.0, selfConsumptionEnergyKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
-  { date: "2023/08/01", time: "00:00", consumptionKWh: 101.187, surplusEnergyKWh: 558.787, generationEnergyKWh: 0.0, selfConsumptionEnergyKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
-  { date: "2023/09/01", time: "00:00", consumptionKWh: 110.658, surplusEnergyKWh: 423.894, generationEnergyKWh: 0.0, selfConsumptionEnergyKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
+  { date: "2022/10/01", time: "00:00", gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0, selfConsumptionKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
+  { date: "2022/11/01", time: "00:00", gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0, selfConsumptionKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
+  { date: "2022/12/01", time: "00:00", gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0, selfConsumptionKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
+  { date: "2023/01/01", time: "00:00", gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0, selfConsumptionKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
+  { date: "2023/02/01", time: "00:00", gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0, selfConsumptionKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
+  { date: "2023/03/01", time: "00:00", gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0, selfConsumptionKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
+  { date: "2023/04/01", time: "00:00", gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0, selfConsumptionKWh: 0, savingsEur: null, tariffSource: null, supplyCount: 2, suppliesWithData: 0 },
+  { date: "2023/05/01", time: "00:00", gridImportKWh: 0.169, surplusKWh: 0.0, assignedProductionKWh: 0.0, selfConsumptionKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
+  { date: "2023/06/01", time: "00:00", gridImportKWh: 94.211004, surplusKWh: 484.14, assignedProductionKWh: 484.14, selfConsumptionKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
+  { date: "2023/07/01", time: "00:00", gridImportKWh: 73.008, surplusKWh: 616.642, assignedProductionKWh: 616.642, selfConsumptionKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
+  { date: "2023/08/01", time: "00:00", gridImportKWh: 101.187, surplusKWh: 558.787, assignedProductionKWh: 558.787, selfConsumptionKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
+  { date: "2023/09/01", time: "00:00", gridImportKWh: 110.658, surplusKWh: 423.894, assignedProductionKWh: 423.894, selfConsumptionKWh: 0.0, savingsEur: 0.0, tariffSource: "ESTIMATE", supplyCount: 2, suppliesWithData: 2 },
 ];
 
 /**

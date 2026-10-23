@@ -48,7 +48,6 @@
         "useAcceptInvitation",
         "useAcceptInvitationAsCurrentUser",
         "useClearMembershipInvestment",
-        "useCreateMembership",
         "useDeleteMembership",
         "useDisableCommunityAdmin",
         "useDisableMembership",
@@ -127,18 +126,14 @@
       "module": "src/api/users/users",
       "hooks": [
         "useChangePassword",
-        "useCreateUser",
-        "useCreateUsersWithFile",
         "useDeleteUser",
         "useDisableUser",
         "useEnableUser",
-        "useGrantPlatformAdmin",
         "useInvitePlatformAdmin",
         "useResendPlatformAdminInvitation",
         "useRevokePlatformAdmin",
         "useRevokePlatformAdminInvitation",
-        "useUpdateProfile",
-        "useUpdateUser"
+        "useUpdateProfile"
       ]
     }
   ]

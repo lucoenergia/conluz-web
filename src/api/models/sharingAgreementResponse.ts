@@ -5,37 +5,37 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { SharingAgreementCapabilitiesResponse } from './sharingAgreementCapabilitiesResponse';
+import type { SharingAgreementResponseCreatedBy } from './sharingAgreementResponseCreatedBy';
+import type { SharingAgreementResponseFile } from './sharingAgreementResponseFile';
 import type { SharingAgreementResponseNotes } from './sharingAgreementResponseNotes';
 import type { SharingAgreementResponseStatus } from './sharingAgreementResponseStatus';
-import type { SharingAgreementResponseCreatedBy } from './sharingAgreementResponseCreatedBy';
 import type { SharingAgreementResponseUpdatedAt } from './sharingAgreementResponseUpdatedAt';
 import type { SharingAgreementResponseUpdatedBy } from './sharingAgreementResponseUpdatedBy';
-import type { SharingAgreementResponseFile } from './sharingAgreementResponseFile';
-import type { SharingAgreementCapabilitiesResponse } from './sharingAgreementCapabilitiesResponse';
 
 export interface SharingAgreementResponse {
-  /** Internal unique identifier of the sharing agreement */
-  id: string;
-  /** Identifier of the plant this agreement distributes production from */
-  plantId: string;
-  /** Human-readable label for the agreement */
-  name: string;
-  /** Free-text notes about the agreement */
-  notes: SharingAgreementResponseNotes;
-  /** Status of the agreement: DRAFT, PUBLISHED or SUPERSEDED */
-  status: SharingAgreementResponseStatus;
-  /** Snapshot of the plant's installed power at authoring time, in kW */
-  installedPowerKw: number;
+  /** What the caller may do with this sharing agreement. */
+  capabilities: SharingAgreementCapabilitiesResponse;
   /** Date and time the agreement was created */
   createdAt: string;
   /** Identifier of the user who created the agreement. Null means it was created by the system (a migration), not by a person */
   createdBy: SharingAgreementResponseCreatedBy;
+  /** Metadata of the latest evidence file uploaded for this agreement. Null means no file has been uploaded, never that it wasn't loaded */
+  file: SharingAgreementResponseFile;
+  /** Internal unique identifier of the sharing agreement */
+  id: string;
+  /** Snapshot of the plant's installed power at authoring time, in kW */
+  installedPowerKw: number;
+  /** Human-readable label for the agreement */
+  name: string;
+  /** Free-text notes about the agreement */
+  notes: SharingAgreementResponseNotes;
+  /** Identifier of the plant this agreement distributes production from */
+  plantId: string;
+  /** Status of the agreement: DRAFT, PUBLISHED or SUPERSEDED */
+  status: SharingAgreementResponseStatus;
   /** Date and time the agreement was last edited. Null means it has never been edited since creation */
   updatedAt: SharingAgreementResponseUpdatedAt;
   /** Identifier of the user who last edited the agreement. Null means it has never been edited since creation */
   updatedBy: SharingAgreementResponseUpdatedBy;
-  /** Metadata of the latest evidence file uploaded for this agreement. Null means no file has been uploaded, never that it wasn't loaded */
-  file: SharingAgreementResponseFile;
-  /** What the caller may do with this sharing agreement. */
-  capabilities: SharingAgreementCapabilitiesResponse;
 }

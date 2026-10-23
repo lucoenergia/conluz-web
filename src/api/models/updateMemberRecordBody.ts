@@ -5,12 +5,16 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { UpdateMemberRecordBodyMemberNumber } from './updateMemberRecordBodyMemberNumber';
-import type { UpdateMemberRecordBodyContactEmail } from './updateMemberRecordBodyContactEmail';
 import type { UpdateMemberRecordBodyAddress } from './updateMemberRecordBodyAddress';
+import type { UpdateMemberRecordBodyContactEmail } from './updateMemberRecordBodyContactEmail';
+import type { UpdateMemberRecordBodyMemberNumber } from './updateMemberRecordBodyMemberNumber';
 import type { UpdateMemberRecordBodyPhoneNumber } from './updateMemberRecordBodyPhoneNumber';
 
 export interface UpdateMemberRecordBody {
+  /** The member's address, as this community records it. Omit it, or send null, an empty or a blank string, if there is none; one already recorded is then cleared. */
+  address?: UpdateMemberRecordBodyAddress;
+  /** The email address this community contacts the member at, and where the next invitation is sent. Omit it, or send null, an empty or a blank string, if there is none; one already recorded is then cleared. A membership with the COMMUNITY_ADMIN role must keep one. */
+  contactEmail?: UpdateMemberRecordBodyContactEmail;
   /**
    * The member's full name, as this community records it.
    * @minLength 1
@@ -21,10 +25,6 @@ export interface UpdateMemberRecordBody {
    * @minimum 0
    */
   memberNumber?: UpdateMemberRecordBodyMemberNumber;
-  /** The email address this community contacts the member at, and where the next invitation is sent. Omit it, or send null, an empty or a blank string, if there is none; one already recorded is then cleared. A membership with the COMMUNITY_ADMIN role must keep one. */
-  contactEmail?: UpdateMemberRecordBodyContactEmail;
-  /** The member's address, as this community records it. Omit it, or send null, an empty or a blank string, if there is none; one already recorded is then cleared. */
-  address?: UpdateMemberRecordBodyAddress;
   /** The member's phone number, as this community records it. Omit it, or send null, an empty or a blank string, if there is none; one already recorded is then cleared. */
   phoneNumber?: UpdateMemberRecordBodyPhoneNumber;
 }

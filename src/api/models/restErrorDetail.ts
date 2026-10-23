@@ -9,10 +9,10 @@ import type { RestErrorDetailCode } from './restErrorDetailCode';
 import type { RestErrorDetailParams } from './restErrorDetailParams';
 
 export interface RestErrorDetail {
-  /** Human-readable error message, in English. */
-  message: string;
   /** Null for errors not yet migrated to the typed contract; clients must fall back to `message` for those. */
   code?: RestErrorDetailCode;
+  /** Human-readable error message, in English. */
+  message: string;
   /** Structured data for this error, keyed in camelCase for use as i18n interpolation variables. Null when the error carries no such data. */
   params?: RestErrorDetailParams;
 }

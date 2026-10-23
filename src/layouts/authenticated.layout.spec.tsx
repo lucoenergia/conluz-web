@@ -7,7 +7,7 @@ import { renderWithProviders } from "../test/renderWithProviders";
 import { query } from "../test/queryState";
 import { useGetCurrentUser, useGetSuppliesByUserId } from "../api/users/users";
 import { AuthenticatedLayout } from "./authenticated.layout";
-import { CommunityRole } from "../api/models";
+import { CommunityRole } from "../hooks/permissions";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../test/fixtures";
 import { useGetAllCommunities, useGetCommunityById, type getCommunityById } from "../api/communities/communities";
 

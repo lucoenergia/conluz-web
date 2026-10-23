@@ -5,31 +5,31 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { SharingAgreementPartitionCoefficientResponseApplicationState } from './sharingAgreementPartitionCoefficientResponseApplicationState';
+import type { SharingAgreementPartitionCoefficientResponseCurrentCoefficient } from './sharingAgreementPartitionCoefficientResponseCurrentCoefficient';
+import type { SharingAgreementPartitionCoefficientResponseEndDate } from './sharingAgreementPartitionCoefficientResponseEndDate';
+import type { SharingAgreementPartitionCoefficientResponseEndState } from './sharingAgreementPartitionCoefficientResponseEndState';
 import type { SupplyReferenceResponse } from './supplyReferenceResponse';
 import type { SharingAgreementPartitionCoefficientResponseValidFrom } from './sharingAgreementPartitionCoefficientResponseValidFrom';
 import type { SharingAgreementPartitionCoefficientResponseValidTo } from './sharingAgreementPartitionCoefficientResponseValidTo';
-import type { SharingAgreementPartitionCoefficientResponseApplicationState } from './sharingAgreementPartitionCoefficientResponseApplicationState';
-import type { SharingAgreementPartitionCoefficientResponseEndState } from './sharingAgreementPartitionCoefficientResponseEndState';
-import type { SharingAgreementPartitionCoefficientResponseEndDate } from './sharingAgreementPartitionCoefficientResponseEndDate';
-import type { SharingAgreementPartitionCoefficientResponseCurrentCoefficient } from './sharingAgreementPartitionCoefficientResponseCurrentCoefficient';
 
 export interface SharingAgreementPartitionCoefficientResponse {
-  /** Internal unique identifier of this coefficient */
-  coefficientId: string;
-  /** Supply this coefficient belongs to */
-  supply: SupplyReferenceResponse;
+  /** Whether the distributor has applied this coefficient yet */
+  applicationState: SharingAgreementPartitionCoefficientResponseApplicationState;
   /** Partition coefficient value, on a 0-1 scale */
   coefficient: number;
+  /** Internal unique identifier of this coefficient */
+  coefficientId: string;
+  /** The coefficient this supply is currently on in this agreement's plant -- what the value in this row would replace. Null when the supply has no active coefficient in this plant. */
+  currentCoefficient: SharingAgreementPartitionCoefficientResponseCurrentCoefficient;
+  /** The effective end of this coefficient's coverage. Present only when endState is DERIVED or CLOSED. */
+  endDate: SharingAgreementPartitionCoefficientResponseEndDate;
+  /** How/why this coefficient's coverage ends */
+  endState: SharingAgreementPartitionCoefficientResponseEndState;
+  /** Supply this coefficient belongs to */
+  supply: SupplyReferenceResponse;
   /** Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated. */
   validFrom: SharingAgreementPartitionCoefficientResponseValidFrom;
   /** End of the period (exclusive), as stored. Null unless explicitly closed. */
   validTo: SharingAgreementPartitionCoefficientResponseValidTo;
-  /** Whether the distributor has applied this coefficient yet */
-  applicationState: SharingAgreementPartitionCoefficientResponseApplicationState;
-  /** How/why this coefficient's coverage ends */
-  endState: SharingAgreementPartitionCoefficientResponseEndState;
-  /** The effective end of this coefficient's coverage. Present only when endState is DERIVED or CLOSED. */
-  endDate: SharingAgreementPartitionCoefficientResponseEndDate;
-  /** The coefficient this supply is currently on in this agreement's plant -- what the value in this row would replace. Null when the supply has no active coefficient in this plant. */
-  currentCoefficient: SharingAgreementPartitionCoefficientResponseCurrentCoefficient;
 }

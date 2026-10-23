@@ -7,10 +7,10 @@
  */
 
 export interface UpdateCommunityBody {
-  /** @minLength 1 */
-  name: string;
+  address?: string;
   /** @minLength 1 */
   code: string;
   legalId?: string;
-  address?: string;
+  /** @minLength 1 */
+  name: string;
 }

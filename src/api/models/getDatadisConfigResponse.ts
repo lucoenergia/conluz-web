@@ -8,8 +8,8 @@
 import type { GetDatadisConfigResponseUsername } from './getDatadisConfigResponseUsername';
 
 export interface GetDatadisConfigResponse {
-  username: GetDatadisConfigResponseUsername;
-  passwordSet: boolean;
   baseUrl: string;
   enabled: boolean;
+  passwordSet: boolean;
+  username: GetDatadisConfigResponseUsername;
 }

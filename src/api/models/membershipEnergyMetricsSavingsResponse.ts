@@ -6,14 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MembershipEnergyMetricsSavingsResponseAmountEur } from './membershipEnergyMetricsSavingsResponseAmountEur';
-import type { MembershipEnergyMetricsSavingsResponseTariffSource } from './membershipEnergyMetricsSavingsResponseTariffSource';
 import type { MembershipEnergyMetricsSavingsResponseEstimatedPrice } from './membershipEnergyMetricsSavingsResponseEstimatedPrice';
+import type { MembershipEnergyMetricsSavingsResponseTariffSource } from './membershipEnergyMetricsSavingsResponseTariffSource';
 
 export interface MembershipEnergyMetricsSavingsResponse {
   /** Estimated amount saved over the period by every supply of the membership, in euros, rounded to cents. Null only when no period could be resolved; whenever a period exists it is a figure, 0.00 when nothing was priced. */
   amountEur: MembershipEnergyMetricsSavingsResponseAmountEur;
-  /** Whether the prices behind the amount are the supplies' contracted tariffs or an estimate. A single estimated stretch of any supply makes the whole amount an estimate. */
-  tariffSource: MembershipEnergyMetricsSavingsResponseTariffSource;
   /** The estimated energy-term price, before taxes, the amount was priced with. Present only when the estimated price was used to price at least part of the period for at least one supply; null when every supply was priced with its contracted tariff, and when nothing was priced with the estimate at all. */
   estimatedPrice: MembershipEnergyMetricsSavingsResponseEstimatedPrice;
+  /** Whether the prices behind the amount are the supplies' contracted tariffs or an estimate. A single estimated stretch of any supply makes the whole amount an estimate. */
+  tariffSource: MembershipEnergyMetricsSavingsResponseTariffSource;
 }

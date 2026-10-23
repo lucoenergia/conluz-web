@@ -7,6 +7,6 @@
  */
 
 export interface ProductionByTime {
-  time?: string;
   power?: number;
+  time?: string;
 }

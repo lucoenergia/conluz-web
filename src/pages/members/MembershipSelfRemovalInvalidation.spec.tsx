@@ -16,7 +16,8 @@ import {
   buildMembershipCapabilities,
   buildUser,
 } from "../../test/fixtures";
-import { CommunityRole, type CurrentUserResponse } from "../../api/models";
+import { type CurrentUserResponse } from "../../api/models";
+import { CommunityRole } from "../../hooks/permissions";
 
 /**
  * The one case where an in-app action changes the caller's OWN record.
@@ -47,7 +48,7 @@ const MEMBERSHIP_URL = `${COMMUNITY_URL}/memberships/${USER_ID}`;
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
-vi.mock(import("../../api/custom-instance"), async (importOriginal) => ({
+vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));

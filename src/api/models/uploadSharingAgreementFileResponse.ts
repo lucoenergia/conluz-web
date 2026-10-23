@@ -7,10 +7,10 @@
  */
 
 export interface UploadSharingAgreementFileResponse {
+  /** Number of coefficient entries materialised as pending rows */
+  entriesMaterialized: number;
   /** Internal unique identifier of the stored file */
   fileId: string;
   /** Original uploaded filename */
   filename: string;
-  /** Number of coefficient entries materialised as pending rows */
-  entriesMaterialized: number;
 }
