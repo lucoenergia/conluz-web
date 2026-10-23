@@ -92,8 +92,9 @@ export function invitationRefusalMessage(
 
 /**
  * MEMBERSHIP_OWNS_SUPPLIES for an admin. The catalogue's wording recommends
- * suspending, which a community admin cannot do to another admin (#415), so
- * this one recommends demoting them to member first (#309).
+ * suspending, which a community admin cannot do to another admin
+ * (lucoenergia/conluz#449, MEM-034), so this one recommends demoting them to
+ * member first (#309).
  */
 const ADMIN_OWNS_SUPPLIES =
   "Este administrador es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.";

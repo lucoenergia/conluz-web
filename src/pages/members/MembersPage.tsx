@@ -172,7 +172,7 @@ export const MembersPage: FC = () => {
       setRemoveConfirmUserId(null);
     } else {
       // The removed row's role, not the caller's: it only picks the wording of
-      // the supplies refusal, since an admin cannot be suspended by a peer (#415).
+      // the supplies refusal, since a peer cannot suspend an admin (lucoenergia/conluz#449, MEM-034).
       const subject = target?.role === MembershipResponseRole.COMMUNITY_ADMIN ? "admin" : "member";
       errorDispatch(removalRefusalMessage(result.error, subject));
     }
