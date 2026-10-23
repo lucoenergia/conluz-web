@@ -12,8 +12,9 @@ Rules worth knowing before you fake data:
 - `capabilities` objects say what the viewer may do. Pass the flags you want the UI to show as `true`;
   a missing flag reads as "not allowed".
 - `MenuItem.requires` is read by the app shell to filter entries; in a design use `{ scope: "always" }`.
-- `UserResponse`, contract, distributor and Shelly sub-records are rarely rendered by these components;
-  pass `null` where the type allows it.
+- A supply's owner is shown from `ownerRecord` (the member record in the supply's community), never
+  from `user`, which carries only the user id. Contract, distributor and Shelly sub-records are rarely
+  rendered by these components; pass `null` where the type allows it.
 
 ```ts
 interface SharingAgreementResponse {
@@ -112,8 +113,10 @@ interface SupplyResponse {
   id: string;
   /** Code that identifies the supply */
   code: string;
-  /** Owner of the supply */
-  user: UserResponse | null;
+  /** Owner of the supply, by id only. Null when the supply has no owner. */
+  user: UserReferenceResponse | null;
+  /** The owner's member record in the supply's community. Null when the supply has no owner, or its owner has no membership in that community. */
+  ownerRecord: MemberRecordResponse | null;
   /** Name of the supply */
   name: string | null;
   /** Address of the supply */
@@ -223,6 +226,26 @@ interface SupplyCapabilitiesResponse {
   canReadPartitionCoefficients: boolean;
   /** Whether the caller may create a plant on this supply (POST /api/v1/plants). */
   canCreatePlant: boolean;
+  /** Whether the caller may delete this supply (DELETE /api/v1/supplies/{supplyId}). Authorization only: a supply with plants or partition coefficients is still refused with 409. */
+  canDelete: boolean;
+}
+
+interface MemberRecordResponse {
+  /** The member's full name, as this community records it. */
+  fullName: string;
+  /** The member's number in this community. Null if the community records none. */
+  memberNumber: number | null;
+  /** The member's address, as this community records it. Null if there is none. */
+  address: string | null;
+  /** The email address this community contacts the member at. Null if there is none. */
+  contactEmail: string | null;
+  /** The member's phone number, as this community records it. Null if there is none. */
+  phoneNumber: string | null;
+}
+
+interface UserReferenceResponse {
+  /** Internal unique identifier of the user */
+  id: string;
 }
 
 interface AttentionItem {

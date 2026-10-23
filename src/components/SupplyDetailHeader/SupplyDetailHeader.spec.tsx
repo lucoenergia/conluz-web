@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { SupplyDetailHeader } from "./SupplyDetailHeader";
-import { buildSupply, buildUser } from "../../test/fixtures";
+import { buildSupply, buildMemberRecord } from "../../test/fixtures";
 
 describe("SupplyDetailHeader", () => {
   const mockSupplyPoint = buildSupply({
@@ -26,13 +26,12 @@ describe("SupplyDetailHeader", () => {
       id: "shelly-1",
       mqttPrefix: "shellies/test",
     },
-    user: buildUser({
-      id: "user1",
-      personalId: "12345678A",
-      number: 1,
+    user: { id: "user1" },
+    ownerRecord: buildMemberRecord({
       fullName: "John Doe",
+      memberNumber: 1,
+      contactEmail: "john.doe@example.com",
       address: "Calle Test 1",
-      email: "john.doe@example.com",
       phoneNumber: "600000000",
     }),
   });
@@ -66,6 +65,34 @@ describe("SupplyDetailHeader", () => {
     expect(screen.getByText("REF123456")).toBeInTheDocument();
     expect(screen.getByText("Propietario")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
+  });
+
+  it("UI-SUP-005 shows no owner when the owner has no record in the supply's community", async () => {
+    const user = userEvent.setup();
+    render(<SupplyDetailHeader supplyPoint={{ ...mockSupplyPoint, ownerRecord: null }} />);
+
+    await user.click(screen.getByRole("button", { name: "Ver 2 datos más" }));
+
+    expect(screen.getByText("Propietario").parentElement).toHaveTextContent("-");
+    expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
+  });
+
+  it("UI-SUP-005 shows, for one owner, the record of each supply's own community", async () => {
+    const user = userEvent.setup();
+    const inSur = {
+      ...mockSupplyPoint,
+      id: "supply-sur",
+      community: { id: "c-sur", name: "Comunidad Sur" },
+      ownerRecord: buildMemberRecord({ fullName: "John A. Doe" }),
+    };
+    const { rerender } = render(<SupplyDetailHeader supplyPoint={mockSupplyPoint} />);
+    await user.click(screen.getByRole("button", { name: "Ver 2 datos más" }));
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
+
+    rerender(<SupplyDetailHeader supplyPoint={inSur} />);
+
+    expect(screen.getByText("John A. Doe")).toBeInTheDocument();
+    expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
   });
 
   it("falls back to the CUPS as the title when the supply has no name", () => {

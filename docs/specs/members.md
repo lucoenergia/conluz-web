@@ -8,7 +8,7 @@
 | **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the bulk send need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-013) |
 | **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #284 |
+| **Last reviewed against code** | #302 |
 
 ## Purpose
 
@@ -370,6 +370,24 @@ covers only the rules #272, #275, #276 and #284 introduced; the rest of the memb
   bulk, with its confirmation and its batches.
 - **Implements:** MEM-012, MEM-030
 - **Source:** #284
+
+### UI-MBR-025 — The roster shows the community's record, never the account
+
+- **Status:** Active
+- **Rule:**
+  - Every place the page shows a member's data — the name and contact email in the roster, the
+    row's menu labels, the record dialog's seeding and its read-only personal ID, and the names in
+    the invitation, suspension, role-change and removal dialogs — MUST read it from the roster row's
+    own fields (`fullName`, `memberNumber`, `contactEmail`, `address`, `phoneNumber`, `personalId`),
+    never from its `user`, which carries the account's id only.
+  - "Puntos de suministro" MUST be offered from the row's `capabilities.canListSupplies`.
+  - A person in several communities MUST be shown, on each community's roster, with that
+    community's record.
+- **Rationale:** Each community keeps its own record of a member, and the account may hold what
+  another community or the person entered. The membership now names its record as the member
+  responses do, and reports the supplies capability itself, since its user is a reference.
+- **Implements:** MEM-026
+- **Source:** #302, lucoenergia/conluz#448
 
 ## States
 

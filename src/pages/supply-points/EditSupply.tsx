@@ -112,7 +112,6 @@ export const EditSupplyPage: FC = () => {
                 cups: supplyPoint?.code,
                 address: supplyPoint?.address,
                 addressRef: supplyPoint?.addressRef ?? undefined,
-                personalId: supplyPoint?.user?.personalId,
               }}
               handleSubmit={handleSubmit}
               showUserSelector={true}

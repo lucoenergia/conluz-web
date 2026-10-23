@@ -6,7 +6,6 @@ import {
   buildCurrentUser,
   buildMembership,
   buildMembershipCapabilities,
-  buildUser,
 } from "../../test/fixtures";
 
 /**
@@ -71,7 +70,9 @@ export function rosterRow(
     acceptedAt: null,
     invitedAt: null,
     invitationExpiresAt: null,
-    user: buildUser({ id: userId, fullName, email: `${userId}@example.com` }),
+    user: { id: userId },
+    fullName,
+    contactEmail: `${userId}@example.com`,
     capabilities: ON_A_MEMBER,
     ...overrides,
   });

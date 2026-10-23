@@ -6,25 +6,41 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MembershipResponseAcceptedAt } from './membershipResponseAcceptedAt';
+import type { MembershipResponseAddress } from './membershipResponseAddress';
 import type { MembershipCapabilitiesResponse } from './membershipCapabilitiesResponse';
+import type { MembershipResponseContactEmail } from './membershipResponseContactEmail';
 import type { MembershipResponseInvitationExpiresAt } from './membershipResponseInvitationExpiresAt';
 import type { MembershipResponseInvitedAt } from './membershipResponseInvitedAt';
+import type { MembershipResponseMemberNumber } from './membershipResponseMemberNumber';
+import type { MembershipResponsePhoneNumber } from './membershipResponsePhoneNumber';
 import type { MembershipResponseRole } from './membershipResponseRole';
-import type { MembershipResponseUser } from './membershipResponseUser';
+import type { UserReferenceResponse } from './userReferenceResponse';
 
 export interface MembershipResponse {
   /** When the membership was accepted. Null while it is pending: a pending membership grants no access until it is accepted. Independent of enabled. */
   acceptedAt: MembershipResponseAcceptedAt;
+  /** The member's address, as this community records it. Null if there is none. */
+  address: MembershipResponseAddress;
   /** What the caller may do with this membership. */
   capabilities: MembershipCapabilitiesResponse;
   communityId: string;
+  /** The email address this community contacts the member at. Null if there is none. */
+  contactEmail: MembershipResponseContactEmail;
   enabled: boolean;
+  /** The member's full name, as this community records it. */
+  fullName: string;
   id: string;
   /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
   invitationExpiresAt: MembershipResponseInvitationExpiresAt;
   /** When the membership was last sent an invitation. Null if none has been sent. */
   invitedAt: MembershipResponseInvitedAt;
+  /** The member's number in this community. Null if the community records none. */
+  memberNumber: MembershipResponseMemberNumber;
+  /** The member's DNI/NIE/NIF, normalised: the one the community registered them with. */
+  personalId: string;
+  /** The member's phone number, as this community records it. Null if there is none. */
+  phoneNumber: MembershipResponsePhoneNumber;
   role: MembershipResponseRole;
-  /** User associated with the membership */
-  user: MembershipResponseUser;
+  /** The member's account, by id only: the {userId} the membership's endpoints take. Nothing else of the account is carried. */
+  user: UserReferenceResponse;
 }

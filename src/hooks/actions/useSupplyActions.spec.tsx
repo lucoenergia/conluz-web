@@ -15,7 +15,7 @@ import {
   getGetMembershipMonthlyConsumptionQueryKey,
 } from "../../api/memberships/memberships";
 import { apiError } from "../../test/apiError";
-import { buildSupply, buildSupplyCapabilities, buildUser } from "../../test/fixtures";
+import { buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import { mutation } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { useSupplyActions } from "./useSupplyActions";
@@ -57,7 +57,7 @@ const OWNER_ID = "TEST-OWNER-ID";
 const supplyWith = (capabilities: Parameters<typeof buildSupplyCapabilities>[0]) =>
   buildSupply({
     id: SUPPLY_ID,
-    user: buildUser({ id: OWNER_ID }),
+    user: { id: OWNER_ID },
     capabilities: buildSupplyCapabilities(capabilities),
   });
 

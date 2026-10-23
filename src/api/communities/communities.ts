@@ -25,9 +25,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CommunityContactResponse,
   CommunityResponse,
   CreateCommunityBody,
   RestError,
+  SetCommunityContactBody,
   UpdateCommunityBody
 } from '.././models';
 
@@ -370,6 +372,172 @@ export const useUpdateCommunity = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getUpdateCommunityMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Returns how the members of the community can contact it: its phone numbers, email addresses and postal addresses, in the order the community admins listed them. The list is empty if the community has none.
+
+Only the active members of the community and platform admins may read them; anyone else is answered 404, so the response does not reveal whether the community exists.
+
+ * @summary Returns the contact channels of a community.
+ */
+export const getCommunityContact = (
+    communityId: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommunityContactResponse>(
+      {url: `/api/v1/communities/${communityId}/contact`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetCommunityContactQueryKey = (communityId?: string,) => {
+    return [
+    `/api/v1/communities/${communityId}/contact`
+    ] as const;
+    }
+
+    
+export const getGetCommunityContactQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityContact>>, TError = ErrorType<RestError>>(communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityContact>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityContactQueryKey(communityId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityContact>>> = ({ signal }) => getCommunityContact(communityId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityContact>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCommunityContactQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityContact>>>
+export type GetCommunityContactQueryError = ErrorType<RestError>
+
+
+export function useGetCommunityContact<TData = Awaited<ReturnType<typeof getCommunityContact>>, TError = ErrorType<RestError>>(
+ communityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityContact>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityContact>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityContact>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityContact<TData = Awaited<ReturnType<typeof getCommunityContact>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityContact>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityContact>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityContact>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityContact<TData = Awaited<ReturnType<typeof getCommunityContact>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityContact>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the contact channels of a community.
+ */
+
+export function useGetCommunityContact<TData = Awaited<ReturnType<typeof getCommunityContact>>, TError = ErrorType<RestError>>(
+ communityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityContact>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCommunityContactQueryOptions(communityId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Replaces the whole list of the community's contact channels with the submitted one, kept in the submitted order, and returns it as stored. An empty list removes every channel. There are no partial updates: send every channel the community should keep. Concurrent replacements are applied one after another, and the last one wins.
+
+Every text is trimmed before it is checked and stored, and a blank `schedule` or `notes` is stored as null. A list that breaks a rule is answered 400 with one error per broken rule, each with its own code and, for a rule about one channel, the channel's 0-based `index` in `params`; nothing is stored then.
+
+Only an active community admin of the community may replace them. An active member who is not one is answered 403. Anyone else, a platform admin who is not a member of the community included, is answered 404.
+
+ * @summary Replaces the contact channels of a community.
+ */
+export const setCommunityContact = (
+    communityId: string,
+    setCommunityContactBody: SetCommunityContactBody,
+ ) => {
+      
+      
+      return customInstance<CommunityContactResponse>(
+      {url: `/api/v1/communities/${communityId}/contact`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: setCommunityContactBody
+    },
+      );
+    }
+  
+
+
+export const getSetCommunityContactMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCommunityContact>>, TError,{communityId: string;data: SetCommunityContactBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof setCommunityContact>>, TError,{communityId: string;data: SetCommunityContactBody}, TContext> => {
+
+const mutationKey = ['setCommunityContact'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setCommunityContact>>, {communityId: string;data: SetCommunityContactBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  setCommunityContact(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetCommunityContactMutationResult = NonNullable<Awaited<ReturnType<typeof setCommunityContact>>>
+    export type SetCommunityContactMutationBody = SetCommunityContactBody
+    export type SetCommunityContactMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Replaces the contact channels of a community.
+ */
+export const useSetCommunityContact = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCommunityContact>>, TError,{communityId: string;data: SetCommunityContactBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setCommunityContact>>,
+        TError,
+        {communityId: string;data: SetCommunityContactBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSetCommunityContactMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
