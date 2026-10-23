@@ -13,7 +13,7 @@ import {
  * registration and invitations (#275). Mock-free: each spec mocks
  * custom-instance itself and hands `serveMembersPage` its mock.
  *
- * The routes cover what the page reads and the writes #275 and #284 send, and
+ * The routes cover what the page reads and the writes #275, #284 and #309 send, and
  * nothing else: a GET of the user list or a POST that links an existing account
  * matches no route, so it fails the test that sent it.
  */
@@ -41,8 +41,11 @@ export const ADMIN_COMMUNITY = buildCommunity({
   }),
 });
 
+/** The signed-in admin's user id, for a spec about the caller's own row. */
+export const CALLER_ID = "admin";
+
 const CALLER = buildCurrentUser({
-  id: "admin",
+  id: CALLER_ID,
   fullName: "Ada Admin",
   memberships: { [COMMUNITY_ID]: "COMMUNITY_ADMIN" },
 });
@@ -81,7 +84,7 @@ export function rosterRow(
 /** What the next roster GET serves, so a write's handler can change it as the backend would. */
 export type Roster = { current: MembershipResponse[] };
 
-export type Write = "register" | "import" | "invite" | "resend" | "revoke" | "bulk" | "remove";
+export type Write = "register" | "import" | "invite" | "resend" | "revoke" | "bulk" | "remove" | "changeRole";
 
 export type Writes = Partial<Record<Write, (config: RequestConfig) => unknown>>;
 
@@ -110,6 +113,7 @@ export function serveMembersPage(
     { method: "POST", url: /\/memberships\/[^/]+\/invitation\/resend$/, respond: write("resend") },
     { method: "POST", url: /\/memberships\/[^/]+\/invitation\/revoke$/, respond: write("revoke") },
     { method: "DELETE", url: /\/memberships\/[^/]+$/, respond: write("remove") },
+    { method: "PATCH", url: /\/memberships\/[^/]+$/, respond: write("changeRole") },
   ]);
   customInstance.mockImplementation(router.handle);
   return router;

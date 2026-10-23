@@ -347,6 +347,14 @@ describe("personal ID refusals (#276)", () => {
   });
 });
 
+describe("the last active admin refusal (#309)", () => {
+  it("translates MEMBERSHIP_LAST_ACTIVE_ADMIN with the reason and the way forward", () => {
+    expect(translateErrorDetail({ message: "raw", code: "MEMBERSHIP_LAST_ACTIVE_ADMIN" }, "fallback")).toBe(
+      "Es el último administrador activo de la comunidad. Primero haz administrador a otro miembro activo.",
+    );
+  });
+});
+
 describe("member registration and invitation refusals (#275)", () => {
   it.each([
     ["MEMBERSHIP_ALREADY_EXISTS", "Ya forma parte de esta comunidad."],

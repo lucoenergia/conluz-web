@@ -1,7 +1,12 @@
 import type { RestErrorDetailCode } from "../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "./apiErrorCatalogue";
 import { getRetryAfterSeconds } from "./authErrors";
-import { NO_CONTACT_EMAIL_TO_INVITE, resendLimitMessage, type InvitationSubject } from "./membershipErrorMessages";
+import {
+  LAST_ACTIVE_ADMIN_EXPLANATION,
+  NO_CONTACT_EMAIL_TO_INVITE,
+  resendLimitMessage,
+  type InvitationSubject,
+} from "./membershipErrorMessages";
 
 /** Which invitation write was refused: the same code can mean something else in each. */
 export type InvitationWrite = "invite" | "resend" | "revoke" | "bulk";
@@ -13,19 +18,31 @@ const FALLBACKS: Record<InvitationWrite, string> = {
   bulk: "No se han podido enviar las invitaciones. Inténtalo de nuevo.",
 };
 
+/** A membership write whose refusal can mean the roster is stale. */
+export type StaleRowWrite = Exclude<InvitationWrite, "bulk"> | "changeRole" | "remove";
+
 /**
  * The refusals that mean the row the screen acted on is stale: the membership
- * was invited, accepted or suspended since the roster was read.
+ * was invited, accepted or suspended since the roster was read, or, for the
+ * role change and the removal, it became the community's last active admin
+ * because another admin was demoted, suspended or removed meanwhile (#309).
  * useMembershipActions refetches the roster on these, and useCommunityActions
- * a community's admins on the same codes (#276), so the row shows the
+ * a community's admins on the invitation codes (#276), so the row shows the
  * state the backend refused from and the actions that state allows, and the
  * message says the list was refreshed.
  */
-export const STALE_ROW_CODES: Record<Exclude<InvitationWrite, "bulk">, readonly RestErrorDetailCode[]> = {
+export const STALE_ROW_CODES: Record<StaleRowWrite, readonly RestErrorDetailCode[]> = {
   invite: ["MEMBERSHIP_ALREADY_INVITED", "MEMBERSHIP_ALREADY_EXISTS", "MEMBERSHIP_DISABLED"],
   resend: ["MEMBERSHIP_NOT_INVITED", "MEMBERSHIP_ALREADY_EXISTS", "MEMBERSHIP_DISABLED"],
   revoke: ["MEMBERSHIP_ALREADY_EXISTS"],
+  changeRole: ["MEMBERSHIP_LAST_ACTIVE_ADMIN"],
+  remove: ["MEMBERSHIP_LAST_ACTIVE_ADMIN"],
 };
+
+/** The message, saying the list was refreshed when the refusal refetched it. */
+function withRefreshedNote(message: string, write: StaleRowWrite, code: RestErrorDetailCode | undefined): string {
+  return code && STALE_ROW_CODES[write].includes(code) ? `${message} Hemos actualizado la lista.` : message;
+}
 
 /**
  * The refusals worded per subject here rather than in the catalogue.
@@ -70,14 +87,39 @@ export function invitationRefusalMessage(
         return (code && SUBJECT_REFUSALS[subject][code]) || getFirstApiErrorMessage(error, FALLBACKS[write]);
     }
   })();
-  const refreshed = write !== "bulk" && !!code && STALE_ROW_CODES[write].includes(code);
-  return refreshed ? `${message} Hemos actualizado la lista.` : message;
+  return write === "bulk" ? message : withRefreshedNote(message, write, code);
 }
 
-/** Why removing a member was refused: the reason when the backend gives one this page words. */
-export function removalRefusalMessage(error: unknown): string {
-  if (getFirstApiErrorCode(error) === "MEMBERSHIP_OWNS_SUPPLIES") {
-    return getFirstApiErrorMessage(error, "");
+/**
+ * MEMBERSHIP_OWNS_SUPPLIES for an admin. The catalogue's wording recommends
+ * suspending, which a community admin cannot do to another admin (#415), so
+ * this one recommends demoting them to member first (#309).
+ */
+const ADMIN_OWNS_SUPPLIES =
+  "Este administrador es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.";
+
+/**
+ * Why removing a membership was refused: the reason when the backend gives one
+ * this page words. `subject` is the removed membership's role, which decides
+ * what the supplies refusal recommends.
+ */
+export function removalRefusalMessage(error: unknown, subject: InvitationSubject = "member"): string {
+  const code = getFirstApiErrorCode(error);
+  switch (code) {
+    case "MEMBERSHIP_LAST_ACTIVE_ADMIN":
+      return withRefreshedNote(LAST_ACTIVE_ADMIN_EXPLANATION, "remove", code);
+    case "MEMBERSHIP_OWNS_SUPPLIES":
+      return subject === "admin" ? ADMIN_OWNS_SUPPLIES : getFirstApiErrorMessage(error, "");
+    default:
+      return "Error al eliminar el miembro. Por favor, inténtalo de nuevo.";
   }
-  return "Error al eliminar el miembro. Por favor, inténtalo de nuevo.";
+}
+
+/** Why a role change was refused: the reason when the backend gives one this page words. */
+export function roleChangeRefusalMessage(error: unknown): string {
+  const code = getFirstApiErrorCode(error);
+  if (code === "MEMBERSHIP_LAST_ACTIVE_ADMIN") {
+    return withRefreshedNote(LAST_ACTIVE_ADMIN_EXPLANATION, "changeRole", code);
+  }
+  return "Error al actualizar el rol. Por favor, inténtalo de nuevo.";
 }
