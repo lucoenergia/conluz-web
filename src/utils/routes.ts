@@ -62,7 +62,7 @@ const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "un
   { prefix: "/platform-admins", scope: "platform" },
   { prefix: "/profile", scope: "personal" },
   { prefix: "/change-password", scope: "personal" },
-  { prefix: "/contact", scope: "personal" },
+  { prefix: "/contact", scope: "none" },
   { prefix: "/no-community", scope: "none" },
 ];
 

@@ -73,7 +73,7 @@ The app is **multi-community**. This supersedes any older single-community assum
 - Reads use the generated hooks (or their community-scope wrappers); `getGet…QueryKey()` getters are importable everywhere. Invalidation is explicit after every mutation (`removeQueries` after a delete) — see `src/hooks/actions/useSharingAgreementActions.ts`.
 
 ### Routing
-`LoginLayout` (unauthenticated), `AuthenticatedLayout` (protected, sidebar), `PublicLayout` (same for everyone, `/contact`). There is deliberately no auth-adaptive layout; the comment at `/contact` in `src/App.tsx` says why.
+`LoginLayout` (unauthenticated), `AuthenticatedLayout` (protected, sidebar), `PublicLayout` (`/contact`, the sign-in help page). There is deliberately no auth-adaptive layout: a page that serves both kinds of caller is two routes, and `AnonRoute` sends a signed-in caller from the public one to the in-app one (`/contact` → `/community/contact`).
 
 ## Testing — rules that always apply
 Full guide: the `conluz-web-testing` skill.

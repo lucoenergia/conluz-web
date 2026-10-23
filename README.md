@@ -100,7 +100,8 @@ conluz-web/
 - **Login** (`/login`): User authentication
 - **Forgot Password** (`/forgot-password`): Password recovery flow
 - **Reset Password** (`/forgot-password/:token`): Password reset with token
-- **Contact** (`/contact`): Support and contact page
+- **Contact** (`/community/contact`): The active community's contact channels
+- **Sign-in help** (`/contact`): Public help for somebody who cannot sign in; a signed-in user is sent to `/community/contact`
 
 ## 🚀 Getting Started
 

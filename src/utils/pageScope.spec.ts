@@ -94,7 +94,7 @@ describe("resolvePageScope", () => {
     ["/platform-admins", "platform"],
     ["/profile", "personal"],
     ["/change-password", "personal"],
-    ["/contact", "personal"],
+    ["/contact", "none"],
     ["/no-community", "none"],
   ] as const)("%s is %s", (path, scope) => {
     expect(resolvePageScope(path)).toBe(scope);
