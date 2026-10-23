@@ -94,7 +94,7 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
           )}
           <TextField
             label="DNI/NIE"
-            value={membership.user?.personalId ?? ""}
+            value={membership.personalId}
             helperText="Identifica su cuenta, así que no se cambia desde aquí."
             slotProps={{ input: { readOnly: true } }}
             fullWidth

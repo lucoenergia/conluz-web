@@ -321,8 +321,8 @@ describe("invitation refusals", () => {
   ])("UI-MBR-014 refetches the roster after %s, and shows its new state", async (_case, row, item, title, code, change, message, shown) => {
     const u = user();
     const roster: Roster = { current: [row, ANA] };
-    const userId = row.user?.id ?? "";
-    const name = row.user?.fullName ?? "";
+    const userId = row.user.id;
+    const name = row.fullName;
     const router = serveMembersPage(mockCustomInstance, roster, {
       [item === "Invitar" ? "invite" : "resend"]: () => {
         update(roster, userId, change);

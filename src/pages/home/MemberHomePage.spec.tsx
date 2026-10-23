@@ -27,7 +27,6 @@ import {
   buildMembershipMonthlyConsumptionBucket,
   buildMembershipPayback,
   buildSupply,
-  buildUser,
 } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { declaredStyle } from "../../test/declaredStyle";
@@ -261,7 +260,7 @@ describe("MemberHomePage (#199)", () => {
     );
     answerCommunities({ adminOf: [COMMUNITY_ID] });
     vi.mocked(useGetSuppliesByUserId).mockReturnValue(
-      query.success<typeof getSuppliesByUserId>([buildSupply({ user: buildUser({ id: adminId }), community: { id: COMMUNITY_ID, name: "Comunidad" } })]),
+      query.success<typeof getSuppliesByUserId>([buildSupply({ user: { id: adminId }, community: { id: COMMUNITY_ID, name: "Comunidad" } })]),
     );
     // Only the admin's own membership answers with their figures.
     vi.mocked(useGetMembershipPayback).mockImplementation((communityId, userId) =>

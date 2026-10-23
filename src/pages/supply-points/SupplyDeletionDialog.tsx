@@ -49,7 +49,7 @@ export const SupplyDeletionDialog: FC<SupplyDeletionDialogProps> = ({ supply, on
       isOpen
       code={supply.code}
       name={supply.name}
-      ownerName={supply.user?.fullName ?? null}
+      ownerName={supply.ownerRecord?.fullName ?? null}
       isDeleting={remove.isPending}
       onCancel={onClose}
       onConfirm={() => void handleConfirm()}

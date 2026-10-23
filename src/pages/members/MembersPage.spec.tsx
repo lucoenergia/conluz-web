@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import userEvent from "@testing-library/user-event";
 import type { QueryClient } from "@tanstack/react-query";
@@ -11,8 +11,6 @@ import {
   buildCurrentUser,
   buildMembership,
   buildMembershipCapabilities,
-  buildUser,
-  buildUserCapabilities,
 } from "../../test/fixtures";
 import type { MembershipResponse } from "../../api/models";
 import type { CommunityCapabilitiesResponse } from "../../api/models";
@@ -31,22 +29,21 @@ const ADMINISTRABLE = buildMembershipCapabilities({
   canDelete: true,
   canManageInvestment: true,
   canReadPayback: true,
+  canListSupplies: true,
 });
 
-// "Puntos de suministro" is the member's own supplies, not the membership's, so
-// it is the USER that carries its answer.
-const member = (id: string, fullName: string, email: string) =>
-  buildUser({
-    id,
-    fullName,
-    email,
-    capabilities: buildUserCapabilities({ canRead: true, canListSupplies: true }),
-  });
+// A roster row carries the community's record at its top level and its user by
+// id only (lucoenergia/conluz#448).
+const member = (id: string, fullName: string, email: string) => ({ user: { id }, fullName, contactEmail: email });
+
+// "Puntos de suministro" is decided apart from the roster rights, so a row that
+// offers it carries canListSupplies on its own.
+const SUPPLIES = { canListSupplies: true };
 
 const MOCK_MEMBERSHIPS = [
   buildMembership({
     id: "m1",
-    user: member("u1", "Ana García", "ana@example.com"),
+    ...member("u1", "Ana García", "ana@example.com"),
     communityId: "c1",
     role: "COMMUNITY_MEMBER",
     enabled: true,
@@ -54,7 +51,7 @@ const MOCK_MEMBERSHIPS = [
   }),
   buildMembership({
     id: "m2",
-    user: member("u2", "Bruno Leal", "bruno@example.com"),
+    ...member("u2", "Bruno Leal", "bruno@example.com"),
     communityId: "c1",
     role: "COMMUNITY_ADMIN",
     enabled: true,
@@ -135,6 +132,7 @@ import {
 } from "../../api/memberships/memberships";
 import { getGetCurrentUserQueryKey, useGetSuppliesByUserId } from "../../api/users/users";
 import { MembersPage } from "./MembersPage";
+import { useActiveCommunity } from "../../context/community.context";
 
 const ADMIN_COMMUNITY: Partial<CommunityCapabilitiesResponse> = {
   canManageMemberships: true,
@@ -185,7 +183,7 @@ describe("MembersPage", () => {
     return rendered;
   };
 
-  it("renders census with fullName and email from membership.user", () => {
+  it("renders census with the name and contact email of the membership's record", () => {
     setup();
     expect(screen.getByText("Ana García")).toBeInTheDocument();
     expect(screen.getByText("ana@example.com")).toBeInTheDocument();
@@ -301,7 +299,9 @@ describe("MembersPage", () => {
     const READ_ONLY = [
       buildMembership({
         id: "m1",
-        user: buildUser({ id: "u1", fullName: "Ana García", email: "ana@example.com" }),
+        user: { id: "u1" },
+        fullName: "Ana García",
+        contactEmail: "ana@example.com",
         communityId: "c1",
         role: "COMMUNITY_MEMBER",
         enabled: true,
@@ -342,15 +342,17 @@ describe("MembersPage", () => {
       memberships: [
         buildMembership({
           id: "m1",
-          user: member("u1", "Ana García", "ana@example.com"),
+          ...member("u1", "Ana García", "ana@example.com"),
           communityId: "c1",
           role: "COMMUNITY_MEMBER",
           enabled: true,
-          capabilities: buildMembershipCapabilities({ canDelete: true }),
+          capabilities: buildMembershipCapabilities({ canDelete: true, ...SUPPLIES }),
         }),
         buildMembership({
           id: "m2",
-          user: buildUser({ id: "u2", fullName: "Bruno Leal", email: "bruno@example.com" }),
+          user: { id: "u2" },
+          fullName: "Bruno Leal",
+          contactEmail: "bruno@example.com",
           communityId: "c1",
           role: "COMMUNITY_ADMIN",
           enabled: true,
@@ -374,13 +376,13 @@ describe("MembersPage", () => {
       memberships: [
         buildMembership({
           id: "m1",
-          user: member("u1", "Ana García", "ana@example.com"),
+          ...member("u1", "Ana García", "ana@example.com"),
           communityId: "c1",
           role: "COMMUNITY_ADMIN",
           enabled: true,
           // What the backend answers for an admin looking at themselves: they
           // may still be re-roled by a peer, but not removed by themselves.
-          capabilities: buildMembershipCapabilities({ canUpdateRole: true, canDelete: false }),
+          capabilities: buildMembershipCapabilities({ canUpdateRole: true, canDelete: false, ...SUPPLIES }),
         }),
       ],
     });
@@ -419,10 +421,12 @@ describe("MembersPage", () => {
       const user = userEvent.setup();
       setup({
         community: { canManageMemberships: false },
-        memberships: [row({ id: "m1", user: member("u1", "Ana García", "ana@example.com"), capabilities })],
+        memberships: [
+          row({ id: "m1", ...member("u1", "Ana García", "ana@example.com"), capabilities: { ...capabilities, ...SUPPLIES } }),
+        ],
       });
 
-      // The supply list is the user's own answer, so the row keeps a menu.
+      // The supply list is decided apart from the roster rights, so the row keeps a menu.
       const menu = await openMenuFor(user, "Ana García");
       expect(within(menu).getByRole("menuitem", { name: /Puntos de suministro/ })).toBeInTheDocument();
       expect(within(menu).queryByRole("menuitem", { name: NEW_ACTIONS })).not.toBeInTheDocument();
@@ -434,7 +438,9 @@ describe("MembersPage", () => {
         memberships: [
           row({
             id: "m1",
-            user: buildUser({ id: "admin", fullName: "Ada Admin", email: "ada@example.com" }),
+            user: { id: "admin" },
+            fullName: "Ada Admin",
+            contactEmail: "ada@example.com",
             role: "COMMUNITY_ADMIN",
             acceptedAt: null,
             capabilities: buildMembershipCapabilities({ canEditRecord: true }),
@@ -450,11 +456,11 @@ describe("MembersPage", () => {
 
     it("UI-MBR-005 offers Suspender on an active row and Reactivar on a suspended one, never both", async () => {
       const user = userEvent.setup();
-      const both = buildMembershipCapabilities({ canEnable: true, canDisable: true });
+      const both = buildMembershipCapabilities({ canEnable: true, canDisable: true, ...SUPPLIES });
       setup({
         memberships: [
-          row({ id: "m1", user: member("u1", "Ana García", "ana@example.com"), enabled: true, capabilities: both }),
-          row({ id: "m2", user: member("u2", "Bruno Leal", "bruno@example.com"), enabled: false, capabilities: both }),
+          row({ id: "m1", ...member("u1", "Ana García", "ana@example.com"), enabled: true, capabilities: both }),
+          row({ id: "m2", ...member("u2", "Bruno Leal", "bruno@example.com"), enabled: false, capabilities: both }),
         ],
       });
 
@@ -478,9 +484,9 @@ describe("MembersPage", () => {
         memberships: [
           row({
             id: "m1",
-            user: member("u1", "Ana García", "ana@example.com"),
+            ...member("u1", "Ana García", "ana@example.com"),
             enabled,
-            capabilities: buildMembershipCapabilities(capabilities),
+            capabilities: buildMembershipCapabilities({ ...capabilities, ...SUPPLIES }),
           }),
         ],
       });
@@ -491,7 +497,7 @@ describe("MembersPage", () => {
 
     it("UI-MBR-006 shows a suspended membership as Suspendido", () => {
       setup({
-        memberships: [row({ id: "m1", user: member("u1", "Ana García", "ana@example.com"), enabled: false })],
+        memberships: [row({ id: "m1", ...member("u1", "Ana García", "ana@example.com"), enabled: false })],
       });
 
       const anaRow = screen.getByText("Ana García").closest("tr") as HTMLElement;
@@ -504,8 +510,8 @@ describe("MembersPage", () => {
         memberships: [
           row({
             id: "m1",
-            user: member("u1", "Ana García", "ana@example.com"),
-            capabilities: buildMembershipCapabilities({ canEditRecord: true, canEnable: true, canDisable: true }),
+            ...member("u1", "Ana García", "ana@example.com"),
+            capabilities: buildMembershipCapabilities({ canEditRecord: true, canEnable: true, canDisable: true, ...SUPPLIES }),
           }),
         ],
       });
@@ -524,7 +530,9 @@ describe("MembersPage", () => {
         memberships: [
           buildMembership({
             id: "m1",
-            user: buildUser({ id: "u1", fullName: "Ana García", email: null }),
+            user: { id: "u1" },
+            fullName: "Ana García",
+            contactEmail: null,
             communityId: "c1",
             enabled: true,
           }),
@@ -544,8 +552,10 @@ describe("MembersPage", () => {
     ): MembershipResponse =>
       buildMembership({
         id: `m-${id}`,
-        // No supply list on the user, so a row's menu holds only membership writes.
-        user: buildUser({ id, fullName, email: `${id}@example.com` }),
+        // No canListSupplies, so a row's menu holds only membership writes.
+        user: { id },
+        fullName,
+        contactEmail: `${id}@example.com`,
         communityId: "c1",
         role: "COMMUNITY_MEMBER",
         enabled: true,
@@ -655,9 +665,9 @@ describe("MembersPage", () => {
       }));
       setup({ memberships: withoutCapability });
 
-      for (const { user } of withoutCapability) {
+      for (const { fullName } of withoutCapability) {
         expect(
-          screen.queryByRole("button", { name: `Más acciones para ${user?.fullName}` }),
+          screen.queryByRole("button", { name: `Más acciones para ${fullName}` }),
         ).not.toBeInTheDocument();
       }
     });
@@ -696,6 +706,71 @@ describe("MembersPage", () => {
       expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("UI-MBR-025 offers the member's supplies from the row's canListSupplies alone", async () => {
+    const user = userEvent.setup();
+    setup({
+      memberships: [
+        buildMembership({
+          id: "m1",
+          ...member("u1", "Ana García", "ana@example.com"),
+          communityId: "c1",
+          capabilities: buildMembershipCapabilities({ canListSupplies: true }),
+        }),
+        buildMembership({
+          id: "m2",
+          ...member("u2", "Bruno Leal", "bruno@example.com"),
+          communityId: "c1",
+          capabilities: buildMembershipCapabilities({ canListSupplies: false }),
+        }),
+      ],
+    });
+
+    // Without it, and with nothing else granted, the row has no menu at all.
+    expect(screen.queryByRole("button", { name: "Más acciones para Bruno Leal" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+    await user.click(await screen.findByRole("menuitem", { name: /Puntos de suministro/ }));
+
+    expect(mockNavigate).toHaveBeenCalledWith("/supply-points?personId=u1");
+  });
+
+  describe("a person in two communities with a different record in each (lucoenergia/conluz#448)", () => {
+    const RECORDS: Record<string, Pick<MembershipResponse, "fullName" | "contactEmail">> = {
+      c1: { fullName: "Ana García", contactEmail: "ana@norte.example" },
+      c2: { fullName: "Ana G. Pérez", contactEmail: "ana@sur.example" },
+    };
+
+    // Keyed on the active community, as the layout renders the routed page.
+    function KeyedPage() {
+      const communityId = useActiveCommunity();
+      return <MembersPage key={communityId} />;
+    }
+
+    it("UI-MBR-025 shows each community's record of the same person on that community's roster", async () => {
+      vi.mocked(useGetCommunityById).mockImplementation((communityId) =>
+        query.success<typeof getCommunityById>(
+          buildCommunity({ id: communityId, capabilities: buildCommunityCapabilities({ canRead: true, ...ADMIN_COMMUNITY }) }),
+        ),
+      );
+      vi.mocked(useGetMemberships).mockImplementation((communityId) =>
+        query.success<typeof getMemberships>([
+          buildMembership({ id: `m-${communityId}`, communityId, user: { id: "u-ana" }, ...RECORDS[communityId] }),
+        ]),
+      );
+      const { switchActiveCommunity } = renderWithProviders(<KeyedPage />, { activeCommunityId: "c1" });
+
+      expect(screen.getByText("Ana García")).toBeInTheDocument();
+      expect(screen.getByText("ana@norte.example")).toBeInTheDocument();
+
+      act(() => switchActiveCommunity("c2"));
+
+      expect(await screen.findByText("Ana G. Pérez")).toBeInTheDocument();
+      expect(screen.getByText("ana@sur.example")).toBeInTheDocument();
+      expect(screen.queryByText("Ana García")).not.toBeInTheDocument();
+      expect(screen.queryByText("ana@norte.example")).not.toBeInTheDocument();
     });
   });
 });

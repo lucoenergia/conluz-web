@@ -74,7 +74,13 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useUpdateCommunity: { scope: "community", capability: "canUpdate", hook: "useCommunityActions" },
   useEnableCommunity: { scope: "community", capability: "canEnable", hook: "useCommunityActions" },
   useDisableCommunity: { scope: "community", capability: "canDisable", hook: "useCommunityActions" },
-  useSetCommunityContact: { ungated: "no screen writes contact channels yet; #296 adds the edit and decides its gate" },
+  // No screen sends it yet (lucoenergia/conluz#462). No action hook.
+  useSetCommunityContact: {
+    scope: "community",
+    capability: "canManage",
+    approximates:
+      "there is no contact flag; the backend reports this guard through canManage, which allows the same callers, though its doc does not name the contact channels",
+  },
 
   // ── Consumption ───────────────────────────────────────────────────────────
   useConfigureDatadis: {

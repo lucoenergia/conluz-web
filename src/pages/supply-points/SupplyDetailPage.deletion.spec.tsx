@@ -9,7 +9,7 @@ import { SuccessDisplay } from "../../components/Success/SuccessDisplay";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
-import { buildSupply, buildSupplyCapabilities, buildUser } from "../../test/fixtures";
+import { buildSupply, buildMemberRecord, buildSupplyCapabilities } from "../../test/fixtures";
 
 /**
  * Deleting a supply from its detail page (#290): once the supply is gone the
@@ -40,7 +40,8 @@ const SUPPLY = buildSupply({
   id: SUPPLY_ID,
   code: "ES0031406912345678JN0F",
   name: "Casa de Lucía",
-  user: buildUser({ id: "owner-1", fullName: "Lucía Martínez Soler" }),
+  user: { id: "owner-1" },
+  ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }),
   community: { id: COMMUNITY_ID, name: "Comunidad Solar" },
   capabilities: buildSupplyCapabilities({ canEdit: true, canDelete: true }),
 });

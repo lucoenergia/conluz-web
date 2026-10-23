@@ -128,11 +128,11 @@ export const MembersPage: FC = () => {
   const selectedInvitationActions = invitationActionsFor(selectedMembership, selectedActions);
   const selectedInvitationAction = invitationDialog ? selectedInvitationActions[invitationDialog] : undefined;
 
-  // "Puntos de suministro" opens the member's own supply list, which is the
-  // user's decision to make, not the membership's -- canListSupplies is
-  // deliberately narrower than being able to read the user at all.
+  // "Puntos de suministro" opens the member's own supply list. canListSupplies
+  // is deliberately narrower than managing the membership: the membership
+  // reports it because its user is a reference by id (lucoenergia/conluz#448).
   const rowSupplies = (membership: MembershipResponse | null) =>
-    outcomeFromResource(membership?.user?.capabilities, "canListSupplies");
+    outcomeFromResource(membership?.capabilities, "canListSupplies");
 
   // No permitted action means no menu at all, rather than a menu with nothing
   // in it or items the backend would refuse.
@@ -318,7 +318,7 @@ export const MembersPage: FC = () => {
               getRowKey={(membership) => membership.id}
               isLoading={isLoading}
               emptyMessage="No hay miembros en esta comunidad"
-              rowActionsLabel={(membership) => `Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
+              rowActionsLabel={(membership) => `Más acciones para ${membership.fullName}`}
               onRowActionsClick={handleMenuOpen}
               hasRowActions={hasRowActions}
               columns={[
@@ -335,15 +335,15 @@ export const MembersPage: FC = () => {
                           fontSize: fontSizes.md,
                         }}
                       >
-                        {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
+                        {membership.fullName.charAt(0).toUpperCase()}
                       </Avatar>
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {membership.user?.fullName ?? "Miembro desconocido"}
+                          {membership.fullName}
                         </Typography>
-                        {membership.user?.email && (
+                        {membership.contactEmail && (
                           <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                            {membership.user.email}
+                            {membership.contactEmail}
                           </Typography>
                         )}
                       </Box>
@@ -380,14 +380,14 @@ export const MembersPage: FC = () => {
                     id: String(membership.id ?? ""),
                     avatar: (
                       <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                        {(membership.user?.fullName ?? "?").charAt(0).toUpperCase()}
+                        {membership.fullName.charAt(0).toUpperCase()}
                       </Avatar>
                     ),
-                    title: membership.user?.fullName ?? "Miembro desconocido",
+                    title: membership.fullName,
                     status: <MembershipStatusChip membership={membership} />,
                     actions: hasRowActions(membership) ? (
                       <IconButton
-                        aria-label={`Más acciones para ${membership.user?.fullName ?? "el miembro"}`}
+                        aria-label={`Más acciones para ${membership.fullName}`}
                         onClick={(e) => handleMenuOpen(e, membership)}
                         sx={sxStyles.touchTarget}
                       >
@@ -395,7 +395,7 @@ export const MembersPage: FC = () => {
                       </IconButton>
                     ) : undefined,
                     fields: [
-                      { label: "Email", value: membership.user?.email ?? "-" },
+                      { label: "Email", value: membership.contactEmail ?? "-" },
                       { label: "Rol", value: ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER] },
                       ...(invitation ? [{ label: "Invitación", value: invitation }] : []),
                     ],
@@ -516,7 +516,7 @@ export const MembersPage: FC = () => {
       {invitationDialog && selectedMembership && selectedInvitationAction && (
         <InvitationActionDialog
           kind={invitationDialog}
-          memberName={selectedMembership.user?.fullName ?? "este miembro"}
+          memberName={selectedMembership.fullName}
           communityName={communityName}
           action={selectedInvitationAction}
           onClose={() => setInvitationDialog(null)}
@@ -574,7 +574,7 @@ export const MembersPage: FC = () => {
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Typography variant="body2">
             {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
-            <strong>{selectedMembership?.user?.fullName ?? "este miembro"}</strong> en {community}?
+            <strong>{selectedMembership?.fullName ?? "este miembro"}</strong> en {community}?
           </Typography>
           <Alert severity="info">
             {selectedStatusToggle?.isSuspending
@@ -611,7 +611,7 @@ export const MembersPage: FC = () => {
         <DialogTitle sx={{ pt: 0 }}>Cambiar rol en {community}</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           <Typography variant="body2">
-            Cambiando el rol de <strong>{selectedMembership?.user?.fullName}</strong>.
+            Cambiando el rol de <strong>{selectedMembership?.fullName}</strong>.
           </Typography>
           <FormControl fullWidth size="small">
             <InputLabel>Nuevo rol</InputLabel>
@@ -660,7 +660,7 @@ export const MembersPage: FC = () => {
         <DialogContent>
           <Typography variant="body2">
             ¿Eliminar a{" "}
-            <strong>{removeTarget?.user?.fullName ?? "este miembro"}</strong> de {community}?
+            <strong>{removeTarget?.fullName ?? "este miembro"}</strong> de {community}?
             Esta acción no se puede deshacer.
           </Typography>
         </DialogContent>
