@@ -392,7 +392,7 @@ export const Login: FC = () => {
                   },
                 })}
               >
-                Contacta con nosotres
+                Pide ayuda
               </Link>
             </Box>
           </Box>
