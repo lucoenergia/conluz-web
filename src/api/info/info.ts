@@ -21,7 +21,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetInfoResponse
+  GetInfoResponse,
+  GetOperatorContactResponse
 } from '.././models';
 
 import { customInstance } from '../../http/custom-instance';
@@ -112,6 +113,102 @@ export function useGetInfo<TData = Awaited<ReturnType<typeof getInfo>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetInfoQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Returns how to reach the organisation operating this instance: the last-resort contact for someone who cannot sign in and so has no community to turn to. `contact` is null if this instance configures none.
+
+Does not require authentication: any token sent is ignored.
+
+ * @summary Returns the contact of the organisation operating this instance.
+ */
+export const getOperatorContact = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<GetOperatorContactResponse>(
+      {url: `/api/v1/operator-contact`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetOperatorContactQueryKey = () => {
+    return [
+    `/api/v1/operator-contact`
+    ] as const;
+    }
+
+    
+export const getGetOperatorContactQueryOptions = <TData = Awaited<ReturnType<typeof getOperatorContact>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperatorContact>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOperatorContactQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOperatorContact>>> = ({ signal }) => getOperatorContact(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOperatorContact>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOperatorContactQueryResult = NonNullable<Awaited<ReturnType<typeof getOperatorContact>>>
+export type GetOperatorContactQueryError = ErrorType<unknown>
+
+
+export function useGetOperatorContact<TData = Awaited<ReturnType<typeof getOperatorContact>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperatorContact>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOperatorContact>>,
+          TError,
+          Awaited<ReturnType<typeof getOperatorContact>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOperatorContact<TData = Awaited<ReturnType<typeof getOperatorContact>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperatorContact>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOperatorContact>>,
+          TError,
+          Awaited<ReturnType<typeof getOperatorContact>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOperatorContact<TData = Awaited<ReturnType<typeof getOperatorContact>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperatorContact>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Returns the contact of the organisation operating this instance.
+ */
+
+export function useGetOperatorContact<TData = Awaited<ReturnType<typeof getOperatorContact>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperatorContact>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOperatorContactQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
