@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { RestErrorDetailCode } from "../api/models";
-import { getFirstApiErrorMessage, getGroupedApiErrorDetails, translateErrorDetail } from "./apiErrorCatalogue";
+import {
+  getFirstApiErrorMessage,
+  getGroupedApiErrorDetails,
+  getIndexedApiErrorDetails,
+  translateErrorDetail,
+} from "./apiErrorCatalogue";
 import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 
 const DISTRIBUTOR_FILE_CODES: RestErrorDetailCode[] = [
@@ -378,5 +383,87 @@ describe("member registration and invitation refusals (#275)", () => {
     expect(translateErrorDetail({ message: "raw", code: "MEMBERSHIP_WITHOUT_CONTACT_EMAIL" }, "fallback")).toBe(
       "Un administrador de la comunidad tiene que tener un email de contacto. Para quitárselo, cámbiale antes el rol a miembro.",
     );
+  });
+});
+
+describe("the contact channel codes (#296)", () => {
+  const FIELD_CODES: [Exclude<RestErrorDetailCode, null>, Record<string, string>, string][] = [
+    ["CONTACT_CHANNEL_LABEL_BLANK", {}, "Escribe un nombre para el canal, por ejemplo «Oficina»."],
+    ["CONTACT_CHANNEL_LABEL_TOO_LONG", { maxLength: "60", n: "64" }, "El nombre puede tener hasta 60 caracteres. Ahora tiene 64."],
+    ["CONTACT_CHANNEL_VALUE_BLANK", { type: "EMAIL" }, "Escribe un email."],
+    ["CONTACT_CHANNEL_VALUE_BLANK", { type: "PHONE" }, "Escribe un número de teléfono."],
+    ["CONTACT_CHANNEL_VALUE_BLANK", { type: "ADDRESS" }, "Escribe una dirección."],
+    ["CONTACT_CHANNEL_VALUE_TOO_LONG", { maxLength: "200", n: "230" }, "Puede tener hasta 200 caracteres. Ahora tiene 230."],
+    ["CONTACT_CHANNEL_SCHEDULE_TOO_LONG", { maxLength: "200", n: "201" }, "El horario puede tener hasta 200 caracteres. Ahora tiene 201."],
+    ["CONTACT_CHANNEL_NOTES_TOO_LONG", { maxLength: "500", n: "512" }, "Las notas pueden tener hasta 500 caracteres. Ahora tienen 512."],
+    ["CONTACT_CHANNEL_EMAIL_INVALID", {}, "Revisa el email: debe tener la forma nombre@dominio.es."],
+    ["CONTACT_CHANNEL_PHONE_CHARACTERS_INVALID", {}, "Escribe al menos 6 cifras. Solo números, espacios y un + al principio."],
+    ["CONTACT_CHANNEL_PHONE_TOO_FEW_DIGITS", { minDigits: "6" }, "Escribe al menos 6 cifras. Solo números, espacios y un + al principio."],
+  ];
+
+  // The server's own message follows the browser's language and numbers the
+  // channels, so none of them may reach the user.
+  it.each(FIELD_CODES)("words %s in Spanish, as the editor's own check of the rule (%j)", (code, params, expected) => {
+    expect(translateErrorDetail({ message: "raw backend message", code, params }, "fallback")).toBe(expected);
+  });
+
+  it("leaves the current length out when the response does not carry it", () => {
+    expect(
+      translateErrorDetail({ message: "raw", code: "CONTACT_CHANNEL_LABEL_TOO_LONG", params: { maxLength: "60" } }, "fallback"),
+    ).toBe("El nombre puede tener hasta 60 caracteres.");
+  });
+
+  it.each(["CONTACT_CHANNELS_MISSING", "CONTACT_CHANNELS_TOO_MANY", "CONTACT_CHANNEL_TYPE_INVALID"] as const)(
+    "has no entry for %s, which the channel editor cannot reach",
+    (code) => {
+      expect(translateErrorDetail({ message: "raw backend message", code }, "fallback")).toBe("raw backend message");
+    },
+  );
+});
+
+describe("getIndexedApiErrorDetails", () => {
+  const errorWith = (errors: unknown[]) => ({ response: { status: 400, data: { status: 400, errors } } });
+
+  it("places a detail with an index on that item, and one without on the form", () => {
+    const result = getIndexedApiErrorDetails(
+      errorWith([
+        { code: "CONTACT_CHANNEL_EMAIL_INVALID", message: "raw", params: { index: "2" } },
+        { code: null, message: "Algo del formulario.", params: null },
+        { code: "CONTACT_CHANNEL_LABEL_BLANK", message: "raw", params: { index: "0" } },
+      ]),
+    );
+
+    expect(result.indexed).toEqual([
+      { index: 2, code: "CONTACT_CHANNEL_EMAIL_INVALID", message: "Revisa el email: debe tener la forma nombre@dominio.es." },
+      { index: 0, code: "CONTACT_CHANNEL_LABEL_BLANK", message: "Escribe un nombre para el canal, por ejemplo «Oficina»." },
+    ]);
+    expect(result.formLevel).toEqual(["Algo del formulario."]);
+  });
+
+  it("adds the params the form knows about the item it sent, for that item only", () => {
+    const paramsFor = vi.fn((index: number) => (index === 1 ? { n: "75", type: "PHONE" } : { n: "0", type: "EMAIL" }));
+    const result = getIndexedApiErrorDetails(
+      errorWith([
+        { code: "CONTACT_CHANNEL_LABEL_TOO_LONG", message: "raw", params: { index: "1", maxLength: "60" } },
+        { code: "CONTACT_CHANNEL_VALUE_BLANK", message: "raw", params: { index: "0" } },
+      ]),
+      paramsFor,
+    );
+
+    expect(result.indexed.map((detail) => detail.message)).toEqual([
+      "El nombre puede tener hasta 60 caracteres. Ahora tiene 75.",
+      "Escribe un email.",
+    ]);
+    expect(paramsFor).toHaveBeenCalledWith(1, "CONTACT_CHANNEL_LABEL_TOO_LONG");
+  });
+
+  it.each(["", "abc", "-1", "1.5"])("keeps a detail whose index is %j on the form rather than dropping it", (index) => {
+    const result = getIndexedApiErrorDetails(errorWith([{ code: null, message: "Algo falló.", params: { index } }]));
+
+    expect(result).toEqual({ formLevel: ["Algo falló."], indexed: [] });
+  });
+
+  it("finds nothing in an error that is not an API response", () => {
+    expect(getIndexedApiErrorDetails(new Error("network"))).toEqual({ formLevel: [], indexed: [] });
   });
 });

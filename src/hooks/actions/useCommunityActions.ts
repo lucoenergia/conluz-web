@@ -2,8 +2,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetAllCommunitiesQueryKey,
   getGetCommunityByIdQueryKey,
+  getGetCommunityContactQueryKey,
   useDisableCommunity,
   useEnableCommunity,
+  useSetCommunityContact,
   useUpdateCommunity,
 } from "../../api/communities/communities";
 import {
@@ -31,6 +33,7 @@ import {
 import { getGetCurrentUserQueryKey } from "../../api/users/users";
 import type {
   CommunityAdminResponse,
+  CommunityContactResponse,
   CommunityResponse,
   ConfigureDatadisBody,
   CreationInBulkResponse,
@@ -41,6 +44,7 @@ import type {
   InviteCommunityAdminBody,
   PlantResponse,
   RestErrorDetailCode,
+  SetCommunityContactBody,
   SupplyResponse,
   UpdateCommunityBody,
 } from "../../api/models";
@@ -69,6 +73,9 @@ import type { MembershipWriteResult } from "./useMembershipActions";
  *   Datadis and Shelly configuration". `enableDatadis` and `disableDatadis` are
  *   an opposite pair, both handed over to a caller who may do either; the
  *   stored `enabled` picks which one applies.
+ * - replacing the contact channels (#296) gates on `canManage` too. There is no
+ *   contact flag, and the backend reports this guard through `canManage`, which
+ *   allows the same callers.
  *
  * A community's admins are managed here too (#276), on `canManageAdmins`, a
  * platform-wide decision: being a community admin does not confer it. Their
@@ -115,6 +122,7 @@ export interface CommunityRowActions {
     enableDatadis: MaybeAction<[], DatadisToggleResult>;
     disableDatadis: MaybeAction<[], DatadisToggleResult>;
     inviteAdmin: MaybeAction<[InviteCommunityAdminBody], MembershipWriteResult<CommunityAdminResponse>>;
+    setContact: MaybeAction<[SetCommunityContactBody], CommunityWriteResult<CommunityContactResponse>>;
   };
   outcomes: Record<keyof CommunityRowActions["actions"], CapabilityOutcome>;
 }
@@ -161,6 +169,7 @@ export function useCommunityActions(): CommunityActions {
   const revokeAdminInvitationMutation = useRevokeCommunityAdminInvitation();
   const enableAdminMutation = useEnableCommunityAdmin();
   const disableAdminMutation = useDisableCommunityAdmin();
+  const setContactMutation = useSetCommunityContact();
 
   const invalidateAdmins = (communityId: string) =>
     queryClient.invalidateQueries({ queryKey: getGetCommunityAdminsQueryKey(communityId) });
@@ -339,6 +348,21 @@ export function useCommunityActions(): CommunityActions {
               ]),
             inviteAdminMutation.isPending,
           ),
+          // The response is the list as stored, so it replaces the cached one
+          // rather than being fetched again.
+          setContact: grant(
+            manage,
+            async (data: SetCommunityContactBody): Promise<CommunityWriteResult<CommunityContactResponse>> => {
+              try {
+                const value = await setContactMutation.mutateAsync({ communityId, data });
+                queryClient.setQueryData(getGetCommunityContactQueryKey(communityId), value);
+                return { ok: true, value };
+              } catch (error) {
+                return { error };
+              }
+            },
+            setContactMutation.isPending,
+          ),
         },
         outcomes: {
           update,
@@ -352,6 +376,7 @@ export function useCommunityActions(): CommunityActions {
           enableDatadis: manage,
           disableDatadis: manage,
           inviteAdmin: manageAdmins,
+          setContact: manage,
         },
       };
     },

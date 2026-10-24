@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getGetAllCommunitiesQueryKey,
   getGetCommunityByIdQueryKey,
+  getGetCommunityContactQueryKey,
   useDisableCommunity,
   useEnableCommunity,
+  useSetCommunityContact,
   useUpdateCommunity,
 } from "../../api/communities/communities";
 import {
@@ -47,6 +49,7 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
   useUpdateCommunity: vi.fn(),
   useEnableCommunity: vi.fn(),
   useDisableCommunity: vi.fn(),
+  useSetCommunityContact: vi.fn(),
 }));
 vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -82,6 +85,7 @@ beforeEach(() => {
   vi.mocked(useUpdateCommunity).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useEnableCommunity).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useDisableCommunity).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useSetCommunityContact).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreateSupply).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreateSuppliesWithFile).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreatePlant).mockReturnValue(mutation.idle({ mutateAsync }));
@@ -266,5 +270,46 @@ describe("useCommunityActions", () => {
 
     await expect(result.current.actions.update?.run({ name: "TEST-COMMUNITY-NAME", code: "TEST-CODE" })).resolves.toEqual({ error });
     expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  describe("the contact channels", () => {
+    const STORED = {
+      channels: [
+        { type: "PHONE" as const, label: "Guardia", value: "600 111 222", schedule: null, notes: null },
+        { type: "ADDRESS" as const, label: "Oficina", value: "Carrer de la Pau 12", schedule: null, notes: null },
+        { type: "EMAIL" as const, label: "Correo", value: "hola@solcomun.test", schedule: null, notes: "En 48 horas." },
+      ],
+    };
+
+    // There is no contact flag; the backend reports this guard through canManage.
+    it("hands out replacing them on canManage only", () => {
+      expect(render(communityWith({ canManage: true })).result.current.actions.setContact).toBeDefined();
+      expect(
+        render(communityWith({ canUpdate: true, canManageMemberships: true })).result.current.actions.setContact,
+      ).toBeUndefined();
+    });
+
+    it("writes the list as stored into the cache, instead of fetching it again", async () => {
+      mutateAsync.mockResolvedValue(STORED);
+      const { result, queryClient } = render(communityWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.setContact?.run(STORED)).resolves.toEqual({ ok: true, value: STORED });
+
+      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, data: STORED });
+      expect(queryClient.getQueryData(getGetCommunityContactQueryKey(COMMUNITY_ID))).toEqual(STORED);
+      expect(invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("hands back the refusal and leaves the cached list alone", async () => {
+      const refusal = new Error("refused");
+      mutateAsync.mockRejectedValue(refusal);
+      const { result, queryClient } = render(communityWith({ canManage: true }));
+      queryClient.setQueryData(getGetCommunityContactQueryKey(COMMUNITY_ID), STORED);
+
+      await expect(result.current.actions.setContact?.run({ channels: [] })).resolves.toEqual({ error: refusal });
+
+      expect(queryClient.getQueryData(getGetCommunityContactQueryKey(COMMUNITY_ID))).toEqual(STORED);
+    });
   });
 });
