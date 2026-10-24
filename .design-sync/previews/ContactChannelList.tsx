@@ -35,3 +35,21 @@ export const AddressOnly = () => (
     />
   </Mui.Box>
 );
+
+const ADMIN_CHANNELS = [
+  { type: "PHONE", label: "Oficina", value: "+34 978 710 251", schedule: "Lunes a viernes, de 10:00 a 13:00", notes: "Si no contestamos, deja un mensaje y te llamamos." },
+  { type: "EMAIL", label: "Tesorería", value: "tesoreria@solsierra.example", schedule: null, notes: null },
+  { type: "ADDRESS", label: "Local de la asociación", value: "Calle Mayor 12, bajo, 44100 Albarracín (Teruel)", schedule: null, notes: null },
+] as const;
+
+export const WithEditActions = () => (
+  <Mui.Box sx={{ maxWidth: 440 }}>
+    <ContactChannelList channels={[...ADMIN_CHANNELS]} onEdit={() => {}} />
+  </Mui.Box>
+);
+
+export const JustSaved = () => (
+  <Mui.Box sx={{ maxWidth: 440 }}>
+    <ContactChannelList channels={[...ADMIN_CHANNELS]} onEdit={() => {}} highlightIndex={1} />
+  </Mui.Box>
+);
