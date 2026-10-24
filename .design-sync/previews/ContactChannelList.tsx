@@ -4,7 +4,7 @@ export const MixedChannels = () => (
   <Mui.Box sx={{ maxWidth: 440 }}>
     <ContactChannelList
       channels={[
-        { type: "PHONE", label: "Atención a socios", value: "+34 600 111 222", schedule: "Lunes a viernes, de 9:00 a 14:00", notes: null },
+        { type: "PHONE", label: "Atención a miembros", value: "+34 600 111 222", schedule: "Lunes a viernes, de 9:00 a 14:00", notes: null },
         { type: "EMAIL", label: "Correo de la comunidad", value: "hola@solcomun.example", schedule: null, notes: "Respondemos en un plazo de 48 horas." },
         { type: "ADDRESS", label: "Oficina", value: "Carrer de la Pau 12, 46002 València", schedule: "Jueves, de 17:00 a 19:00", notes: null },
       ]}
