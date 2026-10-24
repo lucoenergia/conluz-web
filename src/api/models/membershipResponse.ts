@@ -34,6 +34,8 @@ export interface MembershipResponse {
   invitationExpiresAt: MembershipResponseInvitationExpiresAt;
   /** When the membership was last sent an invitation. Null if none has been sent. */
   invitedAt: MembershipResponseInvitedAt;
+  /** Whether demoting this membership to member, or deleting it, would be refused right now with MEMBERSHIP_LAST_ACTIVE_ADMIN: true only for the community's last active admin. A pending or suspended admin, or one whose account is disabled, is never the last one. Independent of capabilities.canUpdateRole and capabilities.canDelete, which say whether the caller may ask for it. */
+  lastActiveAdmin: boolean;
   /** The member's number in this community. Null if the community records none. */
   memberNumber: MembershipResponseMemberNumber;
   /** The member's DNI/NIE/NIF, normalised: the one the community registered them with. */

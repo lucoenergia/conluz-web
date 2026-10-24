@@ -19,6 +19,7 @@ import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities"
 import { getGetAllSuppliesQueryKey } from "../../api/supplies/supplies";
 import {
   getGetAllUsersQueryKey,
+  getGetCurrentUserQueryKey,
   getGetSuppliesByUserIdQueryKey,
   getGetUserByIdQueryKey,
 } from "../../api/users/users";
@@ -535,6 +536,66 @@ describe("useMembershipActions", () => {
       const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
       await expect(result.current.actions.importMembers?.run({ file: FILE })).resolves.toEqual({ error });
+      expect(invalidateQueries).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the last active admin (#309)", () => {
+    const restError = (status: number, code: RestErrorDetailCode) => ({
+      response: { status, data: { status, message: "refused", errors: [{ message: "refused", code }] } },
+    });
+    const ON_AN_ADMIN = { canUpdateRole: true, canDelete: true };
+
+    it("answers the role change with the updated membership and refreshes the three keys", async () => {
+      const updated = membershipWith(ON_AN_ADMIN);
+      mutateAsync.mockResolvedValue(updated);
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(membershipWith(ON_AN_ADMIN)),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.changeRole?.run({ role: "COMMUNITY_MEMBER" })).resolves.toEqual({
+        ok: true,
+        value: updated,
+      });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
+    });
+
+    it.each([
+      ["changeRole", () => [{ role: "COMMUNITY_MEMBER" }] as const],
+      ["remove", () => [] as const],
+    ] as const)(
+      "UI-MBR-028 %s refused with 409 MEMBERSHIP_LAST_ACTIVE_ADMIN hands back the error and refetches the roster only",
+      async (action, args) => {
+        const error = restError(409, "MEMBERSHIP_LAST_ACTIVE_ADMIN");
+        mutateAsync.mockRejectedValue(error);
+        const { result, queryClient } = renderHookWithProviders(() =>
+          useMembershipActions(communityWith({})).forMembership(membershipWith(ON_AN_ADMIN)),
+        );
+        const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+        const run = result.current.actions[action]?.run as (...a: unknown[]) => Promise<unknown>;
+        await expect(run(...args())).resolves.toEqual({ error });
+        expect(invalidateQueries).toHaveBeenCalledTimes(1);
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+      },
+    );
+
+    it.each([
+      ["changeRole", () => [{ role: "COMMUNITY_MEMBER" }] as const],
+      ["remove", () => [] as const],
+    ] as const)("%s refused with any other code leaves the cache alone", async (action, args) => {
+      mutateAsync.mockRejectedValue(restError(409, "MEMBERSHIP_OWNS_SUPPLIES"));
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(membershipWith(ON_AN_ADMIN)),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      const run = result.current.actions[action]?.run as (...a: unknown[]) => Promise<unknown>;
+      await run(...args());
+
       expect(invalidateQueries).not.toHaveBeenCalled();
     });
   });

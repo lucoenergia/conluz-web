@@ -875,6 +875,8 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
+    // The roster's only accepted, enabled admin (lucoenergia/conluz#449).
+    lastActiveAdmin: true,
     // Their own membership: the backend does not offer them their own removal
     // or demotion, which is the safety rail the row menu has to respect.
     capabilities: {
@@ -901,6 +903,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
+    lastActiveAdmin: false,
     capabilities: {
       canUpdateRole: true,
       canDelete: true,
@@ -922,6 +925,7 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: false,
+    lastActiveAdmin: false,
     capabilities: {
       canUpdateRole: true,
       canDelete: true,
@@ -957,6 +961,7 @@ function pendingMembership(
     invitedAt: null,
     invitationExpiresAt: null,
     enabled: true,
+    lastActiveAdmin: false,
     capabilities: {
       canUpdateRole: true,
       canDelete: true,
@@ -988,6 +993,22 @@ export const FIXED_ROSTER_INVITATION_STATES: MembershipResponse[] = [
   pendingMembership("pending-lapsed", "Elena Caducada Ruiz", { invitedAt: "2026-09-01T10:00:00Z" }),
   pendingMembership("pending-suspended", "Pablo Pausado Gil", { enabled: false }),
   FIXED_MEMBERSHIPS[2],
+];
+
+/**
+ * The roster as the community's only active admin sees it since
+ * lucoenergia/conluz#449 (#309): admins manage each other, themselves
+ * included, so their own row offers the role change and the removal, and the
+ * backend reports it as the last active admin -- the row whose menu shows
+ * "Eliminar" disabled, with the reason.
+ */
+export const FIXED_ROSTER_LAST_ACTIVE_ADMIN: MembershipResponse[] = [
+  {
+    ...FIXED_MEMBERSHIPS[0],
+    lastActiveAdmin: true,
+    capabilities: { ...FIXED_MEMBERSHIPS[0].capabilities, canUpdateRole: true, canDelete: true },
+  },
+  FIXED_MEMBERSHIPS[1],
 ];
 
 /**

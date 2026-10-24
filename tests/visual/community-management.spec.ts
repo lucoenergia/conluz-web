@@ -7,6 +7,7 @@ import {
   FIXED_DATADIS_CONFIG,
   FIXED_MEMBERSHIPS,
   FIXED_ROSTER_INVITATION_STATES,
+  FIXED_ROSTER_LAST_ACTIVE_ADMIN,
   hideAppBar,
   injectAuthToken,
   mainRegion,
@@ -95,6 +96,34 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("members-page-invitation-states.png", await mainRegion(page));
+  });
+
+  // The last active admin's row menu (#309): "Eliminar" disabled with its
+  // reason as a second line, wrapping inside the menu at 390 px, which is what
+  // can break. That the item is disabled and why, and when, is asserted in
+  // Vitest (MemberLastActiveAdmin.spec.tsx).
+  test("members last active admin menu", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockCommunityManagementRoutes(page, { memberships: FIXED_ROSTER_LAST_ACTIVE_ADMIN });
+
+    const admin = FIXED_ROSTER_LAST_ACTIVE_ADMIN[0];
+    await page.goto("/members");
+    await page.getByRole("button", { name: `Más acciones para ${admin.fullName}` }).click();
+    const menu = page.getByRole("menu");
+    // The disabled item and its reason, before the capture: a menu without
+    // them would make a plausible baseline.
+    const remove = menu.getByRole("menuitem", { name: /Eliminar/ });
+    await expect(remove).toHaveAttribute("aria-disabled", "true");
+    await expect(
+      remove.getByText("Es el último administrador activo de la comunidad. Primero haz administrador a otro miembro activo."),
+    ).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Cambiar rol" })).toBeVisible();
+    await stabilizePage(page);
+
+    // Component subject: the menu, with the app bar hidden (see hideAppBar).
+    await expect(menu).toHaveScreenshot("members-last-admin-menu.png", await hideAppBar(page));
   });
 
   // The registration form (#275): the record form's fields under an editable

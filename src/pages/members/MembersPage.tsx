@@ -12,6 +12,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  FormHelperText,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -52,7 +53,12 @@ import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useErrorDispatch } from "../../context/error.context";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
-import { invitationRefusalMessage, removalRefusalMessage } from "../../errors/membershipErrors";
+import {
+  invitationRefusalMessage,
+  removalRefusalMessage,
+  roleChangeRefusalMessage,
+} from "../../errors/membershipErrors";
+import { LAST_ACTIVE_ADMIN_EXPLANATION } from "../../errors/membershipErrorMessages";
 import { MemberRecordDialog } from "./MemberRecordDialog";
 import { ImportMembersDialog } from "./ImportMembersDialog";
 import { RegisterMemberDialog } from "./RegisterMemberDialog";
@@ -71,6 +77,15 @@ const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
   [MembershipResponseRole.COMMUNITY_ADMIN]: "Administrador",
 };
+
+/**
+ * Whether the backend would refuse demoting or removing this membership as the
+ * community's last active admin (lucoenergia/conluz#449). That is the row's
+ * state, apart from the capabilities, which only say the caller may ask. An
+ * older backend leaves the field out, which counts as false.
+ */
+const isLastActiveAdmin = (membership: MembershipResponse | null | undefined) =>
+  membership?.lastActiveAdmin === true;
 
 const INVITATION_ITEMS: { kind: InvitationWriteKind; key: keyof InvitationActions; label: string }[] = [
   { kind: "invite", key: "invite", label: "Invitar" },
@@ -149,13 +164,17 @@ export const MembersPage: FC = () => {
   };
 
   const handleRemoveMember = async (userId: string) => {
-    const remove = forMembership(memberships.find((m) => m.user?.id === userId)).actions.remove;
+    const target = memberships.find((m) => m.user?.id === userId);
+    const remove = forMembership(target).actions.remove;
     if (!remove) return;
     const result = await remove.run();
     if ("ok" in result) {
       setRemoveConfirmUserId(null);
     } else {
-      errorDispatch(removalRefusalMessage(result.error));
+      // The removed row's role, not the caller's: it only picks the wording of
+      // the supplies refusal, since a peer cannot suspend an admin (lucoenergia/conluz#449, MEM-034).
+      const subject = target?.role === MembershipResponseRole.COMMUNITY_ADMIN ? "admin" : "member";
+      errorDispatch(removalRefusalMessage(result.error, subject));
     }
   };
 
@@ -174,10 +193,11 @@ export const MembersPage: FC = () => {
 
   const handleRoleDialogConfirm = async () => {
     if (!selectedActions.changeRole) return;
-    if (await selectedActions.changeRole.run({ role: pendingRole as UpdateMembershipRoleBodyRole })) {
+    const result = await selectedActions.changeRole.run({ role: pendingRole as UpdateMembershipRoleBodyRole });
+    if ("ok" in result) {
       setRoleDialogOpen(false);
     } else {
-      errorDispatch("Error al actualizar el rol. Por favor, inténtalo de nuevo.");
+      errorDispatch(roleChangeRefusalMessage(result.error));
     }
   };
 
@@ -487,6 +507,7 @@ export const MembersPage: FC = () => {
           <Divider key="divider" />,
           <MenuItem
             key="remove"
+            disabled={isLastActiveAdmin(selectedMembership)}
             onClick={() => {
               handleMenuClose();
               setRemoveConfirmUserId(selectedMembership?.user?.id ?? null);
@@ -495,7 +516,11 @@ export const MembersPage: FC = () => {
             <ListItemIcon>
               <DeleteOutlineIcon fontSize="small" sx={{ color: "error.main" }} />
             </ListItemIcon>
-            <ListItemText sx={{ color: "error.main" }}>Eliminar</ListItemText>
+            <ListItemText
+              primary="Eliminar"
+              secondary={isLastActiveAdmin(selectedMembership) ? LAST_ACTIVE_ADMIN_EXPLANATION : undefined}
+              slotProps={{ primary: { sx: { color: "error.main" } }, secondary: { sx: { whiteSpace: "normal" } } }}
+            />
           </MenuItem>,
         ]}
       </RowActionsMenu>
@@ -620,13 +645,19 @@ export const MembersPage: FC = () => {
               label="Nuevo rol"
               onChange={(e) => setPendingRole(e.target.value)}
             >
-              <MenuItem value={MembershipResponseRole.COMMUNITY_MEMBER}>
+              <MenuItem
+                value={MembershipResponseRole.COMMUNITY_MEMBER}
+                disabled={isLastActiveAdmin(selectedMembership)}
+              >
                 {ROLE_LABELS[MembershipResponseRole.COMMUNITY_MEMBER]}
               </MenuItem>
               <MenuItem value={MembershipResponseRole.COMMUNITY_ADMIN}>
                 {ROLE_LABELS[MembershipResponseRole.COMMUNITY_ADMIN]}
               </MenuItem>
             </Select>
+            {isLastActiveAdmin(selectedMembership) && (
+              <FormHelperText>{LAST_ACTIVE_ADMIN_EXPLANATION}</FormHelperText>
+            )}
           </FormControl>
           <Alert severity="info">
             {pendingRole === MembershipResponseRole.COMMUNITY_ADMIN
@@ -639,7 +670,12 @@ export const MembersPage: FC = () => {
           <Button
             variant="contained"
             onClick={handleRoleDialogConfirm}
-            disabled={pendingRole === selectedMembership?.role || selectedActions.changeRole?.isPending}
+            disabled={
+              pendingRole === selectedMembership?.role ||
+              // A refetch can make the row the last active admin while Miembro is picked.
+              (pendingRole === MembershipResponseRole.COMMUNITY_MEMBER && isLastActiveAdmin(selectedMembership)) ||
+              selectedActions.changeRole?.isPending
+            }
           >
             {selectedActions.changeRole?.isPending ? "Guardando..." : "Confirmar"}
           </Button>
@@ -648,7 +684,7 @@ export const MembersPage: FC = () => {
 
       {/* Remove confirmation dialog, gated like the item that opens it. */}
       <Dialog
-        open={!!removeConfirmUserId && !!removeTargetRemove}
+        open={!!removeConfirmUserId && !!removeTargetRemove && !isLastActiveAdmin(removeTarget)}
         onClose={() => setRemoveConfirmUserId(null)}
         maxWidth="xs"
         fullWidth

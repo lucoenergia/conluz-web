@@ -18,6 +18,14 @@ export const SUBJECT_NOUN: Record<InvitationSubject, string> = {
 };
 
 /**
+ * Why the community's last active admin cannot be demoted or removed
+ * (lucoenergia/conluz#449, #309): the reason the members page shows on the
+ * actions it disables, and the catalogue's wording of the refusal.
+ */
+export const LAST_ACTIVE_ADMIN_EXPLANATION =
+  "Es el último administrador activo de la comunidad. Primero haz administrador a otro miembro activo.";
+
+/**
  * Refused because a pending membership has no contact email to invite at (#275).
  * The members page points to its own record edit; the platform admin has none
  * on the admins page, so that one says who can add it.

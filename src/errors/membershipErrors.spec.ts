@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { apiError } from "../test/apiError";
-import { invitationRefusalMessage, removalRefusalMessage } from "./membershipErrors";
+import {
+  invitationRefusalMessage,
+  removalRefusalMessage,
+  roleChangeRefusalMessage,
+  STALE_ROW_CODES,
+} from "./membershipErrors";
 import { resendLimitMessage } from "./membershipErrorMessages";
 
 const REFRESHED = "Hemos actualizado la lista.";
@@ -115,5 +120,47 @@ describe("removalRefusalMessage", () => {
 
   it("keeps the generic sentence for any other refusal", () => {
     expect(removalRefusalMessage(apiError(500))).toBe("Error al eliminar el miembro. Por favor, inténtalo de nuevo.");
+  });
+});
+
+describe("the last active admin (#309)", () => {
+  const REASON = "Es el último administrador activo de la comunidad. Primero haz administrador a otro miembro activo.";
+  const ADMIN_OWNS_SUPPLIES =
+    "Este administrador es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.";
+
+  it("UI-MBR-028 counts the refusal as a stale row for the role change and the removal", () => {
+    expect(STALE_ROW_CODES.changeRole).toContain("MEMBERSHIP_LAST_ACTIVE_ADMIN");
+    expect(STALE_ROW_CODES.remove).toContain("MEMBERSHIP_LAST_ACTIVE_ADMIN");
+  });
+
+  it("UI-MBR-028 words a refused role change with the reason, and says the list was refreshed", () => {
+    expect(roleChangeRefusalMessage(apiError(409, { code: "MEMBERSHIP_LAST_ACTIVE_ADMIN" }))).toBe(
+      `${REASON} ${REFRESHED}`,
+    );
+  });
+
+  it("keeps the generic wording for any other role change refusal", () => {
+    expect(roleChangeRefusalMessage(apiError(500))).toBe("Error al actualizar el rol. Por favor, inténtalo de nuevo.");
+  });
+
+  it.each(["member", "admin"] as const)(
+    "UI-MBR-028 words a refused removal with the reason, and says the list was refreshed, whatever the role (%s)",
+    (subject) => {
+      expect(removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_LAST_ACTIVE_ADMIN" }), subject)).toBe(
+        `${REASON} ${REFRESHED}`,
+      );
+    },
+  );
+
+  it("UI-MBR-029 recommends demoting an admin who owns supplies before suspending them", () => {
+    expect(removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_OWNS_SUPPLIES" }), "admin")).toBe(
+      ADMIN_OWNS_SUPPLIES,
+    );
+  });
+
+  it("UI-MBR-015 keeps the supplies wording for a member", () => {
+    expect(removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_OWNS_SUPPLIES" }), "member")).toBe(
+      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+    );
   });
 });

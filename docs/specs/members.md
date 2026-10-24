@@ -6,17 +6,17 @@
 | **Status** | Active |
 | **Routes** | `/members` |
 | **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the bulk send need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-013) |
-| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, ACC-003, ACC-008, ACC-010 |
+| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #302 |
+| **Last reviewed against code** | #309 |
 
 ## Purpose
 
 Let an admin of a community keep its roster: register members, one by one or from a CSV file, and
 invite them to join, see which members are still pending and where their invitation stands, correct
 the record the community keeps on each member, and suspend or reactivate a member's access to the
-community. This document
-covers only the rules #272, #275, #276 and #284 introduced; the rest of the members page is not covered yet.
+community, and keep it from losing its last active admin. This document
+covers only the rules #272, #275, #276, #284 and #309 introduced; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -240,11 +240,12 @@ covers only the rules #272, #275, #276 and #284 introduced; the rest of the memb
 - **Rule:** When removing a member is refused with `MEMBERSHIP_OWNS_SUPPLIES`, the page MUST say
   that the member owns supplies in this community, recommend suspending them to stop their access,
   and say their supplies must be deleted first to remove them. The member MUST stay in the roster.
+  This applies to a row whose role is `COMMUNITY_MEMBER`; an admin's refusal is UI-MBR-029.
 - **Rationale:** The generic error gave the admin no way forward. Suspending stops the member's
   access in this community without deleting anything, and needs nothing done first, so it is the
   step the message recommends; deleting the supplies is not done from this page.
 - **Implements:** MEM-029
-- **Source:** #275 (maintainer decision; lucoenergia/conluz#412)
+- **Source:** #275 (maintainer decision; lucoenergia/conluz#412); #309 (scoped to a member's row)
 
 ### UI-MBR-016 — The page reads no user list and links no existing account
 
@@ -388,6 +389,66 @@ covers only the rules #272, #275, #276 and #284 introduced; the rest of the memb
   responses do, and reports the supplies capability itself, since its user is a reference.
 - **Implements:** MEM-026
 - **Source:** #302, lucoenergia/conluz#448
+
+### UI-MBR-026 — The last active admin's removal is shown disabled, with the reason
+
+- **Status:** Active
+- **Rule:**
+  - On a row whose `lastActiveAdmin` is true, the caller's own included, "Eliminar" MUST be shown
+    disabled, with "Es el último administrador activo de la comunidad. Primero haz administrador a
+    otro miembro activo." under it, and its confirmation MUST NOT open.
+  - "Eliminar" MUST still be shown only where the row's `capabilities.canDelete` offers it.
+  - A `lastActiveAdmin` absent from the payload MUST count as false.
+- **Rationale:** The backend refuses this removal and reports it in advance, apart from `canDelete`,
+  which only says the caller may ask. A disabled item with its reason tells the admin why and what
+  to do first, where an enabled one led to a request bound to fail; it follows "Revocar rol" on the
+  platform admins page (UI-PAD-004). Counting the absent field as false keeps the page as it was
+  against a backend that does not send it.
+- **Implements:** MEM-033
+- **Source:** #309, lucoenergia/conluz#449
+
+### UI-MBR-027 — The last active admin cannot be changed to Miembro
+
+- **Status:** Active
+- **Rule:**
+  - In the "Cambiar rol" dialog of a row whose `lastActiveAdmin` is true, the caller's own included,
+    the Miembro option MUST be disabled, with the reason of UI-MBR-026 under the role field, and
+    Confirmar MUST stay disabled while Miembro is selected.
+  - "Cambiar rol" itself MUST still be offered from the row's `capabilities.canUpdateRole` alone.
+  - A `lastActiveAdmin` absent from the payload MUST count as false.
+- **Rationale:** On that row demoting is the only role change, and the backend refuses it. The page
+  offers no "Hacer miembro" item: the role is chosen in the "Cambiar rol" dialog, so the choice the
+  backend would refuse is disabled there. Confirmar stays disabled because a refetch can make the row
+  the last active admin while Miembro is already selected.
+- **Implements:** MEM-033
+- **Source:** #309 (maintainer decision on where the role change is disabled), lucoenergia/conluz#449
+
+### UI-MBR-028 — A last-admin refusal says why, and the roster is refreshed
+
+- **Status:** Active
+- **Rule:** When the role change or the removal is refused with 409 `MEMBERSHIP_LAST_ACTIVE_ADMIN`,
+  the page MUST show the reason of UI-MBR-026 followed by "Hemos actualizado la lista.", MUST
+  refresh the roster, and the row MUST stay with its role unchanged.
+- **Rationale:** The page disables both actions on the last active admin's row, so this refusal
+  means the roster was stale: another admin was demoted, suspended or removed since it was read, or
+  two admins acted at once. The refreshed row shows the actions disabled with their reason
+  (UI-MBR-026, UI-MBR-027), and the message says the list changed, as the invitation refusals that
+  mean a stale row do (UI-MBR-014).
+- **Implements:** MEM-033
+- **Source:** #309, lucoenergia/conluz#449
+
+### UI-MBR-029 — An admin who owns supplies is not removed, and the caller is told to demote them first
+
+- **Status:** Active
+- **Rule:** When removing a row whose role is `COMMUNITY_ADMIN` is refused with
+  `MEMBERSHIP_OWNS_SUPPLIES`, the page MUST say that the admin owns supplies in this community,
+  recommend changing their role to member and then suspending them to stop their access, and say
+  their supplies must be deleted first to remove them. The admin MUST stay in the roster.
+- **Rationale:** A community admin cannot suspend another admin, so the member's wording
+  (UI-MBR-015) recommended a step the caller cannot take; once demoted, the person can be suspended.
+  The removed row's role picks the wording: it is the target's data, not the caller's authorization.
+- **Implements:** MEM-029, MEM-034
+- **Source:** #309, lucoenergia/conluz#449
 
 ## States
 

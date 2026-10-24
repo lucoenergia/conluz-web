@@ -1,7 +1,7 @@
 import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/models";
 import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
-import { resendLimitMessage } from "./membershipErrorMessages";
+import { LAST_ACTIVE_ADMIN_EXPLANATION, resendLimitMessage } from "./membershipErrorMessages";
 import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
 
@@ -242,6 +242,9 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // Removing a member who owns supplies in the community (lucoenergia/conluz#412).
   MEMBERSHIP_OWNS_SUPPLIES:
     "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+  // Demoting or removing the community's last active admin
+  // (lucoenergia/conluz#449, #309).
+  MEMBERSHIP_LAST_ACTIVE_ADMIN: LAST_ACTIVE_ADMIN_EXPLANATION,
 
   // A member import refused as a whole (lucoenergia/conluz#397; #284). Function
   // templates where the code carries params, so an absent one degrades to a

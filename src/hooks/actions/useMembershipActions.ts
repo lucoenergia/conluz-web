@@ -29,6 +29,7 @@ import type {
   ImportMembersResponse,
   MemberResponse,
   MembershipCapabilitiesResponse,
+  MembershipResponse,
   RegisterMemberBody,
   RestErrorDetailCode,
   SendInvitationsResponse,
@@ -56,7 +57,7 @@ import { grant, type MaybeAction } from "./action";
  */
 export interface MembershipRowActions {
   actions: {
-    changeRole: MaybeAction<[UpdateMembershipRoleBody], boolean>;
+    changeRole: MaybeAction<[UpdateMembershipRoleBody], MembershipWriteResult<MembershipResponse>>;
     remove: MaybeAction<[], MembershipWriteResult>;
     setInvestment: MaybeAction<[SetMembershipInvestmentBody], boolean>;
     clearInvestment: MaybeAction<[], boolean>;
@@ -90,8 +91,8 @@ export type EditMemberRecordResult = { ok: true } | { error: unknown };
 
 /**
  * The error, not a boolean, for the same reason as EditMemberRecordResult: each
- * refusal of a removal or an invitation has its own message (#275), so the
- * screen needs the code. `value` is the response, when the screen needs it.
+ * refusal of a role change, a removal or an invitation has its own message
+ * (#275, #309), so the screen needs the code. `value` is the response, when the screen needs it.
  */
 export type MembershipWriteResult<T = void> = { ok: true; value: T } | { error: unknown };
 
@@ -284,12 +285,21 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
           changeRole: grant(
             changeRole,
             (data: UpdateMembershipRoleBody) =>
-              run(() => updateRoleMutation.mutateAsync({ communityId, userId, data })),
+              write(
+                () => updateRoleMutation.mutateAsync({ communityId, userId, data }),
+                invalidateAfterWrite,
+                STALE_ROW_CODES.changeRole,
+              ),
             updateRoleMutation.isPending,
           ),
           remove: grant(
             remove,
-            () => write(() => deleteMutation.mutateAsync({ communityId, userId }), invalidateAfterWrite),
+            () =>
+              write(
+                () => deleteMutation.mutateAsync({ communityId, userId }),
+                invalidateAfterWrite,
+                STALE_ROW_CODES.remove,
+              ),
             deleteMutation.isPending,
           ),
           setInvestment: grant(
