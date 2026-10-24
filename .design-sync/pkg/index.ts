@@ -25,6 +25,8 @@ export { CoefficientHistory } from "../../src/components/CoefficientHistory/Coef
 export { CommunityScopeHeader } from "../../src/components/CommunityScopeHeader/CommunityScopeHeader";
 export { CommunityStatusChip } from "../../src/components/CommunityStatusChip/CommunityStatusChip";
 export { ContactChannelList } from "../../src/components/ContactChannelList/ContactChannelList";
+export { ContactChannelEditor } from "../../src/components/ContactChannelEditor/ContactChannelEditor";
+export { ContactChannelReorderList } from "../../src/components/ContactChannelReorderList/ContactChannelReorderList";
 export { DetailHeader } from "../../src/components/DetailHeader/DetailHeader";
 export { EmptyState } from "../../src/components/EmptyState/EmptyState";
 export { FilterChipsBar } from "../../src/components/FilterChips/FilterChipsBar";
@@ -61,6 +63,7 @@ export { DeactivateOrReopenCoefficientConfirmationModal } from "../../src/compon
 export { DeleteConfirmationModal } from "../../src/components/Modals/DeleteConfirmationModal";
 export { DeleteSharingAgreementConfirmationModal } from "../../src/components/Modals/DeleteSharingAgreementConfirmationModal";
 export { DeleteSupplyConfirmationModal } from "../../src/components/Modals/DeleteSupplyConfirmationModal";
+export { DeleteContactChannelConfirmationModal } from "../../src/components/Modals/DeleteContactChannelConfirmationModal";
 export { DisableConfirmationModal } from "../../src/components/Modals/DisableConfirmationModal";
 export { EnableConfirmationModal } from "../../src/components/Modals/EnableConfirmationModal";
 export { PublishSharingAgreementConfirmationModal } from "../../src/components/Modals/PublishSharingAgreementConfirmationModal";
