@@ -322,4 +322,22 @@ interface ContactChannelResponse {
   /** The phone number, email address or postal address. */
   value: string;
 }
+
+/** One channel as `ContactChannelEditor` holds it: every field a string, nothing trimmed yet. */
+interface ContactChannelDraft {
+  type: 'PHONE' | 'EMAIL' | 'ADDRESS';
+  label: string;
+  value: string;
+  schedule: string;
+  notes: string;
+}
+
+/** `ContactChannelEditor`'s `fieldErrors`: a message per field in error. */
+interface ContactChannelErrors {
+  type?: string;
+  label?: string;
+  value?: string;
+  schedule?: string;
+  notes?: string;
+}
 ```

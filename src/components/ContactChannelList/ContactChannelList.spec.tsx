@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 import { screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import { buildContactChannel } from "../../test/fixtures";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { ContactChannelList } from "./ContactChannelList";
@@ -53,6 +54,56 @@ describe("ContactChannelList", () => {
     expect(screen.getByText("Carrer de la Pau 12, València")).toBeVisible();
     expect(screen.queryByRole("link", { name: "Carrer de la Pau 12, València" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link")).toHaveLength(3);
+  });
+
+  it("names each channel's type above its name", () => {
+    renderWithProviders(<ContactChannelList channels={CHANNELS} />);
+
+    const items = channelItems();
+    expect(within(items[0]).getByText("Teléfono")).toBeVisible();
+    expect(within(items[1]).getByText("Dirección")).toBeVisible();
+    expect(within(items[2]).getByText("Email")).toBeVisible();
+  });
+
+  it("does not repeat the type when the name already is the type", () => {
+    renderWithProviders(
+      <ContactChannelList channels={[buildContactChannel({ type: "EMAIL", label: "Email", value: "hola@solcomun.test" })]} />,
+    );
+
+    expect(within(channelItems()[0]).getAllByText("Email")).toHaveLength(1);
+  });
+});
+
+describe("ContactChannelList — edit actions (#296)", () => {
+  it("offers no edit action and no heading without onEdit, as members see it", () => {
+    renderWithProviders(<ContactChannelList channels={CHANNELS} />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+  });
+
+  it("offers an Editar per channel, named after it, that reports the channel's position", async () => {
+    const onEdit = vi.fn();
+    renderWithProviders(<ContactChannelList channels={CHANNELS} onEdit={onEdit} />);
+
+    expect(screen.getAllByRole("button", { name: /^Editar / })).toHaveLength(4);
+    await userEvent.click(screen.getByRole("button", { name: "Editar Correo" }));
+
+    expect(onEdit).toHaveBeenCalledWith(2);
+  });
+
+  it("names each channel by its label and its type, as a heading that can take focus", () => {
+    renderWithProviders(<ContactChannelList channels={CHANNELS} onEdit={vi.fn()} />);
+
+    const heading = screen.getByRole("heading", { level: 3, name: "Oficina, dirección" });
+    expect(heading).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("heading", { level: 3, name: "Correo, email" })).toBeInTheDocument();
+  });
+
+  it("disables every Editar while editDisabled is set", () => {
+    renderWithProviders(<ContactChannelList channels={CHANNELS} onEdit={vi.fn()} editDisabled />);
+
+    screen.getAllByRole("button", { name: /^Editar / }).forEach((button) => expect(button).toBeDisabled());
   });
 });
 

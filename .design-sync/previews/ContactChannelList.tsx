@@ -4,7 +4,7 @@ export const MixedChannels = () => (
   <Mui.Box sx={{ maxWidth: 440 }}>
     <ContactChannelList
       channels={[
-        { type: "PHONE", label: "Atención a socios", value: "+34 600 111 222", schedule: "Lunes a viernes, de 9:00 a 14:00", notes: null },
+        { type: "PHONE", label: "Atención a miembros", value: "+34 600 111 222", schedule: "Lunes a viernes, de 9:00 a 14:00", notes: null },
         { type: "EMAIL", label: "Correo de la comunidad", value: "hola@solcomun.example", schedule: null, notes: "Respondemos en un plazo de 48 horas." },
         { type: "ADDRESS", label: "Oficina", value: "Carrer de la Pau 12, 46002 València", schedule: "Jueves, de 17:00 a 19:00", notes: null },
       ]}
@@ -33,5 +33,23 @@ export const AddressOnly = () => (
     <ContactChannelList
       channels={[{ type: "ADDRESS", label: "Local social", value: "Plaça Major 3, 46900 Torrent", schedule: null, notes: null }]}
     />
+  </Mui.Box>
+);
+
+const ADMIN_CHANNELS = [
+  { type: "PHONE", label: "Oficina", value: "+34 978 710 251", schedule: "Lunes a viernes, de 10:00 a 13:00", notes: "Si no contestamos, deja un mensaje y te llamamos." },
+  { type: "EMAIL", label: "Tesorería", value: "tesoreria@solsierra.example", schedule: null, notes: null },
+  { type: "ADDRESS", label: "Local de la asociación", value: "Calle Mayor 12, bajo, 44100 Albarracín (Teruel)", schedule: null, notes: null },
+] as const;
+
+export const WithEditActions = () => (
+  <Mui.Box sx={{ maxWidth: 440 }}>
+    <ContactChannelList channels={[...ADMIN_CHANNELS]} onEdit={() => {}} />
+  </Mui.Box>
+);
+
+export const JustSaved = () => (
+  <Mui.Box sx={{ maxWidth: 440 }}>
+    <ContactChannelList channels={[...ADMIN_CHANNELS]} onEdit={() => {}} highlightIndex={1} />
   </Mui.Box>
 );

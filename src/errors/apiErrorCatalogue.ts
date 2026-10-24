@@ -4,6 +4,7 @@ import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 import { LAST_ACTIVE_ADMIN_EXPLANATION, resendLimitMessage } from "./membershipErrorMessages";
 import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
+import { CONTACT_CHANNEL_MESSAGES } from "../utils/contactChannelRules";
 
 /**
  * code -> Spanish message template. Templates may reference `{paramName}`
@@ -52,6 +53,12 @@ type ApiErrorTemplate = string | ((params: Record<string, string> | undefined) =
 /** A refused enable, naming the fields in `params.missingFields`, or none when it is absent. */
 const incompleteConfig: ApiErrorTemplate = (params) =>
   incompleteText(labelsForMissingFields(missingFieldNamesFrom(params?.missingFields)));
+
+/** `params.n` as a length, or undefined when it is absent or not a count. */
+function lengthParam(params: Record<string, string> | undefined): number | undefined {
+  const n = Number(params?.n);
+  return params?.n !== undefined && Number.isInteger(n) && n >= 0 ? n : undefined;
+}
 
 function withOptionalCups(full: (cups: string) => string, generic: string): ApiErrorTemplate {
   return (params) => {
@@ -215,6 +222,28 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   DATADIS_CONFIG_INCOMPLETE: incompleteConfig,
   HUAWEI_CONFIG_INCOMPLETE: incompleteConfig,
 
+  // A refused channel in a list of contact channels (lucoenergia/conluz#462).
+  // The channel editor (#296) shows it on the field it names, worded as its
+  // own check of the same rule. The backend sends the limit but not the current
+  // length, nor the channel's type: the editor adds both, as `n` and `type`,
+  // from the channel it sent (getIndexedApiErrorDetails). CONTACT_CHANNELS_MISSING,
+  // CONTACT_CHANNELS_TOO_MANY and CONTACT_CHANNEL_TYPE_INVALID cannot be reached
+  // from it, so they have no entry.
+  CONTACT_CHANNEL_LABEL_BLANK: CONTACT_CHANNEL_MESSAGES.labelBlank,
+  CONTACT_CHANNEL_LABEL_TOO_LONG: (params) => CONTACT_CHANNEL_MESSAGES.labelTooLong(lengthParam(params)),
+  CONTACT_CHANNEL_VALUE_BLANK: (params) => {
+    const type = params?.type;
+    return type === "PHONE" || type === "EMAIL" || type === "ADDRESS"
+      ? CONTACT_CHANNEL_MESSAGES.valueBlank(type)
+      : "Escribe el teléfono, el email o la dirección del canal.";
+  },
+  CONTACT_CHANNEL_VALUE_TOO_LONG: (params) => CONTACT_CHANNEL_MESSAGES.valueTooLong(lengthParam(params)),
+  CONTACT_CHANNEL_SCHEDULE_TOO_LONG: (params) => CONTACT_CHANNEL_MESSAGES.scheduleTooLong(lengthParam(params)),
+  CONTACT_CHANNEL_NOTES_TOO_LONG: (params) => CONTACT_CHANNEL_MESSAGES.notesTooLong(lengthParam(params)),
+  CONTACT_CHANNEL_EMAIL_INVALID: CONTACT_CHANNEL_MESSAGES.emailInvalid,
+  CONTACT_CHANNEL_PHONE_CHARACTERS_INVALID: CONTACT_CHANNEL_MESSAGES.phoneInvalid,
+  CONTACT_CHANNEL_PHONE_TOO_FEW_DIGITS: CONTACT_CHANNEL_MESSAGES.phoneInvalid,
+
   // A member record saved without a contact email on a COMMUNITY_ADMIN
   // membership (lucoenergia/conluz#416). The record form shows it on the email
   // field (#272).
@@ -375,4 +404,50 @@ export function getGroupedApiErrorDetails(error: unknown): GroupedApiErrors {
   });
 
   return { fileLevel, lineLevel };
+}
+
+export interface IndexedApiErrorDetail {
+  /** The 0-based position, in the submitted list, of the item the detail is about. */
+  index: number;
+  code: RestErrorDetailCode | undefined;
+  message: string;
+}
+
+export interface IndexedApiErrors {
+  formLevel: string[];
+  indexed: IndexedApiErrorDetail[];
+}
+
+/**
+ * Translates every error detail in a RestError response and partitions them by
+ * params.index, for a form that submits a list and places each refusal on the
+ * item it names (the contact channels, #296). A detail with no index, or one
+ * that is not a non-negative integer, is about the whole form: it is kept there
+ * rather than dropped or put on the wrong item.
+ *
+ * `paramsFor` adds params the response does not carry but the form knows, from
+ * the item it sent at that index (the contact channel's current length and
+ * type). The response's own params win.
+ */
+export function getIndexedApiErrorDetails(
+  error: unknown,
+  paramsFor?: (index: number, code: RestErrorDetailCode | undefined) => Record<string, string>,
+): IndexedApiErrors {
+  const details = extractRestError(error)?.errors ?? [];
+  const formLevel: string[] = [];
+  const indexed: IndexedApiErrorDetail[] = [];
+
+  for (const detail of details) {
+    const raw = detail.params?.index;
+    const index = raw === undefined || raw.trim() === "" ? NaN : Number(raw);
+    if (Number.isInteger(index) && index >= 0) {
+      const code = detail.code ?? undefined;
+      const params = { ...paramsFor?.(index, code), ...detail.params };
+      indexed.push({ index, code, message: translateErrorDetail({ ...detail, params }, detail.message) });
+    } else {
+      formLevel.push(translateErrorDetail(detail, detail.message));
+    }
+  }
+
+  return { formLevel, indexed };
 }

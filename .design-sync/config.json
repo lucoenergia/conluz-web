@@ -64,6 +64,8 @@
     "PasswordPolicyHint": "../groups/forms.md",
     "SearchBar": "../groups/forms.md",
     "FilterChipsBar": "../groups/forms.md",
+    "ContactChannelEditor": "../groups/dialogs.md",
+    "ContactChannelReorderList": "../groups/forms.md",
     "Graph": "../groups/charts.md",
     "GraphBar": "../groups/charts.md",
     "GraphCard": "../groups/charts.md",
@@ -107,6 +109,7 @@
     "DeleteConfirmationModal": "../groups/dialogs.md",
     "DeleteSharingAgreementConfirmationModal": "../groups/dialogs.md",
     "DeleteSupplyConfirmationModal": "../groups/dialogs.md",
+    "DeleteContactChannelConfirmationModal": "../groups/dialogs.md",
     "DisableConfirmationModal": "../groups/dialogs.md",
     "EnableConfirmationModal": "../groups/dialogs.md",
     "PublishSharingAgreementConfirmationModal": "../groups/dialogs.md",
@@ -145,6 +148,14 @@
     "DeleteSupplyConfirmationModal": {
       "cardMode": "single",
       "viewport": "720x520"
+    },
+    "DeleteContactChannelConfirmationModal": {
+      "cardMode": "single",
+      "viewport": "720x420"
+    },
+    "ContactChannelEditor": {
+      "cardMode": "single",
+      "viewport": "720x960"
     },
     "DeleteSuccessModal": {
       "cardMode": "single",

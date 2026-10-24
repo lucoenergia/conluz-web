@@ -3,13 +3,20 @@ import type { FC } from "react";
 import { screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  useGetCommunityById,
   useGetCommunityContact,
+  type getCommunityById,
   type getCommunityContact,
 } from "../../api/communities/communities";
 import { useGetOperatorContact, type getOperatorContact } from "../../api/info/info";
 import { useActiveCommunity } from "../../context/community.context";
 import { apiError } from "../../test/apiError";
-import { buildContactChannel, buildOperatorContact } from "../../test/fixtures";
+import {
+  buildCommunity,
+  buildCommunityCapabilities,
+  buildContactChannel,
+  buildOperatorContact,
+} from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { CommunityContactPage } from "./CommunityContactPage";
@@ -17,6 +24,7 @@ import { CommunityContactPage } from "./CommunityContactPage";
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCommunityContact: vi.fn(),
+  useGetCommunityById: vi.fn(),
 }));
 vi.mock(import("../../api/info/info"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -70,7 +78,21 @@ const operatorRequested = () =>
 // Keyed on the active community, as AuthenticatedLayout keys its Outlet.
 const KeyedPage: FC = () => <CommunityContactPage key={useActiveCommunity() ?? "none"} />;
 
+// Every caller here is a member: none may manage the contact, so every rule
+// below is about what a member sees.
+function serveMember() {
+  vi.mocked(useGetCommunityById).mockImplementation((communityId) =>
+    communityId
+      ? query.success<typeof getCommunityById>(
+          buildCommunity({ id: communityId, capabilities: buildCommunityCapabilities({ canRead: true }) }),
+        )
+      : query.disabled(),
+  );
+}
+
 beforeEach(() => {
+  vi.mocked(useGetCommunityById).mockReset();
+  serveMember();
   vi.mocked(useGetCommunityContact).mockReset();
   vi.mocked(useGetOperatorContact).mockReset();
   serveChannels(channelsOf);
@@ -142,6 +164,32 @@ describe("CommunityContactPage", () => {
     expect(screen.getByText(INSTRUCTION)).toBeVisible();
     expect(screen.queryByRole("heading", { name: OPERATOR_HEADING })).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("UI-CTU-003 shows the fallback to a caller who may do other things in the community but not manage it", () => {
+    serveChannels({});
+    vi.mocked(useGetCommunityById).mockReturnValue(
+      query.success<typeof getCommunityById>(
+        buildCommunity({
+          id: COMMUNITY_A,
+          capabilities: buildCommunityCapabilities({ canRead: true, canUpdate: true, canManageMemberships: true }),
+        }),
+      ),
+    );
+    renderWithProviders(<CommunityContactPage />, { activeCommunityId: COMMUNITY_A });
+
+    expect(screen.getByText(INSTRUCTION)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Configurar contacto" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: OPERATOR_HEADING })).toBeVisible();
+  });
+
+  it("UI-CTU-003 shows the fallback when whether the caller may manage the community could not be checked", () => {
+    serveChannels({});
+    vi.mocked(useGetCommunityById).mockReturnValue(query.error(apiError(500)));
+    renderWithProviders(<CommunityContactPage />, { activeCommunityId: COMMUNITY_A });
+
+    expect(screen.getByText(INSTRUCTION)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Configurar contacto" })).not.toBeInTheDocument();
   });
 
   it("UI-CTU-003 for a caller with no community, shows the fallback and requests no channels", () => {
