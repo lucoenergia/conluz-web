@@ -19,6 +19,11 @@ export interface ContactChannelReorderListProps {
   onCancel: () => void;
   /** Leaves after the caller lost the right to edit, so the page can refresh what they may do. */
   onLostRightsClose: () => void;
+  /**
+   * Announces each move through the page's own status region. Without it, the
+   * list announces the moves itself.
+   */
+  onAnnounce?: (message: string) => void;
 }
 
 interface Row {
@@ -40,6 +45,7 @@ export const ContactChannelReorderList: FC<ContactChannelReorderListProps> = ({
   onSave,
   onCancel,
   onLostRightsClose,
+  onAnnounce,
 }) => {
   const [rows, setRows] = useState<Row[]>(() => channels.map((channel, key) => ({ key, channel })));
   const [moved, setMoved] = useState<{ key: number; direction: Direction } | null>(null);
@@ -64,7 +70,9 @@ export const ContactChannelReorderList: FC<ContactChannelReorderListProps> = ({
     [next[position], next[target]] = [next[target], next[position]];
     setRows(next);
     setMoved({ key: next[target].key, direction });
-    setAnnouncement(`«${next[target].channel.label}» está ahora en la posición ${target + 1} de ${next.length}.`);
+    const message = `«${next[target].channel.label}» está ahora en la posición ${target + 1} de ${next.length}.`;
+    if (onAnnounce) onAnnounce(message);
+    else setAnnouncement(message);
   };
 
   return (
@@ -238,7 +246,7 @@ export const ContactChannelReorderList: FC<ContactChannelReorderListProps> = ({
         )}
       </Box>
 
-      <ActionStatus message={announcement} />
+      {!onAnnounce && <ActionStatus message={announcement} />}
     </Box>
   );
 };
