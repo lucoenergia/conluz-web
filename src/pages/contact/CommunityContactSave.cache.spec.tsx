@@ -75,7 +75,7 @@ const puts = (router: RequestRouter) =>
 const listedLabels = () =>
   within(screen.getByRole("list", { name: "Canales de contacto" }))
     .getAllByRole("listitem")
-    .map((item) => item.querySelector("h3, p")?.textContent);
+    .map((item) => item.querySelector("h3")?.textContent);
 const editButton = (label: string) => screen.getByRole("button", { name: `Editar ${label}` });
 const sheet = () => screen.getByRole("dialog");
 const field = (name: string) => within(sheet()).getByRole("textbox", { name });

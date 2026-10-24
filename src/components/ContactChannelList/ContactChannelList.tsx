@@ -33,55 +33,106 @@ const ICONS: Record<ContactChannelResponseType, SvgIconComponent> = {
 };
 
 /**
- * A community's contact channels, in the order given (#295). A phone or an
- * email is a link the user can tap; an address is text. With `onEdit`, each
- * channel also has an "Editar" action (#296); without it, the list is
- * read-only.
+ * A community's contact channels, in the order given (#295), each as a
+ * bordered card. A phone or an email is a link the user can tap; an address is
+ * text. With `onEdit`, each channel also has an "Editar" action (#296);
+ * without it, the list is read-only.
  */
 export const ContactChannelList: FC<ContactChannelListProps> = ({ channels, onEdit, highlightIndex, editDisabled }) => (
-  <Box component="ul" aria-label="Canales de contacto" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+  <Box component="ul" aria-label="Canales de contacto" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
     {channels.map((channel, index) => {
       const Icon = ICONS[channel.type];
       const href = contactHref(channel.type, channel.value);
+      const typeLabel = CONTACT_CHANNEL_TYPE_LABELS[channel.type];
+      const highlighted = !!onEdit && highlightIndex === index;
       return (
         <Box
           component="li"
           key={index}
-          sx={[
-            { display: "flex", gap: 2, alignItems: "flex-start" },
-            !!onEdit && { p: 1.5, mx: -1.5, borderRadius: radii.default },
-            !!onEdit && highlightIndex === index && { backgroundColor: colors.brand.surface },
-          ]}
+          sx={{
+            display: "flex",
+            gap: { xs: 1.5, sm: 2 },
+            alignItems: "flex-start",
+            p: { xs: 1.5, sm: 2 },
+            border: 1,
+            borderColor: colors.border.light,
+            borderRadius: radii.default,
+            backgroundColor: highlighted ? colors.brand.surface : colors.background.paper,
+          }}
         >
-          <Icon aria-hidden sx={{ color: "primary.main", mt: 0.25 }} />
-          <Box sx={{ minWidth: 0, flex: onEdit ? 1 : undefined }}>
-            {onEdit ? (
-              <Typography
-                variant="subtitle2"
-                component="h3"
-                id={contactChannelHeadingId(index)}
-                tabIndex={-1}
-                aria-label={`${channel.label}, ${CONTACT_CHANNEL_TYPE_LABELS[channel.type].toLowerCase()}`}
-                sx={{ color: colors.text.primary, m: 0 }}
-              >
-                {channel.label}
-              </Typography>
-            ) : (
-              <Typography variant="subtitle2" component="p" sx={{ color: colors.text.primary }}>
-                {channel.label}
-              </Typography>
-            )}
-            {href ? (
-              <Link href={href} underline="hover" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
-                {channel.value}
-              </Link>
-            ) : (
-              <Typography variant="body2" sx={{ color: colors.text.body, overflowWrap: "anywhere" }}>
-                {channel.value}
-              </Typography>
-            )}
+          <Box
+            aria-hidden
+            sx={{
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              // On the highlighted card the disc would vanish into the same tint.
+              backgroundColor: highlighted ? colors.background.paper : colors.brand.surface,
+            }}
+          >
+            <Icon fontSize="small" sx={{ color: "primary.main" }} />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            {/* Editar shares the row of the type and the name only, so the
+                value, the schedule and the notes keep the card's full width. */}
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                {/* The type, unless the name already says it (the operator's
+                    "Teléfono" and "Email"). With onEdit the heading's name carries
+                    the type, so the caption is not read a second time. */}
+                {channel.label.toLowerCase() !== typeLabel.toLowerCase() && (
+                  <Typography variant="caption" component="p" aria-hidden={onEdit ? true : undefined} sx={{ color: colors.text.subtle }}>
+                    {typeLabel}
+                  </Typography>
+                )}
+                {onEdit ? (
+                  <Typography
+                    variant="subtitle2"
+                    component="h3"
+                    id={contactChannelHeadingId(index)}
+                    tabIndex={-1}
+                    aria-label={`${channel.label}, ${typeLabel.toLowerCase()}`}
+                    sx={{ color: colors.text.primary, m: 0 }}
+                  >
+                    {channel.label}
+                  </Typography>
+                ) : (
+                  <Typography variant="subtitle2" component="p" sx={{ color: colors.text.primary }}>
+                    {channel.label}
+                  </Typography>
+                )}
+              </Box>
+              {onEdit && (
+                <Button
+                  variant="text"
+                  startIcon={<EditOutlinedIcon />}
+                  id={contactChannelEditId(index)}
+                  aria-label={`Editar ${channel.label}`}
+                  disabled={editDisabled}
+                  onClick={() => onEdit(index)}
+                  sx={{ minHeight: 44, flexShrink: 0, mt: -0.5, mr: -1 }}
+                >
+                  Editar
+                </Button>
+              )}
+            </Box>
+            <Box sx={{ mt: 1 }}>
+              {href ? (
+                <Link href={href} underline="always" sx={{ overflowWrap: "anywhere" }}>
+                  {channel.value}
+                </Link>
+              ) : (
+                <Typography variant="body2" sx={{ color: colors.text.body, overflowWrap: "anywhere" }}>
+                  {channel.value}
+                </Typography>
+              )}
+            </Box>
             {channel.schedule && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
                 <AccessTimeIcon aria-hidden fontSize="small" sx={{ color: colors.text.subtle }} />
                 <Typography variant="body2" sx={{ color: colors.text.subtle }}>
                   {channel.schedule}
@@ -89,24 +140,11 @@ export const ContactChannelList: FC<ContactChannelListProps> = ({ channels, onEd
               </Box>
             )}
             {channel.notes && (
-              <Typography variant="body2" sx={{ color: colors.text.subtle, mt: 0.5 }}>
+              <Typography variant="body2" sx={{ color: colors.text.body, mt: 0.5 }}>
                 {channel.notes}
               </Typography>
             )}
           </Box>
-          {onEdit && (
-            <Button
-              variant="text"
-              startIcon={<EditOutlinedIcon />}
-              id={contactChannelEditId(index)}
-              aria-label={`Editar ${channel.label}`}
-              disabled={editDisabled}
-              onClick={() => onEdit(index)}
-              sx={{ minHeight: 44, flexShrink: 0, mt: -1 }}
-            >
-              Editar
-            </Button>
-          )}
         </Box>
       );
     })}

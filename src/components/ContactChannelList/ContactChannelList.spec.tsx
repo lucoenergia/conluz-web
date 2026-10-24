@@ -55,6 +55,23 @@ describe("ContactChannelList", () => {
     expect(screen.queryByRole("link", { name: "Carrer de la Pau 12, València" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link")).toHaveLength(3);
   });
+
+  it("names each channel's type above its name", () => {
+    renderWithProviders(<ContactChannelList channels={CHANNELS} />);
+
+    const items = channelItems();
+    expect(within(items[0]).getByText("Teléfono")).toBeVisible();
+    expect(within(items[1]).getByText("Dirección")).toBeVisible();
+    expect(within(items[2]).getByText("Email")).toBeVisible();
+  });
+
+  it("does not repeat the type when the name already is the type", () => {
+    renderWithProviders(
+      <ContactChannelList channels={[buildContactChannel({ type: "EMAIL", label: "Email", value: "hola@solcomun.test" })]} />,
+    );
+
+    expect(within(channelItems()[0]).getAllByText("Email")).toHaveLength(1);
+  });
 });
 
 describe("ContactChannelList — edit actions (#296)", () => {
