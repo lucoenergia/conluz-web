@@ -3,6 +3,8 @@ import type { ImportMembersResponse } from "../../src/api/models";
 import {
   test,
   expect,
+  COMPONENT_MAX_DIFF_PIXELS,
+  FIXED_COMMUNITY_CONTACT,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_DATADIS_CONFIG,
   FIXED_MEMBERSHIPS,
@@ -380,5 +382,32 @@ test.describe("Visual baselines", () => {
 
       await expect(card).toHaveScreenshot("integrations-datadis-unconfigured.png", await hideAppBar(page));
     });
+  });
+
+  // The contact channel editor's bottom sheet (#296), mobile only: below md it
+  // is a sheet anchored to the bottom, tall enough to reach under the fixed app
+  // bar, which once painted over its title and its Cerrar. jsdom cannot see
+  // stacking, so this is a pixel risk. Unlike every other component capture,
+  // the app bar is NOT hidden: the subject is the sheet's own box, so the bar
+  // appears in it only if it is painted over the sheet again, which is the
+  // regression this catches. Its behaviour is asserted in
+  // ContactChannelEditor.spec.tsx and CommunityContactPage.edit.spec.tsx.
+  test("contact channel edit sheet", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "From md up the editor is a centred dialog, not a bottom sheet.");
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    const channel = FIXED_COMMUNITY_CONTACT.channels[1];
+    await page.goto("/community/contact");
+    await page.getByRole("button", { name: `Editar ${channel.label}` }).click();
+    const sheet = page.getByRole("dialog");
+    // Seeded from the channel: a capture of empty fields would look plausible.
+    await expect(sheet.getByRole("heading", { name: "Editar canal" })).toBeVisible();
+    await expect(sheet.getByRole("textbox", { name: "Nombre del canal" })).toHaveValue(channel.label);
+    await expect(sheet.getByRole("textbox", { name: "Notas (opcional)" })).toHaveValue(channel.notes ?? "");
+    await stabilizePage(page);
+
+    await expect(sheet).toHaveScreenshot("contact-channel-edit-sheet.png", { maxDiffPixels: COMPONENT_MAX_DIFF_PIXELS });
   });
 });

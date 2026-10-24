@@ -166,6 +166,32 @@ describe("CommunityContactPage", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("UI-CTU-003 shows the fallback to a caller who may do other things in the community but not manage it", () => {
+    serveChannels({});
+    vi.mocked(useGetCommunityById).mockReturnValue(
+      query.success<typeof getCommunityById>(
+        buildCommunity({
+          id: COMMUNITY_A,
+          capabilities: buildCommunityCapabilities({ canRead: true, canUpdate: true, canManageMemberships: true }),
+        }),
+      ),
+    );
+    renderWithProviders(<CommunityContactPage />, { activeCommunityId: COMMUNITY_A });
+
+    expect(screen.getByText(INSTRUCTION)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Configurar contacto" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: OPERATOR_HEADING })).toBeVisible();
+  });
+
+  it("UI-CTU-003 shows the fallback when whether the caller may manage the community could not be checked", () => {
+    serveChannels({});
+    vi.mocked(useGetCommunityById).mockReturnValue(query.error(apiError(500)));
+    renderWithProviders(<CommunityContactPage />, { activeCommunityId: COMMUNITY_A });
+
+    expect(screen.getByText(INSTRUCTION)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Configurar contacto" })).not.toBeInTheDocument();
+  });
+
   it("UI-CTU-003 for a caller with no community, shows the fallback and requests no channels", () => {
     renderWithProviders(<CommunityContactPage />, { activeCommunityId: null });
 
