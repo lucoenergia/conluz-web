@@ -577,7 +577,7 @@ describe("refused row actions", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Has alcanzado el límite de reenvíos para este administrador. Podrás volver a reenviar la invitación dentro de 2 horas.",
+        "Has alcanzado el límite de reenvíos para esta persona. Podrás volver a reenviar la invitación dentro de 2 horas.",
       ),
     );
   });
@@ -586,19 +586,19 @@ describe("refused row actions", () => {
     [
       "MEMBERSHIP_NOT_INVITED",
       { invitedAt: null, invitationExpiresAt: null },
-      "Este administrador todavía no tiene ninguna invitación que reenviar. Hemos actualizado la lista.",
+      "Esta persona todavía no tiene ninguna invitación que reenviar. Hemos actualizado la lista.",
     ],
     [
       "MEMBERSHIP_DISABLED",
       { enabled: false },
-      "Este administrador está suspendido, así que no se le puede invitar. Hemos actualizado la lista.",
+      "Esta persona está suspendida, así que no se le puede invitar. Hemos actualizado la lista.",
     ],
     [
       "MEMBERSHIP_ALREADY_EXISTS",
       { acceptedAt: "2026-10-18T09:00:00Z" },
-      "Este administrador ya ha aceptado la invitación. Hemos actualizado la lista.",
+      "Esta persona ya ha aceptado la invitación. Hemos actualizado la lista.",
     ],
-  ])("UI-ADM-006 words a resend refused with %s for an admin, and refetches the list", async (code, change, message) => {
+  ])("UI-ADM-006 words a resend refused with %s for the invitee, and refetches the list", async (code, change, message) => {
     const u = user();
     const admins: Admins = { current: [PABLO] };
     const router = serveAdminsPage(admins, {
@@ -632,7 +632,7 @@ describe("refused row actions", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Este administrador ya ha aceptado la invitación. Hemos actualizado la lista.",
+        "Esta persona ya ha aceptado la invitación. Hemos actualizado la lista.",
       ),
     );
     expect(await within(rowOf("Pablo Pendiente")).findByText("Activo")).toBeInTheDocument();
@@ -650,7 +650,7 @@ describe("refused row actions", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Este administrador no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.",
+        "Esta persona no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.",
       ),
     );
   });

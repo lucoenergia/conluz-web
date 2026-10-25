@@ -66,22 +66,22 @@ describe("invitationRefusalMessage for a community admin (#276)", () => {
   it("UI-ADM-006 says who can add a missing contact email, rather than pointing to a record edit", () => {
     expect(
       invitationRefusalMessage(apiError(400, { code: "MEMBERSHIP_WITHOUT_CONTACT_EMAIL" }), "resend", "admin"),
-    ).toBe("Este administrador no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.");
+    ).toBe("Esta persona no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.");
   });
 
-  it("UI-ADM-006 names the admin in the resend limit", () => {
+  it("UI-ADM-006 names the invitee in the resend limit", () => {
     const error = apiError(429, { code: "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED" }, { "retry-after": "7200" });
     expect(invitationRefusalMessage(error, "resend", "admin")).toBe(
-      "Has alcanzado el límite de reenvíos para este administrador. Podrás volver a reenviar la invitación dentro de 2 horas.",
+      "Has alcanzado el límite de reenvíos para esta persona. Podrás volver a reenviar la invitación dentro de 2 horas.",
     );
   });
 
   it.each([
-    ["resend", "MEMBERSHIP_NOT_INVITED", "Este administrador todavía no tiene ninguna invitación que reenviar."],
-    ["resend", "MEMBERSHIP_DISABLED", "Este administrador está suspendido, así que no se le puede invitar."],
-    ["resend", "MEMBERSHIP_ALREADY_EXISTS", "Este administrador ya ha aceptado la invitación."],
-    ["revoke", "MEMBERSHIP_ALREADY_EXISTS", "Este administrador ya ha aceptado la invitación."],
-  ] as const)("UI-ADM-006 %s refused with %s names the admin and says the list was refreshed", (write, code, message) => {
+    ["resend", "MEMBERSHIP_NOT_INVITED", "Esta persona todavía no tiene ninguna invitación que reenviar."],
+    ["resend", "MEMBERSHIP_DISABLED", "Esta persona está suspendida, así que no se le puede invitar."],
+    ["resend", "MEMBERSHIP_ALREADY_EXISTS", "Esta persona ya ha aceptado la invitación."],
+    ["revoke", "MEMBERSHIP_ALREADY_EXISTS", "Esta persona ya ha aceptado la invitación."],
+  ] as const)("UI-ADM-006 %s refused with %s names the invitee and says the list was refreshed", (write, code, message) => {
     expect(invitationRefusalMessage(apiError(409, { code }), write, "admin")).toBe(`${message} ${REFRESHED}`);
   });
 

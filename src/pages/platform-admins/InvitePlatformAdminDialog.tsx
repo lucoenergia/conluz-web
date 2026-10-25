@@ -4,14 +4,18 @@ import type { InvitePlatformAdminBody } from "../../api/models";
 import type { Action, PlatformInvitationSentResult } from "../../hooks/actions";
 import {
   EMPTY_ADMIN_INVITATION,
-  validateAdminInvitation,
   type AdminInvitationValues,
   type MemberRecordErrors,
   type MemberRecordField,
 } from "../members/memberRecordForm";
 import { MemberRecordFields } from "../members/MemberRecordFields";
 import { ConfirmationCodePanel } from "./ConfirmationCodePanel";
-import { platformAdminInvitationBodyOf, platformAdminInvitationRefusalOf } from "./platformAdminInvitationForm";
+import {
+  PLATFORM_ADMIN_EMAIL_LABEL,
+  platformAdminInvitationBodyOf,
+  platformAdminInvitationRefusalOf,
+  validatePlatformAdminInvitation,
+} from "./platformAdminInvitationForm";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
@@ -53,7 +57,7 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!inviteAdmin) return;
-    const invalid = validateAdminInvitation(values);
+    const invalid = validatePlatformAdminInvitation(values);
     setErrors(invalid);
     setFormError(null);
     if (Object.keys(invalid).length > 0) return;
@@ -102,7 +106,14 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
             fullWidth
             sx={{ mt: 1 }}
           />
-          <MemberRecordFields values={values} errors={errors} onChange={change} fields={FIELDS} required={FIELDS} />
+          <MemberRecordFields
+            values={values}
+            errors={errors}
+            onChange={change}
+            fields={FIELDS}
+            required={FIELDS}
+            labels={{ contactEmail: PLATFORM_ADMIN_EMAIL_LABEL }}
+          />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={onClose} disabled={inFlight}>

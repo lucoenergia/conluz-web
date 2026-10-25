@@ -239,7 +239,7 @@ async function openInviteForm(u: ReturnType<typeof userEvent.setup>) {
 async function fillInviteForm(u: ReturnType<typeof userEvent.setup>, dialog: HTMLElement, body = INVITE_BODY) {
   await u.type(within(dialog).getByRole("textbox", { name: "DNI/NIE/NIF" }), body.personalId);
   await u.type(within(dialog).getByRole("textbox", { name: "Nombre completo" }), body.fullName);
-  await u.type(within(dialog).getByRole("textbox", { name: "Email de contacto" }), body.email);
+  await u.type(within(dialog).getByRole("textbox", { name: "Email" }), body.email);
 }
 
 const codeDialog = () => screen.findByRole("dialog", { name: "Código de confirmación" });
@@ -471,7 +471,7 @@ describe("resending an invitation", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Has alcanzado el límite de reenvíos para este administrador. Podrás volver a reenviar la invitación dentro de 2 horas.",
+        "Has alcanzado el límite de reenvíos para esta persona. Podrás volver a reenviar la invitación dentro de 2 horas.",
       ),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -696,7 +696,7 @@ describe("inviting a platform admin", () => {
 
     expect(within(form).getByText("Escribe el DNI/NIE/NIF")).toBeInTheDocument();
     expect(within(form).getByText("Escribe el nombre completo")).toBeInTheDocument();
-    expect(within(form).getByText("Escribe el email de contacto")).toBeInTheDocument();
+    expect(within(form).getByText("Escribe el email")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([]);
   });
 
@@ -722,7 +722,7 @@ describe("inviting a platform admin", () => {
     await waitFor(() => expect(personalId).toHaveAccessibleDescription("El DNI/NIE/NIF no es válido. Revisa los números y la letra."));
     expect(personalId).toHaveValue(INVITE_BODY.personalId);
     expect(within(form).getByRole("textbox", { name: "Nombre completo" })).toHaveValue(INVITE_BODY.fullName);
-    expect(within(form).getByRole("textbox", { name: "Email de contacto" })).toHaveValue(INVITE_BODY.email);
+    expect(within(form).getByRole("textbox", { name: "Email" })).toHaveValue(INVITE_BODY.email);
     expect(listReads(router)).toBe(readsBefore);
   });
 
@@ -766,7 +766,7 @@ describe("inviting a platform admin", () => {
     expect(await within(form).findByText(message)).toBeInTheDocument();
     expect(within(form).getByRole("textbox", { name: "DNI/NIE/NIF" })).toHaveValue(INVITE_BODY.personalId);
     expect(within(form).getByRole("textbox", { name: "Nombre completo" })).toHaveValue(INVITE_BODY.fullName);
-    expect(within(form).getByRole("textbox", { name: "Email de contacto" })).toHaveValue(INVITE_BODY.email);
+    expect(within(form).getByRole("textbox", { name: "Email" })).toHaveValue(INVITE_BODY.email);
     if (refetches) await waitFor(() => expect(listReads(router)).toBe(readsBefore + 1));
     else expect(listReads(router)).toBe(readsBefore);
   });

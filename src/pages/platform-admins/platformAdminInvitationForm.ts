@@ -1,7 +1,13 @@
 import type { InvitePlatformAdminBody } from "../../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 import { INVITATIONS_UNAVAILABLE_MESSAGE } from "../../errors/platformAdminErrors";
-import { personalIdRefusalOf, type AdminInvitationValues, type MemberRecordRefusal } from "../members/memberRecordForm";
+import {
+  personalIdRefusalOf,
+  validateAdminInvitation,
+  type AdminInvitationValues,
+  type MemberRecordErrors,
+  type MemberRecordRefusal,
+} from "../members/memberRecordForm";
 
 /**
  * The platform-admin invitation's body (#288), from the community admin
@@ -16,6 +22,19 @@ export function platformAdminInvitationBodyOf(values: AdminInvitationValues): In
     fullName: values.fullName.trim(),
     email: values.contactEmail.trim(),
   };
+}
+
+/**
+ * The platform form calls its email field "Email" (#310): it is the address
+ * the invitation goes to, not a record's contact email. Its empty-field error
+ * says the same; the rules are the community admin invitation's.
+ */
+export const PLATFORM_ADMIN_EMAIL_LABEL = "Email";
+
+export function validatePlatformAdminInvitation(values: AdminInvitationValues): MemberRecordErrors {
+  const errors = validateAdminInvitation(values);
+  if (values.contactEmail.trim() === "") errors.contactEmail = "Escribe el email";
+  return errors;
 }
 
 const REFRESHED = " Hemos actualizado la lista.";

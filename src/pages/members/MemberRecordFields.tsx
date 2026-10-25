@@ -14,6 +14,8 @@ interface MemberRecordFieldsProps<F extends RecordField> {
   fields?: readonly F[];
   /** The fields marked required. The full name by default, the only one the record requires. */
   required?: readonly F[];
+  /** A label of this form's own for a field, where the record's would be wrong (#310). */
+  labels?: Partial<Record<F, string>>;
 }
 
 /**
@@ -28,6 +30,7 @@ export function MemberRecordFields<F extends RecordField>({
   onChange,
   fields,
   required,
+  labels,
 }: MemberRecordFieldsProps<F>) {
   const shownFields: readonly RecordField[] = fields ?? ALL_FIELDS;
   const requiredFields: readonly RecordField[] = required ?? ["fullName"];
@@ -42,6 +45,7 @@ export function MemberRecordFields<F extends RecordField>({
     fullWidth: true,
   });
   const shown = (field: RecordField) => shownFields.includes(field);
+  const ownLabels: Partial<Record<RecordField, string>> = labels ?? {};
 
   return (
     <>
@@ -53,7 +57,7 @@ export function MemberRecordFields<F extends RecordField>({
           {...fieldProps("memberNumber")}
         />
       )}
-      {shown("contactEmail") && <TextField label="Email de contacto" type="email" {...fieldProps("contactEmail")} />}
+      {shown("contactEmail") && <TextField label={ownLabels.contactEmail ?? "Email de contacto"} type="email" {...fieldProps("contactEmail")} />}
       {shown("address") && <TextField label="Dirección" {...fieldProps("address")} />}
       {shown("phoneNumber") && <TextField label="Teléfono" {...fieldProps("phoneNumber")} />}
     </>

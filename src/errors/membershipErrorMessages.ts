@@ -8,13 +8,15 @@ import { pluralize } from "../utils/pluralize";
 
 /**
  * Whom an invitation is for: a member on the members page, an admin on a
- * community's admins page (#276). The sentences name them.
+ * community's admins page (#276) or on the platform-admin page (#288). The
+ * sentences name them. Each is said of someone whose invitation is still
+ * pending, who is not an admin yet, so an admin is "esta persona" (#310).
  */
 export type InvitationSubject = "member" | "admin";
 
 export const SUBJECT_NOUN: Record<InvitationSubject, string> = {
   member: "este miembro",
-  admin: "este administrador",
+  admin: "esta persona",
 };
 
 /**
@@ -32,7 +34,7 @@ export const LAST_ACTIVE_ADMIN_EXPLANATION =
  */
 export const NO_CONTACT_EMAIL_TO_INVITE: Record<InvitationSubject, string> = {
   member: "Este miembro no tiene email de contacto. Añádelo desde «Editar ficha» y vuelve a intentarlo.",
-  admin: "Este administrador no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.",
+  admin: "Esta persona no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.",
 };
 
 /**

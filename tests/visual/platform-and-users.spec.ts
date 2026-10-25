@@ -271,7 +271,7 @@ test.describe("Visual baselines", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("heading", { name: "Invitar administrador de plataforma" })).toBeVisible();
     await expect(dialog.getByLabel(/^DNI\/NIE\/NIF/)).toBeEditable();
-    await expect(dialog.getByLabel(/^Email de contacto/)).toBeVisible();
+    await expect(dialog.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
     await stabilizePage(page);
 
     await expect(dialog).toHaveScreenshot("platform-admin-invite-dialog.png", await hideAppBar(page));
@@ -291,7 +291,7 @@ test.describe("Visual baselines", () => {
     const form = page.getByRole("dialog");
     await form.getByLabel(/^DNI\/NIE\/NIF/).fill("12345678Z");
     await form.getByLabel(/^Nombre completo/).fill("Marta Gil Sanz");
-    await form.getByLabel(/^Email de contacto/).fill("marta.gil@conluz.test");
+    await form.getByRole("textbox", { name: "Email", exact: true }).fill("marta.gil@conluz.test");
     await form.getByRole("button", { name: "Invitar" }).click();
     const dialog = page.getByRole("dialog", { name: "Código de confirmación" });
     await expect(dialog.getByText("K7Q2-M9XZ")).toBeVisible();
