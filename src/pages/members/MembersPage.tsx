@@ -73,6 +73,7 @@ import {
 } from "./membershipStatus";
 import { MembershipStatusCell, MembershipStatusChip } from "./MembershipStatusCell";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
@@ -587,7 +588,7 @@ export const MembersPage: FC = () => {
       {/* Suspend / reactivate confirmation, gated like the item that opens it. */}
       <Dialog
         open={statusDialogOpen && !!selectedStatusToggle}
-        onClose={() => setStatusDialogOpen(false)}
+        {...inFlightDialogProps(selectedStatusToggle?.action.isPending ?? false, () => setStatusDialogOpen(false))}
         maxWidth="xs"
         fullWidth
       >
@@ -609,7 +610,9 @@ export const MembersPage: FC = () => {
           </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setStatusDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setStatusDialogOpen(false)} disabled={selectedStatusToggle?.action.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             color={selectedStatusToggle?.isSuspending ? "error" : "primary"}
@@ -627,7 +630,7 @@ export const MembersPage: FC = () => {
           reached, and no way to be left open across a switch that revokes it. */}
       <Dialog
         open={roleDialogOpen && !!selectedActions.changeRole}
-        onClose={() => setRoleDialogOpen(false)}
+        {...inFlightDialogProps(selectedActions.changeRole?.isPending ?? false, () => setRoleDialogOpen(false))}
         maxWidth="sm"
         fullWidth
       >
@@ -667,7 +670,9 @@ export const MembersPage: FC = () => {
           </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRoleDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setRoleDialogOpen(false)} disabled={selectedActions.changeRole?.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             onClick={handleRoleDialogConfirm}
@@ -686,7 +691,7 @@ export const MembersPage: FC = () => {
       {/* Remove confirmation dialog, gated like the item that opens it. */}
       <Dialog
         open={!!removeConfirmUserId && !!removeTargetRemove && !isLastActiveAdmin(removeTarget)}
-        onClose={() => setRemoveConfirmUserId(null)}
+        {...inFlightDialogProps(removeTargetRemove?.isPending ?? false, () => setRemoveConfirmUserId(null))}
         maxWidth="xs"
         fullWidth
       >
@@ -702,7 +707,9 @@ export const MembersPage: FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRemoveConfirmUserId(null)}>Cancelar</Button>
+          <Button onClick={() => setRemoveConfirmUserId(null)} disabled={removeTargetRemove?.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             color="error"

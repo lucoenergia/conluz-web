@@ -13,6 +13,7 @@ import { MemberRecordFields } from "../members/MemberRecordFields";
 import { ConfirmationCodePanel } from "./ConfirmationCodePanel";
 import { platformAdminInvitationBodyOf, platformAdminInvitationRefusalOf } from "./platformAdminInvitationForm";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 const FIELDS = ["fullName", "contactEmail"] as const;
 
@@ -42,6 +43,7 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
   const [errors, setErrors] = useState<MemberRecordErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
+  const inFlight = inviteAdmin?.isPending ?? false;
 
   const change = (field: MemberRecordField, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -81,7 +83,7 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
   }
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open {...inFlightDialogProps(inFlight, onClose)} maxWidth="sm" fullWidth>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <DialogTitle>Invitar administrador de plataforma</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
@@ -103,7 +105,9 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
           <MemberRecordFields values={values} errors={errors} onChange={change} fields={FIELDS} required={FIELDS} />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose}>Cancelar</Button>
+          <Button onClick={onClose} disabled={inFlight}>
+            Cancelar
+          </Button>
           <Button type="submit" variant="contained" disabled={!inviteAdmin || inviteAdmin.isPending}>
             {inviteAdmin?.isPending ? "Enviando..." : "Invitar"}
           </Button>

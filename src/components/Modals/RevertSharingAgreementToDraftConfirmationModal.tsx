@@ -23,6 +23,7 @@ export const RevertSharingAgreementToDraftConfirmationModal: FC<
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isReverting}
       confirmLabel="Volver a borrador"
       confirmColor="primary"
       confirmDisabled={isReverting}

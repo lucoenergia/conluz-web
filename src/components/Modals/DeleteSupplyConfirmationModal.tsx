@@ -38,6 +38,7 @@ export const DeleteSupplyConfirmationModal: FC<DeleteSupplyConfirmationModalProp
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isDeleting}
       confirmLabel="Eliminar"
       confirmDisabled={isDeleting}
       confirmPending={isDeleting}

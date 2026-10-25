@@ -17,6 +17,8 @@ export type AppModalProps = AppModalName & {
   isOpen: boolean;
   /** Called on Escape and on a backdrop click (`BasicModal`). */
   onClose: (event: SyntheticEvent) => void;
+  /** False while the dialog's write is in flight (`BasicModal`). */
+  dismissible?: boolean;
   /** Rendered above the title, e.g. the community a confirmed write lands in. */
   scopeHeader?: ReactNode;
   icon?: ReactNode;
@@ -33,6 +35,7 @@ export const AppModal: FC<AppModalProps> = ({
   title,
   labelledBy,
   label,
+  dismissible,
   scopeHeader,
   icon,
   iconBg,
@@ -47,7 +50,7 @@ export const AppModal: FC<AppModalProps> = ({
 
   if (centered) {
     return (
-      <BasicModal isOpen={isOpen} onClose={onClose} {...name}>
+      <BasicModal isOpen={isOpen} onClose={onClose} dismissible={dismissible} {...name}>
         <Box
           sx={{
             display: "flex",
@@ -87,7 +90,7 @@ export const AppModal: FC<AppModalProps> = ({
   }
 
   return (
-    <BasicModal isOpen={isOpen} onClose={onClose} {...name}>
+    <BasicModal isOpen={isOpen} onClose={onClose} dismissible={dismissible} {...name}>
       <Box sx={{ p: { xs: 2, sm: 3 } }}>
         {scopeHeader}
         {(icon || title) && (

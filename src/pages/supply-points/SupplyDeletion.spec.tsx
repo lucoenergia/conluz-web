@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SupplyPointsPage } from "./SupplyPointsPage";
@@ -218,6 +218,35 @@ describe("deleting a supply from its card menu", () => {
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey });
       }
     });
+  });
+
+  it("#310 AC4 keeps the confirmation open while the deletion is in flight, then closes it as before", async () => {
+    const user = userEvent.setup();
+    let settle!: () => void;
+    const { router } = renderPage("/supply-points", (state) => {
+      return new Promise((resolve) => {
+        settle = () => resolve(deleted(state));
+      });
+    });
+
+    await openDeletion(user);
+    await user.click(screen.getByRole("button", { name: "Eliminar" }));
+    await waitFor(() => expect(deleteRequests(router)).toHaveLength(1));
+
+    const dialog = screen.getByRole("dialog", { name: DELETE_TITLE });
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    // The backdrop has no role or name: its class is the only way to click it.
+    await user.click(document.querySelector(".MuiBackdrop-root")!);
+    const cancel = within(dialog).getByRole("button", { name: "Cancelar" });
+    expect(cancel).toBeDisabled();
+    // A disabled button takes no pointer events, so userEvent refuses it.
+    fireEvent.click(cancel);
+    expect(screen.getByRole("dialog", { name: DELETE_TITLE })).toBeInTheDocument();
+
+    settle();
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: DELETE_TITLE })).not.toBeInTheDocument());
+    expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.")).toBeInTheDocument();
   });
 
   it("UI-SUP-002 names the supply and its owner, and says it cannot be undone", async () => {

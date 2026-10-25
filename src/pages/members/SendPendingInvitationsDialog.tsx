@@ -7,6 +7,7 @@ import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { invitationRefusalMessage } from "../../errors/membershipErrors";
 import { pluralize } from "../../utils/pluralize";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 interface SendPendingInvitationsDialogProps {
   communityName: string | undefined;
@@ -43,7 +44,7 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
   const remaining = batch?.remaining ?? 0;
 
   return (
-    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open {...inFlightDialogProps(isPending, onClose)} maxWidth="xs" fullWidth>
       <Box sx={{ px: 3, pt: 2.5 }}>
         <CommunityScopeHeader name={communityName} />
       </Box>
@@ -76,7 +77,9 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose}>{batch ? "Cerrar" : "Cancelar"}</Button>
+        <Button onClick={onClose} disabled={isPending}>
+          {batch ? "Cerrar" : "Cancelar"}
+        </Button>
         {(!batch || remaining > 0) && (
           <Button variant="contained" onClick={send} disabled={isPending}>
             {isPending ? "Enviando..." : batch ? "Enviar las siguientes" : "Enviar invitaciones"}

@@ -18,6 +18,11 @@ export type BasicModalProps = DialogName & {
    * to whatever renders it, which may need to stop them.
    */
   onClose: (event: React.SyntheticEvent) => void;
+  /**
+   * False while the dialog's write is in flight: Escape and a backdrop click
+   * then do nothing, so the dialog stays until the write settles (#310).
+   */
+  dismissible?: boolean;
   children: React.ReactNode;
 };
 
@@ -36,12 +41,20 @@ const modalContainerStyle = {
   outline: 'none',
 };
 
-export const BasicModal: React.FC<BasicModalProps> = ({ isOpen, onClose, labelledBy, label, children }) => {
+export const BasicModal: React.FC<BasicModalProps> = ({
+  isOpen,
+  onClose,
+  labelledBy,
+  label,
+  dismissible = true,
+  children,
+}) => {
   return (
     <Modal
       open={isOpen}
       // MUI types the event as {}; it is the keyboard or backdrop event.
-      onClose={(event) => onClose(event as React.SyntheticEvent)}
+      onClose={dismissible ? (event) => onClose(event as React.SyntheticEvent) : undefined}
+      disableEscapeKeyDown={!dismissible}
       slotProps={{ backdrop: { sx: { backgroundColor: alphas.black.overlay } } }}
     >
       <Box

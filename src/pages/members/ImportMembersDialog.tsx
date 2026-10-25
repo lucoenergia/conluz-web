@@ -22,6 +22,7 @@ import { pluralize } from "../../utils/pluralize";
 import { radii } from "../../theme/tokens";
 import { downloadMemberTemplate, IMPORT_COLUMNS, MAX_IMPORT_ROWS, rowReason } from "./importMembers";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 interface ImportMembersDialogProps {
   communityName: string | undefined;
@@ -106,8 +107,7 @@ export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
     <Dialog
       open
       // The import can take several seconds, and closing would hide its result.
-      onClose={importing ? undefined : onClose}
-      disableEscapeKeyDown={importing}
+      {...inFlightDialogProps(importing, onClose)}
       maxWidth="sm"
       fullWidth
     >

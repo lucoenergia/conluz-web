@@ -120,6 +120,8 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({
     <AppModal
       isOpen={isOpen}
       onClose={handleClose}
+      // The upload step has no buttons; closing would hide the import's result.
+      dismissible={step !== "uploading"}
       // Named by the title in every step: only the upload step shows it.
       label={title(communityLabel(communityName))}
       scopeHeader={<CommunityScopeHeader name={communityName} />}

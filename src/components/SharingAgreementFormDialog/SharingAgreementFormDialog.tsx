@@ -116,6 +116,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
     <AppModal
       isOpen={isOpen}
       onClose={onCancel}
+      dismissible={!isSubmitting}
       title={`${mode === "create" ? "Nuevo" : "Editar"} acuerdo de reparto en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<HandshakeOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -330,6 +330,42 @@ describe("inviting an admin", () => {
     expect(nora.getByText("Pendiente")).toBeInTheDocument();
     expect(nora.getByText("Enlace activo hasta el 26 oct 2026")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([`POST ${INVITE_URL}`]);
+  });
+
+  it("#310 AC4 keeps the form open while the invitation is in flight, then closes it as before", async () => {
+    const u = user();
+    const admins: Admins = { current: [ROSA] };
+    let settle!: () => void;
+    serveAdminsPage(admins, {
+      invite: (config) =>
+        new Promise((resolve) => {
+          settle = () => {
+            const body = config.data as { fullName: string };
+            const invited = admin("u-nora", body.fullName, { ...NEW_LINK, personalId: "12345678Z" });
+            admins.current = [...admins.current, invited];
+            resolve(invited);
+          };
+        }),
+    });
+    renderPage();
+    const form = await openForm(u);
+    await fill(u, FORM);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+    await within(form).findByRole("button", { name: "Enviando..." });
+
+    fireEvent.keyDown(form, { key: "Escape" });
+    // The backdrop has no role or name: MUI's Dialog container takes the click.
+    await u.click(document.querySelector(".MuiDialog-container")!);
+    const cancel = within(form).getByRole("button", { name: "Cancelar" });
+    expect(cancel).toBeDisabled();
+    // A disabled button takes no pointer events, so userEvent refuses it.
+    fireEvent.click(cancel);
+    expect(screen.getByRole("dialog", { name: `Invitar administrador a ${COMMUNITY_NAME}` })).toBeInTheDocument();
+
+    settle();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(await screen.findByText("Nora Nueva")).toBeInTheDocument();
   });
 
   it("UI-ADM-003 sends a blank phone as none", async () => {

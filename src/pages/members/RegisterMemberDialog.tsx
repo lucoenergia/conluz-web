@@ -26,6 +26,7 @@ import {
 } from "./memberRecordForm";
 import { MemberRecordFields } from "./MemberRecordFields";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 interface RegisterMemberDialogProps {
   communityName: string | undefined;
@@ -92,9 +93,10 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
       if ("ok" in result) onClose();
       else setInviteError(invitationRefusalMessage(result.error, "invite"));
     };
+    const inviting = invite?.isPending ?? false;
 
     return (
-      <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <Dialog open {...inFlightDialogProps(inviting, onClose)} maxWidth="sm" fullWidth>
         <Box sx={{ px: 3, pt: 2.5 }}>
           <CommunityScopeHeader name={communityName} />
         </Box>
@@ -119,7 +121,9 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose}>Cerrar</Button>
+          <Button onClick={onClose} disabled={inviting}>
+            Cerrar
+          </Button>
           {invite && (
             <Button variant="contained" onClick={handleInvite} disabled={invite.isPending}>
               {invite.isPending ? "Enviando..." : "Invitar ahora"}
@@ -131,7 +135,7 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
   }
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open {...inFlightDialogProps(register.isPending, onClose)} maxWidth="sm" fullWidth>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Box sx={{ px: 3, pt: 2.5 }}>
           <CommunityScopeHeader name={communityName} />
@@ -155,7 +159,9 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
           <MemberRecordFields values={values} errors={errors} onChange={change} />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose}>Cancelar</Button>
+          <Button onClick={onClose} disabled={register.isPending}>
+            Cancelar
+          </Button>
           <Button type="submit" variant="contained" disabled={register.isPending}>
             {register.isPending ? "Registrando..." : "Registrar"}
           </Button>

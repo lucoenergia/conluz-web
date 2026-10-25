@@ -47,6 +47,7 @@ import { hasAnyOffer, isPendingInvitation, membershipStateOf, platformAdminRowOf
 import { PlatformInvitationActionDialog, type PlatformInvitationWriteKind } from "./PlatformInvitationActionDialog";
 import { InvitePlatformAdminDialog } from "./InvitePlatformAdminDialog";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 const EMPTY_MESSAGE = "No hay administradores de plataforma";
 const NOT_REVOCABLE_EXPLANATION = "La plataforma necesita al menos un administrador de plataforma habilitado.";
@@ -376,7 +377,7 @@ export const PlatformAdminsPage: FC = () => {
           longer revocable, or takes it away, closes the dialog. */}
       <Dialog
         open={revokeDialogOpen && !!selectedRevoke && !!selectedAdmin?.revocable}
-        onClose={() => setRevokeDialogOpen(false)}
+        {...inFlightDialogProps(selectedRevoke?.isPending ?? false, () => setRevokeDialogOpen(false))}
         maxWidth="xs"
         fullWidth
       >
@@ -390,7 +391,9 @@ export const PlatformAdminsPage: FC = () => {
           </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRevokeDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setRevokeDialogOpen(false)} disabled={selectedRevoke?.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             color="error"

@@ -46,6 +46,7 @@ import { invitationActionsFor, invitationText, statusOf, statusToggleFor } from 
 import { MembershipStatusCell, MembershipStatusChip } from "../members/MembershipStatusCell";
 import { InviteAdminDialog } from "./InviteAdminDialog";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 type AdminInvitationWrite = "resend" | "revoke";
 
@@ -360,7 +361,7 @@ export const CommunityAdminsPage: FC = () => {
       {/* Suspend / reactivate confirmation, gated like the item that opens it. */}
       <Dialog
         open={statusDialogOpen && !!selectedStatusToggle}
-        onClose={() => setStatusDialogOpen(false)}
+        {...inFlightDialogProps(selectedStatusToggle?.action.isPending ?? false, () => setStatusDialogOpen(false))}
         maxWidth="xs"
         fullWidth
       >
@@ -383,7 +384,9 @@ export const CommunityAdminsPage: FC = () => {
           </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setStatusDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setStatusDialogOpen(false)} disabled={selectedStatusToggle?.action.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             color={selectedStatusToggle?.isSuspending ? "error" : "primary"}

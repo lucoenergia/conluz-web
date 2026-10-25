@@ -56,6 +56,7 @@ export const DeactivateOrReopenCoefficientConfirmationModal: FC<DeactivateOrReop
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isPending}
       confirmLabel="Confirmar y recalcular"
       confirmDisabled={isPending}
       onConfirm={onConfirm}

@@ -493,6 +493,7 @@ export const IntegrationsPage: FC = () => {
         confirmColor={datadisToggle.requested ? "success" : "error"}
         confirmPending={datadisToggle.isPending}
         confirmDisabled={datadisToggle.isPending}
+        inFlight={datadisToggle.isPending}
         scopeHeader={<CommunityScopeHeader name={communityName} />}
       >
         <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>

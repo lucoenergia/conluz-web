@@ -58,6 +58,7 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isPending}
       confirmLabel="Cerrar (baja)"
       confirmColor="primary"
       confirmDisabled={confirmDisabledReason !== null}

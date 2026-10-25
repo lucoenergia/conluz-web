@@ -15,6 +15,12 @@ interface ConfirmationModalProps {
   confirmDisabled?: boolean;
   /** Swaps the confirm button's label for a spinner. Opt-in and false by default — every other confirmation dialog using this component keeps its unchanged static-label behaviour. */
   confirmPending?: boolean;
+  /**
+   * The confirmed write is in flight: "Cancelar" is disabled, and Escape and a
+   * backdrop click do nothing, until it settles (#310). Independent of
+   * `confirmPending`, which only swaps the label for a spinner.
+   */
+  inFlight?: boolean;
   /** The dialog's heading, and its accessible name. */
   title: string;
   /** Forwarded to AppModal: rendered above the title. */
@@ -32,6 +38,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
   confirmColor = "error",
   confirmDisabled = false,
   confirmPending = false,
+  inFlight = false,
   title,
   scopeHeader,
   icon,
@@ -47,6 +54,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
     <AppModal
       isOpen={isOpen}
       onClose={onCancel}
+      dismissible={!inFlight}
       title={title}
       scopeHeader={scopeHeader}
       icon={icon}
@@ -56,6 +64,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
           <Button
             variant="outlined"
             onClick={onCancel}
+            disabled={inFlight}
             sx={{
               minWidth: "64px",
               padding: "5px 15px",

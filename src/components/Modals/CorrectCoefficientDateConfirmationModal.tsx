@@ -75,6 +75,7 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isPending}
       confirmLabel="Confirmar y recalcular"
       confirmDisabled={confirmDisabledReason !== null}
       onConfirm={handleConfirm}

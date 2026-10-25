@@ -37,6 +37,7 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isPublishing}
       confirmLabel="Poner en vigor"
       // Sealing an agreed reparto is the constructive move in this workflow. The
       // component's default is "error", which would render it in the same red as

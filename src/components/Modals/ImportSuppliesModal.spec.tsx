@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -141,6 +141,31 @@ describe("ImportSuppliesModal", () => {
       expect(
         screen.getByText("Importando puntos de suministro..."),
       ).toBeInTheDocument();
+    });
+    it("#310 AC4 cannot be closed while the import is in flight, and can once its result is shown", async () => {
+      const user = userEvent.setup();
+      let settle!: (value: { created: string[]; errors: [] }) => void;
+      mockRun.mockReturnValue(new Promise((resolve) => (settle = resolve)));
+      setup();
+      const name = "Importar puntos de suministro a Comunidad Solar Norte";
+
+      await user.upload(screen.getByTestId("csv-file-input"), new File(["a,b,c"], "test.csv", { type: "text/csv" }));
+      await user.click(screen.getByRole("button", { name: /Importar/i }));
+      expect(screen.getByText("Importando puntos de suministro...")).toBeInTheDocument();
+
+      // The uploading view has no buttons, so there is no Cancelar to press.
+      expect(screen.queryByRole("button", { name: "Cancelar" })).not.toBeInTheDocument();
+      fireEvent.keyDown(screen.getByRole("dialog", { name }), { key: "Escape" });
+      // The backdrop has no role or name: its class is the only way to click it.
+      await user.click(document.querySelector(".MuiBackdrop-root")!);
+      expect(mockOnClose).not.toHaveBeenCalled();
+      expect(screen.getByText("Importando puntos de suministro...")).toBeInTheDocument();
+
+      settle({ created: ["sp1"], errors: [] });
+
+      expect(await screen.findByText("Importación completada")).toBeInTheDocument();
+      fireEvent.keyDown(screen.getByRole("dialog", { name }), { key: "Escape" });
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 

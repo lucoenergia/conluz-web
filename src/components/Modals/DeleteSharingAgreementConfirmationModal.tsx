@@ -26,6 +26,7 @@ export const DeleteSharingAgreementConfirmationModal: FC<DeleteSharingAgreementC
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isDeleting}
       confirmLabel="Eliminar"
       confirmDisabled={isDeleting}
       onConfirm={onConfirm}

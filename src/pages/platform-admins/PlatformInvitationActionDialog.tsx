@@ -3,6 +3,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography }
 import type { MaybeAction, PlatformAdminWriteResult, PlatformInvitationSentResult } from "../../hooks/actions";
 import { ConfirmationCodePanel } from "./ConfirmationCodePanel";
 import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 export type PlatformInvitationWriteKind = "resend" | "revoke";
 
@@ -62,6 +63,7 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
 }) => {
   const [code, setCode] = useState<string | null>(null);
   const copy = COPY[kind];
+  const inFlight = action?.isPending ?? false;
 
   const handleConfirm = async () => {
     if (!action) return;
@@ -86,7 +88,7 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
   }
 
   return (
-    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open {...inFlightDialogProps(inFlight, onClose)} maxWidth="xs" fullWidth>
       <DialogTitle>{copy.title}</DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <Typography variant="body2">
@@ -96,7 +98,9 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
         <Notice severity="info">{copy.consequence}</Notice>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose} disabled={inFlight}>
+          Cancelar
+        </Button>
         <Button
           variant="contained"
           color={kind === "revoke" ? "error" : "primary"}

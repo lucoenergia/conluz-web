@@ -68,6 +68,7 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isPending}
       confirmLabel="Registrar fecha"
       confirmColor="primary"
       confirmDisabled={confirmDisabledReason !== null}

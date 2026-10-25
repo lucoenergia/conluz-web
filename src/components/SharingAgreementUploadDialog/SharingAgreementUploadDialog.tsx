@@ -75,6 +75,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
     <AppModal
       isOpen={isOpen}
       onClose={handleClose}
+      dismissible={!uploadFile.isPending}
       title={`Importar un fichero que ya tengas en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<UploadFileOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
