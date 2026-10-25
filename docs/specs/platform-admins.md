@@ -209,30 +209,38 @@ invitation. The acceptance itself is the invitation-acceptance screen (`UI-INV`)
     form, ending with "Hemos actualizado la lista.", and MUST refetch the list. A 503 MUST say that
     invitations cannot be sent right now. Every refusal MUST keep the typed values.
   - Resending: `PLATFORM_ADMIN_INVITATION_RESEND_LIMIT_REACHED` MUST say when another resend
-    becomes possible, from `Retry-After` or the body, worded for an admin.
+    becomes possible, from `Retry-After` or the body, naming the invitee as "esta persona".
   - Resending or revoking a link: `PLATFORM_ADMIN_NOT_INVITED` and a 404 MUST each say the row was
     stale, ending with "Hemos actualizado la lista.", and MUST refetch the list. A 503 MUST say
     that invitations cannot be sent right now.
 - **Rationale:** A stale row is refreshed so the page shows the state the backend refused from;
-  the wait is worded as the community invitations' (UI-MBR-014).
+  the wait is worded as the community invitations' (UI-MBR-014). Someone whose invitation is
+  pending is not an admin yet, so the refusal does not call them one.
 - **Implements:** n/a
-- **Source:** #288
+- **Source:** #288; changed in #310 (the resend limit names the invitee as "esta persona", not "este
+  administrador")
 
 ### UI-PAD-014 — The counters count holders of the role
 
 - **Status:** Active
 - **Rule:** "Total" and the announced result count MUST count the rows without an `invitation`.
   "Pendientes" MUST count the rows with one, and MUST be shown only when there is at least one.
-- **Rationale:** A pending invitation is not a platform admin (lucoenergia/conluz ADR-0004 §1).
+  The announcement MUST name the pending invitations apart, after the holders, when there is at
+  least one ("3 administradores de plataforma y 1 invitación pendiente"), and MUST NOT announce the
+  list as empty while one is shown.
+- **Rationale:** A pending invitation is not a platform admin (lucoenergia/conluz ADR-0004 §1). The
+  list renders the pending invitations too, so an announcement that left them out described a list
+  other than the one on screen.
 - **Implements:** lucoenergia/conluz ADR-0004 §1
-- **Source:** #288 (maintainer decision)
+- **Source:** #288 (maintainer decision); changed in #310 (the announcement names the pending
+  invitations)
 
 ## States
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Loading | The list's loading row | None |
-| Empty | "No hay administradores de plataforma" | None |
+| Empty | "No hay administradores de plataforma", only with neither holders nor pending invitations | None |
 | Error | An error message | None |
 | Listed | One row per platform admin, then one per pending invitation | "Invitar administrador de plataforma" when allowed; "Revocar rol" on the holders' rows that allow it; "Reenviar" and "Revocar enlace" on pending rows |
 | Code shown | The code dialog, over the list | "Copiar", "Hecho" |
