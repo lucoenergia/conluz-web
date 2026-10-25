@@ -1,5 +1,5 @@
 import Typography from "@mui/material/Typography";
-import type { FC, MouseEvent } from "react";
+import type { FC, SyntheticEvent } from "react";
 import { fontSizes } from "../../theme/tokens";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { Notice } from "../Notice";
@@ -10,7 +10,7 @@ interface DeleteContactChannelConfirmationModalProps {
   label: string;
   /** How many channels stay after the deletion. At 0, the community is left without contact. */
   otherCount: number;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

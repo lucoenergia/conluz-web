@@ -385,8 +385,9 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
       renderDraft();
       await user.click(screen.getByRole("button", { name: "Editar a mano" }));
       await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
-      // The picker has no role="dialog" yet; modal-panel is its interim test id (see BasicModal).
-      await user.click(await within(await screen.findByTestId("modal-panel")).findByText("Trastero Nuevo"));
+      await user.click(
+        await within(await screen.findByRole("dialog", { name: "Añadir suministros" })).findByText("Trastero Nuevo"),
+      );
       await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
 
       await waitFor(() => expect(within(table()).getByText("Trastero Nuevo")).toBeInTheDocument());
@@ -417,7 +418,9 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
 
       await user.click(screen.getByRole("button", { name: "Editar a mano" }));
       await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
-      await user.click(await within(await screen.findByTestId("modal-panel")).findByText("Trastero Nuevo"));
+      await user.click(
+        await within(await screen.findByRole("dialog", { name: "Añadir suministros" })).findByText("Trastero Nuevo"),
+      );
       await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
 
       await waitFor(() => expect(screen.queryByText(/^Salen del reparto/)).not.toBeInTheDocument());
@@ -428,7 +431,9 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
       renderDraft();
       await user.click(screen.getByRole("button", { name: "Editar a mano" }));
       await user.click(screen.getByRole("button", { name: "Añadir suministro" }));
-      await user.click(await within(await screen.findByTestId("modal-panel")).findByText("Trastero Nuevo"));
+      await user.click(
+        await within(await screen.findByRole("dialog", { name: "Añadir suministros" })).findByText("Trastero Nuevo"),
+      );
       await user.click(screen.getByRole("button", { name: /Añadir \(1\)/ }));
 
       await waitFor(() => expect(within(table()).getByText("Trastero Nuevo")).toBeInTheDocument());

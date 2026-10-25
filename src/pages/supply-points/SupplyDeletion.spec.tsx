@@ -225,8 +225,7 @@ describe("deleting a supply from its card menu", () => {
     renderPage("/supply-points", deleted);
 
     await openDeletion(user);
-    // The modal has no role="dialog" yet; modal-panel is the interim container id.
-    const dialog = within(screen.getByTestId("modal-panel"));
+    const dialog = within(screen.getByRole("dialog", { name: /^Eliminar punto de suministro de / }));
 
     expect(dialog.getByText("ES0031406912345678JN0F")).toBeInTheDocument();
     expect(dialog.getByText("Casa de Lucía")).toBeInTheDocument();
@@ -239,7 +238,7 @@ describe("deleting a supply from its card menu", () => {
     renderPage("/supply-points", deleted, [{ ...DELETABLE, ownerRecord: null }, KEPT]);
 
     await openDeletion(user);
-    const dialog = within(screen.getByTestId("modal-panel"));
+    const dialog = within(screen.getByRole("dialog", { name: /^Eliminar punto de suministro de / }));
 
     expect(dialog.getByText("ES0031406912345678JN0F")).toBeInTheDocument();
     expect(dialog.queryByText(/Titular/)).not.toBeInTheDocument();

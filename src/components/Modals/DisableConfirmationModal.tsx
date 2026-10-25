@@ -1,5 +1,5 @@
 import Typography from "@mui/material/Typography";
-import type { FC, MouseEvent } from "react";
+import type { FC, SyntheticEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -9,7 +9,7 @@ import { radii, alphas, fontSizes } from "../../theme/tokens";
 interface DisableConfirmationModalProps {
   isOpen: boolean;
   code: string;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onDisable: () => void;
 }
 

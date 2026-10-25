@@ -1,12 +1,22 @@
-import * as React from "react";
-import type { FC, ReactNode } from "react";
+import { useId, type FC, type ReactNode, type SyntheticEvent } from "react";
 import { Box, Typography } from "@mui/material";
 import { BasicModal } from "./BasicModal";
 
-interface AppModalProps {
+/**
+ * How the dialog is named: by the `title` this modal renders; when the
+ * content renders its own heading, by that heading's id; or, when no heading
+ * stays on screen throughout, by a `label`. A modal with none of them does not
+ * compile (`AppModal.typecheck.ts`).
+ */
+type AppModalName =
+  | { title: string; labelledBy?: never; label?: never }
+  | { title?: undefined; labelledBy: string; label?: never }
+  | { title?: undefined; labelledBy?: never; label: string };
+
+export type AppModalProps = AppModalName & {
   isOpen: boolean;
-  onClose: (event: React.MouseEvent<HTMLElement>) => void;
-  title?: string;
+  /** Called on Escape and on a backdrop click (`BasicModal`). */
+  onClose: (event: SyntheticEvent) => void;
   /** Rendered above the title, e.g. the community a confirmed write lands in. */
   scopeHeader?: ReactNode;
   icon?: ReactNode;
@@ -15,12 +25,14 @@ interface AppModalProps {
   centered?: boolean;
   actions?: ReactNode;
   children?: ReactNode;
-}
+};
 
 export const AppModal: FC<AppModalProps> = ({
   isOpen,
   onClose,
   title,
+  labelledBy,
+  label,
   scopeHeader,
   icon,
   iconBg,
@@ -30,10 +42,12 @@ export const AppModal: FC<AppModalProps> = ({
   children,
 }) => {
   const circleSize = iconSize ?? (centered ? 64 : 48);
+  const titleId = useId();
+  const name = label !== undefined ? { label } : { labelledBy: labelledBy ?? titleId };
 
   if (centered) {
     return (
-      <BasicModal isOpen={isOpen} onClose={onClose}>
+      <BasicModal isOpen={isOpen} onClose={onClose} {...name}>
         <Box
           sx={{
             display: "flex",
@@ -60,6 +74,11 @@ export const AppModal: FC<AppModalProps> = ({
               {icon}
             </Box>
           )}
+          {title && (
+            <Typography id={titleId} variant="h6" component="h2" sx={{ color: "text.primary", mb: 2 }}>
+              {title}
+            </Typography>
+          )}
           {children}
           {actions}
         </Box>
@@ -68,7 +87,7 @@ export const AppModal: FC<AppModalProps> = ({
   }
 
   return (
-    <BasicModal isOpen={isOpen} onClose={onClose}>
+    <BasicModal isOpen={isOpen} onClose={onClose} {...name}>
       <Box sx={{ p: { xs: 2, sm: 3 } }}>
         {scopeHeader}
         {(icon || title) && (
@@ -91,6 +110,7 @@ export const AppModal: FC<AppModalProps> = ({
             {title && (
               <Box sx={{ flex: 1 }}>
                 <Typography
+                  id={titleId}
                   variant="h6"
                   component="h2"
                   sx={{ color: "text.primary" }}

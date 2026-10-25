@@ -1,4 +1,4 @@
-import type { FC, MouseEvent } from "react";
+import type { FC, SyntheticEvent } from "react";
 import { Typography } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { ConfirmationModal } from "./ConfirmationModal";
@@ -17,7 +17,7 @@ interface DeactivateOrReopenCoefficientConfirmationModalProps {
   hiddenCount?: number;
   isPending: boolean;
   errorMessages: string[] | null;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

@@ -1,9 +1,9 @@
 import { BasicModal, Mui } from "conluz-web";
 
 export const Open = () => (
-  <BasicModal isOpen onClose={() => {}}>
+  <BasicModal isOpen onClose={() => {}} labelledBy="basic-modal-title">
     <Mui.Box sx={{ p: 3 }}>
-      <Mui.Typography variant="h6" sx={{ mb: 1 }}>
+      <Mui.Typography id="basic-modal-title" variant="h6" component="h2" sx={{ mb: 1 }}>
         Planta Polideportivo
       </Mui.Typography>
       <Mui.Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>

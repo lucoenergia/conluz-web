@@ -1,5 +1,5 @@
 import Typography from "@mui/material/Typography";
-import type { FC, MouseEvent } from "react";
+import type { FC, SyntheticEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { radii, alphas, fontSizes } from "../../theme/tokens";
@@ -10,7 +10,7 @@ interface DeleteSharingAgreementConfirmationModalProps {
   isOpen: boolean;
   agreementName: string;
   isDeleting?: boolean;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

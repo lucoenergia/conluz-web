@@ -121,7 +121,9 @@ describe("IntegrationsPage", () => {
       // Credentials are community configuration, so the save is confirmed
       // against the community it names first (#186). The gate is still what
       // decides the button exists at all.
-      await userEvent.click(within(screen.getByTestId("modal-panel")).getByRole("button", { name: "Guardar" }));
+      await userEvent.click(
+        within(screen.getByRole("dialog", { name: /^Guardar integración en / })).getByRole("button", { name: "Guardar" }),
+      );
 
       expect(mockConfigureDatadis).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -187,7 +189,9 @@ describe("IntegrationsPage", () => {
 const cardOf = (name: string) => screen.getByRole("region", { name });
 const datadis = () => cardOf("Datadis");
 const field = (label: string) => within(datadis()).getByLabelText(label);
-const confirmation = () => screen.queryByTestId("modal-panel");
+const confirmation = () => screen.queryByRole("dialog", { name: /^Guardar integración en / });
+/** Any dialog at all: what a refused save must not have opened. */
+const anyDialog = () => screen.queryByRole("dialog");
 
 const serveDatadis = (overrides: Partial<Awaited<ReturnType<typeof getDatadisConfig>>> = {}) =>
   vi.mocked(useGetDatadisConfig).mockReturnValue(
@@ -251,7 +255,7 @@ describe("the Datadis form", () => {
 
       expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
       expect(field("Contraseña")).toBeInvalid();
-      expect(confirmation()).not.toBeInTheDocument();
+      expect(anyDialog()).not.toBeInTheDocument();
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
 
@@ -264,7 +268,7 @@ describe("the Datadis form", () => {
       await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
 
       expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
-      expect(confirmation()).not.toBeInTheDocument();
+      expect(anyDialog()).not.toBeInTheDocument();
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
 
@@ -398,7 +402,7 @@ describe("the Datadis form", () => {
       await user.click(within(datadis()).getByRole("button", { name: "Guardar" }));
 
       expect(field("Contraseña")).toHaveAccessibleDescription("Introduce la contraseña.");
-      expect(confirmation()).not.toBeInTheDocument();
+      expect(anyDialog()).not.toBeInTheDocument();
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
   });
@@ -421,7 +425,7 @@ describe("the Datadis form", () => {
 
       expect(field(label)).toHaveAccessibleDescription(message);
       expect(field(label)).toBeInvalid();
-      expect(confirmation()).not.toBeInTheDocument();
+      expect(anyDialog()).not.toBeInTheDocument();
       expect(mockConfigureDatadis).not.toHaveBeenCalled();
     });
 
@@ -483,7 +487,11 @@ describe("the Datadis switch", () => {
 
   async function toggle(user: ReturnType<typeof userEvent.setup>, confirmLabel: "Activar" | "Desactivar") {
     await user.click(datadisSwitch());
-    await user.click(within(screen.getByTestId("modal-panel")).getByRole("button", { name: confirmLabel }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: /^(Activar|Desactivar) integración con Datadis$/ })).getByRole("button", {
+        name: confirmLabel,
+      }),
+    );
   }
 
   it("UI-INT-013 AC3 a 409 DATADIS_CONFIG_INCOMPLETE leaves the switch off and names the missing fields, with a way to the first", async () => {
@@ -551,7 +559,11 @@ describe("the Datadis switch", () => {
     // fireEvent rather than userEvent, which refuses a disabled control: the
     // guarantee is that the handlers stay unreachable even so.
     fireEvent.click(behindTheModal);
-    fireEvent.click(within(screen.getByTestId("modal-panel")).getByRole("button", { name: "Desactivar" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Desactivar integración con Datadis" })).getByRole("button", {
+        name: "Desactivar",
+      }),
+    );
     expect(mockDisableDatadis).toHaveBeenCalledTimes(1);
     expect(mockEnableDatadis).not.toHaveBeenCalled();
   });

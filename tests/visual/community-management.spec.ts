@@ -332,8 +332,7 @@ test.describe("Visual baselines", () => {
       await expect(card.getByText("Introduce la contraseña.")).toBeVisible();
       await expect(card.getByText("Introduce una URL válida que empiece por http:// o https://.")).toBeVisible();
       // Blocked before the confirmation: nothing to confirm, nothing sent.
-      // modal-panel is BasicModal's interim test id, pending a real role="dialog".
-      await expect(page.getByTestId("modal-panel")).toHaveCount(0);
+      await expect(page.getByRole("dialog")).toHaveCount(0);
       // The save button keeps focus after the click; move it off so its focus
       // ring is not part of the picture.
       await page.getByRole("heading", { level: 1 }).click();
@@ -390,10 +389,12 @@ test.describe("Visual baselines", () => {
         enable: "incomplete",
       });
       await switchOf(card).click();
-      // modal-panel is BasicModal's interim test id, pending a real role="dialog".
-      await page.getByTestId("modal-panel").getByRole("button", { name: "Activar" }).click();
+      await page
+        .getByRole("dialog", { name: "Activar integración con Datadis" })
+        .getByRole("button", { name: "Activar" })
+        .click();
       await expect(card.getByRole("alert")).toHaveText(/Faltan datos para activar la integración: contraseña\./);
-      await expect(page.getByTestId("modal-panel")).toHaveCount(0);
+      await expect(page.getByRole("dialog")).toHaveCount(0);
       await expect(switchOf(card)).not.toBeChecked();
       // Move focus off the switch, so its focus ring is not part of the picture.
       await page.getByRole("heading", { level: 1 }).click();

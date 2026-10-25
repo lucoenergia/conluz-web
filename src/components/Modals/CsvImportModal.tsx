@@ -117,7 +117,13 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({
   const errors = result?.errors || [];
 
   return (
-    <AppModal isOpen={isOpen} onClose={handleClose} scopeHeader={<CommunityScopeHeader name={communityName} />}>
+    <AppModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      // Named by the title in every step: only the upload step shows it.
+      label={title(communityLabel(communityName))}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
+    >
       {step === "upload" && (
         <>
           <Typography

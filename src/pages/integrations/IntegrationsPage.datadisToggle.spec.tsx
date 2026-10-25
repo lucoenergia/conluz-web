@@ -63,18 +63,19 @@ const requestsTo = (requests: RequestConfig[], method: string, url: string) =>
 const datadis = () => screen.getByRole("region", { name: "Datadis" });
 const datadisSwitch = () => within(datadis()).getByRole("switch", { name: "Integración con Datadis activa" });
 const guardar = () => within(datadis()).getByRole("button", { name: "Guardar" });
-const confirmation = () => screen.getByTestId("modal-panel");
+const toggleConfirmation = () => screen.getByRole("dialog", { name: /^(Activar|Desactivar) integración con Datadis$/ });
+const saveConfirmation = () => screen.getByRole("dialog", { name: /^Guardar integración en / });
 
 /** Flips the switch and confirms the write it asks for. */
 async function toggle(user: ReturnType<typeof userEvent.setup>, confirmLabel: "Activar" | "Desactivar") {
   await user.click(datadisSwitch());
-  await user.click(within(confirmation()).getByRole("button", { name: confirmLabel }));
+  await user.click(within(toggleConfirmation()).getByRole("button", { name: confirmLabel }));
 }
 
 /** Guardar, then the save confirmation that names the community. */
 async function save(user: ReturnType<typeof userEvent.setup>) {
   await user.click(guardar());
-  await user.click(within(confirmation()).getByRole("button", { name: "Guardar" }));
+  await user.click(within(saveConfirmation()).getByRole("button", { name: "Guardar" }));
 }
 
 const render = () => renderWithProviders(<IntegrationsPage />, { activeCommunityId: COMMUNITY_ID });

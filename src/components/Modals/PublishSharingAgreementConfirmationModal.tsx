@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import type { FC, MouseEvent } from "react";
+import type { FC, SyntheticEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import PublishOutlinedIcon from "@mui/icons-material/PublishOutlined";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
@@ -14,7 +14,7 @@ interface PublishSharingAgreementConfirmationModalProps {
   fileSumLabel: string;
   coefficientCount: number;
   isPublishing?: boolean;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

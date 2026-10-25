@@ -1,5 +1,5 @@
 import Typography from "@mui/material/Typography";
-import type { FC, MouseEvent } from "react";
+import type { FC, SyntheticEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { radii, alphas, fontSizes } from "../../theme/tokens";
@@ -15,7 +15,7 @@ interface DeleteSupplyConfirmationModalProps {
   /** The owner's full name; null for a supply with no owner. */
   ownerName?: string | null;
   isDeleting?: boolean;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

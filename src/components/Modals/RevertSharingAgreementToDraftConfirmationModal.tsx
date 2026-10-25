@@ -1,5 +1,5 @@
 import { Typography } from "@mui/material";
-import type { FC, MouseEvent } from "react";
+import type { FC, SyntheticEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
@@ -11,7 +11,7 @@ interface RevertSharingAgreementToDraftConfirmationModalProps {
   isOpen: boolean;
   agreementName: string;
   isReverting?: boolean;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

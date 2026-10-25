@@ -14,11 +14,18 @@ describe("ConfirmationModal", () => {
 
   function setup() {
     render(
-      <ConfirmationModal isOpen={true} confirmLabel="Deshabilitar" onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
+      <ConfirmationModal isOpen={true} title="¿Deshabilitar?" confirmLabel="Deshabilitar" onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
         Deshabilitar punto de suministro
       </ConfirmationModal>,
     );
   }
+
+  it("#310 AC2 is a modal dialog named by its title", () => {
+    setup();
+    const dialog = screen.getByRole("dialog", { name: "¿Deshabilitar?" });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toHaveTextContent("Deshabilitar punto de suministro");
+  });
 
   it("renders the modal content with code", () => {
     setup();
@@ -45,7 +52,7 @@ describe("ConfirmationModal", () => {
 
   it("keeps the static label by default while pending — confirmPending is opt-in, off unless a caller asks for it", () => {
     render(
-      <ConfirmationModal isOpen confirmLabel="Deshabilitar" confirmDisabled onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
+      <ConfirmationModal isOpen title="¿Deshabilitar?" confirmLabel="Deshabilitar" confirmDisabled onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
         Deshabilitar punto de suministro
       </ConfirmationModal>,
     );
@@ -55,7 +62,7 @@ describe("ConfirmationModal", () => {
 
   it("swaps the visible label for a spinner when confirmPending is set, while keeping the button's accessible name", () => {
     render(
-      <ConfirmationModal isOpen confirmLabel="Deshabilitar" confirmPending onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
+      <ConfirmationModal isOpen title="¿Deshabilitar?" confirmLabel="Deshabilitar" confirmPending onCancel={mockOnCancel} onConfirm={mockOnConfirm}>
         Deshabilitar punto de suministro
       </ConfirmationModal>,
     );

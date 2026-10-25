@@ -3,11 +3,23 @@ import Box from "@mui/material/Box";
 import Modal from "@mui/material/Modal";
 import { radii, alphas } from "../../theme/tokens";
 
-interface BasicModalProps {
+/**
+ * A dialog's accessible name: the id of the heading that names it, or, when
+ * nothing on screen does, the name itself. One of the two is required, so a
+ * modal cannot be announced as an unnamed dialog.
+ */
+export type DialogName = { labelledBy: string; label?: never } | { label: string; labelledBy?: never };
+
+export type BasicModalProps = DialogName & {
   isOpen: boolean;
-  onClose: (event: React.MouseEvent<HTMLElement>) => void;
+  /**
+   * Called on Escape and on a backdrop click, with the event that caused it:
+   * the modal is a portal, but its events still bubble through the React tree
+   * to whatever renders it, which may need to stop them.
+   */
+  onClose: (event: React.SyntheticEvent) => void;
   children: React.ReactNode;
-}
+};
 
 const modalContainerStyle = {
   position: 'absolute',
@@ -24,27 +36,21 @@ const modalContainerStyle = {
   outline: 'none',
 };
 
-export const BasicModal: React.FC<BasicModalProps> = ({ isOpen, onClose, children }) => {
+export const BasicModal: React.FC<BasicModalProps> = ({ isOpen, onClose, labelledBy, label, children }) => {
   return (
     <Modal
       open={isOpen}
-      onClose={onClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-      slotProps={{
-        backdrop: {
-          sx: {
-            backgroundColor: alphas.black.overlay,
-          },
-        },
-      }}
+      // MUI types the event as {}; it is the keyboard or backdrop event.
+      onClose={(event) => onClose(event as React.SyntheticEvent)}
+      slotProps={{ backdrop: { sx: { backgroundColor: alphas.black.overlay } } }}
     >
-      {/* Interim: the visual suite captures this panel by test id only because
-          it has no role="dialog" and no accessible name to select it by. That
-          gap is reported separately as an accessibility issue, "BasicModal
-          renders no dialog role". Once it is fixed, the specs select
-          getByRole("dialog", { name }) and this test id goes. */}
-      <Box sx={modalContainerStyle} data-testid="modal-panel">
+      <Box
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={labelledBy}
+        aria-label={label}
+        sx={modalContainerStyle}
+      >
         {children}
       </Box>
     </Modal>

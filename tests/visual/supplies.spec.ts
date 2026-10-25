@@ -130,11 +130,11 @@ test.describe("Visual baselines", () => {
     await importBtn.scrollIntoViewIfNeeded();
     await importBtn.click();
 
-    // Wait for the modal title to appear (MUI Modal doesn't use role="dialog")
-    await expect(page.getByRole("heading", { name: /^Importar puntos de suministro a / })).toBeVisible();
+    const dialog = page.getByRole("dialog", { name: /^Importar puntos de suministro a / });
+    await expect(dialog.getByRole("heading", { name: /^Importar puntos de suministro a / })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("import-supplies-modal.png", await hideAppBar(page));
+    await expect(dialog).toHaveScreenshot("import-supplies-modal.png", await hideAppBar(page));
   });
 
   test("disable confirmation modal open", async ({ page }) => {
@@ -157,7 +157,10 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=Deshabilitar punto de suministro");
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-confirmation-modal.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Deshabilitar punto de suministro en / })).toHaveScreenshot(
+      "disable-confirmation-modal.png",
+      await hideAppBar(page),
+    );
   });
 
   test("disable success modal open", async ({ page }) => {
@@ -183,7 +186,9 @@ test.describe("Visual baselines", () => {
     await page.waitForSelector("text=ha sido deshabilitado");
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("disable-success-modal.png", await hideAppBar(page));
+    await expect(
+      page.getByRole("dialog", { name: "El punto de suministro ES0021000000000000AA ha sido deshabilitado" }),
+    ).toHaveScreenshot("disable-success-modal.png", await hideAppBar(page));
   });
 
   // The same list as a community admin. The member capture above shows the
@@ -273,11 +278,11 @@ test.describe("Visual baselines", () => {
 
     await page.getByRole("button", { name: "Más opciones del punto de suministro" }).click();
     await page.getByRole("menuitem", { name: "Eliminar punto de suministro" }).click();
-    await expect(page.getByRole("heading", { name: /^Eliminar punto de suministro de / })).toBeVisible();
-    await expect(page.getByTestId("modal-panel").getByText("ES0021000000000000AA")).toBeVisible();
+    const dialog = page.getByRole("dialog", { name: /^Eliminar punto de suministro de / });
+    await expect(dialog.getByText("ES0021000000000000AA")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("delete-supply-confirmation-modal.png", await hideAppBar(page));
+    await expect(dialog).toHaveScreenshot("delete-supply-confirmation-modal.png", await hideAppBar(page));
   });
 
   // Admitted: the detail header gained a menu button beside the title for a

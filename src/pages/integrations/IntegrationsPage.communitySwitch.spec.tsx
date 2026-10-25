@@ -88,9 +88,9 @@ function datadisCard(): HTMLElement {
   return screen.getByText("Datadis").closest(".MuiPaper-root") as HTMLElement;
 }
 
-/** The save confirmation, by BasicModal's interim test id until the panel gets a dialog role. */
+/** The save confirmation, which names the community it writes into. */
 function confirmation(): HTMLElement {
-  return screen.getByTestId("modal-panel");
+  return screen.getByRole("dialog", { name: /^Guardar integración en / });
 }
 
 describe("IntegrationsPage across a community switch", () => {
