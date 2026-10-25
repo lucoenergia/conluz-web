@@ -46,6 +46,8 @@ community context the dialogs read. There is no signed-in user, so community-sco
 - Any action that changes data opens a confirmation dialog (`ConfirmationModal`,
   `DeleteConfirmationModal`, …); success is confirmed with the matching `*SuccessModal`, or with a
   toast when the item leaves the screen (deleting a supply: `DeleteSupplyConfirmationModal`).
+  While the confirmed write is in flight the dialog shows its pending state (`inFlight`): "Cancelar"
+  disabled, the confirm button's spinner (`confirmPending`).
 - Pages open with `DetailHeader` / `SupplyDetailHeader` / `PlantDetailHeader` and `BreadCrumb`;
   empty, loading and error states use `EmptyState`, the `Loading*` skeletons and `LoadErrorAlert`.
 - A guide, an explanation or a confirmation is a `Notice` (`announce` when it reports the result of

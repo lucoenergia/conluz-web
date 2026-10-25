@@ -43,8 +43,9 @@ The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus
 **For actions that change server state** (role change, status toggle, etc.) the menu item must open a confirmation `<Dialog>` that:
 - Names the affected entity.
 - Shows the new value via a controlled select or clear text.
-- Includes an `<Alert severity="info">` explaining consequences.
+- Includes a `<Notice severity="info">` explaining consequences (a note, not an `Alert`, which would be announced as urgent).
 - Disables the confirm button while the mutation is pending or when the new value equals the current value.
+- Cannot be dismissed while the mutation is pending: pass `inFlightDialogProps(isPending, onClose)` to the `<Dialog>` and `disabled={isPending}` to "Cancelar" (`inFlight` on a `ConfirmationModal`).
 
 **Never** show a `<Select>` or any mutable control directly inside a table row — it bypasses the confirmation step and is visually inconsistent.
 
