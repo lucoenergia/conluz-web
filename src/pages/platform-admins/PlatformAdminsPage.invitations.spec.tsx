@@ -306,7 +306,7 @@ describe("pending invitations in the list", () => {
     expect(facts("Total")).toContain("2");
     expect(facts("Habilitados")).toContain("2");
     expect(facts("Pendientes")).toContain("2");
-    expect(screen.getByText("2 administradores")).toBeInTheDocument();
+    expect(screen.getByText("2 administradores de plataforma y 2 invitaciones pendientes")).toBeInTheDocument();
   });
 
   it("UI-PAD-014 shows no pending counter when nobody is pending", async () => {
@@ -315,6 +315,16 @@ describe("pending invitations in the list", () => {
     await screen.findByText("Ramón Revocable");
 
     expect(screen.queryByText("Pendientes")).not.toBeInTheDocument();
+    expect(screen.getByText("2 administradores de plataforma")).toBeInTheDocument();
+  });
+
+  it("UI-PAD-014 announces a lone pending invitation rather than an empty list", async () => {
+    servePage({ current: [NURIA] });
+    renderPage();
+    await screen.findByText("Nuria Nueva");
+
+    expect(screen.getByText("0 administradores de plataforma y 1 invitación pendiente")).toBeInTheDocument();
+    expect(screen.queryByText("No hay administradores de plataforma")).not.toBeInTheDocument();
   });
 });
 

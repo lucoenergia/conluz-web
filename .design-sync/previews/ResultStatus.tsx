@@ -54,3 +54,15 @@ export const Empty = () => (
     <ResultStatus count={0} noun={noun} emptyMessage={emptyMessage} />
   </>
 );
+
+export const WithPendingInvitations = () => (
+  <>
+    <Transcript text="3 administradores de plataforma y 1 invitación pendiente" />
+    <ResultStatus
+      count={3}
+      noun={{ one: "administrador de plataforma", other: "administradores de plataforma" }}
+      also={{ count: 1, noun: { one: "invitación pendiente", other: "invitaciones pendientes" } }}
+      emptyMessage="No hay administradores de plataforma"
+    />
+  </>
+);

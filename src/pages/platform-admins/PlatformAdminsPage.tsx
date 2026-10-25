@@ -251,7 +251,8 @@ export const PlatformAdminsPage: FC = () => {
               <ResultStatus
                 isLoading={isLoading}
                 count={holderCount}
-                noun={{ one: "administrador", other: "administradores" }}
+                noun={{ one: "administrador de plataforma", other: "administradores de plataforma" }}
+                also={{ count: pendingCount, noun: { one: "invitación pendiente", other: "invitaciones pendientes" } }}
                 emptyMessage={EMPTY_MESSAGE}
               />
 
