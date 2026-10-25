@@ -1,7 +1,8 @@
 import { useState, type FC } from "react";
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import type { MaybeAction, PlatformAdminWriteResult, PlatformInvitationSentResult } from "../../hooks/actions";
 import { ConfirmationCodePanel } from "./ConfirmationCodePanel";
+import { Notice } from "../../components/Notice";
 
 export type PlatformInvitationWriteKind = "resend" | "revoke";
 
@@ -92,7 +93,7 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
           {copy.question}
           <strong>{fullName}</strong>?
         </Typography>
-        <Alert severity="info">{copy.consequence}</Alert>
+        <Notice severity="info">{copy.consequence}</Notice>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose}>Cancelar</Button>

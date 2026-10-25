@@ -1,10 +1,11 @@
-import { Alert, Box, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import type { FC, MouseEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import PublishOutlinedIcon from "@mui/icons-material/PublishOutlined";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { Notice } from "../Notice";
 
 interface PublishSharingAgreementConfirmationModalProps {
   isOpen: boolean;
@@ -89,7 +90,7 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
         Al poner el acuerdo en vigor, el reparto queda sellado: no podrás editar los coeficientes mientras esté
         vigente.
       </Typography>
-      <Alert severity="info">
+      <Notice severity="info">
         <Box component="span" sx={{ display: "block" }}>
           Hazlo cuando la distribuidora haya aceptado el reparto. Poner en vigor no aplica nada por sí mismo:
           después tendrás que registrar la fecha de aplicación de cada punto. Hasta entonces el acuerdo no reparte
@@ -100,7 +101,7 @@ export const PublishSharingAgreementConfirmationModal: FC<PublishSharingAgreemen
           Podrás volver a borrador mientras no se haya aplicado ningún coeficiente. En cuanto aplique
           alguno, dejará de ser posible y cualquier cambio exigirá un acuerdo nuevo.
         </Box>
-      </Alert>
+      </Notice>
     </ConfirmationModal>
   );
 };

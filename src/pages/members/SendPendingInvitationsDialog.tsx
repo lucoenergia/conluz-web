@@ -6,6 +6,7 @@ import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { invitationRefusalMessage } from "../../errors/membershipErrors";
 import { pluralize } from "../../utils/pluralize";
+import { Notice } from "../../components/Notice";
 
 interface SendPendingInvitationsDialogProps {
   communityName: string | undefined;
@@ -56,11 +57,11 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
                 ? "No se ha enviado ninguna invitación."
                 : `Se ${pluralize(batch.sent, "ha", "han")} enviado ${batch.sent} ${pluralize(batch.sent, "invitación", "invitaciones")}.`}
             </Typography>
-            <Alert severity={remaining > 0 ? "info" : "success"}>
+            <Notice announce severity={remaining > 0 ? "info" : "success"}>
               {remaining > 0
                 ? `${pluralize(remaining, "Queda", "Quedan")} ${remaining} por enviar. Puedes seguir con las siguientes.`
                 : "No queda ninguna invitación pendiente de enviar."}
-            </Alert>
+            </Notice>
           </>
         ) : (
           <>
@@ -68,9 +69,9 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
               ¿Enviar la invitación a los miembros pendientes de {community} que tienen email de contacto y todavía no
               han recibido ninguna?
             </Typography>
-            <Alert severity="info">
+            <Notice severity="info">
               Se envían por tandas de hasta 50. Los miembros suspendidos o sin email de contacto no la reciben.
-            </Alert>
+            </Notice>
           </>
         )}
       </DialogContent>

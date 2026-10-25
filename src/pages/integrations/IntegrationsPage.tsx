@@ -509,8 +509,10 @@ export const IntegrationsPage: FC = () => {
         onClose={() => setSnack(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
+        {/* A failure interrupts; a confirmation is announced politely. */}
         <Alert
           severity={snack?.includes("Error") ? "error" : "success"}
+          role={snack?.includes("Error") ? "alert" : "status"}
           onClose={() => setSnack(null)}
           sx={{ borderRadius: radii.default, fontWeight: 500 }}
         >

@@ -1,5 +1,5 @@
 import { useState, type FC, type Ref } from "react";
-import { Alert, Box, IconButton, Link, MenuItem, Typography, Divider } from "@mui/material";
+import { Box, IconButton, Link, MenuItem, Typography, Divider } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -26,6 +26,7 @@ import { colors, radii } from "../../theme/tokens";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 import { selectSharingAgreementLifecycleView } from "../../pages/production/sharingAgreementLifecycle";
 import type { SharingAgreementNextStep } from "../../pages/production/selectSharingAgreementNextStep";
+import { Notice } from "../Notice";
 
 export interface SharingAgreementDetailHeaderProps {
   agreement?: SharingAgreementResponse;
@@ -265,12 +266,12 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
       />
 
       {isResolved && distributesNothing && (
-        <Alert severity="info" icon={<InfoOutlinedIcon />}>
+        <Notice severity="info" icon={<InfoOutlinedIcon />}>
           <Box component="strong" sx={{ fontWeight: 600 }}>
             Vigente, pero todavía no reparte producción:
           </Box>{" "}
           registra las fechas de aplicación.
-        </Alert>
+        </Notice>
       )}
 
       {isResolved && (

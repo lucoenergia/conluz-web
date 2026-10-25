@@ -45,7 +45,7 @@ test.describe("Visual baselines — password recovery", () => {
     await page.goto("/forgot-password");
     await page.getByLabel("DNI/NIE/NIF").fill("12345678Z");
     await page.getByRole("button", { name: "Enviar" }).click();
-    await expect(page.getByRole("alert")).toContainText("Si tus datos son correctos");
+    await expect(page.getByRole("status").filter({ hasText: "Si tus datos son correctos" })).toBeVisible();
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("forgot-password-sent.png", FULL_PAGE);

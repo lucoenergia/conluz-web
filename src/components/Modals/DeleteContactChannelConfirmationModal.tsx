@@ -1,8 +1,8 @@
-import Alert from "@mui/material/Alert";
 import Typography from "@mui/material/Typography";
 import type { FC, MouseEvent } from "react";
 import { fontSizes } from "../../theme/tokens";
 import { ConfirmationModal } from "./ConfirmationModal";
+import { Notice } from "../Notice";
 
 interface DeleteContactChannelConfirmationModalProps {
   isOpen: boolean;
@@ -34,10 +34,10 @@ export const DeleteContactChannelConfirmationModal: FC<DeleteContactChannelConfi
     title={`¿Eliminar el canal «${label}»?`}
   >
     {otherCount === 0 ? (
-      <Alert severity="info">
+      <Notice severity="info">
         Es el único canal. Si lo eliminas, tu comunidad se quedará sin contacto y los miembros no sabrán cómo contactar
         con quien la gestiona hasta que añadas otro.
-      </Alert>
+      </Notice>
     ) : (
       <Typography sx={{ fontSize: fontSizes.lg, color: "text.secondary", lineHeight: 1.6 }}>
         Los miembros dejarán de verlo en Contacto.{" "}

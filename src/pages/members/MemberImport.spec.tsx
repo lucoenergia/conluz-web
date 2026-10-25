@@ -90,18 +90,16 @@ async function importFile(u: ReturnType<typeof userEvent.setup>, dialog: HTMLEle
 }
 
 /**
- * The refusal, among the dialog's alerts: MUI gives every Alert the role, the
- * guide's notes included. The refusal is the one that appeared once the import
- * failed, so it is found by waiting for the guide to come back, then picking
- * the alert that is not the notes.
+ * The refusal: the dialog's only alert once the import failed, found by
+ * waiting for the guide to come back. The guide's notes are a note, not an
+ * alert (#310).
  */
 async function refusalIn(dialog: HTMLElement) {
   await within(dialog).findByRole("button", { name: "Importar" });
+  expect(within(dialog).getByRole("note")).toHaveTextContent(/registra a los miembros, pero no les envía nada/);
   const alerts = within(dialog).getAllByRole("alert");
-  const notes = within(dialog).getByText(/registra a los miembros, pero no les envía nada/).closest('[role="alert"]');
-  const others = alerts.filter((alert) => alert !== notes);
-  expect(others).toHaveLength(1);
-  return others[0];
+  expect(alerts).toHaveLength(1);
+  return alerts[0];
 }
 
 const failedRows = (dialog: HTMLElement) =>

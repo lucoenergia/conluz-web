@@ -9,6 +9,7 @@ import type { GroupedApiErrors } from "../../errors/apiErrorCatalogue";
 import type { Action, SharingAgreementFileUploadResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { Notice } from "../Notice";
 
 export interface SharingAgreementUploadDialogProps {
   isOpen: boolean;
@@ -132,10 +133,10 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
               <strong>AAAA</strong> por el año correspondiente.
             </Typography>
 
-            <Alert severity="warning" sx={{ mb: 3 }}>
+            <Notice severity="warning" sx={{ mb: 3 }}>
               Subir un fichero nuevo <strong>sustituye por completo</strong> el conjunto de coeficientes actual del
               acuerdo.
-            </Alert>
+            </Notice>
 
             <Button component="label" variant="outlined" startIcon={<UploadFileOutlinedIcon />} sx={{ mb: 1 }}>
               Seleccionar fichero

@@ -25,6 +25,7 @@ import {
   type RegistrationValues,
 } from "./memberRecordForm";
 import { MemberRecordFields } from "./MemberRecordFields";
+import { Notice } from "../../components/Notice";
 
 interface RegisterMemberDialogProps {
   communityName: string | undefined;
@@ -106,15 +107,15 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
           </Typography>
           {registered.contactEmail ? (
             invite && (
-              <Alert severity="info">
+              <Notice severity="info">
                 Si le invitas ahora, le llegará un email a {registered.contactEmail} con un enlace para unirse a{" "}
                 {community}.
-              </Alert>
+              </Notice>
             )
           ) : (
-            <Alert severity="info">
+            <Notice severity="info">
               No tiene email de contacto, así que todavía no se le puede invitar. Añádelo desde «Editar ficha».
-            </Alert>
+            </Notice>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
@@ -138,9 +139,9 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
         <DialogTitle sx={{ pt: 0 }}>Registrar miembro en {community}</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
-          <Alert severity="info">
+          <Notice severity="info">
             Registrarle no le envía nada. Quedará pendiente hasta que le invites y acepte la invitación.
-          </Alert>
+          </Notice>
           <TextField
             label="DNI/NIE/NIF"
             required

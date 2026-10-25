@@ -1,7 +1,7 @@
 import { radii, shadows, alphas, fontSizes, colors } from "../theme/tokens";
 import { sxStyles } from "../theme/sx";
 import { useState, useEffect, type FC } from "react";
-import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Chip, Alert, Snackbar } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Chip, Snackbar } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import BadgeIcon from "@mui/icons-material/Badge";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -11,6 +11,7 @@ import { useErrorDispatch } from "../context/error.context";
 import { useProfileActions } from "../hooks/actions";
 import { useActiveCommunityRoleLabel } from "../hooks/permissions";
 import { isValidEmail } from "../utils/email";
+import { Notice } from "../components/Notice";
 
 export const ProfilePage: FC = () => {
   const { data: currentUser, isLoading, error } = useGetCurrentUser();
@@ -231,9 +232,9 @@ export const ProfilePage: FC = () => {
       </Box>
 
       <Snackbar open={successMessage} autoHideDuration={4000} onClose={handleCloseSuccessMessage} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", borderRadius: radii.default }}>
+        <Notice announce onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", borderRadius: radii.default }}>
           Perfil actualizado correctamente
-        </Alert>
+        </Notice>
       </Snackbar>
     </Box>
   );

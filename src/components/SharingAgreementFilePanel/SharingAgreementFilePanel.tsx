@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Alert, Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
@@ -20,6 +20,7 @@ import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementActions } from "../../hooks/actions";
 import { SharingAgreementGenerateDialog } from "../SharingAgreementGenerateDialog";
 import { hasPlantRegulatoryCode, MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
+import { Notice } from "../Notice";
 
 export interface SharingAgreementFilePanelProps {
   plantId: string;
@@ -106,10 +107,10 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
           />
         )}
         {showGeneratedNotice && (
-          <Alert severity="info" onClose={() => setShowGeneratedNotice(false)} sx={{ mt: 2 }}>
+          <Notice announce severity="info" onClose={() => setShowGeneratedNotice(false)} sx={{ mt: 2 }}>
             El fichero se ha generado a partir de los coeficientes actuales y se ha descargado. Conluz no guarda
             ninguna copia ni lo envía a la distribuidora — hazlo llegar por tu medio habitual (por ejemplo, email).
-          </Alert>
+          </Notice>
         )}
       </Box>
 

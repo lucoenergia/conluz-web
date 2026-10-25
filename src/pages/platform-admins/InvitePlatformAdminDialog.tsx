@@ -12,6 +12,7 @@ import {
 import { MemberRecordFields } from "../members/MemberRecordFields";
 import { ConfirmationCodePanel } from "./ConfirmationCodePanel";
 import { platformAdminInvitationBodyOf, platformAdminInvitationRefusalOf } from "./platformAdminInvitationForm";
+import { Notice } from "../../components/Notice";
 
 const FIELDS = ["fullName", "contactEmail"] as const;
 
@@ -85,10 +86,10 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
         <DialogTitle>Invitar administrador de plataforma</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
-          <Alert severity="info">
+          <Notice severity="info">
             Le llegará un email con un enlace para aceptar. Después verás un código de confirmación que tendrás que
             darle tú: sin él no podrá aceptar. Será administrador de la plataforma solo cuando acepte.
-          </Alert>
+          </Notice>
           <TextField
             label="DNI/NIE/NIF"
             required

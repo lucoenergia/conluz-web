@@ -76,7 +76,8 @@ describe("the forgot-password screen", () => {
       const user = userEvent.setup();
       const { unmount } = renderPage();
       await submit(user, personalId);
-      confirmations.push((await screen.findByRole("alert")).textContent ?? "");
+      confirmations.push((await screen.findByRole("status")).textContent ?? "");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("DNI/NIE/NIF")).not.toBeInTheDocument();
       expect(screen.getByRole("link", { name: "Volver al inicio de sesión" })).toHaveAttribute("href", "/login");
       unmount();

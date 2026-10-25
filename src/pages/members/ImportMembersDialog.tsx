@@ -21,6 +21,7 @@ import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiE
 import { pluralize } from "../../utils/pluralize";
 import { radii } from "../../theme/tokens";
 import { downloadMemberTemplate, IMPORT_COLUMNS, MAX_IMPORT_ROWS, rowReason } from "./importMembers";
+import { Notice } from "../../components/Notice";
 
 interface ImportMembersDialogProps {
   communityName: string | undefined;
@@ -135,7 +136,7 @@ export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
                 {refusal.nothingRegistered && " No se ha registrado ningún miembro."}
               </Alert>
             )}
-            <Alert severity="info">
+            <Notice severity="info">
               <Box component="ul" sx={{ m: 0, pl: 2 }}>
                 <li>
                   Importar registra a los miembros, pero no les envía nada. Después puedes invitarles uno a uno o con
@@ -152,7 +153,7 @@ export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
                   como tales.
                 </li>
               </Box>
-            </Alert>
+            </Notice>
 
             <Box>
               <Typography component="h3" variant="subtitle2" sx={{ mb: 1 }}>
@@ -226,12 +227,12 @@ const ImportResult: FC<ImportResultProps> = ({ result, onSendPending, onImportAn
   return (
     <>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Alert severity={failed > 0 ? "warning" : "success"}>
+        <Notice announce severity={failed > 0 ? "warning" : "success"}>
           {registered === 0
             ? "No se ha registrado ningún miembro."
             : `Se ${pluralize(registered, "ha", "han")} registrado ${registered} ${pluralize(registered, "miembro", "miembros")}.`}
           {failed > 0 && ` ${failed} ${pluralize(failed, "fila tiene", "filas tienen")} errores.`}
-        </Alert>
+        </Notice>
 
         {failedRows.length > 0 && (
           <Box>
@@ -255,12 +256,12 @@ const ImportResult: FC<ImportResultProps> = ({ result, onSendPending, onImportAn
         )}
 
         {registered > 0 && (
-          <Alert severity="info">
+          <Notice severity="info">
             Todavía no se ha enviado ninguna invitación.
             {onSendPending
               ? " Puedes enviarlas ahora a los miembros pendientes que tienen email de contacto."
               : " Los miembros registrados aparecen como pendientes."}
-          </Alert>
+          </Notice>
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2, flexWrap: "wrap", gap: 1 }}>

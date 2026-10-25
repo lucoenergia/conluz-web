@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { useSuccess } from "../../context/success.context";
-import { Alert, Box, Slide, Snackbar } from "@mui/material";
+import { Box, Slide, Snackbar } from "@mui/material";
+import { Notice } from "../Notice";
 
 export const SuccessDisplay: FC = () => {
   const messages = useSuccess();
@@ -13,10 +14,9 @@ export const SuccessDisplay: FC = () => {
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           slots={{ transition: Slide }}
         >
-          {/* role="status" (polite) not MUI's default role="alert": a
-              confirmation should not interrupt what is being read. Errors keep
-              the assertive default. */}
-          <Alert severity="success" role="status">{message}</Alert>
+          {/* Announced politely: a confirmation should not interrupt what is
+              being read. Errors keep the assertive default. */}
+          <Notice announce severity="success">{message}</Notice>
         </Snackbar>
       ))}
     </Box>

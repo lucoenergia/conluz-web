@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Alert, Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
+import { Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -9,6 +9,7 @@ import { fontSizes, shadows } from "../../theme/tokens";
 import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { Notice } from "../Notice";
 
 export interface SharingAgreementFormValues {
   name: string;
@@ -166,11 +167,11 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
               disponible en cualquier momento del borrador.
             </Typography>
 
-            <Alert icon={<LockOutlinedIcon fontSize="small" />} severity="info" sx={{ mb: 3 }}>
+            <Notice icon={<LockOutlinedIcon fontSize="small" />} severity="info" sx={{ mb: 3 }}>
               Al <strong>poner en vigor</strong>, el conjunto de coeficientes queda fijo para siempre — cualquier
               cambio futuro requerirá un nuevo acuerdo. Después de ponerlo en vigor solo podrás registrar cuándo la
               distribuidora aplica cada coeficiente.
-            </Alert>
+            </Notice>
           </>
         )}
 
@@ -193,10 +194,10 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
           />
 
           {capacityChanged && (
-            <Alert severity="info">
+            <Notice announce severity="info">
               Cambiar la capacidad no modifica los coeficientes ya guardados, pero sí cambia la potencia
               en kW que corresponde a cada suministro según esos coeficientes.
-            </Alert>
+            </Notice>
           )}
 
           <TextField

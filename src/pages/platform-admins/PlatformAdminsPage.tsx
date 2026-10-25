@@ -46,6 +46,7 @@ import { invitationText } from "../members/membershipStatus";
 import { hasAnyOffer, isPendingInvitation, membershipStateOf, platformAdminRowOffer } from "./platformAdminStatus";
 import { PlatformInvitationActionDialog, type PlatformInvitationWriteKind } from "./PlatformInvitationActionDialog";
 import { InvitePlatformAdminDialog } from "./InvitePlatformAdminDialog";
+import { Notice } from "../../components/Notice";
 
 const EMPTY_MESSAGE = "No hay administradores de plataforma";
 const NOT_REVOCABLE_EXPLANATION = "La plataforma necesita al menos un administrador de plataforma habilitado.";
@@ -384,9 +385,9 @@ export const PlatformAdminsPage: FC = () => {
           <Typography variant="body2">
             ¿Revocar el rol de administrador de plataforma a <strong>{selectedAdmin?.fullName}</strong>?
           </Typography>
-          <Alert severity="info">
+          <Notice severity="info">
             Dejará de administrar la plataforma. Su cuenta y las comunidades de las que es miembro no cambian.
-          </Alert>
+          </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setRevokeDialogOpen(false)}>Cancelar</Button>

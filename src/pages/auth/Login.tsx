@@ -35,6 +35,7 @@ import {
   takeSessionExpired,
 } from "../../utils/session";
 import { throttledMessage } from "../../errors/authErrors";
+import { Notice } from "../../components/Notice";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -174,7 +175,7 @@ export const Login: FC = () => {
           }}
         >
           {sessionExpired && !loginError && (
-            <Alert
+            <Notice announce
               severity="warning"
               sx={{
                 mb: 3,
@@ -182,11 +183,11 @@ export const Login: FC = () => {
               }}
             >
               {SESSION_EXPIRED_MESSAGE}
-            </Alert>
+            </Notice>
           )}
 
           {passwordChanged && !loginError && (
-            <Alert
+            <Notice announce
               severity="success"
               sx={{
                 mb: 3,
@@ -194,11 +195,11 @@ export const Login: FC = () => {
               }}
             >
               {PASSWORD_CHANGED_MESSAGE}
-            </Alert>
+            </Notice>
           )}
 
           {passwordReset && !loginError && (
-            <Alert
+            <Notice announce
               severity="success"
               sx={{
                 mb: 3,
@@ -206,11 +207,11 @@ export const Login: FC = () => {
               }}
             >
               {PASSWORD_RESET_MESSAGE}
-            </Alert>
+            </Notice>
           )}
 
           {invitationCommunity && !loginError && (
-            <Alert
+            <Notice announce
               severity="success"
               sx={{
                 mb: 3,
@@ -218,11 +219,11 @@ export const Login: FC = () => {
               }}
             >
               {invitationAcceptedLoginMessage(invitationCommunity)}
-            </Alert>
+            </Notice>
           )}
 
           {platformInvitationAccepted && !loginError && (
-            <Alert
+            <Notice announce
               severity="success"
               sx={{
                 mb: 3,
@@ -230,7 +231,7 @@ export const Login: FC = () => {
               }}
             >
               {PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE}
-            </Alert>
+            </Notice>
           )}
 
           {loginError && (

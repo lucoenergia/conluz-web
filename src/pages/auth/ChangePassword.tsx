@@ -14,6 +14,7 @@ import { useLoggedUser } from "../../context/logged-user.context";
 import { checkPasswordPolicy, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "../../errors/authErrors";
 import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { Notice } from "../../components/Notice";
 
 type Field = "currentPassword" | "newPassword" | "confirmPassword";
 type FieldErrors = Partial<Record<Field, string>>;
@@ -187,9 +188,9 @@ export const ChangePasswordPage: FC = () => {
         >
           <Box component="form" onSubmit={handleSubmit} noValidate sx={sxStyles.flexColumnGap3}>
             {isForced && (
-              <Alert severity="info" sx={{ borderRadius: radii.default }}>
+              <Notice severity="info" sx={{ borderRadius: radii.default }}>
                 {FORCED_PASSWORD_CHANGE_MESSAGE}
-              </Alert>
+              </Notice>
             )}
 
             {formError && (

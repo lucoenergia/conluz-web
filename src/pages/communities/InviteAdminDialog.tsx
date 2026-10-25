@@ -14,6 +14,7 @@ import {
   type MemberRecordField,
 } from "../members/memberRecordForm";
 import { MemberRecordFields } from "../members/MemberRecordFields";
+import { Notice } from "../../components/Notice";
 
 const ADMIN_FIELDS = ["fullName", "contactEmail", "phoneNumber"] as const;
 const ADMIN_REQUIRED = ["fullName", "contactEmail"] as const;
@@ -74,10 +75,10 @@ export const InviteAdminDialog: FC<InviteAdminDialogProps> = ({ communityName, i
         <DialogTitle sx={{ pt: 0 }}>Invitar administrador a {community}</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
-          <Alert severity="info">
+          <Notice severity="info">
             Le llegará un email a su dirección de contacto con un enlace para aceptar. Quedará pendiente hasta que
             acepte la invitación.
-          </Alert>
+          </Notice>
           <TextField
             label="DNI/NIE/NIF"
             required

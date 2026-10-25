@@ -72,6 +72,7 @@ import {
   type InvitationActions,
 } from "./membershipStatus";
 import { MembershipStatusCell, MembershipStatusChip } from "./MembershipStatusCell";
+import { Notice } from "../../components/Notice";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
@@ -601,11 +602,11 @@ export const MembersPage: FC = () => {
             {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
             <strong>{selectedMembership?.fullName ?? "este miembro"}</strong> en {community}?
           </Typography>
-          <Alert severity="info">
+          <Notice severity="info">
             {selectedStatusToggle?.isSuspending
               ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
               : `Volverá a tener acceso a ${community}.`}
-          </Alert>
+          </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setStatusDialogOpen(false)}>Cancelar</Button>
@@ -659,11 +660,11 @@ export const MembersPage: FC = () => {
               <FormHelperText>{LAST_ACTIVE_ADMIN_EXPLANATION}</FormHelperText>
             )}
           </FormControl>
-          <Alert severity="info">
+          <Notice severity="info">
             {pendingRole === MembershipResponseRole.COMMUNITY_ADMIN
               ? "Un administrador puede gestionar los miembros y la configuración de la comunidad."
               : "Un miembro tiene acceso básico a la comunidad y perderá los permisos de administración."}
-          </Alert>
+          </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setRoleDialogOpen(false)}>Cancelar</Button>

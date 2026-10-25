@@ -1,8 +1,9 @@
 import type { FC } from "react";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import type { Action, MembershipWriteResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel } from "../../hooks/useActiveCommunityName";
+import { Notice } from "../../components/Notice";
 
 export type InvitationWriteKind = "invite" | "resend" | "revoke";
 
@@ -87,7 +88,7 @@ export const InvitationActionDialog: FC<InvitationActionDialogProps> = ({
           {copy.question}
           <strong>{memberName}</strong>?
         </Typography>
-        <Alert severity="info">{copy.consequence(community)}</Alert>
+        <Notice severity="info">{copy.consequence(community)}</Notice>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose}>Cancelar</Button>

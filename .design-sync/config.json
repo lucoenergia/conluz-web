@@ -56,6 +56,7 @@
     "AttentionPanel": "../groups/feedback.md",
     "EmptyState": "../groups/feedback.md",
     "LoadErrorAlert": "../groups/feedback.md",
+    "Notice": "../groups/feedback.md",
     "ResultStatus": "../groups/feedback.md",
     "RouteFallback": "../groups/feedback.md",
     "CapabilityLoadError": "../groups/feedback.md",

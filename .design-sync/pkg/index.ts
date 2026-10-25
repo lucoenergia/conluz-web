@@ -69,6 +69,7 @@ export { EnableConfirmationModal } from "../../src/components/Modals/EnableConfi
 export { PublishSharingAgreementConfirmationModal } from "../../src/components/Modals/PublishSharingAgreementConfirmationModal";
 export { RevertSharingAgreementToDraftConfirmationModal } from "../../src/components/Modals/RevertSharingAgreementToDraftConfirmationModal";
 export { NextStepBanner } from "../../src/components/NextStepBanner/NextStepBanner";
+export { Notice } from "../../src/components/Notice/Notice";
 export { PaginatedList } from "../../src/components/PaginatedList/PaginatedList";
 export { PaginationOutlined } from "../../src/components/Pagination/Pagination";
 export { PlantCard } from "../../src/components/PlantCard/PlantCard";

@@ -215,7 +215,7 @@ describe("the login page after a session ends", () => {
 
     // ProtectedRoute does the navigating -- the provider cannot, it sits above
     // the router -- and the reason survives the redirect to be shown here.
-    expect(await screen.findByRole("alert")).toHaveTextContent(SESSION_EXPIRED_MESSAGE);
+    expect(await screen.findByRole("status")).toHaveTextContent(SESSION_EXPIRED_MESSAGE);
   });
 
   // Reaching the same page by asking to leave. The reason the provider records

@@ -760,4 +760,31 @@ describe("inviting a platform admin", () => {
     if (refetches) await waitFor(() => expect(listReads(router)).toBe(readsBefore + 1));
     else expect(listReads(router)).toBe(readsBefore);
   });
+
+  it("#310 AC1 shows the form's guidance as a note, and a refusal as an alert", async () => {
+    const u = userEvent.setup();
+    servePage(
+      { current: [PAULA] },
+      {
+        caller: INVITER,
+        invite: () => {
+          throw restError(503, "PLATFORM_ADMIN_INVITATION_UNAVAILABLE");
+        },
+      },
+    );
+    renderPage();
+    await screen.findByText("Paula Plataforma");
+    const form = await openInviteForm(u);
+
+    expect(within(form).getByRole("note")).toHaveTextContent("Le llegará un email con un enlace para aceptar.");
+    expect(within(form).queryByRole("alert")).not.toBeInTheDocument();
+
+    await fillInviteForm(u, form);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+
+    expect(await within(form).findByRole("alert")).toHaveTextContent(
+      "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde.",
+    );
+    expect(within(form).getByRole("note")).toHaveTextContent("Le llegará un email con un enlace para aceptar.");
+  });
 });

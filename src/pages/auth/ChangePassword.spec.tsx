@@ -108,7 +108,11 @@ describe("ChangePasswordPage", () => {
 
       await waitFor(() => expect(path()).toHaveTextContent("/login"));
       expect(token()).toHaveTextContent("none");
-      expect(screen.getByRole("alert")).toHaveTextContent("Contraseña cambiada. Inicia sesión con tu nueva contraseña.");
+      expect(screen.getAllByRole("status").map((region) => region.textContent)).toContain(
+        "Contraseña cambiada. Inicia sesión con tu nueva contraseña.",
+      );
+      // A confirmation, announced politely, not an alert (#310).
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
 
@@ -327,7 +331,9 @@ describe("ChangePasswordPage", () => {
     it("says so, without claiming who chose the current password", () => {
       renderPage({ mustChangePassword: true });
 
-      expect(screen.getByRole("alert")).toHaveTextContent("Por seguridad, debes cambiar tu contraseña antes de continuar.");
+      expect(screen.getByRole("note")).toHaveTextContent("Por seguridad, debes cambiar tu contraseña antes de continuar.");
+      // Why the page is shown, not something gone wrong: never announced as an alert (#310).
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
     it("offers no way out but the change itself", () => {

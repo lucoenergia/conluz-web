@@ -24,6 +24,7 @@ import {
   type MemberRecordValues,
 } from "./memberRecordForm";
 import { MemberRecordFields } from "./MemberRecordFields";
+import { Notice } from "../../components/Notice";
 
 interface MemberRecordDialogProps {
   membership: MembershipResponse;
@@ -87,10 +88,10 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
           {hasPendingInvitation(membership) && (
-            <Alert severity="info">
+            <Notice severity="info">
               Este miembro tiene una invitación pendiente. Si cambias el email de contacto, el próximo
               reenvío irá a la nueva dirección.
-            </Alert>
+            </Notice>
           )}
           <TextField
             label="DNI/NIE"
