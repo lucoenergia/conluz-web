@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { AxiosError } from "axios";
 import { Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -366,6 +367,31 @@ describe("inviting an admin", () => {
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(await screen.findByText("Nora Nueva")).toBeInTheDocument();
+  });
+
+  it("#310 releases the form once a write that never answers times out", async () => {
+    const u = user();
+    let timeOut!: () => void;
+    serveAdminsPage({ current: [ROSA] }, {
+      invite: () =>
+        new Promise((_, reject) => {
+          // What axios rejects with when the request's limit runs out: no response.
+          timeOut = () => reject(new AxiosError("timeout of 30000ms exceeded", "ECONNABORTED"));
+        }),
+    });
+    renderPage();
+    const form = await openForm(u);
+    await fill(u, FORM);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+    expect(await within(form).findByRole("button", { name: "Cancelar" })).toBeDisabled();
+
+    timeOut();
+
+    expect(await within(form).findByRole("alert")).toBeInTheDocument();
+    expect(within(form).getByRole("button", { name: "Cancelar" })).toBeEnabled();
+    expect(within(form).getByRole("textbox", { name: /^Nombre completo/ })).toHaveValue("Nora Nueva");
+    fireEvent.keyDown(form, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
   it("UI-ADM-003 sends a blank phone as none", async () => {
