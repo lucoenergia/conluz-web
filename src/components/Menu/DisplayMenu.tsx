@@ -14,6 +14,11 @@ interface DisplayMenuProps {
   disableSupplyPoint: () => void;
   enableSupplyPoint: () => void;
   supplyPointId: string;
+  /**
+   * What the menu button names the supply by: its name, or its CUPS when it
+   * has none. Each card's button then has a name of its own (#310).
+   */
+  supplyLabel: string;
   enabled: boolean;
   /**
    * Whether the caller may edit, enable and disable the supply (its canEdit).
@@ -26,6 +31,7 @@ interface DisplayMenuProps {
 
 export const DisplayMenu: FC<DisplayMenuProps> = ({
   supplyPointId,
+  supplyLabel,
   disableSupplyPoint,
   enableSupplyPoint,
   enabled,
@@ -66,7 +72,7 @@ export const DisplayMenu: FC<DisplayMenuProps> = ({
     <>
       <IconButton
         onClick={handleOpenUserMenu}
-        aria-label="Más acciones del punto de suministro"
+        aria-label={`Más acciones para ${supplyLabel}`}
         sx={{
           color: "white",
           minWidth: 40,

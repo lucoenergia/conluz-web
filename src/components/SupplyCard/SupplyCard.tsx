@@ -160,6 +160,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
                   <DisplayMenu
                     supplyPointId={id}
+                    supplyLabel={name || code}
                     disableSupplyPoint={() => setOpenDisableConfirmation(true)}
                     enableSupplyPoint={() => setOpenEnableConfirmation(true)}
                     enabled={enabled}

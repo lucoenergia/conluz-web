@@ -11,6 +11,7 @@ import {
   FIXED_MEMBER_USER,
   FIXED_SUPPLY_COEFFICIENT_HISTORY,
   FIXED_SUPPLY_ID,
+  FIXED_SUPPLY_NAME,
   freezeClock,
   hideAppBar,
   injectAuthToken,
@@ -146,10 +147,7 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     // Open the three-dot menu on the enabled supply card (ES0021000000000000AA)
-    const enabledCard = page
-      .locator(".MuiCard-root")
-      .filter({ hasText: "ES0021000000000000AA" });
-    await enabledCard.getByRole("button").click();
+    await page.getByRole("button", { name: `Más acciones para ${FIXED_SUPPLY_NAME}` }).click();
 
     // Click "Deshabilitar" in the dropdown — opens DisableConfirmationModal
     await page.getByRole("menuitem", { name: /Deshabilitar/i }).click();
@@ -172,10 +170,7 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     // Open the dropdown and trigger the disable confirmation modal
-    const enabledCard = page
-      .locator(".MuiCard-root")
-      .filter({ hasText: "ES0021000000000000AA" });
-    await enabledCard.getByRole("button").click();
+    await page.getByRole("button", { name: `Más acciones para ${FIXED_SUPPLY_NAME}` }).click();
     await page.getByRole("menuitem", { name: /Deshabilitar/i }).click();
     await page.waitForSelector("text=Deshabilitar punto de suministro");
 
@@ -253,10 +248,9 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Casa Principal" })).toBeVisible();
     await stabilizePage(page);
 
-    // Every card's menu button shares one accessible name, so the first is
-    // taken: the fixture lists the enabled supply first, and the menu proves it
-    // by offering "Deshabilitar" rather than "Activar".
-    await page.getByRole("button", { name: "Más acciones del punto de suministro" }).first().click();
+    // The enabled supply's menu, which proves it by offering "Deshabilitar"
+    // rather than "Activar".
+    await page.getByRole("button", { name: `Más acciones para ${FIXED_SUPPLY_NAME}` }).click();
     await expect(page.getByRole("menuitem", { name: "Deshabilitar" })).toBeVisible();
     await expect(page.getByRole("menuitem", { name: "Eliminar punto de suministro" })).toBeVisible();
     await stabilizePage(page);

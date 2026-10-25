@@ -40,7 +40,9 @@ import { SupplyPointsPage } from "./SupplyPointsPage";
 const COMMUNITY_ID = "community-a";
 const NEW_BUTTON = "Nuevo Punto de Suministro";
 const IMPORT_BUTTON = /Importar CSV/i;
-const MENU_BUTTON = "Más acciones del punto de suministro";
+const MENU_BUTTON = "Más acciones para Casa";
+/** Any card's menu button, whichever supply it names. */
+const ANY_MENU_BUTTON = /^Más acciones para /;
 
 const supply = (capabilities: Partial<SupplyCapabilitiesResponse>) =>
   buildSupply({
@@ -145,8 +147,9 @@ describe("SupplyPointsPage", () => {
       ],
     });
 
-    const menus = screen.getAllByRole("button", { name: MENU_BUTTON });
+    const menus = screen.getAllByRole("button", { name: ANY_MENU_BUTTON });
     expect(menus).toHaveLength(1);
+    expect(menus[0]).toHaveAccessibleName("Más acciones para Garaje");
 
     // The one menu belongs to the editable supply, not merely to some supply.
     await userEvent.click(menus[0]);
@@ -154,6 +157,25 @@ describe("SupplyPointsPage", () => {
       "href",
       "/supply-points/supply-2",
     );
+  });
+
+  it("#310 AC3 names each card's menu button after its own supply, by its CUPS when it has no name", () => {
+    setup({
+      community: { canManage: true },
+      supplies: [
+        supply({ canEdit: true }),
+        { ...supply({ canEdit: true }), id: "supply-2", name: "Garaje", code: "ES0021000000000000BB" },
+        { ...supply({ canEdit: true }), id: "supply-3", name: null, code: "ES0021000000000000CC" },
+      ],
+    });
+
+    const names = screen.getAllByRole("button", { name: ANY_MENU_BUTTON }).map((button) => button.getAttribute("aria-label"));
+    expect(names).toEqual([
+      "Más acciones para Casa",
+      "Más acciones para Garaje",
+      "Más acciones para ES0021000000000000CC",
+    ]);
+    expect(new Set(names).size).toBe(names.length);
   });
 
   // The capabilities have not arrived yet, which is not the same as "no".
@@ -283,7 +305,7 @@ describe("SupplyPointsPage", () => {
         },
       ]);
 
-      await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
+      await userEvent.click(screen.getByRole("button", { name: "Más acciones para Casa en Sol Común" }));
 
       expect(!!screen.queryByRole("menuitem", { name: "Eliminar punto de suministro" })).toBe(canDelete);
     });

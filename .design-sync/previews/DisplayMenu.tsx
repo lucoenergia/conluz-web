@@ -5,6 +5,7 @@ const noop = () => {};
 
 const OpenOnBanner = ({ enabled, canDelete = false }: { enabled: boolean; canDelete?: boolean }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const name = enabled ? "Casa de Lucía" : "Local de la asociación";
   useEffect(() => {
     ref.current?.querySelector("button")?.click();
   }, []);
@@ -15,10 +16,11 @@ const OpenOnBanner = ({ enabled, canDelete = false }: { enabled: boolean; canDel
         sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "primary.main", color: "white", px: 3, py: 1.5, borderRadius: 2 }}
       >
         <Mui.Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          {enabled ? "Casa de Lucía" : "Local de la asociación"}
+          {name}
         </Mui.Typography>
         <DisplayMenu
           supplyPointId="sup-1"
+          supplyLabel={name}
           enabled={enabled}
           canEdit
           disableSupplyPoint={noop}

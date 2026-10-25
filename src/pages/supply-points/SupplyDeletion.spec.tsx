@@ -46,7 +46,7 @@ const OWNER_SUPPLIES_URL = `${OWNER_URL}/supplies`;
 const DELETE_URL = `/api/v1/supplies/${DELETABLE_ID}`;
 const DISABLE_URL = `/api/v1/supplies/${DELETABLE_ID}/disable`;
 
-const MENU_BUTTON = "Más acciones del punto de suministro";
+const MENU_BUTTON = "Más acciones para Casa de Lucía";
 const DELETE_TITLE = /^Eliminar punto de suministro de /;
 
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
