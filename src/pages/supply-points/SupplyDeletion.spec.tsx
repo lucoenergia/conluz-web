@@ -24,6 +24,7 @@ import {
   getGetMembershipEnergyMetricsQueryKey,
   getGetMembershipMonthlyConsumptionQueryKey,
 } from "../../api/memberships/memberships";
+import { VISIBLE } from "../../test/visibleText";
 
 /**
  * Deleting a supply from its card menu (#290), in the community's supply list
@@ -204,7 +205,7 @@ describe("deleting a supply from its card menu", () => {
       await waitFor(() => expect(state[listServed]).toBe(2));
       await waitFor(() => expect(screen.queryByRole("heading", { name: "Casa de Lucía" })).not.toBeInTheDocument());
       expect(screen.getByRole("heading", { name: "Local de la asociación" })).toBeInTheDocument();
-      expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.")).toBeInTheDocument();
+      expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.", VISIBLE)).toBeInTheDocument();
 
       expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(DELETABLE_ID), type: "inactive" });
       for (const queryKey of [
@@ -246,7 +247,7 @@ describe("deleting a supply from its card menu", () => {
     settle();
 
     await waitFor(() => expect(screen.queryByRole("dialog", { name: DELETE_TITLE })).not.toBeInTheDocument());
-    expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.")).toBeInTheDocument();
+    expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.", VISIBLE)).toBeInTheDocument();
   });
 
   it("UI-SUP-002 names the supply and its owner, and says it cannot be undone", async () => {

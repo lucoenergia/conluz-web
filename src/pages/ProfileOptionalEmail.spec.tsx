@@ -7,6 +7,7 @@ import { routeRequests, type RequestConfig } from "../test/requestRouter";
 import { buildCurrentUser } from "../test/fixtures";
 import type { CurrentUserResponse, UpdateProfileBody } from "../api/models";
 import { ProfilePage } from "./Profile";
+import { VISIBLE } from "../test/visibleText";
 
 /**
  * The profile email is optional (lucoenergia/conluz#389): an account may have
@@ -93,7 +94,7 @@ describe("ProfilePage optional email", () => {
     await user.type(phone, "600000002");
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
-    expect(await screen.findByText("Perfil actualizado correctamente")).toBeInTheDocument();
+    expect(await screen.findByText("Perfil actualizado correctamente", VISIBLE)).toBeInTheDocument();
     expect(profileRequests(router)).toHaveLength(1);
     expect(profileRequests(router)[0].data).toEqual({
       email: undefined,
@@ -119,7 +120,7 @@ describe("ProfilePage optional email", () => {
     await user.clear(email);
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
-    expect(await screen.findByText("Perfil actualizado correctamente")).toBeInTheDocument();
+    expect(await screen.findByText("Perfil actualizado correctamente", VISIBLE)).toBeInTheDocument();
     expect(profileRequests(router)[0].data).toMatchObject({ email: undefined });
     // The save refetched the signed-in user, and what came back has no email.
     await waitFor(() => expect(currentUserServed).toBeGreaterThan(1));

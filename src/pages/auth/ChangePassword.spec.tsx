@@ -108,9 +108,12 @@ describe("ChangePasswordPage", () => {
 
       await waitFor(() => expect(path()).toHaveTextContent("/login"));
       expect(token()).toHaveTextContent("none");
-      expect(screen.getAllByRole("status").map((region) => region.textContent)).toContain(
-        "Contraseña cambiada. Inicia sesión con tu nueva contraseña.",
+      await waitFor(() =>
+        expect(screen.getAllByRole("status").map((region) => region.textContent)).toContain(
+          "Contraseña cambiada. Inicia sesión con tu nueva contraseña.",
+        ),
       );
+      expect(screen.getByRole("note")).toHaveTextContent("Contraseña cambiada. Inicia sesión con tu nueva contraseña.");
       // A confirmation, announced politely, not an alert (#310).
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });

@@ -36,6 +36,7 @@ import {
 } from "../../utils/session";
 import { throttledMessage } from "../../errors/authErrors";
 import { Notice } from "../../components/Notice";
+import { ActionStatus } from "../../components/ActionStatus";
 
 export const Login: FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -113,6 +114,18 @@ export const Login: FC = () => {
     );
   };
 
+  // What the page arrives with, announced through a region that is in place
+  // before its text (ActionStatus): the notes below are only read in place.
+  const arrivalMessages = loginError
+    ? []
+    : [
+        sessionExpired && SESSION_EXPIRED_MESSAGE,
+        passwordChanged && PASSWORD_CHANGED_MESSAGE,
+        passwordReset && PASSWORD_RESET_MESSAGE,
+        invitationCommunity && invitationAcceptedLoginMessage(invitationCommunity),
+        platformInvitationAccepted && PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE,
+      ].filter((message): message is string => typeof message === "string");
+
   return (
     <Box
       sx={{
@@ -122,6 +135,7 @@ export const Login: FC = () => {
         p: { xs: 2, sm: 3 },
       }}
     >
+      <ActionStatus message={arrivalMessages.join(" ")} />
       <Paper
         elevation={0}
         sx={{
@@ -175,7 +189,7 @@ export const Login: FC = () => {
           }}
         >
           {sessionExpired && !loginError && (
-            <Notice announce
+            <Notice
               severity="warning"
               sx={{
                 mb: 3,
@@ -187,7 +201,7 @@ export const Login: FC = () => {
           )}
 
           {passwordChanged && !loginError && (
-            <Notice announce
+            <Notice
               severity="success"
               sx={{
                 mb: 3,
@@ -199,7 +213,7 @@ export const Login: FC = () => {
           )}
 
           {passwordReset && !loginError && (
-            <Notice announce
+            <Notice
               severity="success"
               sx={{
                 mb: 3,
@@ -211,7 +225,7 @@ export const Login: FC = () => {
           )}
 
           {invitationCommunity && !loginError && (
-            <Notice announce
+            <Notice
               severity="success"
               sx={{
                 mb: 3,
@@ -223,7 +237,7 @@ export const Login: FC = () => {
           )}
 
           {platformInvitationAccepted && !loginError && (
-            <Notice announce
+            <Notice
               severity="success"
               sx={{
                 mb: 3,

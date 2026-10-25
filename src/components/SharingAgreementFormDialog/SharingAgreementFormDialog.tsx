@@ -10,6 +10,7 @@ import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecim
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { Notice } from "../Notice";
+import { ActionStatus } from "../ActionStatus";
 
 export interface SharingAgreementFormValues {
   name: string;
@@ -50,6 +51,10 @@ function isCapacityValid(raw: string): boolean {
 function toComparableCapacity(value: number): number {
   return Math.round(value * CAPACITY_COMPARISON_SCALE);
 }
+
+
+const CAPACITY_CHANGE_NOTICE =
+  "Cambiar la capacidad no modifica los coeficientes ya guardados, pero sí cambia la potencia en kW que corresponde a cada suministro según esos coeficientes.";
 
 export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = ({
   isOpen,
@@ -158,6 +163,8 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
         </>
       }
     >
+      {/* In place from the moment the dialog opens, so the explanation is announced when a capacity edit brings it. */}
+      <ActionStatus message={capacityChanged ? CAPACITY_CHANGE_NOTICE : ""} />
       <Box sx={{ maxHeight: "60vh", overflowY: "auto", pt: 1 }}>
         {mode === "create" && (
           <>
@@ -195,10 +202,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
           />
 
           {capacityChanged && (
-            <Notice announce severity="info">
-              Cambiar la capacidad no modifica los coeficientes ya guardados, pero sí cambia la potencia
-              en kW que corresponde a cada suministro según esos coeficientes.
-            </Notice>
+            <Notice severity="info">{CAPACITY_CHANGE_NOTICE}</Notice>
           )}
 
           <TextField

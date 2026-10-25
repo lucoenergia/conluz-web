@@ -8,6 +8,7 @@ import { invitationRefusalMessage } from "../../errors/membershipErrors";
 import { pluralize } from "../../utils/pluralize";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { ActionStatus } from "../../components/ActionStatus";
 
 interface SendPendingInvitationsDialogProps {
   communityName: string | undefined;
@@ -42,6 +43,15 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
 
   const { isPending } = sendPendingInvitations;
   const remaining = batch?.remaining ?? 0;
+  const sentText =
+    batch &&
+    (batch.sent === 0
+      ? "No se ha enviado ninguna invitación."
+      : `Se ${pluralize(batch.sent, "ha", "han")} enviado ${batch.sent} ${pluralize(batch.sent, "invitación", "invitaciones")}.`);
+  const remainingText =
+    remaining > 0
+      ? `${pluralize(remaining, "Queda", "Quedan")} ${remaining} por enviar. Puedes seguir con las siguientes.`
+      : "No queda ninguna invitación pendiente de enviar.";
 
   return (
     <Dialog open {...inFlightDialogProps(isPending, onClose)} maxWidth="xs" fullWidth>
@@ -53,16 +63,8 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
         {error && <Alert severity="error">{error}</Alert>}
         {batch ? (
           <>
-            <Typography variant="body2">
-              {batch.sent === 0
-                ? "No se ha enviado ninguna invitación."
-                : `Se ${pluralize(batch.sent, "ha", "han")} enviado ${batch.sent} ${pluralize(batch.sent, "invitación", "invitaciones")}.`}
-            </Typography>
-            <Notice announce severity={remaining > 0 ? "info" : "success"}>
-              {remaining > 0
-                ? `${pluralize(remaining, "Queda", "Quedan")} ${remaining} por enviar. Puedes seguir con las siguientes.`
-                : "No queda ninguna invitación pendiente de enviar."}
-            </Notice>
+            <Typography variant="body2">{sentText}</Typography>
+            <Notice severity={remaining > 0 ? "info" : "success"}>{remainingText}</Notice>
           </>
         ) : (
           <>
@@ -86,6 +88,9 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
           </Button>
         )}
       </DialogActions>
+      {/* In place from the moment the dialog opens, so each batch's result is
+          announced. Last, so it does not separate the title from the content. */}
+      <ActionStatus message={batch ? `${sentText} ${remainingText}` : ""} />
     </Dialog>
   );
 };

@@ -10,7 +10,7 @@ export const Guidance = () => (
 
 export const ActionResult = () => (
   <Mui.Box sx={{ maxWidth: 560 }}>
-    <Notice severity="success" announce>
+    <Notice severity="success">
       Si tus datos son correctos, te hemos enviado un email con un enlace para restablecer tu contraseña.
     </Notice>
   </Mui.Box>

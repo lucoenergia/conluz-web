@@ -20,6 +20,7 @@ import {
   type Roster,
 } from "./MembersPage.testUtils";
 import { MembersPage } from "./MembersPage";
+import { VISIBLE } from "../../test/visibleText";
 
 /**
  * The invitation writes on the roster, the bulk send, their refusals, and the
@@ -207,13 +208,17 @@ describe("sending the pending invitations in bulk", () => {
     const dialog = await screen.findByRole("dialog", { name: `Enviar invitaciones pendientes en ${COMMUNITY_NAME}` });
     // A confirmation first: nothing is sent on opening.
     expect(requestsTo(router, "POST", BULK_INVITE_URL)).toHaveLength(0);
+    // Each batch is announced through a region in place, empty, before the first (#310).
+    const region = within(dialog).getByRole("status");
+    expect(region).toHaveTextContent(/^$/);
     await u.click(within(dialog).getByRole("button", { name: "Enviar invitaciones" }));
 
     expect(await within(dialog).findByText("Se han enviado 50 invitaciones.")).toBeInTheDocument();
-    expect(within(dialog).getByText(/Quedan 70 por enviar/)).toBeInTheDocument();
+    expect(region).toHaveTextContent("Se han enviado 50 invitaciones. Quedan 70 por enviar.");
+    expect(within(dialog).getByText(/Quedan 70 por enviar/, VISIBLE)).toBeInTheDocument();
     await u.click(within(dialog).getByRole("button", { name: "Enviar las siguientes" }));
 
-    expect(await within(dialog).findByText(/Quedan 20 por enviar/)).toBeInTheDocument();
+    expect(await within(dialog).findByText(/Quedan 20 por enviar/, VISIBLE)).toBeInTheDocument();
     expect(within(dialog).getByText("Se han enviado 50 invitaciones.")).toBeInTheDocument();
     await u.click(within(dialog).getByRole("button", { name: "Enviar las siguientes" }));
 

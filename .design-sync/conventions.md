@@ -50,8 +50,8 @@ community context the dialogs read. There is no signed-in user, so community-sco
   disabled, the confirm button's spinner (`confirmPending`).
 - Pages open with `DetailHeader` / `SupplyDetailHeader` / `PlantDetailHeader` and `BreadCrumb`;
   empty, loading and error states use `EmptyState`, the `Loading*` skeletons and `LoadErrorAlert`.
-- A guide, an explanation or a confirmation is a `Notice` (`announce` when it reports the result of
-  an action), never a `Mui.Alert`: an `Alert` is announced as urgent, so it is kept for errors and
+- A guide, an explanation or a confirmation is a `Notice` (a note; the result of an action is also
+  announced through an `ActionStatus` mounted before it), never a `Mui.Alert`: an `Alert` is announced as urgent, so it is kept for errors and
   warnings the user must act on now.
 - Components that take API records (`SharingAgreementCard`, `PlantDetailHeader`, the coefficient
   rows…) need realistic objects: their shapes are in `guidelines/data-shapes.md`.

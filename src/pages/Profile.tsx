@@ -12,6 +12,9 @@ import { useProfileActions } from "../hooks/actions";
 import { useActiveCommunityRoleLabel } from "../hooks/permissions";
 import { isValidEmail } from "../utils/email";
 import { Notice } from "../components/Notice";
+import { ActionStatus } from "../components/ActionStatus";
+
+const PROFILE_SAVED_MESSAGE = "Perfil actualizado correctamente";
 
 export const ProfilePage: FC = () => {
   const { data: currentUser, isLoading, error } = useGetCurrentUser();
@@ -231,9 +234,11 @@ export const ProfilePage: FC = () => {
         </Paper>
       </Box>
 
+      {/* In place before the save, so its confirmation is announced; the toast is read in place. */}
+      <ActionStatus message={successMessage ? PROFILE_SAVED_MESSAGE : ""} />
       <Snackbar open={successMessage} autoHideDuration={4000} onClose={handleCloseSuccessMessage} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Notice announce onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", borderRadius: radii.default }}>
-          Perfil actualizado correctamente
+        <Notice onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", borderRadius: radii.default }}>
+          {PROFILE_SAVED_MESSAGE}
         </Notice>
       </Snackbar>
     </Box>

@@ -14,14 +14,11 @@ describe("Notice", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("#310 AC1 is a polite status when it reports the result of an action", () => {
-    renderWithProviders(
-      <Notice severity="success" announce>
-        Contraseña cambiada.
-      </Notice>,
-    );
+  it("#310 AC1 is a note too when it reports the result of an action, which an ActionStatus announces", () => {
+    renderWithProviders(<Notice severity="success">Contraseña cambiada.</Notice>);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Contraseña cambiada.");
+    expect(screen.getByRole("note")).toHaveTextContent("Contraseña cambiada.");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 

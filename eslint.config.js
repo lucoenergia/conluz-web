@@ -69,7 +69,7 @@ const STYLING_SELECTORS = [
 // ─── Notice guard rail ────────────────────────────────────────────────────────
 // MUI gives every Alert role="alert", which a screen reader announces at once.
 // An info or success Alert is a note, never something to act on now, so it is
-// a Notice, which renders the same Alert as role="note" or role="status"
+// a Notice, which renders the same Alert as role="note"
 // (#310). An Alert without a severity is a success one. A dynamic severity is
 // not seen here; such an Alert sets its role itself.
 const NOTICE_SELECTORS = [
@@ -77,7 +77,7 @@ const NOTICE_SELECTORS = [
     selector:
       "JSXOpeningElement[name.name='Alert'] > JSXAttribute[name.name='severity'] > Literal[value=/^(info|success)$/]",
     message:
-      "An info or success Alert is a note, not an alert: use Notice from src/components/Notice (announce for the result of an action).",
+      "An info or success Alert is a note, not an alert: use Notice from src/components/Notice, and announce the result of an action through an ActionStatus mounted before it.",
   },
   {
     selector: "JSXOpeningElement[name.name='Alert']:not(:has(JSXAttribute[name.name='severity']))",

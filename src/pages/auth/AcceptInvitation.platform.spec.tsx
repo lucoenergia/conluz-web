@@ -24,6 +24,7 @@ import {
   CODE_REQUIRED_MESSAGE,
   PLATFORM_INVALID_LINK_MESSAGE,
 } from "./AcceptInvitation";
+import { VISIBLE } from "../../test/visibleText";
 
 /**
  * The accept-invitation screen with a platform-admin invitation (#288): the
@@ -222,7 +223,7 @@ describe("UI-INV-004 UI-INV-014 a platform invitation names the platform and ask
 
       await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
       expect(bodiesTo(router, ACCEPT)).toEqual([{ token: TOKEN, newPassword: NEW_PASSWORD, confirmationCode: CODE }]);
-      expect(screen.getAllByText(PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE)).toHaveLength(1);
+      expect(screen.getAllByText(PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE, VISIBLE)).toHaveLength(1);
       await settle();
       expect(window.sessionStorage.getItem("platformInvitationAccepted")).toBeNull();
 
@@ -271,7 +272,7 @@ describe("UI-INV-004 UI-INV-014 a platform invitation names the platform and ask
     // The new capabilities apply: the re-read user is a platform admin, whom the landing sends to the platform.
     await screen.findByRole("heading", { level: 1, name: "Plataforma" });
     expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([{ token: TOKEN, confirmationCode: CODE }]);
-    expect(screen.getAllByText(PLATFORM_INVITATION_ACCEPTED_MESSAGE)).toHaveLength(1);
+    expect(screen.getAllByText(PLATFORM_INVITATION_ACCEPTED_MESSAGE, VISIBLE)).toHaveLength(1);
     expect(window.sessionStorage.getItem("platformInvitationAccepted")).toBeNull();
     expect(secrets.leaksOf(CODE)).toEqual([]);
     expect(secrets.leaksOf(TOKEN)).toEqual([]);
@@ -312,7 +313,7 @@ describe("UI-INV-004 UI-INV-014 a platform invitation names the platform and ask
     await screen.findByRole("heading", { level: 1, name: "Plataforma" });
     expect(currentUser.served()).toBeGreaterThan(readsBefore);
     expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([{ token: TOKEN, confirmationCode: CODE }]);
-    expect(screen.getAllByText(PLATFORM_INVITATION_ACCEPTED_MESSAGE)).toHaveLength(1);
+    expect(screen.getAllByText(PLATFORM_INVITATION_ACCEPTED_MESSAGE, VISIBLE)).toHaveLength(1);
     expect(secrets.leaksOf(CODE)).toEqual([]);
   });
 });

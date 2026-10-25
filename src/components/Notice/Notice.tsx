@@ -1,26 +1,20 @@
 import type { FC } from "react";
 import { Alert, type AlertProps } from "@mui/material";
 
-export interface NoticeProps extends Omit<AlertProps, "role"> {
-  /**
-   * The note appears as the result of something the user just did, and is
-   * announced politely (`role="status"`). Leave it off for guidance that is
-   * simply part of the view (`role="note"`), which is read in place and never
-   * announced.
-   */
-  announce?: boolean;
-}
+export type NoticeProps = Omit<AlertProps, "role">;
 
 /**
  * An informational note: a guide, an explanation, a consequence, or the result
- * of an action. It looks like an `Alert` of the same severity, but is not
- * announced as one.
+ * of an action. It looks like an `Alert` of the same severity, but is a note
+ * (`role="note"`), read in place and never announced.
  *
  * MUI gives every `Alert` `role="alert"`, which a screen reader announces at
  * once, interrupting whatever is being read (#310). That is right for an error
  * or a warning the user must act on now, which stay a plain `Alert`; it is
  * noise for everything else.
+ *
+ * A note that reports what just happened is announced through an
+ * `ActionStatus` mounted before it appears, not by this element: a live region
+ * inserted together with its text is announced unreliably.
  */
-export const Notice: FC<NoticeProps> = ({ announce = false, ...props }) => (
-  <Alert role={announce ? "status" : "note"} {...props} />
-);
+export const Notice: FC<NoticeProps> = (props) => <Alert role="note" {...props} />;

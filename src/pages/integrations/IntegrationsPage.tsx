@@ -28,6 +28,7 @@ import {
   type CredentialsField,
 } from "../../utils/integrationCredentials";
 import { DISABLED_TEXT, incompleteText, isNotFound, retryUnlessNotFound } from "../../utils/integrationStatus";
+import { ActionStatus } from "../../components/ActionStatus";
 
 /**
  * Integration credentials change only when someone edits them on this page, so
@@ -504,16 +505,18 @@ export const IntegrationsPage: FC = () => {
       </ConfirmationModal>
 
       {/* Snackbar */}
+      {/* A confirmation is announced through this region, in place before the
+          save; a failure is an alert, which is announced as it appears. */}
+      <ActionStatus message={snack && !snack.includes("Error") ? snack : ""} />
       <Snackbar
         open={!!snack}
         autoHideDuration={3500}
         onClose={() => setSnack(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        {/* A failure interrupts; a confirmation is announced politely. */}
         <Alert
           severity={snack?.includes("Error") ? "error" : "success"}
-          role={snack?.includes("Error") ? "alert" : "status"}
+          role={snack?.includes("Error") ? "alert" : "note"}
           onClose={() => setSnack(null)}
           sx={{ borderRadius: radii.default, fontWeight: 500 }}
         >

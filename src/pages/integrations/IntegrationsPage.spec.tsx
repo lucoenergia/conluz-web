@@ -131,6 +131,10 @@ describe("IntegrationsPage", () => {
           data: expect.objectContaining({ username: "datadis-user" }),
         }),
       );
+      // Confirmed as a note, and announced through a region in place before the save (#310).
+      expect(await screen.findByRole("note")).toHaveTextContent("Datadis guardado correctamente");
+      expect(screen.getByRole("status")).toHaveTextContent("Datadis guardado correctamente");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
 

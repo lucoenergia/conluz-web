@@ -21,6 +21,7 @@ import {
   type Writes,
 } from "./MembersPage.testUtils";
 import { MembersPage } from "./MembersPage";
+import { VISIBLE } from "../../test/visibleText";
 
 /**
  * Importing members from a CSV file (#284), against routed requests.
@@ -241,9 +242,13 @@ describe("importing a file", () => {
     await renderPage();
 
     const dialog = await openImport(u);
+    // Announced through a region in place, empty, from the moment the dialog opens (#310).
+    const region = within(dialog).getByRole("status");
+    expect(region).toHaveTextContent(/^$/);
     await importFile(u, dialog);
 
-    expect(await within(dialog).findByText(/Se ha registrado 1 miembro\./)).toHaveTextContent("2 filas tienen errores.");
+    expect(await within(dialog).findByText(/Se ha registrado 1 miembro\./, VISIBLE)).toHaveTextContent("2 filas tienen errores.");
+    expect(region).toHaveTextContent("Se ha registrado 1 miembro. 2 filas tienen errores.");
     expect(failedRows(dialog)).toEqual([
       "Línea 3: Nombre completo: es obligatorio. Número de socio: tiene que ser un número entero.",
       "Línea 4: Ya es miembro de la comunidad.",
@@ -269,7 +274,7 @@ describe("importing a file", () => {
 
     const dialog = await openImport(u);
     await importFile(u, dialog);
-    await within(dialog).findByText(/Se ha registrado 1 miembro/);
+    await within(dialog).findByText(/Se ha registrado 1 miembro/, VISIBLE);
 
     await waitFor(() => expect(rosterReads(r)).toBeGreaterThan(readsBefore));
     // The roster is hidden from the accessibility tree while the dialog is open.
@@ -286,7 +291,9 @@ describe("importing a file", () => {
     const dialog = await openImport(u);
     await importFile(u, dialog);
 
-    expect(await within(dialog).findByRole("status")).toHaveTextContent(/Importando miembros/);
+    // The progress panel, beside the dialog's empty announcement region (#310).
+    expect(await within(dialog).findByText(/Importando miembros/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Importando miembros/).closest('[role="status"]')).not.toBeNull();
     expect(within(dialog).queryByRole("button")).not.toBeInTheDocument();
     // Dispatched on the dialog itself: the button that had focus is gone, and a
     // key pressed on the body would never reach the dialog, proving nothing.
@@ -294,7 +301,7 @@ describe("importing a file", () => {
     expect(screen.getByRole("dialog", { name: `Importar miembros en ${COMMUNITY_NAME}` })).toBeInTheDocument();
 
     answer(RESULT);
-    expect(await within(dialog).findByText(/Se ha registrado 1 miembro/)).toBeInTheDocument();
+    expect(await within(dialog).findByText(/Se ha registrado 1 miembro/, VISIBLE)).toBeInTheDocument();
     // The same key, once the import has ended, does close it.
     fireEvent.keyDown(dialog, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
@@ -320,7 +327,7 @@ describe("importing a file", () => {
 
     const dialog = await openImport(u);
     await importFile(u, dialog);
-    await within(dialog).findByText(/Se ha registrado 1 miembro/);
+    await within(dialog).findByText(/Se ha registrado 1 miembro/, VISIBLE);
 
     expect(r.requests.filter((request) => request.url?.includes("/users/import"))).toEqual([]);
     expect(writesSent(r).map((request) => request.url)).toEqual([IMPORT_URL]);
@@ -419,7 +426,7 @@ describe("after an import", () => {
 
     const dialog = await openImport(u);
     await importFile(u, dialog);
-    await within(dialog).findByText(/Se ha registrado 1 miembro/);
+    await within(dialog).findByText(/Se ha registrado 1 miembro/, VISIBLE);
 
     expect(within(dialog).queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
     expect(within(dialog).getByText(/Todavía no se ha enviado ninguna invitación/)).toBeInTheDocument();
@@ -434,7 +441,7 @@ describe("after an import", () => {
     const dialog = await openImport(u);
     await importFile(u, dialog);
 
-    expect(await within(dialog).findByText(/No se ha registrado ningún miembro/)).toBeInTheDocument();
+    expect(await within(dialog).findByText(/No se ha registrado ningún miembro/, VISIBLE)).toBeInTheDocument();
     expect(within(dialog).queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
   });
 });
@@ -495,7 +502,7 @@ describe("what the import logs", () => {
     await importFile(u, dialog);
     await refusalIn(dialog);
     await u.click(within(dialog).getByRole("button", { name: "Importar" }));
-    await within(dialog).findByText(/Se ha registrado 1 miembro/);
+    await within(dialog).findByText(/Se ha registrado 1 miembro/, VISIBLE);
 
     const text = logged.map((args) => args.map((arg) => (arg instanceof Error ? arg.stack : String(arg))).join(" "));
     for (const secret of [...PERSONAL_IDS, ...EMAILS]) {

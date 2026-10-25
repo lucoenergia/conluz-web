@@ -27,6 +27,7 @@ import {
   OTHER_ACCOUNT_MESSAGE,
   PASSWORD_CHANGE_REQUIRED_MESSAGE,
 } from "./AcceptInvitation";
+import { VISIBLE } from "../../test/visibleText";
 
 /**
  * The accept-invitation screen (#274), mounted on the real browser history so
@@ -426,7 +427,7 @@ describe("UI-INV-007 an account without a password (AC1)", () => {
     await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
     expect(currentPath()).toBe("/login");
     expect(bodiesTo(router, ACCEPT)).toEqual([{ token: TOKEN, newPassword: NEW_PASSWORD }]);
-    expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME))).toHaveLength(1);
+    expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME), VISIBLE)).toHaveLength(1);
 
     // Once: leaving the login page and coming back does not show it again.
     await user.click(screen.getByRole("link", { name: "¿Olvidaste tu contraseña?" }));
@@ -467,7 +468,7 @@ describe("UI-INV-007 an account without a password (AC1)", () => {
     expect(pathAtLogout).toBe("/accept-invitation");
     expect(currentToken()).toBe("none");
     expect(currentPath()).toBe("/login");
-    expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME))).toHaveLength(1);
+    expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME), VISIBLE)).toHaveLength(1);
   });
 
   it("UI-INV-007 ends another account's session even when the revocation fails", async () => {
@@ -494,7 +495,7 @@ describe("UI-INV-007 an account without a password (AC1)", () => {
     await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
     expect(bodiesTo(router, LOGOUT)).toHaveLength(1);
     expect(currentToken()).toBe("none");
-    expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME))).toHaveLength(1);
+    expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME), VISIBLE)).toHaveLength(1);
   });
 
   describe("when the revocation never answers", () => {
@@ -534,7 +535,7 @@ describe("UI-INV-007 an account without a password (AC1)", () => {
       await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
       expect(currentToken()).toBe("none");
       expect(currentPath()).toBe("/login");
-      expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME))).toHaveLength(1);
+      expect(screen.getAllByText(invitationAcceptedLoginMessage(COMMUNITY_NAME), VISIBLE)).toHaveLength(1);
     });
   });
 
@@ -830,7 +831,7 @@ describe("UI-INV-010 signed in as the invited account (AC3)", () => {
     await screen.findByRole("heading", { level: 1, name: "Inicio" });
     expect(currentUser.served()).toBe(2);
     expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([{ token: TOKEN }]);
-    expect(screen.getAllByText(invitationAcceptedMessage(COMMUNITY_NAME))).toHaveLength(1);
+    expect(screen.getAllByText(invitationAcceptedMessage(COMMUNITY_NAME), VISIBLE)).toHaveLength(1);
     expect(window.sessionStorage.getItem("invitationAccepted")).toBeNull();
   });
 });

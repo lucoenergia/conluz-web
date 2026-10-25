@@ -23,6 +23,7 @@ import { radii } from "../../theme/tokens";
 import { downloadMemberTemplate, IMPORT_COLUMNS, MAX_IMPORT_ROWS, rowReason } from "./importMembers";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { ActionStatus } from "../../components/ActionStatus";
 
 interface ImportMembersDialogProps {
   communityName: string | undefined;
@@ -209,6 +210,10 @@ export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
           </DialogActions>
         </>
       )}
+      {/* In place from the moment the dialog opens, so the result is announced.
+          Last, so it does not separate the title from the content: MUI pads the
+          content less when it follows the title directly. */}
+      <ActionStatus message={result ? importSummaryOf(result) : ""} />
     </Dialog>
   );
 };
@@ -220,6 +225,15 @@ interface ImportResultProps {
   onClose: () => void;
 }
 
+/** What the import did, in one sentence: shown as the result's note and announced. */
+function importSummaryOf({ registered, failed }: ImportMembersResponse): string {
+  const outcome =
+    registered === 0
+      ? "No se ha registrado ningún miembro."
+      : `Se ${pluralize(registered, "ha", "han")} registrado ${registered} ${pluralize(registered, "miembro", "miembros")}.`;
+  return failed > 0 ? `${outcome} ${failed} ${pluralize(failed, "fila tiene", "filas tienen")} errores.` : outcome;
+}
+
 const ImportResult: FC<ImportResultProps> = ({ result, onSendPending, onImportAnother, onClose }) => {
   const failedRows = result.rows.filter((row) => row.outcome === "FAILED");
   const { registered, failed } = result;
@@ -227,12 +241,7 @@ const ImportResult: FC<ImportResultProps> = ({ result, onSendPending, onImportAn
   return (
     <>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Notice announce severity={failed > 0 ? "warning" : "success"}>
-          {registered === 0
-            ? "No se ha registrado ningún miembro."
-            : `Se ${pluralize(registered, "ha", "han")} registrado ${registered} ${pluralize(registered, "miembro", "miembros")}.`}
-          {failed > 0 && ` ${failed} ${pluralize(failed, "fila tiene", "filas tienen")} errores.`}
-        </Notice>
+        <Notice severity={failed > 0 ? "warning" : "success"}>{importSummaryOf(result)}</Notice>
 
         {failedRows.length > 0 && (
           <Box>
