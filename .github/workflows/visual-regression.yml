@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload JSON report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-visual-results
           path: reports/visual-results.json
@@ -105,7 +105,7 @@ jobs:
       # failed uploads test-results/ through the failure step below instead.
       - name: Upload flaky test traces
         if: steps.flaky.outputs.flaky == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-flaky-traces
           path: test-results/
@@ -113,7 +113,7 @@ jobs:
 
       - name: Upload failure artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-visual-diff
           path: |
