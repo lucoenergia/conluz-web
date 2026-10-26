@@ -22,12 +22,12 @@ reused.
 
 ## Rules
 
-### UI-USR-001 — A user with no partner number cannot be saved from the edit screen
+### UI-USR-001 — A user with no member number cannot be saved from the edit screen
 
 - **Status:** Removed (#285: the edit screen no longer exists)
 - **Rule:**
   - When the loaded account has no `number` (`null`), the edit screen MUST show visible text saying
-    that the user has no partner number and that their details cannot be saved from here.
+    that the user has no member number and that their details cannot be saved from here.
   - In that state, the save MUST be disabled and MUST NOT send a request.
 - **Rationale:** The account read may answer `number: null`, but the update requires a number, and
   the edit form has no field for it. Any save would be refused, so the screen says why instead of
