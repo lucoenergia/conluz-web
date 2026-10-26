@@ -77,7 +77,6 @@
     "AppModal": "../groups/dialogs.md",
     "BasicModal": "../groups/dialogs.md",
     "ConfirmationModal": "../groups/dialogs.md",
-    "DeleteSuccessModal": "../groups/dialogs.md",
     "DisableSuccessModal": "../groups/dialogs.md",
     "EnableSuccessModal": "../groups/dialogs.md",
     "CoefficientDialogErrorPanel": "../groups/dialogs.md",
@@ -157,10 +156,6 @@
     "ContactChannelEditor": {
       "cardMode": "single",
       "viewport": "720x960"
-    },
-    "DeleteSuccessModal": {
-      "cardMode": "single",
-      "viewport": "720x400"
     },
     "DisableConfirmationModal": {
       "cardMode": "single",
