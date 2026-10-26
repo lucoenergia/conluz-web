@@ -18,11 +18,11 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 
 ## Differences from the domain specs
 
-- Rule IDs use the `UI-<PREFIX>-<NNN>` format, e.g. `UI-SUP-001`.
+- Rule IDs use the `UI-<PREFIX>-<NNN>` format, e.g. `UI-EXM-001`.
 - A UI rule that enforces a domain rule references it by ID in **Implements** and never restates it.
 - Styling values come from the theme tokens (`references/theme-tokens.md`); a spec document never
   contains colour codes or pixel values.
-- Tests start their title with the rule ID: `test('UI-SUP-001 …', …)`.
+- Tests start their title with the rule ID: `test('UI-EXM-001 …', …)`.
 - Spec document updates follow this repository's commit format (`[conluzweb-XXX] …`), not
   `[conluz-XXX] …`.
 

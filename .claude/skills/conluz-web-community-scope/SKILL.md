@@ -163,8 +163,18 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
 
 - **`src/hooks/permissions/` is the only module allowed to read a role or the
   platform-admin flag.** `no-restricted-imports` and `no-restricted-syntax` in
-  `eslint.config.js` enforce it, so reaching for `useActiveCommunityRole` or
-  `useIsPlatformAdmin` elsewhere fails the build.
+  `eslint.config.js` enforce it, and `src/hooks/permissions/lintRule.spec.ts`
+  proves each selector still fires. Outside the module the build fails on:
+  - importing `useActiveCommunityRole`;
+  - any use of the `CommunityRole` enum;
+  - any `.isPlatformAdmin` read, whoever's record it is on;
+  - reading a role out of a `memberships` map: by key (`memberships[id]`), or
+    all at once (`Object.values` / `Object.entries`).
+
+  `Object.keys(memberships)` and `id in memberships` stay allowed: they decide
+  which community is active, not what the caller may do there. A target row's
+  own `role` (a `MembershipResponse`) is the resource's state and is allowed
+  too.
 - **Route level:** one guard, `CapabilityRoute`, given the capability the page
   needs. Six scopes: `platform`; `community`, meaning the **active** one; and
   four read from a route parameter — `plant`, `supply`, `user` (`:userId`) and
@@ -192,8 +202,9 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   a retry. Never fold `error` into `denied`: a network blip would tell somebody
   they lack access they actually have. A 403 or 404 *is* a denial, because the
   API hides what the caller may not see.
-- **Displaying a role is still fine.** `user.isPlatformAdmin` as data, and
-  `useActiveCommunityRoleLabel()` for the role's name, are the sanctioned reads.
+- **Displaying a role goes through the module too.** `useActiveCommunityRoleLabel()`
+  names the caller's role, the platform-admin flag included; it is the
+  sanctioned read, and a screen never reads the flag itself, even to show it.
 - **There are no exemptions.** Nothing under `src/` reads a role or the
   platform-admin flag to decide what to render, and nothing carries an
   `eslint-disable` for the permission rules. If you want one, the capability you
@@ -263,9 +274,11 @@ Habilitar disabled the user it named. Resolve the pair **once** — one item lab
 by the half that applies — so the menu item, its confirmation dialog and the handler
 that runs it cannot disagree about which operation was chosen.
 
-Reading the **row's** `enabled` or `isPlatformAdmin` to pick between them is reading
+Reading the **row's** own state, such as `enabled`, to pick between them is reading
 the resource's state, not re-deriving privilege: the rule this module enforces is
-about the **caller's** flag, through `useIsPlatformAdmin`.
+about the **caller's** role and flag. The lint rule refuses `.isPlatformAdmin` on any
+record, though, so a screen that needs a target user's flag reads it through a helper
+in `src/hooks/permissions/`.
 
 A spec whose fixtures let status and capability agree everywhere cannot tell the two
 apart, and will pass against the pre-capability code. A fixture that grants one half

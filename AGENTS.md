@@ -59,7 +59,7 @@ The app is **multi-community**. This supersedes any older single-community assum
 - **No global user `role`.** Two independent axes: `isPlatformAdmin`, and the role within the active community (`COMMUNITY_ADMIN` / `COMMUNITY_MEMBER`, from `memberships`).
 - **Golden rule (mirror of the backend):** `isPlatformAdmin` **never** grants access to a community's operational data.
 - **Data endpoints are path-scoped** (`/communities/{communityId}/…`). Data hooks pass `communityId` and are **gated on its presence**; controls that submit community-scoped data disable when none is selected. The legacy `X-Community-Id` header is gone — the path is the sole scoping mechanism.
-- **Capabilities decide visibility, not roles.** Every response carries `capabilities`; `GET /users/current` carries `platformCapabilities`. Never re-derive a rule locally. `src/hooks/permissions/` is the only module allowed to read a role or the platform-admin flag (lint-enforced); reading `user.isPlatformAdmin` to **display** it is fine.
+- **Capabilities decide visibility, not roles.** Every response carries `capabilities`; `GET /users/current` carries `platformCapabilities`. Never re-derive a rule locally. `src/hooks/permissions/` is the only module allowed to read a role or the platform-admin flag, even to display it (`useActiveCommunityRoleLabel` names the caller's role); the lint rule and the selectors it refuses are in the community-scope skill.
 - **No exemptions.** No file under `src/` reads a role or the platform-admin flag to decide what to render, and none carries an `eslint-disable` for the permission rules. If you want one, the capability either exists on the payload or is missing from the backend — ask for it; do not approximate it with a role.
 - **A capability says "may this caller ever", not "is this legal now".** Pair it with the resource's state (`isDraft && canDelete`). Opposite pairs (`canEnable`/`canDisable`) are **both** true for a caller who may do either; the row's own state picks one — resolve the pair once. Fixtures grant both halves.
 - **Mutations go through `src/hooks/actions/` only.** No component imports a generated mutation hook (lint- and test-enforced over the whole tree). Action hooks return `undefined` for an action the caller may not perform; record each decision in `ACTION_COVERAGE` (`src/contracts/mutationHooks.spec.ts`).
@@ -95,7 +95,7 @@ Full guide: the `conluz-web-testing` skill.
 ## Spec documents
 
 `docs/specs/` holds the living specification of UI rules: one document per screen or flow, written
-as normative rules with stable IDs (`UI-SUP-001`). Domain rules live in `lucoenergia/conluz` and
+as normative rules with stable IDs (`UI-EXM-001`). Domain rules live in `lucoenergia/conluz` and
 are referenced by ID, never restated. Conventions: `docs/specs/README.md`.
 
 - Before changing UI behaviour, read the spec document of the affected screen or flow.
