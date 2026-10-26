@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type FC, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, type FC, type ReactNode } from "react";
 
 type Dispatch = (message: string) => void;
 
@@ -12,14 +12,18 @@ const SuccessDispatchContext = createContext<Dispatch | null>(null);
 const SuccessProvider: FC<SuccessProviderProps> = ({ children }) => {
   const [messages, setMessages] = useState<string[]>([]);
 
-  const addMessage: Dispatch = (message: string) => {
+  // Stable across renders, as the error dispatch is: a screen that reports from
+  // an effect depends on this dispatch, so a new function on every render
+  // re-ran that effect after each message. It reads the messages through the
+  // updater, never from this render.
+  const addMessage: Dispatch = useCallback((message: string) => {
     setMessages((prev) => [...prev, message]);
 
     // AUTO REMOVE MESSAGE AFTER 5 SECONDS
     setTimeout(() => {
       setMessages((prev) => prev.filter((m) => m !== message));
     }, 5000);
-  };
+  }, []);
 
   return (
     <SuccessContext.Provider value={messages}>

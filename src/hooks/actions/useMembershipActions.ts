@@ -18,7 +18,6 @@ import {
 import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
 import { getGetAllSuppliesQueryKey } from "../../api/supplies/supplies";
 import {
-  getGetAllUsersQueryKey,
   getGetCurrentUserQueryKey,
   getGetSuppliesByUserIdQueryKey,
   getGetUserByIdQueryKey,
@@ -170,7 +169,7 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   // name and contact details from (lucoenergia/conluz#396), so besides the
   // roster it refreshes every read here that shows the member: the community's
   // supplies and each supply's detail (their owner), the member's own supplies
-  // and the member as a user (the supply list names them), and the user list.
+  // and the member as a user (the supply list names them).
   const invalidateMemberReads = (userId: string) => {
     queryClient.invalidateQueries({ queryKey: getGetAllSuppliesQueryKey(communityId) });
     queryClient.invalidateQueries({
@@ -181,7 +180,6 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
     });
     queryClient.invalidateQueries({ queryKey: getGetSuppliesByUserIdQueryKey(userId) });
     queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(userId) });
-    queryClient.invalidateQueries({ queryKey: getGetAllUsersQueryKey() });
   };
 
   const run = async (call: () => Promise<unknown>) => {
