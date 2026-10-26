@@ -126,7 +126,7 @@ export async function waitForPageSettled(page: Page) {
   }
 }
 
-export const test = base.extend<{ noDeniedCalls: void; settledAfterGoto: void }>({
+export const test = base.extend<{ noDeniedCalls: void; settledAfterGoto: void; noCaptureResize: void }>({
   // `auto` rather than a fixture a test asks for, and rather than overriding
   // `page`: a spec gets the check by importing `test` from ./fixtures and
   // nothing else. An opt-in fixture would be missing from exactly the specs
@@ -180,6 +180,30 @@ export const test = base.extend<{ noDeniedCalls: void; settledAfterGoto: void }>
         await waitForPageSettled(page);
         return response;
       };
+      await use();
+    },
+    { auto: true },
+  ],
+
+  // A capture taller than the viewport makes Chromium resize the page to fit
+  // it, and on the way it fires a `resize` with the window at 1x1. The app
+  // reads the window width on every resize, so on a loaded machine React had
+  // time to render a 1 px wide app mid-capture: the side menu became a modal
+  // drawer, whose focus trap took focus from the field under test and whose
+  // re-mount shifted the layout. No browser the app runs in is 1x1, so that
+  // one event is stopped before the app's listeners see it; every other
+  // resize goes through.
+  noCaptureResize: [
+    async ({ page }: { page: Page }, use) => {
+      await page.addInitScript(() => {
+        window.addEventListener(
+          "resize",
+          (event) => {
+            if (window.innerWidth <= 1 && window.innerHeight <= 1) event.stopImmediatePropagation();
+          },
+          { capture: true },
+        );
+      });
       await use();
     },
     { auto: true },
