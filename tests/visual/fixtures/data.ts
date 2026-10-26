@@ -62,6 +62,16 @@ const NO_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canInvitePlatformAdmins: false,
 };
 
+/**
+ * An active community admin's platform capabilities: none of the platform's own,
+ * but canListUsers, which UserAccessPolicy.canList grants to anyone who
+ * administers at least one community.
+ */
+const COMMUNITY_ADMIN_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
+  ...NO_PLATFORM_CAPABILITIES,
+  canListUsers: true,
+};
+
 const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canCreateCommunity: true,
   canListUsers: true,
@@ -197,13 +207,10 @@ const SHARING_AGREEMENT_CAPABILITIES = { canRead: true, canManage: true };
  * the platform dashboard baseline honest -- listing communities is a platform
  * right, reading their production is not.
  *
- * canManageMemberships is one of the platform-wide ones, despite sitting beside
- * the membership flags. MembershipAccessPolicy.canManageMemberships allows any
- * platform admin who can see the community, and CallerMemberships.canSeeCommunity
- * is true for a platform admin on every community -- so a fixture that inherited
- * `false` from the member shape was stating the opposite of the rule. Its
- * stricter sibling canManageMembershipInvestment has no platform bypass and
- * stays false.
+ * canManageMemberships is NOT one of them, despite a platform admin seeing every
+ * community: MembershipAccessPolicy.canManageMemberships has no platform-admin
+ * bypass (lucoenergia/conluz#446). The roster belongs to the community's own
+ * admins, so it stays false, as it is in the member shape.
  *
  * canManageAdmins is a platform admin's alone (lucoenergia/conluz#395): it is
  * what offers "Gestionar administradores" in the communities row menu and opens
@@ -214,7 +221,6 @@ export const PLATFORM_VIEW_COMMUNITY_CAPABILITIES = {
   canUpdate: true,
   canEnable: true,
   canDisable: true,
-  canManageMemberships: true,
   canManageAdmins: true,
   canListPlants: false,
   canReadProduction: false,
@@ -260,7 +266,7 @@ export const FIXED_COMMUNITY_ADMIN_USER = {
   isPlatformAdmin: false,
   memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" },
   capabilities: OWN_USER_CAPABILITIES,
-  platformCapabilities: NO_PLATFORM_CAPABILITIES,
+  platformCapabilities: COMMUNITY_ADMIN_PLATFORM_CAPABILITIES,
 };
 
 /**
@@ -862,6 +868,19 @@ function recordRowOf(user: FixtureUser) {
  * Every row carries its own capabilities, as the backend returns them -- the
  * members screen reads those per row rather than asking once for the community,
  * so a single shape would make every row's menu identical and prove nothing.
+ *
+ * The caller is FIXED_COMMUNITY_ADMIN_USER, an active admin of the community, and
+ * each value is what MembershipCapabilitiesAssembler sends that caller today:
+ *
+ * - canUpdateRole, canDelete, canEditRecord, canInvite and canManageInvestment are
+ *   decided on the community alone, so an active admin gets them on every row,
+ *   their own included (lucoenergia/conluz#449, MEM-034). Whether a row is
+ *   pending, invited or the last active admin is its own state, not a capability.
+ * - canReadPayback is the community admin's on every row.
+ * - canEnable/canDisable only on a COMMUNITY_MEMBER row: admin memberships are the
+ *   platform admin's to suspend.
+ * - canListSupplies needs the member to hold an active membership of a community
+ *   the caller administers, or to be the caller.
  */
 export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
   {
@@ -875,20 +894,21 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     enabled: true,
     // The roster's only accepted, enabled admin (lucoenergia/conluz#449).
     lastActiveAdmin: true,
-    // Their own membership: the backend does not offer them their own removal
-    // or demotion, which is the safety rail the row menu has to respect.
+    // Their own membership. Admins manage each other, themselves included, so
+    // the role change and the removal are offered; it is lastActiveAdmin that
+    // stops them here, not a capability (MEM-033).
     capabilities: {
-      canUpdateRole: false,
-      canDelete: false,
+      canUpdateRole: true,
+      canDelete: true,
       canManageInvestment: true,
       canReadPayback: true,
-      canInvite: false,
+      canInvite: true,
       // Only a COMMUNITY_MEMBER membership can be suspended; any record can be
       // edited, the admin's own included.
       canEnable: false,
       canDisable: false,
       canEditRecord: true,
-      // Their own supplies, which the embedded user reported before #448.
+      // Their own supplies.
       canListSupplies: true,
     },
   },
@@ -907,11 +927,12 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
       canDelete: true,
       canManageInvestment: true,
       canReadPayback: true,
-      canInvite: false,
+      canInvite: true,
       canEnable: true,
       canDisable: true,
       canEditRecord: true,
-      canListSupplies: false,
+      // An active member of the caller's community.
+      canListSupplies: true,
     },
   },
   {
@@ -927,18 +948,24 @@ export const FIXED_MEMBERSHIPS: MembershipResponse[] = [
     capabilities: {
       canUpdateRole: true,
       canDelete: true,
-      canManageInvestment: false,
-      canReadPayback: false,
-      canInvite: false,
+      canManageInvestment: true,
+      canReadPayback: true,
+      canInvite: true,
       canEnable: true,
       canDisable: true,
       canEditRecord: true,
+      // Suspended, and a member of no other community: no active membership
+      // the caller administers, so their supplies are not the caller's to list.
       canListSupplies: false,
     },
   },
 ];
 
-/** A member registered with the community but not yet accepted (#275): pending, never invited by default. */
+/**
+ * A member registered with the community but not yet accepted (#275): pending,
+ * never invited by default. Capabilities as FIXED_MEMBERSHIPS explains, for a
+ * member with no active membership yet.
+ */
 function pendingMembership(
   id: string,
   fullName: string,
@@ -963,8 +990,8 @@ function pendingMembership(
     capabilities: {
       canUpdateRole: true,
       canDelete: true,
-      canManageInvestment: false,
-      canReadPayback: false,
+      canManageInvestment: true,
+      canReadPayback: true,
       canInvite: true,
       canEnable: true,
       canDisable: true,
@@ -994,20 +1021,13 @@ export const FIXED_ROSTER_INVITATION_STATES: MembershipResponse[] = [
 ];
 
 /**
- * The roster as the community's only active admin sees it since
- * lucoenergia/conluz#449 (#309): admins manage each other, themselves
- * included, so their own row offers the role change and the removal, and the
- * backend reports it as the last active admin -- the row whose menu shows
- * "Eliminar" disabled, with the reason.
+ * The roster as the community's only active admin sees it (#309): their own
+ * row offers the role change and the removal, and the backend reports it as the
+ * last active admin -- the row whose menu shows "Eliminar" disabled, with the
+ * reason. FIXED_MEMBERSHIPS[0] is that row as it stands; the capture keeps its
+ * own roster so the menu it opens stays the subject.
  */
-export const FIXED_ROSTER_LAST_ACTIVE_ADMIN: MembershipResponse[] = [
-  {
-    ...FIXED_MEMBERSHIPS[0],
-    lastActiveAdmin: true,
-    capabilities: { ...FIXED_MEMBERSHIPS[0].capabilities, canUpdateRole: true, canDelete: true },
-  },
-  FIXED_MEMBERSHIPS[1],
-];
+export const FIXED_ROSTER_LAST_ACTIVE_ADMIN: MembershipResponse[] = [FIXED_MEMBERSHIPS[0], FIXED_MEMBERSHIPS[1]];
 
 /**
  * A community's admins as GET …/admins lists them (#276), one per state the

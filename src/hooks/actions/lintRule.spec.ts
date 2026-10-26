@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { ESLint } from "eslint";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 /**
  * The mutation guard rail, asserted rather than assumed.
@@ -142,8 +144,9 @@ describe("the mutation guard rail", () => {
     });
 
     it("stop being exempt once they migrate, for communities, platform and users too", async () => {
-      // Files from the last large block on the list, plus the platform admins
-      // page that replaced the users pages (#285). Each is named with the hook
+      // Files from the last large block on the list, the community admins page
+      // that replaced the admins dialog (#276), and the platform admins page
+      // that replaced the users pages (#285). Each is named with the hook
       // that hands its write out, because the message is what tells
       // the next author where to go -- a bare refusal would send them looking.
       const cases: [string, string, string, string][] = [
@@ -160,10 +163,10 @@ describe("the mutation guard rail", () => {
           "useCommunityActions",
         ],
         [
-          "useUpdateMembershipRole",
+          "useDisableCommunityAdmin",
           "../../api/memberships/memberships",
-          "src/pages/communities/ManageAdminsDialog.tsx",
-          "useMembershipActions",
+          "src/pages/communities/CommunityAdminsPage.tsx",
+          "useCommunityActions",
         ],
         [
           "useRevokePlatformAdmin",
@@ -183,5 +186,17 @@ describe("the mutation guard rail", () => {
         expect(errors[0], filePath).toContain(replacement);
       }
     });
+  });
+
+  // A screen named above stands for a real file: lintText lints whatever path
+  // it is given, so a deleted one keeps passing while proving nothing about the
+  // screen it names. Only the probes are hypothetical, and they say so.
+  it("names only screens that exist, apart from the probes", () => {
+    const source = readFileSync(fileURLToPath(import.meta.url), "utf8");
+    const paths = [...source.matchAll(/"(src\/[^"]+\.tsx?)"/g)].map((match) => match[1]);
+    const missing = paths.filter((path) => !/(^|\/)probe(\/|\.)|\/Probe\./i.test(path) && !existsSync(path));
+
+    expect(paths.length).toBeGreaterThan(0);
+    expect(missing).toEqual([]);
   });
 });

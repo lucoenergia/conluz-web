@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { PlantCard } from "./PlantCard";
@@ -13,6 +13,7 @@ vi.mock(import("react-router"), async (importOriginal) => ({
 }));
 
 const MENU_BUTTON = "Más acciones para Planta Norte";
+const SUCCESS_DIALOG = { name: "La planta NE=1 ha sido eliminada" };
 
 function renderCard(props: Partial<React.ComponentProps<typeof PlantCard>> = {}) {
   return renderWithProviders(
@@ -92,6 +93,20 @@ describe("PlantCard", () => {
       await waitFor(() => expect(onDelete).toHaveBeenCalledWith("plant-1"));
     });
 
+    it("reports success when the delete succeeded", async () => {
+      const onDelete = vi.fn().mockResolvedValue(true);
+      const user = userEvent.setup();
+      renderCard({ canManage: true, onDelete });
+
+      await user.click(screen.getByRole("button", { name: MENU_BUTTON }));
+      await user.click(await screen.findByText("Eliminar"));
+      await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+
+      expect(await screen.findByRole("dialog", SUCCESS_DIALOG)).toBeInTheDocument();
+    });
+
+    // The positive twin above proves SUCCESS_DIALOG finds the dialog, so its
+    // absence here means it did not open, not that the query missed it.
     it("does not report success when the delete failed", async () => {
       const onDelete = vi.fn().mockResolvedValue(false);
       const user = userEvent.setup();
@@ -102,7 +117,9 @@ describe("PlantCard", () => {
       await user.click(await screen.findByRole("button", { name: "Eliminar" }));
 
       await waitFor(() => expect(onDelete).toHaveBeenCalled());
-      expect(screen.queryByText(/eliminada correctamente/i)).not.toBeInTheDocument();
+      // Let the awaited result reach the card before asking what it did with it.
+      await act(async () => {});
+      expect(screen.queryByRole("dialog", SUCCESS_DIALOG)).not.toBeInTheDocument();
     });
   });
 
