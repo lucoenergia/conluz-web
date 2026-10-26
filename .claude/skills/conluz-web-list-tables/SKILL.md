@@ -38,7 +38,7 @@ const handleMenuClose = () => setAnchorEl(null);
 </RowActionsMenu>
 ```
 
-The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus`, the narrow-viewport `RecordList`, pagination (`UsersPage`), the menu items, and the menu state (`anchorEl` + the selected row). Destructive items (delete) go last, below a `<Divider>`, with `color: "error.main"`.
+The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus`, the narrow-viewport `RecordList`, the menu items, and the menu state (`anchorEl` + the selected row). Destructive items (delete) go last, below a `<Divider>`, with `color: "error.main"`.
 
 **For actions that change server state** (role change, status toggle, etc.) the menu item must open a confirmation `<Dialog>` that:
 - Names the affected entity.

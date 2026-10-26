@@ -266,13 +266,14 @@ agreement card needs `isDraft && canDelete`.
 
 **Two capabilities naming opposite operations are not two exclusive affordances.**
 `canEnable`/`canDisable` are *both* true for a caller who may do either, and the
-row's own `enabled` is what decides which one applies. `UsersPage` rendered them as
-two separately gated menu items and so offered Habilitar beside Deshabilitar (and
-did the same with granting and revoking the platform-admin flag); worse, its
-handlers picked with `actions.disable ?? actions.enable`, so with both present "disable" always won and
-Habilitar disabled the user it named. Resolve the pair **once** — one item labelled
+row's own `enabled` is what decides which one applies. Rendered as two separately
+gated menu items, they offer Habilitar beside Deshabilitar; picked with
+`actions.disable ?? actions.enable`, "disable" always wins when both are present, so
+Habilitar disables the record it names. Resolve the pair **once** — one item labelled
 by the half that applies — so the menu item, its confirmation dialog and the handler
-that runs it cannot disagree about which operation was chosen.
+that runs it cannot disagree about which operation was chosen. `statusToggleFor`
+(`src/pages/members/membershipStatus.ts`) does it for a membership's suspend and
+reactivate.
 
 Reading the **row's** own state, such as `enabled`, to pick between them is reading
 the resource's state, not re-deriving privilege: the rule this module enforces is
@@ -283,7 +284,7 @@ in `src/hooks/permissions/`.
 A spec whose fixtures let status and capability agree everywhere cannot tell the two
 apart, and will pass against the pre-capability code. A fixture that grants one half
 of a pair per row is worse still: it describes a response the API never produces, and
-it is why no test caught either defect above.
+it cannot catch either defect above.
 
 ## A capability gates the call, not the rows
 
