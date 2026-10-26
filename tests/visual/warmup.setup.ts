@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { test } from "@playwright/test";
+import { test, type Page } from "@playwright/test";
+import { waitForRouteMounted } from "./fixtures/session";
 
 const VISUAL_DIR = dirname(fileURLToPath(import.meta.url));
 
@@ -44,24 +45,61 @@ function lazyPageModuleUrls(): string[] {
   return [...new Set(specifiers)].map((specifier) => `/src/${specifier}`);
 }
 
+// Transforming the whole app from cold is minutes of work on a loaded machine,
+// and it is paid once for the entire suite.
+const WARMUP_TIMEOUT_MS = 300_000;
+
+/**
+ * How a module import fails when the document that issued it went away or the
+ * dev server could not serve the module at that moment -- a reload while Vite
+ * re-optimises dependencies, or a request dropped on a saturated machine.
+ * Both are about the moment, not the module, so one retry in a fresh document
+ * tells them apart from a module that is genuinely broken.
+ */
+const TRANSIENT_IMPORT_FAILURE =
+  /Execution context was destroyed|Failed to fetch dynamically imported module|Importing a module script failed/;
+
+/**
+ * Loads /login and waits until the app has booted, i.e. the entry's graph is
+ * served. On a cold server that is the first transform of the whole entry, so
+ * it gets the warm-up's own budget, not the per-route one the tests use.
+ */
+async function openApp(page: Page, baseURL: string | undefined) {
+  await page.goto(`${baseURL}/login`);
+  await waitForRouteMounted(page, WARMUP_TIMEOUT_MS);
+}
+
+async function importModule(page: Page, moduleUrl: string) {
+  await page.evaluate(async (url) => {
+    await import(/* @vite-ignore */ url);
+  }, moduleUrl);
+}
+
 test("warm the dev server's lazy page modules", async ({ page, baseURL }) => {
-  // Transforming the whole app from cold is minutes of work on a loaded
-  // machine, and it is paid once for the entire suite.
-  test.setTimeout(300_000);
+  test.setTimeout(WARMUP_TIMEOUT_MS);
 
   const moduleUrls = lazyPageModuleUrls();
 
   // Any app URL will do — this only needs a document on the dev server's
-  // origin to issue the imports from. /login is unguarded.
-  await page.goto(`${baseURL}/login`);
+  // origin to issue the imports from. /login is unguarded. Waiting for it to
+  // mount means the entry's own dependencies are served before the first
+  // import asks for more.
+  await openApp(page, baseURL);
 
   // Sequential on purpose: the point is to finish the work, not to race the
-  // dev server with 27 parallel transform requests, which is the contention
+  // dev server with one transform request per page, which is the contention
   // this warm-up exists to avoid in the first place.
   for (const moduleUrl of moduleUrls) {
-    await page.evaluate(async (url) => {
-      await import(/* @vite-ignore */ url);
-    }, moduleUrl);
+    try {
+      await importModule(page, moduleUrl);
+    } catch (error) {
+      if (!TRANSIENT_IMPORT_FAILURE.test(String(error))) throw error;
+      // A fresh document: the browser may remember a failed import for the
+      // life of the one that saw it. A second failure is not transient.
+      await page.reload({ waitUntil: "load" });
+      await waitForRouteMounted(page, WARMUP_TIMEOUT_MS);
+      await importModule(page, moduleUrl);
+    }
   }
 });
 

@@ -1,4 +1,5 @@
-import { test as base, expect, type Page, type Response } from "@playwright/test";
+import { test as base, expect, type Page, type Request, type Response } from "@playwright/test";
+import { ROUTE_MOUNT_TIMEOUT_MS } from "./session";
 
 /**
  * `test`, extended so that no screen may ask the backend something it refuses.
@@ -89,7 +90,43 @@ export function describeDenial(response: Response): string {
   return `${response.request().method()} ${new URL(response.url()).pathname} -> ${response.status()}`;
 }
 
-export const test = base.extend<{ noDeniedCalls: void }>({
+/** Frames in a row with nothing loading before a page counts as settled. */
+const SETTLED_FRAMES = 5;
+
+/** Each page's requests still in flight, recorded by the settledAfterGoto fixture. */
+const requestsInFlight = new WeakMap<Page, Set<Request>>();
+
+/**
+ * Waits until the page has settled: the app has rendered, no route fallback is
+ * showing, and no request is in flight, held for SETTLED_FRAMES animation frames
+ * in a row, because a commit is what starts the next request. `page.goto` runs
+ * it after every navigation; a helper whose click navigates calls it itself.
+ */
+export async function waitForPageSettled(page: Page) {
+  const inFlight = requestsInFlight.get(page);
+  if (!inFlight) {
+    throw new Error("waitForPageSettled needs the page of a test from ./fixtures, which records its requests.");
+  }
+  // The route fallback, found as waitForRouteMounted finds it.
+  const routeFallback = page.getByRole("status").filter({ has: page.getByRole("progressbar") });
+  const rendered = page.locator("#root > *");
+  const deadline = Date.now() + ROUTE_MOUNT_TIMEOUT_MS;
+  let quietFrames = 0;
+  while (quietFrames < SETTLED_FRAMES) {
+    if (Date.now() > deadline) {
+      const pending = [...inFlight].map((request) => `${request.method()} ${new URL(request.url()).pathname}`);
+      throw new Error(
+        `The page did not settle within ${ROUTE_MOUNT_TIMEOUT_MS} ms. ` +
+          `Still loading: ${pending.join(", ") || "nothing in flight, but the app has not rendered or shows the route fallback"}.`,
+      );
+    }
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    const settled = inFlight.size === 0 && (await rendered.count()) > 0 && (await routeFallback.count()) === 0;
+    quietFrames = settled ? quietFrames + 1 : 0;
+  }
+}
+
+export const test = base.extend<{ noDeniedCalls: void; settledAfterGoto: void }>({
   // `auto` rather than a fixture a test asks for, and rather than overriding
   // `page`: a spec gets the check by importing `test` from ./fixtures and
   // nothing else. An opt-in fixture would be missing from exactly the specs
@@ -114,6 +151,36 @@ export const test = base.extend<{ noDeniedCalls: void }>({
           "been offered to this caller -- gate it on the capability the backend answers with -- or " +
           "the request is legitimate and belongs in ALLOWED_DENIALS with the reason why.",
       ).toEqual([]);
+    },
+    { auto: true },
+  ],
+
+  // `goto` resolves on the load event, long before a screen has content: every
+  // page is React.lazy, CapabilityRoute renders nothing until the capability
+  // answer arrives, and only then is the page's chunk requested -- hundreds of
+  // unbundled modules on the dev server, then the screen's own reads. Neither
+  // the route fallback nor `networkidle` spans all of that (see
+  // waitForRouteMounted). On a busy machine the chain outlasts a test's first
+  // assertion, which then times out on content that was still on its way.
+  //
+  // So every navigation waits for the page to settle (waitForPageSettled).
+  // Patched on the instance because a fixture cannot override `page` while
+  // depending on it (see above).
+  settledAfterGoto: [
+    async ({ page }: { page: Page }, use) => {
+      const inFlight = new Set<Request>();
+      requestsInFlight.set(page, inFlight);
+      page.on("request", (request) => inFlight.add(request));
+      page.on("requestfinished", (request) => inFlight.delete(request));
+      page.on("requestfailed", (request) => inFlight.delete(request));
+
+      const goto = page.goto.bind(page);
+      page.goto = async (url, options) => {
+        const response = await goto(url, options);
+        await waitForPageSettled(page);
+        return response;
+      };
+      await use();
     },
     { auto: true },
   ],
