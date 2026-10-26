@@ -293,12 +293,14 @@ test.describe("Visual baselines", () => {
     // the loop runs as well as the overflow that starts it.
     const CHARTS = ["Tus últimos 12 meses", "Tus mejores horas para autoconsumir"];
 
-    // ApexCharts debounces a parent resize by 150 ms before redrawing; a redraw
-    // the pointer set off has landed well inside this.
-    const REDRAW_SETTLE_MS = 600;
-
-    // Long enough for a wheel's scroll to land, where it lands at all.
-    const WHEEL_SETTLE_MS = 300;
+    // A size change reaches a ResizeObserver, and a wheel's scroll reaches
+    // scrollTop, within a frame or two of what causes it, so a value that has
+    // held this many frames in a row has settled. Counted in frames, so a
+    // loaded machine waits longer rather than less. MAX_FRAMES bounds the
+    // wait, so a chart that never settles fails on the assertions below rather
+    // than on the test timeout.
+    const SETTLE_FRAMES = 5;
+    const MAX_FRAMES = 120;
 
     const openMemberHome = async (page: Page) => {
       await injectAuthToken(page);
@@ -362,7 +364,7 @@ test.describe("Visual baselines", () => {
         // each chart; mark each SVG so a redraw, which replaces it, shows.
         await region.locator("[data-chart-scroller]").evaluate(async (scroller) => {
           const watched = [scroller, scroller.firstElementChild!, ...scroller.querySelectorAll(".apexcharts-canvas")];
-          const state = { resizes: 0, ready: false };
+          const state = { resizes: 0, triggers: 0, ready: false };
           (scroller as unknown as { resizeLog: typeof state }).resizeLog = state;
           // A ResizeObserver reports every observed element once on observe;
           // only what follows is a change.
@@ -374,6 +376,20 @@ test.describe("Visual baselines", () => {
               if (state.ready) state.resizes += 1;
             }).observe(el),
           );
+          // What makes ApexCharts redraw, 150 ms later: a size change of its
+          // element's parent, or a window resize (_parentResizeCallback and
+          // _windowResizeHandler in apexcharts.js). Counted apart from the
+          // sizes asserted below, only to know whether a redraw is coming.
+          scroller.querySelectorAll(".apexcharts-canvas").forEach((canvas) => {
+            const parent = canvas.parentElement?.parentElement;
+            if (!parent) return;
+            new ResizeObserver(() => {
+              if (state.ready) state.triggers += 1;
+            }).observe(parent);
+          });
+          window.addEventListener("resize", () => {
+            if (state.ready) state.triggers += 1;
+          });
           scroller.querySelectorAll("svg.apexcharts-svg").forEach((svg) => svg.setAttribute("data-drawn-before-sweep", ""));
           await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           state.ready = true;
@@ -394,7 +410,32 @@ test.describe("Visual baselines", () => {
             }
           }
         }
-        await page.waitForTimeout(REDRAW_SETTLE_MS);
+        // Wait for the last move's size changes, if any, to stop.
+        const triggered = await region.locator("[data-chart-scroller]").evaluate(
+          async (scroller, { settleFrames, maxFrames }) => {
+            const log = (scroller as unknown as { resizeLog: { resizes: number; triggers: number } }).resizeLog;
+            const count = () => log.resizes + log.triggers;
+            let last = count();
+            let held = 0;
+            for (let frame = 0; frame < maxFrames && held < settleFrames; frame++) {
+              await new Promise((resolve) => requestAnimationFrame(resolve));
+              held = count() === last ? held + 1 : 0;
+              last = count();
+            }
+            return log.triggers > 0;
+          },
+          { settleFrames: SETTLE_FRAMES, maxFrames: MAX_FRAMES },
+        );
+        // With no trigger there is no redraw to wait for. With one, wait for
+        // the redraw it scheduled, so the assertions below see it.
+        if (triggered) {
+          await expect
+            .soft(
+              region.locator("svg.apexcharts-svg:not([data-drawn-before-sweep])"),
+              `${name}: the redraw ApexCharts schedules after its parent or the window resized`,
+            )
+            .not.toHaveCount(0);
+        }
 
         expect
           .soft(whileHovering, `${name}: the most vertical overflow and scrollbar seen while hovering`)
@@ -431,9 +472,30 @@ test.describe("Visual baselines", () => {
         });
         const box = (await scroller.boundingBox())!;
         await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        // The wheel resolves before the scroll it causes is applied: wait for
+        // the container to receive it, then for its scroll position to hold.
+        await scroller.evaluate((el) => {
+          (el as unknown as { wheelSeen: Promise<void> }).wheelSeen = new Promise((resolve) =>
+            el.addEventListener("wheel", () => resolve(), { once: true, passive: true }),
+          );
+        });
         await page.mouse.wheel(0, 200);
-        // The wheel resolves before the scroll it causes is applied.
-        await page.waitForTimeout(WHEEL_SETTLE_MS);
+        await scroller.evaluate(
+          async (el, { settleFrames, maxFrames }) => {
+            const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+            let seen = false;
+            void (el as unknown as { wheelSeen: Promise<void> }).wheelSeen.then(() => (seen = true));
+            for (let frame = 0; frame < maxFrames && !seen; frame++) await nextFrame();
+            let last = el.scrollTop;
+            let held = 0;
+            for (let frame = 0; frame < maxFrames && held < settleFrames; frame++) {
+              await nextFrame();
+              held = el.scrollTop === last ? held + 1 : 0;
+              last = el.scrollTop;
+            }
+          },
+          { settleFrames: SETTLE_FRAMES, maxFrames: MAX_FRAMES },
+        );
 
         const overflowed = await scroller.evaluate((el: HTMLElement) => ({
           scrollTop: el.scrollTop,
