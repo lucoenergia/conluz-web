@@ -1,0 +1,32 @@
+# Blocks a PR that adds or upgrades a dependency to a version with a known
+# advisory of severity `high` or above (`high`, `critical`), as listed in the
+# GitHub Advisory Database (#306).
+#
+# Only runtime dependencies fail the check (`fail-on-scopes` is left at its
+# default, `runtime`): an advisory that affects only `devDependencies` is
+# reported in the job summary but does not fail it.
+#
+# The action compares the dependency graph of the base and head commits through
+# the API. GitHub parses package-lock.json statically, so no checkout and no
+# dependency snapshot are needed.
+#
+# The job id `dependency-review` is the check name a ruleset references to make
+# this check required. Keep it stable.
+
+name: Dependency review
+
+on:
+  pull_request:
+    branches: ["main"]
+
+permissions: {}
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
