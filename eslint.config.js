@@ -93,20 +93,40 @@ const NOTICE_SELECTORS = [
 // a platform admin came to reach a community's integrations page that 403s
 // every call it makes.
 //
-// So the two hooks that produce those values, and any comparison against the
-// CommunityRole enum, stay inside src/hooks/permissions. Reading
-// `user.isPlatformAdmin` as a field to display is untouched: it is deciding on
-// it that this forbids.
-const COMMUNITY_ROLE_SELECTOR = {
-  selector: "MemberExpression[object.name='CommunityRole']",
-  message:
-    "Do not decide anything from a CommunityRole. Ask the backend through src/hooks/permissions -- useActiveCommunityCapabilities, usePlatformCapabilities or usePlantCapabilities -- and use useActiveCommunityRoleLabel if you only need to render the role's name.",
-};
+// So the hook that produces the caller's role, and every read of the caller's
+// role or platform-admin flag, stay inside src/hooks/permissions:
+//
+// - any comparison against the CommunityRole enum;
+// - any read of an `isPlatformAdmin` field -- displaying the flag goes through
+//   useActiveCommunityRoleLabel, which lives in that module;
+// - any read of a role out of the `memberships` map, by key or by value.
+//
+// Object.keys(memberships) and `id in memberships` stay allowed: they ask which
+// communities the caller belongs to, which is how the active one is chosen, not
+// what the caller may do in it. A target row's role (MembershipResponseRole on a
+// roster row) is the resource's own state, and stays allowed too.
+const ROLE_GATE_MESSAGE =
+  "Do not decide anything from a role or the platform-admin flag. Ask the backend through src/hooks/permissions -- useActiveCommunityCapabilities, usePlatformCapabilities or usePlantCapabilities -- and use useActiveCommunityRoleLabel if you only need to render the role's name.";
+
+const ROLE_SELECTORS = [
+  { selector: "MemberExpression[object.name='CommunityRole']", message: ROLE_GATE_MESSAGE },
+  { selector: "MemberExpression[property.name='isPlatformAdmin']", message: ROLE_GATE_MESSAGE },
+  { selector: "MemberExpression[computed=true][object.property.name='memberships']", message: ROLE_GATE_MESSAGE },
+  { selector: "MemberExpression[computed=true][object.name='memberships']", message: ROLE_GATE_MESSAGE },
+  {
+    selector: "CallExpression[callee.object.name='Object'][callee.property.name=/^(values|entries)$/] MemberExpression[property.name='memberships']",
+    message: ROLE_GATE_MESSAGE,
+  },
+  {
+    selector: "CallExpression[callee.object.name='Object'][callee.property.name=/^(values|entries)$/] Identifier[name='memberships']:not(MemberExpression > .property)",
+    message: ROLE_GATE_MESSAGE,
+  },
+];
 
 const PERMISSION_HOOKS = [
   {
     group: ["**/hooks/permissions/useActiveCommunityRole"],
-    importNames: ["useActiveCommunityRole", "useIsPlatformAdmin"],
+    importNames: ["useActiveCommunityRole"],
     message:
       "Only src/hooks/permissions may read a role or the platform-admin flag. Gate on a capability instead (useActiveCommunityCapabilities / usePlatformCapabilities / usePlantCapabilities), or use useActiveCommunityRoleLabel to render the role's name.",
   },
@@ -266,13 +286,13 @@ export default tseslint.config([
       "src/theme/**",       // token definitions live here — literals are allowed
       "src/**/*.spec.{ts,tsx}", // test fixtures use literal colours intentionally
     ],
-    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...NOTICE_SELECTORS, COMMUNITY_ROLE_SELECTOR] },
+    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...NOTICE_SELECTORS, ...ROLE_SELECTORS] },
   },
   {
     // Notice is the one Alert that takes its severity and role from its props.
     files: ["src/components/Notice/**/*.{ts,tsx}"],
     ignores: ["src/**/*.spec.{ts,tsx}"],
-    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, COMMUNITY_ROLE_SELECTOR] },
+    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...ROLE_SELECTORS] },
   },
   {
     // The permissions module is where roles are legitimately read, so it keeps

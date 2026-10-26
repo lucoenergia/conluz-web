@@ -11,8 +11,3 @@ export function useActiveCommunityRole(): CommunityRole | null {
   }
   return (loggedUser.memberships[activeCommunityId] as CommunityRole) ?? null;
 }
-
-export function useIsPlatformAdmin(): boolean {
-  const loggedUser = useLoggedUser();
-  return loggedUser?.isPlatformAdmin === true;
-}
