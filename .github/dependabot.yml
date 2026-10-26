@@ -1,0 +1,53 @@
+# Weekly version updates for every ecosystem the repository depends on (#306).
+#
+# Per ecosystem, minor and patch updates arrive as one grouped PR and each major
+# update as its own PR. Security updates are grouped separately.
+#
+# npm: Dependabot runs its own npm, not the one pinned by package.json "engines"
+# and .npmrc engine-strict. If it rewrites package-lock.json differently, the
+# lockfile check in test-n-build.yml fails the PR, and it is fixed case by case.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      github-actions-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      github-actions-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  # Base images of docker/Dockerfile.
+  - package-ecosystem: docker
+    directory: /docker
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      docker-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      docker-security:
+        applies-to: security-updates
+        patterns: ["*"]
