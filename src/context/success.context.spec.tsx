@@ -58,4 +58,21 @@ describe("success.context", () => {
       vi.useRealTimers();
     }
   });
+
+  it("leaves no removal pending once it unmounts", () => {
+    vi.useFakeTimers();
+    try {
+      const { result, unmount } = renderHook(() => useSuccessDispatch(), { wrapper });
+      act(() => {
+        result.current("Planta eliminada.");
+      });
+      expect(vi.getTimerCount()).toBe(1);
+
+      unmount();
+
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

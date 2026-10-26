@@ -24,14 +24,21 @@ export const GraphBar: FC<GraphBarProps> = ({
 
   // Force chart re-render on window resize (sidebar toggle)
   useEffect(() => {
+    // Cleared on unmount, so none fires on a chart that is gone.
+    const pending = new Set<ReturnType<typeof setTimeout>>();
     const handleResize = () => {
-      setTimeout(() => {
+      const rerender = setTimeout(() => {
+        pending.delete(rerender);
         setChartKey(prev => prev + 1);
       }, 300);
+      pending.add(rerender);
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      pending.forEach(clearTimeout);
+    };
   }, []);
 
   const getChartColors = () => {
