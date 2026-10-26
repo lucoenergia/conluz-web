@@ -72,10 +72,17 @@ function setup(canCreatePlants: boolean) {
 }
 
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Código de proveedor", { exact: false }), "NE=1");
-  await user.type(screen.getByLabelText("Nombre", { exact: false }), "Planta Norte");
-  await user.type(screen.getByLabelText("Dirección", { exact: false }), "Calle Sol 1");
-  await user.type(screen.getByLabelText("Potencia total", { exact: false }), "63");
+  // Pasted, not typed: what is under test is the value sent, not each
+  // keystroke, and typing re-renders the form once per character.
+  for (const [label, value] of [
+    ["Código de proveedor", "NE=1"],
+    ["Nombre", "Planta Norte"],
+    ["Dirección", "Calle Sol 1"],
+    ["Potencia total", "63"],
+  ] as const) {
+    await user.click(screen.getByLabelText(label, { exact: false }));
+    await user.paste(value);
+  }
   await user.click(screen.getByRole("combobox", { name: /Punto de suministro/ }));
   await user.click(await screen.findByRole("option", { name: /ES0001/ }));
   await user.click(screen.getByRole("button", { name: "Crear planta" }));

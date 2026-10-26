@@ -408,9 +408,16 @@ describe("a caller who must change their password (#213)", () => {
 
     renderAt("/change-password");
     await findForm();
-    await user.type(screen.getByLabelText("Contraseña actual"), "la contraseña de antes");
-    await user.type(screen.getByLabelText("Nueva contraseña"), "el gato duerme junto a la ventana");
-    await user.type(screen.getByLabelText("Repite la nueva contraseña"), "el gato duerme junto a la ventana");
+    // Pasted, not typed: typing re-renders the form once per character, and
+    // what is under test is the layout after the change.
+    for (const [label, value] of [
+      ["Contraseña actual", "la contraseña de antes"],
+      ["Nueva contraseña", "el gato duerme junto a la ventana"],
+      ["Repite la nueva contraseña", "el gato duerme junto a la ventana"],
+    ] as const) {
+      await user.click(screen.getByLabelText(label));
+      await user.paste(value);
+    }
     await user.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
 
     await screen.findByRole("heading", { name: "Bienvenide a ConLuz" });
