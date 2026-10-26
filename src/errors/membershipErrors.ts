@@ -5,7 +5,7 @@ import {
   LAST_ACTIVE_ADMIN_EXPLANATION,
   NO_CONTACT_EMAIL_TO_INVITE,
   resendLimitMessage,
-  type InvitationSubject,
+  type MembershipSubject,
 } from "./membershipErrorMessages";
 
 /** Which invitation write was refused: the same code can mean something else in each. */
@@ -52,7 +52,7 @@ function withRefreshedNote(message: string, write: StaleRowWrite, code: RestErro
  * words them for someone whose invitation is pending, who is not an admin yet
  * (#276, #310).
  */
-const SUBJECT_REFUSALS: Record<InvitationSubject, Partial<Record<Exclude<RestErrorDetailCode, null>, string>>> = {
+const SUBJECT_REFUSALS: Record<MembershipSubject, Partial<Record<Exclude<RestErrorDetailCode, null>, string>>> = {
   member: {
     MEMBERSHIP_ALREADY_EXISTS: "Este miembro ya ha aceptado la invitación.",
   },
@@ -75,7 +75,7 @@ const SUBJECT_REFUSALS: Record<InvitationSubject, Partial<Record<Exclude<RestErr
 export function invitationRefusalMessage(
   error: unknown,
   write: InvitationWrite,
-  subject: InvitationSubject = "member",
+  subject: MembershipSubject = "member",
 ): string {
   const code = getFirstApiErrorCode(error);
   const message = (() => {
@@ -105,7 +105,7 @@ const ADMIN_OWNS_SUPPLIES =
  * this page words. `subject` is the removed membership's role, which decides
  * what the supplies refusal recommends.
  */
-export function removalRefusalMessage(error: unknown, subject: InvitationSubject = "member"): string {
+export function removalRefusalMessage(error: unknown, subject: MembershipSubject = "member"): string {
   const code = getFirstApiErrorCode(error);
   switch (code) {
     case "MEMBERSHIP_LAST_ACTIVE_ADMIN":
