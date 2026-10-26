@@ -46,6 +46,7 @@ vi.mock(import("../hooks/permissions"), async (importOriginal) => ({
 }));
 
 import { ProfilePage } from "./Profile";
+import { VISIBLE } from "../test/visibleText";
 
 describe("ProfilePage role label", () => {
   beforeEach(() => {
@@ -190,7 +191,9 @@ describe("ProfilePage save", () => {
   it("confirms a successful save", async () => {
     await save(mockCurrentUser);
 
-    expect(await screen.findByText("Perfil actualizado correctamente")).toBeInTheDocument();
+    expect(await screen.findByText("Perfil actualizado correctamente", VISIBLE)).toBeInTheDocument();
+    // Announced through a region that was in place before the save (#310).
+    expect(screen.getByRole("status")).toHaveTextContent("Perfil actualizado correctamente");
     expect(mockErrorDispatch).not.toHaveBeenCalled();
   });
 });

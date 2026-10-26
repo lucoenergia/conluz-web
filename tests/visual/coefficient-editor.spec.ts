@@ -38,7 +38,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText(FIXED_SUPPLY_NAME)).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-editor-add-supply-picker.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: "Añadir suministros" })).toHaveScreenshot(
+      "sharing-agreement-editor-add-supply-picker.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement coefficient editor (row empty-value error)", async ({ page }, testInfo) => {

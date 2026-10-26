@@ -66,6 +66,26 @@ const STYLING_SELECTORS = [
   },
 ];
 
+// ─── Notice guard rail ────────────────────────────────────────────────────────
+// MUI gives every Alert role="alert", which a screen reader announces at once.
+// An info or success Alert is a note, never something to act on now, so it is
+// a Notice, which renders the same Alert as role="note"
+// (#310). An Alert without a severity is a success one. A dynamic severity is
+// not seen here; such an Alert sets its role itself.
+const NOTICE_SELECTORS = [
+  {
+    selector:
+      "JSXOpeningElement[name.name='Alert'] > JSXAttribute[name.name='severity'] > Literal[value=/^(info|success)$/]",
+    message:
+      "An info or success Alert is a note, not an alert: use Notice from src/components/Notice, and announce the result of an action through an ActionStatus mounted before it.",
+  },
+  {
+    selector: "JSXOpeningElement[name.name='Alert']:not(:has(JSXAttribute[name.name='severity']))",
+    message:
+      "An Alert without a severity is a success note: use Notice from src/components/Notice, or give a real alert its severity.",
+  },
+];
+
 // ─── Capability guard rail ────────────────────────────────────────────────────
 // Visibility is the backend's answer, carried on the resource it concerns. A
 // role or the platform-admin flag is the old way of guessing at that answer,
@@ -246,13 +266,19 @@ export default tseslint.config([
       "src/theme/**",       // token definitions live here — literals are allowed
       "src/**/*.spec.{ts,tsx}", // test fixtures use literal colours intentionally
     ],
+    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...NOTICE_SELECTORS, COMMUNITY_ROLE_SELECTOR] },
+  },
+  {
+    // Notice is the one Alert that takes its severity and role from its props.
+    files: ["src/components/Notice/**/*.{ts,tsx}"],
+    ignores: ["src/**/*.spec.{ts,tsx}"],
     rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, COMMUNITY_ROLE_SELECTOR] },
   },
   {
     // The permissions module is where roles are legitimately read, so it keeps
     // the styling rules and drops the capability one.
     files: ["src/hooks/permissions/**/*.{ts,tsx}"],
-    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS] },
+    rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...NOTICE_SELECTORS] },
   },
   {
     // Community-scope guard rail. Specs are exempt: they mock these modules by

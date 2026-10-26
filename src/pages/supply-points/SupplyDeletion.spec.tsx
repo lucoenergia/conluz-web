@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SupplyPointsPage } from "./SupplyPointsPage";
@@ -24,6 +24,7 @@ import {
   getGetMembershipEnergyMetricsQueryKey,
   getGetMembershipMonthlyConsumptionQueryKey,
 } from "../../api/memberships/memberships";
+import { VISIBLE } from "../../test/visibleText";
 
 /**
  * Deleting a supply from its card menu (#290), in the community's supply list
@@ -46,7 +47,7 @@ const OWNER_SUPPLIES_URL = `${OWNER_URL}/supplies`;
 const DELETE_URL = `/api/v1/supplies/${DELETABLE_ID}`;
 const DISABLE_URL = `/api/v1/supplies/${DELETABLE_ID}/disable`;
 
-const MENU_BUTTON = "Más acciones del punto de suministro";
+const MENU_BUTTON = "Más acciones para Casa de Lucía";
 const DELETE_TITLE = /^Eliminar punto de suministro de /;
 
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
@@ -204,7 +205,7 @@ describe("deleting a supply from its card menu", () => {
       await waitFor(() => expect(state[listServed]).toBe(2));
       await waitFor(() => expect(screen.queryByRole("heading", { name: "Casa de Lucía" })).not.toBeInTheDocument());
       expect(screen.getByRole("heading", { name: "Local de la asociación" })).toBeInTheDocument();
-      expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.")).toBeInTheDocument();
+      expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.", VISIBLE)).toBeInTheDocument();
 
       expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(DELETABLE_ID), type: "inactive" });
       for (const queryKey of [
@@ -220,13 +221,41 @@ describe("deleting a supply from its card menu", () => {
     });
   });
 
+  it("#310 AC4 keeps the confirmation open while the deletion is in flight, then closes it as before", async () => {
+    const user = userEvent.setup();
+    let settle!: () => void;
+    const { router } = renderPage("/supply-points", (state) => {
+      return new Promise((resolve) => {
+        settle = () => resolve(deleted(state));
+      });
+    });
+
+    await openDeletion(user);
+    await user.click(screen.getByRole("button", { name: "Eliminar" }));
+    await waitFor(() => expect(deleteRequests(router)).toHaveLength(1));
+
+    const dialog = screen.getByRole("dialog", { name: DELETE_TITLE });
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    // The backdrop has no role or name: its class is the only way to click it.
+    await user.click(document.querySelector(".MuiBackdrop-root")!);
+    const cancel = within(dialog).getByRole("button", { name: "Cancelar" });
+    expect(cancel).toBeDisabled();
+    // A disabled button takes no pointer events, so userEvent refuses it.
+    fireEvent.click(cancel);
+    expect(screen.getByRole("dialog", { name: DELETE_TITLE })).toBeInTheDocument();
+
+    settle();
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: DELETE_TITLE })).not.toBeInTheDocument());
+    expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.", VISIBLE)).toBeInTheDocument();
+  });
+
   it("UI-SUP-002 names the supply and its owner, and says it cannot be undone", async () => {
     const user = userEvent.setup();
     renderPage("/supply-points", deleted);
 
     await openDeletion(user);
-    // The modal has no role="dialog" yet; modal-panel is the interim container id.
-    const dialog = within(screen.getByTestId("modal-panel"));
+    const dialog = within(screen.getByRole("dialog", { name: /^Eliminar punto de suministro de / }));
 
     expect(dialog.getByText("ES0031406912345678JN0F")).toBeInTheDocument();
     expect(dialog.getByText("Casa de Lucía")).toBeInTheDocument();
@@ -239,7 +268,7 @@ describe("deleting a supply from its card menu", () => {
     renderPage("/supply-points", deleted, [{ ...DELETABLE, ownerRecord: null }, KEPT]);
 
     await openDeletion(user);
-    const dialog = within(screen.getByTestId("modal-panel"));
+    const dialog = within(screen.getByRole("dialog", { name: /^Eliminar punto de suministro de / }));
 
     expect(dialog.getByText("ES0031406912345678JN0F")).toBeInTheDocument();
     expect(dialog.queryByText(/Titular/)).not.toBeInTheDocument();

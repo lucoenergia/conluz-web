@@ -7,7 +7,20 @@ import { useLogin, useLogout } from "../../api/authentication/authentication";
 import userEvent from "@testing-library/user-event";
 import { apiError } from "../../test/apiError";
 import { expectPasswordFieldContract } from "../../test/passwordField";
-import { markPasswordChanged, takePasswordChanged } from "../../utils/session";
+import {
+  PASSWORD_CHANGED_MESSAGE,
+  PASSWORD_RESET_MESSAGE,
+  PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE,
+  SESSION_EXPIRED_MESSAGE,
+  invitationAcceptedLoginMessage,
+  markInvitationAccepted,
+  markPasswordChanged,
+  markPasswordReset,
+  markPlatformInvitationAccepted,
+  markSessionExpired,
+  takePasswordChanged,
+} from "../../utils/session";
+import type { FC, ReactNode } from "react";
 
 // Crear los mocks
 const mockNavigate = vi.fn();
@@ -205,5 +218,52 @@ describe("Login component", () => {
   it("shows no notice on a plain visit", () => {
     setup();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/^$/);
+  });
+
+  /**
+   * Leaves the marker during its own render, after the harness has cleared
+   * browser storage and before Login, its child, reads it on its first render.
+   */
+  const Arriving: FC<{ mark: () => void; children: ReactNode }> = ({ mark, children }) => {
+    mark();
+    return <>{children}</>;
+  };
+
+  describe.each([
+    ["the session expired", markSessionExpired, SESSION_EXPIRED_MESSAGE],
+    ["the password was changed", markPasswordChanged, PASSWORD_CHANGED_MESSAGE],
+    ["the password was reset", markPasswordReset, PASSWORD_RESET_MESSAGE],
+    [
+      "a community invitation was accepted",
+      () => markInvitationAccepted("Comunidad Solar"),
+      invitationAcceptedLoginMessage("Comunidad Solar"),
+    ],
+    ["a platform invitation was accepted", markPlatformInvitationAccepted, PLATFORM_INVITATION_ACCEPTED_LOGIN_MESSAGE],
+  ])("arriving because %s (#310)", (_, mark, message) => {
+    it("announces it through a status region that is in place, empty, before its text", async () => {
+      renderWithProviders(
+        <Arriving mark={mark}>
+          <Login />
+        </Arriving>,
+      );
+
+      const region = screen.getByRole("status");
+      expect(region).toHaveTextContent(/^$/);
+      await waitFor(() => expect(region).toHaveTextContent(message));
+      expect(screen.getByRole("status")).toBe(region);
+    });
+
+    it("shows it as a note, never an alert", () => {
+      renderWithProviders(
+        <Arriving mark={mark}>
+          <Login />
+        </Arriving>,
+      );
+
+      expect(screen.getByRole("note")).toHaveTextContent(message);
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
   });
 });

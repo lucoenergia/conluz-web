@@ -4,14 +4,20 @@ import type { InvitePlatformAdminBody } from "../../api/models";
 import type { Action, PlatformInvitationSentResult } from "../../hooks/actions";
 import {
   EMPTY_ADMIN_INVITATION,
-  validateAdminInvitation,
   type AdminInvitationValues,
   type MemberRecordErrors,
   type MemberRecordField,
 } from "../members/memberRecordForm";
 import { MemberRecordFields } from "../members/MemberRecordFields";
 import { ConfirmationCodePanel } from "./ConfirmationCodePanel";
-import { platformAdminInvitationBodyOf, platformAdminInvitationRefusalOf } from "./platformAdminInvitationForm";
+import {
+  PLATFORM_ADMIN_EMAIL_LABEL,
+  platformAdminInvitationBodyOf,
+  platformAdminInvitationRefusalOf,
+  validatePlatformAdminInvitation,
+} from "./platformAdminInvitationForm";
+import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 const FIELDS = ["fullName", "contactEmail"] as const;
 
@@ -41,6 +47,7 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
   const [errors, setErrors] = useState<MemberRecordErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
+  const inFlight = inviteAdmin?.isPending ?? false;
 
   const change = (field: MemberRecordField, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -50,7 +57,7 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!inviteAdmin) return;
-    const invalid = validateAdminInvitation(values);
+    const invalid = validatePlatformAdminInvitation(values);
     setErrors(invalid);
     setFormError(null);
     if (Object.keys(invalid).length > 0) return;
@@ -80,15 +87,15 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
   }
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open {...inFlightDialogProps(inFlight, onClose)} maxWidth="sm" fullWidth>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <DialogTitle>Invitar administrador de plataforma</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
-          <Alert severity="info">
+          <Notice severity="info">
             Le llegará un email con un enlace para aceptar. Después verás un código de confirmación que tendrás que
             darle tú: sin él no podrá aceptar. Será administrador de la plataforma solo cuando acepte.
-          </Alert>
+          </Notice>
           <TextField
             label="DNI/NIE/NIF"
             required
@@ -99,10 +106,19 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
             fullWidth
             sx={{ mt: 1 }}
           />
-          <MemberRecordFields values={values} errors={errors} onChange={change} fields={FIELDS} required={FIELDS} />
+          <MemberRecordFields
+            values={values}
+            errors={errors}
+            onChange={change}
+            fields={FIELDS}
+            required={FIELDS}
+            labels={{ contactEmail: PLATFORM_ADMIN_EMAIL_LABEL }}
+          />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose}>Cancelar</Button>
+          <Button onClick={onClose} disabled={inFlight}>
+            Cancelar
+          </Button>
           <Button type="submit" variant="contained" disabled={!inviteAdmin || inviteAdmin.isPending}>
             {inviteAdmin?.isPending ? "Enviando..." : "Invitar"}
           </Button>

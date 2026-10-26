@@ -66,13 +66,13 @@ export const SupplyCard: FC<SupplyCardProps> = ({
   const [openEnableConfirmation, setOpenEnableConfirmation] = useState(false);
   const [openEnableSuccess, setOpenEnableSuccess] = useState(false);
 
-  const handleCloseDisableConfirmation = (event: React.MouseEvent) => {
+  const handleCloseDisableConfirmation = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setOpenDisableConfirmation(false);
   };
 
-  const handleCloseDisableSuccess = (event: React.MouseEvent) => {
+  const handleCloseDisableSuccess = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setOpenDisableSuccess(false);
@@ -87,13 +87,13 @@ export const SupplyCard: FC<SupplyCardProps> = ({
     }
   };
 
-  const handleCloseEnableConfirmation = (event: React.MouseEvent) => {
+  const handleCloseEnableConfirmation = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setOpenEnableConfirmation(false);
   };
 
-  const handleCloseEnableSuccess = (event: React.MouseEvent) => {
+  const handleCloseEnableSuccess = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setOpenEnableSuccess(false);
@@ -160,6 +160,7 @@ export const SupplyCard: FC<SupplyCardProps> = ({
                 <Box onClick={handleMenuClick} sx={{ flexShrink: 0 }}>
                   <DisplayMenu
                     supplyPointId={id}
+                    supplyLabel={name || code}
                     disableSupplyPoint={() => setOpenDisableConfirmation(true)}
                     enableSupplyPoint={() => setOpenEnableConfirmation(true)}
                     enabled={enabled}

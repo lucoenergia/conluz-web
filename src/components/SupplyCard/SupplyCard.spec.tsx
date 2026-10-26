@@ -13,7 +13,7 @@ vi.mock(import("react-router"), async (importOriginal) => ({
 
 import { SupplyCard } from "./SupplyCard";
 
-const MENU_BUTTON = "Más acciones del punto de suministro";
+const MENU_BUTTON = "Más acciones para Casa";
 
 const renderCard = (props: Partial<React.ComponentProps<typeof SupplyCard>> = {}) =>
   renderWithProviders(

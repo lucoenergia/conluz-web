@@ -45,6 +45,8 @@ import { InvitationActionDialog } from "../members/InvitationActionDialog";
 import { invitationActionsFor, invitationText, statusOf, statusToggleFor } from "../members/membershipStatus";
 import { MembershipStatusCell, MembershipStatusChip } from "../members/MembershipStatusCell";
 import { InviteAdminDialog } from "./InviteAdminDialog";
+import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 type AdminInvitationWrite = "resend" | "revoke";
 
@@ -359,7 +361,7 @@ export const CommunityAdminsPage: FC = () => {
       {/* Suspend / reactivate confirmation, gated like the item that opens it. */}
       <Dialog
         open={statusDialogOpen && !!selectedStatusToggle}
-        onClose={() => setStatusDialogOpen(false)}
+        {...inFlightDialogProps(selectedStatusToggle?.action.isPending ?? false, () => setStatusDialogOpen(false))}
         maxWidth="xs"
         fullWidth
       >
@@ -375,14 +377,16 @@ export const CommunityAdminsPage: FC = () => {
             {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
             <strong>{selectedAdmin?.fullName ?? "este administrador"}</strong> como administrador de {community}?
           </Typography>
-          <Alert severity="info">
+          <Notice severity="info">
             {selectedStatusToggle?.isSuspending
               ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
               : `Volverá a tener acceso a ${community} como administrador.`}
-          </Alert>
+          </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setStatusDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setStatusDialogOpen(false)} disabled={selectedStatusToggle?.action.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             color={selectedStatusToggle?.isSuspending ? "error" : "primary"}

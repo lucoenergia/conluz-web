@@ -6,6 +6,9 @@ import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { invitationRefusalMessage } from "../../errors/membershipErrors";
 import { pluralize } from "../../utils/pluralize";
+import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { ActionStatus } from "../../components/ActionStatus";
 
 interface SendPendingInvitationsDialogProps {
   communityName: string | undefined;
@@ -40,9 +43,18 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
 
   const { isPending } = sendPendingInvitations;
   const remaining = batch?.remaining ?? 0;
+  const sentText =
+    batch &&
+    (batch.sent === 0
+      ? "No se ha enviado ninguna invitación."
+      : `Se ${pluralize(batch.sent, "ha", "han")} enviado ${batch.sent} ${pluralize(batch.sent, "invitación", "invitaciones")}.`);
+  const remainingText =
+    remaining > 0
+      ? `${pluralize(remaining, "Queda", "Quedan")} ${remaining} por enviar. Puedes seguir con las siguientes.`
+      : "No queda ninguna invitación pendiente de enviar.";
 
   return (
-    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open {...inFlightDialogProps(isPending, onClose)} maxWidth="xs" fullWidth>
       <Box sx={{ px: 3, pt: 2.5 }}>
         <CommunityScopeHeader name={communityName} />
       </Box>
@@ -51,16 +63,8 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
         {error && <Alert severity="error">{error}</Alert>}
         {batch ? (
           <>
-            <Typography variant="body2">
-              {batch.sent === 0
-                ? "No se ha enviado ninguna invitación."
-                : `Se ${pluralize(batch.sent, "ha", "han")} enviado ${batch.sent} ${pluralize(batch.sent, "invitación", "invitaciones")}.`}
-            </Typography>
-            <Alert severity={remaining > 0 ? "info" : "success"}>
-              {remaining > 0
-                ? `${pluralize(remaining, "Queda", "Quedan")} ${remaining} por enviar. Puedes seguir con las siguientes.`
-                : "No queda ninguna invitación pendiente de enviar."}
-            </Alert>
+            <Typography variant="body2">{sentText}</Typography>
+            <Notice severity={remaining > 0 ? "info" : "success"}>{remainingText}</Notice>
           </>
         ) : (
           <>
@@ -68,20 +72,25 @@ export const SendPendingInvitationsDialog: FC<SendPendingInvitationsDialogProps>
               ¿Enviar la invitación a los miembros pendientes de {community} que tienen email de contacto y todavía no
               han recibido ninguna?
             </Typography>
-            <Alert severity="info">
+            <Notice severity="info">
               Se envían por tandas de hasta 50. Los miembros suspendidos o sin email de contacto no la reciben.
-            </Alert>
+            </Notice>
           </>
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose}>{batch ? "Cerrar" : "Cancelar"}</Button>
+        <Button onClick={onClose} disabled={isPending}>
+          {batch ? "Cerrar" : "Cancelar"}
+        </Button>
         {(!batch || remaining > 0) && (
           <Button variant="contained" onClick={send} disabled={isPending}>
             {isPending ? "Enviando..." : batch ? "Enviar las siguientes" : "Enviar invitaciones"}
           </Button>
         )}
       </DialogActions>
+      {/* In place from the moment the dialog opens, so each batch's result is
+          announced. Last, so it does not separate the title from the content. */}
+      <ActionStatus message={batch ? `${sentText} ${remainingText}` : ""} />
     </Dialog>
   );
 };

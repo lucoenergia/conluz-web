@@ -212,6 +212,7 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
         confirmColor={toggle.requested ? "success" : "error"}
         confirmPending={toggle.isPending}
         confirmDisabled={toggle.isPending}
+        inFlight={toggle.isPending}
       >
         {toggle.requested
           ? "La planta empezará a sincronizar su producción desde Huawei."

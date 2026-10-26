@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Alert, Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
+import { Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -9,6 +9,8 @@ import { fontSizes, shadows } from "../../theme/tokens";
 import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { Notice } from "../Notice";
+import { ActionStatus } from "../ActionStatus";
 
 export interface SharingAgreementFormValues {
   name: string;
@@ -49,6 +51,10 @@ function isCapacityValid(raw: string): boolean {
 function toComparableCapacity(value: number): number {
   return Math.round(value * CAPACITY_COMPARISON_SCALE);
 }
+
+
+const CAPACITY_CHANGE_NOTICE =
+  "Cambiar la capacidad no modifica los coeficientes ya guardados, pero sí cambia la potencia en kW que corresponde a cada suministro según esos coeficientes.";
 
 export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = ({
   isOpen,
@@ -115,6 +121,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
     <AppModal
       isOpen={isOpen}
       onClose={onCancel}
+      dismissible={!isSubmitting}
       title={`${mode === "create" ? "Nuevo" : "Editar"} acuerdo de reparto en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<HandshakeOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
@@ -156,6 +163,8 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
         </>
       }
     >
+      {/* In place from the moment the dialog opens, so the explanation is announced when a capacity edit brings it. */}
+      <ActionStatus message={capacityChanged ? CAPACITY_CHANGE_NOTICE : ""} />
       <Box sx={{ maxHeight: "60vh", overflowY: "auto", pt: 1 }}>
         {mode === "create" && (
           <>
@@ -166,11 +175,11 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
               disponible en cualquier momento del borrador.
             </Typography>
 
-            <Alert icon={<LockOutlinedIcon fontSize="small" />} severity="info" sx={{ mb: 3 }}>
+            <Notice icon={<LockOutlinedIcon fontSize="small" />} severity="info" sx={{ mb: 3 }}>
               Al <strong>poner en vigor</strong>, el conjunto de coeficientes queda fijo para siempre — cualquier
               cambio futuro requerirá un nuevo acuerdo. Después de ponerlo en vigor solo podrás registrar cuándo la
               distribuidora aplica cada coeficiente.
-            </Alert>
+            </Notice>
           </>
         )}
 
@@ -193,10 +202,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
           />
 
           {capacityChanged && (
-            <Alert severity="info">
-              Cambiar la capacidad no modifica los coeficientes ya guardados, pero sí cambia la potencia
-              en kW que corresponde a cada suministro según esos coeficientes.
-            </Alert>
+            <Notice severity="info">{CAPACITY_CHANGE_NOTICE}</Notice>
           )}
 
           <TextField

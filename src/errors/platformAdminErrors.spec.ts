@@ -27,11 +27,11 @@ describe("platform-admin invitation refusals (#288)", () => {
     expect(isPlatformInvitationStaleRow(apiError(404), "invite")).toBe(false);
   });
 
-  it("gives the resend limit's wait from the Retry-After header, worded for an admin", () => {
+  it("gives the resend limit's wait from the Retry-After header, worded for the invitee", () => {
     const error = apiError(429, { code: "PLATFORM_ADMIN_INVITATION_RESEND_LIMIT_REACHED" }, { "retry-after": "7200" });
 
     expect(platformInvitationWriteMessage(error, "resend")).toBe(
-      "Has alcanzado el límite de reenvíos para este administrador. Podrás volver a reenviar la invitación dentro de 2 horas.",
+      "Has alcanzado el límite de reenvíos para esta persona. Podrás volver a reenviar la invitación dentro de 2 horas.",
     );
   });
 
@@ -44,7 +44,7 @@ describe("platform-admin invitation refusals (#288)", () => {
 
     expect(platformInvitationWriteMessage(withBody, "resend")).toContain("dentro de 10 minutos.");
     expect(platformInvitationWriteMessage(without, "resend")).toBe(
-      "Has alcanzado el límite de reenvíos para este administrador. Vuelve a intentarlo más tarde.",
+      "Has alcanzado el límite de reenvíos para esta persona. Vuelve a intentarlo más tarde.",
     );
   });
 

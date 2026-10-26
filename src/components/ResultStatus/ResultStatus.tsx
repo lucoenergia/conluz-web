@@ -14,7 +14,13 @@ export interface ResultStatusProps {
   /** Number of records currently rendered. */
   count: number;
   noun: ResultNoun;
-  /** What to announce when the result set is empty. */
+  /**
+   * A second kind of record rendered in the same list, counted apart and
+   * announced after the first when there is any: "3 administradores de
+   * plataforma y 1 invitación pendiente" (#310).
+   */
+  also?: { count: number; noun: ResultNoun };
+  /** What to announce when the result set is empty, `also` included. */
   emptyMessage: string;
   /** BCP-47 tag used to pick the plural form. */
   locale?: string;
@@ -41,13 +47,22 @@ export const ResultStatus: FC<ResultStatusProps> = ({
   isLoading,
   count,
   noun,
+  also,
   emptyMessage,
   locale = "es-ES",
 }) => {
-  const form = new Intl.PluralRules(locale).select(count) === "one" ? noun.one : noun.other;
+  const rules = new Intl.PluralRules(locale);
+  const counted = (n: number, { one, other }: ResultNoun) => `${n} ${rules.select(n) === "one" ? one : other}`;
+  const shownAlso = also && also.count > 0 ? also : undefined;
+  const text =
+    count === 0 && !shownAlso
+      ? emptyMessage
+      : shownAlso
+        ? `${counted(count, noun)} y ${counted(shownAlso.count, shownAlso.noun)}`
+        : counted(count, noun);
   return (
     <Box role="status" aria-live="polite" sx={visuallyHidden}>
-      {isLoading ? "Cargando…" : count === 0 ? emptyMessage : `${count} ${form}`}
+      {isLoading ? "Cargando…" : text}
     </Box>
   );
 };

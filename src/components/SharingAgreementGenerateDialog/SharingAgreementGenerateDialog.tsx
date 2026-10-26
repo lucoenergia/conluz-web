@@ -70,6 +70,7 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
     <AppModal
       isOpen={isOpen}
       onClose={handleClose}
+      dismissible={!generateFile.isPending}
       title="Generar fichero"
       icon={<DescriptionOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}

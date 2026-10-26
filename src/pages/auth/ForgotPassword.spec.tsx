@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { act, screen } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router";
@@ -75,8 +75,14 @@ describe("the forgot-password screen", () => {
     for (const personalId of ["12345678Z", "X1234567L"]) {
       const user = userEvent.setup();
       const { unmount } = renderPage();
+      // The region is in place, empty, before the request (#310).
+      const region = screen.getByRole("status");
+      expect(region).toHaveTextContent(/^$/);
       await submit(user, personalId);
-      confirmations.push((await screen.findByRole("alert")).textContent ?? "");
+      await waitFor(() => expect(region).not.toHaveTextContent(/^$/));
+      confirmations.push(region.textContent ?? "");
+      expect(screen.getByRole("note")).toHaveTextContent(RECOVERY_REQUESTED_MESSAGE);
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("DNI/NIE/NIF")).not.toBeInTheDocument();
       expect(screen.getByRole("link", { name: "Volver al inicio de sesión" })).toHaveAttribute("href", "/login");
       unmount();
@@ -93,7 +99,7 @@ describe("the forgot-password screen", () => {
 
     renderPage();
     await submit(user, "  12345678Z ");
-    await screen.findByText(RECOVERY_REQUESTED_MESSAGE);
+    expect(await screen.findByRole("note")).toHaveTextContent(RECOVERY_REQUESTED_MESSAGE);
 
     expect(recoverBodies(router)).toEqual([{ personalId: "12345678Z" }]);
   });
@@ -133,7 +139,7 @@ describe("the forgot-password screen", () => {
     expect(screen.getByLabelText("DNI/NIE/NIF")).toHaveValue("12345678Z");
 
     await user.click(screen.getByRole("button", { name: "Enviar" }));
-    expect(await screen.findByText(RECOVERY_REQUESTED_MESSAGE)).toBeInTheDocument();
+    expect(await screen.findByRole("note")).toHaveTextContent(RECOVERY_REQUESTED_MESSAGE);
     expect(recoverBodies(router)).toEqual([{ personalId: "12345678Z" }, { personalId: "12345678Z" }]);
   });
 

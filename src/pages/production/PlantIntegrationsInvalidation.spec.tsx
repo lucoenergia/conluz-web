@@ -54,7 +54,7 @@ function TwoPlants() {
 
 const region = (name: string) => screen.getByRole("region", { name });
 const switchOf = (name: string) => within(region(name)).getByRole("switch", { name: "Integración con Huawei activa" });
-const confirmation = () => screen.getByTestId("modal-panel");
+const confirmation = () => screen.getByRole("dialog", { name: /^(Activar|Desactivar) integración con Huawei$/ });
 
 const requestsTo = (requests: RequestConfig[], method: string, url: string) =>
   requests.filter((r) => (r.method ?? "GET").toUpperCase() === method && r.url === url);

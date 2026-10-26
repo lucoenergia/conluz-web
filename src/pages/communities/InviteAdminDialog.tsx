@@ -14,6 +14,8 @@ import {
   type MemberRecordField,
 } from "../members/memberRecordForm";
 import { MemberRecordFields } from "../members/MemberRecordFields";
+import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 const ADMIN_FIELDS = ["fullName", "contactEmail", "phoneNumber"] as const;
 const ADMIN_REQUIRED = ["fullName", "contactEmail"] as const;
@@ -66,7 +68,7 @@ export const InviteAdminDialog: FC<InviteAdminDialogProps> = ({ communityName, i
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open {...inFlightDialogProps(inviteAdmin.isPending, onClose)} maxWidth="sm" fullWidth>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Box sx={{ px: 3, pt: 2.5 }}>
           <CommunityScopeHeader name={communityName} />
@@ -74,10 +76,10 @@ export const InviteAdminDialog: FC<InviteAdminDialogProps> = ({ communityName, i
         <DialogTitle sx={{ pt: 0 }}>Invitar administrador a {community}</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
-          <Alert severity="info">
+          <Notice severity="info">
             Le llegará un email a su dirección de contacto con un enlace para aceptar. Quedará pendiente hasta que
             acepte la invitación.
-          </Alert>
+          </Notice>
           <TextField
             label="DNI/NIE/NIF"
             required
@@ -97,7 +99,9 @@ export const InviteAdminDialog: FC<InviteAdminDialogProps> = ({ communityName, i
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose}>Cancelar</Button>
+          <Button onClick={onClose} disabled={inviteAdmin.isPending}>
+            Cancelar
+          </Button>
           <Button type="submit" variant="contained" disabled={inviteAdmin.isPending}>
             {inviteAdmin.isPending ? "Enviando..." : "Invitar"}
           </Button>

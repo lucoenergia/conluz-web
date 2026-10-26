@@ -41,6 +41,34 @@ describe("ResultStatus", () => {
     expect(screen.getByRole("status")).not.toHaveTextContent("No se encontraron");
   });
 
+  describe("#310 with a second kind of record counted apart", () => {
+    const PENDING = { one: "invitación pendiente", other: "invitaciones pendientes" };
+
+    it("announces both counts, each in its own plural form", () => {
+      render(<ResultStatus count={3} noun={NOUN} also={{ count: 1, noun: PENDING }} emptyMessage="Sin comunidades" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent("3 comunidades y 1 invitación pendiente");
+    });
+
+    it("leaves the second count out when there is none", () => {
+      render(<ResultStatus count={1} noun={NOUN} also={{ count: 0, noun: PENDING }} emptyMessage="Sin comunidades" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(/^1 comunidad$/);
+    });
+
+    it("does not call the list empty while the second kind is there", () => {
+      render(<ResultStatus count={0} noun={NOUN} also={{ count: 2, noun: PENDING }} emptyMessage="Sin comunidades" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent("0 comunidades y 2 invitaciones pendientes");
+    });
+
+    it("announces the empty message when both are zero", () => {
+      render(<ResultStatus count={0} noun={NOUN} also={{ count: 0, noun: PENDING }} emptyMessage="Sin comunidades" />);
+
+      expect(screen.getByRole("status")).toHaveTextContent("Sin comunidades");
+    });
+  });
+
   it("stays mounted across states so the region is not inserted with its content", () => {
     const { rerender } = render(
       <ResultStatus isLoading count={0} noun={NOUN} emptyMessage="Sin comunidades" />,

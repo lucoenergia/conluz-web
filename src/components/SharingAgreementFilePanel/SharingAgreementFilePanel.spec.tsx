@@ -321,6 +321,25 @@ describe("SharingAgreementFilePanel", () => {
       expect(mockErrorDispatch).not.toHaveBeenCalledWith("TEST-SERVER-MESSAGE");
     });
 
+    it("#310 announces a generated file through a region in place before it, and shows it as a note", async () => {
+      // jsdom has no createObjectURL/revokeObjectURL implementation.
+      vi.stubGlobal("URL", { ...URL, createObjectURL: vi.fn(() => "blob:test"), revokeObjectURL: vi.fn() });
+      const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+      mockGenerateMutateAsync.mockResolvedValue(new Blob(["ES0031;0,5"], { type: "text/plain" }));
+      const user = userEvent.setup();
+      renderPanel();
+      const region = screen.getByRole("status");
+      expect(region).toHaveTextContent(/^$/);
+
+      await user.click(screen.getByRole("button", { name: GENERATE }));
+      await user.click(await screen.findByRole("button", { name: "Generar" }));
+
+      expect(await screen.findByRole("note")).toHaveTextContent(/El fichero se ha generado/);
+      expect(region).toHaveTextContent(/El fichero se ha generado/);
+      click.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
     it("UI-ERR-003 shows the server's message for a code with no catalogue entry", async () => {
       mockGenerateMutateAsync.mockRejectedValue(refusalWith("USER_ALREADY_EXISTS", {}));
       const user = userEvent.setup();

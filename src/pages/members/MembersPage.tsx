@@ -72,6 +72,8 @@ import {
   type InvitationActions,
 } from "./membershipStatus";
 import { MembershipStatusCell, MembershipStatusChip } from "./MembershipStatusCell";
+import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
@@ -586,7 +588,7 @@ export const MembersPage: FC = () => {
       {/* Suspend / reactivate confirmation, gated like the item that opens it. */}
       <Dialog
         open={statusDialogOpen && !!selectedStatusToggle}
-        onClose={() => setStatusDialogOpen(false)}
+        {...inFlightDialogProps(selectedStatusToggle?.action.isPending ?? false, () => setStatusDialogOpen(false))}
         maxWidth="xs"
         fullWidth
       >
@@ -601,14 +603,16 @@ export const MembersPage: FC = () => {
             {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
             <strong>{selectedMembership?.fullName ?? "este miembro"}</strong> en {community}?
           </Typography>
-          <Alert severity="info">
+          <Notice severity="info">
             {selectedStatusToggle?.isSuspending
               ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
               : `Volverá a tener acceso a ${community}.`}
-          </Alert>
+          </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setStatusDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setStatusDialogOpen(false)} disabled={selectedStatusToggle?.action.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             color={selectedStatusToggle?.isSuspending ? "error" : "primary"}
@@ -626,7 +630,7 @@ export const MembersPage: FC = () => {
           reached, and no way to be left open across a switch that revokes it. */}
       <Dialog
         open={roleDialogOpen && !!selectedActions.changeRole}
-        onClose={() => setRoleDialogOpen(false)}
+        {...inFlightDialogProps(selectedActions.changeRole?.isPending ?? false, () => setRoleDialogOpen(false))}
         maxWidth="sm"
         fullWidth
       >
@@ -659,14 +663,16 @@ export const MembersPage: FC = () => {
               <FormHelperText>{LAST_ACTIVE_ADMIN_EXPLANATION}</FormHelperText>
             )}
           </FormControl>
-          <Alert severity="info">
+          <Notice severity="info">
             {pendingRole === MembershipResponseRole.COMMUNITY_ADMIN
               ? "Un administrador puede gestionar los miembros y la configuración de la comunidad."
               : "Un miembro tiene acceso básico a la comunidad y perderá los permisos de administración."}
-          </Alert>
+          </Notice>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRoleDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setRoleDialogOpen(false)} disabled={selectedActions.changeRole?.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             onClick={handleRoleDialogConfirm}
@@ -685,7 +691,7 @@ export const MembersPage: FC = () => {
       {/* Remove confirmation dialog, gated like the item that opens it. */}
       <Dialog
         open={!!removeConfirmUserId && !!removeTargetRemove && !isLastActiveAdmin(removeTarget)}
-        onClose={() => setRemoveConfirmUserId(null)}
+        {...inFlightDialogProps(removeTargetRemove?.isPending ?? false, () => setRemoveConfirmUserId(null))}
         maxWidth="xs"
         fullWidth
       >
@@ -701,7 +707,9 @@ export const MembersPage: FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRemoveConfirmUserId(null)}>Cancelar</Button>
+          <Button onClick={() => setRemoveConfirmUserId(null)} disabled={removeTargetRemove?.isPending}>
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             color="error"

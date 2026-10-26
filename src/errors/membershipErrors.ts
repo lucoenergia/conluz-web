@@ -49,16 +49,17 @@ function withRefreshedNote(message: string, write: StaleRowWrite, code: RestErro
  * MEMBERSHIP_ALREADY_EXISTS means a registration of someone already in the
  * community in the catalogue, and an acceptance that happened meanwhile here.
  * The catalogue's NOT_INVITED and DISABLED name a member, so the admins page
- * words them for an admin (#276).
+ * words them for someone whose invitation is pending, who is not an admin yet
+ * (#276, #310).
  */
 const SUBJECT_REFUSALS: Record<InvitationSubject, Partial<Record<Exclude<RestErrorDetailCode, null>, string>>> = {
   member: {
     MEMBERSHIP_ALREADY_EXISTS: "Este miembro ya ha aceptado la invitación.",
   },
   admin: {
-    MEMBERSHIP_ALREADY_EXISTS: "Este administrador ya ha aceptado la invitación.",
-    MEMBERSHIP_NOT_INVITED: "Este administrador todavía no tiene ninguna invitación que reenviar.",
-    MEMBERSHIP_DISABLED: "Este administrador está suspendido, así que no se le puede invitar.",
+    MEMBERSHIP_ALREADY_EXISTS: "Esta persona ya ha aceptado la invitación.",
+    MEMBERSHIP_NOT_INVITED: "Esta persona todavía no tiene ninguna invitación que reenviar.",
+    MEMBERSHIP_DISABLED: "Esta persona está suspendida, así que no se le puede invitar.",
   },
 };
 

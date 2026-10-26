@@ -239,7 +239,7 @@ async function openInviteForm(u: ReturnType<typeof userEvent.setup>) {
 async function fillInviteForm(u: ReturnType<typeof userEvent.setup>, dialog: HTMLElement, body = INVITE_BODY) {
   await u.type(within(dialog).getByRole("textbox", { name: "DNI/NIE/NIF" }), body.personalId);
   await u.type(within(dialog).getByRole("textbox", { name: "Nombre completo" }), body.fullName);
-  await u.type(within(dialog).getByRole("textbox", { name: "Email de contacto" }), body.email);
+  await u.type(within(dialog).getByRole("textbox", { name: "Email" }), body.email);
 }
 
 const codeDialog = () => screen.findByRole("dialog", { name: "Código de confirmación" });
@@ -306,7 +306,7 @@ describe("pending invitations in the list", () => {
     expect(facts("Total")).toContain("2");
     expect(facts("Habilitados")).toContain("2");
     expect(facts("Pendientes")).toContain("2");
-    expect(screen.getByText("2 administradores")).toBeInTheDocument();
+    expect(screen.getByText("2 administradores de plataforma y 2 invitaciones pendientes")).toBeInTheDocument();
   });
 
   it("UI-PAD-014 shows no pending counter when nobody is pending", async () => {
@@ -315,6 +315,16 @@ describe("pending invitations in the list", () => {
     await screen.findByText("Ramón Revocable");
 
     expect(screen.queryByText("Pendientes")).not.toBeInTheDocument();
+    expect(screen.getByText("2 administradores de plataforma")).toBeInTheDocument();
+  });
+
+  it("UI-PAD-014 announces a lone pending invitation rather than an empty list", async () => {
+    servePage({ current: [NURIA] });
+    renderPage();
+    await screen.findByText("Nuria Nueva");
+
+    expect(screen.getByText("0 administradores de plataforma y 1 invitación pendiente")).toBeInTheDocument();
+    expect(screen.queryByText("No hay administradores de plataforma")).not.toBeInTheDocument();
   });
 });
 
@@ -461,7 +471,7 @@ describe("resending an invitation", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Has alcanzado el límite de reenvíos para este administrador. Podrás volver a reenviar la invitación dentro de 2 horas.",
+        "Has alcanzado el límite de reenvíos para esta persona. Podrás volver a reenviar la invitación dentro de 2 horas.",
       ),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -686,7 +696,7 @@ describe("inviting a platform admin", () => {
 
     expect(within(form).getByText("Escribe el DNI/NIE/NIF")).toBeInTheDocument();
     expect(within(form).getByText("Escribe el nombre completo")).toBeInTheDocument();
-    expect(within(form).getByText("Escribe el email de contacto")).toBeInTheDocument();
+    expect(within(form).getByText("Escribe el email")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([]);
   });
 
@@ -712,7 +722,7 @@ describe("inviting a platform admin", () => {
     await waitFor(() => expect(personalId).toHaveAccessibleDescription("El DNI/NIE/NIF no es válido. Revisa los números y la letra."));
     expect(personalId).toHaveValue(INVITE_BODY.personalId);
     expect(within(form).getByRole("textbox", { name: "Nombre completo" })).toHaveValue(INVITE_BODY.fullName);
-    expect(within(form).getByRole("textbox", { name: "Email de contacto" })).toHaveValue(INVITE_BODY.email);
+    expect(within(form).getByRole("textbox", { name: "Email" })).toHaveValue(INVITE_BODY.email);
     expect(listReads(router)).toBe(readsBefore);
   });
 
@@ -756,8 +766,35 @@ describe("inviting a platform admin", () => {
     expect(await within(form).findByText(message)).toBeInTheDocument();
     expect(within(form).getByRole("textbox", { name: "DNI/NIE/NIF" })).toHaveValue(INVITE_BODY.personalId);
     expect(within(form).getByRole("textbox", { name: "Nombre completo" })).toHaveValue(INVITE_BODY.fullName);
-    expect(within(form).getByRole("textbox", { name: "Email de contacto" })).toHaveValue(INVITE_BODY.email);
+    expect(within(form).getByRole("textbox", { name: "Email" })).toHaveValue(INVITE_BODY.email);
     if (refetches) await waitFor(() => expect(listReads(router)).toBe(readsBefore + 1));
     else expect(listReads(router)).toBe(readsBefore);
+  });
+
+  it("#310 AC1 shows the form's guidance as a note, and a refusal as an alert", async () => {
+    const u = userEvent.setup();
+    servePage(
+      { current: [PAULA] },
+      {
+        caller: INVITER,
+        invite: () => {
+          throw restError(503, "PLATFORM_ADMIN_INVITATION_UNAVAILABLE");
+        },
+      },
+    );
+    renderPage();
+    await screen.findByText("Paula Plataforma");
+    const form = await openInviteForm(u);
+
+    expect(within(form).getByRole("note")).toHaveTextContent("Le llegará un email con un enlace para aceptar.");
+    expect(within(form).queryByRole("alert")).not.toBeInTheDocument();
+
+    await fillInviteForm(u, form);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+
+    expect(await within(form).findByRole("alert")).toHaveTextContent(
+      "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde.",
+    );
+    expect(within(form).getByRole("note")).toHaveTextContent("Le llegará un email con un enlace para aceptar.");
   });
 });

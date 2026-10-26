@@ -4,6 +4,7 @@ import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import { SharingAgreementFormDialog } from "./SharingAgreementFormDialog";
+import { VISIBLE } from "../../test/visibleText";
 
 describe("SharingAgreementFormDialog", () => {
   test("create mode starts with an empty, required capacity field when no prefill is given", () => {
@@ -159,12 +160,16 @@ describe("SharingAgreementFormDialog", () => {
     );
 
     expect(screen.queryByText(CAPACITY_WARNING)).not.toBeInTheDocument();
+    // The region is in place, empty, before the edit that brings the explanation (#310).
+    const region = screen.getByRole("status");
+    expect(region).toHaveTextContent(/^$/);
 
     const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
     await user.clear(capacityField);
     await user.type(capacityField, "20");
 
-    expect(screen.getByText(CAPACITY_WARNING)).toBeInTheDocument();
+    expect(screen.getByText(CAPACITY_WARNING, VISIBLE).closest('[role="note"]')).not.toBeNull();
+    expect(region).toHaveTextContent(CAPACITY_WARNING);
   });
 
   test("does not warn while the capacity field is cleared mid-edit", async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC, type MouseEvent } from "react";
+import { useEffect, useState, type FC, type SyntheticEvent } from "react";
 import { Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -22,7 +22,7 @@ interface ApplyCoefficientDateConfirmationModalProps {
   hiddenCount?: number;
   isPending: boolean;
   errorMessages: string[] | null;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: (date: Dayjs) => void;
 }
 
@@ -68,6 +68,7 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isPending}
       confirmLabel="Registrar fecha"
       confirmColor="primary"
       confirmDisabled={confirmDisabledReason !== null}

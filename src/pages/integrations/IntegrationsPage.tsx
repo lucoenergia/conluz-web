@@ -28,6 +28,7 @@ import {
   type CredentialsField,
 } from "../../utils/integrationCredentials";
 import { DISABLED_TEXT, incompleteText, isNotFound, retryUnlessNotFound } from "../../utils/integrationStatus";
+import { ActionStatus } from "../../components/ActionStatus";
 
 /**
  * Integration credentials change only when someone edits them on this page, so
@@ -493,6 +494,7 @@ export const IntegrationsPage: FC = () => {
         confirmColor={datadisToggle.requested ? "success" : "error"}
         confirmPending={datadisToggle.isPending}
         confirmDisabled={datadisToggle.isPending}
+        inFlight={datadisToggle.isPending}
         scopeHeader={<CommunityScopeHeader name={communityName} />}
       >
         <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
@@ -503,6 +505,9 @@ export const IntegrationsPage: FC = () => {
       </ConfirmationModal>
 
       {/* Snackbar */}
+      {/* A confirmation is announced through this region, in place before the
+          save; a failure is an alert, which is announced as it appears. */}
+      <ActionStatus message={snack && !snack.includes("Error") ? snack : ""} />
       <Snackbar
         open={!!snack}
         autoHideDuration={3500}
@@ -511,6 +516,7 @@ export const IntegrationsPage: FC = () => {
       >
         <Alert
           severity={snack?.includes("Error") ? "error" : "success"}
+          role={snack?.includes("Error") ? "alert" : "note"}
           onClose={() => setSnack(null)}
           sx={{ borderRadius: radii.default, fontWeight: 500 }}
         >

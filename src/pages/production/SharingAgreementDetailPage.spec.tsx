@@ -29,6 +29,7 @@ import {
   useRevertSharingAgreementToDraft,
   useUpdateSharingAgreement,
 } from "../../api/sharing-agreements/sharing-agreements";
+import { VISIBLE } from "../../test/visibleText";
 
 const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
 const { OPEN, DERIVED, CLOSED } = SharingAgreementPartitionCoefficientResponseEndState;
@@ -394,7 +395,7 @@ describe("SharingAgreementDetailPage", () => {
     await user.type(capacityInput, "20");
 
     expect(
-      await screen.findByText(/cambiar la capacidad no modifica los coeficientes ya guardados/i),
+      await screen.findByText(/cambiar la capacidad no modifica los coeficientes ya guardados/i, VISIBLE),
     ).toBeInTheDocument();
   });
 

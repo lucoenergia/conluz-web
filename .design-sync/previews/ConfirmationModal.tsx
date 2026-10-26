@@ -30,6 +30,7 @@ export const Pending = () => (
     confirmColor="primary"
     confirmDisabled
     confirmPending
+    inFlight
     title="Guardar integración en Comunidad Energética Benimaclet"
     scopeHeader={<CommunityScopeHeader name="Comunidad Energética Benimaclet" />}
   >

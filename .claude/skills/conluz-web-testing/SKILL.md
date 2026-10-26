@@ -36,7 +36,7 @@ Pick the first level that works, in strict order. The reasoning, and the conditi
 2. **Visible text, when no role fits**, e.g. `page.getByText("Sin periodos aplicados")` in `tests/visual/supplies.spec.ts`.
 3. **`data-testid`, only on a region container with neither a role nor an accessible name** (a card section, panel or bar whose only job is grouping), e.g. `page.getByTestId("coefficient-history-drawer")` in `tests/visual/sharing-agreement-dialogs.spec.ts`. A test id checks nothing a user perceives. It marks the region as lacking semantics, not as convenient.
 - **Never put a `data-testid` on a button, link, form field, menu item or anything else a user interacts with.** If an interactive element can only be found by test id, it is missing an accessible name or role. That is a production defect: report it, don't route around it. `csv-file-input` and `drop-zone` in the import modals predate this rule and are grandfathered, not examples.
-- A test id that stands in for a missing role is marked **interim** by a comment at the attribute, naming the issue that removes it (`modal-panel` in `BasicModal`, pending a real `role="dialog"`).
+- A test id that stands in for a missing role is marked **interim** by a comment at the attribute, naming the issue that removes it. None is left: the last, `modal-panel` in `BasicModal`, went when the modals got `role="dialog"` and a name (#310), so a modal is `getByRole("dialog", { name })`.
 - A structural locator (MUI class, DOM nesting) is a last resort, and it needs a one-line justification in the spec.
 
 ## Fast iteration (agents)

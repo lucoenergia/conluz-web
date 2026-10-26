@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type FC } from "react";
-import { Alert, Box, Button, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Box, Button, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import { colors, fontSizes, radii } from "../../theme/tokens";
 import { groupedCode } from "../../utils/confirmationCode";
+import { Notice } from "../../components/Notice";
 
 const COPY_FEEDBACK_MS = 2000;
 
@@ -80,13 +81,13 @@ export const ConfirmationCodePanel: FC<ConfirmationCodePanelProps> = ({ code, fu
             {copied ? "Copiado" : "Copiar"}
           </Button>
         </Box>
-        <Alert severity="warning">
+        <Notice severity="warning">
           <Box component="ul" sx={{ m: 0, pl: 2 }}>
             <li>Dáselo por teléfono o en persona, nunca por email.</li>
             <li>No se volverá a mostrar: apúntalo o cópialo antes de cerrar.</li>
             <li>Si reenvías la invitación, se generará uno nuevo y este dejará de funcionar.</li>
           </Box>
-        </Alert>
+        </Notice>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button variant="contained" onClick={onDone}>

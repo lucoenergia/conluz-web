@@ -1,7 +1,7 @@
 import { radii, shadows, alphas, fontSizes, colors } from "../theme/tokens";
 import { sxStyles } from "../theme/sx";
 import { useState, useEffect, type FC } from "react";
-import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Chip, Alert, Snackbar } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, Avatar, CircularProgress, Chip, Snackbar } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import BadgeIcon from "@mui/icons-material/Badge";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -11,6 +11,10 @@ import { useErrorDispatch } from "../context/error.context";
 import { useProfileActions } from "../hooks/actions";
 import { useActiveCommunityRoleLabel } from "../hooks/permissions";
 import { isValidEmail } from "../utils/email";
+import { Notice } from "../components/Notice";
+import { ActionStatus } from "../components/ActionStatus";
+
+const PROFILE_SAVED_MESSAGE = "Perfil actualizado correctamente";
 
 export const ProfilePage: FC = () => {
   const { data: currentUser, isLoading, error } = useGetCurrentUser();
@@ -230,10 +234,12 @@ export const ProfilePage: FC = () => {
         </Paper>
       </Box>
 
+      {/* In place before the save, so its confirmation is announced; the toast is read in place. */}
+      <ActionStatus message={successMessage ? PROFILE_SAVED_MESSAGE : ""} />
       <Snackbar open={successMessage} autoHideDuration={4000} onClose={handleCloseSuccessMessage} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", borderRadius: radii.default }}>
-          Perfil actualizado correctamente
-        </Alert>
+        <Notice onClose={handleCloseSuccessMessage} severity="success" sx={{ width: "100%", borderRadius: radii.default }}>
+          {PROFILE_SAVED_MESSAGE}
+        </Notice>
       </Snackbar>
     </Box>
   );

@@ -73,13 +73,13 @@ export const PlantCard: FC<PlantCardProps> = ({
     setAnchorElement(null);
   };
 
-  const handleCloseDeleteConfirmation = (event: React.MouseEvent) => {
+  const handleCloseDeleteConfirmation = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setOpenDeleteConfirmation(false);
   };
 
-  const handleCloseDeleteSuccess = (event: React.MouseEvent) => {
+  const handleCloseDeleteSuccess = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setOpenDeleteSuccess(false);

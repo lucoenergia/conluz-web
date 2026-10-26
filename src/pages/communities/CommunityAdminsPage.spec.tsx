@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { AxiosError } from "axios";
 import { Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -332,6 +333,67 @@ describe("inviting an admin", () => {
     expect(writeLines(router)).toEqual([`POST ${INVITE_URL}`]);
   });
 
+  it("#310 AC4 keeps the form open while the invitation is in flight, then closes it as before", async () => {
+    const u = user();
+    const admins: Admins = { current: [ROSA] };
+    let settle!: () => void;
+    serveAdminsPage(admins, {
+      invite: (config) =>
+        new Promise((resolve) => {
+          settle = () => {
+            const body = config.data as { fullName: string };
+            const invited = admin("u-nora", body.fullName, { ...NEW_LINK, personalId: "12345678Z" });
+            admins.current = [...admins.current, invited];
+            resolve(invited);
+          };
+        }),
+    });
+    renderPage();
+    const form = await openForm(u);
+    await fill(u, FORM);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+    await within(form).findByRole("button", { name: "Enviando..." });
+
+    fireEvent.keyDown(form, { key: "Escape" });
+    // The backdrop has no role or name: MUI's Dialog container takes the click.
+    await u.click(document.querySelector(".MuiDialog-container")!);
+    const cancel = within(form).getByRole("button", { name: "Cancelar" });
+    expect(cancel).toBeDisabled();
+    // A disabled button takes no pointer events, so userEvent refuses it.
+    fireEvent.click(cancel);
+    expect(screen.getByRole("dialog", { name: `Invitar administrador a ${COMMUNITY_NAME}` })).toBeInTheDocument();
+
+    settle();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(await screen.findByText("Nora Nueva")).toBeInTheDocument();
+  });
+
+  it("#310 releases the form once a write that never answers times out", async () => {
+    const u = user();
+    let timeOut!: () => void;
+    serveAdminsPage({ current: [ROSA] }, {
+      invite: () =>
+        new Promise((_, reject) => {
+          // What axios rejects with when the request's limit runs out: no response.
+          timeOut = () => reject(new AxiosError("timeout of 30000ms exceeded", "ECONNABORTED"));
+        }),
+    });
+    renderPage();
+    const form = await openForm(u);
+    await fill(u, FORM);
+    await u.click(within(form).getByRole("button", { name: "Invitar" }));
+    expect(await within(form).findByRole("button", { name: "Cancelar" })).toBeDisabled();
+
+    timeOut();
+
+    expect(await within(form).findByRole("alert")).toBeInTheDocument();
+    expect(within(form).getByRole("button", { name: "Cancelar" })).toBeEnabled();
+    expect(within(form).getByRole("textbox", { name: /^Nombre completo/ })).toHaveValue("Nora Nueva");
+    fireEvent.keyDown(form, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
   it("UI-ADM-003 sends a blank phone as none", async () => {
     const u = user();
     const router = serveAdminsPage({ current: [ROSA] }, { invite: () => admin("u-nora", "Nora Nueva", NEW_LINK) });
@@ -541,7 +603,7 @@ describe("refused row actions", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Has alcanzado el límite de reenvíos para este administrador. Podrás volver a reenviar la invitación dentro de 2 horas.",
+        "Has alcanzado el límite de reenvíos para esta persona. Podrás volver a reenviar la invitación dentro de 2 horas.",
       ),
     );
   });
@@ -550,19 +612,19 @@ describe("refused row actions", () => {
     [
       "MEMBERSHIP_NOT_INVITED",
       { invitedAt: null, invitationExpiresAt: null },
-      "Este administrador todavía no tiene ninguna invitación que reenviar. Hemos actualizado la lista.",
+      "Esta persona todavía no tiene ninguna invitación que reenviar. Hemos actualizado la lista.",
     ],
     [
       "MEMBERSHIP_DISABLED",
       { enabled: false },
-      "Este administrador está suspendido, así que no se le puede invitar. Hemos actualizado la lista.",
+      "Esta persona está suspendida, así que no se le puede invitar. Hemos actualizado la lista.",
     ],
     [
       "MEMBERSHIP_ALREADY_EXISTS",
       { acceptedAt: "2026-10-18T09:00:00Z" },
-      "Este administrador ya ha aceptado la invitación. Hemos actualizado la lista.",
+      "Esta persona ya ha aceptado la invitación. Hemos actualizado la lista.",
     ],
-  ])("UI-ADM-006 words a resend refused with %s for an admin, and refetches the list", async (code, change, message) => {
+  ])("UI-ADM-006 words a resend refused with %s for the invitee, and refetches the list", async (code, change, message) => {
     const u = user();
     const admins: Admins = { current: [PABLO] };
     const router = serveAdminsPage(admins, {
@@ -596,7 +658,7 @@ describe("refused row actions", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Este administrador ya ha aceptado la invitación. Hemos actualizado la lista.",
+        "Esta persona ya ha aceptado la invitación. Hemos actualizado la lista.",
       ),
     );
     expect(await within(rowOf("Pablo Pendiente")).findByText("Activo")).toBeInTheDocument();
@@ -614,7 +676,7 @@ describe("refused row actions", () => {
 
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Este administrador no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.",
+        "Esta persona no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.",
       ),
     );
   });

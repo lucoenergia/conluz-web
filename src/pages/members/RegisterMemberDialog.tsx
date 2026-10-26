@@ -25,6 +25,8 @@ import {
   type RegistrationValues,
 } from "./memberRecordForm";
 import { MemberRecordFields } from "./MemberRecordFields";
+import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 interface RegisterMemberDialogProps {
   communityName: string | undefined;
@@ -91,9 +93,10 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
       if ("ok" in result) onClose();
       else setInviteError(invitationRefusalMessage(result.error, "invite"));
     };
+    const inviting = invite?.isPending ?? false;
 
     return (
-      <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <Dialog open {...inFlightDialogProps(inviting, onClose)} maxWidth="sm" fullWidth>
         <Box sx={{ px: 3, pt: 2.5 }}>
           <CommunityScopeHeader name={communityName} />
         </Box>
@@ -106,19 +109,21 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
           </Typography>
           {registered.contactEmail ? (
             invite && (
-              <Alert severity="info">
+              <Notice severity="info">
                 Si le invitas ahora, le llegará un email a {registered.contactEmail} con un enlace para unirse a{" "}
                 {community}.
-              </Alert>
+              </Notice>
             )
           ) : (
-            <Alert severity="info">
+            <Notice severity="info">
               No tiene email de contacto, así que todavía no se le puede invitar. Añádelo desde «Editar ficha».
-            </Alert>
+            </Notice>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose}>Cerrar</Button>
+          <Button onClick={onClose} disabled={inviting}>
+            Cerrar
+          </Button>
           {invite && (
             <Button variant="contained" onClick={handleInvite} disabled={invite.isPending}>
               {invite.isPending ? "Enviando..." : "Invitar ahora"}
@@ -130,7 +135,7 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
   }
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open {...inFlightDialogProps(register.isPending, onClose)} maxWidth="sm" fullWidth>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Box sx={{ px: 3, pt: 2.5 }}>
           <CommunityScopeHeader name={communityName} />
@@ -138,9 +143,9 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
         <DialogTitle sx={{ pt: 0 }}>Registrar miembro en {community}</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
-          <Alert severity="info">
+          <Notice severity="info">
             Registrarle no le envía nada. Quedará pendiente hasta que le invites y acepte la invitación.
-          </Alert>
+          </Notice>
           <TextField
             label="DNI/NIE/NIF"
             required
@@ -154,7 +159,9 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
           <MemberRecordFields values={values} errors={errors} onChange={change} />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose}>Cancelar</Button>
+          <Button onClick={onClose} disabled={register.isPending}>
+            Cancelar
+          </Button>
           <Button type="submit" variant="contained" disabled={register.isPending}>
             {register.isPending ? "Registrando..." : "Registrar"}
           </Button>

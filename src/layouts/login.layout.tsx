@@ -4,6 +4,8 @@ import { Outlet } from "react-router";
 import { Logo } from "../components/Header/Logo";
 import { AnonRoute } from "../components/Auth/AnonRoute";
 import { RouteFallback } from "../components/RouteFallback";
+import { AuthErrorBoundry } from "../components/ErrorBoundries/AuthErrorBoundry";
+import { useLogout } from "../hooks/useLogout";
 
 interface LoginLayoutProps {
   /**
@@ -16,13 +18,18 @@ interface LoginLayoutProps {
 }
 
 export const LoginLayout: FC<LoginLayoutProps> = ({ allowSignedIn = false }) => {
+  const logout = useLogout();
   const content = (
     <Container sx={{ width: '100vw', height: '100vh', display: 'grid', justifyContent: 'center', alignItems: 'flex-start', p: 0, m: 0, maxWidth: '100vw !important' }}>
       <Box sx={{ display: 'grid', justifyItems: 'center', alignContent: 'flex-start', gap: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 2 }, width: { xs: '100vw', sm: '512px' } }}>
         <Logo></Logo>
-        <Suspense fallback={<RouteFallback />}>
-          <Outlet />
-        </Suspense>
+        {/* A 401 thrown by a query (src/queryClient.ts) ends the session here
+            too, as in AuthenticatedLayout, instead of unmounting the app (#310). */}
+        <AuthErrorBoundry onError={() => void logout()}>
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
+        </AuthErrorBoundry>
       </Box>
     </Container>
   );

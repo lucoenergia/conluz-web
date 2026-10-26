@@ -28,6 +28,7 @@ export const Centered = () => (
     isOpen
     onClose={() => {}}
     centered
+    label="Coeficientes importados"
     icon={<Icons.CheckCircle sx={{ fontSize: 40, color: "success.main" }} />}
     iconBg={alphas.success.light}
   >

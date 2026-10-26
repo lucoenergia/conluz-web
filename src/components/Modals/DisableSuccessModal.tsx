@@ -1,25 +1,28 @@
-import type { FC } from "react";
+import { useId, type FC, type SyntheticEvent } from "react";
 import { AppModal } from "./AppModal";
 import { Button, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { radii, shadows, alphas, fontSizes, interactiveTransition} from "../../theme/tokens";
 
 interface DisableSuccessModalProps {
-  onClose: (event: React.MouseEvent<HTMLElement>) => void;
+  onClose: (event: SyntheticEvent) => void;
   isOpen: boolean;
   code: string;
 }
 
 export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isOpen, code }) => {
+  const nameId = useId();
   return (
     <AppModal
       isOpen={isOpen}
       onClose={onClose}
       centered
+      labelledBy={`${nameId}-lead ${nameId}-code ${nameId}-outcome`}
       icon={<CheckCircleIcon sx={{ fontSize: 40, color: "success.main" }} />}
       iconBg={alphas.success.light}
     >
       <Typography
+        id={`${nameId}-lead`}
         sx={{
           fontSize: fontSizes["2xl"],
           color: "secondary.main",
@@ -30,6 +33,7 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
         El punto de suministro
       </Typography>
       <Typography
+        id={`${nameId}-code`}
         sx={{
           fontSize: fontSizes.lg,
           fontWeight: 600,
@@ -43,6 +47,7 @@ export const DisableSuccessModal: FC<DisableSuccessModalProps> = ({ onClose, isO
         {code}
       </Typography>
       <Typography
+        id={`${nameId}-outcome`}
         sx={{
           fontSize: fontSizes["2xl"],
           color: "secondary.main",

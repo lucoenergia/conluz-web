@@ -9,6 +9,8 @@ import { Link as RouterLink } from "react-router";
 import { useSessionActions } from "../../hooks/actions";
 import { throttledMessage } from "../../errors/authErrors";
 import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { Notice } from "../../components/Notice";
+import { ActionStatus } from "../../components/ActionStatus";
 
 /**
  * The same sentence whatever the account (#233): the backend answers 202 for
@@ -108,11 +110,14 @@ export const ForgotPassword: FC = () => {
         </Box>
 
         <Box sx={{ p: { xs: 3, sm: 4 } }}>
+          {/* In place before the request is sent, so the confirmation that
+              replaces the form is announced; the note below is read in place. */}
+          <ActionStatus message={requested ? RECOVERY_REQUESTED_MESSAGE : ""} />
           <Box sx={sxStyles.flexColumnGap3}>
             {requested ? (
-              <Alert severity="success" sx={{ borderRadius: radii.default }}>
+              <Notice severity="success" sx={{ borderRadius: radii.default }}>
                 {RECOVERY_REQUESTED_MESSAGE}
-              </Alert>
+              </Notice>
             ) : (
               <Box component="form" onSubmit={handleSubmit} noValidate sx={sxStyles.flexColumnGap3}>
                 {formError && (

@@ -56,7 +56,7 @@ test.describe("Visual baselines", () => {
 
     await page.goto("/");
     await expect(page).toHaveURL(/\/change-password$/);
-    await expect(page.getByRole("alert")).toHaveText("Por seguridad, debes cambiar tu contraseña antes de continuar.");
+    await expect(page.getByRole("note")).toHaveText("Por seguridad, debes cambiar tu contraseña antes de continuar.");
     await expect(page.getByRole("button", { name: "Cancelar" })).toHaveCount(0);
     await stabilizePage(page);
 

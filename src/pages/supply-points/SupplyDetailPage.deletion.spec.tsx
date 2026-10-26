@@ -10,6 +10,7 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
 import { buildSupply, buildMemberRecord, buildSupplyCapabilities } from "../../test/fixtures";
+import { VISIBLE } from "../../test/visibleText";
 
 /**
  * Deleting a supply from its detail page (#290): once the supply is gone the
@@ -89,7 +90,7 @@ describe("deleting a supply from its detail page", () => {
     await confirmDeletion(user);
 
     expect(await screen.findByRole("heading", { name: "Lista de puntos de suministro" })).toBeInTheDocument();
-    expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.")).toBeInTheDocument();
+    expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.", VISIBLE)).toBeInTheDocument();
     const deleteAt = router.requests.findIndex((request) => request.method === "DELETE");
     expect(deleteAt).toBeGreaterThan(-1);
     expect(router.requests.slice(deleteAt + 1).filter(isSupplyRead)).toHaveLength(0);

@@ -25,6 +25,7 @@ import {
   HUAWEI_URL_PLACEHOLDER,
   SAVE_FAILED_MESSAGE,
 } from "./huaweiConfig";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 export interface HuaweiConfigDialogProps {
   /** `create` when the plant has no configuration (a 404), `edit` otherwise. */
@@ -91,7 +92,7 @@ export const HuaweiConfigDialog: FC<HuaweiConfigDialogProps> = ({
   return (
     <Dialog
       open
-      onClose={isSaving ? undefined : onClose}
+      {...inFlightDialogProps(isSaving, onClose)}
       fullScreen={fullScreen}
       fullWidth
       maxWidth="sm"

@@ -64,6 +64,8 @@ A `data-testid` in `src/` is a statement: this container has no role and no name
 - Six attributes are added to production markup (see References). They cost nothing at runtime but are visible in the DOM.
 - Contributors must follow an obligation that is not visible in the code: before adding a `data-testid`, check that no role and no name fits, and never add one to an interactive element.
 - The `modal-panel` interim test id must be removed when the dialog-role issue is fixed. Otherwise the interim becomes permanent.
+
+  > **Implementation note (#310):** `BasicModal` now renders `role="dialog"` with an accessible name, `modal-panel` is removed, and every spec selects a modal by `getByRole("dialog", { name })`. The decision above is unchanged.
 - Known pre-existing exceptions remain: `csv-file-input` and `drop-zone` in `ImportSuppliesModal.tsx` and `ImportPartnersModal.tsx`. They are on interactive elements and are grandfathered, not endorsed. `drop-zone` also marks a keyboard-access defect.
 
   > **Implementation note (conluzweb-180):** both modals now render through `src/components/Modals/CsvImportModal.tsx`, which is where `csv-file-input` and `drop-zone` live. `ImportSuppliesModal.tsx` and `ImportPartnersModal.tsx` remain as thin adapters without test ids. The decision above is unchanged.

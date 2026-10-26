@@ -1,8 +1,10 @@
 import type { FC } from "react";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import type { Action, MembershipWriteResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel } from "../../hooks/useActiveCommunityName";
+import { Notice } from "../../components/Notice";
+import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
 export type InvitationWriteKind = "invite" | "resend" | "revoke";
 
@@ -75,7 +77,7 @@ export const InvitationActionDialog: FC<InvitationActionDialogProps> = ({
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open {...inFlightDialogProps(action.isPending, onClose)} maxWidth="xs" fullWidth>
       <Box sx={{ px: 3, pt: 2.5 }}>
         <CommunityScopeHeader name={communityName} />
       </Box>
@@ -87,10 +89,12 @@ export const InvitationActionDialog: FC<InvitationActionDialogProps> = ({
           {copy.question}
           <strong>{memberName}</strong>?
         </Typography>
-        <Alert severity="info">{copy.consequence(community)}</Alert>
+        <Notice severity="info">{copy.consequence(community)}</Notice>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose} disabled={action.isPending}>
+          Cancelar
+        </Button>
         <Button
           variant="contained"
           color={kind === "revoke" ? "error" : "primary"}

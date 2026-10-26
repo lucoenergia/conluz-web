@@ -92,21 +92,23 @@ member of the community, and sees nothing about its members here.
 - **Implements:** MEM-022, MEM-023, MEM-025
 - **Source:** #276
 
-### UI-ADM-006 — Row refusals are the members page's, worded for an admin
+### UI-ADM-006 — Row refusals are the members page's, worded for the invitee
 
 - **Status:** Active
 - **Rule:**
-  - Each refusal of a resend or a revoke MUST have the message UI-MBR-014 gives it, naming "este
-    administrador" where the members page names "este miembro".
+  - Each refusal of a resend or a revoke MUST have the message UI-MBR-014 gives it, naming "esta
+    persona" where the members page names "este miembro".
   - The resend limit MUST say when another resend will be possible.
   - After `MEMBERSHIP_NOT_INVITED`, `MEMBERSHIP_DISABLED` or `MEMBERSHIP_ALREADY_EXISTS`, the list
     MUST be refreshed and the message MUST say so.
   - `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` MUST say that a community admin can add the email from the
     admin's record, and MUST NOT point to "Editar ficha".
 - **Rationale:** The platform admin has no record edit on this page; the community's own admins
-  keep its member records. The refreshed row shows the state the backend refused from.
+  keep its member records. The refreshed row shows the state the backend refused from. A resend or
+  a revoke is refused about someone whose invitation is pending, who is not an admin until they
+  accept, so the message does not call them one.
 - **Implements:** MEM-010, MEM-011, MEM-022, MEM-025
-- **Source:** #276
+- **Source:** #276; changed in #310 ("esta persona" replaces "este administrador")
 
 ### UI-ADM-007 — The page reads nothing about members and writes no membership
 

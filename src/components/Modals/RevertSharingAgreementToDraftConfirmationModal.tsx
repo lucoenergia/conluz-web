@@ -1,16 +1,17 @@
-import { Alert, Typography } from "@mui/material";
-import type { FC, MouseEvent } from "react";
+import { Typography } from "@mui/material";
+import type { FC, SyntheticEvent } from "react";
 import { ConfirmationModal } from "./ConfirmationModal";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
+import { Notice } from "../Notice";
 
 interface RevertSharingAgreementToDraftConfirmationModalProps {
   isOpen: boolean;
   agreementName: string;
   isReverting?: boolean;
-  onCancel: (event: MouseEvent<HTMLElement>) => void;
+  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 
@@ -22,6 +23,7 @@ export const RevertSharingAgreementToDraftConfirmationModal: FC<
     <ConfirmationModal
       isOpen={isOpen}
       onCancel={onCancel}
+      inFlight={isReverting}
       confirmLabel="Volver a borrador"
       confirmColor="primary"
       confirmDisabled={isReverting}
@@ -59,10 +61,10 @@ export const RevertSharingAgreementToDraftConfirmationModal: FC<
 
       {/* The rule the publish dialog explains in advance, stated here where it is
           about to matter: this route exists only while nothing has been applied. */}
-      <Alert severity="info">
+      <Notice severity="info">
         Puedes hacerlo porque la distribuidora todavía no ha aplicado ningún coeficiente. En cuanto aplique alguno,
         el acuerdo ya no podrá volver a borrador y cualquier cambio exigirá un acuerdo nuevo.
-      </Alert>
+      </Notice>
     </ConfirmationModal>
   );
 };

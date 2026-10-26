@@ -44,7 +44,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByLabel("Capacidad de generación de la planta", { exact: false })).toHaveValue("120,5");
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-create-dialog.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Nuevo acuerdo de reparto en / })).toHaveScreenshot(
+      "sharing-agreement-create-dialog.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement create dialog (empty-name validation error)", async ({ page }) => {
@@ -60,7 +63,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("El nombre es obligatorio")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-create-dialog-validation-error.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Nuevo acuerdo de reparto en / })).toHaveScreenshot(
+      "sharing-agreement-create-dialog-validation-error.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement batch registration dialog (Registrar fecha, opened from Acciones)", async ({ page }) => {
@@ -82,7 +88,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Selecciona una fecha")).toBeVisible();
 
     await stabilizePage(page);
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-batch-registration-dialog.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Registrar fecha de aplicación en / })).toHaveScreenshot(
+      "sharing-agreement-batch-registration-dialog.png",
+      await hideAppBar(page),
+    );
   });
 
   test("coefficient history drawer (draft)", async ({ page }) => {
@@ -136,7 +145,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText(/producción ya atribuida a este suministro/)).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-coefficient-recalculation-dialog.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Corregir fecha de aplicación en / })).toHaveScreenshot(
+      "sharing-agreement-coefficient-recalculation-dialog.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement delete confirmation", async ({ page }) => {
@@ -153,7 +165,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: /^Eliminar acuerdo de reparto (en|de) / })).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-delete-confirmation.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Eliminar acuerdo de reparto de / })).toHaveScreenshot(
+      "sharing-agreement-delete-confirmation.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement publish confirmation", async ({ page }) => {
@@ -176,7 +191,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText(/Poner en vigor no aplica nada por sí mismo/)).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-publish-confirmation.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Poner en vigor en / })).toHaveScreenshot(
+      "sharing-agreement-publish-confirmation.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement upload dialog (idle)", async ({ page }) => {
@@ -192,7 +210,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText(`${FIXED_PLANT.regulatoryCode}_AAAA.txt`)).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-upload-dialog-idle.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Importar un fichero que ya tengas en / })).toHaveScreenshot(
+      "sharing-agreement-upload-dialog-idle.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement upload dialog (rejected lines)", async ({ page }) => {
@@ -217,7 +238,10 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Errores por línea")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-upload-dialog-rejected.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: /^Importar un fichero que ya tengas en / })).toHaveScreenshot(
+      "sharing-agreement-upload-dialog-rejected.png",
+      await hideAppBar(page),
+    );
   });
 
   test("sharing agreement generate dialog (year pre-filled)", async ({ page }) => {
@@ -241,6 +265,9 @@ test.describe("Visual baselines", () => {
     await expect(page.getByLabel("Año")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByTestId("modal-panel")).toHaveScreenshot("sharing-agreement-generate-dialog.png", await hideAppBar(page));
+    await expect(page.getByRole("dialog", { name: "Generar fichero" })).toHaveScreenshot(
+      "sharing-agreement-generate-dialog.png",
+      await hideAppBar(page),
+    );
   });
 });

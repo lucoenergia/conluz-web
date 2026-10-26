@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Alert, Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
@@ -20,6 +20,8 @@ import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementActions } from "../../hooks/actions";
 import { SharingAgreementGenerateDialog } from "../SharingAgreementGenerateDialog";
 import { hasPlantRegulatoryCode, MISSING_CAU_MESSAGE } from "../../errors/sharingAgreementFileCopy";
+import { Notice } from "../Notice";
+import { ActionStatus } from "../ActionStatus";
 
 export interface SharingAgreementFilePanelProps {
   plantId: string;
@@ -47,6 +49,10 @@ const BODY_SX = {
   color: colors.text.body,
   textWrap: "pretty",
 } as const;
+
+
+const GENERATED_NOTICE =
+  "El fichero se ha generado a partir de los coeficientes actuales y se ha descargado. Conluz no guarda ninguna copia ni lo envía a la distribuidora — hazlo llegar por tu medio habitual (por ejemplo, email).";
 
 export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
   plantId,
@@ -79,6 +85,8 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel} data-testid="sharing-agreement-file-panel">
+      {/* In place before the file is generated, so the outcome is announced; the note is read in place. */}
+      <ActionStatus message={showGeneratedNotice ? GENERATED_NOTICE : ""} />
       <SectionHeading
         title="Fichero para la distribuidora"
         description="El TXT con los coeficientes que la distribuidora necesita para aplicar el reparto."
@@ -106,10 +114,9 @@ export const SharingAgreementFilePanel: FC<SharingAgreementFilePanelProps> = ({
           />
         )}
         {showGeneratedNotice && (
-          <Alert severity="info" onClose={() => setShowGeneratedNotice(false)} sx={{ mt: 2 }}>
-            El fichero se ha generado a partir de los coeficientes actuales y se ha descargado. Conluz no guarda
-            ninguna copia ni lo envía a la distribuidora — hazlo llegar por tu medio habitual (por ejemplo, email).
-          </Alert>
+          <Notice severity="info" onClose={() => setShowGeneratedNotice(false)} sx={{ mt: 2 }}>
+            {GENERATED_NOTICE}
+          </Notice>
         )}
       </Box>
 

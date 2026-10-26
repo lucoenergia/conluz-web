@@ -80,7 +80,7 @@ const WRITE_FAILED: Record<"resend" | "revoke", string> = {
 
 /**
  * What a refused resend or link revoke says (#288). The resend limit gives the
- * wait from `Retry-After` or the body, worded for an admin; a stale row says
+ * wait from `Retry-After` or the body, naming the invitee (#310); a stale row says
  * the list was refreshed, which the action did.
  */
 export function platformInvitationWriteMessage(error: unknown, write: "resend" | "revoke"): string {

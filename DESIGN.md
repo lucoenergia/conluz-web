@@ -416,11 +416,13 @@ only place `Ink Disabled` is allowed.
 
 ### Dialogs
 A dialog names the entity it is about, restates the values that will change, and
-carries an `Alert severity="info"` explaining consequences when the action is not
-trivially reversible. The confirm button's colour is the *semantics* of the act,
+carries a `Notice severity="info"` explaining consequences when the action is not
+trivially reversible (a note, never an `Alert`, which is announced as urgent). The confirm button's colour is the *semantics* of the act,
 not its weight: destructive acts confirm in fault red, constructive ones in
 Cooperative Blue. While a mutation is in flight the confirm button swaps its
-label for a spinner and keeps its accessible name.
+label for a spinner and keeps its accessible name, and the dialog cannot be
+dismissed: Escape and the backdrop do nothing and "Cancelar" is disabled until
+the mutation settles.
 
 ### Signature: the lifecycle rail
 A horizontal five-stage rail rendered inside the page banner, carrying an

@@ -78,7 +78,7 @@ const huaweiCard = () => screen.getByRole("region", { name: "Huawei" });
 const theSwitch = () => screen.getByRole("switch", { name: "Integración con Huawei activa" });
 const dialog = () => screen.getByRole("dialog");
 const field = (label: string) => within(dialog()).getByLabelText(label);
-const confirmation = () => screen.getByTestId("modal-panel");
+const confirmation = () => screen.getByRole("dialog", { name: /^(Activar|Desactivar) integración con Huawei$/ });
 
 /** The body of the one configuration write, asserted whole. */
 const sentBody = () => {
