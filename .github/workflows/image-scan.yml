@@ -1,0 +1,89 @@
+# Scans the published image ghcr.io/lucoenergia/conluz-web:latest every week
+# with Trivy (#307, policy in lucoenergia/conluz#474).
+#
+# Why: the release and PR gates only see an image when it is built. Production
+# is updated on demand, so `latest` can stay deployed for a long time while new
+# vulnerabilities are published against the packages it already contains.
+#
+# The results go to code scanning under the `container-image` category, like
+# the release scan. The run fails when the gate matches: a CRITICAL
+# vulnerability that has a fix available and is not accepted in .trivyignore.
+# That failed run is the notification: GitHub sends it to the user who last
+# changed the cron schedule.
+#
+# GitHub disables scheduled workflows in public repositories after 60 days
+# without repository activity. If that happens this scan stops silently until
+# it is re-enabled from the Actions tab.
+
+name: Scan published image
+
+on:
+  schedule:
+    # Mondays at 05:00 UTC.
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  image-scan:
+    runs-on: ubuntu-latest
+    # The image is public, so pulling it needs no `packages: read`.
+    # `security-events: write` lets the job upload the results to code scanning.
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      # Checks out .trivyignore.
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Every entry must carry an expiry date and a reason (see .trivyignore).
+      - name: Lint .trivyignore
+        run: |
+          bad=$(grep -nEv '^[[:space:]]*(#|$)' .trivyignore | grep -vE 'exp:[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+.*#[[:space:]]*[^[:space:]]' || true)
+          if [ -n "$bad" ]; then
+            echo "::error file=.trivyignore::Every entry needs exp:YYYY-MM-DD and a # reason"
+            echo "$bad"
+            exit 1
+          fi
+
+      # Report: CRITICAL and HIGH findings that have a fix, for code scanning.
+      # It never fails the job; the gate below does.
+      - name: Scan image for the report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/lucoenergia/conluz-web:latest
+          version: v0.76.0
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          # Without it the action ignores `severity` for SARIF output.
+          limit-severities-for-sarif: true
+          ignore-unfixed: true
+          exit-code: "0"
+          format: sarif
+          output: trivy-results.sarif
+          trivyignores: .trivyignore
+
+      - name: Upload scan results to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: container-image
+
+      # Gate (lucoenergia/conluz#474): fails on a CRITICAL vulnerability, in OS
+      # packages or application libraries, that has a fix available and is not
+      # accepted in .trivyignore.
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/lucoenergia/conluz-web:latest
+          version: v0.76.0
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+          trivyignores: .trivyignore
