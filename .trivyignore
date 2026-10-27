@@ -1,0 +1,18 @@
+# Accepted findings for the container image scan (#307).
+#
+# The image gate fails on CRITICAL vulnerabilities that have a fix available.
+# A finding listed here is accepted and does not fail the gate. Policy:
+# lucoenergia/conluz#474.
+#
+# One entry per line, in this format:
+#
+#   <ID> exp:<YYYY-MM-DD>  # <reason>
+#
+# - <ID> is the vulnerability ID Trivy reports (e.g. CVE-2024-12345).
+# - exp: is mandatory. From that date on the entry no longer applies and the
+#   finding blocks again, so an acceptance is reviewed instead of forgotten.
+# - The reason after `#` is mandatory: why the finding is accepted, and what
+#   would let us remove the entry.
+#
+# The workflows that scan the image lint this file and fail on an entry that
+# lacks the expiry date or the reason.
