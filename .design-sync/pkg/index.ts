@@ -53,7 +53,6 @@ export { AppModal } from "../../src/components/Modals/AppModal";
 export { BasicModal } from "../../src/components/Modals/BasicModal";
 export { ConfirmationModal } from "../../src/components/Modals/ConfirmationModal";
 export { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "../../src/components/Modals/coefficientLifecycleDialogHelpers";
-export { DeleteSuccessModal } from "../../src/components/Modals/DeleteSuccessModal";
 export { DisableSuccessModal } from "../../src/components/Modals/DisableSuccessModal";
 export { EnableSuccessModal } from "../../src/components/Modals/EnableSuccesModal";
 export { ApplyCoefficientDateConfirmationModal } from "../../src/components/Modals/ApplyCoefficientDateConfirmationModal";

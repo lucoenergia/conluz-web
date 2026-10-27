@@ -90,7 +90,11 @@ async function fill(
   fields: Partial<Record<"DNI/NIE/NIF" | "Nombre completo" | "Número de socio" | "Email de contacto" | "Dirección" | "Teléfono", string>>,
 ) {
   for (const [label, value] of Object.entries(fields)) {
-    if (value) await u.type(within(dialog).getByLabelText(new RegExp(`^${label}`)), value);
+    if (!value) continue;
+    // Pasted, not typed: what is under test is the value sent, not each
+    // keystroke, and typing re-renders the dialog once per character.
+    await u.click(within(dialog).getByLabelText(new RegExp(`^${label}`)));
+    await u.paste(value);
   }
 }
 

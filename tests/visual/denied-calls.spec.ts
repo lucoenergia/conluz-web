@@ -1,6 +1,7 @@
 import { test as base, expect } from "@playwright/test";
 import {
   ALLOWED_DENIALS,
+  FIXED_COMMUNITY_ADMIN_USER,
   FIXED_COMMUNITY_ID,
   FIXED_MEMBER_USER,
   injectAuthToken,
@@ -45,7 +46,7 @@ base.describe("the denied-call check itself", () => {
   });
 
   base("a mock allows the same call for a caller whose capabilities do allow it", async ({ page }) => {
-    const admin = { ...FIXED_MEMBER_USER, memberships: { [FIXED_COMMUNITY_ID]: "COMMUNITY_ADMIN" } };
+    const admin = FIXED_COMMUNITY_ADMIN_USER;
     await injectAuthToken(page);
     await seedActiveCommunity(page, admin.id);
     await mockAllApiRoutes(page, admin);

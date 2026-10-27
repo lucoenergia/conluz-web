@@ -1,6 +1,6 @@
 import { PlantCard, Mui } from "conluz-web";
 
-const ok = async () => true;
+const ok = async () => {};
 
 export const Manageable = () => (
   <Mui.Box sx={{ maxWidth: 440 }}>

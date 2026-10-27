@@ -211,8 +211,9 @@ export async function mockMemberHome(
  *
  * A platform admin belongs to no community, so there is no membership to read
  * and the member shape would be the wrong answer: canUpdate, canEnable,
- * canDisable and canManageMemberships are decisions a platform admin holds on
- * every community, while the operational ones stay out of reach. Without this
+ * canDisable and canManageAdmins are decisions a platform admin holds on every
+ * community, while the operational ones -- the roster included
+ * (lucoenergia/conluz#446) -- stay out of reach. Without this
  * branch /communities/:communityId/edit refuses them, because the fixture --
  * not the product -- says they may not update it.
  */

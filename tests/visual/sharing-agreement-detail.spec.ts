@@ -28,6 +28,7 @@ import {
   PUBLISHED_AGREEMENT,
   PUBLISHED_AGREEMENT_EDITED,
   seedActiveCommunity,
+  settleScroll,
   stabilizePage,
   SUPERSEDED_AGREEMENT,
 } from "./fixtures";
@@ -272,9 +273,7 @@ test.describe("Visual baselines", () => {
     // last card and the fixed bar are both on screen at once — this is the
     // assertion the screenshot exists to make: the reserved spacer must
     // leave the last card's bottom edge visible above the bar, not under it.
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await page.waitForTimeout(300);
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await settleScroll(page, "bottom");
 
     // "Ático F" is the last row in FIXED_COEFFICIENTS_MIXED.
     const lastCard = page.getByText("Ático F").last();

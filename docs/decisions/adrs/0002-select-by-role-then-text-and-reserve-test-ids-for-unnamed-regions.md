@@ -70,6 +70,8 @@ A `data-testid` in `src/` is a statement: this container has no role and no name
 
   > **Implementation note (conluzweb-180):** both modals now render through `src/components/Modals/CsvImportModal.tsx`, which is where `csv-file-input` and `drop-zone` live. `ImportSuppliesModal.tsx` and `ImportPartnersModal.tsx` remain as thin adapters without test ids. The decision above is unchanged.
 
+  > **Implementation note (#311):** `ImportPartnersModal.tsx` went with the partners pages (#180). `CsvImportModal.tsx` is now used by `ImportSuppliesModal.tsx` alone, and the two grandfathered test ids live only there. The decision above is unchanged.
+
 ## Revisit if
 
 - A `data-testid` appears on an interactive element other than the two grandfathered ones. Check with `grep -rnE 'data-testid' src --include=*.tsx --exclude=*.spec.tsx`, then inspect each element that also has `onClick`, or is a `Button`, `IconButton`, `MenuItem`, `Link`, `input` or `TextField`.

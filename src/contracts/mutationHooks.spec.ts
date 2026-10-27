@@ -28,12 +28,19 @@ const MUTATION_METHODS = ["post", "put", "patch", "delete"];
 
 type Scope = "platform" | "community" | "supply" | "plant" | "user" | "platformAdmin" | "membership" | "sharingAgreement";
 
+/**
+ * The file under src/hooks/actions that hands a mutation out. Several when more
+ * than one surface performs the same write: each must import it, and each that
+ * imports it must be named.
+ */
+type ActionHook = string | readonly string[];
+
 type Decision =
   | {
       scope: Scope;
       capability: string;
-      /** The action hook that hands it out, when one exists yet. */
-      hook?: string;
+      /** The action hook(s) that hand it out, when one exists yet. */
+      hook?: ActionHook;
       /**
        * Set when the capability does not name this action, only covers it.
        * Every one of these is a place the UI is less precise than it could be,
@@ -48,8 +55,8 @@ type Decision =
        * and anything else must name the issue that replaces it with a gate.
        */
       ungated: string;
-      /** The action hook that hands it out, when one exists yet. */
-      hook?: string;
+      /** The action hook(s) that hand it out, when one exists yet. */
+      hook?: ActionHook;
     };
 
 const SYNC_JOB = "canManage covers 'triggering its synchronisation endpoints'; no per-job flag exists, and no screen calls this yet";
@@ -61,10 +68,10 @@ const AGREEMENT_LIFECYCLE = "canManage is the only write flag on an agreement; i
  */
 const ACTION_COVERAGE: Record<string, Decision> = {
   // ── Authentication ────────────────────────────────────────────────────────
-  useLogin: { ungated: "no session: a capability rides on a resource fetched with a token, so none can precede the request that obtains one" },
-  useLogout: { ungated: "no session: refusing to end a session on a capability would strand the caller in it" },
-  useRequestPasswordReset: { ungated: "no session: a forgotten password is recovered by somebody who cannot sign in" },
-  useResetPassword: { ungated: "no session: the emailed token is the only credential, and it is checked by the backend" },
+  useLogin: { ungated: "no session: a capability rides on a resource fetched with a token, so none can precede the request that obtains one", hook: "useSessionActions" },
+  useLogout: { ungated: "no session: refusing to end a session on a capability would strand the caller in it", hook: "useSessionActions" },
+  useRequestPasswordReset: { ungated: "no session: a forgotten password is recovered by somebody who cannot sign in", hook: "useSessionActions" },
+  useResetPassword: { ungated: "no session: the emailed token is the only credential, and it is checked by the backend", hook: "useSessionActions" },
 
   // ── Configuration ─────────────────────────────────────────────────────────
   useInit: { ungated: "no session: first-run bootstrap, called before any account exists" },
@@ -144,7 +151,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useCreatePlant: {
     scope: "supply",
     capability: "canCreatePlant",
-    hook: "useCommunityActions",
+    hook: ["useCommunityActions", "useSupplyActions"],
     approximates:
       "two surfaces, and CreatePlantPage uses both: the community's canCreatePlants gates the entry point (the Nueva Planta button, the production/new route) and hands out the action, while the supply's canCreatePlant bounds the choice -- PlantForm offers only supplies that report it, so the form cannot submit one the backend would refuse. useSupplyActions carries the per-supply action for callers that start from a supply",
   },
@@ -285,8 +292,8 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   // row, so the screen offers them on rows with an invitation alone.
   useResendPlatformAdminInvitation: { scope: "platformAdmin", capability: "canResendInvitation", hook: "usePlatformAdminActions" },
   useRevokePlatformAdminInvitation: { scope: "platformAdmin", capability: "canRevokeInvitation", hook: "usePlatformAdminActions" },
-  useUpdateProfile: { ungated: "open to any authenticated caller: PUT /users/profile acts on the caller and takes no id" },
-  useChangePassword: { ungated: "open to any authenticated caller: PUT /users/current/password acts on the caller and takes no id" },
+  useUpdateProfile: { ungated: "open to any authenticated caller: PUT /users/profile acts on the caller and takes no id", hook: "useProfileActions" },
+  useChangePassword: { ungated: "open to any authenticated caller: PUT /users/current/password acts on the caller and takes no id", hook: "useProfileActions" },
 };
 
 /** The two forms of ungated reason that are permanent rather than pending work. */
@@ -337,6 +344,35 @@ function actionsLayerSource(): string {
     .filter((f) => f.endsWith(".ts") || f.endsWith(".tsx"))
     .map((f) => readFileSync(join(ACTIONS_DIR, f), "utf8"))
     .join("\n");
+}
+
+/** What a file actually imports from a generated tag module. */
+function mutationImportsIn(path: string): string[] {
+  const source = readFileSync(path, "utf8");
+  const known = new Set(committedHooks());
+  const found = new Set<string>();
+  for (const match of source.matchAll(
+    /import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*["'][^"']*api\/[a-z-]+\/[a-z-]+["']/g,
+  )) {
+    // Comments first: an eslint-disable block inside the braces usually
+    // contains a comma, which would otherwise glue the name after it onto a
+    // sentence and hide that import from this scan entirely.
+    const names = match[1].replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+    for (const raw of names.split(",")) {
+      const name = raw.trim().split(/\s+as\s+/)[0].trim();
+      if (known.has(name)) found.add(name);
+    }
+  }
+  return [...found].sort();
+}
+
+/** Every hand-written source file: the generated client is not one. */
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return path === GENERATED_CLIENT_DIR ? [] : sourceFiles(path);
+    return /\.tsx?$/.test(entry.name) ? [path] : [];
+  });
 }
 
 describe("the generated mutation-hook list", () => {
@@ -484,36 +520,53 @@ const TEST_HELPER_MUTATION_IMPORTS: Record<string, { hooks: string[]; reason: st
   },
 };
 
+/** The action hooks an entry names, as a list. */
+function hooksNamedBy(decision: Decision): readonly string[] {
+  if (decision.hook === undefined) return [];
+  return typeof decision.hook === "string" ? [decision.hook] : decision.hook;
+}
+
+describe("which action hook hands out each mutation", () => {
+  /** Each hand-written action hook, by name, with the mutations it imports. */
+  const actionHooks = new Map(
+    readdirSync(ACTIONS_DIR)
+      .filter((name) => /\.tsx?$/.test(name) && !/\.spec\.tsx?$/.test(name))
+      .map((name) => [name.replace(/\.tsx?$/, ""), mutationImportsIn(join(ACTIONS_DIR, name))] as const),
+  );
+
+  // The entry is what a reader opens to find where a write is handed out; a
+  // name that does not import the mutation sends them to the wrong file.
+  it("names only action hooks that import the mutation", () => {
+    const wrong = Object.entries(ACTION_COVERAGE).flatMap(([mutation, decision]) =>
+      hooksNamedBy(decision)
+        .filter((hook) => !actionHooks.get(hook)?.includes(mutation))
+        .map((hook) =>
+          actionHooks.has(hook)
+            ? `${mutation}: ${hook} does not import it`
+            : `${mutation}: ${hook} is not a file in ${ACTIONS_DIR}`,
+        ),
+    );
+
+    expect(wrong).toEqual([]);
+  });
+
+  // And the converse: a hook that grows a write must say so in the entry, or
+  // the decision recorded there no longer describes every place it is made.
+  it("names every action hook that imports the mutation", () => {
+    const unnamed = [...actionHooks].flatMap(([hook, mutations]) =>
+      mutations
+        .filter((mutation) => {
+          const decision = ACTION_COVERAGE[mutation];
+          return decision === undefined || !hooksNamedBy(decision).includes(hook);
+        })
+        .map((mutation) => `${hook} imports ${mutation}, whose entry does not name it`),
+    );
+
+    expect(unnamed).toEqual([]);
+  });
+});
+
 describe("where a generated mutation may be imported", () => {
-  /** What a file actually imports from a generated tag module. */
-  function mutationImportsIn(path: string): string[] {
-    const source = readFileSync(path, "utf8");
-    const known = new Set(committedHooks());
-    const found = new Set<string>();
-    for (const match of source.matchAll(
-      /import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*["'][^"']*api\/[a-z-]+\/[a-z-]+["']/g,
-    )) {
-      // Comments first: an eslint-disable block inside the braces usually
-      // contains a comma, which would otherwise glue the name after it onto a
-      // sentence and hide that import from this scan entirely.
-      const names = match[1].replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
-      for (const raw of names.split(",")) {
-        const name = raw.trim().split(/\s+as\s+/)[0].trim();
-        if (known.has(name)) found.add(name);
-      }
-    }
-    return [...found].sort();
-  }
-
-  /** Every hand-written source file: the generated client is not one. */
-  function sourceFiles(dir: string): string[] {
-    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) return path === GENERATED_CLIENT_DIR ? [] : sourceFiles(path);
-      return /\.tsx?$/.test(entry.name) ? [path] : [];
-    });
-  }
-
   const importers = sourceFiles("src")
     .filter((path) => !path.startsWith(`${ACTIONS_DIR}/`))
     .filter((path) => !/\.spec\.tsx?$/.test(path))

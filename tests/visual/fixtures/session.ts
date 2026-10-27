@@ -84,10 +84,53 @@ export async function seedActiveCommunity(page: Page, userId: string) {
  * role="status" in the app containing a progressbar. The other three -- the
  * two visually-hidden live regions and the success Alert -- carry text, and
  * can legitimately still be on screen when a capture is taken.
+ *
+ * It first waits for the app to have rendered at all: right after `goto`, React
+ * may not have committed anything yet, and an empty #root has no fallback
+ * either, so counting fallbacks alone would answer "mounted" before the route
+ * had even started loading. It cannot see a page whose CapabilityRoute is still
+ * pending, which renders nothing rather than the fallback; `page.goto` waits for
+ * that too (waitForPageSettled in ./test.ts).
  */
-async function waitForRouteMounted(page: Page) {
+export async function waitForRouteMounted(page: Page, timeout = ROUTE_MOUNT_TIMEOUT_MS) {
+  await expect(page.locator("#root > *").first()).toBeAttached({ timeout });
   const routeFallback = page.getByRole("status").filter({ has: page.getByRole("progressbar") });
-  await expect(routeFallback).toHaveCount(0, { timeout: ROUTE_MOUNT_TIMEOUT_MS });
+  await expect(routeFallback).toHaveCount(0, { timeout });
+}
+
+/**
+ * Scrolls the window to the top or the bottom and waits until it stays there.
+ *
+ * A preceding click (e.g. a filter chip) can trigger the browser's native focus
+ * scroll-into-view asynchronously, and under CPU contention it can land after a
+ * single reset. So this re-asserts the position on every animation frame and
+ * returns once it has held for STABLE_FRAMES frames in a row -- counted in
+ * frames rather than milliseconds, because a loaded machine delays frames and
+ * late scrolls alike, where a fixed wait only guesses at how much.
+ */
+export async function settleScroll(page: Page, to: "top" | "bottom") {
+  const STABLE_FRAMES = 5;
+  await page.waitForFunction(
+    async ({ to, stableFrames }) => {
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+      const target = () => (to === "top" ? 0 : document.documentElement.scrollHeight - window.innerHeight);
+      let held = 0;
+      // Bounded, so a page that never stops scrolling fails as itself rather
+      // than as the test timeout; waitForFunction retries a false answer.
+      for (let frame = 0; frame < 60 && held < stableFrames; frame++) {
+        const y = Math.max(0, target());
+        if (Math.abs(window.scrollY - y) > 1 || window.scrollX !== 0) {
+          window.scrollTo(0, y);
+          held = 0;
+        } else {
+          held += 1;
+        }
+        await nextFrame();
+      }
+      return held >= stableFrames;
+    },
+    { to, stableFrames: STABLE_FRAMES },
+  );
 }
 
 export async function stabilizePage(page: Page) {
@@ -118,12 +161,5 @@ export async function stabilizePage(page: Page) {
   // Reset scroll to the top. A page scrolled away from (0, 0) at capture time
   // can bake a stale offset into position: fixed elements (e.g. the AppBar)
   // in a fullPage screenshot, even though the element renders correctly on screen.
-  // A preceding click (e.g. a filter chip) can trigger the browser's native
-  // focus scroll-into-view asynchronously; under CPU contention that can land
-  // after a single reset, so re-assert once more after giving it time to fire,
-  // then let the compositor settle before the screenshot is taken.
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(300);
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(300);
+  await settleScroll(page, "top");
 }

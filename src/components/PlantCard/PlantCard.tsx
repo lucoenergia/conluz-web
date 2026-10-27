@@ -16,7 +16,6 @@ import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { DeleteConfirmationModal } from "../Modals/DeleteConfirmationModal";
-import { DeleteSuccessModal } from "../Modals/DeleteSuccessModal";
 import { AppCard } from "../AppCard";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
@@ -39,8 +38,11 @@ interface PlantCardProps {
   /**
    * Only ever called when `canManage` is true, and only mounted then -- the
    * card offers no way to reach it otherwise.
+   *
+   * The page reports the result, not the card: a deleted card unmounts when the
+   * list refreshes, and would take its own confirmation with it.
    */
-  onDelete?: (id: string) => Promise<boolean>;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 export const PlantCard: FC<PlantCardProps> = ({
@@ -59,7 +61,6 @@ export const PlantCard: FC<PlantCardProps> = ({
   const navigate = useNavigate();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
-  const [openDeleteSuccess, setOpenDeleteSuccess] = useState(false);
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
@@ -79,19 +80,11 @@ export const PlantCard: FC<PlantCardProps> = ({
     setOpenDeleteConfirmation(false);
   };
 
-  const handleCloseDeleteSuccess = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setOpenDeleteSuccess(false);
-  };
 
   const handleDelete = async () => {
     setOpenDeleteConfirmation(false);
     if (!onDelete) return;
-    const deleted = await onDelete(id);
-    if (deleted) {
-      setOpenDeleteSuccess(true);
-    }
+    await onDelete(id);
   };
 
   const handleCardClick = () => {
@@ -322,19 +315,12 @@ export const PlantCard: FC<PlantCardProps> = ({
 
       {/* Modals: mounted inside the same gate as the item that opens them. */}
       {canManage && (
-        <>
-          <DeleteConfirmationModal
-            isOpen={openDeleteConfirmation}
-            code={code}
-            onCancel={handleCloseDeleteConfirmation}
-            onDelete={handleDelete}
-          />
-          <DeleteSuccessModal
-            isOpen={openDeleteSuccess}
-            onClose={handleCloseDeleteSuccess}
-            code={code}
-          />
-        </>
+        <DeleteConfirmationModal
+          isOpen={openDeleteConfirmation}
+          code={code}
+          onCancel={handleCloseDeleteConfirmation}
+          onDelete={handleDelete}
+        />
       )}
     </>
   );

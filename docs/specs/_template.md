@@ -54,7 +54,7 @@ A rule motivated by an architectural decision links its ADR (docs/decisions/adrs
 <!--
 EXAMPLE (delete when using the template)
 
-### UI-SUP-001 — Blocking reasons are visible text
+### UI-EXM-001 — Blocking reasons are visible text
 
 - **Status:** Active
 - **Rule:** When an action is unavailable, the reason MUST be rendered as visible text next to it, never only in a tooltip.
@@ -62,11 +62,11 @@ EXAMPLE (delete when using the template)
 - **Implements:** n/a
 - **Source:** #<issue>
 
-### UI-SUP-002 — Actions that will fail are not rendered
+### UI-EXM-002 — Actions that will fail are not rendered
 
 - **Status:** Active
 - **Rule:** An action whose outcome is guaranteed to fail MUST NOT be rendered.
 - **Rationale:** Showing it only to return an error adds a dead end.
-- **Implements:** SUP-001
+- **Implements:** EXM-001
 - **Source:** #<issue>
 -->
