@@ -7,14 +7,19 @@ import { pluralize } from "../utils/pluralize";
  */
 
 /**
- * Whom an invitation is for: a member on the members page, an admin on a
- * community's admins page (#276) or on the platform-admin page (#288). The
- * sentences name them. Each is said of someone whose invitation is still
- * pending, who is not an admin yet, so an admin is "esta persona" (#310).
+ * Whom a membership sentence is about, which picks its wording.
+ *
+ * For an invitation, whom it is for: a member on the members page, an admin on
+ * a community's admins page (#276) or on the platform-admin page (#288). Each
+ * invitation sentence is said of someone whose invitation is still pending, who
+ * is not an admin yet, so an admin is "esta persona" (#310).
+ *
+ * For a removal, the removed membership's role, which picks the refusal's
+ * wording in removalRefusalMessage.
  */
-export type InvitationSubject = "member" | "admin";
+export type MembershipSubject = "member" | "admin";
 
-export const SUBJECT_NOUN: Record<InvitationSubject, string> = {
+export const SUBJECT_NOUN: Record<MembershipSubject, string> = {
   member: "este miembro",
   admin: "esta persona",
 };
@@ -32,7 +37,7 @@ export const LAST_ACTIVE_ADMIN_EXPLANATION =
  * The members page points to its own record edit; the platform admin has none
  * on the admins page, so that one says who can add it.
  */
-export const NO_CONTACT_EMAIL_TO_INVITE: Record<InvitationSubject, string> = {
+export const NO_CONTACT_EMAIL_TO_INVITE: Record<MembershipSubject, string> = {
   member: "Este miembro no tiene email de contacto. Añádelo desde «Editar ficha» y vuelve a intentarlo.",
   admin: "Esta persona no tiene email de contacto. Un administrador de la comunidad puede añadirlo desde su ficha.",
 };
@@ -51,7 +56,7 @@ function waitText(seconds: number): string {
 }
 
 /** MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED, with the wait when the backend gave one. */
-export function resendLimitMessage(retryAfterSeconds: number | null, subject: InvitationSubject = "member"): string {
+export function resendLimitMessage(retryAfterSeconds: number | null, subject: MembershipSubject = "member"): string {
   const limit = `Has alcanzado el límite de reenvíos para ${SUBJECT_NOUN[subject]}.`;
   if (retryAfterSeconds === null) return `${limit} Vuelve a intentarlo más tarde.`;
   return `${limit} Podrás volver a reenviar la invitación dentro de ${waitText(retryAfterSeconds)}.`;

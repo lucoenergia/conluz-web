@@ -1,10 +1,10 @@
 import "@testing-library/jest-dom";
-import { useEffect } from "react";
-import { describe, expect, it } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { useEffect, type ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
+import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { useQuery } from "@tanstack/react-query";
 import { renderWithProviders } from "../test/renderWithProviders";
-import { useError, useErrorDispatch } from "./error.context";
+import { ErrorProvider, useError, useErrorDispatch } from "./error.context";
 
 const MESSAGE = "No se pudo cargar la información.";
 
@@ -49,5 +49,24 @@ describe("ErrorProvider", () => {
 
     expect(dispatches).toBe(1);
     await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(1));
+  });
+
+  it("leaves no removal pending once it unmounts", () => {
+    vi.useFakeTimers();
+    try {
+      const { result, unmount } = renderHook(() => useErrorDispatch(), {
+        wrapper: ({ children }: { children: ReactNode }) => <ErrorProvider>{children}</ErrorProvider>,
+      });
+      act(() => {
+        result.current(MESSAGE);
+      });
+      expect(vi.getTimerCount()).toBe(1);
+
+      unmount();
+
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

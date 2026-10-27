@@ -79,7 +79,7 @@ describe("PlantCard", () => {
     });
 
     it("confirms before deleting, and calls onDelete only once confirmed", async () => {
-      const onDelete = vi.fn().mockResolvedValue(true);
+      const onDelete = vi.fn().mockResolvedValue(undefined);
       const user = userEvent.setup();
       renderCard({ canManage: true, onDelete });
 
@@ -90,19 +90,6 @@ describe("PlantCard", () => {
       await user.click(await screen.findByRole("button", { name: "Eliminar" }));
 
       await waitFor(() => expect(onDelete).toHaveBeenCalledWith("plant-1"));
-    });
-
-    it("does not report success when the delete failed", async () => {
-      const onDelete = vi.fn().mockResolvedValue(false);
-      const user = userEvent.setup();
-      renderCard({ canManage: true, onDelete });
-
-      await user.click(screen.getByRole("button", { name: MENU_BUTTON }));
-      await user.click(await screen.findByText("Eliminar"));
-      await user.click(await screen.findByRole("button", { name: "Eliminar" }));
-
-      await waitFor(() => expect(onDelete).toHaveBeenCalled());
-      expect(screen.queryByText(/eliminada correctamente/i)).not.toBeInTheDocument();
     });
   });
 

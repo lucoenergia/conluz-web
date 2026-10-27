@@ -16,6 +16,7 @@ import {
   seedActiveCommunity,
   stabilizePage,
 } from "./session";
+import { waitForPageSettled } from "./test";
 
 export async function navigateToSharingAgreements(page: Page) {
   await page.goto("/production");
@@ -46,7 +47,13 @@ export async function navigateToSharingAgreements(page: Page) {
   await plantCard.getByRole("button", { name: `Más acciones para ${FIXED_PLANT.name}` }).click();
   await page.getByRole("menuitem", { name: /Acuerdos de Reparto/i }).click();
 
-  await expect(page.getByText(/CAU:/)).toBeVisible();
+  // A click into another lazy, capability-guarded route. React Router renders a
+  // navigation as a transition, so the old page stays up with no fallback while
+  // the new one loads, and a quiet page is no sign the new one has arrived: its
+  // own content is. Like the plant card above, that is a mount wait with the
+  // mount budget; settling then lets its reads land before anything is clicked.
+  await expect(page.getByText(/CAU:/)).toBeVisible({ timeout: ROUTE_MOUNT_TIMEOUT_MS });
+  await waitForPageSettled(page);
   await stabilizePage(page);
 }
 
@@ -61,7 +68,11 @@ export async function navigateToSharingAgreementDetail(page: Page, agreementName
   // fixture — unlike the coefficient sum, which is absent when coefficients is empty.
   // One wording in every status now: the panel no longer switches to
   // "Fichero enviado a la distribuidora" once the agreement is published.
-  await expect(page.getByRole("heading", { name: "Fichero para la distribuidora" })).toBeVisible();
+  // A mount wait like the one in navigateToSharingAgreements, for the same reason.
+  await expect(page.getByRole("heading", { name: "Fichero para la distribuidora" })).toBeVisible({
+    timeout: ROUTE_MOUNT_TIMEOUT_MS,
+  });
+  await waitForPageSettled(page);
   await stabilizePage(page);
 }
 

@@ -21,8 +21,10 @@ export interface PlantActiveCoefficients {
  * authored them. Only a DRAFT is compared against them, so the request is not
  * made for any other status.
  *
- * No role gate is needed: the endpoint answers 403 to plain members, but the
- * only page that renders the comparison sits behind CommunityAdminRoute.
+ * No capability check is needed here: the endpoint answers 403 to a caller who
+ * may not manage the plant, which is the same decision as the plant's
+ * canListSharingAgreements, and the only page that renders the comparison sits
+ * behind a CapabilityRoute on that capability.
  */
 export function usePlantActiveCoefficients(plantId: string, enabled: boolean): PlantActiveCoefficients {
   const { data, isLoading, isError, refetch } = useGetPlantActivePartitionCoefficients(plantId, {

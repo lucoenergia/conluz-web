@@ -15,6 +15,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { Link, useNavigate } from "react-router";
 import { useErrorDispatch } from "../../context/error.context";
+import { useSuccessDispatch } from "../../context/success.context";
 import { plantDeletionRefusalMessage } from "../../errors/plantErrors";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -27,6 +28,7 @@ export const PlantsPage: FC = () => {
   const [searchText, setSearchText] = useState("");
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
+  const successDispatch = useSuccessDispatch();
   const activeCommunityId = useActiveCommunity();
   const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllPlants(
     activeCommunityId ?? "",
@@ -174,9 +176,10 @@ export const PlantsPage: FC = () => {
                     remove &&
                     (async () => {
                       const result = await remove.run();
-                      if ("ok" in result) return true;
-                      errorDispatch(plantDeletionRefusalMessage(result.error));
-                      return false;
+                      // Announced by the page: the card leaves the list once
+                      // it refreshes, and anything it showed goes with it.
+                      if ("ok" in result) successDispatch(`Planta ${item.providerCode} eliminada.`);
+                      else errorDispatch(plantDeletionRefusalMessage(result.error));
                     })
                   }
                 />

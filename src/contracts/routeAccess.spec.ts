@@ -106,6 +106,22 @@ const ROUTE_ACCESS: Record<string, Access> = {
  */
 const STRICTER_THAN_ROUTE: Record<string, string> = {};
 
+/** Every entry the side menu can show. */
+function menuItems(): MenuItem[] {
+  return [...MENU_SECTIONS.flatMap((section) => section.items), CONTACT_ITEM];
+}
+
+/** Whether a menu entry names the same requirement as the route it leads to. */
+function menuMatchesRoute(item: MenuItem): boolean {
+  const access = ROUTE_ACCESS[item.to];
+  if (!access) return false;
+  const required = "require" in access ? access.require : null;
+  const menu = item.requires;
+  return required === null
+    ? menu.scope === "always"
+    : "capability" in menu && menu.scope === required.scope && menu.capability === required.capability;
+}
+
 // ---------------------------------------------------------------------------
 // Reading App.tsx
 // ---------------------------------------------------------------------------
@@ -329,20 +345,14 @@ describe("route access", () => {
   });
 
   it("offers no menu entry whose requirement differs from the page it leads to", () => {
-    const items: MenuItem[] = [...MENU_SECTIONS.flatMap((section) => section.items), CONTACT_ITEM];
-
-    const drifted = items.flatMap((item) => {
+    const drifted = menuItems().flatMap((item) => {
       const access = ROUTE_ACCESS[item.to];
       if (!access) return [];
       if (item.to in STRICTER_THAN_ROUTE) return [];
 
       const required = "require" in access ? access.require : null;
       const menu = item.requires;
-      const same =
-        required === null
-          ? menu.scope === "always"
-          : "capability" in menu && menu.scope === required.scope && menu.capability === required.capability;
-      return same
+      return menuMatchesRoute(item)
         ? []
         : [`${item.to}: menu asks ${describeRequirement(menu)}, route asks ${describeRequirement(required)}`];
     });
@@ -373,8 +383,17 @@ describe("route access", () => {
   });
 
   it("keeps no stale reason for a menu entry that now matches its route", () => {
-    const menuPaths = new Set([...MENU_SECTIONS.flatMap((s) => s.items), CONTACT_ITEM].map((i) => i.to));
-    const stale = Object.keys(STRICTER_THAN_ROUTE).filter((path) => !menuPaths.has(path));
-    expect(stale, "These paths are recorded as stricter than their route but are not in the menu").toEqual([]);
+    const items = new Map(menuItems().map((item) => [item.to, item]));
+
+    const notInMenu = Object.keys(STRICTER_THAN_ROUTE).filter((path) => !items.has(path));
+    expect(notInMenu, "These paths are recorded as stricter than their route but are not in the menu").toEqual([]);
+
+    // An exemption outliving the difference it explains would hide the next
+    // drift on that entry, so it goes as soon as the two agree again.
+    const matching = Object.keys(STRICTER_THAN_ROUTE).filter((path) => {
+      const item = items.get(path);
+      return item !== undefined && menuMatchesRoute(item);
+    });
+    expect(matching, "These menu entries ask the same as their route again; drop their reason").toEqual([]);
   });
 });

@@ -140,8 +140,12 @@ function currentPath(): string | null {
   return screen.getByRole("status", { name: "Ruta actual" }).textContent;
 }
 
-const memberView = () => screen.findByRole("heading", MEMBER_HEADING);
-const managementView = () => screen.findByRole("heading", MANAGEMENT_HEADING);
+// The first test in a worker renders the whole app cold, about ten times
+// slower than the tests after it, and under machine load that outgrew the
+// default 1 s. A budget, not a wait: the find returns as soon as the view shows.
+const VIEW_TIMEOUT_MS = 3_000;
+const memberView = () => screen.findByRole("heading", MEMBER_HEADING, { timeout: VIEW_TIMEOUT_MS });
+const managementView = () => screen.findByRole("heading", MANAGEMENT_HEADING, { timeout: VIEW_TIMEOUT_MS });
 const viewSwitch = () => screen.queryByRole("tablist", { name: "Vistas de inicio" });
 
 describe("home views (#197)", () => {

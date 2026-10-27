@@ -104,10 +104,10 @@ test.describe("Visual baselines", () => {
    * are the only tests that fail if one of those three lines is changed back.
    */
   test("the platform overview asks for canAdministerPlatform, not canListUsers", async ({ page }) => {
-    // A community admin holds no platform capability at all, so the overview
-    // refuses them whichever of the two it asks for. What this pins is that it
-    // asks: the page's own loading and error state comes from GET /communities,
-    // which canListUsers says nothing about.
+    // A community admin holds canListUsers -- the backend grants it to anyone
+    // who administers a community -- and none of the platform's own
+    // capabilities. So the overview admits them if it asks for canListUsers and
+    // refuses them if it asks for canAdministerPlatform, which is what this pins.
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);

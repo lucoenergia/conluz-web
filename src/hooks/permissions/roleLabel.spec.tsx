@@ -9,7 +9,6 @@ const mockRole = vi.hoisted(() => ({ current: null as CommunityRole | null }));
 
 vi.mock(import("./useActiveCommunityRole"), () => ({
   useActiveCommunityRole: () => mockRole.current,
-  useIsPlatformAdmin: () => false,
 }));
 
 // The signed-in user is the GET /users/current query (#203); the label reads

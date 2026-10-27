@@ -39,4 +39,40 @@ describe("success.context", () => {
 
     vi.useRealTimers();
   });
+
+  it("keeps the same dispatch after a message is added", () => {
+    // LandingRoute dispatches from an effect that depends on the dispatch; a new
+    // function per render would re-run that effect after every message.
+    // Fake timers, so the message's removal is never left pending past the test.
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useSuccessDispatch(), { wrapper });
+      const first = result.current;
+
+      act(() => {
+        result.current("Planta eliminada.");
+      });
+
+      expect(result.current).toBe(first);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves no removal pending once it unmounts", () => {
+    vi.useFakeTimers();
+    try {
+      const { result, unmount } = renderHook(() => useSuccessDispatch(), { wrapper });
+      act(() => {
+        result.current("Planta eliminada.");
+      });
+      expect(vi.getTimerCount()).toBe(1);
+
+      unmount();
+
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

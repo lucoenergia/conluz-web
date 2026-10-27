@@ -260,10 +260,12 @@ describe("useMembershipActions", () => {
         getGetAllSuppliesQueryKey(COMMUNITY_ID),
         getGetSuppliesByUserIdQueryKey(USER_ID),
         getGetUserByIdQueryKey(USER_ID),
-        getGetAllUsersQueryKey(),
       ]) {
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey });
       }
+      // The user list is read only by the supply form's owner picker, which is
+      // never mounted beside the roster and refetches when it mounts.
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetAllUsersQueryKey() });
       expect(queryClient.getQueryState(["/api/v1/supplies/TEST-SUPPLY-ID"])?.isInvalidated).toBe(true);
       expect(queryClient.getQueryState(["/api/v1/supplies/TEST-SUPPLY-ID/coefficients"])?.isInvalidated).toBe(false);
     });

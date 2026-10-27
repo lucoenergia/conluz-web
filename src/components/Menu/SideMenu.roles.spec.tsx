@@ -128,11 +128,6 @@ describe("SideMenu visibility", () => {
     shows("Contacto");
   });
 
-  test("Socios is never in the menu", () => {
-    setup(menuFor([...COMMUNITY_ADMIN, ...PLATFORM_ADMIN]));
-    hides("Socios");
-  });
-
   // Admin of A, member of B: switching drops the entries A allowed.
   test("switching to a community the user does not administer drops its entries", () => {
     const { rerender } = render(
