@@ -3,7 +3,8 @@
 # Images are NOT published from here: a push to `main` goes through
 # version-update.yml -> build-and-push-image.yml, which publishes a versioned
 # image (X.Y.Z, X.Y, X, latest). On PRs the image is built without pushing, as
-# a Dockerfile sanity check.
+# a Dockerfile sanity check, and scanned with Trivy: the job fails on a CRITICAL
+# vulnerability that has a fix and is not accepted in .trivyignore (#307).
 
 name: Run unit tests and build image
 
@@ -71,4 +72,32 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64
           push: false
+          # Loads the image into the runner's Docker so the scan below can read it.
+          load: true
+          tags: conluz-web:scan
           cache-from: type=gha
+
+      # Every entry must carry an expiry date and a reason (see .trivyignore).
+      - name: Lint .trivyignore
+        run: |
+          bad=$(grep -nEv '^[[:space:]]*(#|$)' .trivyignore | grep -vE 'exp:[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+.*#[[:space:]]*[^[:space:]]' || true)
+          if [ -n "$bad" ]; then
+            echo "::error file=.trivyignore::Every entry needs exp:YYYY-MM-DD and a # reason"
+            echo "$bad"
+            exit 1
+          fi
+
+      # Gate (lucoenergia/conluz#474): fails on a CRITICAL vulnerability, in OS
+      # packages or application libraries, that has a fix available and is not
+      # accepted in .trivyignore.
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: conluz-web:scan
+          version: v0.76.0
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+          trivyignores: .trivyignore
