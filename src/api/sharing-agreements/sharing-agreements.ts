@@ -71,7 +71,7 @@ with nothing in force returns an empty list.
 
 Returns 404 if the plant does not exist or if the caller is not a member of its
 community, to avoid leaking the existence of plants by ID.
-Returns 403 if the caller is an enabled member of the plant's community but
+Returns 403 if the caller is an active member of the plant's community but
 not a community admin.
 
 Authentication is required using a Bearer token.
@@ -174,7 +174,7 @@ export function useGetPlantActivePartitionCoefficients<TData = Awaited<ReturnTyp
 
 Returns 404 if the plant does not exist or if the caller is not a member of its
 community, to avoid leaking the existence of plants by ID. Returns 403 if the
-caller is an enabled member of the plant's community but not a community admin.
+caller is an active member of the plant's community but not a community admin.
 
 Authentication is required using a Bearer token.
 
@@ -435,7 +435,7 @@ export const useDeleteSharingAgreement = <TError = ErrorType<RestError>,
 Returns 404 if the plant does not exist, if the caller is not a member of its
 community, or if the sharing agreement does not exist or does not belong to
 this plant, to avoid leaking the existence of plants or agreements by ID.
-Returns 403 if the caller is an enabled member of the plant's community but
+Returns 403 if the caller is an active member of the plant's community but
 not a community admin.
 
 Authentication is required using a Bearer token.
@@ -625,7 +625,7 @@ export const useUpdateSharingAgreement = <TError = ErrorType<RestError>,
 Returns 404 if the plant does not exist, if the caller is not a member of its
 community, if the sharing agreement does not exist or does not belong to this
 plant, or if the agreement has no file uploaded, to avoid leaking the existence
-of plants or agreements by ID. Returns 403 if the caller is an enabled member
+of plants or agreements by ID. Returns 403 if the caller is an active member
 of the plant's community but not a community admin.
 
 Authentication is required using a Bearer token.
@@ -908,7 +908,7 @@ PUBLISHED or SUPERSEDED).
 Returns 404 if the plant does not exist, if the caller is not a member of its
 community, or if the sharing agreement does not exist or does not belong to this
 plant, to avoid leaking the existence of plants or agreements by ID.
-Returns 403 if the caller is an enabled member of the plant's community but
+Returns 403 if the caller is an active member of the plant's community but
 not a community admin.
 
 Authentication is required using a Bearer token.

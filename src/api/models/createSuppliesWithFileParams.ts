@@ -10,5 +10,5 @@ export type CreateSuppliesWithFileParams = {
 /**
  * Target community UUID.
  */
-communityId?: string;
+communityId: string;
 };

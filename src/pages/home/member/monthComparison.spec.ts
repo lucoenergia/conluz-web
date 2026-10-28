@@ -13,7 +13,7 @@ const COMPLETE = { hoursWithData: EXPECTED_HOURS, expectedHours: EXPECTED_HOURS,
 
 function month(overrides: Partial<MembershipEnergyMetricsResponse> = {}): MembershipEnergyMetricsResponse {
   return buildMembershipEnergyMetrics({
-    period: { startDate: "2026-08-01T00:00:00+02:00", endDate: "2026-08-31T23:00:00+02:00" },
+    period: { startDate: "2026-08-01T00:00:00+02:00", endDate: "2026-09-01T00:00:00+02:00" },
     coverage: COMPLETE,
     savings: { amountEur: 18.15, tariffSource: "REAL_TARIFF", estimatedPrice: null },
     selfConsumptionRatio: 0.45,
@@ -194,7 +194,7 @@ describe("compareWithPreviousMonth (#200)", () => {
 
     it("a month before with nothing recorded at all, as for an unpublished month or a brand-new member", () => {
       const nothingRecorded = buildMembershipEnergyMetrics({
-        period: { startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-07-31T23:00:00+02:00" },
+        period: { startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-08-01T00:00:00+02:00" },
         coverage: { ...COMPLETE, hoursWithData: 0, suppliesWithData: 0 },
         savings: { amountEur: 0, tariffSource: "REAL_TARIFF", estimatedPrice: null },
       });

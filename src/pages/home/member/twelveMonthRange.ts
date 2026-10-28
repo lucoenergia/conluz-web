@@ -10,8 +10,8 @@ const MONTHS_IN_SERIES = 12;
  * own end, exactly as the server resolved it.
  *
  * The backend emits every month whose local midnight on day 1 falls inside the
- * inclusive bounds, so these select exactly the twelve months ending at the
- * reference month. Counted back from the reference month alone, never from the
+ * half-open period, which excludes its end, so these select exactly the twelve
+ * months ending at the reference month. Counted back from the reference month alone, never from the
  * device clock.
  */
 export function twelveMonthRangeOf(referencePeriod: ReferencePeriod): ReferencePeriod {

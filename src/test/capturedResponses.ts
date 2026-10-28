@@ -1,4 +1,4 @@
-import type { MembershipMonthlyConsumptionBucketResponse } from "../api/models";
+import type { MembershipEnergyMetricsResponse, MembershipMonthlyConsumptionBucketResponse } from "../api/models";
 
 /**
  * Responses captured verbatim from the running backend, so a fixture can be
@@ -41,3 +41,39 @@ export function wireShapeOf(sample: string): RegExp {
   const pattern = sample.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&").replace(/\d/g, "\\d");
   return new RegExp(`^${pattern}$`);
 }
+
+/**
+ * `GET /api/v1/communities/{communityId}/memberships/{userId}/energy-metrics?period=LATEST_PUBLISHED_MONTH`
+ * for a member with two supplies, captured on 2026-10-28 from a backend on
+ * lucoenergia/conluz b3366ce, the half-open periods of lucoenergia/conluz#409
+ * (#324). August 2026 resolved, so `period.endDate` is 00:00 on 1 September,
+ * the first instant not included.
+ */
+export const CAPTURED_MEMBERSHIP_ENERGY_METRICS_LATEST_PUBLISHED_MONTH: MembershipEnergyMetricsResponse = {
+  period: {
+    startDate: "2026-08-01T00:00:00+02:00",
+    endDate: "2026-09-01T00:00:00+02:00",
+  },
+  coverage: {
+    hoursWithData: 1488,
+    expectedHours: 1488,
+    supplyCount: 2,
+    suppliesWithData: 2,
+  },
+  energy: {
+    totalConsumptionKWh: 409.331,
+    gridImportKWh: 155.622,
+    selfConsumptionKWh: 253.709,
+    surplusKWh: 610.711,
+    assignedProductionKWh: 864.42,
+  },
+  savings: {
+    amountEur: 38.06,
+    tariffSource: "ESTIMATE",
+    estimatedPrice: {
+      eurPerKWh: 0.15,
+    },
+  },
+  selfSufficiencyRatio: 0.6198137939131192,
+  selfConsumptionRatio: 0.2935020018321226,
+};

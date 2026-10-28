@@ -343,7 +343,7 @@ In cases where the creation process encounters errors, the server responds with 
  */
 export const createSuppliesWithFile = (
     createSuppliesWithFileBody: CreateSuppliesWithFileBody,
-    params?: CreateSuppliesWithFileParams,
+    params: CreateSuppliesWithFileParams,
  signal?: AbortSignal
 ) => {
       
@@ -362,8 +362,8 @@ formData.append(`file`, createSuppliesWithFileBody.file)
 
 
 export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}, TContext> => {
 
 const mutationKey = ['createSuppliesWithFile'];
 const {mutation: mutationOptions} = options ?
@@ -375,7 +375,7 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}> = (props) => {
           const {data,params} = props ?? {};
 
           return  createSuppliesWithFile(data,params,)
@@ -394,11 +394,11 @@ const {mutation: mutationOptions} = options ?
  * @summary Creates supplies in bulk importing a CSV file.
  */
 export const useCreateSuppliesWithFile = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSuppliesWithFile>>,
         TError,
-        {data: CreateSuppliesWithFileBody;params?: CreateSuppliesWithFileParams},
+        {data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams},
         TContext
       > => {
 
@@ -661,12 +661,39 @@ range. Every energy figure is in kWh, rounded to 3 decimals.
 configured with, not UTC. A day therefore lasts 23 hours on the spring daylight
 saving transition and 25 hours on the autumn one.
 
-**Range bounds:** `startDate` and `endDate` are both inclusive and are taken as
-given, without being rounded to a day boundary. Bounds that fall in the middle of
-a local day produce a partial first and last bucket, so a caller wanting whole
-local days must pass them at local midnight and at 23:59:59 local time, offset
+**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+the next month, each bound with the offset in force at that instant -- for example
+`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+Europe/Madrid.
+
+**Period checks:** a requested period is checked in this order, and the first rule it
+breaks is answered 400 with that rule's code:
+
+1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+   On the operations where both are required, a missing one is a bad request before any
+   of these checks.
+3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+4. `startDate` is before the start of the current hour, read in the period's time zone
+   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+
+A period that passes them and ends after the start of the current hour is then clipped
+to end there, before any data is read: no hour that has not fully happened is read or
+counted as expected. Energy metrics report the clipped end in `period`, and a series
+emits no bucket starting at or after it.
+
+The bounds are taken as given, without being rounded to a day boundary. Bounds
+that fall in the middle of a local day produce a partial first and last bucket,
+so a caller wanting whole local days passes both at local midnight, offset
 included -- for example `2023-04-01T00:00:00+02:00` to
-`2023-04-30T23:59:59+02:00` for April 2023 in Europe/Madrid. A day with no stored
+`2023-05-01T00:00:00+02:00` for April 2023 in Europe/Madrid. A day with no stored
 record is returned with zero energy rather than omitted.
 
 Each day is priced over its own local day, clipped to the requested bounds, so a
@@ -927,15 +954,42 @@ hourly records when they are read.
 application is configured with, not the UTC one, so its total includes the first
 and last local hours of the month and nothing from its neighbours.
 
-**Range bounds:** `startDate` and `endDate` are both inclusive, and they select
-pre-aggregated points by the instant each one is stamped at, which is local
-midnight on the first day of its month. Pass them with the zone's offset to
+**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+the next month, each bound with the offset in force at that instant -- for example
+`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+Europe/Madrid.
+
+**Period checks:** a requested period is checked in this order, and the first rule it
+breaks is answered 400 with that rule's code:
+
+1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+   On the operations where both are required, a missing one is a bad request before any
+   of these checks.
+3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+4. `startDate` is before the start of the current hour, read in the period's time zone
+   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+
+A period that passes them and ends after the start of the current hour is then clipped
+to end there, before any data is read: no hour that has not fully happened is read or
+counted as expected. Energy metrics report the clipped end in `period`, and a series
+emits no bucket starting at or after it.
+
+The bounds select pre-aggregated points by the instant each one is stamped at,
+which is local midnight on the first day of its month. Pass them with the zone's offset to
 select the months intended: local `2023-01-01T00:00:00+01:00` is
 `2022-12-31T23:00:00Z`, so a bound expressed in UTC can select one month too few
 or too many.
 
 **Whole months only.** A month is included if and only if its day-1 timestamp
-falls inside the inclusive bounds, and once included it always carries the whole
+falls inside the half-open bounds, and once included it always carries the whole
 month's energy and the whole month's savings -- bounds falling mid-month never
 trim it. A request ending on the 15th therefore still returns that month in
 full.
@@ -1331,15 +1385,59 @@ different magnitude weigh differently. A ratio whose denominator is zero is retu
 - Supply owners can only retrieve energy metrics for their own supplies
 
 **Period:**
-`startDate` and `endDate` are optional and must be supplied together; supplying exactly
-one of them is a bad request, as is a `startDate` after the `endDate`. When neither is
-supplied the period spans from the supply's earliest stored record to its latest, and a
-supply with no record at all returns a successful response with null period bounds, zero
-totals and null ratios.
+The period is resolved in exactly one of three ways, and the resolved bounds are
+always reported in `period`, also when the caller supplied them, with an end after
+the current hour clipped as described under **Period checks**.
 
-**Both bounds are inclusive.** A caller wanting a single calendar day must pass `00:00`
-to `23:00` of that day, not `00:00` to the following `00:00`, which would count the
-boundary hour in both days.
+- `startDate` and `endDate`: an explicit period. They must be supplied together;
+  supplying exactly one of them is a bad request, as is a `startDate` that is not
+  before the `endDate`.
+- `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in the
+  supply's time zone, that the distributor has published for **this supply**. It is
+  resolved from this supply's records alone: a month published only for another supply
+  of the same owner is never chosen. An hourly record is published when it carries
+  self-consumed energy, zero included, and surplus alone does not count. A month is
+  published when at least 90% of the hours it could have published carry it: the hours
+  of the month from the later of its first hour and the supply's first published
+  record. An unpublished or partly published month is skipped and the search continues
+  backwards through the 24 complete months before the current one. The current month is
+  never a candidate. The period runs from `00:00` of the first day of the month to
+  `00:00` of the first day of the next month. Combining it with `startDate` or
+  `endDate` is a bad request.
+- Neither: from the supply's earliest stored record to the end of the hour of its
+  latest.
+
+When no period can be resolved -- no published month in the search window, or no
+stored record at all -- the response is still successful, with null period bounds,
+zero totals and null ratios.
+
+**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+the next month, each bound with the offset in force at that instant -- for example
+`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+Europe/Madrid.
+
+**Period checks:** a requested period is checked in this order, and the first rule it
+breaks is answered 400 with that rule's code:
+
+1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+   On the operations where both are required, a missing one is a bad request before any
+   of these checks.
+3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+4. `startDate` is before the start of the current hour, read in the period's time zone
+   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+
+A period that passes them and ends after the start of the current hour is then clipped
+to end there, before any data is read: no hour that has not fully happened is read or
+counted as expected. Energy metrics report the clipped end in `period`, and a series
+emits no bucket starting at or after it.
 
 The `coverage` object reports how many hourly records were found against how many hours
 the period spans, so a partially synchronised period can be told apart from a genuinely
@@ -1360,8 +1458,9 @@ stored record contributes nothing, exactly as it contributes nothing to the ener
 totals, so a partially synchronised period yields a proportionally low figure rather
 than a flagged one. `coverage` is the field that tells the two apart. Consistently
 with that, an explicitly requested period containing no record at all is worth `0.00`,
-while `null` is reserved for the one case where no period could be resolved: a supply
-with no stored record and no requested period.
+while `null` is reserved for the case where no period could be resolved: a supply
+with no stored record and no requested period, or no published month for
+`period=LATEST_PUBLISHED_MONTH`.
 
  * @summary Retrieves aggregated energy metrics for a specific supply
  */

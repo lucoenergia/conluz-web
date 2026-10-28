@@ -1121,7 +1121,7 @@ export const FIXED_HUAWEI_CONFIG = {
 // ---------------------------------------------------------------------------
 
 /** August 2026 in Europe/Madrid, as the backend bounds it: before FIXED_NOW, never the current month. */
-const REFERENCE_AUGUST_2026 = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T21:00:00Z" };
+const REFERENCE_AUGUST_2026 = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T22:00:00Z" };
 
 const ESTIMATED_PRICE = { eurPerKWh: 0.15 };
 
@@ -1163,7 +1163,7 @@ export const MEMBER_ENERGY_METRICS_NO_MONTH: MembershipEnergyMetricsResponse = {
 
 // The month before the reference month (#200), as the comparison requests
 // it: July 2026, bounded by explicit dates, which the backend echoes back.
-const PREVIOUS_JULY_2026 = { startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-07-31T23:00:00+02:00" };
+const PREVIOUS_JULY_2026 = { startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-08-01T00:00:00+02:00" };
 
 /**
  * A complete July below August on every compared figure: 11,70 € saved, 31 %

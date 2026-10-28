@@ -19,31 +19,31 @@ describe("previousMonthOf (#200)", () => {
 
   it.each([
     // The backend writes the bounds with their local offset; the repo's fixtures in UTC. Both are the same instant.
-    ["August 2026 as the backend writes it", "2026-08-01T00:00:00+02:00", "2026-07-01T00:00:00+02:00", "2026-07-31T23:00:00+02:00"],
-    ["August 2026 written in UTC", "2026-07-31T22:00:00Z", "2026-07-01T00:00:00+02:00", "2026-07-31T23:00:00+02:00"],
+    ["August 2026 as the backend writes it", "2026-08-01T00:00:00+02:00", "2026-07-01T00:00:00+02:00", "2026-08-01T00:00:00+02:00"],
+    ["August 2026 written in UTC", "2026-07-31T22:00:00Z", "2026-07-01T00:00:00+02:00", "2026-08-01T00:00:00+02:00"],
   ])("reads the reference month in the app's time zone: %s", (_label, referenceStart, startDate, endDate) => {
     expect(previousMonthOf(referenceStart)).toEqual({ startDate, endDate });
   });
 
   describe("month lengths", () => {
-    it("the month before a 31-day month ends on the 30th when it has 30 days (May 2026 -> April)", () => {
+    it("the month before a 31-day month ends on 1 May when April has 30 days (May 2026 -> April)", () => {
       expect(previousMonthOf("2026-05-01T00:00:00+02:00")).toEqual({
         startDate: "2026-04-01T00:00:00+02:00",
-        endDate: "2026-04-30T23:00:00+02:00",
+        endDate: "2026-05-01T00:00:00+02:00",
       });
     });
 
-    it("the month before a 31-day month ends on the 28th in a common year (March 2027 -> February)", () => {
+    it("the month before a 31-day month ends on 1 March after 28 days in a common year (March 2027 -> February)", () => {
       expect(previousMonthOf("2027-03-01T00:00:00+01:00")).toEqual({
         startDate: "2027-02-01T00:00:00+01:00",
-        endDate: "2027-02-28T23:00:00+01:00",
+        endDate: "2027-03-01T00:00:00+01:00",
       });
     });
 
     it("rolls the year back from January (January 2027 -> December 2026)", () => {
       expect(previousMonthOf("2026-12-31T23:00:00Z")).toEqual({
         startDate: "2026-12-01T00:00:00+01:00",
-        endDate: "2026-12-31T23:00:00+01:00",
+        endDate: "2027-01-01T00:00:00+01:00",
       });
     });
   });
@@ -52,14 +52,14 @@ describe("previousMonthOf (#200)", () => {
     it("October 2026, clocks back on the 25th: starts in summer time, ends in winter time", () => {
       expect(previousMonthOf("2026-11-01T00:00:00+01:00")).toEqual({
         startDate: "2026-10-01T00:00:00+02:00",
-        endDate: "2026-10-31T23:00:00+01:00",
+        endDate: "2026-11-01T00:00:00+01:00",
       });
     });
 
     it("March 2026, clocks forward on the 29th: starts in winter time, ends in summer time", () => {
       expect(previousMonthOf("2026-04-01T00:00:00+02:00")).toEqual({
         startDate: "2026-03-01T00:00:00+01:00",
-        endDate: "2026-03-31T23:00:00+02:00",
+        endDate: "2026-04-01T00:00:00+02:00",
       });
     });
   });
@@ -68,7 +68,7 @@ describe("previousMonthOf (#200)", () => {
     // Whether that month has data is the response's to say, not the derivation's.
     expect(previousMonthOf("2026-08-31T22:00:00Z")).toEqual({
       startDate: "2026-08-01T00:00:00+02:00",
-      endDate: "2026-08-31T23:00:00+02:00",
+      endDate: "2026-09-01T00:00:00+02:00",
     });
   });
 });

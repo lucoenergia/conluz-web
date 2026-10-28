@@ -8,11 +8,11 @@
 
 export type GetMembershipMonthlyConsumptionParams = {
 /**
- * First instant of the period, inclusive.
+ * Start of the period, inclusive.
  */
 startDate: string;
 /**
- * Last instant of the period, inclusive.
+ * End of the period, exclusive.
  */
 endDate: string;
 };

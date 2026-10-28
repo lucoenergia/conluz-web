@@ -20,7 +20,7 @@ const USER_ID = "member-user";
 const COMMUNITY_ID = "member-community";
 
 /** August 2026, as the fixtures write it. */
-const AUGUST = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T21:00:00Z" };
+const AUGUST = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T22:00:00Z" };
 
 function render(activeCommunityId: string | null = COMMUNITY_ID) {
   return renderHookWithProviders(() => usePreviousMonthEnergyMetrics(AUGUST), { activeCommunityId }).result.current;
@@ -48,7 +48,7 @@ describe("usePreviousMonthEnergyMetrics (#200)", () => {
     expect(useGetMembershipEnergyMetrics).toHaveBeenLastCalledWith(
       COMMUNITY_ID,
       USER_ID,
-      { startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-07-31T23:00:00+02:00" },
+      { startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-08-01T00:00:00+02:00" },
       { query: { enabled: true } },
     );
   });
@@ -62,7 +62,7 @@ describe("usePreviousMonthEnergyMetrics (#200)", () => {
   it("exposes the bounds it requested", () => {
     expect(render().previousPeriod).toEqual({
       startDate: "2026-07-01T00:00:00+02:00",
-      endDate: "2026-07-31T23:00:00+02:00",
+      endDate: "2026-08-01T00:00:00+02:00",
     });
   });
 

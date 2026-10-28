@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import type { RestErrorDetailCode } from "../api/models";
 import {
@@ -7,6 +8,7 @@ import {
   translateErrorDetail,
 } from "./apiErrorCatalogue";
 import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
+import { apiError } from "../test/apiError";
 
 const DISTRIBUTOR_FILE_CODES: RestErrorDetailCode[] = [
   "DISTRIBUTOR_FILE_LINE_MALFORMED",
@@ -349,6 +351,46 @@ describe("personal ID refusals (#276)", () => {
     expect(translateErrorDetail({ message: "raw", code: "USER_PERSONAL_ID_INVALID" }, "fallback")).toBe(
       "El DNI/NIE/NIF no es válido. Revisa los números y la letra.",
     );
+  });
+});
+
+describe("energy metrics period refusals (#324)", () => {
+  // Read from the contract rather than listed by hand, so a period code the
+  // server adds later fails here until it has an entry.
+  const contractPeriodCodes = (): string[] => {
+    const spec = JSON.parse(readFileSync("api-docs.json", "utf8")) as {
+      components: { schemas: { RestErrorDetail: { properties: { code: { enum: string[] } } } } };
+    };
+    return spec.components.schemas.RestErrorDetail.properties.code.enum.filter((code) =>
+      code.startsWith("ENERGY_METRICS_PERIOD_"),
+    );
+  };
+
+  it("UI-ERR-004 the contract defines the five period codes this catalogue covers", () => {
+    expect(contractPeriodCodes().sort()).toEqual([
+      "ENERGY_METRICS_PERIOD_CONFLICTING",
+      "ENERGY_METRICS_PERIOD_INCOMPLETE",
+      "ENERGY_METRICS_PERIOD_START_AFTER_END",
+      "ENERGY_METRICS_PERIOD_START_IN_FUTURE",
+      "ENERGY_METRICS_PERIOD_TOO_LONG",
+    ]);
+  });
+
+  it.each(contractPeriodCodes())("UI-ERR-004 %s has a catalogue entry, so the server's message is never shown", (code) => {
+    const message = getFirstApiErrorMessage(apiError(400, { code: code as RestErrorDetailCode }), "fallback");
+
+    expect(message).not.toBe("raw backend message");
+    expect(message).not.toBe("fallback");
+  });
+
+  it.each<[RestErrorDetailCode, string]>([
+    ["ENERGY_METRICS_PERIOD_START_IN_FUTURE", "Este periodo todavía no ha empezado."],
+    ["ENERGY_METRICS_PERIOD_TOO_LONG", "El periodo puede abarcar como máximo 24 meses."],
+    ["ENERGY_METRICS_PERIOD_START_AFTER_END", "La fecha de inicio del periodo debe ser anterior a la de fin."],
+    ["ENERGY_METRICS_PERIOD_CONFLICTING", "No se ha podido interpretar el periodo."],
+    ["ENERGY_METRICS_PERIOD_INCOMPLETE", "No se ha podido interpretar el periodo: falta una de sus fechas."],
+  ])("UI-ERR-001 shows %s with the catalogue's text, and without params", (code, expected) => {
+    expect(getFirstApiErrorMessage(apiError(400, { code, params: null }), "fallback")).toBe(expected);
   });
 });
 

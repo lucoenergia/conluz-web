@@ -6,12 +6,12 @@
 | **Status** | Active |
 | **Routes** | `/home/member`, `/home/management` |
 | **Roles** | A caller to whom the view is open (`useHomeViews`) |
-| **Domain rules** | n/a |
+| **Domain rules** | `lucoenergia/conluz`: EPR-001 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #280 |
+| **Last reviewed against code** | #324 |
 
-Scope: the rules introduced in #280 for home states migrated from visual tests to Vitest. Not
-exhaustive: other home behaviour is not yet specified here.
+Scope: the rules introduced in #280 for home states migrated from visual tests to Vitest, and the
+month bounds of #324. Not exhaustive: other home behaviour is not yet specified here.
 
 ## Purpose
 
@@ -131,6 +131,17 @@ view may present a missing figure as a zero or a normal setup stage as a failure
   the community's or another member's.
 - **Implements:** n/a
 - **Source:** #280
+
+### UI-HOM-011 — A month derived from the reference month is sent half-open
+
+- **Status:** Active
+- **Rule:** A month the member home derives from the reference month MUST be sent as `[00:00 on
+  day 1, 00:00 on day 1 of the next month)` in `APP_TIME_ZONE`, each bound with the offset in force
+  at that instant, as EPR-001 in lucoenergia/conluz defines a month.
+- **Rationale:** A month ending at 23:00 silently loses its last hour under half-open bounds, and
+  coverage cannot reveal it: expected hours are counted on the requested period.
+- **Implements:** EPR-001
+- **Source:** #324, lucoenergia/conluz#409
 
 ## States
 
