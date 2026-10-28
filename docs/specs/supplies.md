@@ -6,9 +6,9 @@
 | **Status** | Active |
 | **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId` |
 | **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete` |
-| **Domain rules** | `lucoenergia/conluz`: SUP-001, MEM-026 |
+| **Domain rules** | `lucoenergia/conluz`: SUP-001, MEM-026, EPR-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #302 |
+| **Last reviewed against code** | #324 |
 
 ## Purpose
 
@@ -16,7 +16,7 @@ Let a community admin delete a supply that nothing in the community depends on, 
 to stop using one that something does. Deleting a member who owns supplies needs their supplies
 deleted first (UI-MBR-015), so this is the step that makes that possible.
 
-This document covers only the rules #290 and #302 introduced.
+This document covers only the rules #290, #302 and #324 introduced.
 
 ## Rules
 
@@ -95,3 +95,15 @@ This document covers only the rules #290 and #302 introduced.
   the community may show, and falling back to the account would disclose it.
 - **Implements:** MEM-026
 - **Source:** #302, lucoenergia/conluz#448
+
+### UI-SUP-006 — A consumption period that has not started yet is shown as empty
+
+- **Status:** Active
+- **Rule:** On the supply detail page, a consumption refusal with
+  `ENERGY_METRICS_PERIOD_START_IN_FUTURE` MUST be shown as an empty period, not as a load failure.
+  Any other error MUST still be shown as a load failure. The page MUST decide by the error detail's
+  code, never by the HTTP status or the message.
+- **Rationale:** Under EPR-003 a period that has not started is refused; for the current month or
+  year in its first hour, or a custom range starting later, that is "nothing yet", not a fault.
+- **Implements:** EPR-003
+- **Source:** #324, lucoenergia/conluz#409

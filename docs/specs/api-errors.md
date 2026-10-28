@@ -8,7 +8,7 @@
 | **Roles** | Any caller |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #232 |
+| **Last reviewed against code** | #324 |
 
 ## Purpose
 
@@ -19,7 +19,7 @@ maps; the server's message is only the fallback for the codes it does not.
 Screens that word a code their own way, such as the member invitation actions or UI-MBR-023's
 import rows, are covered by the exception in UI-ERR-001.
 
-This document covers only the rules #232 introduced.
+This document covers only the rules #232 and #324 introduced.
 
 ## Rules
 
@@ -52,6 +52,15 @@ This document covers only the rules #232 introduced.
   message is the only text that states it.
 - **Implements:** n/a
 - **Source:** #232
+
+### UI-ERR-004 — Every energy metrics period code has a catalogue entry
+
+- **Status:** Active
+- **Rule:** Every `ENERGY_METRICS_PERIOD_*` code MUST have a catalogue entry.
+- **Rationale:** The client translates by code; without an entry, UI-ERR-003 would show the
+  server's English message.
+- **Implements:** n/a
+- **Source:** #324, lucoenergia/conluz#409
 
 ## States
 
