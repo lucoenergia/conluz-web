@@ -53,14 +53,14 @@ describe("useMemberEnergyMetrics", () => {
     vi.mocked(useGetMembershipEnergyMetrics).mockReturnValue(
       query.success<typeof getMembershipEnergyMetrics>(
         buildMembershipEnergyMetrics({
-          period: { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T21:00:00Z" },
+          period: { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T22:00:00Z" },
         }),
       ),
     );
 
     expect(render().referencePeriod).toEqual({
       startDate: "2026-07-31T22:00:00Z",
-      endDate: "2026-08-31T21:00:00Z",
+      endDate: "2026-08-31T22:00:00Z",
     });
   });
 

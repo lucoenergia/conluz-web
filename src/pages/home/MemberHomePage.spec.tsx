@@ -18,7 +18,11 @@ import { CommunityRole } from "../../hooks/permissions";
 import { customInstance } from "../../http/custom-instance";
 import { useGetSuppliesByUserId, type getSuppliesByUserId } from "../../api/users/users";
 import { useLoggedUser } from "../../context/logged-user.context";
-import { CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION, wireShapeOf } from "../../test/capturedResponses";
+import {
+  CAPTURED_MEMBERSHIP_ENERGY_METRICS_LATEST_PUBLISHED_MONTH,
+  CAPTURED_MEMBERSHIP_MONTHLY_CONSUMPTION,
+  wireShapeOf,
+} from "../../test/capturedResponses";
 import {
   buildCurrentUser,
   buildMembershipEnergyMetrics,
@@ -75,7 +79,7 @@ const COMMUNITY_ID = "member-community";
 /** August 2026 in Europe/Madrid, as the backend bounds it. */
 const AUGUST: MembershipEnergyMetricsResponse["period"] = {
   startDate: "2026-07-31T22:00:00Z",
-  endDate: "2026-08-31T21:00:00Z",
+  endDate: "2026-08-31T22:00:00Z",
 };
 
 /** A complete month: 180 of 268 assigned kWh used, 180 of 412 consumed kWh from the community. */
@@ -115,7 +119,7 @@ function paybackWith(overrides: Partial<MembershipPaybackResponse> = {}): Member
 /** July 2026, the month before AUGUST, as the comparison requests it. */
 const JULY: MembershipEnergyMetricsResponse["period"] = {
   startDate: "2026-07-01T00:00:00+02:00",
-  endDate: "2026-07-31T23:00:00+02:00",
+  endDate: "2026-08-01T00:00:00+02:00",
 };
 
 /**
@@ -689,6 +693,40 @@ describe("MemberHomePage (#199)", () => {
       expect(bucket.date).toMatch(wireShapeOf(captured.date));
       expect(bucket.time).toMatch(wireShapeOf(captured.time));
     }
+  });
+
+  // The server's month is half-open since lucoenergia/conluz#409: it ends at
+  // 00:00 on 1 September, which belongs to the next month and must never be
+  // read as part of this one.
+  describe("#324 -- the reference month as the server now bounds it", () => {
+    const CAPTURED = CAPTURED_MEMBERSHIP_ENERGY_METRICS_LATEST_PUBLISHED_MONTH;
+    const energyCalls = () => vi.mocked(useGetMembershipEnergyMetrics).mock.calls.map(([, , params]) => params);
+    const monthlyCalls = () => vi.mocked(useGetMembershipMonthlyConsumption).mock.calls.map(([, , params]) => params);
+
+    beforeEach(() => {
+      answer({ metrics: CAPTURED, hourly: { ...augustProfile(), period: CAPTURED.period } });
+    });
+
+    it("AC5 -- labels the captured month as August 2026, and never as 1 September", () => {
+      openHome();
+
+      expect(screen.getByText("Datos de agosto de 2026")).toBeInTheDocument();
+      expect(savingsCard()).toBeInTheDocument();
+      expect(text(card("Tus mejores horas para autoconsumir"))).toContain("Media de cada hora en agosto de 2026");
+      expect(page()).not.toMatch(/1 de septiembre|septiembre de 2026/);
+    });
+
+    it("UI-HOM-011 asks for the month before as [00:00 on 1 July, 00:00 on 1 August) in Madrid", () => {
+      openHome();
+
+      expect(energyCalls()).toContainEqual({ startDate: "2026-07-01T00:00:00+02:00", endDate: "2026-08-01T00:00:00+02:00" });
+    });
+
+    it("UI-HOM-011 ends the twelve months at the captured month's exclusive end, unchanged", () => {
+      openHome();
+
+      expect(monthlyCalls()).toContainEqual({ startDate: "2025-09-01T00:00:00+02:00", endDate: "2026-09-01T00:00:00+02:00" });
+    });
   });
 
   describe("the twelve-month series (#201)", () => {

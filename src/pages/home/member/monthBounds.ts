@@ -1,9 +1,6 @@
 import { APP_TIME_ZONE } from "../../../utils/formatCalendarDate";
 import type { ReferencePeriod } from "./useMemberEnergyMetrics";
 
-/** The last hourly record of a day: both bounds are inclusive, so a month ends on this hour, not on the next midnight. */
-const LAST_HOUR_OF_DAY = 23;
-
 interface WallTime {
   year: number;
   /** 1-12. */
@@ -43,7 +40,7 @@ const pad = (value: number) => String(value).padStart(2, "0");
 /**
  * A wall-clock hour in the app's time zone, as the backend writes a month's
  * bounds: local time with the offset in force at that instant
- * ("2026-10-31T23:00:00+01:00"). The offset is looked up twice because the
+ * ("2026-11-01T00:00:00+01:00"). The offset is looked up twice because the
  * first guess is taken at the wrong instant whenever a transition lies between
  * the wall time read as UTC and the real one.
  */
@@ -58,8 +55,10 @@ function zonedIso({ year, month, day, hour }: WallTime): string {
 
 /**
  * The month `monthsBack` months before the reference month, bounded the way
- * the backend bounds a month: from 00:00 on its first day to 23:00 on its
- * last, both inclusive, in the app's time zone.
+ * the backend bounds a month: the half-open period from 00:00 on its first day
+ * to 00:00 on the first day of the next month, which it excludes, in the app's
+ * time zone. Each bound carries the offset in force at its own instant, so a
+ * month with a daylight-saving transition starts and ends on different offsets.
  *
  * Derived from the reference month's start alone -- never from the device
  * clock or the device's time zone -- so every period counted back from the
@@ -70,13 +69,10 @@ export function monthBefore(referenceStart: string, monthsBack: number): Referen
   const reference = wallTimeAt(Date.parse(referenceStart));
   // Months counted from year 0, so stepping back across any number of years is one subtraction.
   const monthIndex = reference.year * 12 + (reference.month - 1) - monthsBack;
-  const year = Math.floor(monthIndex / 12);
-  const month = (monthIndex % 12) + 1;
-  // Day 0 of the following month is the last day of this one.
-  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const firstDayOf = (index: number) => zonedIso({ year: Math.floor(index / 12), month: (index % 12) + 1, day: 1, hour: 0 });
 
   return {
-    startDate: zonedIso({ year, month, day: 1, hour: 0 }),
-    endDate: zonedIso({ year, month, day: lastDay, hour: LAST_HOUR_OF_DAY }),
+    startDate: firstDayOf(monthIndex),
+    endDate: firstDayOf(monthIndex + 1),
   };
 }

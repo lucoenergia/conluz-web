@@ -54,7 +54,7 @@ const USER_ID = "member-user";
 const COMMUNITY_ID = "member-community";
 
 /** August 2026 in Europe/Madrid, as the backend bounds it. */
-const AUGUST = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T21:00:00Z" };
+const AUGUST = { startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T22:00:00Z" };
 
 /** September 2025 to August 2026, in order: the twelve months ending at AUGUST. */
 const MONTHS = [

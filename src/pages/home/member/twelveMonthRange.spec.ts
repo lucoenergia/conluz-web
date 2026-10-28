@@ -19,45 +19,51 @@ describe("twelveMonthRangeOf (#201)", () => {
 
   it("starts eleven months before the reference month and ends where the server ended it (August 2026)", () => {
     expect(
-      twelveMonthRangeOf({ startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T21:00:00Z" }),
-    ).toEqual({ startDate: "2025-09-01T00:00:00+02:00", endDate: "2026-08-31T21:00:00Z" });
+      twelveMonthRangeOf({ startDate: "2026-07-31T22:00:00Z", endDate: "2026-08-31T22:00:00Z" }),
+    ).toEqual({ startDate: "2025-09-01T00:00:00+02:00", endDate: "2026-08-31T22:00:00Z" });
+  });
+
+  it("UI-HOM-011 counts back from the server's half-open month and passes its exclusive end through (August 2026)", () => {
+    expect(
+      twelveMonthRangeOf({ startDate: "2026-08-01T00:00:00+02:00", endDate: "2026-09-01T00:00:00+02:00" }),
+    ).toEqual({ startDate: "2025-09-01T00:00:00+02:00", endDate: "2026-09-01T00:00:00+02:00" });
   });
 
   it("keeps the reference month's end verbatim, in whatever form the server wrote it", () => {
-    const end = "2026-08-31T23:00:00+02:00";
+    const end = "2026-09-01T00:00:00+02:00";
     expect(twelveMonthRangeOf({ startDate: "2026-08-01T00:00:00+02:00", endDate: end }).endDate).toBe(end);
   });
 
   it("crosses a year boundary: a January reference starts in February of the year before", () => {
-    expect(twelveMonthRangeOf({ startDate: "2026-12-31T23:00:00Z", endDate: "2027-01-31T22:00:00Z" })).toEqual({
+    expect(twelveMonthRangeOf({ startDate: "2026-12-31T23:00:00Z", endDate: "2027-01-31T23:00:00Z" })).toEqual({
       startDate: "2026-02-01T00:00:00+01:00",
-      endDate: "2027-01-31T22:00:00Z",
+      endDate: "2027-01-31T23:00:00Z",
     });
   });
 
   describe("daylight-saving months", () => {
     it("an October reference (clocks back on the 25th) starts the previous November, in winter time", () => {
-      expect(twelveMonthRangeOf({ startDate: "2026-10-01T00:00:00+02:00", endDate: "2026-10-31T23:00:00+01:00" })).toEqual({
+      expect(twelveMonthRangeOf({ startDate: "2026-10-01T00:00:00+02:00", endDate: "2026-11-01T00:00:00+01:00" })).toEqual({
         startDate: "2025-11-01T00:00:00+01:00",
-        endDate: "2026-10-31T23:00:00+01:00",
+        endDate: "2026-11-01T00:00:00+01:00",
       });
     });
 
     it("a March reference (clocks forward on the 29th) starts the previous April, in summer time", () => {
-      expect(twelveMonthRangeOf({ startDate: "2026-03-01T00:00:00+01:00", endDate: "2026-03-31T23:00:00+02:00" })).toEqual({
+      expect(twelveMonthRangeOf({ startDate: "2026-03-01T00:00:00+01:00", endDate: "2026-04-01T00:00:00+02:00" })).toEqual({
         startDate: "2025-04-01T00:00:00+02:00",
-        endDate: "2026-03-31T23:00:00+02:00",
+        endDate: "2026-04-01T00:00:00+02:00",
       });
     });
 
     it("a range starting in October starts in summer time (September 2026 reference)", () => {
-      expect(twelveMonthRangeOf({ startDate: "2026-08-31T22:00:00Z", endDate: "2026-09-30T21:00:00Z" }).startDate).toBe(
+      expect(twelveMonthRangeOf({ startDate: "2026-08-31T22:00:00Z", endDate: "2026-09-30T22:00:00Z" }).startDate).toBe(
         "2025-10-01T00:00:00+02:00",
       );
     });
 
     it("a range starting in March starts in winter time (February 2027 reference)", () => {
-      expect(twelveMonthRangeOf({ startDate: "2027-01-31T23:00:00Z", endDate: "2027-02-28T22:00:00Z" }).startDate).toBe(
+      expect(twelveMonthRangeOf({ startDate: "2027-01-31T23:00:00Z", endDate: "2027-02-28T23:00:00Z" }).startDate).toBe(
         "2026-03-01T00:00:00+01:00",
       );
     });
