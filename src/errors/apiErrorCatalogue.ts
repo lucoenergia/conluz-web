@@ -301,6 +301,15 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
       ? `El archivo tiene más de ${params.maxRows} filas. Divídelo en varios archivos.`
       : "El archivo tiene demasiadas filas. Divídelo en varios archivos.",
 
+  // A refused energy metrics or consumption period (#324). The server sends
+  // no params. CONFLICTING and INCOMPLETE come from how a screen built the
+  // request, never from anything the user did, so they tell the user nothing to do.
+  ENERGY_METRICS_PERIOD_CONFLICTING: "No se ha podido interpretar el periodo.",
+  ENERGY_METRICS_PERIOD_INCOMPLETE: "No se ha podido interpretar el periodo: falta una de sus fechas.",
+  ENERGY_METRICS_PERIOD_START_AFTER_END: "La fecha de inicio del periodo debe ser anterior a la de fin.",
+  ENERGY_METRICS_PERIOD_START_IN_FUTURE: "Este periodo todavía no ha empezado.",
+  ENERGY_METRICS_PERIOD_TOO_LONG: "El periodo puede abarcar como máximo 24 meses.",
+
   // Creating or editing a community whose code or NIF another community
   // already has (#232). params.field names which: `code` or `legalId`. A
   // function template, so a missing or other value words both.
