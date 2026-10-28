@@ -9,11 +9,11 @@ import type { GetMembershipEnergyMetricsPeriod } from './getMembershipEnergyMetr
 
 export type GetMembershipEnergyMetricsParams = {
 /**
- * First instant of an explicit period, inclusive. Requires endDate.
+ * Start of an explicit period, inclusive. Requires endDate.
  */
 startDate?: string;
 /**
- * Last instant of an explicit period, inclusive. Requires startDate.
+ * End of an explicit period, exclusive. Requires startDate.
  */
 endDate?: string;
 /**

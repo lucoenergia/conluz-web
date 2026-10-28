@@ -7,6 +7,6 @@
  */
 
 /**
- * Last instant included in the aggregation, inclusive
+ * End of the aggregation, exclusive: the first instant not included
  */
 export type SupplyEnergyMetricsPeriodResponseEndDate = string | null;

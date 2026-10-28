@@ -9,7 +9,7 @@ import type { SupplyEnergyMetricsPeriodResponseEndDate } from './supplyEnergyMet
 import type { SupplyEnergyMetricsPeriodResponseStartDate } from './supplyEnergyMetricsPeriodResponseStartDate';
 
 export interface SupplyEnergyMetricsPeriodResponse {
-  /** Last instant included in the aggregation, inclusive */
+  /** End of the aggregation, exclusive: the first instant not included */
   endDate: SupplyEnergyMetricsPeriodResponseEndDate;
   /** First instant included in the aggregation, inclusive */
   startDate: SupplyEnergyMetricsPeriodResponseStartDate;

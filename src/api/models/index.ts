@@ -92,6 +92,7 @@ export * from './getShellyConfigResponse';
 export * from './getSupplyDailyConsumptionParams';
 export * from './getSupplyDailyProductionParams';
 export * from './getSupplyEnergyMetricsParams';
+export * from './getSupplyEnergyMetricsPeriod';
 export * from './getSupplyHourlyConsumptionParams';
 export * from './getSupplyHourlyProductionParams';
 export * from './getSupplyMonthlyConsumptionParams';

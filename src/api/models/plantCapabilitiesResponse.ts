@@ -16,7 +16,7 @@ export interface PlantCapabilitiesResponse {
   canManage: boolean;
   /** Whether the caller may create a sharing agreement under this plant. */
   canManageSharingAgreements: boolean;
-  /** Whether the caller may read this plant. Open to any enabled member of its community. */
+  /** Whether the caller may read this plant. Open to any active member of its community. */
   canRead: boolean;
   /** Whether the caller may open the supply referenced by this plant (GET /api/v1/supplies/{supplyId}). Listing plants is open to any member, but the supply behind one is not, so the reference carries no owner and this says whether following it would succeed. */
   canReadSupply: boolean;

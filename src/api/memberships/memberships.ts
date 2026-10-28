@@ -964,12 +964,40 @@ record.
 
 **Time zone and month selection:**
 Months are local calendar months of the community's time zone, not UTC ones.
-`startDate` and `endDate` are both required and both inclusive, and a month is in
-range if and only if its local midnight on day 1 falls inside them -- the rule the
+`startDate` and `endDate` are both required, and a month is in range if and only
+if its local midnight on day 1 falls inside them -- the rule the
 per-supply monthly series selects its pre-aggregated points by. Once in range a
 month always carries its whole energy and its whole savings: bounds falling
 mid-month never trim it. Pass the bounds with the zone's offset: a bound expressed
 in UTC can select one month too few or too many.
+
+**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+the next month, each bound with the offset in force at that instant -- for example
+`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+Europe/Madrid.
+
+**Period checks:** a requested period is checked in this order, and the first rule it
+breaks is answered 400 with that rule's code:
+
+1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+   On the operations where both are required, a missing one is a bad request before any
+   of these checks.
+3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+4. `startDate` is before the start of the current hour, read in the period's time zone
+   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+
+A period that passes them and ends after the start of the current hour is then clipped
+to end there, before any data is read: no hour that has not fully happened is read or
+counted as expected. Energy metrics report the clipped end in `period`, and a series
+emits no bucket starting at or after it.
 
 **Completeness:**
 `supplyCount` is the number of supplies the member **currently** owns in the
@@ -1261,12 +1289,12 @@ is zero is returned as `null`, never as `0`.
 
 **Period:**
 The period is resolved in exactly one of three ways, and the resolved bounds are
-always reported in `period`, also when the caller supplied them.
+always reported in `period`, also when the caller supplied them, with an end after
+the current hour clipped as described under **Period checks**.
 
 - `startDate` and `endDate`: an explicit period, with the same semantics as the
-  per-supply endpoint. They must be supplied together, and a `startDate` after
-  the `endDate` is a bad request. **Both bounds are inclusive**: a single
-  calendar day runs from `00:00` to `23:00` of that day.
+  per-supply endpoint. They must be supplied together, and a `startDate` that
+  is not before the `endDate` is a bad request.
 - `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in
   the community's time zone, that the distributor has published for any of the
   member's supplies. The distributor publishes a month's self-consumed energy
@@ -1283,14 +1311,42 @@ always reported in `period`, also when the caller supplied them.
   the search continues backwards through the 24 complete months before the
   current one. The current month is never a candidate. When no month in the
   search window is published, no period is resolved. The period runs from
-  `00:00` of the first day to `23:00` of the last day. Combining it with
-  `startDate` or `endDate` is a bad request.
-- Neither: from the earliest to the latest record stored for any of the member's
-  supplies.
+  `00:00` of the first day of the month to `00:00` of the first day of the next
+  month. Combining it with `startDate` or `endDate` is a bad request.
+- Neither: from the earliest record stored for any of the member's supplies to
+  the end of the hour of the latest.
 
 When no period can be resolved -- no published month in the search window, no
 stored record at all, or no supplies to search -- the response is still
 successful, with null period bounds, zero totals and null ratios.
+
+**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+the next month, each bound with the offset in force at that instant -- for example
+`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+Europe/Madrid.
+
+**Period checks:** a requested period is checked in this order, and the first rule it
+breaks is answered 400 with that rule's code:
+
+1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+   On the operations where both are required, a missing one is a bad request before any
+   of these checks.
+3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+4. `startDate` is before the start of the current hour, read in the period's time zone
+   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+
+A period that passes them and ends after the start of the current hour is then clipped
+to end there, before any data is read: no hour that has not fully happened is read or
+counted as expected. Energy metrics report the clipped end in `period`, and a series
+emits no bucket starting at or after it.
 
 **Coverage:**
 `coverage.hoursWithData` counts the hourly records found across every supply.
@@ -1444,7 +1500,8 @@ published for a supply when at least 90% of the hours it could have published
 carry it, counted from the later of the month's first hour and the supply's first
 published record. It **cannot be chosen**: only inside a published month is a
 stored zero a measured zero rather than a value not published yet. The resolved
-bounds are reported in `period`. When no month can be resolved -- no published
+bounds are reported in `period`, half-open: from `00:00` of the first day of the
+month, included, to `00:00` of the first day of the next month, excluded. When no month can be resolved -- no published
 month in the search window, or no supplies to search -- the response is still
 successful, with null period bounds and 24 buckets without any sample.
 
@@ -2069,13 +2126,13 @@ export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMem
 
 
 /**
- * Replaces the record this community keeps on a member: full name, member number, contact email, address and phone number. The whole record is sent: an optional value that is missing, null, empty or blank is cleared. Only the record is written, never the person's account, which they share with their other communities, nor the membership's role, state or invitation.
+ * Replaces the record this community keeps on a member: full name, member number, contact email, address and phone number. The whole record is sent: an optional value that is missing, null, empty or blank is cleared. Only the record is written, never the person's account, which they share with their other communities, nor the membership's role or state. The only other change is the invitation link revoked as described below.
 
 Any membership of the community may be edited, whatever its role and whether it is pending, accepted or disabled, the caller's own included. A user with no membership in the community responds 404.
 
 A membership with the `COMMUNITY_ADMIN` role must keep a contact email: a record without one responds 400 with the `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` code, and nothing is changed.
 
-An invitation link already sent stays valid; the next invitation, or resend, goes to the new contact email.
+Changing the contact email of a pending membership revokes its active invitation link, so a link sent to the old address stops working and `invitationExpiresAt` is null; the next invitation, or resend, goes to the new contact email. A change only of letter case is not a change of address and keeps the link.
 
 **Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
 
