@@ -34,6 +34,19 @@ import { Can, outcomeFromResource } from "../../hooks/permissions";
 import { useSupplyActions } from "../../hooks/actions";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 import { toConsumptionRows } from "./consumptionRows";
+import { getFirstApiErrorCode } from "../../errors/apiErrorCatalogue";
+
+/**
+ * A daily or monthly consumption period that has not started yet: "Mes" in the
+ * first local hour of day 1, "Año" in the first hour of 1 January, or a custom
+ * range starting in the future. The server refuses it (EPR-003 in
+ * lucoenergia/conluz), and for this page that means nothing to show yet, not a
+ * failure (#324). Decided by the detail code, never by the status alone.
+ */
+const isNotStartedYet = (error: unknown) => getFirstApiErrorCode(error) === "ENERGY_METRICS_PERIOD_START_IN_FUTURE";
+
+/** React Query's default of three retries, except for a period that has not started: asking again changes nothing. */
+const retryUnlessNotStartedYet = (failureCount: number, error: unknown) => !isNotStartedYet(error) && failureCount < 3;
 
 export const SupplyDetailPage: FC = () => {
   const { supplyPointId = "" } = useParams();
@@ -181,7 +194,12 @@ export const SupplyDetailPage: FC = () => {
   } = useGetSupplyDailyConsumption(
     supplyPointId,
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!supplyPointId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
+    {
+      query: {
+        enabled: !!supplyPointId && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")),
+        retry: retryUnlessNotStartedYet,
+      },
+    },
   );
 
   // Fetch monthly consumption data for year filter and dates filter with monthly granularity
@@ -192,7 +210,12 @@ export const SupplyDetailPage: FC = () => {
   } = useGetSupplyMonthlyConsumption(
     supplyPointId,
     { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
-    { query: { enabled: !!supplyPointId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
+    {
+      query: {
+        enabled: !!supplyPointId && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")),
+        retry: retryUnlessNotStartedYet,
+      },
+    },
   );
 
   // Fetch yearly consumption data for totals filter
@@ -290,8 +313,9 @@ export const SupplyDetailPage: FC = () => {
     supplyDailyProductionError ||
     supplyMonthlyProductionError ||
     hourlyConsumptionError ||
-    dailyConsumptionError ||
-    monthlyConsumptionError ||
+    // A period that has not started yet is shown as empty, not as a failure.
+    (isNotStartedYet(dailyConsumptionError) ? null : dailyConsumptionError) ||
+    (isNotStartedYet(monthlyConsumptionError) ? null : monthlyConsumptionError) ||
     yearlyConsumptionError ||
     supplyPointError;
 
