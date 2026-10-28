@@ -8,7 +8,9 @@
 #      `gh workflow run build-and-push-image.yml --ref <tag>`. A tag pushed by
 #      hand (e.g. to bump minor/major) triggers it through `push: tags`.
 #   3. This workflow checks out the tagged commit, runs the checks, bakes the
-#      version into the bundle and publishes the image to GHCR.
+#      version into the bundle, scans the image with Trivy and publishes it to
+#      GHCR only if the scan passes (#307). The scan results go to code
+#      scanning under the `container-image` category.
 #
 # Resulting tags published per release (for tag `1.0.12`):
 #   ghcr.io/lucoenergia/conluz-web:1.0.12
@@ -45,6 +47,20 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
+      # Puts npm and npx behind Aikido Safe Chain, so a known-malicious package
+      # or one published less than 48 hours ago is blocked before it runs with
+      # this job's token (#307).
+      # If Aikido's malware list cannot be fetched, installs fail (HTTP 500 from the proxy): re-run the job. The minimum-age check fails open when its list is unavailable.
+      - name: Install Safe Chain
+        run: |
+          curl -fsSL https://github.com/AikidoSec/safe-chain/releases/download/1.5.26/install-safe-chain.sh -o /tmp/install-safe-chain.sh
+          echo "9e4af7107f06d9c0d758cb08fb36804c2af88e24972f3a9d3f8c2bd0ca002adf  /tmp/install-safe-chain.sh" | sha256sum -c -
+          sh /tmp/install-safe-chain.sh --ci
+          rm /tmp/install-safe-chain.sh
+      # The installer only warns when its setup fails; this step fails the job
+      # instead, so npm never runs unprotected.
+      - name: Verify Safe Chain
+        run: npm safe-chain-verify
       - run: npm ci
       # Fails if `npm ci` rewrote the lockfile, which the npm pin (package.json
       # engines + .npmrc engine-strict) exists to prevent.
@@ -57,9 +73,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     # `packages: write` is what allows the built-in GITHUB_TOKEN to push to GHCR.
+    # `security-events: write` lets it upload the scan results to code scanning.
     permissions:
       contents: read
       packages: write
+      security-events: write
 
     steps:
       # Checks out the repo at the tag's commit (github.ref is refs/tags/X.Y.Z
@@ -99,16 +117,104 @@ jobs:
 
       # APP_VERSION is baked into the bundle (see docker/Dockerfile) so the
       # running app reports the same version as its image tag.
-      - name: Build and push Docker image
+      # The image is loaded into the runner, not pushed: it is scanned first,
+      # and the push below publishes this same local image. The extra
+      # local-only tag gives both scans a fixed name, whatever the ref.
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
           platforms: linux/amd64
-          push: true
+          push: false
+          load: true
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            conluz-web-scan:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Print the local image ID
+        run: docker image inspect --format '{{.Id}}' "conluz-web-scan:${GITHUB_SHA}"
+
+      # Every entry must carry an expiry date and a reason (see .trivyignore).
+      - name: Lint .trivyignore
+        run: |
+          bad=$(grep -nEv '^[[:space:]]*(#|$)' .trivyignore | grep -vE 'exp:[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+.*#[[:space:]]*[^[:space:]]' || true)
+          if [ -n "$bad" ]; then
+            echo "::error file=.trivyignore::Every entry needs exp:YYYY-MM-DD and a # reason"
+            echo "$bad"
+            exit 1
+          fi
+
+      # Report: CRITICAL and HIGH findings that have a fix, for code scanning.
+      # It never fails the job; the gate below does.
+      - name: Scan image for the report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: conluz-web-scan:${{ github.sha }}
+          version: v0.76.0
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          # Without it the action ignores `severity` for SARIF output.
+          limit-severities-for-sarif: true
+          ignore-unfixed: true
+          exit-code: "0"
+          format: sarif
+          output: trivy-results.sarif
+          trivyignores: .trivyignore
+
+      - name: Upload scan results to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: container-image
+
+      # Gate (lucoenergia/conluz#474): fails on a CRITICAL vulnerability, in OS
+      # packages or application libraries, that has a fix available and is not
+      # accepted in .trivyignore. A failure here stops the push below.
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: conluz-web-scan:${{ github.sha }}
+          version: v0.76.0
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+          trivyignores: .trivyignore
+
+      # Publishes the scanned local image under each metadata tag (not the
+      # local-only scan tag), and fails if what a tag holds in the registry is
+      # not the scanned image: both config digests are printed and compared.
+      - name: Push the scanned image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          # `docker save` writes the image's config digest into manifest.json
+          # (`<hex>.json` or `blobs/sha256/<hex>`) with both the classic and the
+          # containerd image store, unlike the local image ID.
+          config=$(docker save "conluz-web-scan:${GITHUB_SHA}" | tar -xO manifest.json | jq -r '.[0].Config')
+          scanned="sha256:$(basename "$config" .json)"
+          echo "Scanned image config digest: $scanned"
+          while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            docker push "$tag"
+            manifest=$(docker buildx imagetools inspect --raw "$tag")
+            # The containerd image store pushes an index; follow it to the
+            # linux/amd64 manifest to reach the config.
+            if index_amd64=$(jq -er '.manifests[]? | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' <<< "$manifest"); then
+              manifest=$(docker buildx imagetools inspect --raw "${tag%:*}@${index_amd64}")
+            fi
+            pushed=$(jq -r .config.digest <<< "$manifest")
+            echo "$tag config digest: $pushed"
+            if [ "$pushed" != "$scanned" ]; then
+              echo "::error title=Pushed image differs::$tag has config $pushed, but the scanned image has $scanned"
+              exit 1
+            fi
+          done <<< "$TAGS"

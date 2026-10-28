@@ -3,7 +3,8 @@
 # Images are NOT published from here: a push to `main` goes through
 # version-update.yml -> build-and-push-image.yml, which publishes a versioned
 # image (X.Y.Z, X.Y, X, latest). On PRs the image is built without pushing, as
-# a Dockerfile sanity check.
+# a Dockerfile sanity check, and scanned with Trivy: the job fails on a CRITICAL
+# vulnerability that has a fix and is not accepted in .trivyignore (#307).
 
 name: Run unit tests and build image
 
@@ -29,6 +30,20 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+      # Puts npm and npx behind Aikido Safe Chain, so a known-malicious package
+      # or one published less than 48 hours ago is blocked before it runs with
+      # this job's token (#307).
+      # If Aikido's malware list cannot be fetched, installs fail (HTTP 500 from the proxy): re-run the job. The minimum-age check fails open when its list is unavailable.
+      - name: Install Safe Chain
+        run: |
+          curl -fsSL https://github.com/AikidoSec/safe-chain/releases/download/1.5.26/install-safe-chain.sh -o /tmp/install-safe-chain.sh
+          echo "9e4af7107f06d9c0d758cb08fb36804c2af88e24972f3a9d3f8c2bd0ca002adf  /tmp/install-safe-chain.sh" | sha256sum -c -
+          sh /tmp/install-safe-chain.sh --ci
+          rm /tmp/install-safe-chain.sh
+      # The installer only warns when its setup fails; this step fails the job
+      # instead, so npm never runs unprotected.
+      - name: Verify Safe Chain
+        run: npm safe-chain-verify
       - run: npm ci
       # Fails if `npm ci` rewrote the lockfile, which the npm pin (package.json
       # engines + .npmrc engine-strict) exists to prevent.
@@ -58,4 +73,32 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64
           push: false
+          # Loads the image into the runner's Docker so the scan below can read it.
+          load: true
+          tags: conluz-web:scan
           cache-from: type=gha
+
+      # Every entry must carry an expiry date and a reason (see .trivyignore).
+      - name: Lint .trivyignore
+        run: |
+          bad=$(grep -nEv '^[[:space:]]*(#|$)' .trivyignore | grep -vE 'exp:[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+.*#[[:space:]]*[^[:space:]]' || true)
+          if [ -n "$bad" ]; then
+            echo "::error file=.trivyignore::Every entry needs exp:YYYY-MM-DD and a # reason"
+            echo "$bad"
+            exit 1
+          fi
+
+      # Gate (lucoenergia/conluz#474): fails on a CRITICAL vulnerability, in OS
+      # packages or application libraries, that has a fix available and is not
+      # accepted in .trivyignore.
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: conluz-web:scan
+          version: v0.76.0
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+          trivyignores: .trivyignore

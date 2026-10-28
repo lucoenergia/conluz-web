@@ -44,6 +44,22 @@ jobs:
           node-version: "22"
           cache: npm
 
+      # Puts npm and npx behind Aikido Safe Chain, so a known-malicious package
+      # or one published less than 48 hours ago is blocked before it runs with
+      # this job's token (#307).
+      # If Aikido's malware list cannot be fetched, installs fail (HTTP 500 from the proxy): re-run the job. The minimum-age check fails open when its list is unavailable.
+      - name: Install Safe Chain
+        run: |
+          curl -fsSL https://github.com/AikidoSec/safe-chain/releases/download/1.5.26/install-safe-chain.sh -o /tmp/install-safe-chain.sh
+          echo "9e4af7107f06d9c0d758cb08fb36804c2af88e24972f3a9d3f8c2bd0ca002adf  /tmp/install-safe-chain.sh" | sha256sum -c -
+          sh /tmp/install-safe-chain.sh --ci
+          rm /tmp/install-safe-chain.sh
+
+      # The installer only warns when its setup fails; this step fails the job
+      # instead, so npm never runs unprotected.
+      - name: Verify Safe Chain
+        run: npm safe-chain-verify
+
       - name: Install dependencies
         run: npm ci
 
