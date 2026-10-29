@@ -1,6 +1,6 @@
 import { SharingAgreementPartitionCoefficientResponseApplicationState } from "../../api/models";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
-import { normalizeForSearch } from "./sharingAgreementFilters";
+import { normalizeForSearch } from "../../utils/search";
 
 export type SharingAgreementCoefficientApplicationStateFilter =
   | SharingAgreementPartitionCoefficientResponseApplicationState
