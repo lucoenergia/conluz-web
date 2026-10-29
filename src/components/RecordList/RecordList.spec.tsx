@@ -71,4 +71,26 @@ describe("RecordList", () => {
 
     expect(screen.getByText("Sin datos")).toBeInTheDocument();
   });
+
+  it("renders each of a record's lines on its own row, after the badge", () => {
+    render(
+      <RecordList
+        items={[
+          {
+            id: "u3",
+            title: "Carla Mas",
+            badge: <span>Sin invitar</span>,
+            lines: ["Miembro · 12345678Z", "carla@example.com"],
+            fields: [],
+          },
+        ]}
+        label="Usuarios"
+        emptyMessage="Sin usuarios"
+      />,
+    );
+
+    const item = screen.getByRole("listitem");
+    expect(item).toHaveTextContent(/Sin invitar\s*Miembro · 12345678Z\s*carla@example\.com/);
+    expect(screen.getByText("carla@example.com")).toBeInTheDocument();
+  });
 });

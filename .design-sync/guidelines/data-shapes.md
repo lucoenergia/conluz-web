@@ -279,6 +279,8 @@ interface RecordListItem {
   status?: ReactNode;
   /** Row actions. Always rendered on the title line so they can never be pushed out of reach the way an off-canvas table column can. */
   actions?: ReactNode;
+  /** Plain lines under the badge, one per row. Each stays on one line and is cut with an ellipsis only when it is wider than the card. */
+  lines?: ReactNode[];
   fields: RecordField[];
 }
 
