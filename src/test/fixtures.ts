@@ -92,6 +92,7 @@ export function buildPlatformCapabilities(
     canAdministerPlatform: false,
     canListPlatformAdmins: false,
     canInvitePlatformAdmins: false,
+    canSyncPrices: false,
     ...overrides,
   };
 }

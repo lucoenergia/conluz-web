@@ -163,6 +163,11 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   },
   useDeletePlant: { scope: "plant", capability: "canManage", hook: "usePlantActions", approximates: "as useUpdatePlant" },
 
+  // ── Prices ────────────────────────────────────────────────────────────────
+  // Re-synchronising the OMIE prices is a platform-wide write, answered on the
+  // caller's platformCapabilities. No screen calls it yet.
+  useSyncPrices: { scope: "platform", capability: "canSyncPrices" },
+
   // ── Production ────────────────────────────────────────────────────────────
   useConfigureHuawei: {
     scope: "plant",

@@ -60,6 +60,7 @@ const NO_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canAdministerPlatform: false,
   canListPlatformAdmins: false,
   canInvitePlatformAdmins: false,
+  canSyncPrices: false,
 };
 
 /**
@@ -78,6 +79,7 @@ const FULL_PLATFORM_CAPABILITIES: PlatformCapabilitiesResponse = {
   canAdministerPlatform: true,
   canListPlatformAdmins: true,
   canInvitePlatformAdmins: true,
+  canSyncPrices: true,
 };
 
 /**
