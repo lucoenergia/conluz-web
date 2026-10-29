@@ -74,9 +74,8 @@ test.describe("Visual baselines", () => {
     await expect(dialog).toHaveScreenshot("member-record-dialog.png", await hideAppBar(page));
   });
 
-  // Every status chip and invitation caption at once (#275): a third chip
-  // colour, and a caption under the chip in a table cell and as an extra
-  // field in the narrow list, where wrapping and alignment are what can break.
+  // Every status chip at once (#275, #331): the derived status of each state,
+  // with its own chip tone, where wrapping and alignment are what can break.
   // Which state shows which text and which actions is asserted in Vitest.
   test("members page invitation states", async ({ page }) => {
     await injectAuthToken(page);
@@ -89,12 +88,15 @@ test.describe("Visual baselines", () => {
     // a fixture that lost a state, would otherwise make a plausible baseline.
     const main = page.getByRole("main");
     await expect(main.getByText("Nadia Nueva Fernández")).toBeVisible();
-    // Nadia, and Pablo, who was suspended before anyone invited him.
-    await expect(main.getByText("Sin invitar")).toHaveCount(2);
-    await expect(main.getByText("Enlace activo hasta el 8 oct 2026")).toBeVisible();
-    await expect(main.getByText("Enlace caducado o revocado")).toBeVisible();
-    await expect(main.getByText("Pendiente", { exact: true })).toHaveCount(3);
+    // The derived status of each (UI-MBR-030). Pablo, suspended before anyone
+    // invited him, is Suspendido, not Sin invitar.
+    await expect(main.getByText("Sin invitar", { exact: true })).toHaveCount(1);
+    await expect(main.getByText("Invitación enviada", { exact: true })).toHaveCount(1);
+    await expect(main.getByText("Invitación caducada o revocada", { exact: true })).toHaveCount(1);
     await expect(main.getByText("Suspendido", { exact: true })).toHaveCount(2);
+    // A pending row shows its sub-status, and no link caption is left.
+    await expect(main.getByText("Pendiente", { exact: true })).toHaveCount(0);
+    await expect(main.getByText(/Enlace activo hasta el|Enlace caducado o revocado/)).toHaveCount(0);
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("members-page-invitation-states.png", await mainRegion(page));

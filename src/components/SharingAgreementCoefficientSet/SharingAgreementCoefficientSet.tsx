@@ -78,7 +78,7 @@ import {
   summarizeSelectionActions,
   type CoefficientAction,
 } from "../../pages/production/sharingAgreementCoefficientState";
-import { normalizeForSearch } from "../../pages/production/sharingAgreementFilters";
+import { normalizeForSearch } from "../../utils/search";
 import {
   buildCoefficientSnapshot,
   buildEditableRowFromSupply,

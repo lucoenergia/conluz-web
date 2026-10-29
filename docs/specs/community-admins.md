@@ -8,7 +8,7 @@
 | **Roles** | A caller to whom the community named in the URL reports `canManageAdmins`: the platform admin |
 | **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-010, MEM-011, MEM-013, MEM-020, MEM-021, MEM-022, MEM-023, MEM-025, ACC-010 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #276 |
+| **Last reviewed against code** | #331 |
 
 ## Purpose
 
@@ -39,12 +39,12 @@ member of the community, and sees nothing about its members here.
 
 - **Status:** Active
 - **Rule:** Each row MUST show the admin's full name, contact email, phone and personal ID, and
-  their state and invitation state with the members page's labels and rules (UI-MBR-006,
-  UI-MBR-010, UI-MBR-011).
+  their status with the members page's labels and rules (UI-MBR-006, UI-MBR-010, UI-MBR-030).
 - **Rationale:** The platform admin needs the same reading of a membership's state as a community
   admin has of their members, so both screens share one rule for it.
 - **Implements:** MEM-005, MEM-013, MEM-021
-- **Source:** #276
+- **Source:** #276; changed in #331 (the derived status of UI-MBR-030 replaces the invitation state
+  of UI-MBR-011)
 
 ### UI-ADM-003 — The invitation asks for the DNI, the name and the contact email
 

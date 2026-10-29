@@ -41,9 +41,8 @@ import {
   revokePlatformAdminRefusal,
   revokePlatformAdminRefusalMessage,
 } from "../../errors/platformAdminErrors";
-import { MembershipStatusCell, MembershipStatusChip } from "../members/MembershipStatusCell";
-import { invitationText } from "../members/membershipStatus";
-import { hasAnyOffer, isPendingInvitation, membershipStateOf, platformAdminRowOffer } from "./platformAdminStatus";
+import { PlatformInvitationCell, PlatformInvitationChip } from "./PlatformInvitationStatus";
+import { hasAnyOffer, invitationText, isPendingInvitation, membershipStateOf, platformAdminRowOffer } from "./platformAdminStatus";
 import { PlatformInvitationActionDialog, type PlatformInvitationWriteKind } from "./PlatformInvitationActionDialog";
 import { InvitePlatformAdminDialog } from "./InvitePlatformAdminDialog";
 import { Notice } from "../../components/Notice";
@@ -70,7 +69,7 @@ const StateChip: FC<{ admin: PlatformAdminResponse }> = ({ admin }) => (
  */
 const StateCell: FC<{ admin: PlatformAdminResponse }> = ({ admin }) => {
   const invitation = membershipStateOf(admin);
-  return invitation ? <MembershipStatusCell membership={invitation} /> : <StateChip admin={admin} />;
+  return invitation ? <PlatformInvitationCell invitation={invitation} /> : <StateChip admin={admin} />;
 };
 
 const INVITATION_ITEMS: { kind: PlatformInvitationWriteKind; label: string; Icon: typeof SendIcon }[] = [
@@ -312,7 +311,7 @@ export const PlatformAdminsPage: FC = () => {
                           </Avatar>
                         ),
                         title: admin.fullName,
-                        status: invitation ? <MembershipStatusChip membership={invitation} /> : <StateChip admin={admin} />,
+                        status: invitation ? <PlatformInvitationChip /> : <StateChip admin={admin} />,
                         actions: hasRowActions(admin) ? (
                           <IconButton
                             aria-label={`Más acciones para ${admin.fullName}`}

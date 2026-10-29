@@ -1,15 +1,8 @@
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
+import { normalizeForSearch } from "../../utils/search";
 
 export type SharingAgreementStatusFilter = SharingAgreementResponseStatus | "all";
-
-/**
- * Case- and accent-insensitive normalization for search matching
- * ("histórico" and "historico" must match).
- */
-export function normalizeForSearch(text: string): string {
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
 
 /**
  * Pure filter over the already-fetched, unfiltered agreement list. Search

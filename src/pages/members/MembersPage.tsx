@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useMemo, useRef, useState, type FC } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -26,6 +26,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
@@ -39,7 +40,7 @@ import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
-import { ResultStatus } from "../../components/ResultStatus";
+import { EmptyState } from "../../components/EmptyState";
 import useWindowDimensions from "../../utils/useWindowDimensions";
 import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -66,12 +67,22 @@ import { SendPendingInvitationsDialog } from "./SendPendingInvitationsDialog";
 import { InvitationActionDialog, type InvitationWriteKind } from "./InvitationActionDialog";
 import {
   invitationActionsFor,
-  invitationText,
-  statusOf,
+  membershipStatusOf,
   statusToggleFor,
   type InvitationActions,
 } from "./membershipStatus";
-import { MembershipStatusCell, MembershipStatusChip } from "./MembershipStatusCell";
+import { MembershipStatusChip } from "./MembershipStatusChip";
+import {
+  filterMemberships,
+  MEMBERS_PAGE_SIZE,
+  membersCount,
+  NO_MEMBER_FILTERS,
+  pageCountOf,
+  pageOf,
+  type MemberFilters,
+} from "./memberFilters";
+import { MembersFilters } from "./MembersFilters";
+import { MembersPagination } from "./MembersPagination";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
@@ -122,6 +133,11 @@ export const MembersPage: FC = () => {
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [invitationDialog, setInvitationDialog] = useState<InvitationWriteKind | null>(null);
+  // The search, the filters and the page are this view's alone: never stored,
+  // never sent, and lost on leaving the page (#331).
+  const [filters, setFilters] = useState<MemberFilters>(NO_MEMBER_FILTERS);
+  const [page, setPage] = useState(1);
+  const countRef = useRef<HTMLElement>(null);
 
   const {
     data: memberships = [],
@@ -217,8 +233,31 @@ export const MembersPage: FC = () => {
     }
   };
 
+  // Narrowing the list always starts it again from its first page.
+  const changeFilters = (changes: Partial<MemberFilters>) => {
+    setFilters((current) => ({ ...current, ...changes }));
+    setPage(1);
+  };
+  const clearFilters = () => changeFilters(NO_MEMBER_FILTERS);
+
+  // Derived from the roster on every render, never copied: a refetch after a
+  // write shows through at once, filtered as before.
+  const filtered = useMemo(() => filterMemberships(memberships, filters), [memberships, filters]);
+  const pageCount = pageCountOf(filtered.length);
+  // A write can shrink the result under the page shown, so it is clamped.
+  const currentPage = Math.min(page, pageCount);
+  const pageRows = pageOf(filtered, currentPage);
+  const changePage = (next: number) => {
+    setPage(next);
+    countRef.current?.scrollIntoView?.({ block: "start" });
+  };
+  const isFiltering = filters.query.trim() !== "" || filters.status !== "all" || filters.role !== "all";
+  // Some members, and none matching: an empty table would read as no members at all.
+  const noResults = !isLoading && memberships.length > 0 && filtered.length === 0;
+
+  // The counters describe the community, not the view: computed over the whole roster.
   // Active means accepted and enabled: a pending member has no access yet.
-  const activeCount = memberships.filter((m) => statusOf(m) === "active").length;
+  const activeCount = memberships.filter((m) => membershipStatusOf(m).status === "active").length;
   const adminCount = memberships.filter((m) => m.role === MembershipResponseRole.COMMUNITY_ADMIN).length;
 
   const removeTarget = removeConfirmUserId
@@ -327,17 +366,41 @@ export const MembersPage: FC = () => {
             </Alert>
           ) : (
             <>
-            <ResultStatus
-              isLoading={isLoading}
-              count={memberships.length}
-              noun={{ one: "miembro", other: "miembros" }}
-              emptyMessage="No se encontraron miembros"
-            />
+            <Box sx={{ p: 2, pb: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+              <MembersFilters
+                filters={filters}
+                onChange={changeFilters}
+                onClear={clearFilters}
+                resultCount={filtered.length}
+                showClear={isFiltering && !noResults}
+                isNarrow={isNarrow}
+              />
+              {/* One persistent live region: the count changes, the node stays. */}
+              <Typography
+                ref={countRef}
+                role="status"
+                aria-live="polite"
+                variant="body2"
+                sx={{ fontWeight: 600, color: "text.secondary", scrollMarginTop: (t) => t.spacing(2) }}
+              >
+                {isLoading ? "Cargando…" : membersCount(filtered.length)}
+              </Typography>
+            </Box>
 
-            {!isNarrow && (
+            {noResults && (
+              <Box sx={{ p: 2 }}>
+                <EmptyState
+                  icon={SearchOffIcon}
+                  title="No hay miembros que coincidan"
+                  subtitle="Prueba con otra búsqueda o quita algún filtro."
+                  actionButton={{ label: "Limpiar filtros", onClick: clearFilters }}
+                />
+              </Box>
+            )}
+
+            {!isNarrow && !noResults && (
             <ListTable
-              rows={memberships}
-              getRowKey={(membership) => membership.id}
+              rows={pageRows}              getRowKey={(membership) => membership.id}
               isLoading={isLoading}
               emptyMessage="No hay miembros en esta comunidad"
               rowActionsLabel={(membership) => `Más acciones para ${membership.fullName}`}
@@ -363,11 +426,17 @@ export const MembersPage: FC = () => {
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {membership.fullName}
                         </Typography>
-                        {membership.contactEmail && (
-                          <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                            {membership.contactEmail}
-                          </Typography>
-                        )}
+                        {/* The DNI/NIE/NIF as secondary information, after the email when
+                            there is one; alone, with no separator, when there is none (UI-MBR-007). */}
+                        <Typography variant="caption" component="p" sx={{ color: colors.text.subtle }}>
+                          {membership.contactEmail && (
+                            <>
+                              <span>{membership.contactEmail}</span>
+                              <span aria-hidden> · </span>
+                            </>
+                          )}
+                          <span>{membership.personalId}</span>
+                        </Typography>
                       </Box>
                     </Box>
                   ),
@@ -384,20 +453,20 @@ export const MembersPage: FC = () => {
                 {
                   key: "status",
                   header: "Estado",
-                  render: (membership) => <MembershipStatusCell membership={membership} />,
+                  render: (membership) => <MembershipStatusChip membership={membership} />,
                 },
               ]}
             />
             )}
 
-            {isNarrow && (
+            {isNarrow && !noResults && (
             <Box sx={{ p: 2 }}>
               <RecordList
                 label="Miembros de la comunidad"
                 isLoading={isLoading}
                 emptyMessage="No se encontraron miembros"
-                items={memberships.map((membership) => {
-                  const invitation = invitationText(membership);
+                items={pageRows.map((membership) => {
+                  const role = ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER];
                   return {
                     id: String(membership.id ?? ""),
                     avatar: (
@@ -406,7 +475,7 @@ export const MembersPage: FC = () => {
                       </Avatar>
                     ),
                     title: membership.fullName,
-                    status: <MembershipStatusChip membership={membership} />,
+                    badge: <MembershipStatusChip membership={membership} />,
                     actions: hasRowActions(membership) ? (
                       <IconButton
                         aria-label={`Más acciones para ${membership.fullName}`}
@@ -416,15 +485,28 @@ export const MembersPage: FC = () => {
                         <MoreVertIcon />
                       </IconButton>
                     ) : undefined,
-                    fields: [
-                      { label: "Email", value: membership.contactEmail ?? "-" },
-                      { label: "Rol", value: ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER] },
-                      ...(invitation ? [{ label: "Invitación", value: invitation }] : []),
+                    // Role and DNI/NIE/NIF on one line, the email on its own, left out when there is none.
+                    lines: [
+                      `${role} · ${membership.personalId}`,
+                      ...(membership.contactEmail ? [membership.contactEmail] : []),
                     ],
+                    fields: [],
                   };
                 })}
               />
             </Box>
+            )}
+
+            {!isLoading && filtered.length > MEMBERS_PAGE_SIZE && (
+              <Box sx={{ p: 2, pt: 0 }}>
+                <MembersPagination
+                  page={currentPage}
+                  pageCount={pageCount}
+                  total={filtered.length}
+                  onChange={changePage}
+                  isNarrow={isNarrow}
+                />
+              </Box>
             )}
             </>
           )}

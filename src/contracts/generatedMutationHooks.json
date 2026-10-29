@@ -79,6 +79,13 @@
       ]
     },
     {
+      "tag": "Prices",
+      "module": "src/api/prices/prices",
+      "hooks": [
+        "useSyncPrices"
+      ]
+    },
+    {
       "tag": "Production",
       "module": "src/api/production/production",
       "hooks": [

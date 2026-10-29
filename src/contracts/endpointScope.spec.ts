@@ -51,6 +51,8 @@ const REVIEWED: Record<string, Scope> = {
   "/api/v1/logout": "global",
   "/api/v1/operator-contact": "global",
   "/api/v1/prices": "global",
+  // Re-synchronising the market prices: platform-wide, no community in it.
+  "/api/v1/prices/sync": "global",
   "/api/v1/plants": "global",
   "/api/v1/supplies": "global",
   "/api/v1/users": "global",

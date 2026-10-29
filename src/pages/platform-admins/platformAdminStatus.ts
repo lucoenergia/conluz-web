@@ -1,6 +1,7 @@
 import type { PlatformAdminResponse } from "../../api/models";
 import type { PlatformAdminRowActions } from "../../hooks/actions";
-import { invitationActionsFor, type MembershipState } from "../members/membershipStatus";
+import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
+import { invitationActionsFor, invitationStateOf, type MembershipState } from "../members/membershipStatus";
 
 /** A row of GET /platform-admins that is a pending invitation, not a holder of the role (#288). */
 export function isPendingInvitation(admin: PlatformAdminResponse): boolean {
@@ -25,6 +26,27 @@ export function membershipStateOf(admin: PlatformAdminResponse): MembershipState
     invitedAt: admin.invitation.invitedAt,
     invitationExpiresAt: admin.invitation.expiresAt,
   };
+}
+
+/**
+ * Where a pending invitation's link stands (#288). The community invitations
+ * showed the same captions until #331 gave them a derived status; a
+ * platform-admin invitation has no membership to derive one from, so it keeps
+ * them.
+ */
+export function invitationText(
+  membership: Pick<MembershipState, "acceptedAt" | "invitedAt" | "invitationExpiresAt">,
+): string | null {
+  const state = invitationStateOf(membership);
+  if (!state) return null;
+  switch (state.kind) {
+    case "never":
+      return "Sin invitar";
+    case "active":
+      return `Enlace activo hasta el ${formatCalendarDate(state.expiresAt, SHORT_CALENDAR_DATE)}`;
+    case "lapsed":
+      return "Enlace caducado o revocado";
+  }
 }
 
 type Actions = PlatformAdminRowActions["actions"];

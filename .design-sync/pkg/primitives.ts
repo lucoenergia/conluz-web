@@ -117,6 +117,7 @@ import EvStationIcon from "@mui/icons-material/EvStation";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import ExtensionRoundedIcon from "@mui/icons-material/ExtensionRounded";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import GroupOffRoundedIcon from "@mui/icons-material/GroupOffRounded";
@@ -313,6 +314,7 @@ export const Icons = {
   ExpandMore: ExpandMoreIcon,
   Extension: ExtensionIcon,
   ExtensionRounded: ExtensionRoundedIcon,
+  FilterAltOff: FilterAltOffIcon,
   FilterList: FilterListIcon,
   GroupAddOutlined: GroupAddOutlinedIcon,
   GroupOffRounded: GroupOffRoundedIcon,

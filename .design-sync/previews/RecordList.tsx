@@ -49,6 +49,42 @@ export const WithBadge = () => (
   </Mui.Box>
 );
 
+export const WithLines = () => (
+  <Mui.Box sx={{ maxWidth: 390 }}>
+    <RecordList
+      label="Miembros de la comunidad"
+      emptyMessage="No se encontraron miembros"
+      items={[
+        {
+          id: "m-4",
+          avatar: (
+            <Mui.Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>A</Mui.Avatar>
+          ),
+          title: "Amparo Domínguez Llorens",
+          actions: (
+            <Mui.IconButton aria-label="Más acciones para Amparo Domínguez Llorens" sx={sxStyles.touchTarget}>
+              <Icons.MoreVert />
+            </Mui.IconButton>
+          ),
+          badge: <Mui.Chip label="Invitación enviada" size="small" sx={{ fontWeight: 600 }} />,
+          lines: ["Miembro · 12345678Z", "amparo.dominguez.llorens.cooperativa@telefonica.net"],
+          fields: [],
+        },
+        {
+          id: "m-5",
+          avatar: (
+            <Mui.Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>T</Mui.Avatar>
+          ),
+          title: "Toni Esteve Cano",
+          badge: <Mui.Chip label="Sin email" size="small" sx={{ fontWeight: 600 }} />,
+          lines: ["Administrador · X1234567L"],
+          fields: [],
+        },
+      ]}
+    />
+  </Mui.Box>
+);
+
 export const Loading = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
     <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={[]} isLoading />

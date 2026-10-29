@@ -138,13 +138,13 @@ describe("registering a member", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
     expect(await within(screen.getByRole("table")).findByText("Nuria Nueva")).toBeInTheDocument();
-    expect(within(rowOf("Nuria Nueva")).getByText("Pendiente")).toBeInTheDocument();
+    // Pending and never invited (UI-MBR-030).
     expect(within(rowOf("Nuria Nueva")).getByText("Sin invitar")).toBeInTheDocument();
     // Registering sends nothing to the member: no invitation went out.
     expect(writesSent(router).map((r) => `${r.method} ${r.url}`)).toEqual([`POST ${REGISTER_URL}`]);
   });
 
-  it("UI-MBR-009 invites straight away when the record has a contact email, and the row shows the active link", async () => {
+  it("UI-MBR-009 invites straight away when the record has a contact email, and the row shows the invitation sent", async () => {
     const u = user();
     const roster: Roster = { current: [ANA] };
     const router = serveMembersPage(mockCustomInstance, roster, {
@@ -169,7 +169,7 @@ describe("registering a member", () => {
 
     await waitFor(() => expect(requestsTo(router, "POST", inviteUrl("u-nuevo"))).toHaveLength(1));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(await within(rowOf("Nuria Nueva")).findByText("Enlace activo hasta el 26 oct 2026")).toBeInTheDocument();
+    expect(await within(rowOf("Nuria Nueva")).findByText("Invitación enviada")).toBeInTheDocument();
   });
 
   it("UI-MBR-009 offers no invitation without a contact email, and points to the record edit", async () => {

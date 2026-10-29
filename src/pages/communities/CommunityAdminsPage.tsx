@@ -42,8 +42,8 @@ import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { useErrorDispatch } from "../../context/error.context";
 import { invitationRefusalMessage } from "../../errors/membershipErrors";
 import { InvitationActionDialog } from "../members/InvitationActionDialog";
-import { invitationActionsFor, invitationText, statusOf, statusToggleFor } from "../members/membershipStatus";
-import { MembershipStatusCell, MembershipStatusChip } from "../members/MembershipStatusCell";
+import { invitationActionsFor, membershipStatusOf, statusToggleFor } from "../members/membershipStatus";
+import { MembershipStatusChip } from "../members/MembershipStatusChip";
 import { InviteAdminDialog } from "./InviteAdminDialog";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
@@ -129,8 +129,8 @@ export const CommunityAdminsPage: FC = () => {
     }
   };
 
-  const activeCount = admins.filter((admin) => statusOf(admin) === "active").length;
-  const pendingCount = admins.filter((admin) => statusOf(admin) === "pending").length;
+  const activeCount = admins.filter((admin) => membershipStatusOf(admin).status === "active").length;
+  const pendingCount = admins.filter((admin) => membershipStatusOf(admin).status === "pending").length;
 
   return (
     <Box
@@ -251,7 +251,7 @@ export const CommunityAdminsPage: FC = () => {
                     {
                       key: "status",
                       header: "Estado",
-                      render: (admin) => <MembershipStatusCell membership={admin} />,
+                      render: (admin) => <MembershipStatusChip membership={admin} />,
                     },
                   ]}
                 />
@@ -264,7 +264,6 @@ export const CommunityAdminsPage: FC = () => {
                     isLoading={isLoading}
                     emptyMessage="Esta comunidad no tiene administradores"
                     items={admins.map((admin) => {
-                      const invitation = invitationText(admin);
                       return {
                         id: admin.user.id,
                         avatar: (
@@ -273,7 +272,9 @@ export const CommunityAdminsPage: FC = () => {
                           </Avatar>
                         ),
                         title: admin.fullName,
-                        status: <MembershipStatusChip membership={admin} />,
+                        // Under the name, full width: a long sub-status on the title line
+                        // squeezed the name to a letter per line (#331).
+                        badge: <MembershipStatusChip membership={admin} />,
                         actions: hasRowActions(admin) ? (
                           <IconButton
                             aria-label={`Más acciones para ${admin.fullName}`}
@@ -287,7 +288,6 @@ export const CommunityAdminsPage: FC = () => {
                           { label: "DNI/NIE", value: admin.personalId },
                           ...(admin.contactEmail ? [{ label: "Email", value: admin.contactEmail }] : []),
                           ...(admin.phoneNumber ? [{ label: "Teléfono", value: admin.phoneNumber }] : []),
-                          ...(invitation ? [{ label: "Invitación", value: invitation }] : []),
                         ],
                       };
                     })}

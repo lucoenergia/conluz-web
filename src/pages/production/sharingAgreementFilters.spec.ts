@@ -1,17 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { filterSharingAgreements, normalizeForSearch } from "./sharingAgreementFilters";
+import { filterSharingAgreements } from "./sharingAgreementFilters";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import { buildSharingAgreement } from "../../test/fixtures";
-
-describe("normalizeForSearch", () => {
-  test("strips accents so 'histórico' and 'historico' normalize identically", () => {
-    expect(normalizeForSearch("histórico")).toBe(normalizeForSearch("historico"));
-  });
-
-  test("lowercases", () => {
-    expect(normalizeForSearch("HISTÓRICO")).toBe("historico");
-  });
-});
 
 describe("filterSharingAgreements", () => {
   const agreements = [
