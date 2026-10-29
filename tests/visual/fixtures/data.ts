@@ -14,6 +14,7 @@ import type {
   PlantResponse,
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
+  SendInvitationsResponse,
   SharingAgreementResponse,
   SupplyResponse,
 } from "../../../src/api/models";
@@ -1018,6 +1019,64 @@ export const FIXED_ROSTER_INVITATION_STATES: MembershipResponse[] = [
   pendingMembership("pending-suspended", "Pablo Pausado Gil", { enabled: false }),
   FIXED_MEMBERSHIPS[2],
 ];
+
+/**
+ * The roster for selecting whom to invite or resend (#328): the invitation
+ * states above, plus a pending member without a contact email, who is shown
+ * unselectable with that reason. Nadia, Lucas and Elena can be selected; the
+ * accepted, suspended and email-less rows cannot.
+ */
+export const FIXED_ROSTER_INVITATION_SELECTION: MembershipResponse[] = [
+  ...FIXED_ROSTER_INVITATION_STATES.slice(0, 4),
+  pendingMembership("pending-noemail", "Óscar Sincorreo Vidal", { contactEmail: null }),
+  ...FIXED_ROSTER_INVITATION_STATES.slice(4),
+];
+
+/**
+ * A selection large enough for both groups of the send's confirmation, the
+ * first invitations past the five names it lists (#328): seven never invited
+ * and two invited, every one of them selectable.
+ */
+export const FIXED_ROSTER_INVITATION_BATCH: MembershipResponse[] = [
+  pendingMembership("batch-1", "Alicia Navarro Peña"),
+  pendingMembership("batch-2", "Bernat Soler Vidal"),
+  pendingMembership("batch-3", "Carmen Ibáñez Torres"),
+  pendingMembership("batch-4", "David Ferrer Lozano"),
+  pendingMembership("batch-5", "Encarna Molina Ruiz"),
+  pendingMembership("batch-6", "Francesc Roig Martí"),
+  pendingMembership("batch-7", "Gloria Herrero Sanz"),
+  pendingMembership("batch-8", "Hugo Castell Mora", {
+    invitedAt: "2026-10-01T10:00:00Z",
+    invitationExpiresAt: "2026-10-08T10:00:00Z",
+  }),
+  pendingMembership("batch-9", "Irene Bosch Climent", { invitedAt: "2026-09-01T10:00:00Z" }),
+];
+
+/**
+ * What the send answers for FIXED_ROSTER_INVITATION_BATCH (#328): first
+ * invitations and resends, and one refusal per reason, whose long lines are
+ * what can wrap.
+ */
+export const FIXED_INVITATION_BATCH_RESULT: SendInvitationsResponse = {
+  sent: 3,
+  remaining: 0,
+  results: [
+    { user: { id: "batch-1" }, outcome: "SENT", code: null, params: {} },
+    { user: { id: "batch-2" }, outcome: "SENT", code: null, params: {} },
+    { user: { id: "batch-3" }, outcome: "SENT", code: null, params: {} },
+    { user: { id: "batch-4" }, outcome: "REFUSED", code: "MEMBERSHIP_NOT_FOUND", params: {} },
+    { user: { id: "batch-5" }, outcome: "REFUSED", code: "MEMBERSHIP_ALREADY_EXISTS", params: {} },
+    { user: { id: "batch-6" }, outcome: "REFUSED", code: "MEMBERSHIP_DISABLED", params: {} },
+    { user: { id: "batch-7" }, outcome: "REFUSED", code: "MEMBERSHIP_WITHOUT_CONTACT_EMAIL", params: {} },
+    { user: { id: "batch-8" }, outcome: "RESENT", code: null, params: {} },
+    {
+      user: { id: "batch-9" },
+      outcome: "REFUSED",
+      code: "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED",
+      params: { retryAfterSeconds: "72001" },
+    },
+  ],
+};
 
 /**
  * The roster as the community's only active admin sees it (#309): their own
