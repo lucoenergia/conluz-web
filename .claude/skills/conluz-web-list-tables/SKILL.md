@@ -2,8 +2,9 @@
 name: conluz-web-list-tables
 description: >-
   The conluz-web pattern for data tables and their row actions: ListTable + RowActionsMenu, the
-  kebab-only rule, menu state, destructive items, and the confirmation dialog every state-changing
-  action needs. Use whenever building or changing a list table, a row menu or a row action dialog.
+  kebab-only rule, menu state, destructive items, row selection, and the confirmation dialog every
+  state-changing action needs. Use whenever building or changing a list table, a row menu, a row
+  selection or a row action dialog.
 ---
 
 # conluz-web — List tables and row actions
@@ -48,4 +49,16 @@ The page keeps what differs: the `Paper` shell, the error `Alert`, `ResultStatus
 - Cannot be dismissed while the mutation is pending: pass `inFlightDialogProps(isPending, onClose)` to the `<Dialog>` and `disabled={isPending}` to "Cancelar" (`inFlight` on a `ConfirmationModal`).
 
 **Never** show a `<Select>` or any mutable control directly inside a table row — it bypasses the confirmation step and is visually inconsistent.
+
+## Selecting rows to act on together
+
+A **selection checkbox in the leading slot is the one inline control a row may carry.** It changes no server state by itself: it only marks the row for an action that lives outside the rows and confirms before it writes. Use the components' own slot, never a hand-built column:
+
+- `ListTable`'s `selection={{ header, render }}` renders a leading `padding="checkbox"` column; `RecordListItem.selection` renders a fixed-width leading slot, given to every card as soon as one has a selection, so the cards stay aligned. The page supplies the checkboxes, so the components hold no selection policy.
+- Each row checkbox is named **"Seleccionar <nombre>"** (`inputProps={{ "aria-label": … }}`). A row that cannot be selected renders nothing in the slot (`null`), not a disabled checkbox — unless the reason is the selection limit, which disables the unselected rows while it is reached.
+- **"Seleccionar todo" is tri-state**: unchecked or indeterminate selects the rows shown, checked deselects them. It is the table header's control on wide screens; the card list has no header, so it is a labelled checkbox above the list.
+- **The actions on the selection live outside the rows**, in a bar above the list that shows the count, mounted only while something is selected, and open the same confirmation dialog any state-changing action does.
+- Keep the selection with `useRowSelection` (`src/hooks/useRowSelection.ts`): it stores ids, not rows, drops any id that stops being selectable when the list is refreshed, and caps the selection at a limit, saying when "select all" stopped there. Which rows are selectable comes from each row's capability and state, never from a role.
+
+Real usage: the members page's selection of whom to invite or resend (`src/pages/members/MembersPage.tsx`, #328). The sharing agreement coefficient set predates these slots and keeps its own selection code.
 
