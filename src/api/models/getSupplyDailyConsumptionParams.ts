@@ -7,6 +7,12 @@
  */
 
 export type GetSupplyDailyConsumptionParams = {
+/**
+ * Start of the period, inclusive.
+ */
 startDate: string;
+/**
+ * End of the period, exclusive.
+ */
 endDate: string;
 };

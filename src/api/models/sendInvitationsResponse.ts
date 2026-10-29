@@ -5,13 +5,16 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
+import type { SendInvitationResultResponse } from './sendInvitationResultResponse';
 
 /**
- * The outcome of sending first invitations in bulk.
+ * The outcome of sending invitations in bulk.
  */
 export interface SendInvitationsResponse {
   /** How many members of the community are still awaiting their first invitation: pending, enabled, with a contact email and never invited. Call again while it is above zero. */
   remaining: number;
+  /** With a selection of `userIds`, one result per selected user, in the order requested. Empty without one. */
+  results: SendInvitationResultResponse[];
   /** How many members were sent their first invitation by this request. */
   sent: number;
 }
