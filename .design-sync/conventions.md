@@ -42,7 +42,9 @@ community context the dialogs read. There is no signed-in user, so community-sco
 ## Patterns the app always follows
 
 - Lists: desktop `ListTable` + `RowActionsMenu`; row actions live **only** in the kebab menu. Mobile:
-  `RecordList`. Card grids: `CardGrid` (pass `fadeTimeout={0}` for static mockups).
+  `RecordList`. The one inline control a row may carry is a selection checkbox in the leading slot
+  (`ListTable`'s `selection`, `RecordListItem.selection`), named "Seleccionar <nombre>", with a
+  tri-state "select all"; the actions on the selection sit outside the rows. Card grids: `CardGrid` (pass `fadeTimeout={0}` for static mockups).
 - Any action that changes data opens a confirmation dialog (`ConfirmationModal`,
   `DeleteConfirmationModal`, …); success is confirmed with the matching `*SuccessModal`, or with a
   toast when the item leaves the screen (deleting a supply: `DeleteSupplyConfirmationModal`).
