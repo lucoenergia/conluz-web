@@ -15,6 +15,9 @@ export interface MemberFilters {
 
 export const NO_MEMBER_FILTERS: MemberFilters = { query: "", status: "all", role: "all" };
 
+/** "0 miembros", "1 miembro", "N miembros". */
+export const membersCount = (count: number) => (count === 1 ? "1 miembro" : `${count} miembros`);
+
 /** The rows of one page of the members list (#331). */
 export const MEMBERS_PAGE_SIZE = 25;
 

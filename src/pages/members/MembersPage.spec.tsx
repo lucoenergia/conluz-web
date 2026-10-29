@@ -525,22 +525,33 @@ describe("MembersPage", () => {
   });
 
   describe("a member without email (#272)", () => {
-    it("UI-MBR-007 shows the name alone in the roster", () => {
+    it("UI-MBR-007 shows the DNI/NIE/NIF alone under the name, with no separator, when there is no email", () => {
       setup({
         memberships: [
           buildMembership({
             id: "m1",
             user: { id: "u1" },
             fullName: "Ana García",
+            personalId: "12345678Z",
             contactEmail: null,
+            communityId: "c1",
+            enabled: true,
+          }),
+          buildMembership({
+            id: "m2",
+            user: { id: "u2" },
+            fullName: "Bruno Leal",
+            personalId: "87654321X",
+            contactEmail: "bruno@example.com",
             communityId: "c1",
             enabled: true,
           }),
         ],
       });
 
-      const cell = screen.getByText("Ana García").parentElement as HTMLElement;
-      expect(cell).toHaveTextContent(/^Ana García$/);
+      const cellOf = (name: string) => screen.getByText(name).parentElement as HTMLElement;
+      expect(cellOf("Ana García")).toHaveTextContent(/^Ana García12345678Z$/);
+      expect(cellOf("Bruno Leal")).toHaveTextContent(/^Bruno Lealbruno@example\.com · 87654321X$/);
     });
   });
   describe("pending members and their invitations (#275)", () => {
