@@ -272,7 +272,9 @@ export const CommunityAdminsPage: FC = () => {
                           </Avatar>
                         ),
                         title: admin.fullName,
-                        status: <MembershipStatusChip membership={admin} />,
+                        // Under the name, full width: a long sub-status on the title line
+                        // squeezed the name to a letter per line (#331).
+                        badge: <MembershipStatusChip membership={admin} />,
                         actions: hasRowActions(admin) ? (
                           <IconButton
                             aria-label={`Más acciones para ${admin.fullName}`}
