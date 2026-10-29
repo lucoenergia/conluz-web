@@ -7,16 +7,17 @@
 | **Routes** | `/members` |
 | **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the bulk send need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-013) |
 | **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, ACC-003, ACC-008, ACC-010 |
-| **Design reference** | n/a |
-| **Last reviewed against code** | #309 |
+| **Design reference** | The members page search and filters, screens A–D, mobile and desktop: https://claude.ai/artifact/RwsRYG1EqfMcnBmbysot93 (#331) |
+| **Last reviewed against code** | #331 |
 
 ## Purpose
 
 Let an admin of a community keep its roster: register members, one by one or from a CSV file, and
 invite them to join, see which members are still pending and where their invitation stands, correct
 the record the community keeps on each member, and suspend or reactivate a member's access to the
-community, and keep it from losing its last active admin. This document
-covers only the rules #272, #275, #276, #284 and #309 introduced; the rest of the members page is not covered yet.
+community, and keep it from losing its last active admin; and find a member, or the members in a
+given status or role, by searching and filtering the roster. This document covers only the rules
+#272, #275, #276, #284, #309 and #331 introduced; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -101,13 +102,22 @@ covers only the rules #272, #275, #276, #284 and #309 introduced; the rest of th
 ### UI-MBR-007 — A member without email is named alone
 
 - **Status:** Active
-- **Rule:** Wherever a member's email is shown next to their name (the roster, the community admins
-  page), a member without email MUST be shown by name alone, with no empty parentheses, separators
-  or blank line.
-- **Rationale:** An account, and a member record, may have no email.
+- **Rule:**
+  - Wherever a member's email is shown next to their name (the roster, the community admins page),
+    a member without email MUST be shown without it, with no empty parentheses, separators or blank
+    line.
+  - On the roster, both layouts MUST show the DNI/NIE/NIF as secondary information: under the name
+    in the table, as "email · DNI/NIE/NIF", or the DNI/NIE/NIF alone when there is no contact email;
+    in the narrow list, on the line "role · DNI/NIE/NIF", with the email on its own line, left out
+    when there is none.
+  - Elsewhere, a member without email MUST be shown by name alone.
+- **Rationale:** An account, and a member record, may have no email. Admins search the roster by
+  DNI/NIE/NIF (UI-MBR-031), so each row shows it, on every viewport, whether or not there is an
+  email.
 - **Implements:** ACC-003
 - **Source:** #272; changed in #275 (the add-member picker it also covered was removed, UI-MBR-016);
-  changed in #276 (the community admins dialog became the community admins page, UI-ADM-002)
+  changed in #276 (the community admins dialog became the community admins page, UI-ADM-002);
+  changed in #331 (the roster shows the DNI/NIE/NIF as secondary information, maintainer decision)
 
 ### UI-MBR-008 — A registration sends the whole record and the personal ID
 
@@ -134,7 +144,7 @@ covers only the rules #272, #275, #276, #284 and #309 introduced; the rest of th
 - **Status:** Active
 - **Rule:**
   - After a registration the roster MUST be refreshed and show the member as pending (UI-MBR-010),
-    never invited (UI-MBR-011). Registering MUST send no invitation.
+    never invited (UI-MBR-030). Registering MUST send no invitation.
   - When the registered record has a contact email and the response's `capabilities.canInvite` is
     true, the dialog MUST offer "Invitar ahora", which sends the first invitation (UI-MBR-012). A
     refusal MUST be shown in the dialog, which stays open.
@@ -144,26 +154,28 @@ covers only the rules #272, #275, #276, #284 and #309 introduced; the rest of th
   Inviting is the next step in most cases, so it is one click away, but only where the backend
   would accept it: without a contact email there is nowhere to send it.
 - **Implements:** MEM-007, MEM-009
-- **Source:** #275
+- **Source:** #275; changed in #331 (the never-invited state is now UI-MBR-030's)
 
 ### UI-MBR-010 — The roster tells active, pending and suspended members apart
 
 - **Status:** Active
 - **Rule:**
   - A row whose membership is disabled MUST show "Suspendido" (UI-MBR-006).
-  - A row whose membership is enabled and not accepted (`acceptedAt` null) MUST show "Pendiente".
+  - A row whose membership is enabled and not accepted (`acceptedAt` null) MUST show its pending
+    sub-status (UI-MBR-030).
   - A row whose membership is enabled and accepted MUST show "Activo".
   - The "Activos" count MUST count only the accepted, enabled memberships.
   - Each applies in both layouts.
 - **Rationale:** A pending membership grants no access until it is accepted, so showing it as
   active, or counting it among the active members, would tell the admin that someone has access who
-  does not.
+  does not. Its sub-status names what the admin can do about it.
 - **Implements:** MEM-004, MEM-005
-- **Source:** #275
+- **Source:** #275; changed in #331 (a pending row shows its sub-status, not "Pendiente")
 
 ### UI-MBR-011 — A pending row shows where its invitation stands
 
-- **Status:** Active
+- **Status:** Removed (#331: superseded by UI-MBR-030, whose pending sub-status replaces the
+  invitation caption and the link's expiry date)
 - **Rule:** A row whose membership is not accepted MUST show its invitation state, under the status
   in the table and as an "Invitación" field in the narrow list:
   - "Sin invitar" when `invitedAt` is null;
@@ -175,7 +187,7 @@ covers only the rules #272, #275, #276, #284 and #309 introduced; the rest of th
   actions (UI-MBR-012), and only `invitedAt` tells them apart. The backend sends
   `invitationExpiresAt` only while the link can be used, so the screen reads no clock.
 - **Implements:** MEM-013
-- **Source:** #275
+- **Source:** #275; removed in #331
 
 ### UI-MBR-012 — Each invitation write is offered from canInvite and the row's state
 
@@ -450,7 +462,88 @@ covers only the rules #272, #275, #276, #284 and #309 introduced; the rest of th
 - **Implements:** MEM-029, MEM-034
 - **Source:** #309, lucoenergia/conluz#449
 
+### UI-MBR-030 — Each membership shows one derived status
+
+- **Status:** Active
+- **Rule:** The members page MUST derive one status per membership, evaluated in this order:
+  (1) Suspendido if `enabled` is false; (2) Activo if `acceptedAt` is set; (3) otherwise Pendiente,
+  with the first matching sub-status: Invitación enviada (`invitationExpiresAt` set), Sin email
+  (`contactEmail` null), Sin invitar (`invitedAt` null), Invitación caducada o revocada (`invitedAt`
+  set, `invitationExpiresAt` null).
+- **Rationale:** The contract has no status field. Suspendido goes first because invitations to a
+  disabled membership always fail (`409 MEMBERSHIP_DISABLED`). A usable link outranks a missing
+  email because the member can still accept. Sin email outranks the rest because no send can
+  succeed (`400 MEMBERSHIP_WITHOUT_CONTACT_EMAIL`). Expired and revoked share a label because the
+  contract cannot tell them apart and both lead to the same action.
+- **Implements:** MEM-004, MEM-005, MEM-013
+- **Source:** #331
+
+### UI-MBR-031 — The search matches name, DNI/NIE/NIF and email as typed
+
+- **Status:** Active
+- **Rule:** Member search MUST match a substring of `fullName`, `personalId` or `contactEmail`,
+  ignoring case and accents; the query MUST be normalised like `personalId` when matched against it.
+- **Rationale:** Admins search with whatever they have at hand, typed in any form.
+- **Implements:** n/a
+- **Source:** #331
+
+### UI-MBR-032 — Search and filters combine and apply at once
+
+- **Status:** Active
+- **Rule:** Search, status filter and role filter MUST combine with AND and MUST apply immediately
+  on every viewport.
+- **Rationale:** Predictable narrowing; one behaviour across mobile and desktop.
+- **Implements:** n/a
+- **Source:** #331
+
+### UI-MBR-033 — The list is paged only above 25 rows
+
+- **Status:** Active
+- **Rule:** Pagination MUST be rendered only when the filtered result exceeds 25 rows, with pages of
+  25, and MUST reset to page 1 when search or filters change.
+- **Rationale:** Avoids friction on mobile for typical sizes; avoids empty pages after narrowing.
+- **Implements:** n/a
+- **Source:** #331
+
+### UI-MBR-034 — The header counters ignore search and filters
+
+- **Status:** Active
+- **Rule:** Header counters MUST be computed over the full membership list, independent of search
+  and filters.
+- **Rationale:** They describe the community, not the current view.
+- **Implements:** n/a
+- **Source:** #331
+
+### UI-MBR-035 — No matching row shows a no-results state
+
+- **Status:** Active
+- **Rule:** When no row matches, the page MUST show a no-results state with an action that clears
+  search and filters.
+- **Rationale:** An empty table reads as "no members".
+- **Implements:** n/a
+- **Source:** #331
+
+### UI-MBR-036 — The result count is shown above the list
+
+- **Status:** Active
+- **Rule:** The page MUST show, above the list, the number of memberships matching the current
+  search and filters.
+- **Rationale:** On mobile the list is long; the admin must know the result size without scrolling
+  to the pagination.
+- **Implements:** n/a
+- **Source:** #331
+
 ## States
+
+The members list:
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Loading | The search and filters, and "Cargando…" in place of the count | Search, filters |
+| Results | The count, one page of rows or cards, each with its derived status (UI-MBR-030) | Search, filters, "Limpiar filtros" while one is active, each row's menu |
+| Paged | The same, with the range and the page controls (UI-MBR-033) | The same, and the page controls |
+| No results | The count at 0 and the no-results state (UI-MBR-035), neutral | "Limpiar filtros" in the no-results state only |
+| Empty roster | The count at 0 and that the community has no members | Search, filters |
 
 The record dialog:
 

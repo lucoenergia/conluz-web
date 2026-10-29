@@ -8,7 +8,7 @@
 | **Roles** | A caller whose platform capabilities carry `canListPlatformAdmins` |
 | **Domain rules** | lucoenergia/conluz ADR-0004 (platform-admin invitations, #452) |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #288 |
+| **Last reviewed against code** | #331 |
 
 ## Purpose
 
@@ -178,11 +178,12 @@ invitation. The acceptance itself is the invitation-acceptance screen (`UI-INV`)
   - It MUST NOT show "Habilitado" or "Deshabilitado", and MUST NOT read `enabled` or `revocable`,
     which are null on it.
   - The narrow list MUST show the link's state as an "Invitación" line.
-- **Rationale:** A pending invitation tells nothing about the account. The state and the captions
-  are the community invitations' (UI-MBR-011), through the same rules, so the two pages
-  cannot disagree.
+- **Rationale:** A pending invitation tells nothing about the account. The captions were the
+  community invitations' (UI-MBR-011) until #331 gave a membership a derived status (UI-MBR-030).
+  That status reads the membership's `enabled`, `acceptedAt` and `contactEmail`, which a
+  platform-admin invitation does not carry, so this page keeps its own state and captions.
 - **Implements:** lucoenergia/conluz ADR-0004 §7
-- **Source:** #288
+- **Source:** #288; changed in #331 (rationale only: the captions are this page's own)
 
 ### UI-PAD-012 — A pending invitation offers only its resend and its link's revoke
 
