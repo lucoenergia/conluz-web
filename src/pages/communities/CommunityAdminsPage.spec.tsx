@@ -303,7 +303,7 @@ describe("inviting an admin", () => {
     Teléfono: "622 333 444",
   };
 
-  it("UI-ADM-003 sends the whole invitation, and the list then shows the new admin pending with an active link", async () => {
+  it("UI-ADM-003 sends the whole invitation, and the list then shows the new admin with the invitation sent", async () => {
     const u = user();
     const admins: Admins = { current: [ROSA] };
     const router = serveAdminsPage(admins, {

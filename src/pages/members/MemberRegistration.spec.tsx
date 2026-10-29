@@ -144,7 +144,7 @@ describe("registering a member", () => {
     expect(writesSent(router).map((r) => `${r.method} ${r.url}`)).toEqual([`POST ${REGISTER_URL}`]);
   });
 
-  it("UI-MBR-009 invites straight away when the record has a contact email, and the row shows the active link", async () => {
+  it("UI-MBR-009 invites straight away when the record has a contact email, and the row shows the invitation sent", async () => {
     const u = user();
     const roster: Roster = { current: [ANA] };
     const router = serveMembersPage(mockCustomInstance, roster, {
