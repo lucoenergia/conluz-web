@@ -42,8 +42,8 @@ import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { useErrorDispatch } from "../../context/error.context";
 import { invitationRefusalMessage } from "../../errors/membershipErrors";
 import { InvitationActionDialog } from "../members/InvitationActionDialog";
-import { invitationActionsFor, invitationText, membershipStatusOf, statusToggleFor } from "../members/membershipStatus";
-import { MembershipStatusCell, MembershipStatusChip } from "../members/MembershipStatusCell";
+import { invitationActionsFor, membershipStatusOf, statusToggleFor } from "../members/membershipStatus";
+import { MembershipStatusChip } from "../members/MembershipStatusChip";
 import { InviteAdminDialog } from "./InviteAdminDialog";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
@@ -251,7 +251,7 @@ export const CommunityAdminsPage: FC = () => {
                     {
                       key: "status",
                       header: "Estado",
-                      render: (admin) => <MembershipStatusCell membership={admin} />,
+                      render: (admin) => <MembershipStatusChip membership={admin} />,
                     },
                   ]}
                 />
@@ -264,7 +264,6 @@ export const CommunityAdminsPage: FC = () => {
                     isLoading={isLoading}
                     emptyMessage="Esta comunidad no tiene administradores"
                     items={admins.map((admin) => {
-                      const invitation = invitationText(admin);
                       return {
                         id: admin.user.id,
                         avatar: (
@@ -287,7 +286,6 @@ export const CommunityAdminsPage: FC = () => {
                           { label: "DNI/NIE", value: admin.personalId },
                           ...(admin.contactEmail ? [{ label: "Email", value: admin.contactEmail }] : []),
                           ...(admin.phoneNumber ? [{ label: "Teléfono", value: admin.phoneNumber }] : []),
-                          ...(invitation ? [{ label: "Invitación", value: invitation }] : []),
                         ],
                       };
                     })}

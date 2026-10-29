@@ -66,12 +66,11 @@ import { SendPendingInvitationsDialog } from "./SendPendingInvitationsDialog";
 import { InvitationActionDialog, type InvitationWriteKind } from "./InvitationActionDialog";
 import {
   invitationActionsFor,
-  invitationText,
   membershipStatusOf,
   statusToggleFor,
   type InvitationActions,
 } from "./membershipStatus";
-import { MembershipStatusCell, MembershipStatusChip } from "./MembershipStatusCell";
+import { MembershipStatusChip } from "./MembershipStatusChip";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
 
@@ -384,7 +383,7 @@ export const MembersPage: FC = () => {
                 {
                   key: "status",
                   header: "Estado",
-                  render: (membership) => <MembershipStatusCell membership={membership} />,
+                  render: (membership) => <MembershipStatusChip membership={membership} />,
                 },
               ]}
             />
@@ -397,7 +396,6 @@ export const MembersPage: FC = () => {
                 isLoading={isLoading}
                 emptyMessage="No se encontraron miembros"
                 items={memberships.map((membership) => {
-                  const invitation = invitationText(membership);
                   return {
                     id: String(membership.id ?? ""),
                     avatar: (
@@ -419,7 +417,6 @@ export const MembersPage: FC = () => {
                     fields: [
                       { label: "Email", value: membership.contactEmail ?? "-" },
                       { label: "Rol", value: ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER] },
-                      ...(invitation ? [{ label: "Invitación", value: invitation }] : []),
                     ],
                   };
                 })}

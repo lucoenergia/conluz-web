@@ -198,11 +198,13 @@ test.describe("Visual baselines", () => {
     // fixture that lost a state, would otherwise make a plausible baseline.
     const main = page.getByRole("main");
     await expect(main.getByText("Rosa Activa Gómez")).toBeVisible();
+    // The members page's derived status (UI-MBR-030), with no link caption.
     await expect(main.getByText("Activo", { exact: true })).toBeVisible();
-    await expect(main.getByText("Pendiente", { exact: true })).toHaveCount(2);
+    await expect(main.getByText("Invitación enviada", { exact: true })).toBeVisible();
+    await expect(main.getByText("Invitación caducada o revocada", { exact: true })).toBeVisible();
     await expect(main.getByText("Suspendido", { exact: true })).toBeVisible();
-    await expect(main.getByText("Enlace activo hasta el 8 oct 2026")).toBeVisible();
-    await expect(main.getByText("Enlace caducado o revocado")).toBeVisible();
+    await expect(main.getByText("Pendiente", { exact: true })).toHaveCount(0);
+    await expect(main.getByText(/Enlace activo hasta el|Enlace caducado o revocado/)).toHaveCount(0);
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).

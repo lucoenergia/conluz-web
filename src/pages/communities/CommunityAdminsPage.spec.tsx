@@ -223,10 +223,10 @@ describe("the admins list", () => {
     expect(rosa.getByText("U-ROSA-DNI")).toBeInTheDocument();
     expect(rosa.getByText("Activo")).toBeInTheDocument();
 
-    const pablo = within(rowOf("Pablo Pendiente"));
-    expect(pablo.getByText("Pendiente")).toBeInTheDocument();
-    expect(pablo.getByText("Enlace activo hasta el 8 oct 2026")).toBeInTheDocument();
-    expect(within(rowOf("Laura Caducada")).getByText("Enlace caducado o revocado")).toBeInTheDocument();
+    // The members page's derived status (UI-MBR-030): a pending row shows its sub-status, with no link caption.
+    expect(within(rowOf("Pablo Pendiente")).getByText("Invitación enviada")).toBeInTheDocument();
+    expect(screen.queryByText(/Enlace activo hasta el|Enlace caducado o revocado/)).not.toBeInTheDocument();
+    expect(within(rowOf("Laura Caducada")).getByText("Invitación caducada o revocada")).toBeInTheDocument();
     expect(within(rowOf("Sergio Suspendido")).getByText("Suspendido")).toBeInTheDocument();
 
     expect(adminReads(router)).toBe(1);
@@ -327,9 +327,7 @@ describe("inviting an admin", () => {
       phoneNumber: "622 333 444",
     });
     await screen.findByText("Nora Nueva");
-    const nora = within(rowOf("Nora Nueva"));
-    expect(nora.getByText("Pendiente")).toBeInTheDocument();
-    expect(nora.getByText("Enlace activo hasta el 26 oct 2026")).toBeInTheDocument();
+    expect(within(rowOf("Nora Nueva")).getByText("Invitación enviada")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([`POST ${INVITE_URL}`]);
   });
 
@@ -504,7 +502,7 @@ describe("the row actions", () => {
     expect(await menuItemsOf(u, "Silvia Suspendida")).toEqual(["Revocar enlace", "Reactivar"]);
   });
 
-  it("UI-ADM-005 resends the invitation, and the row shows the new link", async () => {
+  it("UI-ADM-005 resends the invitation, and the list is read again", async () => {
     const u = user();
     const admins: Admins = { current: [PABLO] };
     const router = serveAdminsPage(admins, {
@@ -517,7 +515,10 @@ describe("the row actions", () => {
     await screen.findByText("Pablo Pendiente");
     await confirmFromMenu(u, "Pablo Pendiente", "Reenviar");
 
-    expect(await within(rowOf("Pablo Pendiente")).findByText("Enlace activo hasta el 26 oct 2026")).toBeInTheDocument();
+    // A new link reads the same as the old one ("Invitación enviada"), so the
+    // refetch is what shows the row was refreshed.
+    await waitFor(() => expect(adminReads(router)).toBe(2));
+    expect(within(rowOf("Pablo Pendiente")).getByText("Invitación enviada")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([`POST ${resendUrl("u-pablo")}`]);
   });
 
@@ -534,7 +535,7 @@ describe("the row actions", () => {
     await screen.findByText("Pablo Pendiente");
     await confirmFromMenu(u, "Pablo Pendiente", "Revocar enlace");
 
-    expect(await within(rowOf("Pablo Pendiente")).findByText("Enlace caducado o revocado")).toBeInTheDocument();
+    expect(await within(rowOf("Pablo Pendiente")).findByText("Invitación caducada o revocada")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([`POST ${revokeUrl("u-pablo")}`]);
   });
 

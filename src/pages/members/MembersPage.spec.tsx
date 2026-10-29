@@ -596,16 +596,17 @@ describe("MembersPage", () => {
       return items;
     };
 
-    it("UI-MBR-010 tells active, pending and suspended apart, and a suspended pending member is suspended", () => {
+    it("UI-MBR-010 UI-MBR-030 tells active, pending and suspended apart, a pending row by its sub-status", () => {
       setup({ memberships: ROSTER });
 
-      expect(within(rowOf("Nadia Nueva")).getByText("Pendiente")).toBeInTheDocument();
-      expect(within(rowOf("Lucas Enlace")).getByText("Pendiente")).toBeInTheDocument();
-      expect(within(rowOf("Elena Caducada")).getByText("Pendiente")).toBeInTheDocument();
+      expect(within(rowOf("Nadia Nueva")).getByText("Sin invitar")).toBeInTheDocument();
+      expect(within(rowOf("Lucas Enlace")).getByText("Invitación enviada")).toBeInTheDocument();
+      expect(within(rowOf("Elena Caducada")).getByText("Invitación caducada o revocada")).toBeInTheDocument();
       expect(within(rowOf("Andrés Activo")).getByText("Activo")).toBeInTheDocument();
       expect(within(rowOf("Sara Suspendida")).getByText("Suspendido")).toBeInTheDocument();
+      // Suspended wins over a pending membership's usable link.
       expect(within(rowOf("Pablo Pausado")).getByText("Suspendido")).toBeInTheDocument();
-      expect(within(rowOf("Pablo Pausado")).queryByText("Pendiente")).not.toBeInTheDocument();
+      expect(within(rowOf("Pablo Pausado")).queryByText("Invitación enviada")).not.toBeInTheDocument();
     });
 
     it("UI-MBR-010 counts as active only the accepted, enabled members", () => {
@@ -615,14 +616,12 @@ describe("MembersPage", () => {
       expect(activeFact).toHaveTextContent(/^Activos\s*1$/);
     });
 
-    it("UI-MBR-011 shows where each pending member's invitation stands", () => {
-      setup({ memberships: ROSTER });
+    it("UI-MBR-030 shows a pending row's sub-status and no link caption", () => {
+      setup({ memberships: [...ROSTER, pending("no-email", "Sonia Sincorreo", { contactEmail: null })] });
 
-      expect(within(rowOf("Nadia Nueva")).getByText("Sin invitar")).toBeInTheDocument();
-      expect(within(rowOf("Lucas Enlace")).getByText("Enlace activo hasta el 8 oct 2026")).toBeInTheDocument();
-      expect(within(rowOf("Elena Caducada")).getByText("Enlace caducado o revocado")).toBeInTheDocument();
-      // Accepted: nothing left to say about an invitation, whenever it was sent.
-      expect(within(rowOf("Andrés Activo")).queryByText(/Sin invitar|Enlace/)).not.toBeInTheDocument();
+      expect(within(rowOf("Sonia Sincorreo")).getByText("Sin email")).toBeInTheDocument();
+      // The sub-status replaces the link captions of #275, the expiry date included.
+      expect(screen.queryByText(/Enlace activo hasta el|Enlace caducado o revocado/)).not.toBeInTheDocument();
     });
 
     describe("on a narrow viewport", () => {
@@ -631,15 +630,16 @@ describe("MembersPage", () => {
       };
       afterEach(() => setViewport(1024));
 
-      it("UI-MBR-010 UI-MBR-011 shows the status and the invitation state in the list too", () => {
+      it("UI-MBR-010 UI-MBR-030 shows the derived status in the list too, with no invitation line", () => {
         setViewport(390);
         setup({ memberships: ROSTER });
 
         const list = screen.getByRole("list", { name: "Miembros de la comunidad" });
         const item = within(list).getByText("Lucas Enlace").closest("li") as HTMLElement;
-        expect(within(item).getByText("Pendiente")).toBeInTheDocument();
-        expect(within(item).getByText("Invitación")).toBeInTheDocument();
-        expect(within(item).getByText("Enlace activo hasta el 8 oct 2026")).toBeInTheDocument();
+        expect(within(item).getByText("Invitación enviada")).toBeInTheDocument();
+        expect(within(item).queryByText("Invitación")).not.toBeInTheDocument();
+        const suspended = within(list).getByText("Pablo Pausado").closest("li") as HTMLElement;
+        expect(within(suspended).getByText("Suspendido")).toBeInTheDocument();
       });
     });
 

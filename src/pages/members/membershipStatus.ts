@@ -1,18 +1,8 @@
 import type { MembershipResponse } from "../../api/models";
 import type { Action } from "../../hooks/actions";
-import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 
-/** The three states the roster tells apart (#275). */
+/** The three top-level states of a membership (#275). */
 export type MembershipStatus = "active" | "pending" | "suspended";
-
-/**
- * Suspended wins over pending: a suspended membership grants nothing whether
- * or not it was accepted, and "Reactivar" is what the admin can do about it.
- */
-export function statusOf(membership: Pick<MembershipResponse, "enabled" | "acceptedAt">): MembershipStatus {
-  if (!membership.enabled) return "suspended";
-  return membership.acceptedAt === null ? "pending" : "active";
-}
 
 /** Where a pending membership stands with its invitation (#331). */
 export type PendingStatus = "invitationSent" | "noEmail" | "notInvited" | "invitationLapsed";
@@ -90,22 +80,6 @@ export function invitationStateOf(
 
 /** What the status and invitation rules read of a row: a roster row and a community admin both carry it. */
 export type MembershipState = Pick<MembershipResponse, "enabled" | "acceptedAt" | "invitedAt" | "invitationExpiresAt">;
-
-/** Where a pending membership's invitation stands, or null once it is accepted (#275). */
-export function invitationText(
-  membership: Pick<MembershipResponse, "acceptedAt" | "invitedAt" | "invitationExpiresAt">,
-): string | null {
-  const state = invitationStateOf(membership);
-  if (!state) return null;
-  switch (state.kind) {
-    case "never":
-      return "Sin invitar";
-    case "active":
-      return `Enlace activo hasta el ${formatCalendarDate(state.expiresAt, SHORT_CALENDAR_DATE)}`;
-    case "lapsed":
-      return "Enlace caducado o revocado";
-  }
-}
 
 /**
  * The invitation writes a row's caller was handed, by the names the action

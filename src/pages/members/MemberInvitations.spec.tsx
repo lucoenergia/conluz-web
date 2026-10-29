@@ -107,7 +107,7 @@ beforeEach(() => {
 });
 
 describe("inviting from the roster", () => {
-  it("UI-MBR-012 invites a never-invited member, and the row shows the active link and its expiry", async () => {
+  it("UI-MBR-012 invites a never-invited member, and the row shows the invitation sent", async () => {
     const u = user();
     const roster: Roster = { current: [NADIA, ANA] };
     const router = serveMembersPage(mockCustomInstance, roster, {
@@ -122,11 +122,11 @@ describe("inviting from the roster", () => {
     await confirmFromMenu(u, "Nadia Nueva", "Invitar", "Enviar invitación en");
 
     expect(requestsTo(router, "POST", inviteUrl("u-nadia"))).toHaveLength(1);
-    expect(await within(rowOf("Nadia Nueva")).findByText("Enlace activo hasta el 26 oct 2026")).toBeInTheDocument();
+    expect(await within(rowOf("Nadia Nueva")).findByText("Invitación enviada")).toBeInTheDocument();
     expect(mockErrorDispatch).not.toHaveBeenCalled();
   });
 
-  it("UI-MBR-012 offers Reenviar, not Invitar, on a member whose link expired, and resending shows a new active link", async () => {
+  it("UI-MBR-012 offers Reenviar, not Invitar, on a member whose link expired, and resending shows the invitation sent", async () => {
     const u = user();
     const roster: Roster = { current: [ELENA, ANA] };
     const router = serveMembersPage(mockCustomInstance, roster, {
@@ -136,14 +136,14 @@ describe("inviting from the roster", () => {
       },
     });
     await renderPage();
-    expect(within(rowOf("Elena Caducada")).getByText("Enlace caducado o revocado")).toBeInTheDocument();
+    expect(within(rowOf("Elena Caducada")).getByText("Invitación caducada o revocada")).toBeInTheDocument();
     expect(await menuItemsOf(u, "Elena Caducada")).toEqual(["Editar ficha", "Reenviar", "Suspender", "Eliminar"]);
 
     await confirmFromMenu(u, "Elena Caducada", "Reenviar", "Reenviar invitación en");
 
     expect(requestsTo(router, "POST", resendUrl("u-elena"))).toHaveLength(1);
     expect(requestsTo(router, "POST", inviteUrl("u-elena"))).toHaveLength(0);
-    expect(await within(rowOf("Elena Caducada")).findByText("Enlace activo hasta el 26 oct 2026")).toBeInTheDocument();
+    expect(await within(rowOf("Elena Caducada")).findByText("Invitación enviada")).toBeInTheDocument();
   });
 
   it.each([
@@ -182,7 +182,7 @@ describe("inviting from the roster", () => {
     await confirmFromMenu(u, "Lucas Enlace", "Revocar enlace", "Revocar enlace en");
 
     expect(requestsTo(router, "POST", revokeUrl("u-lucas"))).toHaveLength(1);
-    expect(await within(rowOf("Lucas Enlace")).findByText("Enlace caducado o revocado")).toBeInTheDocument();
+    expect(await within(rowOf("Lucas Enlace")).findByText("Invitación caducada o revocada")).toBeInTheDocument();
     const items = await menuItemsOf(u, "Lucas Enlace");
     expect(items).toContain("Reenviar");
     expect(items).not.toContain("Revocar enlace");
@@ -311,7 +311,7 @@ describe("invitation refusals", () => {
       "MEMBERSHIP_ALREADY_INVITED",
       ACTIVE_LINK,
       "Este miembro ya tenía una invitación enviada. Hemos actualizado la lista.",
-      "Enlace activo hasta el 8 oct 2026",
+      "Invitación enviada",
     ],
     [
       "a resend to a member whose invitation is gone",
