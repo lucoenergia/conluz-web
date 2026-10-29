@@ -6,16 +6,20 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
@@ -23,7 +27,9 @@ import type {
 import type {
   GetPriceByRangeOfDatesParams,
   PriceByHour,
-  RestError
+  PriceSyncResponse,
+  RestError,
+  SyncPricesBody
 } from '.././models';
 
 import { customInstance } from '../../http/custom-instance';
@@ -126,3 +132,82 @@ export function useGetPriceByRangeOfDates<TData = Awaited<ReturnType<typeof getP
 
 
 
+/**
+ * Fetches the OMIE day-ahead prices of each market day of the range again, the same way the daily job does, and stores them: each day's prices replace those stored at the same instants. A day OMIE does not serve keeps whatever is stored for it. Sending the same request again, for example after one that was interrupted, leaves the stored prices as a single successful run would.
+
+**Range bounds:** the range is half-open, `[startDate, endDate)`: `startDate` is included and `endDate` is not, so `startDate=2026-03-28` and `endDate=2026-03-30` synchronise 28 and 29 March. Both are market days, calendar days in Europe/Madrid.
+
+**Range checks:** a range is checked in this order, and the first rule it breaks is answered 400 with that rule's code, before anything is fetched:
+
+1. `startDate` is strictly before `endDate`: equal dates make an empty range (`PRICE_SYNC_PERIOD_START_AFTER_END`).
+2. The range is at most 31 days long (`PRICE_SYNC_PERIOD_TOO_LONG`).
+3. The range extends no further than tomorrow in Europe/Madrid: `endDate` is no later than the day after tomorrow (`PRICE_SYNC_PERIOD_END_BEYOND_TOMORROW`). A range beyond tomorrow is rejected, not clipped.
+
+The response lists every day of the range in date order, stored or skipped, and is 200 even when some days are skipped. OMIE publishes tomorrow's prices around 13:00 Europe/Madrid, so before then tomorrow is skipped with `FILE_NOT_FOUND`. Each day is one request to OMIE, which can take up to 30 seconds, so a long range takes minutes.
+
+**Required: an enabled platform admin.** Any other authenticated caller gets 403.
+
+ * @summary Re-synchronise the OMIE prices of a range of market days.
+ */
+export const syncPrices = (
+    syncPricesBody: SyncPricesBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PriceSyncResponse[]>(
+      {url: `/api/v1/prices/sync`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: syncPricesBody, signal
+    },
+      );
+    }
+  
+
+
+export const getSyncPricesMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncPrices>>, TError,{data: SyncPricesBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof syncPrices>>, TError,{data: SyncPricesBody}, TContext> => {
+
+const mutationKey = ['syncPrices'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncPrices>>, {data: SyncPricesBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  syncPrices(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncPricesMutationResult = NonNullable<Awaited<ReturnType<typeof syncPrices>>>
+    export type SyncPricesMutationBody = SyncPricesBody
+    export type SyncPricesMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Re-synchronise the OMIE prices of a range of market days.
+ */
+export const useSyncPrices = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncPrices>>, TError,{data: SyncPricesBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncPrices>>,
+        TError,
+        {data: SyncPricesBody},
+        TContext
+      > => {
+
+      const mutationOptions = getSyncPricesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

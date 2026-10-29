@@ -587,19 +587,22 @@ export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof
 The request body must contain:
 - **year** (required, integer): The year for which to aggregate data
 - **month** (optional, integer 1-12): The month to aggregate. If not provided, all months of the year will be aggregated.
-- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, all active supplies will be aggregated.
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. It must be a supply of the community linked to a plant. If not provided, every supply of the community linked to a plant will be aggregated.
 
 **Behavior:**
 - If both month and supplyCode are provided: Aggregates only that specific supply for that month
-- If only month is provided: Aggregates all supplies for that specific month
+- If only month is provided: Aggregates every supply of the community linked to a plant for that specific month
 - If only supplyCode is provided: Aggregates that supply for all months of the year
-- If neither month nor supplyCode is provided: Aggregates all supplies for all months of the year
+- If neither month nor supplyCode is provided: Aggregates every supply of the community linked to a plant for all months of the year
 
-The community is taken from the path and only that community's supplies are aggregated.
+The community is taken from the path and only that community's supplies linked to a plant are
+aggregated, because only they have Datadis production.
 
 Proper authentication, through an authentication token, is required for secure access to this endpoint.
 **Required: Community Admin of the community. Returns 404 if the community does not exist or the
 caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+Returns 404 if supplyCode is not a supply of the community linked to a plant.
 
 A successful request returns an HTTP status code of 200.
 
@@ -672,20 +675,23 @@ export const useSyncMonthlyDatadisProduction = <TError = ErrorType<RestError>,
 
 The request body must contain:
 - **year** (required, integer): The year for which to aggregate data
-- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. If not provided, all active supplies will be aggregated.
+- **supplyCode** (optional, string): The supply code (CUPS) to aggregate. It must be a supply of the community linked to a plant. If not provided, every supply of the community linked to a plant will be aggregated.
 
 **Behavior:**
 - If supplyCode is provided: Aggregates only that specific supply
-- If supplyCode is not provided or is empty: Aggregates all active supplies
+- If supplyCode is not provided or is empty: Aggregates every supply of the community linked to a plant
 
 **Note:** This aggregation requires that monthly aggregations have already been performed
 for the specified year.
 
-The community is taken from the path and only that community's supplies are aggregated.
+The community is taken from the path and only that community's supplies linked to a plant are
+aggregated, because only they have Datadis production.
 
 Proper authentication, through an authentication token, is required for secure access to this endpoint.
 **Required: Community Admin of the community. Returns 404 if the community does not exist or the
 caller is not a member of it, or 403 if the caller is a member but not one of its admins.**
+
+Returns 404 if supplyCode is not a supply of the community linked to a plant.
 
 A successful request returns an HTTP status code of 200.
 

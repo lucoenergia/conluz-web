@@ -20,4 +20,6 @@ export interface PlatformCapabilitiesResponse {
   canListPlatformAdmins: boolean;
   /** Whether the caller may list users (GET /api/v1/users): an active community admin of at least one community. False for a platform admin who administers no community. */
   canListUsers: boolean;
+  /** Whether the caller may re-synchronise the OMIE prices of a range of market days (POST /api/v1/prices/sync). */
+  canSyncPrices: boolean;
 }
