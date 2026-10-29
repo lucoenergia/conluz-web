@@ -14,6 +14,59 @@ export function statusOf(membership: Pick<MembershipResponse, "enabled" | "accep
   return membership.acceptedAt === null ? "pending" : "active";
 }
 
+/** Where a pending membership stands with its invitation (#331). */
+export type PendingStatus = "invitationSent" | "noEmail" | "notInvited" | "invitationLapsed";
+
+/** A membership's status, with its pending sub-status when it is pending. */
+export type DerivedMembershipStatus =
+  | { status: "active" | "suspended"; pending: null }
+  | { status: "pending"; pending: PendingStatus };
+
+/** What the derived status reads of a row. */
+export type MembershipStatusFields = Pick<
+  MembershipResponse,
+  "enabled" | "acceptedAt" | "invitedAt" | "invitationExpiresAt" | "contactEmail"
+>;
+
+/**
+ * The one status a membership shows, and the one the status filter matches
+ * (#331). The contract has no status field, so it is derived, first match wins:
+ *
+ * 1. Suspended: an invitation to a disabled membership always fails.
+ * 2. Active: accepted.
+ * 3. Pending, and of the pending:
+ *    - a link that can still be used, since the member can still accept it,
+ *      email or not;
+ *    - no contact email, since no send can succeed;
+ *    - never invited;
+ *    - invited, with no usable link: expired and revoked look the same in the
+ *      contract, and both are resent.
+ */
+export function membershipStatusOf(membership: MembershipStatusFields): DerivedMembershipStatus {
+  if (!membership.enabled) return { status: "suspended", pending: null };
+  if (membership.acceptedAt !== null) return { status: "active", pending: null };
+  if (membership.invitationExpiresAt !== null) return { status: "pending", pending: "invitationSent" };
+  if (membership.contactEmail === null) return { status: "pending", pending: "noEmail" };
+  if (membership.invitedAt === null) return { status: "pending", pending: "notInvited" };
+  return { status: "pending", pending: "invitationLapsed" };
+}
+
+/** The label of each status and pending sub-status, wherever it is shown or offered. */
+export const STATUS_LABELS: Record<MembershipStatus | PendingStatus, string> = {
+  active: "Activo",
+  suspended: "Suspendido",
+  pending: "Pendiente",
+  invitationSent: "Invitación enviada",
+  noEmail: "Sin email",
+  notInvited: "Sin invitar",
+  invitationLapsed: "Invitación caducada o revocada",
+};
+
+/** The label a row shows: its pending sub-status, or its status. */
+export function statusLabelOf(derived: DerivedMembershipStatus): string {
+  return STATUS_LABELS[derived.pending ?? derived.status];
+}
+
 /**
  * Where a pending membership's invitation stands, or null once it is accepted.
  *

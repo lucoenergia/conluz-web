@@ -42,7 +42,7 @@ import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { useErrorDispatch } from "../../context/error.context";
 import { invitationRefusalMessage } from "../../errors/membershipErrors";
 import { InvitationActionDialog } from "../members/InvitationActionDialog";
-import { invitationActionsFor, invitationText, statusOf, statusToggleFor } from "../members/membershipStatus";
+import { invitationActionsFor, invitationText, membershipStatusOf, statusToggleFor } from "../members/membershipStatus";
 import { MembershipStatusCell, MembershipStatusChip } from "../members/MembershipStatusCell";
 import { InviteAdminDialog } from "./InviteAdminDialog";
 import { Notice } from "../../components/Notice";
@@ -129,8 +129,8 @@ export const CommunityAdminsPage: FC = () => {
     }
   };
 
-  const activeCount = admins.filter((admin) => statusOf(admin) === "active").length;
-  const pendingCount = admins.filter((admin) => statusOf(admin) === "pending").length;
+  const activeCount = admins.filter((admin) => membershipStatusOf(admin).status === "active").length;
+  const pendingCount = admins.filter((admin) => membershipStatusOf(admin).status === "pending").length;
 
   return (
     <Box

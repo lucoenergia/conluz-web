@@ -67,7 +67,7 @@ import { InvitationActionDialog, type InvitationWriteKind } from "./InvitationAc
 import {
   invitationActionsFor,
   invitationText,
-  statusOf,
+  membershipStatusOf,
   statusToggleFor,
   type InvitationActions,
 } from "./membershipStatus";
@@ -218,7 +218,7 @@ export const MembersPage: FC = () => {
   };
 
   // Active means accepted and enabled: a pending member has no access yet.
-  const activeCount = memberships.filter((m) => statusOf(m) === "active").length;
+  const activeCount = memberships.filter((m) => membershipStatusOf(m).status === "active").length;
   const adminCount = memberships.filter((m) => m.role === MembershipResponseRole.COMMUNITY_ADMIN).length;
 
   const removeTarget = removeConfirmUserId
