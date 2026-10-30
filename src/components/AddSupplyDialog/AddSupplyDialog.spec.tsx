@@ -68,6 +68,25 @@ describe("AddSupplyDialog", () => {
     expect(screen.getByText("Local B")).toBeInTheDocument();
   });
 
+  it("UI-SUP-010 lists a supply without a name by its address, and finds it by that address", async () => {
+    mockGetAllSupplies.mockResolvedValue({
+      items: [
+        buildSupply({ id: "s1", name: "Vivienda A", code: "CUPS1", address: "Calle Mayor 1" }),
+        buildSupply({ id: "s3", name: null, code: "CUPS3", address: "Plaza del Pueblo 3" }),
+      ],
+      number: 0,
+      totalPages: 1,
+    });
+    const user = userEvent.setup();
+    renderDialog();
+    expect(await screen.findByText("Plaza del Pueblo 3")).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText("Buscar por nombre o CUPS"), "plaza");
+
+    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
+    expect(screen.getByText("Plaza del Pueblo 3")).toBeInTheDocument();
+  });
+
   it("multi-selects supplies and confirms with all of them at once", async () => {
     const user = userEvent.setup();
     const { onConfirm } = renderDialog();

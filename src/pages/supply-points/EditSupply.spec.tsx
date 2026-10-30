@@ -124,6 +124,31 @@ describe("EditSupplyPage", () => {
   });
 });
 
+describe("EditSupplyPage: naming the supply", () => {
+  it("UI-SUP-010 names a supply without a name by its address under the title", () => {
+    vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
+      supply: buildSupply({
+        id: SUPPLY_ID,
+        name: null,
+        address: "Plaza del Pueblo 3",
+        community: { id: COMMUNITY_ID, name: "Sol Común" },
+        capabilities: buildSupplyCapabilities({ canEdit: true }),
+      }),
+      isLoading: false,
+      isNotFound: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    renderWithProviders(<EditSupplyPage />, {
+      route: `/supply-points/${SUPPLY_ID}/edit`,
+      activeCommunityId: COMMUNITY_ID,
+    });
+
+    expect(screen.getByText("Plaza del Pueblo 3")).toBeInTheDocument();
+    expect(screen.queryByText("Cargando...")).not.toBeInTheDocument();
+  });
+});
+
 describe("EditSupplyPage: a refused edit", () => {
   const nameInput = () => screen.getByRole("textbox", { name: /^Nombre/ });
   const cupsInput = () => screen.getByRole("textbox", { name: /^CUPS/ });

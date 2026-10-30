@@ -178,6 +178,23 @@ describe("SupplyPointsPage", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
+  it("UI-SUP-010 shows a supply without a name by its address, and the search finds it by that address", async () => {
+    setup({
+      supplies: [
+        supply({}),
+        { ...supply({}), id: "supply-2", name: null, code: "ES0021000000000000BB", address: "Plaza del Pueblo 3" },
+      ],
+    });
+
+    expect(screen.getByRole("heading", { name: "Casa" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
+
+    await userEvent.type(screen.getByRole("searchbox", { name: "Buscar punto de suministro..." }), "plaza");
+
+    expect(screen.queryByRole("heading", { name: "Casa" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
+  });
+
   // The capabilities have not arrived yet, which is not the same as "no".
   it("offers nothing while the community has not loaded", () => {
     vi.mocked(useGetCommunityById).mockReturnValue(query.loading());
