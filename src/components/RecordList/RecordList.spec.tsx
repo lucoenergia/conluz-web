@@ -93,4 +93,24 @@ describe("RecordList", () => {
     expect(item).toHaveTextContent(/Sin invitar\s*Miembro · 12345678Z\s*carla@example\.com/);
     expect(screen.getByText("carla@example.com")).toBeInTheDocument();
   });
+
+  it("renders a record's selection before its title, and none for a list without selection", () => {
+    const { rerender } = render(
+      <RecordList
+        items={[
+          { id: "a", title: "Ana García", selection: <input type="checkbox" aria-label="Seleccionar Ana García" />, fields: [] },
+          { id: "b", title: "Bruno Leal", fields: [] },
+        ]}
+        label="Usuarios"
+        emptyMessage="Sin usuarios"
+      />,
+    );
+
+    const [first, second] = screen.getAllByRole("listitem");
+    expect(within(first).getByRole("checkbox", { name: "Seleccionar Ana García" })).toBeInTheDocument();
+    expect(within(second).queryByRole("checkbox")).not.toBeInTheDocument();
+
+    rerender(<RecordList items={ITEMS} label="Usuarios" emptyMessage="Sin usuarios" />);
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
 });

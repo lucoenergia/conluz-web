@@ -7,7 +7,6 @@ import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures"
 import type { CommunityResponse, ImportMembersResponse, RestErrorDetailCode } from "../../api/models";
 import {
   ADMIN_COMMUNITY,
-  BULK_INVITE_URL,
   COMMUNITY_ID,
   COMMUNITY_NAME,
   IMPORT_URL,
@@ -156,7 +155,7 @@ describe("the import guide", () => {
     const dialog = await openImport(u);
 
     expect(within(dialog).getByText(/registra a los miembros, pero no les envía nada/)).toHaveTextContent(
-      "«Enviar invitaciones pendientes»",
+      "Después puedes invitarles uno a uno o seleccionando a varios en la lista.",
     );
     expect(within(dialog).getByText(/no importan los espacios, los puntos ni los guiones/)).toBeInTheDocument();
     expect(within(dialog).getByText(/«CSV UTF-8» y «CSV \(delimitado por punto y coma\)»/)).toHaveTextContent(
@@ -395,27 +394,28 @@ describe("a file refused as a whole", () => {
 });
 
 describe("after an import", () => {
-  it("UI-MBR-024 offers the bulk send with canInviteMembers, and hands over to its confirmation without sending anything", async () => {
+  it("UI-MBR-024 says nothing was sent, and points to selecting the new members in the list, with canInviteMembers", async () => {
     const u = userEvent.setup();
-    const r = serve({ import: () => RESULT, bulk: () => ({ sent: 1, remaining: 0 }) });
+    const r = serve({ import: () => RESULT });
     await renderPage();
 
     const dialog = await openImport(u);
     await importFile(u, dialog);
-    expect(await within(dialog).findByText("Todavía no se ha enviado ninguna invitación.", { exact: false })).toBeInTheDocument();
-    await u.click(within(dialog).getByRole("button", { name: "Enviar invitaciones pendientes" }));
 
-    // The import sent nothing, and the hand-over sends nothing until confirmed.
-    const bulk = await screen.findByRole("dialog", { name: `Enviar invitaciones pendientes en ${COMMUNITY_NAME}` });
-    expect(screen.queryByRole("dialog", { name: `Importar miembros en ${COMMUNITY_NAME}` })).not.toBeInTheDocument();
-    expect(requestsTo(r, "POST", BULK_INVITE_URL)).toEqual([]);
+    expect(
+      await within(dialog).findByText(
+        "Todavía no se ha enviado ninguna invitación. Para invitarles, selecciónalos en la lista de miembros.",
+      ),
+    ).toBeInTheDocument();
+    // The import hands over to no send: closing is all that is left to do here.
+    expect(within(dialog).getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "Importar otro archivo",
+      "Cerrar",
+    ]);
     expect(writesSent(r).map((request) => request.url)).toEqual([IMPORT_URL]);
-
-    await u.click(within(bulk).getByRole("button", { name: "Enviar invitaciones" }));
-    await waitFor(() => expect(requestsTo(r, "POST", BULK_INVITE_URL)).toHaveLength(1));
   });
 
-  it("UI-MBR-024 does not offer the bulk send without canInviteMembers", async () => {
+  it("UI-MBR-024 says the registered members show as pending without canInviteMembers", async () => {
     const u = userEvent.setup();
     const community = buildCommunity({
       ...ADMIN_COMMUNITY,
@@ -428,12 +428,16 @@ describe("after an import", () => {
     await importFile(u, dialog);
     await within(dialog).findByText(/Se ha registrado 1 miembro/, VISIBLE);
 
-    expect(within(dialog).queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
-    expect(within(dialog).getByText(/Todavía no se ha enviado ninguna invitación/)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        "Todavía no se ha enviado ninguna invitación. Los miembros registrados aparecen como pendientes.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByText(/selecciónalos en la lista/)).not.toBeInTheDocument();
     expect(writesSent(r).map((request) => request.url)).toEqual([IMPORT_URL]);
   });
 
-  it("UI-MBR-024 does not offer the bulk send when nothing was registered", async () => {
+  it("UI-MBR-024 says nothing about invitations when nothing was registered", async () => {
     const u = userEvent.setup();
     serve({ import: () => NOTHING_REGISTERED });
     await renderPage();
@@ -442,7 +446,7 @@ describe("after an import", () => {
     await importFile(u, dialog);
 
     expect(await within(dialog).findByText(/No se ha registrado ningún miembro/, VISIBLE)).toBeInTheDocument();
-    expect(within(dialog).queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
+    expect(within(dialog).queryByText(/Todavía no se ha enviado ninguna invitación/)).not.toBeInTheDocument();
   });
 });
 

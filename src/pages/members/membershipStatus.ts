@@ -1,5 +1,6 @@
 import type { MembershipResponse } from "../../api/models";
 import type { Action } from "../../hooks/actions";
+import { outcomeFromResource } from "../../hooks/permissions";
 
 /** The three top-level states of a membership (#275). */
 export type MembershipStatus = "active" | "pending" | "suspended";
@@ -136,4 +137,49 @@ export function statusToggleFor(
   if (!membership) return undefined;
   if (membership.enabled) return actions.disable && { action: actions.disable, isSuspending: true };
   return actions.enable && { action: actions.enable, isSuspending: false };
+}
+
+/** What the selection for a send or resend reads of a row (#328). */
+export type InvitationSelectionFields = Pick<
+  MembershipResponse,
+  "enabled" | "acceptedAt" | "contactEmail" | "capabilities"
+>;
+
+/** Pending, enabled, and the caller may invite it: a missing capability counts as false. */
+const isInvitablePending = (membership: InvitationSelectionFields) =>
+  membership.acceptedAt === null &&
+  membership.enabled &&
+  outcomeFromResource(membership.capabilities, "canInvite").state === "allowed";
+
+/**
+ * Whether a row can be selected for a send or resend (#328): pending, enabled,
+ * with a contact email, and its own `canInvite`. The backend decides each
+ * person again and answers per person; this only keeps out the rows it would
+ * refuse for a reason the roster already shows.
+ */
+export function isSelectableForInvitation(membership: InvitationSelectionFields): boolean {
+  return isInvitablePending(membership) && membership.contactEmail !== null;
+}
+
+/**
+ * A row that would be selectable but has no contact email: it is shown
+ * unselectable, with that reason, since no send to it can succeed.
+ */
+export function lacksContactEmailToInvite(membership: InvitationSelectionFields): boolean {
+  return isInvitablePending(membership) && membership.contactEmail === null;
+}
+
+/**
+ * Why no row of the roster can be selected for a send or resend, for a
+ * community where the caller may invite (#328); null when some row can.
+ */
+export function invitationSelectionEmptyReason(memberships: readonly InvitationSelectionFields[]): string | null {
+  if (memberships.length === 0 || memberships.some(isSelectableForInvitation)) return null;
+  if (memberships.every((m) => m.acceptedAt !== null)) {
+    return "Todos los miembros han aceptado ya la invitación: no hay nadie a quien invitar.";
+  }
+  if (memberships.some(lacksContactEmailToInvite)) {
+    return "Ningún miembro pendiente tiene email de contacto. Añádelo desde «Editar ficha» para poder invitarlo.";
+  }
+  return "No hay ningún miembro pendiente al que puedas enviar la invitación.";
 }

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { SendInvitationResultResponse } from "../api/models";
 import { apiError } from "../test/apiError";
 import {
   invitationRefusalMessage,
+  invitationResultReason,
+  selectedInvitationsRefusalMessage,
   removalRefusalMessage,
   roleChangeRefusalMessage,
   STALE_ROW_CODES,
@@ -24,7 +27,7 @@ describe("invitationRefusalMessage (#275)", () => {
   });
 
   it("UI-MBR-014 says invitations cannot be sent right now", () => {
-    expect(invitationRefusalMessage(apiError(503, { code: "MEMBERSHIP_INVITATION_UNAVAILABLE" }), "bulk")).toBe(
+    expect(invitationRefusalMessage(apiError(503, { code: "MEMBERSHIP_INVITATION_UNAVAILABLE" }), "invite")).toBe(
       "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde.",
     );
   });
@@ -161,6 +164,68 @@ describe("the last active admin (#309)", () => {
   it("UI-MBR-015 keeps the supplies wording for a member", () => {
     expect(removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_OWNS_SUPPLIES" }), "member")).toBe(
       "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+    );
+  });
+});
+
+const refusal = (code: SendInvitationResultResponse["code"], params: Record<string, string> = {}) =>
+  ({ user: { id: "u-1" }, outcome: "REFUSED", code, params }) satisfies SendInvitationResultResponse;
+
+describe("invitationResultReason (#328)", () => {
+  it.each([
+    ["MEMBERSHIP_NOT_FOUND", "Ya no forma parte de esta comunidad."],
+    ["MEMBERSHIP_ALREADY_EXISTS", "Este miembro ya ha aceptado la invitación."],
+    ["MEMBERSHIP_DISABLED", "Este miembro está suspendido, así que no se le puede invitar."],
+    [
+      "MEMBERSHIP_WITHOUT_CONTACT_EMAIL",
+      "Este miembro no tiene email de contacto. Añádelo desde «Editar ficha» y vuelve a intentarlo.",
+    ],
+  ] as const)("UI-MBR-040 words a person refused with %s", (code, reason) => {
+    expect(invitationResultReason(refusal(code))).toBe(reason);
+  });
+
+  it("UI-MBR-040 says when another resend is possible, from params.retryAfterSeconds", () => {
+    expect(
+      invitationResultReason(refusal("MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED", { retryAfterSeconds: "72001" })),
+    ).toBe(
+      "Has alcanzado el límite de reenvíos para este miembro. Podrás volver a reenviar la invitación dentro de 21 horas.",
+    );
+  });
+
+  it("UI-MBR-040 says to try later when the resend limit carries no wait", () => {
+    expect(invitationResultReason(refusal("MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED"))).toBe(
+      "Has alcanzado el límite de reenvíos para este miembro. Vuelve a intentarlo más tarde.",
+    );
+  });
+
+  it("falls back to a sentence for a refusal without a code", () => {
+    expect(invitationResultReason(refusal(null))).toBe("No se ha podido enviar la invitación.");
+  });
+});
+
+describe("selectedInvitationsRefusalMessage (#328)", () => {
+  it.each([
+    [400, "MEMBERSHIP_INVITATION_SELECTION_EMPTY", {}, "No has seleccionado a nadie. Selecciona al menos un miembro."],
+    [
+      400,
+      "MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE",
+      { maxUserIds: "50" },
+      "Puedes enviar hasta 50 invitaciones a la vez. Quita a alguien de la selección.",
+    ],
+    [
+      400,
+      "MEMBERSHIP_INVITATION_SELECTION_DUPLICATED",
+      {},
+      "La selección repite a algún miembro. Vuelve a seleccionarlos.",
+    ],
+    [503, "MEMBERSHIP_INVITATION_UNAVAILABLE", {}, "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde."],
+  ] as const)("UI-MBR-041 answers %s %s with its own message", (status, code, params, message) => {
+    expect(selectedInvitationsRefusalMessage(apiError(status, { code, params }))).toBe(message);
+  });
+
+  it("falls back to a sentence for a refusal it does not word", () => {
+    expect(selectedInvitationsRefusalMessage(apiError(500))).toBe(
+      "No se han podido enviar las invitaciones. Inténtalo de nuevo.",
     );
   });
 });

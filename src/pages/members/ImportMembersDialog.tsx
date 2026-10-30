@@ -30,11 +30,11 @@ interface ImportMembersDialogProps {
   /** The action itself: the dialog is mounted only when the community grants it. */
   importMembers: Action<[ImportMembersBody], MembershipWriteResult<ImportMembersResponse>>;
   /**
-   * Opens the bulk send, when the community grants it. The import itself never
-   * sends anything: this closes the dialog and hands over to the bulk send's own
-   * confirmation.
+   * Whether the page hands over the send to selected members, which decides
+   * where the result points for inviting the members just registered. The
+   * import itself never sends anything (#328).
    */
-  onSendPending?: () => void;
+  invitable: boolean;
   onClose: () => void;
 }
 
@@ -70,7 +70,7 @@ function refusalOf(error: unknown): { message: string; nothingRegistered: boolea
 export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
   communityName,
   importMembers,
-  onSendPending,
+  invitable,
   onClose,
 }) => {
   const community = communityLabel(communityName);
@@ -127,7 +127,7 @@ export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
           </Box>
         </DialogContent>
       ) : result ? (
-        <ImportResult result={result} onSendPending={onSendPending} onImportAnother={importAnother} onClose={onClose} />
+        <ImportResult result={result} invitable={invitable} onImportAnother={importAnother} onClose={onClose} />
       ) : (
         <>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -140,8 +140,8 @@ export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
             <Notice severity="info">
               <Box component="ul" sx={{ m: 0, pl: 2 }}>
                 <li>
-                  Importar registra a los miembros, pero no les envía nada. Después puedes invitarles uno a uno o con
-                  «Enviar invitaciones pendientes».
+                  Importar registra a los miembros, pero no les envía nada. Después puedes invitarles uno a uno o
+                  seleccionando a varios en la lista.
                 </li>
                 <li>En el DNI/NIE/NIF no importan los espacios, los puntos ni los guiones.</li>
                 <li>
@@ -220,7 +220,7 @@ export const ImportMembersDialog: FC<ImportMembersDialogProps> = ({
 
 interface ImportResultProps {
   result: ImportMembersResponse;
-  onSendPending?: () => void;
+  invitable: boolean;
   onImportAnother: () => void;
   onClose: () => void;
 }
@@ -234,7 +234,7 @@ function importSummaryOf({ registered, failed }: ImportMembersResponse): string 
   return failed > 0 ? `${outcome} ${failed} ${pluralize(failed, "fila tiene", "filas tienen")} errores.` : outcome;
 }
 
-const ImportResult: FC<ImportResultProps> = ({ result, onSendPending, onImportAnother, onClose }) => {
+const ImportResult: FC<ImportResultProps> = ({ result, invitable, onImportAnother, onClose }) => {
   const failedRows = result.rows.filter((row) => row.outcome === "FAILED");
   const { registered, failed } = result;
 
@@ -267,22 +267,17 @@ const ImportResult: FC<ImportResultProps> = ({ result, onSendPending, onImportAn
         {registered > 0 && (
           <Notice severity="info">
             Todavía no se ha enviado ninguna invitación.
-            {onSendPending
-              ? " Puedes enviarlas ahora a los miembros pendientes que tienen email de contacto."
+            {invitable
+              ? " Para invitarles, selecciónalos en la lista de miembros."
               : " Los miembros registrados aparecen como pendientes."}
           </Notice>
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2, flexWrap: "wrap", gap: 1 }}>
         <Button onClick={onImportAnother}>Importar otro archivo</Button>
-        <Button onClick={onClose} variant={registered > 0 && onSendPending ? "text" : "contained"}>
+        <Button onClick={onClose} variant="contained">
           Cerrar
         </Button>
-        {registered > 0 && onSendPending && (
-          <Button variant="contained" onClick={onSendPending}>
-            Enviar invitaciones pendientes
-          </Button>
-        )}
       </DialogActions>
     </>
   );

@@ -9,6 +9,11 @@ export interface RecordField {
 
 export interface RecordListItem {
   id: string;
+  /** Leading selection checkbox, named "Seleccionar <name>", for a page that
+   *  acts on several records at once. When any item has one, every item gets
+   *  the slot, so the cards stay aligned whether or not theirs can be
+   *  selected. The actions on the selection live outside the list. */
+  selection?: ReactNode;
   /** Leading avatar or icon. Optional — omit for records without one. */
   avatar?: ReactNode;
   title: string;
@@ -24,6 +29,10 @@ export interface RecordListItem {
   lines?: ReactNode[];
   fields: RecordField[];
 }
+
+/** Footprint of a Checkbox (24px icon + 9px padding either side), so a card
+ *  without one keeps its avatar where the others have theirs. */
+const SELECTION_SLOT_WIDTH = 42;
 
 export interface RecordListProps {
   items: RecordListItem[];
@@ -62,6 +71,8 @@ export const RecordList: FC<RecordListProps> = ({ items, label, isLoading, empty
     );
   }
 
+  const hasSelectionSlot = items.some((item) => item.selection !== undefined);
+
   return (
     <Box
       component="ul"
@@ -83,6 +94,21 @@ export const RecordList: FC<RecordListProps> = ({ items, label, isLoading, empty
           }}
         >
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+            {hasSelectionSlot && (
+              <Box
+                sx={{
+                  width: SELECTION_SLOT_WIDTH,
+                  flexShrink: 0,
+                  display: "flex",
+                  justifyContent: "center",
+                  // The checkbox box is 42px tall and the avatar 36px: lift it by
+                  // half the difference so both centre on the same line.
+                  mt: -0.375,
+                }}
+              >
+                {item.selection}
+              </Box>
+            )}
             {item.avatar}
             {/* minWidth:0 lets a long name shrink instead of forcing the row wide */}
             <Box sx={{ flex: 1, minWidth: 0 }}>

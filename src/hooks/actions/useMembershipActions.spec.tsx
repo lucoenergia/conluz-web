@@ -333,18 +333,18 @@ describe("useMembershipActions", () => {
       phoneNumber: null,
     };
 
-    it("withholds registration and bulk send unless the community grants each", () => {
+    it("withholds registration and the send to selected members unless the community grants each", () => {
       const { result } = renderHookWithProviders(() =>
         useMembershipActions(communityWith({ canManageMemberships: true })),
       );
 
       expect(result.current.actions.register).toBeUndefined();
-      expect(result.current.actions.sendPendingInvitations).toBeUndefined();
+      expect(result.current.actions.sendInvitations).toBeUndefined();
       expect(result.current.outcomes.register).toEqual({ state: "denied" });
-      expect(result.current.outcomes.sendPendingInvitations).toEqual({ state: "denied" });
+      expect(result.current.outcomes.sendInvitations).toEqual({ state: "denied" });
     });
 
-    it("hands back registration and bulk send each from its own capability", () => {
+    it("hands back registration and the send to selected members each from its own capability", () => {
       const register = renderHookWithProviders(() =>
         useMembershipActions(communityWith({ canRegisterMembers: true })),
       ).result.current;
@@ -353,8 +353,8 @@ describe("useMembershipActions", () => {
       ).result.current;
 
       expect(register.actions.register).toBeDefined();
-      expect(register.actions.sendPendingInvitations).toBeUndefined();
-      expect(bulk.actions.sendPendingInvitations).toBeDefined();
+      expect(register.actions.sendInvitations).toBeUndefined();
+      expect(bulk.actions.sendInvitations).toBeDefined();
       expect(bulk.actions.register).toBeUndefined();
     });
 
@@ -362,7 +362,7 @@ describe("useMembershipActions", () => {
       const { result } = renderHookWithProviders(() => useMembershipActions(undefined));
 
       expect(result.current.outcomes.register).toEqual({ state: "pending" });
-      expect(result.current.outcomes.sendPendingInvitations).toEqual({ state: "pending" });
+      expect(result.current.outcomes.sendInvitations).toEqual({ state: "pending" });
     });
 
     it("hands back the three invitation writes from canInvite alone", () => {
@@ -417,18 +417,26 @@ describe("useMembershipActions", () => {
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllCommunitiesQueryKey() });
     });
 
-    it("sends the pending invitations of the community, answers the counts and refreshes the roster", async () => {
-      mutateAsync.mockResolvedValue({ sent: 50, remaining: 70 });
+    it("sends to the selected members in the order given, answers each one's result and refreshes the roster", async () => {
+      const response = {
+        sent: 1,
+        remaining: 0,
+        results: [
+          { user: { id: "u-2" }, outcome: "SENT", code: null, params: {} },
+          { user: { id: "u-1" }, outcome: "RESENT", code: null, params: {} },
+        ],
+      };
+      mutateAsync.mockResolvedValue(response);
       const { result, queryClient } = renderHookWithProviders(() =>
         useMembershipActions(communityWith({ canInviteMembers: true })),
       );
       const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-      await expect(result.current.actions.sendPendingInvitations?.run()).resolves.toEqual({
+      await expect(result.current.actions.sendInvitations?.run(["u-2", "u-1"])).resolves.toEqual({
         ok: true,
-        value: { sent: 50, remaining: 70 },
+        value: response,
       });
-      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID });
+      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, data: { userIds: ["u-2", "u-1"] } });
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
     });
 

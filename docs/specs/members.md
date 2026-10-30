@@ -5,19 +5,19 @@
 | **Prefix** | `UI-MBR` |
 | **Status** | Active |
 | **Routes** | `/members` |
-| **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the bulk send need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-013) |
-| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, ACC-003, ACC-008, ACC-010 |
+| **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the send to selected members need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-037) |
+| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, MEM-037, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | The members page search and filters, screens A–D, mobile and desktop: https://claude.ai/artifact/RwsRYG1EqfMcnBmbysot93 (#331) |
-| **Last reviewed against code** | #331 |
+| **Last reviewed against code** | #328 |
 
 ## Purpose
 
 Let an admin of a community keep its roster: register members, one by one or from a CSV file, and
-invite them to join, see which members are still pending and where their invitation stands, correct
+invite them to join, one by one or several selected at once, see which members are still pending and where their invitation stands, correct
 the record the community keeps on each member, and suspend or reactivate a member's access to the
 community, and keep it from losing its last active admin; and find a member, or the members in a
 given status or role, by searching and filtering the roster. This document covers only the rules
-#272, #275, #276, #284, #309 and #331 introduced; the rest of the members page is not covered yet.
+#272, #275, #276, #284, #309, #328 and #331 introduced; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -211,7 +211,8 @@ given status or role, by searching and filtering the roster. This document cover
 
 ### UI-MBR-013 — The bulk send asks once and goes on while invitations remain
 
-- **Status:** Active
+- **Status:** Removed (#328: superseded by UI-MBR-037 to UI-MBR-041, which send to the members the
+  admin selects instead of to a set the screen cannot show)
 - **Rule:**
   - "Enviar invitaciones pendientes" MUST be offered when the active community's
     `capabilities.canInviteMembers` is true. A capability absent from the payload MUST count as
@@ -313,15 +314,15 @@ given status or role, by searching and filtering the roster. This document cover
 
 - **Status:** Active
 - **Rule:** Before the import, the dialog MUST say that importing registers members and sends
-  nothing, and that invitations are sent afterwards one by one or with "Enviar invitaciones
-  pendientes"; that spaces, dots and hyphens in the DNI/NIE/NIF are ignored; that both Excel exports,
+  nothing, and that invitations are sent afterwards one by one or by selecting several in the list
+  (UI-MBR-037); that spaces, dots and hyphens in the DNI/NIE/NIF are ignored; that both Excel exports,
   "CSV UTF-8" and "CSV (delimitado por punto y coma)", are accepted and "Texto Unicode" is not; that a
   file holds at most 1000 members; and that importing the same file again is safe.
 - **Rationale:** Each answers a question an admin preparing a file would otherwise answer by trial:
   whether the members are emailed, whether the DNI must be retyped, which "Guardar como" choice to
   make, how large a file may be, and whether retrying after a partial failure duplicates anyone.
 - **Implements:** MEM-030
-- **Source:** #284 (maintainer decision on the encoding note)
+- **Source:** #284 (maintainer decision on the encoding note); #328 (how invitations are sent)
 
 ### UI-MBR-021 — The import sends the file and cannot be interrupted
 
@@ -369,20 +370,20 @@ given status or role, by searching and filtering the roster. This document cover
 - **Implements:** MEM-030
 - **Source:** #284
 
-### UI-MBR-024 — After an import, the roster is refreshed and the bulk send is offered
+### UI-MBR-024 — After an import, the roster is refreshed and the result says how to invite
 
 - **Status:** Active
 - **Rule:**
   - After an import that succeeds, the roster MUST be refreshed.
   - When at least one member was registered, the result MUST say that no invitation has been sent,
-    and MUST offer "Enviar invitaciones pendientes" when the active community's
-    `capabilities.canInviteMembers` is true. It MUST open the bulk send (UI-MBR-013), which asks for
-    confirmation before sending; the import dialog itself MUST NOT send anything.
+    and, when the active community's `capabilities.canInviteMembers` is true, that the new members
+    can be invited by selecting them in the list (UI-MBR-037); otherwise, that they show as pending.
+  - The import dialog MUST NOT send anything, nor open any send.
 - **Rationale:** Registered members are pending until invited, and inviting is the step that
-  follows an import. Handing over to the bulk send keeps one place where invitations are sent in
-  bulk, with its confirmation and its batches.
-- **Implements:** MEM-012, MEM-030
-- **Source:** #284
+  follows an import. The send to selected members names everyone before sending, which a hand-over
+  from the import could not do for members it has just registered and the admin has not seen.
+- **Implements:** MEM-030
+- **Source:** #284, #328
 
 ### UI-MBR-025 — The roster shows the community's record, never the account
 
@@ -533,6 +534,115 @@ given status or role, by searching and filtering the roster. This document cover
 - **Implements:** n/a
 - **Source:** #331
 
+### UI-MBR-037 — Pending members with a contact email can be selected to invite or resend
+
+- **Status:** Active
+- **Rule:**
+  - While the active community's `capabilities.canInviteMembers` is true, a row MUST offer a
+    selection checkbox, in the table and in the narrow list, when its membership is pending
+    (`acceptedAt` null), enabled, has a contact email and its own `capabilities.canInvite` is true.
+    A capability absent from the payload MUST count as false.
+  - Every other row MUST offer none: accepted, suspended, without `canInvite`, or without a contact
+    email.
+  - A row that would be selectable but for its contact email MUST say "Sin email de contacto".
+  - Each checkbox MUST be named "Seleccionar" and the member's full name.
+  - The selection MUST hold user ids, and MUST drop any member who is no longer selectable once the
+    roster is refreshed.
+- **Rationale:** The selection keeps out the members the backend would refuse for a reason the
+  roster already shows, so the admin is not offered a send that cannot succeed. A pending member
+  without an email is visible data, so the reason is shown rather than leaving an unexplained gap.
+  The backend still decides each person (UI-MBR-040).
+- **Implements:** MEM-037
+- **Source:** #328
+
+### UI-MBR-038 — "Seleccionar todo" selects up to 50 of the rows the filters let through
+
+- **Status:** Active
+- **Rule:**
+  - "Seleccionar todo" MUST select the selectable rows the search and filters let through, on every
+    page, in the order the list shows them, and at most 50 in all.
+  - When it stops at 50, the page MUST say that the first 50 were selected and that 50 is the most
+    one send takes.
+  - While 50 are selected, selecting another row MUST NOT be possible, and the page MUST say the
+    limit is reached.
+  - Once nothing more can be added, "Seleccionar todo" MUST read as checked, and MUST then deselect
+    the rows the filters let through.
+- **Rationale:** The backend takes at most 50 ids per send and refuses a larger selection as a
+  whole. Stopping at the limit, and saying so, keeps every send acceptable. Acting across pages lets
+  an admin select, for example, every pending member at once.
+- **Implements:** MEM-037
+- **Source:** #328
+
+### UI-MBR-039 — "Enviar invitación" names everyone who will receive an email before sending
+
+- **Status:** Active
+- **Rule:**
+  - "Enviar invitación (N)" MUST be offered when the active community's
+    `capabilities.canInviteMembers` is true and at least one member is selected, N being how many.
+  - It MUST open a confirmation that names the selected members in two groups: first invitations
+    (`invitedAt` null) and resends (`invitedAt` set). Each group MUST list its first five names and
+    count the rest.
+  - When a resend is among them, it MUST say that the previous link stops working.
+  - The dialog MUST NOT send anything until confirmed. The ids MUST be sent in the order shown: the
+    first invitations, then the resends.
+  - While the send is in flight, the dialog MUST NOT be dismissible and "Cancelar" MUST be disabled
+    (#310).
+- **Rationale:** The admin sees beforehand who will receive an email, and for whom a new link
+  replaces the old one; the bulk send this replaces (UI-MBR-013) could show neither.
+- **Implements:** MEM-037
+- **Source:** #328
+
+### UI-MBR-040 — The result says, per person, who was not sent the invitation and why
+
+- **Status:** Active
+- **Rule:**
+  - Once the send succeeds, the dialog MUST show how many first invitations were sent and how many
+    were resent, counted from the per-person results.
+  - It MUST show one line per refused person, naming them, with the reason built from the result's
+    `code` and `params`:
+    - `MEMBERSHIP_NOT_FOUND`: no longer a member of the community;
+    - `MEMBERSHIP_ALREADY_EXISTS`: has already accepted;
+    - `MEMBERSHIP_DISABLED`: is suspended;
+    - `MEMBERSHIP_WITHOUT_CONTACT_EMAIL`: has no contact email, pointing to "Editar ficha";
+    - `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED`: when another resend becomes possible, from
+      `params.retryAfterSeconds`.
+  - The roster MUST be refreshed, and the selection cleared.
+  - The result MUST be announced through a live region mounted with the dialog.
+- **Rationale:** The backend decides each person on its own, and a refusal of one never stops the
+  others, so only a per-person answer says what happened. Reusing the single send's and resend's
+  wording keeps one sentence per reason.
+- **Implements:** MEM-037, MEM-010
+- **Source:** #328
+
+### UI-MBR-041 — A send refused as a whole says why and keeps the selection
+
+- **Status:** Active
+- **Rule:**
+  - `MEMBERSHIP_INVITATION_SELECTION_EMPTY`, `MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE` (with the
+    limit from `params.maxUserIds`), `MEMBERSHIP_INVITATION_SELECTION_DUPLICATED` and
+    `MEMBERSHIP_INVITATION_UNAVAILABLE` (503) MUST each show their own message in the dialog.
+  - The dialog MUST NOT report anything as sent. The confirmation and the selection MUST stay, so
+    the send can be tried again.
+- **Rationale:** The backend refuses these before sending anything, so the admin's choice still
+  stands and is worth keeping.
+- **Implements:** MEM-037
+- **Source:** #328
+
+### UI-MBR-042 — When nobody can be selected, the page says why
+
+- **Status:** Active
+- **Rule:** While the active community's `capabilities.canInviteMembers` is true and the roster is
+  not empty, a roster where no row can be selected (UI-MBR-037) MUST offer no checkbox, no
+  "Seleccionar todo" and no "Enviar invitación", and MUST say why:
+  - every member has accepted;
+  - otherwise, when a pending member lacks only a contact email, that no pending member has one,
+    pointing to "Editar ficha";
+  - otherwise, that no pending member can be sent the invitation.
+- **Rationale:** An absent action alone does not tell the admin whether there is nobody to invite
+  or something to fix first.
+- **Implements:** MEM-037
+- **Source:** #328
+
 ## States
 
 The members list:
@@ -540,7 +650,9 @@ The members list:
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Loading | The search and filters, and "Cargando…" in place of the count | Search, filters |
-| Results | The count, one page of rows or cards, each with its derived status (UI-MBR-030) | Search, filters, "Limpiar filtros" while one is active, each row's menu |
+| Results | The count, one page of rows or cards, each with its derived status (UI-MBR-030), and, with `canInviteMembers`, a checkbox on each selectable row (UI-MBR-037) | Search, filters, "Limpiar filtros" while one is active, each row's menu, the row checkboxes and "Seleccionar todo" |
+| Selected | The same, with how many are selected, and the limit when it is reached (UI-MBR-038) | The same, and "Enviar invitación (N)" |
+| Nobody to invite | The same, with why nobody can be selected and no checkbox (UI-MBR-042) | Search, filters, each row's menu |
 | Paged | The same, with the range and the page controls (UI-MBR-033) | The same, and the page controls |
 | No results | The count at 0 and the no-results state (UI-MBR-035), neutral | "Limpiar filtros" in the no-results state only |
 | Empty roster | The count at 0 and that the community has no members | Search, filters |
@@ -566,14 +678,14 @@ The registration dialog:
 | Registered, without a contact email | What happened, and a pointer to "Editar ficha" | Cerrar |
 | Invitation refused | The registered state, with the refusal | Invitar ahora, Cerrar |
 
-The bulk send dialog:
+The send to selected members dialog:
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
-| Confirming | Who receives an invitation, and that they go in batches | Enviar invitaciones, Cancelar |
-| Some remain | How many were sent, and how many remain | Enviar las siguientes, Cerrar |
-| None remain | How many were sent, and that none remain | Cerrar |
-| Refused | The refusal | The same as before the request |
+| Confirming | Who receives an email, as first invitations and resends, and, with a resend, that the previous link stops working | Enviar invitación (N), Cancelar |
+| Sending | The same, the send button showing progress | None; the dialog cannot be closed |
+| Result | How many were sent and resent, and each refused person with the reason | Cerrar |
+| Refused | The confirmation, with the refusal | Enviar invitación (N), Cancelar |
 
 The import dialog:
 
@@ -582,7 +694,7 @@ The import dialog:
 | Guide | The notes, the column guide, the template download and the file picker | Descargar plantilla, Seleccionar archivo CSV, Importar (once a file is chosen), Cancelar |
 | Importing | That the import is running | None; the dialog cannot be closed |
 | Refused | The guide, with the refusal and that nothing was registered, and the file still chosen | As in Guide |
-| Result | The counts, each failed row with its line and reason, and, with registered members, that nothing was sent | Importar otro archivo, Cerrar, and Enviar invitaciones pendientes with registered members and `canInviteMembers` |
+| Result | The counts, each failed row with its line and reason, and, with registered members, that nothing was sent and how to invite them | Importar otro archivo, Cerrar |
 
 ## Accepted exceptions
 

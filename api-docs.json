@@ -1150,6 +1150,10 @@
               "MEMBERSHIP_NOT_INVITED",
               "MEMBERSHIP_DISABLED",
               "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED",
+              "MEMBERSHIP_INVITATION_SELECTION_EMPTY",
+              "MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE",
+              "MEMBERSHIP_INVITATION_SELECTION_DUPLICATED",
+              "MEMBERSHIP_NOT_FOUND",
               "MEMBERSHIP_INVITATION_TOKEN_INVALID",
               "MEMBERSHIP_INVITATION_LOGIN_REQUIRED",
               "MEMBERSHIP_OWNS_SUPPLIES",
@@ -1637,6 +1641,85 @@
           "canManageInvestment",
           "canReadPayback",
           "canUpdateRole"
+        ],
+        "type" : "object"
+      },
+      "MembershipDailyConsumptionBucketResponse" : {
+        "properties" : {
+          "assignedProductionKWh" : {
+            "description" : "Energy assigned to every supply of the membership over the day: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures.",
+            "example" : 4.25,
+            "type" : "number"
+          },
+          "date" : {
+            "description" : "The day, a local calendar date in the community's time zone.",
+            "example" : "2024/01/15",
+            "type" : "string"
+          },
+          "gridImportKWh" : {
+            "description" : "Energy taken from the grid by every supply of the membership over the day. Does not include self-consumed energy. In kWh, rounded to 3 decimals. 0 when no supply stored a record.",
+            "example" : 7.75,
+            "type" : "number"
+          },
+          "savingsEur" : {
+            "description" : "Estimated amount the day's self-consumed energy saved across every supply that stored a record, in euros, rounded to cents. Null when no supply stored a record that day: a day with nothing stored is not a day that saved nothing. Unlike the per-supply series, which never reports null here. A supply that did store a record with no self-consumption is a measured zero and makes the amount 0.00, not null. Null exactly when tariffSource is null.",
+            "example" : 0.38,
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "selfConsumptionKWh" : {
+            "description" : "Energy produced by the community and consumed by every supply of the membership over the day, as reported by the distributor. In kWh, rounded to 3 decimals.",
+            "example" : 2.5,
+            "type" : "number"
+          },
+          "suppliesWithData" : {
+            "description" : "Number of those supplies that stored at least one hourly record that day, within the period. Measured day by day, whereas the aggregated energy metrics measure their suppliesWithData over the whole period, so the two figures are not comparable across endpoints. Below supplyCount, the day is incomplete.",
+            "example" : 2,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "supplyCount" : {
+            "description" : "Number of supplies the member currently owns in the community. The model records no date a supply joined, so the same count applies to every day, including days before a supply started reporting.",
+            "example" : 3,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "surplusKWh" : {
+            "description" : "Energy assigned to every supply of the membership and fed back to the grid over the day. In kWh, rounded to 3 decimals.",
+            "example" : 1.75,
+            "type" : "number"
+          },
+          "tariffSource" : {
+            "description" : "Whether the prices behind savingsEur are the supplies' contracted tariffs or an estimate. A single estimated stretch of any supply makes the whole amount an estimate. Null exactly when savingsEur is null: with no amount there is nothing whose prices to describe.",
+            "enum" : [
+              "REAL_TARIFF",
+              "ESTIMATE"
+            ],
+            "example" : "ESTIMATE",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "time" : {
+            "description" : "Local time the day starts at in the community's time zone: always midnight, also for a first day the period starts in the middle of.",
+            "example" : "00:00",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "assignedProductionKWh",
+          "date",
+          "gridImportKWh",
+          "savingsEur",
+          "selfConsumptionKWh",
+          "suppliesWithData",
+          "supplyCount",
+          "surplusKWh",
+          "tariffSource",
+          "time"
         ],
         "type" : "object"
       },
@@ -2936,6 +3019,10 @@
               "MEMBERSHIP_NOT_INVITED",
               "MEMBERSHIP_DISABLED",
               "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED",
+              "MEMBERSHIP_INVITATION_SELECTION_EMPTY",
+              "MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE",
+              "MEMBERSHIP_INVITATION_SELECTION_DUPLICATED",
+              "MEMBERSHIP_NOT_FOUND",
               "MEMBERSHIP_INVITATION_TOKEN_INVALID",
               "MEMBERSHIP_INVITATION_LOGIN_REQUIRED",
               "MEMBERSHIP_OWNS_SUPPLIES",
@@ -3037,14 +3124,184 @@
         ],
         "type" : "object"
       },
+      "SendInvitationResultResponse" : {
+        "description" : "What a bulk send did with one selected member.",
+        "properties" : {
+          "code" : {
+            "description" : "Why the member was refused, null unless `outcome` is `REFUSED`: `MEMBERSHIP_NOT_FOUND` (the user is not a member of the community), `MEMBERSHIP_ALREADY_EXISTS` (the membership is accepted), `MEMBERSHIP_DISABLED` (the pending membership is disabled), `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` (the member record has no contact email) or `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED` (sent as many times as allowed in the last 24 hours).",
+            "enum" : [
+              "USER_LAST_PLATFORM_ADMIN",
+              "USER_NOT_PLATFORM_ADMIN",
+              "USER_ALREADY_EXISTS",
+              "USER_PASSWORD_POLICY_VIOLATION",
+              "USER_CURRENT_PASSWORD_INCORRECT",
+              "USER_PASSWORD_UNCHANGED",
+              "USER_PASSWORD_CHANGE_REQUIRED",
+              "USER_PASSWORD_RESET_TOKEN_INVALID",
+              "USER_OWNS_SUPPLIES",
+              "USER_PERSONAL_ID_INVALID",
+              "USER_ALREADY_PLATFORM_ADMIN",
+              "PLATFORM_ADMIN_ALREADY_INVITED",
+              "PLATFORM_ADMIN_NOT_INVITED",
+              "PLATFORM_ADMIN_INVITATION_RESEND_LIMIT_REACHED",
+              "PLATFORM_ADMIN_INVITATION_CODE_INVALID",
+              "PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED",
+              "PLATFORM_ADMIN_INVITATION_UNAVAILABLE",
+              "PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED",
+              "AUTH_TOO_MANY_FAILED_ATTEMPTS",
+              "MEMBERSHIP_ALREADY_EXISTS",
+              "MEMBERSHIP_ALREADY_INVITED",
+              "MEMBERSHIP_WITHOUT_CONTACT_EMAIL",
+              "MEMBERSHIP_INVITATION_UNAVAILABLE",
+              "MEMBERSHIP_NOT_INVITED",
+              "MEMBERSHIP_DISABLED",
+              "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED",
+              "MEMBERSHIP_INVITATION_SELECTION_EMPTY",
+              "MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE",
+              "MEMBERSHIP_INVITATION_SELECTION_DUPLICATED",
+              "MEMBERSHIP_NOT_FOUND",
+              "MEMBERSHIP_INVITATION_TOKEN_INVALID",
+              "MEMBERSHIP_INVITATION_LOGIN_REQUIRED",
+              "MEMBERSHIP_OWNS_SUPPLIES",
+              "MEMBERSHIP_LAST_ACTIVE_ADMIN",
+              "MEMBERSHIP_IMPORT_INVALID_ENCODING",
+              "MEMBERSHIP_IMPORT_AMBIGUOUS_SEPARATOR",
+              "MEMBERSHIP_IMPORT_MALFORMED_FILE",
+              "MEMBERSHIP_IMPORT_UNKNOWN_HEADERS",
+              "MEMBERSHIP_IMPORT_DUPLICATED_HEADERS",
+              "MEMBERSHIP_IMPORT_MISSING_HEADERS",
+              "MEMBERSHIP_IMPORT_TOO_MANY_ROWS",
+              "MEMBERSHIP_IMPORT_ROW_INVALID",
+              "MEMBERSHIP_IMPORT_ROW_MALFORMED",
+              "COMMUNITY_ALREADY_EXISTS",
+              "SUPPLY_HAS_PLANTS",
+              "SUPPLY_HAS_PARTITION_COEFFICIENTS",
+              "SHARING_AGREEMENT_NOT_DRAFT",
+              "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
+              "SHARING_AGREEMENT_NOT_REVERTIBLE",
+              "SHARING_AGREEMENT_HAS_APPLIED_COEFFICIENTS",
+              "SHARING_AGREEMENT_DUPLICATE_CUPS",
+              "SHARING_AGREEMENT_DUPLICATE_SUPPLY",
+              "SHARING_AGREEMENT_NOT_PUBLISHED",
+              "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
+              "SHARING_AGREEMENT_DATE_IN_FUTURE",
+              "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+              "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
+              "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
+              "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
+              "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
+              "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
+              "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
+              "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
+              "DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH",
+              "DISTRIBUTOR_FILE_VALUE_DECIMAL_SEPARATOR_INVALID",
+              "DISTRIBUTOR_FILE_VALUE_SCALE_INVALID",
+              "DISTRIBUTOR_FILE_CUPS_LENGTH_INVALID",
+              "DISTRIBUTOR_FILE_CUPS_DUPLICATE",
+              "DISTRIBUTOR_FILE_COEFFICIENT_SUM_INVALID",
+              "DISTRIBUTOR_FILE_CUPS_UNKNOWN",
+              "DISTRIBUTOR_FILE_LINE_MALFORMED",
+              "SHARING_AGREEMENT_COEFFICIENT_SUM_INVALID",
+              "PLANT_MISSING_REGULATORY_CODE",
+              "PLANT_HAS_SHARING_AGREEMENTS",
+              "PLANT_HAS_PARTITION_COEFFICIENTS",
+              "HUAWEI_CONFIG_PASSWORD_REQUIRED",
+              "SUPPLY_CUPS_NOT_NORMALIZABLE",
+              "SUPPLY_CUPS_COLLISION",
+              "DATADIS_CONFIG_PASSWORD_REQUIRED",
+              "HUAWEI_CONFIG_NOT_FOUND",
+              "HUAWEI_CONFIG_INCOMPLETE",
+              "DATADIS_CONFIG_NOT_FOUND",
+              "DATADIS_CONFIG_INCOMPLETE",
+              "ENERGY_METRICS_PERIOD_CONFLICTING",
+              "ENERGY_METRICS_PERIOD_INCOMPLETE",
+              "ENERGY_METRICS_PERIOD_START_AFTER_END",
+              "ENERGY_METRICS_PERIOD_START_IN_FUTURE",
+              "ENERGY_METRICS_PERIOD_TOO_LONG",
+              "PRICE_SYNC_PERIOD_START_AFTER_END",
+              "PRICE_SYNC_PERIOD_TOO_LONG",
+              "PRICE_SYNC_PERIOD_END_BEYOND_TOMORROW",
+              "CONTACT_CHANNELS_MISSING",
+              "CONTACT_CHANNELS_TOO_MANY",
+              "CONTACT_CHANNEL_TYPE_INVALID",
+              "CONTACT_CHANNEL_LABEL_BLANK",
+              "CONTACT_CHANNEL_LABEL_TOO_LONG",
+              "CONTACT_CHANNEL_VALUE_BLANK",
+              "CONTACT_CHANNEL_VALUE_TOO_LONG",
+              "CONTACT_CHANNEL_SCHEDULE_TOO_LONG",
+              "CONTACT_CHANNEL_NOTES_TOO_LONG",
+              "CONTACT_CHANNEL_EMAIL_INVALID",
+              "CONTACT_CHANNEL_PHONE_CHARACTERS_INVALID",
+              "CONTACT_CHANNEL_PHONE_TOO_FEW_DIGITS",
+              "REQUEST_PAYLOAD_TOO_LARGE"
+            ],
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "outcome" : {
+            "description" : "`SENT` if the member was sent their first invitation, as `sendInvitation` does; `RESENT` if their invitation was resent, as `resendInvitation` does; `REFUSED` otherwise, for the reason in `code`.",
+            "enum" : [
+              "SENT",
+              "RESENT",
+              "REFUSED"
+            ],
+            "example" : "SENT",
+            "type" : "string"
+          },
+          "params" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "The refusal's parameters, as the single send or resend answers them: `userId` and `communityId`, and for `MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED` also `retryAfterSeconds`, the whole seconds until another resend is allowed. Empty unless `outcome` is `REFUSED`.",
+            "type" : "object"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/UserReferenceResponse",
+            "description" : "The selected user, as requested."
+          }
+        },
+        "required" : [
+          "code",
+          "outcome",
+          "params",
+          "user"
+        ],
+        "type" : "object"
+      },
+      "SendInvitationsBody" : {
+        "properties" : {
+          "userIds" : {
+            "description" : "The user ids of the members to send or resend the invitation to: 1 to 50, each at most once.",
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [
+          "userIds"
+        ],
+        "type" : "object"
+      },
       "SendInvitationsResponse" : {
-        "description" : "The outcome of sending first invitations in bulk.",
+        "description" : "The outcome of sending invitations in bulk.",
         "properties" : {
           "remaining" : {
             "description" : "How many members of the community are still awaiting their first invitation: pending, enabled, with a contact email and never invited. Call again while it is above zero.",
             "example" : 70,
             "format" : "int64",
             "type" : "integer"
+          },
+          "results" : {
+            "description" : "With a selection of `userIds`, one result per selected user, in the order requested. Empty without one.",
+            "items" : {
+              "$ref" : "#/components/schemas/SendInvitationResultResponse"
+            },
+            "type" : "array"
           },
           "sent" : {
             "description" : "How many members were sent their first invitation by this request.",
@@ -3055,6 +3312,7 @@
         },
         "required" : [
           "remaining",
+          "results",
           "sent"
         ],
         "type" : "object"
@@ -7965,7 +8223,7 @@
     },
     "/api/v1/communities/{communityId}/memberships/invite" : {
       "post" : {
-        "description" : "Invites, as `sendInvitation` does, the members of the community who are pending, enabled, have a contact email and have never been invited, up to 50 per request, in ascending user id. Every other member is skipped, not refused: an accepted or disabled membership, one without a contact email, and one already invited, including by a concurrent request. Each member is invited on their own, so a failure keeps the invitations already sent. Call again while `remaining` is above zero. Only an active community admin of the community may send; a platform admin may not.\n\nIf the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anyone is invited.\n",
+        "description" : "Invites, as `sendInvitation` does, the members of the community who are pending, enabled, have a contact email and have never been invited, up to 50 per request, in ascending user id. Every other member is skipped, not refused: an accepted or disabled membership, one without a contact email, and one already invited, including by a concurrent request. Each member is invited on their own, so a failure keeps the invitations already sent. Call again while `remaining` is above zero. Only an active community admin of the community may send; a platform admin may not.\n\nWith a body, it acts on exactly the selected members instead, 1 to 50 distinct user ids, in ascending user id: a member never invited is sent their first invitation, as `sendInvitation` does, and a member already invited has it resent, as `resendInvitation` does, within its limit. Any other member is refused with the code and parameters those endpoints answer, and a user who is not a member of the community with `MEMBERSHIP_NOT_FOUND`, whether or not the account exists. Each member is processed on their own, so a refusal never stops the others. `results` holds one entry per selected user, in the order requested; `sent` counts the first invitations among them, and `remaining` keeps its meaning. An empty selection, more than 50 user ids, or a user id named twice is refused with 400 and `MEMBERSHIP_INVITATION_SELECTION_EMPTY`, `MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE` (with the limit in `params.maxUserIds`) or `MEMBERSHIP_INVITATION_SELECTION_DUPLICATED`, and nobody is invited.\n\nIf the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anyone is invited.\n",
         "operationId" : "sendInvitations",
         "parameters" : [
           {
@@ -7978,6 +8236,15 @@
             }
           }
         ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SendInvitationsBody"
+              }
+            }
+          }
+        },
         "responses" : {
           "200" : {
             "content" : {
@@ -7993,14 +8260,26 @@
             "content" : {
               "application/json" : {
                 "example" : {
-                  "message" : "The request contains invalid data.",
+                  "errors" : [
+                    {
+                      "code" : "MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE",
+                      "message" : "Select at most 50 members to invite at once. Nobody has been invited.",
+                      "params" : {
+                        "maxUserIds" : "50"
+                      }
+                    }
+                  ],
+                  "message" : "Select at most 50 members to invite at once. Nobody has been invited.",
                   "status" : 400,
-                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "timestamp" : "2026-09-16T10:10:25.534035352+02:00",
                   "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
                 }
               }
             },
-            "description" : "The request contains invalid data."
+            "description" : "The request is invalid: the selection is empty, holds more than 50 user ids, names one twice, or is not well formed. Nobody was invited."
           },
           "401" : {
             "content" : {
@@ -8107,7 +8386,7 @@
             "bearerToken" : [ ]
           }
         ],
-        "summary" : "Sends the first invitation to members registered without one, up to 50 per request.",
+        "summary" : "Sends the first invitation to members registered without one, or to the selected members, up to 50 per request.",
         "tags" : [
           "Memberships"
         ]
@@ -8646,6 +8925,165 @@
           }
         ],
         "summary" : "Updates the role of a membership.",
+        "tags" : [
+          "Memberships"
+        ]
+      }
+    },
+    "/api/v1/communities/{communityId}/memberships/{userId}/consumption/daily" : {
+      "get" : {
+        "description" : "For each day of the requested period, the energy and the estimated savings of\n**every** supply the member owns in this community that stored a record that day,\nadded up. Each energy figure sums the unrounded per-supply daily totals and is\nrounded once, to 3 decimals, on the result; the savings are likewise summed\nunrounded and rounded once, to cents. A figure can therefore differ from adding\nup the rounded figures of the per-supply daily series. Supplies in the member's\nother communities are not counted.\n\n**Source and freshness:**\nEach supply's day is summed from its hourly records when it is read, exactly as\nthe per-supply daily series sums it, so a day reflects the hourly records stored\nat the time of the request.\n\n**Every day is emitted:**\nA bucket is returned for every local calendar day of the community's time zone\nthat overlaps the period, in chronological order, whether or not any supply\nstored a record that day, so the series has a regular time axis. A day runs\nfrom its local midnight to the next one, so the days on which daylight saving\ntime starts and ends cover 23 and 25 hours. The first and the last day are cut\nto the period: a period starting at 12:00 counts only that day's hours from\n12:00, in energy and in savings, and a period clipped to the current hour ends\nwith today's hours up to then. `date` is the local day and `time` always\n`00:00`, also on a cut first day.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Completeness:**\n`supplyCount` is the number of supplies the member **currently** owns in the\ncommunity, and `suppliesWithData` how many of them stored at least one hourly\nrecord that day, within the period. A day with `suppliesWithData` below\n`supplyCount` is incomplete. The model records no date a supply joined its\ncommunity, so the count is the same for every day, and the days before a supply\nstarted reporting show as incomplete. The aggregated energy metrics measure\ntheir `suppliesWithData` over the whole period, so the two are not comparable.\n\n**Gaps and measured zeros:**\nThe energy figures add up only the supplies that stored a record that day; a\nday on which no supply stored one reports zero energy. `savingsEur` is an\n**estimate** of what the day's self-consumed energy was worth, pricing the\n**energy term before taxes** only, exactly as the per-supply series does. It is\n`null` when no supply stored a record that day (`suppliesWithData` is 0), and\nonly then: a day with nothing stored is a different statement from a day that\nsaved nothing, which reports `0.00` -- as does a day whose stored records carry\nno self-consumption, a measured zero. This differs from the per-supply series,\nwhich reports `0.00` for every bucket it emits. `tariffSource` says where the\nprices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply\nmakes the whole day an estimate; it is `null` exactly when `savingsEur` is.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404: every day in range, with zero totals, null savings and a\n`supplyCount` of 0.\n",
+        "operationId" : "getMembershipDailyConsumption",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "communityId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "path",
+            "name" : "userId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of the period, inclusive.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of the period, exclusive.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/MembershipDailyConsumptionBucketResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Daily consumption retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the daily consumption of every supply of a membership, added up per day.",
         "tags" : [
           "Memberships"
         ]
@@ -18522,6 +18960,7 @@
             }
           },
           {
+            "description" : "Start of the period, inclusive.",
             "in" : "query",
             "name" : "startDate",
             "required" : true,
@@ -18531,6 +18970,7 @@
             }
           },
           {
+            "description" : "End of the period, exclusive.",
             "in" : "query",
             "name" : "endDate",
             "required" : true,
@@ -18818,6 +19258,7 @@
             }
           },
           {
+            "description" : "Start of the period, inclusive.",
             "in" : "query",
             "name" : "startDate",
             "required" : true,
@@ -18827,6 +19268,7 @@
             }
           },
           {
+            "description" : "End of the period, exclusive.",
             "in" : "query",
             "name" : "endDate",
             "required" : true,

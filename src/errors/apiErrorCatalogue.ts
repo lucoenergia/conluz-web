@@ -268,6 +268,15 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     return resendLimitMessage(Number.isFinite(seconds) && seconds > 0 ? seconds : null);
   },
 
+  // Sending or resending to a selection of members (lucoenergia/conluz#527,
+  // #328). The selection codes refuse the whole request, before anything is
+  // sent; MEMBERSHIP_NOT_FOUND comes only as one person's result.
+  MEMBERSHIP_INVITATION_SELECTION_EMPTY: "No has seleccionado a nadie. Selecciona al menos un miembro.",
+  MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE: (params) =>
+    `Puedes enviar hasta ${params?.maxUserIds ?? "50"} invitaciones a la vez. Quita a alguien de la selección.`,
+  MEMBERSHIP_INVITATION_SELECTION_DUPLICATED: "La selección repite a algún miembro. Vuelve a seleccionarlos.",
+  MEMBERSHIP_NOT_FOUND: "Ya no forma parte de esta comunidad.",
+
   // Removing a member who owns supplies in the community (lucoenergia/conluz#412).
   MEMBERSHIP_OWNS_SUPPLIES:
     "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
