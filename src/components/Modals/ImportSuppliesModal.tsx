@@ -1,6 +1,7 @@
 import type { FC } from "react";
-import type { CreateSuppliesWithFileBody, CreationInBulkResponse } from "../../api/models";
+import type { ImportSuppliesBody, ImportSuppliesResponse } from "../../api/models";
 import type { Action } from "../../hooks/actions";
+import type { CommunityWriteResult } from "../../hooks/actions/useCommunityActions";
 import { CsvImportModal } from "./CsvImportModal";
 
 interface ImportSuppliesModalProps {
@@ -15,7 +16,7 @@ interface ImportSuppliesModalProps {
    * action already carries the community it writes into, so this component
    * never chooses one.
    */
-  importSupplies: Action<[CreateSuppliesWithFileBody], CreationInBulkResponse | undefined>;
+  importSupplies: Action<[ImportSuppliesBody], CommunityWriteResult<ImportSuppliesResponse>>;
 }
 
 export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({ importSupplies, ...props }) => {
@@ -28,19 +29,16 @@ export const ImportSuppliesModal: FC<ImportSuppliesModalProps> = ({ importSuppli
       createdNoun={{ one: "punto de suministro", other: "puntos de suministro" }}
       importFile={(file, _communityId, { onSuccess, onError }) => {
         void (async () => {
-          const result = await importSupplies.run({ file });
-          // The action swallows the throw and reports the failure as no value,
-          // so there is one path here rather than a catch as well.
-          if (!result) {
+          const outcome = await importSupplies.run({ file });
+          if (!("ok" in outcome)) {
             onError();
             return;
           }
           onSuccess({
-            createdCount: result.created?.length || 0,
-            errors: (result.errors || []).map((err) => ({
-              item: err.item != null ? String(err.item) : null,
-              message: err.errorMessage,
-            })),
+            createdCount: outcome.value.created,
+            errors: outcome.value.rows
+              .filter((row) => row.outcome === "FAILED")
+              .map((row) => ({ item: `Línea ${row.line}`, message: row.message ?? "" })),
           });
         })();
       }}

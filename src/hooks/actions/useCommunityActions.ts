@@ -10,8 +10,8 @@ import {
 } from "../../api/communities/communities";
 import {
   getGetAllSuppliesQueryKey,
-  useCreateSuppliesWithFile,
   useCreateSupply,
+  useImportSupplies,
 } from "../../api/supplies/supplies";
 import { getGetAllPlantsQueryKey, useCreatePlant } from "../../api/plants/plants";
 import {
@@ -36,11 +36,11 @@ import type {
   CommunityContactResponse,
   CommunityResponse,
   ConfigureDatadisBody,
-  CreationInBulkResponse,
   ConfigureShellyBody,
   CreatePlantBody,
-  CreateSuppliesWithFileBody,
   CreateSupplyBody,
+  ImportSuppliesBody,
+  ImportSuppliesResponse,
   InviteCommunityAdminBody,
   PlantResponse,
   RestErrorDetailCode,
@@ -116,7 +116,7 @@ export interface CommunityRowActions {
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
     createSupply: MaybeAction<[CreateSupplyBody], SupplyResponse | undefined>;
-    importSupplies: MaybeAction<[CreateSuppliesWithFileBody], CreationInBulkResponse | undefined>;
+    importSupplies: MaybeAction<[ImportSuppliesBody], CommunityWriteResult<ImportSuppliesResponse>>;
     configureDatadis: MaybeAction<[ConfigureDatadisBody], ConfigureDatadisResult>;
     configureShelly: MaybeAction<[ConfigureShellyBody], boolean>;
     enableDatadis: MaybeAction<[], DatadisToggleResult>;
@@ -159,7 +159,7 @@ export function useCommunityActions(): CommunityActions {
   const disableMutation = useDisableCommunity();
   const createPlantMutation = useCreatePlant();
   const createSupplyMutation = useCreateSupply();
-  const importSuppliesMutation = useCreateSuppliesWithFile();
+  const importSuppliesMutation = useImportSupplies();
   const configureDatadisMutation = useConfigureDatadis();
   const configureShellyMutation = useConfigureShelly();
   const enableDatadisMutation = useEnableDatadisConfig();
@@ -292,13 +292,19 @@ export function useCommunityActions(): CommunityActions {
               runCreating(() => createSupplyMutation.mutateAsync({ data }), invalidateSupplies),
             createSupplyMutation.isPending,
           ),
+          // A file refused as a whole is the refusal itself: the dialog names
+          // its SUPPLY_IMPORT_* code. A 200 may still hold failed rows.
           importSupplies: grant(
             manage,
-            (data: CreateSuppliesWithFileBody) =>
-              runCreating(
-                () => importSuppliesMutation.mutateAsync({ data, params: { communityId } }),
-                invalidateSupplies,
-              ),
+            async (data: ImportSuppliesBody): Promise<CommunityWriteResult<ImportSuppliesResponse>> => {
+              try {
+                const value = await importSuppliesMutation.mutateAsync({ communityId, data });
+                invalidateSupplies();
+                return { ok: true, value };
+              } catch (error) {
+                return { error };
+              }
+            },
             importSuppliesMutation.isPending,
           ),
           configureDatadis: grant(

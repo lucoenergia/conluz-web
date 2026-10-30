@@ -34,7 +34,7 @@ describe("ImportSuppliesModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRun.mockResolvedValue({ created: [], errors: [] });
+    mockRun.mockResolvedValue({ ok: true, value: { created: 0, failed: 0, rows: [] } });
     vi.mocked(useGetAllCommunities).mockReturnValue(
       query.success<typeof getAllCommunities>([buildCommunity({ id: "community-a", name: "Comunidad Solar Norte" })]),
     );
@@ -144,7 +144,7 @@ describe("ImportSuppliesModal", () => {
     });
     it("#310 AC4 cannot be closed while the import is in flight, and can once its result is shown", async () => {
       const user = userEvent.setup();
-      let settle!: (value: { created: string[]; errors: [] }) => void;
+      let settle!: (value: { ok: true; value: { created: number; failed: number; rows: [] } }) => void;
       mockRun.mockReturnValue(new Promise((resolve) => (settle = resolve)));
       setup();
       const name = "Importar puntos de suministro a Comunidad Solar Norte";
@@ -161,7 +161,7 @@ describe("ImportSuppliesModal", () => {
       expect(mockOnClose).not.toHaveBeenCalled();
       expect(screen.getByText("Importando puntos de suministro...")).toBeInTheDocument();
 
-      settle({ created: ["sp1"], errors: [] });
+      settle({ ok: true, value: { created: 1, failed: 0, rows: [] } });
 
       expect(await screen.findByText("Importación completada")).toBeInTheDocument();
       fireEvent.keyDown(screen.getByRole("dialog", { name }), { key: "Escape" });
@@ -172,7 +172,7 @@ describe("ImportSuppliesModal", () => {
   describe("Results view", () => {
     it("shows success message with created count", async () => {
       const user = userEvent.setup();
-      mockRun.mockResolvedValue({ created: ["sp1", "sp2"], errors: [] });
+      mockRun.mockResolvedValue({ ok: true, value: { created: 2, failed: 0, rows: [] } });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -192,7 +192,7 @@ describe("ImportSuppliesModal", () => {
 
     it("shows singular message when one supply created", async () => {
       const user = userEvent.setup();
-      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
+      mockRun.mockResolvedValue({ ok: true, value: { created: 1, failed: 0, rows: [] } });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -210,8 +210,15 @@ describe("ImportSuppliesModal", () => {
     it("shows errors when import has errors", async () => {
       const user = userEvent.setup();
       mockRun.mockResolvedValue({
-        created: ["sp1"],
-        errors: [{ item: "CUPS001", errorMessage: "Código duplicado" }],
+        ok: true,
+        value: {
+          created: 1,
+          failed: 1,
+          rows: [
+            { line: 2, outcome: "CREATED", code: null, message: null, errors: [] },
+            { line: 3, outcome: "FAILED", code: "SUPPLY_ALREADY_EXISTS", message: "Código duplicado", errors: [] },
+          ],
+        },
       });
       setup();
 
@@ -222,7 +229,7 @@ describe("ImportSuppliesModal", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Errores (1):")).toBeInTheDocument();
-        expect(screen.getByText(/CUPS001/)).toBeInTheDocument();
+        expect(screen.getByText(/Línea 3/)).toBeInTheDocument();
         expect(screen.getByText(/Código duplicado/)).toBeInTheDocument();
       });
     });
@@ -235,8 +242,8 @@ describe("ImportSuppliesModal", () => {
       const input = screen.getByTestId("csv-file-input");
       await user.upload(input, file);
 
-      // The action reports a failure as no value rather than by throwing.
-      mockRun.mockResolvedValue(undefined);
+      // The action reports a failure as the refusal rather than by throwing.
+      mockRun.mockResolvedValue({ error: new Error("TEST-REFUSAL") });
 
       await user.click(screen.getByRole("button", { name: /Importar/i }));
 
@@ -251,7 +258,7 @@ describe("ImportSuppliesModal", () => {
 
     it("calls onImportComplete after successful import", async () => {
       const user = userEvent.setup();
-      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
+      mockRun.mockResolvedValue({ ok: true, value: { created: 1, failed: 0, rows: [] } });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -266,7 +273,7 @@ describe("ImportSuppliesModal", () => {
 
     it("navigates back to upload view when clicking Importar otro archivo", async () => {
       const user = userEvent.setup();
-      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
+      mockRun.mockResolvedValue({ ok: true, value: { created: 1, failed: 0, rows: [] } });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
@@ -294,7 +301,7 @@ describe("ImportSuppliesModal", () => {
 
     it("calls onClose when Cerrar is clicked in results view", async () => {
       const user = userEvent.setup();
-      mockRun.mockResolvedValue({ created: ["sp1"], errors: [] });
+      mockRun.mockResolvedValue({ ok: true, value: { created: 1, failed: 0, rows: [] } });
       setup();
 
       const file = new File(["a,b,c"], "test.csv", { type: "text/csv" });
