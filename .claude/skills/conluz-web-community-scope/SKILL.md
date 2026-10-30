@@ -103,9 +103,11 @@ community-switch bug, so classify an endpoint **before** using it:
    - **Gate on presence:** no active community → do not fire the query (`enabled` guard);
      controls that submit community-scoped data disable when none is selected. Never call
      a path-scoped hook with an empty/undefined `communityId`.
-2. **Community-scoped by QUERY parameter** — `/supplies/import`. The
-   dangerous one: `communityId` is *optional* in the schema, so omitting it compiles,
-   type-checks, and silently lets the backend choose the target community. Always pass it.
+2. **Community-scoped by QUERY parameter** — none today. The last one, `/supplies/import`,
+   moved under `/communities/{communityId}` (lucoenergia/conluz#532). The dangerous kind:
+   `communityId` is *optional* in the schema, so omitting it compiles, type-checks, and
+   silently lets the backend choose the target community. If one comes back, always pass it;
+   `src/contracts/endpointScope.spec.ts` fails until it is classified.
 3. **Entity-scoped** — `/plants/{plantId}/…`, `/supplies/{supplyId}/…`, and every
    sharing-agreement endpoint. The community is **implicit**. Two consequences:
    - The backend authorises on *membership*, not on the active community, so these answer
