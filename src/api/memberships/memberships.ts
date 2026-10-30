@@ -28,6 +28,7 @@ import type {
   AcceptInvitationAsCurrentUserBody,
   AcceptInvitationBody,
   CommunityAdminResponse,
+  GetMembershipDailyConsumptionParams,
   GetMembershipEnergyMetricsParams,
   GetMembershipMonthlyConsumptionParams,
   ImportMembersBody,
@@ -36,6 +37,7 @@ import type {
   InvitationTokenBody,
   InviteCommunityAdminBody,
   MemberResponse,
+  MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
@@ -43,6 +45,7 @@ import type {
   MembershipResponse,
   RegisterMemberBody,
   RestError,
+  SendInvitationsBody,
   SendInvitationsResponse,
   SetMembershipInvestmentBody,
   UpdateMemberRecordBody,
@@ -661,18 +664,23 @@ export const useImportMembers = <TError = ErrorType<RestError>,
     /**
  * Invites, as `sendInvitation` does, the members of the community who are pending, enabled, have a contact email and have never been invited, up to 50 per request, in ascending user id. Every other member is skipped, not refused: an accepted or disabled membership, one without a contact email, and one already invited, including by a concurrent request. Each member is invited on their own, so a failure keeps the invitations already sent. Call again while `remaining` is above zero. Only an active community admin of the community may send; a platform admin may not.
 
+With a body, it acts on exactly the selected members instead, 1 to 50 distinct user ids, in ascending user id: a member never invited is sent their first invitation, as `sendInvitation` does, and a member already invited has it resent, as `resendInvitation` does, within its limit. Any other member is refused with the code and parameters those endpoints answer, and a user who is not a member of the community with `MEMBERSHIP_NOT_FOUND`, whether or not the account exists. Each member is processed on their own, so a refusal never stops the others. `results` holds one entry per selected user, in the order requested; `sent` counts the first invitations among them, and `remaining` keeps its meaning. An empty selection, more than 50 user ids, or a user id named twice is refused with 400 and `MEMBERSHIP_INVITATION_SELECTION_EMPTY`, `MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE` (with the limit in `params.maxUserIds`) or `MEMBERSHIP_INVITATION_SELECTION_DUPLICATED`, and nobody is invited.
+
 If the server cannot send emails right now (no public web URL configured, or email sending disabled), it responds 503 with the `MEMBERSHIP_INVITATION_UNAVAILABLE` code before anyone is invited.
 
- * @summary Sends the first invitation to members registered without one, up to 50 per request.
+ * @summary Sends the first invitation to members registered without one, or to the selected members, up to 50 per request.
  */
 export const sendInvitations = (
     communityId: string,
+    sendInvitationsBody: SendInvitationsBody,
  signal?: AbortSignal
 ) => {
       
       
       return customInstance<SendInvitationsResponse>(
-      {url: `/api/v1/communities/${communityId}/memberships/invite`, method: 'POST', signal
+      {url: `/api/v1/communities/${communityId}/memberships/invite`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: sendInvitationsBody, signal
     },
       );
     }
@@ -680,8 +688,8 @@ export const sendInvitations = (
 
 
 export const getSendInvitationsMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string;data: SendInvitationsBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string;data: SendInvitationsBody}, TContext> => {
 
 const mutationKey = ['sendInvitations'];
 const {mutation: mutationOptions} = options ?
@@ -693,10 +701,10 @@ const {mutation: mutationOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitations>>, {communityId: string}> = (props) => {
-          const {communityId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendInvitations>>, {communityId: string;data: SendInvitationsBody}> = (props) => {
+          const {communityId,data} = props ?? {};
 
-          return  sendInvitations(communityId,)
+          return  sendInvitations(communityId,data,)
         }
 
         
@@ -705,18 +713,18 @@ const {mutation: mutationOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SendInvitationsMutationResult = NonNullable<Awaited<ReturnType<typeof sendInvitations>>>
-    
+    export type SendInvitationsMutationBody = SendInvitationsBody
     export type SendInvitationsMutationError = ErrorType<RestError>
 
     /**
- * @summary Sends the first invitation to members registered without one, up to 50 per request.
+ * @summary Sends the first invitation to members registered without one, or to the selected members, up to 50 per request.
  */
 export const useSendInvitations = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendInvitations>>, TError,{communityId: string;data: SendInvitationsBody}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof sendInvitations>>,
         TError,
-        {communityId: string},
+        {communityId: string;data: SendInvitationsBody},
         TContext
       > => {
 
@@ -939,6 +947,194 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * For each day of the requested period, the energy and the estimated savings of
+**every** supply the member owns in this community that stored a record that day,
+added up. Each energy figure sums the unrounded per-supply daily totals and is
+rounded once, to 3 decimals, on the result; the savings are likewise summed
+unrounded and rounded once, to cents. A figure can therefore differ from adding
+up the rounded figures of the per-supply daily series. Supplies in the member's
+other communities are not counted.
+
+**Source and freshness:**
+Each supply's day is summed from its hourly records when it is read, exactly as
+the per-supply daily series sums it, so a day reflects the hourly records stored
+at the time of the request.
+
+**Every day is emitted:**
+A bucket is returned for every local calendar day of the community's time zone
+that overlaps the period, in chronological order, whether or not any supply
+stored a record that day, so the series has a regular time axis. A day runs
+from its local midnight to the next one, so the days on which daylight saving
+time starts and ends cover 23 and 25 hours. The first and the last day are cut
+to the period: a period starting at 12:00 counts only that day's hours from
+12:00, in energy and in savings, and a period clipped to the current hour ends
+with today's hours up to then. `date` is the local day and `time` always
+`00:00`, also on a cut first day.
+
+**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+the next month, each bound with the offset in force at that instant -- for example
+`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+Europe/Madrid.
+
+**Period checks:** a requested period is checked in this order, and the first rule it
+breaks is answered 400 with that rule's code:
+
+1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+   On the operations where both are required, a missing one is a bad request before any
+   of these checks.
+3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+4. `startDate` is before the start of the current hour, read in the period's time zone
+   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+
+A period that passes them and ends after the start of the current hour is then clipped
+to end there, before any data is read: no hour that has not fully happened is read or
+counted as expected. Energy metrics report the clipped end in `period`, and a series
+emits no bucket starting at or after it.
+
+**Completeness:**
+`supplyCount` is the number of supplies the member **currently** owns in the
+community, and `suppliesWithData` how many of them stored at least one hourly
+record that day, within the period. A day with `suppliesWithData` below
+`supplyCount` is incomplete. The model records no date a supply joined its
+community, so the count is the same for every day, and the days before a supply
+started reporting show as incomplete. The aggregated energy metrics measure
+their `suppliesWithData` over the whole period, so the two are not comparable.
+
+**Gaps and measured zeros:**
+The energy figures add up only the supplies that stored a record that day; a
+day on which no supply stored one reports zero energy. `savingsEur` is an
+**estimate** of what the day's self-consumed energy was worth, pricing the
+**energy term before taxes** only, exactly as the per-supply series does. It is
+`null` when no supply stored a record that day (`suppliesWithData` is 0), and
+only then: a day with nothing stored is a different statement from a day that
+saved nothing, which reports `0.00` -- as does a day whose stored records carry
+no self-consumption, a measured zero. This differs from the per-supply series,
+which reports `0.00` for every bucket it emits. `tariffSource` says where the
+prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
+makes the whole day an estimate; it is `null` exactly when `savingsEur` is.
+
+Readable by the member themself and by community admins of this community.
+Platform admins are **not** granted access on that basis alone and are answered
+404, as is every other caller who may not read it, so the membership's existence
+is not disclosed. A membership without supplies is answered successfully, not
+with 404: every day in range, with zero totals, null savings and a
+`supplyCount` of 0.
+
+ * @summary Retrieves the daily consumption of every supply of a membership, added up per day.
+ */
+export const getMembershipDailyConsumption = (
+    communityId: string,
+    userId: string,
+    params: GetMembershipDailyConsumptionParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MembershipDailyConsumptionBucketResponse[]>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/consumption/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetMembershipDailyConsumptionQueryKey = (communityId?: string,
+    userId?: string,
+    params?: GetMembershipDailyConsumptionParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/memberships/${userId}/consumption/daily`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetMembershipDailyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError = ErrorType<RestError>>(communityId: string,
+    userId: string,
+    params: GetMembershipDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipDailyConsumptionQueryKey(communityId,userId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipDailyConsumption>>> = ({ signal }) => getMembershipDailyConsumption(communityId,userId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(communityId && userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMembershipDailyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipDailyConsumption>>>
+export type GetMembershipDailyConsumptionQueryError = ErrorType<RestError>
+
+
+export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipDailyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipDailyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipDailyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipDailyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipDailyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the daily consumption of every supply of a membership, added up per day.
+ */
+
+export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipDailyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipDailyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMembershipDailyConsumptionQueryOptions(communityId,userId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * For each month of the requested period, the energy and the estimated savings of
 **every** supply the member owns in this community, added up. Each energy figure
 sums the unrounded per-supply monthly totals and is rounded once, to 3 decimals,
@@ -1279,7 +1475,15 @@ this community into energy totals and two ratios, on a 0-1 scale. Supplies in th
 member's other communities are not counted.
 
 - `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.
-- `selfConsumptionRatio`: self-consumed energy divided by the assigned energy.
+- `selfConsumptionRatio`: self-consumed energy divided by the assigned energy, over
+  the supplies that are **not** a plant's own supply. A plant's own supply has its
+  surplus stored as 0, so it is left out of both figures; it still counts
+  in every total, in `selfSufficiencyRatio`, in coverage and in savings.
+  `selfConsumptionRatioBasis` reports the two figures the ratio was computed from
+  and how many plant supplies it left out, and `selfConsumptionRatioStatus` says
+  whether it is `AVAILABLE`, `NOTHING_ASSIGNED` (nothing was assigned to the
+  supplies it covers) or `NOT_APPLICABLE` (every supply is a plant's own supply,
+  which takes precedence).
 
 Every supply is computed over the same period, exactly as the per-supply
 energy-metrics endpoint computes it, and the results are added up: the energy

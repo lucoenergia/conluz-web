@@ -7,6 +7,6 @@
  */
 
 /**
- * Share of the energy assigned to the membership's supplies that they consumed rather than fed back to the grid, on a 0-1 scale, computed from the summed totals. Null when nothing was assigned to them in the period.
+ * Share of the energy assigned to the membership's supplies that they consumed rather than fed back to the grid, on a 0-1 scale, computed from the summed energy of the supplies that are no plant's own supply, which it leaves out. Null when nothing was assigned to those supplies in the period, and when every supply is a plant's own supply: selfConsumptionRatioStatus says which. selfConsumptionRatioBasis holds the energy it was computed from.
  */
 export type MembershipEnergyMetricsResponseSelfConsumptionRatio = number | null;
