@@ -56,6 +56,8 @@ export interface CsvImportDialogProps<R extends CsvImportResult> {
   rowReason: (row: R["rows"][number]) => string;
   /** Anything the result says after the failed rows. */
   resultNote?: (result: R) => ReactNode;
+  /** Called once the import answers with a result, whether or not some rows failed. */
+  onImported?: (result: R) => void;
   onClose: () => void;
 }
 
@@ -80,6 +82,7 @@ export function CsvImportDialog<R extends CsvImportResult>({
   failedRowsHeading,
   rowReason,
   resultNote,
+  onImported,
   onClose,
 }: CsvImportDialogProps<R>) {
   const community = communityLabel(communityName);
@@ -112,8 +115,12 @@ export function CsvImportDialog<R extends CsvImportResult>({
     setImporting(true);
     const outcome = await run.run({ file });
     setImporting(false);
-    if ("ok" in outcome) setResult(outcome.value);
-    else setRefusal(refusalOf(outcome.error));
+    if ("ok" in outcome) {
+      setResult(outcome.value);
+      onImported?.(outcome.value);
+    } else {
+      setRefusal(refusalOf(outcome.error));
+    }
   };
 
   const importAnother = () => {
