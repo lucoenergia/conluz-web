@@ -10,6 +10,8 @@ import type { MembershipEnergyMetricsEnergyResponse } from './membershipEnergyMe
 import type { SupplyEnergyMetricsPeriodResponse } from './supplyEnergyMetricsPeriodResponse';
 import type { MembershipEnergyMetricsSavingsResponse } from './membershipEnergyMetricsSavingsResponse';
 import type { MembershipEnergyMetricsResponseSelfConsumptionRatio } from './membershipEnergyMetricsResponseSelfConsumptionRatio';
+import type { SelfConsumptionRatioBasisResponse } from './selfConsumptionRatioBasisResponse';
+import type { MembershipEnergyMetricsResponseSelfConsumptionRatioStatus } from './membershipEnergyMetricsResponseSelfConsumptionRatioStatus';
 import type { MembershipEnergyMetricsResponseSelfSufficiencyRatio } from './membershipEnergyMetricsResponseSelfSufficiencyRatio';
 
 export interface MembershipEnergyMetricsResponse {
@@ -21,8 +23,12 @@ export interface MembershipEnergyMetricsResponse {
   period: SupplyEnergyMetricsPeriodResponse;
   /** What the self-consumed energy of the membership's supplies was worth over the period. */
   savings: MembershipEnergyMetricsSavingsResponse;
-  /** Share of the energy assigned to the membership's supplies that they consumed rather than fed back to the grid, on a 0-1 scale, computed from the summed totals. Null when nothing was assigned to them in the period. */
+  /** Share of the energy assigned to the membership's supplies that they consumed rather than fed back to the grid, on a 0-1 scale, computed from the summed energy of the supplies that are no plant's own supply, which it leaves out. Null when nothing was assigned to those supplies in the period, and when every supply is a plant's own supply: selfConsumptionRatioStatus says which. selfConsumptionRatioBasis holds the energy it was computed from. */
   selfConsumptionRatio: MembershipEnergyMetricsResponseSelfConsumptionRatio;
+  /** The energy selfConsumptionRatio was computed from, and the plant's own supplies it leaves out. Both figures are 0 when the status is NOT_APPLICABLE. */
+  selfConsumptionRatioBasis: SelfConsumptionRatioBasisResponse;
+  /** Whether selfConsumptionRatio could be computed. AVAILABLE: it is. NOTHING_ASSIGNED: no energy was assigned to the supplies it covers, which includes a period without data. NOT_APPLICABLE: every supply of the membership is a plant's own supply. */
+  selfConsumptionRatioStatus: MembershipEnergyMetricsResponseSelfConsumptionRatioStatus;
   /** Share of the energy the membership's supplies consumed that came from the community rather than from the grid, on a 0-1 scale, computed from the summed totals. Null when nothing was consumed in the period. */
   selfSufficiencyRatio: MembershipEnergyMetricsResponseSelfSufficiencyRatio;
 }

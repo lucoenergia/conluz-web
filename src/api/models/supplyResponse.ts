@@ -12,6 +12,7 @@ import type { SupplyResponseContract } from './supplyResponseContract';
 import type { SupplyResponseDistributor } from './supplyResponseDistributor';
 import type { SupplyResponseName } from './supplyResponseName';
 import type { SupplyResponseOwnerRecord } from './supplyResponseOwnerRecord';
+import type { SupplyResponsePlant } from './supplyResponsePlant';
 import type { SupplyResponseShelly } from './supplyResponseShelly';
 import type { SupplyResponseUser } from './supplyResponseUser';
 
@@ -38,6 +39,8 @@ export interface SupplyResponse {
   name: SupplyResponseName;
   /** The owner's member record in the supply's community. Null when the supply has no owner, or its owner has no membership in that community. */
   ownerRecord: SupplyResponseOwnerRecord;
+  /** The plant whose own supply this is: the supply its production is measured at. Null when the supply is no plant's own supply. */
+  plant: SupplyResponsePlant;
   /** Shelly device information of the supply */
   shelly: SupplyResponseShelly;
   /** Owner of the supply, by id only. Null when the supply has no owner. */

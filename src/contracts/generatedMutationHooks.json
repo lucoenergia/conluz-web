@@ -120,11 +120,11 @@
       "tag": "Supplies",
       "module": "src/api/supplies/supplies",
       "hooks": [
-        "useCreateSuppliesWithFile",
         "useCreateSupply",
         "useDeleteSupply",
         "useDisableSupply",
         "useEnableSupply",
+        "useImportSupplies",
         "useSyncDatadisSupplies",
         "useUpdateSupply"
       ]

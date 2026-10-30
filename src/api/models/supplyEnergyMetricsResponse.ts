@@ -10,6 +10,8 @@ import type { SupplyEnergyMetricsEnergyResponse } from './supplyEnergyMetricsEne
 import type { SupplyEnergyMetricsPeriodResponse } from './supplyEnergyMetricsPeriodResponse';
 import type { SupplyEnergyMetricsSavingsResponse } from './supplyEnergyMetricsSavingsResponse';
 import type { SupplyEnergyMetricsResponseSelfConsumptionRatio } from './supplyEnergyMetricsResponseSelfConsumptionRatio';
+import type { SelfConsumptionRatioBasisResponse } from './selfConsumptionRatioBasisResponse';
+import type { SupplyEnergyMetricsResponseSelfConsumptionRatioStatus } from './supplyEnergyMetricsResponseSelfConsumptionRatioStatus';
 import type { SupplyEnergyMetricsResponseSelfSufficiencyRatio } from './supplyEnergyMetricsResponseSelfSufficiencyRatio';
 import type { SupplyEnergyMetricsSupplyResponse } from './supplyEnergyMetricsSupplyResponse';
 
@@ -22,8 +24,12 @@ export interface SupplyEnergyMetricsResponse {
   period: SupplyEnergyMetricsPeriodResponse;
   /** What the self-consumed energy of the period was worth. */
   savings: SupplyEnergyMetricsSavingsResponse;
-  /** Share of the energy assigned to this supply that it consumed rather than fed back to the grid, on a 0-1 scale. Null when nothing was assigned to the supply in the period. */
+  /** Share of the energy assigned to this supply that it consumed rather than fed back to the grid, on a 0-1 scale. Null when nothing was assigned to the supply in the period, and for a plant's own supply, to which it does not apply: selfConsumptionRatioStatus says which. */
   selfConsumptionRatio: SupplyEnergyMetricsResponseSelfConsumptionRatio;
+  /** The energy selfConsumptionRatio was computed from, and the plant's own supplies it leaves out. Both figures are 0 when the status is NOT_APPLICABLE. */
+  selfConsumptionRatioBasis: SelfConsumptionRatioBasisResponse;
+  /** Whether selfConsumptionRatio could be computed. AVAILABLE: it is. NOTHING_ASSIGNED: no energy was assigned to the supplies it covers, which includes a period without data. NOT_APPLICABLE: the supply is a plant's own supply, whose surplus is stored as 0. */
+  selfConsumptionRatioStatus: SupplyEnergyMetricsResponseSelfConsumptionRatioStatus;
   /** Share of the energy consumed that came from the community rather than from the grid, on a 0-1 scale. Null when nothing was consumed in the period. */
   selfSufficiencyRatio: SupplyEnergyMetricsResponseSelfSufficiencyRatio;
   /** The supply the metrics were computed for. */
