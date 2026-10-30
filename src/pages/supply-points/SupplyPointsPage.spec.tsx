@@ -159,13 +159,13 @@ describe("SupplyPointsPage", () => {
     );
   });
 
-  it("#310 AC3 names each card's menu button after its own supply, by its CUPS when it has no name", () => {
+  it("#310 AC3 UI-SUP-010 names each card's menu button after its own supply, by its address when it has no name", () => {
     setup({
       community: { canManage: true },
       supplies: [
         supply({ canEdit: true }),
         { ...supply({ canEdit: true }), id: "supply-2", name: "Garaje", code: "ES0021000000000000BB" },
-        { ...supply({ canEdit: true }), id: "supply-3", name: null, code: "ES0021000000000000CC" },
+        { ...supply({ canEdit: true }), id: "supply-3", name: null, code: "ES0021000000000000CC", address: "Calle Mayor 3" },
       ],
     });
 
@@ -173,7 +173,7 @@ describe("SupplyPointsPage", () => {
     expect(names).toEqual([
       "Más acciones para Casa",
       "Más acciones para Garaje",
-      "Más acciones para ES0021000000000000CC",
+      "Más acciones para Calle Mayor 3",
     ]);
     expect(new Set(names).size).toBe(names.length);
   });

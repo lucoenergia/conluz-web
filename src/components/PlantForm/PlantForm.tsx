@@ -11,6 +11,7 @@ import "dayjs/locale/es";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
 import type { SupplyResponse } from "../../api/models";
 import { useActiveCommunity } from "../../context/community.context";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface PlantFormValues {
   providerCode: string;
@@ -182,7 +183,7 @@ export const PlantForm: FC<PlantFormProps> = ({
 
         <Autocomplete
           options={selectableSupplies}
-          getOptionLabel={(option) => `${option.name || option.code} (${option.code})`}
+          getOptionLabel={(option) => `${supplyDisplayLabel(option)} (${option.code})`}
           value={selectedSupply}
           onChange={(_, newValue) => setSelectedSupply(newValue)}
           loading={suppliesLoading}

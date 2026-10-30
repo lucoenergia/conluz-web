@@ -11,6 +11,7 @@ import { useSupplyActions } from "../../hooks/actions";
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { useErrorDispatch } from "../../context/error.context";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export const EditSupplyPage: FC = () => {
   const { supplyPointId = "" } = useParams();
@@ -105,7 +106,7 @@ export const EditSupplyPage: FC = () => {
               Editar punto de suministro
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {supplyPoint?.name || "Cargando..."}
+              {supplyPoint ? supplyDisplayLabel(supplyPoint) : "Cargando..."}
             </Typography>
           </Box>
         </Box>

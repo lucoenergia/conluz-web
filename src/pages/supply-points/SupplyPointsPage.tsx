@@ -26,6 +26,7 @@ import { isSupplyOutsideActiveCommunity } from "./supplyCommunityScope";
 import { useCommunityActions, useSupplyActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export const SupplyPointsPage: FC = () => {
   const theme = useTheme();
@@ -94,8 +95,9 @@ export const SupplyPointsPage: FC = () => {
 
     // Filter by search text
     if (searchText) {
+      // The label is what the card shows, so what is shown can be found.
       items = items.filter((item) =>
-        item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        supplyDisplayLabel(item).toLowerCase().includes(searchText.toLowerCase()) ||
         item.code?.toLowerCase().includes(searchText.toLowerCase()) ||
         item.address?.toLowerCase().includes(searchText.toLowerCase())
       );
@@ -261,7 +263,7 @@ export const SupplyPointsPage: FC = () => {
                 <SupplyCard
                   id={item.id}
                   code={item.code}
-                  name={item.name ?? undefined}
+                  name={supplyDisplayLabel(item)}
                   address={item.address}
                   enabled={item.enabled}
                   lastConnection="Hace 2 horas"

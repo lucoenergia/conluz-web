@@ -18,6 +18,7 @@ import { fontSizes, shadows } from "../../theme/tokens";
 import { useDebounce } from "../../utils/useDebounce";
 import { useCommunitySuppliesCatalogue } from "./useCommunitySuppliesCatalogue";
 import type { SupplyResponse } from "../../api/models";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface AddSupplyDialogProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export interface AddSupplyDialogProps {
 function matchesSearch(supply: SupplyResponse, search: string): boolean {
   const term = search.trim().toLowerCase();
   if (!term) return true;
-  return (supply.name?.toLowerCase().includes(term) ?? false) || (supply.code?.toLowerCase().includes(term) ?? false);
+  return supplyDisplayLabel(supply).toLowerCase().includes(term) || (supply.code?.toLowerCase().includes(term) ?? false);
 }
 
 export const AddSupplyDialog: FC<AddSupplyDialogProps> = ({
@@ -134,7 +135,7 @@ export const AddSupplyDialog: FC<AddSupplyDialogProps> = ({
                   >
                     <Checkbox edge="start" checked={selected} disabled={alreadyAdded} tabIndex={-1} disableRipple />
                     <ListItemText
-                      primary={supply.name || "-"}
+                      primary={supplyDisplayLabel(supply) || "-"}
                       secondary={alreadyAdded ? `${supply.code || "-"} · Ya añadido` : supply.code || "-"}
                     />
                   </ListItemButton>

@@ -8,6 +8,7 @@ import type { SupplyResponse } from "../../api/models";
 import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { colors, radii } from "../../theme/tokens";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface SupplyDetailHeaderProps {
   supplyPoint?: SupplyResponse;
@@ -83,7 +84,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
       icon={<ElectricMeterIcon />}
       // The CUPS identifies the supply when nobody has named it; a blank title
       // would leave the page with no subject at all.
-      title={supplyPoint?.name || supplyPoint?.code || "Punto de Suministro"}
+      title={supplyPoint ? supplyDisplayLabel(supplyPoint) : "Punto de Suministro"}
       subtitle={supplyPoint?.address || "Dirección no disponible"}
       subtitleIcon={<LocationOnIcon />}
       status={
