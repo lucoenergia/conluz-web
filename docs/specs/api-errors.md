@@ -8,7 +8,7 @@
 | **Roles** | Any caller |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #324 |
+| **Last reviewed against code** | #339 |
 
 ## Purpose
 
@@ -16,8 +16,9 @@ Tell the user why a request was refused in the app's own words and register, and
 it. The catalogue in `src/errors/apiErrorCatalogue.ts` holds the app's text for each error code it
 maps; the server's message is only the fallback for the codes it does not.
 
-Screens that word a code their own way, such as the member invitation actions or UI-MBR-023's
-import rows, are covered by the exception in UI-ERR-001.
+Screens that word a code their own way, such as the member invitation actions or the import rows
+of UI-MBR-023 and UI-SUP-008, are covered by the exception in UI-ERR-001. UI-SUP-009 applies
+UI-ERR-001 and UI-ERR-002 to the supply forms.
 
 This document covers only the rules #232 and #324 introduced.
 
