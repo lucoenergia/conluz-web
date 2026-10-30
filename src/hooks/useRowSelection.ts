@@ -13,6 +13,8 @@ export interface RowSelection {
   isSelected: (id: string) => boolean;
   /** Adds or removes one row. Adding does nothing once the limit is reached. */
   toggle: (id: string) => void;
+  /** Removes one row, if selected: after acting on that row alone, say. */
+  deselect: (id: string) => void;
   /**
    * The tri-state "select all" over the rows shown: from unchecked or
    * indeterminate it selects them, in order and up to the limit; once nothing
@@ -95,6 +97,12 @@ export function useRowSelection({ selectableIds, max = Infinity }: RowSelectionO
     [visibleSelectable, allSelected, selectedIds, selected, max],
   );
 
+  // Against the latest state, not this render's: it is called once a write
+  // settles, from a handler that closed over the render that started it.
+  const deselect = useCallback((id: string) => {
+    setStored((prev) => (prev.includes(id) ? prev.filter((other) => other !== id) : prev));
+  }, []);
+
   const clear = useCallback(() => {
     setStored([]);
     setTruncatedByLimit(false);
@@ -106,6 +114,7 @@ export function useRowSelection({ selectableIds, max = Infinity }: RowSelectionO
     selectedIds,
     isSelected,
     toggle,
+    deselect,
     toggleAll,
     allSelected,
     someSelected,

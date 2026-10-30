@@ -86,6 +86,17 @@ describe("useRowSelection", () => {
     expect(result.current.truncatedByLimit).toBe(false);
   });
 
+  it("deselects one row and leaves the rest", () => {
+    const { result } = renderSelection({ selectableIds: ids(3) });
+    act(() => result.current.toggle("id-1"));
+    act(() => result.current.toggle("id-2"));
+
+    act(() => result.current.deselect("id-1"));
+    act(() => result.current.deselect("id-3"));
+
+    expect(result.current.selectedIds).toEqual(["id-2"]);
+  });
+
   it("clears the whole selection", () => {
     const { result } = renderSelection({ selectableIds: ids(60), max: 50 });
     act(() => result.current.toggleAll(ids(60)));

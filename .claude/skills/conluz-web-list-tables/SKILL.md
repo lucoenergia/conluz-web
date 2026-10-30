@@ -60,5 +60,5 @@ A **selection checkbox in the leading slot is the one inline control a row may c
 - **The actions on the selection live outside the rows**, in a bar above the list that shows the count, mounted only while something is selected, and open the same confirmation dialog any state-changing action does.
 - Keep the selection with `useRowSelection` (`src/hooks/useRowSelection.ts`): it stores ids, not rows, drops any id that stops being selectable when the list is refreshed, and caps the selection at a limit, saying when "select all" stopped there. Which rows are selectable comes from each row's capability and state, never from a role.
 
-Real usage: the members page's selection of whom to invite or resend (`src/pages/members/MembersPage.tsx`, #328). The sharing agreement coefficient set predates these slots and keeps its own selection code.
+Real usage: the members page's selection of whom to invite or resend (`src/pages/members/MembersPage.tsx`, #328). The sharing agreement coefficient set (`src/components/SharingAgreementCoefficientSet`) keeps its selection with `useRowSelection` too, but renders its own table and cards: its editing mode puts inputs in the rows, which `ListTable` and `RecordList` do not allow.
 
