@@ -11,7 +11,7 @@
 - Included = components that render with only `ConluzProvider`. Excluded on purpose: anything calling
   `src/hooks/actions/`, a generated query hook, auth/logged-user context or `useLogout`
   (Header, ProfileMenu, PasswordChangeHeader, Auth routes, Errors/Success displays, PlantForm,
-  SupplyForm, Csv/Import modals, SharingAgreement{CoefficientSet,DetailHeader,FilePanel,FormDialog,
+  SupplyForm, Csv/Import modals and CsvImportDialog (its `run` is an action), SharingAgreement{CoefficientSet,DetailHeader,FilePanel,FormDialog,
   GenerateDialog,UploadDialog}, CoefficientHistoryDrawer, SupplyCoefficientHistorySection,
   ScopeContext, AddSupplyDialog).
 - `GraphFilterDates` (src/components/Graph) is deliberately not exported: it takes the internal
