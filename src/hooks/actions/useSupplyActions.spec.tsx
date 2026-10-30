@@ -121,7 +121,7 @@ describe("useSupplyActions", () => {
   it("calls the mutation with the supply id and body the screen supplies", async () => {
     const { result } = render(supplyWith({ canEdit: true }));
 
-    await expect(result.current.actions.edit?.run(UPDATE_SUPPLY_BODY)).resolves.toBe(true);
+    await expect(result.current.actions.edit?.run(UPDATE_SUPPLY_BODY)).resolves.toEqual({ ok: true });
     expect(mutateAsync).toHaveBeenCalledWith({ supplyId: SUPPLY_ID, data: UPDATE_SUPPLY_BODY });
   });
 
@@ -165,12 +165,13 @@ describe("useSupplyActions", () => {
     });
   });
 
-  it("reports failure and leaves the cache alone", async () => {
-    mutateAsync.mockRejectedValue(new Error("boom"));
+  it("hands back the refusal of an edit and leaves the cache alone", async () => {
+    const refusal = new Error("boom");
+    mutateAsync.mockRejectedValue(refusal);
     const { result, queryClient } = render(supplyWith({ canEdit: true }));
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-    await expect(result.current.actions.edit?.run(UPDATE_SUPPLY_BODY)).resolves.toBe(false);
+    await expect(result.current.actions.edit?.run(UPDATE_SUPPLY_BODY)).resolves.toEqual({ error: refusal });
     expect(invalidateQueries).not.toHaveBeenCalled();
   });
 

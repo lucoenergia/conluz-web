@@ -1,11 +1,12 @@
 import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { type FC } from "react";
+import { useState, type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import { useNavigate, useParams } from "react-router";
 import type { UpdateSupplyBody } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
-import { SupplyForm, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
+import { SupplyForm, type SupplyFormField, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
+import { supplyRefusalOf } from "./supplyForm";
 import { useSupplyActions } from "../../hooks/actions";
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { useErrorDispatch } from "../../context/error.context";
@@ -18,6 +19,7 @@ export const EditSupplyPage: FC = () => {
 
   const { supply: supplyPoint, isLoading, isNotFound, error } = useSupplyInActiveCommunity(supplyPointId);
   const { edit } = useSupplyActions().forSupply(supplyPoint).actions;
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<SupplyFormField, string>>>({});
 
   const handleSubmit = async ({ name, cups, address, addressRef }: SupplyFormValues) => {
     // The route guard has already established canEdit, so this only covers the
@@ -33,11 +35,21 @@ export const EditSupplyPage: FC = () => {
     };
     // The action invalidates the supply and the list itself, so there is no
     // refetch to fire here.
-    if (await edit.run(updatedSupply)) {
+    setFieldErrors({});
+    const outcome = await edit.run(updatedSupply);
+    if ("ok" in outcome) {
       navigate("/supply-points");
-    } else {
-      errorDispatch("Ha habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde");
+      return;
     }
+    // The owner cannot be changed here, and an edit sends none, so only the
+    // CUPS can be refused on an input.
+    const refusal = supplyRefusalOf(
+      outcome.error,
+      "Ha habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde",
+      { ownerField: false },
+    );
+    if ("field" in refusal) setFieldErrors({ [refusal.field]: refusal.message });
+    else errorDispatch(refusal.form);
   };
   return (
     <Box
@@ -114,6 +126,8 @@ export const EditSupplyPage: FC = () => {
                 addressRef: supplyPoint?.addressRef ?? undefined,
               }}
               handleSubmit={handleSubmit}
+              fieldErrors={fieldErrors}
+              onFieldEdit={(field) => setFieldErrors((errors) => ({ ...errors, [field]: undefined }))}
               showUserSelector={true}
               selectedUserId={supplyPoint?.user?.id}
               disableUserSelector={true}

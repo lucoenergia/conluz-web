@@ -115,7 +115,7 @@ export interface CommunityRowActions {
     enable: MaybeAction<[], boolean>;
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
-    createSupply: MaybeAction<[CreateSupplyBody], SupplyResponse | undefined>;
+    createSupply: MaybeAction<[CreateSupplyBody], CommunityWriteResult<SupplyResponse>>;
     importSupplies: MaybeAction<[ImportSuppliesBody], CommunityWriteResult<ImportSuppliesResponse>>;
     configureDatadis: MaybeAction<[ConfigureDatadisBody], ConfigureDatadisResult>;
     configureShelly: MaybeAction<[ConfigureShellyBody], boolean>;
@@ -286,10 +286,18 @@ export function useCommunityActions(): CommunityActions {
             createPlantMutation.isPending,
           ),
           // Approximation: canManage, for want of a canCreateSupplies.
+          // A refused CUPS or owner is shown on its input, so the refusal is handed back.
           createSupply: grant(
             manage,
-            (data: CreateSupplyBody) =>
-              runCreating(() => createSupplyMutation.mutateAsync({ data }), invalidateSupplies),
+            async (data: CreateSupplyBody): Promise<CommunityWriteResult<SupplyResponse>> => {
+              try {
+                const value = await createSupplyMutation.mutateAsync({ data });
+                invalidateSupplies();
+                return { ok: true, value };
+              } catch (error) {
+                return { error };
+              }
+            },
             createSupplyMutation.isPending,
           ),
           // A file refused as a whole is the refusal itself: the dialog names
