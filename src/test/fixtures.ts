@@ -426,6 +426,8 @@ export function buildSupply(overrides: Partial<SupplyResponse> = {}): SupplyResp
       contract: null,
       distributor: null,
       shelly: null,
+      // No plant's own supply: a spec describing one sets the plant.
+      plant: null,
       // The same community buildPlant and renderWithProviders use, so a supply
       // and the active community agree by default and a spec only has to
       // override this when the point of the test is that they do not.
@@ -557,6 +559,8 @@ export function buildMembershipEnergyMetrics(
       savings: { amountEur: null, tariffSource: "ESTIMATE", estimatedPrice: null },
       selfSufficiencyRatio: null,
       selfConsumptionRatio: null,
+      selfConsumptionRatioStatus: "NOTHING_ASSIGNED",
+      selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 0 },
     } satisfies MembershipEnergyMetricsResponse),
     ...overrides,
   };

@@ -76,4 +76,9 @@ export const CAPTURED_MEMBERSHIP_ENERGY_METRICS_LATEST_PUBLISHED_MONTH: Membersh
   },
   selfSufficiencyRatio: 0.6198137939131192,
   selfConsumptionRatio: 0.2935020018321226,
+  // Not in the capture: the backend added these two fields after it was taken.
+  // They are derived from the captured figures, for two supplies neither of
+  // which is a plant's own supply.
+  selfConsumptionRatioStatus: "AVAILABLE",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 253.709, assignedProductionKWh: 864.42, excludedPlantSupplyCount: 0 },
 };
