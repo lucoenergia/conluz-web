@@ -242,7 +242,7 @@ describe("a platform admin with no membership", () => {
     const platformSection = await screen.findByRole("list", { name: "Plataforma" });
     expect(platformSection).toHaveTextContent("Comunidades");
     expect(platformSection).toHaveTextContent("Administradores de plataforma");
-    for (const label of ["Usuarios", "Miembros", "Consumo", "Producción", "Integraciones"]) {
+    for (const label of ["Usuarios", "Miembros", "Mi consumo y ahorro", "Puntos de suministro", "Producción", "Integraciones"]) {
       expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
     }
   });

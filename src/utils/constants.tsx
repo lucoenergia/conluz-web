@@ -1,6 +1,7 @@
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import SolarPowerRoundedIcon from "@mui/icons-material/SolarPowerRounded";
 import ElectricBoltRoundedIcon from "@mui/icons-material/ElectricBoltRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import ExtensionRoundedIcon from "@mui/icons-material/ExtensionRounded";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
@@ -54,8 +55,9 @@ export const MENU_SECTIONS: MenuSection[] = [
       // once the caller may read the community they are working in -- which is
       // false when there is no active community, as before.
       { to: "/home", id: "home", icon: HomeRoundedIcon, label: "Inicio", requires: COMMUNITY_READ },
+      { to: "/historical-analysis", id: "historical-analysis", icon: InsightsRoundedIcon, label: "Mi consumo y ahorro", requires: COMMUNITY_READ },
       { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", requires: COMMUNITY_READ },
-      { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Consumo", requires: COMMUNITY_READ },
+      { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Puntos de suministro", requires: COMMUNITY_READ },
       { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", requires: { scope: "community", capability: "canManageMemberships" } },
       { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones", requires: { scope: "community", capability: "canManage" } },
     ],

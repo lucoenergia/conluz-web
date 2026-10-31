@@ -52,6 +52,7 @@ export type PageScope = "community" | "platform" | "personal" | "none" | "unknow
 
 const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "unknown"> }> = [
   { prefix: "/home", scope: "community" },
+  { prefix: "/historical-analysis", scope: "community" },
   { prefix: "/production", scope: "community" },
   { prefix: "/supply-points", scope: "community" },
   { prefix: "/members", scope: "community" },
