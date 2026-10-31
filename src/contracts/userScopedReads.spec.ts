@@ -54,6 +54,16 @@ const USER_SCOPED_LISTINGS: Record<string, { hook: string; filter: string; reaso
         "supply only when its community is one of the caller's memberships.",
     },
   ],
+  "src/pages/historical-analysis/useOwnSupplies.ts": [
+    {
+      hook: "useGetSuppliesByUserId",
+      filter: "isSupplyOutsideActiveCommunity",
+      reason:
+        "the supplies the historical analysis page offers: the caller's own, for a member and a " +
+        "community admin alike (#247). The listing spans every community the caller belongs to; " +
+        "only the active one's supplies belong in the selector.",
+    },
+  ],
   "src/pages/home/useHomeViews.ts": [
     {
       hook: "useGetSuppliesByUserId",

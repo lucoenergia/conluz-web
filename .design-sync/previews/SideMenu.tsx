@@ -8,8 +8,9 @@ const sections = [
     title: "Comunidad",
     items: [
       { to: "/", id: "home", icon: Icons.HomeRounded, label: "Inicio", requires: always },
+      { to: "/historical-analysis", id: "historical-analysis", icon: Icons.InsightsRounded, label: "Mi consumo y ahorro", requires: always },
       { to: "/production", id: "production", icon: Icons.SolarPowerRounded, label: "Producción", requires: always },
-      { to: "/supply-points", id: "supply-points", icon: Icons.ElectricBoltRounded, label: "Consumo", requires: always },
+      { to: "/supply-points", id: "supply-points", icon: Icons.ElectricBoltRounded, label: "Puntos de suministro", requires: always },
       { to: "/members", id: "members", icon: Icons.PeopleRounded, label: "Miembros", requires: always },
       { to: "/integrations", id: "integrations", icon: Icons.ExtensionRounded, label: "Integraciones", requires: always },
     ],

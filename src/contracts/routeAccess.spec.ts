@@ -84,6 +84,9 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/home": { require: { scope: "community", capability: "canRead" } },
   "/home/member": { require: { scope: "community", capability: "canRead" } },
   "/home/management": { require: { scope: "community", capability: "canRead" } },
+  // The caller's own supplies in the active community (#247). An admin sees
+  // only their own here too; the page scopes its listing to the community.
+  "/historical-analysis": { require: { scope: "community", capability: "canRead" } },
 
   "/communities": { require: { scope: "platform", capability: "canAdministerPlatform" } },
   "/communities/new": { require: { scope: "platform", capability: "canCreateCommunity" } },
