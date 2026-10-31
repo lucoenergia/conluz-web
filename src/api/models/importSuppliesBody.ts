@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface BulkErrorObject {
-  errorMessage?: string;
-  item?: unknown;
-}
+export type ImportSuppliesBody = {
+  /** CSV file of supplies, UTF-8 or Windows-1252, separated by `,` or `;`, with a header line naming the columns code, address, personalId, addressRef and name. */
+  file: Blob;
+};

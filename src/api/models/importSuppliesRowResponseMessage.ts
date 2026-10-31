@@ -5,9 +5,8 @@
  * Conluz is an API-driven application designed for the efficient management of an energy community,enabling the administration of community members and their corresponding supply points and the retrieval of consumption, production data.
  * OpenAPI spec version: 1.0.0
  */
-import type { BulkErrorObject } from './bulkErrorObject';
 
-export interface CreationInBulkResponse {
-  created?: unknown[];
-  errors?: BulkErrorObject[];
-}
+/**
+ * Why the row failed, as a readable message in the language of the request's Accept-Language, naming the columns and rules broken but never their values. Null for a created row.
+ */
+export type ImportSuppliesRowResponseMessage = string | null;

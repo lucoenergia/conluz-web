@@ -268,7 +268,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     hook: "useCommunityActions",
     approximates: "there is no canCreateSupplies, unlike the sibling canCreatePlants; canManage's doc names 'creating and importing its supplies'",
   },
-  useCreateSuppliesWithFile: { scope: "community", capability: "canManage", hook: "useCommunityActions", approximates: "as useCreateSupply" },
+  useImportSupplies: { scope: "community", capability: "canManage", hook: "useCommunityActions", approximates: "as useCreateSupply" },
   useUpdateSupply: { scope: "supply", capability: "canEdit", hook: "useSupplyActions" },
   useEnableSupply: {
     scope: "supply",

@@ -76,3 +76,25 @@ export const Empty = () => (
     onRowActionsClick={noop}
   />
 );
+
+const selectable = (m: Member) => m.enabled;
+const selected = new Set(["1"]);
+
+export const WithSelection = () => (
+  <ListTable
+    rows={members}
+    getRowKey={(m) => m.id}
+    columns={columns}
+    isLoading={false}
+    emptyMessage="No hay miembros en esta comunidad"
+    rowActionsLabel={(m) => `Más acciones para ${m.name}`}
+    onRowActionsClick={noop}
+    selection={{
+      header: <Mui.Checkbox indeterminate inputProps={{ "aria-label": "Seleccionar todo" }} />,
+      render: (m) =>
+        selectable(m) ? (
+          <Mui.Checkbox checked={selected.has(m.id)} inputProps={{ "aria-label": `Seleccionar ${m.name}` }} />
+        ) : null,
+    }}
+  />
+);

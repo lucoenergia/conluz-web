@@ -6,9 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CreateSuppliesWithFileParams = {
 /**
- * Target community UUID.
+ * The rule's parameters, keyed in camelCase for use as i18n interpolation variables and formatted without a locale. Empty if the rule has none, as both rules today.
  */
-communityId: string;
-};
+export type ImportSuppliesRowErrorResponseParams = {[key: string]: string};

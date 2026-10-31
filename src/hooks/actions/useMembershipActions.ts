@@ -113,12 +113,17 @@ export interface MembershipActions {
   actions: {
     register: MaybeAction<[RegisterMemberBody], MembershipWriteResult<MemberResponse>>;
     importMembers: MaybeAction<[ImportMembersBody], MembershipWriteResult<ImportMembersResponse>>;
-    sendPendingInvitations: MaybeAction<[], MembershipWriteResult<SendInvitationsResponse>>;
+    /**
+     * Sends a first invitation to each selected member never invited, and resends
+     * it to each one already invited (#328). The response holds one result per
+     * id, in the order given; a refusal of one person is a result, not an error.
+     */
+    sendInvitations: MaybeAction<[userIds: string[]], MembershipWriteResult<SendInvitationsResponse>>;
   };
   outcomes: {
     register: CapabilityOutcome;
     importMembers: CapabilityOutcome;
-    sendPendingInvitations: CapabilityOutcome;
+    sendInvitations: CapabilityOutcome;
   };
   /**
    * The per-row gate.
@@ -217,7 +222,7 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   };
 
   const registerOutcome = outcomeFromResource(community?.capabilities, "canRegisterMembers");
-  const sendPendingOutcome = outcomeFromResource(community?.capabilities, "canInviteMembers");
+  const sendInvitationsOutcome = outcomeFromResource(community?.capabilities, "canInviteMembers");
 
   return {
     actions: {
@@ -250,16 +255,17 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
           ),
         importMutation.isPending,
       ),
-      sendPendingInvitations: grant(
-        sendPendingOutcome,
-        () => write(() => sendInvitationsMutation.mutateAsync({ communityId }), invalidateRoster),
+      sendInvitations: grant(
+        sendInvitationsOutcome,
+        (userIds: string[]) =>
+          write(() => sendInvitationsMutation.mutateAsync({ communityId, data: { userIds } }), invalidateRoster),
         sendInvitationsMutation.isPending,
       ),
     },
     outcomes: {
       register: registerOutcome,
       importMembers: registerOutcome,
-      sendPendingInvitations: sendPendingOutcome,
+      sendInvitations: sendInvitationsOutcome,
     },
 
     forMembership: (membership) => {

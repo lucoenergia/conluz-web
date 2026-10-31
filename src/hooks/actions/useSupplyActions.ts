@@ -40,9 +40,16 @@ import { supplyDeletionRefusal } from "../../errors/supplyErrors";
  */
 export type SupplyDeleteResult = { ok: true } | { error: unknown };
 
+/**
+ * Editing a supply: success, or the refusal itself rather than `false`. A
+ * refused CUPS is shown on its input (lucoenergia/conluz#532), so the screen
+ * needs the code.
+ */
+export type SupplyEditResult = { ok: true } | { error: unknown };
+
 export interface SupplyRowActions {
   actions: {
-    edit: MaybeAction<[UpdateSupplyBody], boolean>;
+    edit: MaybeAction<[UpdateSupplyBody], SupplyEditResult>;
     enable: MaybeAction<[], boolean>;
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
@@ -134,8 +141,15 @@ export function useSupplyActions(): SupplyActions {
         actions: {
           edit: grant(
             edit,
-            (data: UpdateSupplyBody) =>
-              run(() => updateMutation.mutateAsync({ supplyId, data }), supplyId, ownerId),
+            async (data: UpdateSupplyBody): Promise<SupplyEditResult> => {
+              try {
+                await updateMutation.mutateAsync({ supplyId, data });
+                invalidateSupply(supplyId, ownerId);
+                return { ok: true };
+              } catch (error) {
+                return { error };
+              }
+            },
             updateMutation.isPending,
           ),
           enable: grant(

@@ -159,13 +159,13 @@ describe("SupplyPointsPage", () => {
     );
   });
 
-  it("#310 AC3 names each card's menu button after its own supply, by its CUPS when it has no name", () => {
+  it("#310 AC3 UI-SUP-010 names each card's menu button after its own supply, by its address when it has no name", () => {
     setup({
       community: { canManage: true },
       supplies: [
         supply({ canEdit: true }),
         { ...supply({ canEdit: true }), id: "supply-2", name: "Garaje", code: "ES0021000000000000BB" },
-        { ...supply({ canEdit: true }), id: "supply-3", name: null, code: "ES0021000000000000CC" },
+        { ...supply({ canEdit: true }), id: "supply-3", name: null, code: "ES0021000000000000CC", address: "Calle Mayor 3" },
       ],
     });
 
@@ -173,9 +173,26 @@ describe("SupplyPointsPage", () => {
     expect(names).toEqual([
       "Más acciones para Casa",
       "Más acciones para Garaje",
-      "Más acciones para ES0021000000000000CC",
+      "Más acciones para Calle Mayor 3",
     ]);
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("UI-SUP-010 shows a supply without a name by its address, and the search finds it by that address", async () => {
+    setup({
+      supplies: [
+        supply({}),
+        { ...supply({}), id: "supply-2", name: null, code: "ES0021000000000000BB", address: "Plaza del Pueblo 3" },
+      ],
+    });
+
+    expect(screen.getByRole("heading", { name: "Casa" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
+
+    await userEvent.type(screen.getByRole("searchbox", { name: "Buscar punto de suministro..." }), "plaza");
+
+    expect(screen.queryByRole("heading", { name: "Casa" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
   });
 
   // The capabilities have not arrived yet, which is not the same as "no".

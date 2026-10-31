@@ -14,9 +14,16 @@ export interface SupplyFormValues {
   personalId?: string;
 }
 
+/** The inputs an API refusal can be shown on. */
+export type SupplyFormField = "cups" | "personalId";
+
 interface SupplyFormProps {
   initialValues?: SupplyFormValues;
   handleSubmit: (values: SupplyFormValues) => void;
+  /** A refusal shown on the input it is about, until that input is edited. */
+  fieldErrors?: Partial<Record<SupplyFormField, string>>;
+  /** Called when an input with an error is edited, so the page can clear it. */
+  onFieldEdit?: (field: SupplyFormField) => void;
   showUserSelector?: boolean;
   selectedUserId?: string;
   disableUserSelector?: boolean;
@@ -32,6 +39,8 @@ export const SupplyForm: FC<SupplyFormProps> = ({
     personalId: initialPersonalId = "",
   } = {},
   handleSubmit,
+  fieldErrors = {},
+  onFieldEdit,
   showUserSelector = false,
   selectedUserId,
   disableUserSelector = false,
@@ -86,7 +95,10 @@ export const SupplyForm: FC<SupplyFormProps> = ({
             options={usersData?.items || []}
             getOptionLabel={(option) => `${option.fullName} (${option.personalId})`}
             value={selectedUser}
-            onChange={(_, newValue) => setSelectedUser(newValue)}
+            onChange={(_, newValue) => {
+              setSelectedUser(newValue);
+              onFieldEdit?.("personalId");
+            }}
             loading={usersLoading}
             disabled={disableUserSelector}
             renderInput={(params) => (
@@ -95,6 +107,8 @@ export const SupplyForm: FC<SupplyFormProps> = ({
                 label="Propietario"
                 required
                 variant="outlined"
+                error={!!fieldErrors.personalId}
+                helperText={fieldErrors.personalId}
                 slotProps={{
                   input: {
                     ...params.InputProps,
@@ -117,8 +131,13 @@ export const SupplyForm: FC<SupplyFormProps> = ({
           type="text"
           name="cups"
           value={cups}
-          onChange={(e) => setCups(e.target.value)}
+          onChange={(e) => {
+            setCups(e.target.value);
+            onFieldEdit?.("cups");
+          }}
           slotProps={{ htmlInput: { maxLength: 50 } }}
+          error={!!fieldErrors.cups}
+          helperText={fieldErrors.cups}
           required
           fullWidth
           variant="outlined"

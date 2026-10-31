@@ -78,6 +78,31 @@ function withHeaders(full: (headers: string) => string, generic: string): ApiErr
   };
 }
 
+// A CSV import refused as a whole. Function templates where the code carries
+// params, so an absent one degrades to a sentence without the list or the
+// limit rather than a literal placeholder.
+const IMPORT_INVALID_ENCODING =
+  "No se ha podido leer el archivo. Guárdalo desde Excel como «CSV UTF-8» o «CSV (delimitado por punto y coma)»; «Texto Unicode» no sirve.";
+const IMPORT_AMBIGUOUS_SEPARATOR =
+  "No se ha podido saber si las columnas se separan con «;» o con «,». Usa un solo separador, como en la plantilla.";
+const IMPORT_MALFORMED_FILE = "El archivo no es un CSV válido. Revisa que no haya comillas sin cerrar.";
+const IMPORT_UNKNOWN_HEADERS = withHeaders(
+  (headers) => `Estas columnas no se reconocen: ${headers}. Usa las cabeceras de la plantilla, con las mismas mayúsculas.`,
+  "Hay columnas que no se reconocen. Usa las cabeceras de la plantilla, con las mismas mayúsculas.",
+);
+const IMPORT_DUPLICATED_HEADERS = withHeaders(
+  (headers) => `Estas columnas aparecen más de una vez: ${headers}. Deja cada una solo una vez.`,
+  "Hay columnas que aparecen más de una vez. Deja cada una solo una vez.",
+);
+const IMPORT_MISSING_HEADERS = withHeaders(
+  (headers) => `Faltan estas columnas obligatorias: ${headers}.`,
+  "Faltan columnas obligatorias. Usa las cabeceras de la plantilla.",
+);
+const IMPORT_TOO_MANY_ROWS: ApiErrorTemplate = (params) =>
+  params?.maxRows
+    ? `El archivo tiene más de ${params.maxRows} filas. Divídelo en varios archivos.`
+    : "El archivo tiene demasiadas filas. Divídelo en varios archivos.";
+
 const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, ApiErrorTemplate>> = {
   SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, así que esta acción no está disponible.",
   SHARING_AGREEMENT_HAS_NO_COEFFICIENTS:
@@ -268,6 +293,15 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     return resendLimitMessage(Number.isFinite(seconds) && seconds > 0 ? seconds : null);
   },
 
+  // Sending or resending to a selection of members (lucoenergia/conluz#527,
+  // #328). The selection codes refuse the whole request, before anything is
+  // sent; MEMBERSHIP_NOT_FOUND comes only as one person's result.
+  MEMBERSHIP_INVITATION_SELECTION_EMPTY: "No has seleccionado a nadie. Selecciona al menos un miembro.",
+  MEMBERSHIP_INVITATION_SELECTION_TOO_LARGE: (params) =>
+    `Puedes enviar hasta ${params?.maxUserIds ?? "50"} invitaciones a la vez. Quita a alguien de la selección.`,
+  MEMBERSHIP_INVITATION_SELECTION_DUPLICATED: "La selección repite a algún miembro. Vuelve a seleccionarlos.",
+  MEMBERSHIP_NOT_FOUND: "Ya no forma parte de esta comunidad.",
+
   // Removing a member who owns supplies in the community (lucoenergia/conluz#412).
   MEMBERSHIP_OWNS_SUPPLIES:
     "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
@@ -275,31 +309,30 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // (lucoenergia/conluz#449, #309).
   MEMBERSHIP_LAST_ACTIVE_ADMIN: LAST_ACTIVE_ADMIN_EXPLANATION,
 
-  // A member import refused as a whole (lucoenergia/conluz#397; #284). Function
-  // templates where the code carries params, so an absent one degrades to a
-  // sentence without the list or the limit rather than a literal placeholder.
-  MEMBERSHIP_IMPORT_INVALID_ENCODING:
-    "No se ha podido leer el archivo. Guárdalo desde Excel como «CSV UTF-8» o «CSV (delimitado por punto y coma)»; «Texto Unicode» no sirve.",
-  MEMBERSHIP_IMPORT_AMBIGUOUS_SEPARATOR:
-    "No se ha podido saber si las columnas se separan con «;» o con «,». Usa un solo separador, como en la plantilla.",
-  MEMBERSHIP_IMPORT_MALFORMED_FILE:
-    "El archivo no es un CSV válido. Revisa que no haya comillas sin cerrar.",
-  MEMBERSHIP_IMPORT_UNKNOWN_HEADERS: withHeaders(
-    (headers) => `Estas columnas no se reconocen: ${headers}. Usa las cabeceras de la plantilla, con las mismas mayúsculas.`,
-    "Hay columnas que no se reconocen. Usa las cabeceras de la plantilla, con las mismas mayúsculas.",
-  ),
-  MEMBERSHIP_IMPORT_DUPLICATED_HEADERS: withHeaders(
-    (headers) => `Estas columnas aparecen más de una vez: ${headers}. Deja cada una solo una vez.`,
-    "Hay columnas que aparecen más de una vez. Deja cada una solo una vez.",
-  ),
-  MEMBERSHIP_IMPORT_MISSING_HEADERS: withHeaders(
-    (headers) => `Faltan estas columnas obligatorias: ${headers}.`,
-    "Faltan columnas obligatorias. Usa las cabeceras de la plantilla.",
-  ),
-  MEMBERSHIP_IMPORT_TOO_MANY_ROWS: (params) =>
-    params?.maxRows
-      ? `El archivo tiene más de ${params.maxRows} filas. Divídelo en varios archivos.`
-      : "El archivo tiene demasiadas filas. Divídelo en varios archivos.",
+  // A member import refused as a whole (lucoenergia/conluz#397; #284), and a
+  // supply import (lucoenergia/conluz#532). The two refuse a file for the same
+  // reasons, so they word them the same way.
+  MEMBERSHIP_IMPORT_INVALID_ENCODING: IMPORT_INVALID_ENCODING,
+  MEMBERSHIP_IMPORT_AMBIGUOUS_SEPARATOR: IMPORT_AMBIGUOUS_SEPARATOR,
+  MEMBERSHIP_IMPORT_MALFORMED_FILE: IMPORT_MALFORMED_FILE,
+  MEMBERSHIP_IMPORT_UNKNOWN_HEADERS: IMPORT_UNKNOWN_HEADERS,
+  MEMBERSHIP_IMPORT_DUPLICATED_HEADERS: IMPORT_DUPLICATED_HEADERS,
+  MEMBERSHIP_IMPORT_MISSING_HEADERS: IMPORT_MISSING_HEADERS,
+  MEMBERSHIP_IMPORT_TOO_MANY_ROWS: IMPORT_TOO_MANY_ROWS,
+  SUPPLY_IMPORT_INVALID_ENCODING: IMPORT_INVALID_ENCODING,
+  SUPPLY_IMPORT_AMBIGUOUS_SEPARATOR: IMPORT_AMBIGUOUS_SEPARATOR,
+  SUPPLY_IMPORT_MALFORMED_FILE: IMPORT_MALFORMED_FILE,
+  SUPPLY_IMPORT_UNKNOWN_HEADERS: IMPORT_UNKNOWN_HEADERS,
+  SUPPLY_IMPORT_DUPLICATED_HEADERS: IMPORT_DUPLICATED_HEADERS,
+  SUPPLY_IMPORT_MISSING_HEADERS: IMPORT_MISSING_HEADERS,
+  SUPPLY_IMPORT_TOO_MANY_ROWS: IMPORT_TOO_MANY_ROWS,
+
+  // A supply refused for its CUPS or its owner (lucoenergia/conluz#532), by
+  // its create, its edit or a row of the import. None echoes the value sent.
+  SUPPLY_CUPS_INVALID: "El CUPS tiene que tener 20 o 22 caracteres, sin espacios.",
+  SUPPLY_ALREADY_EXISTS: "Ya hay un punto de suministro con este CUPS en la comunidad.",
+  SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY: "Este CUPS ya está registrado en otra comunidad.",
+  SUPPLY_OWNER_NOT_FOUND: "No hay ningún miembro de la comunidad con ese DNI/NIE/NIF.",
 
   // A refused energy metrics or consumption period (#324). The server sends
   // no params. CONFLICTING and INCOMPLETE come from how a screen built the

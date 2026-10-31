@@ -96,3 +96,19 @@ export const Empty = () => (
     <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={[]} />
   </Mui.Box>
 );
+
+export const WithSelection = () => (
+  <Mui.Box sx={{ maxWidth: 390 }}>
+    <RecordList
+      label="Miembros de la comunidad"
+      emptyMessage="No se encontraron miembros"
+      items={items.map((item, index) => ({
+        ...item,
+        selection:
+          index < 2 ? (
+            <Mui.Checkbox checked={index === 0} inputProps={{ "aria-label": `Seleccionar ${item.title}` }} />
+          ) : undefined,
+      }))}
+    />
+  </Mui.Box>
+);

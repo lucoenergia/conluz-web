@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-SUP` |
 | **Status** | Active |
-| **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId` |
-| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete` |
-| **Domain rules** | `lucoenergia/conluz`: SUP-001, MEM-026, EPR-003 |
+| **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId`, `/supply-points/new`, `/supply-points/:supplyPointId/edit` |
+| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit` |
+| **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #324 |
+| **Last reviewed against code** | #339 |
 
 ## Purpose
 
@@ -16,7 +16,12 @@ Let a community admin delete a supply that nothing in the community depends on, 
 to stop using one that something does. Deleting a member who owns supplies needs their supplies
 deleted first (UI-MBR-015), so this is the step that makes that possible.
 
-This document covers only the rules #290, #302 and #324 introduced.
+Let a community admin import a community's supplies from a CSV file with the same dialog as the
+member import, the step that follows it during onboarding, and correct a supply refused for its
+CUPS or its owner on the input concerned. Show a supply without a name by something that
+recognises it.
+
+This document covers only the rules #290, #302, #324 and #339 introduced.
 
 ## Rules
 
@@ -107,3 +112,86 @@ This document covers only the rules #290, #302 and #324 introduced.
   year in its first hour, or a custom range starting later, that is "nothing yet", not a fault.
 - **Implements:** EPR-003
 - **Source:** #324, lucoenergia/conluz#409
+
+### UI-SUP-007 — The supply import explains its columns and what it requires, in the member import's dialog
+
+- **Status:** Active
+- **Rule:**
+  - The supply import MUST use the member import's dialog (UI-MBR-019, UI-MBR-020, UI-MBR-021):
+    the community header, an info note, a column guide, a template download, and Cancelar and
+    Importar.
+  - The column guide MUST list `code`, `address` and `personalId` as required and `addressRef` and
+    `name` as optional, in that order, each with a description and an example.
+  - The template MUST be `plantilla-puntos-de-suministro.csv` and hold only the header line, in the
+    member template's format (UTF-8 byte order mark, `;`, CRLF).
+  - The note MUST say that each owner must already be a member of the community, so members are
+    imported first; which Excel formats work; the 1000-row limit; and that importing the same file
+    again is safe.
+  - While the import runs, the dialog MUST NOT close.
+- **Rationale:** The two imports are one onboarding task done one after the other, so the admin
+  learns one pattern. An owner who is not a member yet is the most likely cause of a failed row, so
+  the note says so before the file is sent.
+- **Implements:** SUP-005, SUP-002
+- **Source:** #339, lucoenergia/conluz#532
+
+### UI-SUP-008 — A refused file is one notice; failed rows are listed by line, worded from their code
+
+- **Status:** Active
+- **Rule:**
+  - A file refused as a whole with a `SUPPLY_IMPORT_*` code MUST keep the dialog on the guide, with
+    the file still chosen, and show one error naming the cause (with the headers or the limit from
+    `params`) and that no supply was created. Any other failure MUST say only that the import failed.
+  - A result MUST show how many supplies were created and how many rows failed, and offer
+    "Importar otro archivo" and "Cerrar".
+  - Each failed row MUST be listed as "Línea L: <reason>". The reason MUST be built from the row's
+    `code` and `errors`, by column and constraint. Only a code or a constraint the app does not know
+    MAY fall back to the row's `message`.
+  - Once the import has answered with a result, the supply list MUST be refreshed.
+- **Rationale:** Line numbers let the admin fix the file. Text built by the client keeps the
+  wording consistent with the rest of the app and translatable. A newer backend may add codes or
+  constraints, and its message is better than none.
+- **Implements:** SUP-005, SUP-006, SUP-007
+- **Source:** #339, lucoenergia/conluz#532
+
+### UI-SUP-009 — A supply refused for its CUPS or its owner is corrected on that input
+
+- **Status:** Active
+- **Rule:**
+  - A supply create or edit refused with `SUPPLY_CUPS_INVALID`, `SUPPLY_ALREADY_EXISTS` or
+    `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY` MUST keep the form open with the values typed, and show
+    the catalogue text on the CUPS input.
+  - A create refused with `SUPPLY_OWNER_NOT_FOUND` MUST do the same on the owner input
+    ("Propietario"). The edit form cannot change the owner and sends none, so the code does not
+    reach it.
+  - Any other refusal MUST keep the generic message.
+- **Rationale:** The admin can fix these, and "try later" hides the cause.
+- **Implements:** SUP-002, SUP-006, SUP-007
+- **Source:** #339, lucoenergia/conluz#532
+
+### UI-SUP-010 — A supply is named by its name, else its address, else its CUPS
+
+- **Status:** Active
+- **Rule:**
+  - Wherever the app names a supply, it MUST show its `name`, or its `address` when it has no name,
+    or its CUPS when the payload carries no address. One helper (`supplyDisplayLabel`) applies the
+    order.
+  - A search over supplies MUST match that label.
+  - A supply reference (`SupplyReferenceResponse`, in sharing agreements and plants) carries no
+    address, so a nameless one is named by its CUPS.
+  - A field that shows the name as such — the deletion confirmation's "Nombre" (UI-SUP-002) and
+    the edit form's input — MUST show only the name.
+- **Rationale:** `name` is optional, and a nameless supply must still be recognisable. What is
+  shown must be findable by search.
+- **Implements:** n/a
+- **Source:** #339
+
+## States
+
+The import dialog, as the member import's (`members.md`):
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Guide | The notes, the column guide, the template download and the file picker | Descargar plantilla, Seleccionar archivo CSV, Importar (once a file is chosen), Cancelar |
+| Importing | That the import is running | None; the dialog cannot be closed |
+| Refused | The guide, with the refusal and that no supply was created, and the file still chosen | As in Guide |
+| Result | The counts, and each failed row with its line and reason | Importar otro archivo, Cerrar |

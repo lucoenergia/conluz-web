@@ -52,6 +52,7 @@ import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoeffi
 import { DeactivateOrReopenCoefficientConfirmationModal } from "../Modals/DeactivateOrReopenCoefficientConfirmationModal";
 import { CloseCoefficientConfirmationModal } from "../Modals/CloseCoefficientConfirmationModal";
 import { useDebounce } from "../../utils/useDebounce";
+import { useRowSelection } from "../../hooks/useRowSelection";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { useActiveCommunity } from "../../context/community.context";
 import { useSuccessDispatch } from "../../context/success.context";
@@ -396,7 +397,17 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [snapshot, setSnapshot] = useState<CoefficientSnapshot>(() => new Map());
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Any row with at least one available action, hidden by the filter or not:
+  // a selection outlives the filter that hides part of it.
+  const actionableCoefficientIds = useMemo(
+    () =>
+      coefficients
+        .filter((c) => getAvailableCoefficientActions(c.applicationState, c.endState).length > 0)
+        .map((c) => c.coefficientId),
+    [coefficients],
+  );
+  const selection = useRowSelection({ selectableIds: actionableCoefficientIds });
+  const { selectedIds, isSelected, clear: clearSelection } = selection;
   const [batchActionError, setBatchActionError] = useState<BatchActionErrorState | null>(null);
   const errorPanelRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -505,20 +516,11 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // selected — not merely because a PENDING coefficient exists. One shared
   // condition, computed once, so the bar and spacer can never disagree about
   // whether they're mounted.
-  const isBatchBarMounted = selectedIds.size > 0;
+  const isBatchBarMounted = selectedIds.length > 0;
 
   useEffect(() => {
     onBatchBarMountedChange?.(isBatchBarMounted);
   }, [isBatchBarMounted, onBatchBarMountedChange]);
-
-  const toggleSelected = (coefficientId: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(coefficientId)) next.delete(coefficientId);
-      else next.add(coefficientId);
-      return next;
-    });
-  };
 
   // A successful row-path action is a specific, more recent decision about
   // that one row, superseding whatever the selection expressed earlier —
@@ -527,34 +529,17 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // filter), or silently overwrites this row's individual correction. Never
   // called on failure: an untouched selection is exactly what a failed
   // action should leave behind.
-  const dropFromSelection = (coefficientId: string) => {
-    setSelectedIds((prev) => {
-      if (!prev.has(coefficientId)) return prev;
-      const next = new Set(prev);
-      next.delete(coefficientId);
-      return next;
-    });
-  };
+  const dropFromSelection = selection.deselect;
 
   // Tri-state: indeterminate and unchecked both select every visible
   // actionable row; only the fully-checked state deselects — the header
   // control always moves toward "select all" first, standard tri-state
   // behaviour. Never touches a row hidden by the filter in either direction.
-  const handleToggleAllVisibleActionable = () => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allVisibleActionableSelected) {
-        visibleActionableCoefficients.forEach((c) => next.delete(c.coefficientId));
-      } else {
-        visibleActionableCoefficients.forEach((c) => next.add(c.coefficientId));
-      }
-      return next;
-    });
-  };
+  const handleToggleAllVisibleActionable = () => selection.toggleAll(visibleActionableIds);
 
   // Unlike the header checkbox, clears the *real* selection — visible and
   // hidden alike. That asymmetry is the whole reason both controls exist.
-  const handleClearSelection = () => setSelectedIds(new Set());
+  const handleClearSelection = clearSelection;
 
   /**
    * Show the coefficients still waiting for a date, and bring them into view.
@@ -575,14 +560,14 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
     setApplicationStateFilter(SharingAgreementPartitionCoefficientResponseApplicationState.PENDING);
     setSearchText("");
-    setSelectedIds(new Set());
+    clearSelection();
     // The request came from a panel above the table, which on a long agreement
     // is well off screen.
     panelRef.current?.scrollIntoView({
       behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
       block: "start",
     });
-  }, [registerDatesRequestId]);
+  }, [registerDatesRequestId, clearSelection]);
 
   const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
     setActionsAnchorEl(event.currentTarget);
@@ -609,8 +594,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const handleSelectBatchAction = (action: CoefficientAction) => {
     setBatchActionsAnchorEl(null);
-    if (selectedIds.size === 0) return;
-    setActiveDialog({ action, targetIds: Array.from(selectedIds) as [string, ...string[]], source: "batch" });
+    if (selectedIds.length === 0) return;
+    setActiveDialog({ action, targetIds: [...selectedIds] as [string, ...string[]], source: "batch" });
   };
 
   // A pending mutation can't be cancelled from here, and closing the dialog
@@ -635,7 +620,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       if (dialog.source === "row") {
         dropFromSelection(dialog.targetIds[0]);
       } else {
-        setSelectedIds(new Set());
+        clearSelection();
       }
       setActiveDialog(null);
       setActionsMenuCoefficientId(null);
@@ -707,28 +692,27 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // reason about — any row with at least one available action, not only a
   // PENDING one. Reuses filterSharingAgreementCoefficients rather than
   // reimplementing the search/status predicate.
-  const visibleActionableCoefficients = useMemo(
-    () => filteredCoefficients.filter((c) => getAvailableCoefficientActions(c.applicationState, c.endState).length > 0),
+  const visibleActionableIds = useMemo(
+    () =>
+      filteredCoefficients
+        .filter((c) => getAvailableCoefficientActions(c.applicationState, c.endState).length > 0)
+        .map((c) => c.coefficientId),
     [filteredCoefficients],
   );
 
-  // One pass over filteredCoefficients answers both "how much of the
-  // selection is currently visible" (drives the tri-state checkbox) and "how
-  // many selected rows are hidden by the filter" (drives the bar's count
-  // text). selectedIds can hold any actionable coefficient's id now, not
-  // only PENDING ones — checked live against filteredCoefficients either way.
+  // How much of the selection is visible drives the tri-state checkbox; how
+  // much the filter hides drives the bar's count text.
   const visibleSelectedCount = useMemo(
-    () => filteredCoefficients.filter((c) => selectedIds.has(c.coefficientId)).length,
-    [filteredCoefficients, selectedIds],
+    () => filteredCoefficients.filter((c) => isSelected(c.coefficientId)).length,
+    [filteredCoefficients, isSelected],
   );
-  const hiddenSelectedCount = selectedIds.size - visibleSelectedCount;
-  const allVisibleActionableSelected =
-    visibleActionableCoefficients.length > 0 && visibleSelectedCount === visibleActionableCoefficients.length;
-  const someVisibleActionableSelected = visibleSelectedCount > 0 && !allVisibleActionableSelected;
+  const hiddenSelectedCount = selectedIds.length - visibleSelectedCount;
+  const allVisibleActionableSelected = selection.allSelected(visibleActionableIds);
+  const someVisibleActionableSelected = selection.someSelected(visibleActionableIds);
   const selectionCountText =
     hiddenSelectedCount > 0
-      ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"} · ${hiddenSelectedCount} oculto${hiddenSelectedCount === 1 ? "" : "s"} por el filtro`
-      : `${selectedIds.size} seleccionado${selectedIds.size === 1 ? "" : "s"}`;
+      ? `${selectedIds.length} seleccionado${selectedIds.length === 1 ? "" : "s"} · ${hiddenSelectedCount} oculto${hiddenSelectedCount === 1 ? "" : "s"} por el filtro`
+      : `${selectedIds.length} seleccionado${selectedIds.length === 1 ? "" : "s"}`;
 
   // Every saved row now has at least one menu entry — "Ver histórico" is
   // offered in every status, including DRAFT, which previously had no ⋯ at
@@ -752,8 +736,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // hidden rows included — so a row acted on individually is re-evaluated
   // here too once its own mutation's refetch lands, with no extra handling.
   const selectedCoefficients = useMemo(
-    () => coefficients.filter((c) => selectedIds.has(c.coefficientId)),
-    [coefficients, selectedIds],
+    () => coefficients.filter((c) => isSelected(c.coefficientId)),
+    [coefficients, isSelected],
   );
   const selectionActionSummary = useMemo(() => summarizeSelectionActions(selectedCoefficients), [selectedCoefficients]);
 
@@ -1064,7 +1048,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               checkbox column, which doesn't exist on the card list. Labelled
               rather than a bare checkbox, since there's no column header
               here to imply what it does. */}
-          {showSelectionColumn && visibleActionableCoefficients.length > 0 && (
+          {showSelectionColumn && visibleActionableIds.length > 0 && (
             <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5 }}>
               <Checkbox
                 checked={allVisibleActionableSelected}
@@ -1158,7 +1142,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                 <TableRow sx={{ backgroundColor: colors.background.surface }}>
                   {showSelectionColumn && (
                     <TableCell padding="checkbox">
-                      {visibleActionableCoefficients.length > 0 && (
+                      {visibleActionableIds.length > 0 && (
                         <Checkbox
                           checked={allVisibleActionableSelected}
                           indeterminate={someVisibleActionableSelected}
@@ -1249,8 +1233,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                         comparison={getRowComparison(coefficient)}
                         isDraft={isDraft}
                         showSelectionColumn={showSelectionColumn}
-                        selected={selectedIds.has(coefficient.coefficientId)}
-                        onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
+                        selected={isSelected(coefficient.coefficientId)}
+                        onToggleSelected={() => selection.toggle(coefficient.coefficientId)}
                         showActionsColumn={showActionsColumn}
                         showHistoryAction={showRowHistoryAction}
                         onOpenActionsMenu={handleOpenActionsMenu}
@@ -1302,8 +1286,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                     comparison={getRowComparison(coefficient)}
                     isDraft={isDraft}
                     showSelectionColumn={showSelectionColumn}
-                    selected={selectedIds.has(coefficient.coefficientId)}
-                    onToggleSelected={() => toggleSelected(coefficient.coefficientId)}
+                    selected={isSelected(coefficient.coefficientId)}
+                    onToggleSelected={() => selection.toggle(coefficient.coefficientId)}
                     showActionsColumn={showActionsColumn}
                     showHistoryAction={showRowHistoryAction}
                     onOpenActionsMenu={handleOpenActionsMenu}

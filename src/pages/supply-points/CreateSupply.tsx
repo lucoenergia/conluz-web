@@ -1,10 +1,11 @@
 import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { type FC } from "react";
+import { useState, type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import type { CreateSupplyBody } from "../../api/models";
 import { useNavigate } from "react-router";
-import { SupplyForm, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
+import { SupplyForm, type SupplyFormField, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
+import { supplyRefusalOf } from "./supplyForm";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
@@ -23,6 +24,7 @@ export const CreateSupplyPage: FC = () => {
   const errorDispatch = useErrorDispatch();
   const activeCommunity = useActiveCommunityResource();
   const { createSupply } = useCommunityActions().forCommunity(activeCommunity).actions;
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<SupplyFormField, string>>>({});
 
   const handleSubmit = async ({ name, cups, address, addressRef, personalId }: SupplyFormValues) => {
     // The route guard has already established the caller may create here, so
@@ -38,12 +40,20 @@ export const CreateSupplyPage: FC = () => {
       addressRef: addressRef || undefined,
       communityId: activeCommunityId,
     };
-    const created = await createSupply.run(newSupply);
-    if (created) {
+    setFieldErrors({});
+    const outcome = await createSupply.run(newSupply);
+    if ("ok" in outcome) {
       navigate("/supply-points");
-    } else {
-      errorDispatch("Ha habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde");
+      return;
     }
+    // The form stays as it was typed, so the admin corrects the one input.
+    const refusal = supplyRefusalOf(
+      outcome.error,
+      "Ha habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde",
+      { ownerField: true },
+    );
+    if ("field" in refusal) setFieldErrors({ [refusal.field]: refusal.message });
+    else errorDispatch(refusal.form);
   };
 
   return (
@@ -113,7 +123,13 @@ export const CreateSupplyPage: FC = () => {
           elevation={0}
           sx={[sxStyles.softPanel, { width: { xs: "100%", sm: "auto" }, boxSizing: "border-box" }]}
         >
-          <SupplyForm handleSubmit={handleSubmit} showUserSelector={true} disabled={!createSupply} />
+          <SupplyForm
+            handleSubmit={handleSubmit}
+            fieldErrors={fieldErrors}
+            onFieldEdit={(field) => setFieldErrors((errors) => ({ ...errors, [field]: undefined }))}
+            showUserSelector={true}
+            disabled={!createSupply}
+          />
         </Paper>
       </Box>
     </Box>

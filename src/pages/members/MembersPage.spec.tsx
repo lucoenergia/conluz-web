@@ -275,12 +275,11 @@ describe("MembersPage", () => {
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: getGetCurrentUserQueryKey() });
   });
   describe("an admin of the community", () => {
-    it("is offered both ways to bring a member in, and the bulk send", () => {
+    it("is offered both ways to bring a member in", () => {
       setup();
 
       expect(screen.getByRole("button", { name: "Registrar miembro" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Importar miembros" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Enviar invitaciones pendientes" })).toBeInTheDocument();
     });
 
     it("gets every row action the backend granted on the row", async () => {
@@ -312,7 +311,6 @@ describe("MembersPage", () => {
       setup({ community: { canManageMemberships: false }, memberships: READ_ONLY });
 
       expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
     });
 
@@ -331,7 +329,6 @@ describe("MembersPage", () => {
       setup({ community: { canManageMemberships: false }, memberships: [] });
 
       expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
     });
   });
@@ -399,7 +396,6 @@ describe("MembersPage", () => {
     setup({ communityLoading: true });
 
     expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
   });
 
@@ -693,15 +689,14 @@ describe("MembersPage", () => {
       expect(await menuItemsFor(user, "Nadia Nueva")).toEqual(["Eliminar"]);
     });
 
-    it("UI-MBR-008 UI-MBR-013 UI-MBR-018 offers neither registration, import nor bulk send to a community without the capabilities", () => {
+    it("UI-MBR-008 UI-MBR-018 offers neither registration nor import to a community without the capabilities", () => {
       setup({ community: { canManageMemberships: true } });
 
       expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
     });
 
-    it("UI-MBR-008 UI-MBR-013 UI-MBR-018 offers none of them to a community from a backend that predates the capabilities", () => {
+    it("UI-MBR-008 UI-MBR-018 offers neither of them to a community from a backend that predates the capabilities", () => {
       // The keys are absent, not false: setup builds on top of the defaults,
       // so the community is mocked here as that backend serves it.
       const legacy = buildCommunityCapabilities({ canRead: true, canManageMemberships: true });
@@ -716,7 +711,6 @@ describe("MembersPage", () => {
       expect(screen.getByText("Ana García")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Registrar miembro" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Importar miembros" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Enviar invitaciones pendientes" })).not.toBeInTheDocument();
     });
   });
 

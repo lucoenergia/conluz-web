@@ -42,6 +42,20 @@ export interface ListTableProps<T> {
    * table does not reflow around it.
    */
   hasRowActions?: (row: T) => boolean;
+  /**
+   * A leading selection column, for a page that acts on several rows at once.
+   *
+   * The page supplies the content: `header` is the tri-state "select all"
+   * checkbox and `render(row)` the row's own checkbox, named
+   * "Seleccionar <name>", or nothing for a row that cannot be selected. The
+   * actions on the selection live outside the table, never in a row.
+   */
+  selection?: ListTableSelection<T>;
+}
+
+export interface ListTableSelection<T> {
+  header: ReactNode;
+  render: (row: T) => ReactNode;
 }
 
 /** Header text in the list-table style, for headers that wrap it (e.g. in a sort label). */
@@ -53,7 +67,8 @@ export const ListTableHeaderText = ({ children }: { children: ReactNode }) => (
 
 /**
  * Desktop table for a list page: one row per record and a trailing "Acciones"
- * column whose kebab button opens the page's row menu (see RowActionsMenu).
+ * column whose kebab button opens the page's row menu (see RowActionsMenu),
+ * and, with `selection`, a leading checkbox column.
  */
 export const ListTable = <T,>({
   rows,
@@ -64,14 +79,16 @@ export const ListTable = <T,>({
   rowActionsLabel,
   onRowActionsClick,
   hasRowActions,
+  selection,
 }: ListTableProps<T>) => {
-  const colSpan = columns.length + 1;
+  const colSpan = columns.length + 1 + (selection ? 1 : 0);
 
   return (
     <TableContainer>
       <Table>
         <TableHead>
           <TableRow sx={{ backgroundColor: colors.background.surface }}>
+            {selection && <TableCell padding="checkbox">{selection.header}</TableCell>}
             {columns.map((column) => (
               <TableCell key={column.key} align={column.align}>
                 {typeof column.header === "string" ? (
@@ -110,6 +127,7 @@ export const ListTable = <T,>({
                   transition: "background-color 0.2s",
                 }}
               >
+                {selection && <TableCell padding="checkbox">{selection.render(row)}</TableCell>}
                 {columns.map((column) => (
                   <TableCell key={column.key} align={column.align} sx={column.cellSx}>
                     {column.render(row)}

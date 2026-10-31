@@ -1,5 +1,5 @@
-import type { RestErrorDetailCode } from "../api/models";
-import { getFirstApiErrorCode, getFirstApiErrorMessage } from "./apiErrorCatalogue";
+import type { RestErrorDetailCode, SendInvitationResultResponse } from "../api/models";
+import { getFirstApiErrorCode, getFirstApiErrorMessage, translateErrorDetail } from "./apiErrorCatalogue";
 import { getRetryAfterSeconds } from "./authErrors";
 import {
   LAST_ACTIVE_ADMIN_EXPLANATION,
@@ -9,17 +9,16 @@ import {
 } from "./membershipErrorMessages";
 
 /** Which invitation write was refused: the same code can mean something else in each. */
-export type InvitationWrite = "invite" | "resend" | "revoke" | "bulk";
+export type InvitationWrite = "invite" | "resend" | "revoke";
 
 const FALLBACKS: Record<InvitationWrite, string> = {
   invite: "No se ha podido enviar la invitación. Inténtalo de nuevo.",
   resend: "No se ha podido reenviar la invitación. Inténtalo de nuevo.",
   revoke: "No se ha podido revocar el enlace. Inténtalo de nuevo.",
-  bulk: "No se han podido enviar las invitaciones. Inténtalo de nuevo.",
 };
 
 /** A membership write whose refusal can mean the roster is stale. */
-export type StaleRowWrite = Exclude<InvitationWrite, "bulk"> | "changeRole" | "remove";
+export type StaleRowWrite = InvitationWrite | "changeRole" | "remove";
 
 /**
  * The refusals that mean the row the screen acted on is stale: the membership
@@ -88,7 +87,34 @@ export function invitationRefusalMessage(
         return (code && SUBJECT_REFUSALS[subject][code]) || getFirstApiErrorMessage(error, FALLBACKS[write]);
     }
   })();
-  return write === "bulk" ? message : withRefreshedNote(message, write, code);
+  return withRefreshedNote(message, write, code);
+}
+
+/**
+ * Why one selected member was not sent their invitation (#328), from the
+ * result's own `code` and `params`. The same words as a refusal of the single
+ * send or resend, except that the roster is refreshed after every send, so no
+ * line says so.
+ */
+export function invitationResultReason(result: SendInvitationResultResponse): string {
+  const { code, params } = result;
+  switch (code) {
+    case "MEMBERSHIP_WITHOUT_CONTACT_EMAIL":
+      return NO_CONTACT_EMAIL_TO_INVITE.member;
+    default:
+      return (
+        (code && SUBJECT_REFUSALS.member[code]) ||
+        translateErrorDetail({ code, params, message: "" }, "No se ha podido enviar la invitación.")
+      );
+  }
+}
+
+/**
+ * Why a send to selected members was refused as a whole, before anything was
+ * sent (#328): an invalid selection, or sending unavailable.
+ */
+export function selectedInvitationsRefusalMessage(error: unknown): string {
+  return getFirstApiErrorMessage(error, "No se han podido enviar las invitaciones. Inténtalo de nuevo.");
 }
 
 /**

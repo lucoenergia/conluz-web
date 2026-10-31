@@ -21,6 +21,8 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -63,10 +65,13 @@ import { LAST_ACTIVE_ADMIN_EXPLANATION } from "../../errors/membershipErrorMessa
 import { MemberRecordDialog } from "./MemberRecordDialog";
 import { ImportMembersDialog } from "./ImportMembersDialog";
 import { RegisterMemberDialog } from "./RegisterMemberDialog";
-import { SendPendingInvitationsDialog } from "./SendPendingInvitationsDialog";
+import { SendInvitationsDialog, type InvitationRecipient } from "./SendInvitationsDialog";
 import { InvitationActionDialog, type InvitationWriteKind } from "./InvitationActionDialog";
 import {
   invitationActionsFor,
+  invitationSelectionEmptyReason,
+  isSelectableForInvitation,
+  lacksContactEmailToInvite,
   membershipStatusOf,
   statusToggleFor,
   type InvitationActions,
@@ -85,6 +90,8 @@ import { MembersFilters } from "./MembersFilters";
 import { MembersPagination } from "./MembersPagination";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { useRowSelection } from "../../hooks/useRowSelection";
+import { pluralize } from "../../utils/pluralize";
 
 const ROLE_LABELS: Record<string, string> = {
   [MembershipResponseRole.COMMUNITY_MEMBER]: "Miembro",
@@ -99,6 +106,9 @@ const ROLE_LABELS: Record<string, string> = {
  */
 const isLastActiveAdmin = (membership: MembershipResponse | null | undefined) =>
   membership?.lastActiveAdmin === true;
+
+/** The most people one send or resend may select: the backend's limit (lucoenergia/conluz#527). */
+const MAX_INVITATION_SELECTION = 50;
 
 const INVITATION_ITEMS: { kind: InvitationWriteKind; key: keyof InvitationActions; label: string }[] = [
   { kind: "invite", key: "invite", label: "Invitar" },
@@ -120,7 +130,9 @@ export const MembersPage: FC = () => {
   const errorDispatch = useErrorDispatch();
 
   const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
-  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  // The selection as it stood when the send was opened, so the confirmation
+  // and its result keep naming the same people while the roster refreshes.
+  const [invitationRecipients, setInvitationRecipients] = useState<InvitationRecipient[] | null>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [removeConfirmUserId, setRemoveConfirmUserId] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -251,6 +263,72 @@ export const MembersPage: FC = () => {
     setPage(next);
     countRef.current?.scrollIntoView?.({ block: "start" });
   };
+  // The send or resend to selected members (#328). Only the rows the backend
+  // would not refuse for a reason the roster shows can be selected, and only
+  // when the community hands over the send; the backend decides each person
+  // again. The selection is kept by user id across pages and filters, and
+  // "select all" acts on every row the filters let through, not one page.
+  const sendInvitations = membershipActions.sendInvitations;
+  const canSendInvitations = !!sendInvitations;
+  const selectableIds = useMemo(
+    () =>
+      canSendInvitations
+        ? memberships.filter(isSelectableForInvitation).flatMap((m) => (m.user?.id ? [m.user.id] : []))
+        : [],
+    [memberships, canSendInvitations],
+  );
+  const filteredUserIds = useMemo(() => filtered.flatMap((m) => (m.user?.id ? [m.user.id] : [])), [filtered]);
+  const selection = useRowSelection({ selectableIds, max: MAX_INVITATION_SELECTION });
+  const selectionOffered = selectableIds.length > 0;
+  const selectedCount = selection.selectedIds.length;
+  const invitationEmptyReason =
+    sendInvitations && !isLoading ? invitationSelectionEmptyReason(memberships) : null;
+
+  const selectAllCheckbox = (
+    <Checkbox
+      checked={selection.allSelected(filteredUserIds)}
+      indeterminate={selection.someSelected(filteredUserIds)}
+      disabled={!filteredUserIds.some((id) => selectableIds.includes(id))}
+      onChange={() => selection.toggleAll(filteredUserIds)}
+      inputProps={{ "aria-label": "Seleccionar todo" }}
+    />
+  );
+
+  // The row's checkbox, or nothing for a row that cannot be selected.
+  const selectionCheckbox = (membership: MembershipResponse) => {
+    const userId = membership.user?.id;
+    if (!userId || !selectableIds.includes(userId)) return null;
+    const isSelected = selection.isSelected(userId);
+    return (
+      <Checkbox
+        checked={isSelected}
+        disabled={!isSelected && selection.isAtLimit}
+        onChange={() => selection.toggle(userId)}
+        inputProps={{ "aria-label": `Seleccionar ${membership.fullName}` }}
+      />
+    );
+  };
+
+  // A row that would be selectable but has no contact email says so, since
+  // no send to it can succeed.
+  const showsNoContactEmail = (membership: MembershipResponse) =>
+    selectionOffered && lacksContactEmailToInvite(membership);
+
+  // First invitations, then resends, each in roster order: the order the
+  // confirmation shows them in, and the order they are sent in.
+  const openSendInvitations = () => {
+    const selected = memberships.filter((m) => m.user?.id && selection.isSelected(m.user.id));
+    const recipient = (m: MembershipResponse): InvitationRecipient => ({
+      userId: m.user?.id ?? "",
+      fullName: m.fullName,
+      resend: m.invitedAt !== null,
+    });
+    setInvitationRecipients([
+      ...selected.filter((m) => m.invitedAt === null).map(recipient),
+      ...selected.filter((m) => m.invitedAt !== null).map(recipient),
+    ]);
+  };
+
   const isFiltering = filters.query.trim() !== "" || filters.status !== "all" || filters.role !== "all";
   // Some members, and none matching: an empty table would read as no members at all.
   const noResults = !isLoading && memberships.length > 0 && filtered.length === 0;
@@ -325,16 +403,6 @@ export const MembersPage: FC = () => {
                 Importar miembros
               </Button>
             )}
-            {membershipActions.sendPendingInvitations && (
-              <Button
-                variant="outlined"
-                startIcon={<SendIcon />}
-                onClick={() => setBulkDialogOpen(true)}
-                sx={{ px: 3, py: 1.5 }}
-              >
-                Enviar invitaciones pendientes
-              </Button>
-            )}
             {membershipActions.register && (
               <Button
                 variant="contained"
@@ -385,6 +453,44 @@ export const MembersPage: FC = () => {
               >
                 {isLoading ? "Cargando…" : membersCount(filtered.length)}
               </Typography>
+              {invitationEmptyReason && <Notice severity="info">{invitationEmptyReason}</Notice>}
+              {selectionOffered && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "stretch", sm: "center" },
+                    gap: { xs: 1, sm: 2 },
+                  }}
+                >
+                  {/* The table head carries "select all" on wide screens; the
+                      card list has no head, so it is labelled here. */}
+                  {isNarrow && (
+                    <FormControlLabel
+                      control={selectAllCheckbox}
+                      label="Seleccionar todo"
+                      sx={{ m: 0 }}
+                    />
+                  )}
+                  <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
+                    {selectedCount === 0
+                      ? "Selecciona a quién enviar la invitación."
+                      : `${selectedCount} ${pluralize(selectedCount, "seleccionado", "seleccionados")}`}
+                  </Typography>
+                  {selectedCount > 0 && (
+                    <Button variant="contained" startIcon={<SendIcon />} onClick={openSendInvitations}>
+                      Enviar invitación ({selectedCount})
+                    </Button>
+                  )}
+                </Box>
+              )}
+              {selectionOffered && (selection.truncatedByLimit || selection.isAtLimit) && (
+                <Notice severity="info">
+                  {selection.truncatedByLimit
+                    ? `Se han seleccionado los ${MAX_INVITATION_SELECTION} primeros: es el máximo por envío.`
+                    : `Has llegado al máximo de ${MAX_INVITATION_SELECTION} por envío.`}
+                </Notice>
+              )}
             </Box>
 
             {noResults && (
@@ -406,6 +512,7 @@ export const MembersPage: FC = () => {
               rowActionsLabel={(membership) => `Más acciones para ${membership.fullName}`}
               onRowActionsClick={handleMenuOpen}
               hasRowActions={hasRowActions}
+              selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
               columns={[
                 {
                   key: "member",
@@ -432,6 +539,12 @@ export const MembersPage: FC = () => {
                           {membership.contactEmail && (
                             <>
                               <span>{membership.contactEmail}</span>
+                              <span aria-hidden> · </span>
+                            </>
+                          )}
+                          {showsNoContactEmail(membership) && (
+                            <>
+                              <span>Sin email de contacto</span>
                               <span aria-hidden> · </span>
                             </>
                           )}
@@ -469,6 +582,7 @@ export const MembersPage: FC = () => {
                   const role = ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER];
                   return {
                     id: String(membership.id ?? ""),
+                    selection: selectionOffered ? selectionCheckbox(membership) : undefined,
                     avatar: (
                       <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
                         {membership.fullName.charAt(0).toUpperCase()}
@@ -489,6 +603,7 @@ export const MembersPage: FC = () => {
                     lines: [
                       `${role} · ${membership.personalId}`,
                       ...(membership.contactEmail ? [membership.contactEmail] : []),
+                      ...(showsNoContactEmail(membership) ? ["Sin email de contacto"] : []),
                     ],
                     fields: [],
                   };
@@ -642,28 +757,25 @@ export const MembersPage: FC = () => {
           onClose={() => setRegisterDialogOpen(false)}
         />
       )}
-      {/* The import refreshes the roster itself. Its result hands over to the
-          bulk send, when the community grants it, rather than sending anything. */}
+      {/* The import refreshes the roster itself, and sends nothing: its result
+          points to selecting the new members, when the community can invite. */}
       {importDialogOpen && membershipActions.importMembers && (
         <ImportMembersDialog
           communityName={communityName}
           importMembers={membershipActions.importMembers}
-          onSendPending={
-            membershipActions.sendPendingInvitations
-              ? () => {
-                  setImportDialogOpen(false);
-                  setBulkDialogOpen(true);
-                }
-              : undefined
-          }
+          invitable={canSendInvitations}
           onClose={() => setImportDialogOpen(false)}
         />
       )}
-      {bulkDialogOpen && membershipActions.sendPendingInvitations && (
-        <SendPendingInvitationsDialog
+      {/* Mounted only while the community grants the send. The selection is
+          cleared once the backend has answered for each person. */}
+      {invitationRecipients && sendInvitations && (
+        <SendInvitationsDialog
           communityName={communityName}
-          sendPendingInvitations={membershipActions.sendPendingInvitations}
-          onClose={() => setBulkDialogOpen(false)}
+          recipients={invitationRecipients}
+          sendInvitations={sendInvitations}
+          onSent={selection.clear}
+          onClose={() => setInvitationRecipients(null)}
         />
       )}
 

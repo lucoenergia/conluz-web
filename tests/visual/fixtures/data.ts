@@ -14,6 +14,7 @@ import type {
   PlantResponse,
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
+  SendInvitationsResponse,
   SharingAgreementResponse,
   SupplyResponse,
 } from "../../../src/api/models";
@@ -359,6 +360,7 @@ export const FIXED_SUPPLY: SupplyResponse = {
   contract: { validDateFrom: "2024-01-01" },
   distributor: { name: "Iberdrola", code: "2", pointType: 5 },
   shelly: null,
+  plant: null,
   user: { id: FIXED_MEMBER_USER.id },
   ownerRecord: ownerRecordOf(FIXED_MEMBER_USER),
   // The active-community guard compares this with the selected community; a
@@ -378,6 +380,7 @@ export const FIXED_SUPPLY_2: SupplyResponse = {
   contract: { validDateFrom: "2024-03-15" },
   distributor: { name: "Endesa", code: "1", pointType: 3 },
   shelly: null,
+  plant: null,
   user: { id: FIXED_MEMBER_USER.id },
   ownerRecord: ownerRecordOf(FIXED_MEMBER_USER),
   // The active-community guard compares this with the selected community; a
@@ -402,6 +405,7 @@ export const FIXED_ADMIN_OWNED_SUPPLY: SupplyResponse = {
   contract: { validDateFrom: "2024-02-01" },
   distributor: { name: "Iberdrola", code: "2", pointType: 5 },
   shelly: null,
+  plant: null,
   user: { id: FIXED_COMMUNITY_ADMIN_USER.id },
   ownerRecord: ownerRecordOf(FIXED_COMMUNITY_ADMIN_USER),
   community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
@@ -1020,6 +1024,64 @@ export const FIXED_ROSTER_INVITATION_STATES: MembershipResponse[] = [
 ];
 
 /**
+ * The roster for selecting whom to invite or resend (#328): the invitation
+ * states above, plus a pending member without a contact email, who is shown
+ * unselectable with that reason. Nadia, Lucas and Elena can be selected; the
+ * accepted, suspended and email-less rows cannot.
+ */
+export const FIXED_ROSTER_INVITATION_SELECTION: MembershipResponse[] = [
+  ...FIXED_ROSTER_INVITATION_STATES.slice(0, 4),
+  pendingMembership("pending-noemail", "Óscar Sincorreo Vidal", { contactEmail: null }),
+  ...FIXED_ROSTER_INVITATION_STATES.slice(4),
+];
+
+/**
+ * A selection large enough for both groups of the send's confirmation, the
+ * first invitations past the five names it lists (#328): seven never invited
+ * and two invited, every one of them selectable.
+ */
+export const FIXED_ROSTER_INVITATION_BATCH: MembershipResponse[] = [
+  pendingMembership("batch-1", "Alicia Navarro Peña"),
+  pendingMembership("batch-2", "Bernat Soler Vidal"),
+  pendingMembership("batch-3", "Carmen Ibáñez Torres"),
+  pendingMembership("batch-4", "David Ferrer Lozano"),
+  pendingMembership("batch-5", "Encarna Molina Ruiz"),
+  pendingMembership("batch-6", "Francesc Roig Martí"),
+  pendingMembership("batch-7", "Gloria Herrero Sanz"),
+  pendingMembership("batch-8", "Hugo Castell Mora", {
+    invitedAt: "2026-10-01T10:00:00Z",
+    invitationExpiresAt: "2026-10-08T10:00:00Z",
+  }),
+  pendingMembership("batch-9", "Irene Bosch Climent", { invitedAt: "2026-09-01T10:00:00Z" }),
+];
+
+/**
+ * What the send answers for FIXED_ROSTER_INVITATION_BATCH (#328): first
+ * invitations and resends, and one refusal per reason, whose long lines are
+ * what can wrap.
+ */
+export const FIXED_INVITATION_BATCH_RESULT: SendInvitationsResponse = {
+  sent: 3,
+  remaining: 0,
+  results: [
+    { user: { id: "batch-1" }, outcome: "SENT", code: null, params: {} },
+    { user: { id: "batch-2" }, outcome: "SENT", code: null, params: {} },
+    { user: { id: "batch-3" }, outcome: "SENT", code: null, params: {} },
+    { user: { id: "batch-4" }, outcome: "REFUSED", code: "MEMBERSHIP_NOT_FOUND", params: {} },
+    { user: { id: "batch-5" }, outcome: "REFUSED", code: "MEMBERSHIP_ALREADY_EXISTS", params: {} },
+    { user: { id: "batch-6" }, outcome: "REFUSED", code: "MEMBERSHIP_DISABLED", params: {} },
+    { user: { id: "batch-7" }, outcome: "REFUSED", code: "MEMBERSHIP_WITHOUT_CONTACT_EMAIL", params: {} },
+    { user: { id: "batch-8" }, outcome: "RESENT", code: null, params: {} },
+    {
+      user: { id: "batch-9" },
+      outcome: "REFUSED",
+      code: "MEMBERSHIP_INVITATION_RESEND_LIMIT_REACHED",
+      params: { retryAfterSeconds: "72001" },
+    },
+  ],
+};
+
+/**
  * The roster as the community's only active admin sees it (#309): their own
  * row offers the role change and the removal, and the backend reports it as the
  * last active admin -- the row whose menu shows "Eliminar" disabled, with the
@@ -1141,6 +1203,8 @@ export const MEMBER_ENERGY_METRICS: MembershipEnergyMetricsResponse = {
   savings: { amountEur: 18.15, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
   selfConsumptionRatio: 0.4515,
   selfSufficiencyRatio: 0.2937,
+  selfConsumptionRatioStatus: "AVAILABLE",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 121, assignedProductionKWh: 268, excludedPlantSupplyCount: 0 },
 };
 
 /** One of the two supplies sent nothing this month. */
@@ -1161,6 +1225,8 @@ export const MEMBER_ENERGY_METRICS_NO_MONTH: MembershipEnergyMetricsResponse = {
   savings: { amountEur: null, tariffSource: "ESTIMATE", estimatedPrice: null },
   selfConsumptionRatio: null,
   selfSufficiencyRatio: null,
+  selfConsumptionRatioStatus: "NOTHING_ASSIGNED",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 0 },
 };
 
 // The month before the reference month (#200), as the comparison requests
@@ -1185,6 +1251,8 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS: MembershipEnergyMetricsResponse = {
   savings: { amountEur: 11.7, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
   selfConsumptionRatio: 0.3108,
   selfSufficiencyRatio: 0.2042,
+  selfConsumptionRatioStatus: "AVAILABLE",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 78, assignedProductionKWh: 251, excludedPlantSupplyCount: 0 },
 };
 
 /** July with nothing recorded: not yet published, or before the member's supplies existed. */
@@ -1196,6 +1264,8 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA: MembershipEnergyMetricsResp
   savings: { amountEur: 0, tariffSource: "ESTIMATE", estimatedPrice: null },
   selfConsumptionRatio: null,
   selfSufficiencyRatio: null,
+  selfConsumptionRatioStatus: "NOTHING_ASSIGNED",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 0 },
 };
 
 /** A stored month of the member's two supplies (#201), both reporting unless stated. */

@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import type { MembershipResponse, RestErrorDetailCode } from "../../api/models";
 import {
-  BULK_INVITE_URL,
   COMMUNITY_ID,
   COMMUNITY_NAME,
   inviteUrl,
@@ -20,10 +19,9 @@ import {
   type Roster,
 } from "./MembersPage.testUtils";
 import { MembersPage } from "./MembersPage";
-import { VISIBLE } from "../../test/visibleText";
 
 /**
- * The invitation writes on the roster, the bulk send, their refusals, and the
+ * The invitation writes on the roster, their refusals, and the
  * refusal to remove a member who owns supplies, against routed requests (#275).
  *
  * Tier 2: the real generated hooks, actions layer and QueryClient run, and only
@@ -187,66 +185,6 @@ describe("inviting from the roster", () => {
     expect(items).toContain("Reenviar");
     expect(items).not.toContain("Revocar enlace");
     expect(items).not.toContain("Invitar");
-  });
-});
-
-describe("sending the pending invitations in bulk", () => {
-  it("UI-MBR-013 sends 120 in three batches, showing the counts and offering to continue while some remain", async () => {
-    const u = user();
-    const batches = [
-      { sent: 50, remaining: 70 },
-      { sent: 50, remaining: 20 },
-      { sent: 20, remaining: 0 },
-    ];
-    const router = serveMembersPage(mockCustomInstance, { current: [NADIA, ANA] }, {
-      bulk: () => batches[requestsTo(router, "POST", BULK_INVITE_URL).length - 1],
-    });
-    await renderPage();
-    const readsBefore = rosterReads(router);
-
-    await u.click(screen.getByRole("button", { name: "Enviar invitaciones pendientes" }));
-    const dialog = await screen.findByRole("dialog", { name: `Enviar invitaciones pendientes en ${COMMUNITY_NAME}` });
-    // A confirmation first: nothing is sent on opening.
-    expect(requestsTo(router, "POST", BULK_INVITE_URL)).toHaveLength(0);
-    // Each batch is announced through a region in place, empty, before the first (#310).
-    const region = within(dialog).getByRole("status");
-    expect(region).toHaveTextContent(/^$/);
-    await u.click(within(dialog).getByRole("button", { name: "Enviar invitaciones" }));
-
-    expect(await within(dialog).findByText("Se han enviado 50 invitaciones.")).toBeInTheDocument();
-    expect(region).toHaveTextContent("Se han enviado 50 invitaciones. Quedan 70 por enviar.");
-    expect(within(dialog).getByText(/Quedan 70 por enviar/, VISIBLE)).toBeInTheDocument();
-    await u.click(within(dialog).getByRole("button", { name: "Enviar las siguientes" }));
-
-    expect(await within(dialog).findByText(/Quedan 20 por enviar/, VISIBLE)).toBeInTheDocument();
-    expect(within(dialog).getByText("Se han enviado 50 invitaciones.")).toBeInTheDocument();
-    await u.click(within(dialog).getByRole("button", { name: "Enviar las siguientes" }));
-
-    expect(await within(dialog).findByText("Se han enviado 20 invitaciones.")).toBeInTheDocument();
-    expect(within(dialog).getByText("No queda ninguna invitación pendiente de enviar.")).toBeInTheDocument();
-    expect(within(dialog).queryByRole("button", { name: "Enviar las siguientes" })).not.toBeInTheDocument();
-
-    expect(requestsTo(router, "POST", BULK_INVITE_URL)).toHaveLength(3);
-    // Each batch changes rows, so the roster is refetched after each.
-    await waitFor(() => expect(rosterReads(router)).toBeGreaterThanOrEqual(readsBefore + 3));
-  });
-
-  it("UI-MBR-014 says invitations cannot be sent right now, in the dialog", async () => {
-    const u = user();
-    serveMembersPage(mockCustomInstance, { current: [NADIA, ANA] }, {
-      bulk: () => {
-        throw restError(503, "MEMBERSHIP_INVITATION_UNAVAILABLE");
-      },
-    });
-    await renderPage();
-
-    await u.click(screen.getByRole("button", { name: "Enviar invitaciones pendientes" }));
-    const dialog = await screen.findByRole("dialog");
-    await u.click(within(dialog).getByRole("button", { name: "Enviar invitaciones" }));
-
-    expect(
-      await within(dialog).findByText("Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde."),
-    ).toBeInTheDocument();
   });
 });
 

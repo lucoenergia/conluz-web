@@ -587,6 +587,24 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
     expect(onToggleSelected).toHaveBeenCalledTimes(1);
   });
 
+  it("UI-SUP-010 names the checkbox of a supply without a name by its CUPS, since a reference carries no address", () => {
+    render(
+      <Table>
+        <TableBody>
+          <SharingAgreementCoefficientTableRow
+            coefficient={{ ...pendingCoefficient, supply: { ...pendingCoefficient.supply!, name: null } }}
+            installedPowerKw={100}
+            showSelectionColumn
+            selected={false}
+            onToggleSelected={vi.fn()}
+          />
+        </TableBody>
+      </Table>,
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Seleccionar ES0031300000000001AB" })).toBeInTheDocument();
+  });
+
   it("renders a checkbox for an APPLIED coefficient too, now that it's actionable (correct/deactivate)", async () => {
     const onToggleSelected = vi.fn();
     const user = userEvent.setup();

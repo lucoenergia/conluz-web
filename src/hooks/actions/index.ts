@@ -62,4 +62,4 @@ export {
   type CoefficientActivationResult,
   type ReplaceCoefficientsResult,
 } from "./useSharingAgreementCoefficientActions";
-export { useSupplyActions, type SupplyDeleteResult } from "./useSupplyActions";
+export { useSupplyActions, type SupplyDeleteResult, type SupplyEditResult } from "./useSupplyActions";

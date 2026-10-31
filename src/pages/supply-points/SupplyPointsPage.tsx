@@ -19,12 +19,14 @@ import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
-import { ImportSuppliesModal } from "../../components/Modals/ImportSuppliesModal";
+import { ImportSuppliesDialog } from "./ImportSuppliesDialog";
+import { useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { useActiveCommunity } from "../../context/community.context";
 import { isSupplyOutsideActiveCommunity } from "./supplyCommunityScope";
 import { useCommunityActions, useSupplyActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export const SupplyPointsPage: FC = () => {
   const theme = useTheme();
@@ -79,6 +81,7 @@ export const SupplyPointsPage: FC = () => {
   // function rather than a hook precisely so it can be asked once per card.
   const { forSupply } = useSupplyActions();
   const activeCommunity = useActiveCommunityResource();
+  const activeCommunityName = useActiveCommunityName();
   const { actions: communityActions } = useCommunityActions().forCommunity(activeCommunity);
 
   useEffect(() => {
@@ -92,8 +95,9 @@ export const SupplyPointsPage: FC = () => {
 
     // Filter by search text
     if (searchText) {
+      // The label is what the card shows, so what is shown can be found.
       items = items.filter((item) =>
-        item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        supplyDisplayLabel(item).toLowerCase().includes(searchText.toLowerCase()) ||
         item.code?.toLowerCase().includes(searchText.toLowerCase()) ||
         item.address?.toLowerCase().includes(searchText.toLowerCase())
       );
@@ -259,7 +263,7 @@ export const SupplyPointsPage: FC = () => {
                 <SupplyCard
                   id={item.id}
                   code={item.code}
-                  name={item.name ?? undefined}
+                  name={supplyDisplayLabel(item)}
                   address={item.address}
                   enabled={item.enabled}
                   lastConnection="Hace 2 horas"
@@ -310,13 +314,16 @@ export const SupplyPointsPage: FC = () => {
         </Box>
       )}
 
-      {/* Mounted with its button: no import action, nothing that can open it. */}
-      {communityActions.importSupplies && (
-        <ImportSuppliesModal
-          isOpen={showImportModal}
-          onClose={handleCloseImportModal}
-          onImportComplete={handleImportComplete}
+      {/* Mounted on open, so every opening starts from the guide, and with its
+          button's gate: no import action, nothing that can open it. The page
+          refetches what it lists itself, because a list filtered to one person
+          is a listing the supplies invalidation does not reach. */}
+      {showImportModal && communityActions.importSupplies && (
+        <ImportSuppliesDialog
+          communityName={activeCommunityName}
           importSupplies={communityActions.importSupplies}
+          onImported={handleImportComplete}
+          onClose={handleCloseImportModal}
         />
       )}
 

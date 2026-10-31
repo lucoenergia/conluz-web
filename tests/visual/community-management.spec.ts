@@ -7,7 +7,10 @@ import {
   FIXED_COMMUNITY_CONTACT,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_DATADIS_CONFIG,
+  FIXED_INVITATION_BATCH_RESULT,
   FIXED_MEMBERSHIPS,
+  FIXED_ROSTER_INVITATION_BATCH,
+  FIXED_ROSTER_INVITATION_SELECTION,
   FIXED_ROSTER_INVITATION_STATES,
   FIXED_ROSTER_LAST_ACTIVE_ADMIN,
   hideAppBar,
@@ -100,6 +103,86 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(page).toHaveScreenshot("members-page-invitation-states.png", await mainRegion(page));
+  });
+
+  // Selecting whom to invite or resend (#328): the leading checkbox column in
+  // the table, and the checkbox slot that keeps the cards aligned at 390 px,
+  // beside rows that cannot be selected and the one that says why, with the
+  // selection bar above. Which rows can be selected, and the bar's texts, are
+  // asserted in Vitest (MemberInvitationSelection.spec.tsx).
+  test("members page selection", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockCommunityManagementRoutes(page, { memberships: FIXED_ROSTER_INVITATION_SELECTION });
+
+    await page.goto("/members");
+    const main = page.getByRole("main");
+    await main.getByRole("checkbox", { name: "Seleccionar Nadia Nueva Fernández" }).check();
+    // The selection and the rows that cannot be selected, before the capture:
+    // a roster without them would make a plausible baseline.
+    await expect(main.getByRole("button", { name: "Enviar invitación (1)" })).toBeVisible();
+    for (const name of ["Nadia Nueva Fernández", "Lucas Enlace Martín", "Elena Caducada Ruiz"]) {
+      await expect(main.getByRole("checkbox", { name: `Seleccionar ${name}` })).toBeVisible();
+    }
+    await expect(main.getByRole("checkbox", { name: "Seleccionar Óscar Sincorreo Vidal" })).toHaveCount(0);
+    await expect(main.getByText("Sin email de contacto", { exact: true })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(page).toHaveScreenshot("members-page-selection.png", await mainRegion(page));
+  });
+
+  test.describe("members invitation send", () => {
+    // The send's confirmation and result (#328), with their own layout: two
+    // groups of names, the first cut at five with the rest counted, and a
+    // result whose refusal lines wrap at 390 px. What each says, and when, is
+    // asserted in Vitest (MemberInvitationSelection.spec.tsx).
+    async function openSend(page: Page) {
+      await injectAuthToken(page);
+      await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+      await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+      await mockCommunityManagementRoutes(page, { memberships: FIXED_ROSTER_INVITATION_BATCH });
+      await page.route(
+        (url) => /\/api\/v1\/communities\/[^/]+\/memberships\/invite$/.test(url.href),
+        (route) =>
+          route.request().method() === "POST"
+            ? route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify(FIXED_INVITATION_BATCH_RESULT),
+              })
+            : route.continue(),
+      );
+
+      await page.goto("/members");
+      const main = page.getByRole("main");
+      await main.getByRole("checkbox", { name: "Seleccionar todo" }).check();
+      await main.getByRole("button", { name: "Enviar invitación (9)" }).click();
+      const dialog = page.getByRole("dialog", { name: /^Enviar invitación en/ });
+      await expect(dialog).toBeVisible();
+      return dialog;
+    }
+
+    test("confirmation", async ({ page }) => {
+      const dialog = await openSend(page);
+      await expect(dialog.getByRole("list", { name: "Primera invitación" }).getByRole("listitem")).toHaveCount(6);
+      await expect(dialog.getByText("y 2 más")).toBeVisible();
+      await expect(dialog.getByRole("list", { name: "Reenvío" }).getByRole("listitem")).toHaveCount(2);
+      await stabilizePage(page);
+
+      await expect(dialog).toHaveScreenshot("members-invitation-confirmation.png", await hideAppBar(page));
+    });
+
+    test("result with refusals", async ({ page }) => {
+      const dialog = await openSend(page);
+      await dialog.getByRole("button", { name: "Enviar invitación (9)" }).click();
+      await expect(
+        dialog.getByRole("list", { name: "Personas a las que no se ha enviado" }).getByRole("listitem"),
+      ).toHaveCount(5);
+      await stabilizePage(page);
+
+      await expect(dialog).toHaveScreenshot("members-invitation-result.png", await hideAppBar(page));
+    });
   });
 
   // The last active admin's row menu (#309): "Eliminar" disabled with its

@@ -131,8 +131,8 @@ test.describe("Visual baselines", () => {
     await importBtn.scrollIntoViewIfNeeded();
     await importBtn.click();
 
-    const dialog = page.getByRole("dialog", { name: /^Importar puntos de suministro a / });
-    await expect(dialog.getByRole("heading", { name: /^Importar puntos de suministro a / })).toBeVisible();
+    const dialog = page.getByRole("dialog", { name: /^Importar puntos de suministro en / });
+    await expect(dialog.getByRole("heading", { name: /^Importar puntos de suministro en / })).toBeVisible();
     await stabilizePage(page);
 
     await expect(dialog).toHaveScreenshot("import-supplies-modal.png", await hideAppBar(page));

@@ -270,6 +270,8 @@ interface StatItem {
 
 interface RecordListItem {
   id: string;
+  /** Leading selection checkbox, named "Seleccionar <name>", for a page that acts on several records at once. When any item has one, every item gets the slot, so the cards stay aligned whether or not theirs can be selected. The actions on the selection live outside the list. */
+  selection?: ReactNode;
   /** Leading avatar or icon. Optional — omit for records without one. */
   avatar?: ReactNode;
   title: string;
