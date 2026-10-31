@@ -155,6 +155,9 @@ Proper authentication, through authentication tokens, is required to access this
 Upon successful creation, the server responds with a status code of 200, providing comprehensive
 details about the newly created plant, including its unique identifier.
 
+A supply is the supply of at most one plant: when the supply already has one, the request is
+answered 409 with `SUPPLY_ALREADY_HAS_PLANT`, and nothing is created.
+
 In case of failure, the server returns an appropriate error status code along with a descriptiv
 error message, aiding the client in diagnosing and addressing the issue.
 
@@ -403,6 +406,9 @@ been successfully modified. In cases where the update encounters errors, the ser
 
 If you don't provide some of the optional parameters, they will be considered as null value so their
 values will be updated with a null value.
+
+A supply is the supply of at most one plant: moving the plant to a supply that already has one is
+answered 409 with `SUPPLY_ALREADY_HAS_PLANT`, and nothing is updated.
 
  * @summary Updates plant information
  */

@@ -95,12 +95,10 @@ describe("SupplyDetailHeader", () => {
     expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
   });
 
-  it("falls back to the CUPS as the title when the supply has no name", () => {
+  it("UI-SUP-010 falls back to the address as the title when the supply has no name", () => {
     render(<SupplyDetailHeader supplyPoint={{ ...mockSupplyPoint, name: null }} />);
 
-    expect(
-      screen.getByRole("heading", { level: 1, name: "ES0031300296192001MB0F" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Calle Test 123" })).toBeInTheDocument();
   });
 
   it("shows Inactivo chip when supply point is disabled", () => {

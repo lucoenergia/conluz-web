@@ -7,6 +7,6 @@
  */
 
 /**
- * Share of the energy assigned to this supply that it consumed rather than fed back to the grid, on a 0-1 scale. Null when nothing was assigned to the supply in the period.
+ * Share of the energy assigned to this supply that it consumed rather than fed back to the grid, on a 0-1 scale. Null when nothing was assigned to the supply in the period, and for a plant's own supply, to which it does not apply: selfConsumptionRatioStatus says which.
  */
 export type SupplyEnergyMetricsResponseSelfConsumptionRatio = number | null;

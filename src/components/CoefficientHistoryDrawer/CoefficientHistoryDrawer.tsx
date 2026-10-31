@@ -10,6 +10,7 @@ import { CoefficientHistory } from "../CoefficientHistory";
 // an agreement already scoped to the active community.
 import { useGetPartitionCoefficientHistory } from "../../api/supplies/supplies";
 import type { SupplyReferenceResponse } from "../../api/models";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface CoefficientHistoryDrawerProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ const DESKTOP_WIDTH = 440;
 /** A supply with no name is identified by its CUPS, never by its UUID. */
 function getSupplyLabel(supply: SupplyReferenceResponse | undefined): string {
   if (!supply) return "Suministro";
-  return supply.name?.trim() || supply.code || "Suministro";
+  return supplyDisplayLabel(supply) || "Suministro";
 }
 
 /**

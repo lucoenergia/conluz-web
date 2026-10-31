@@ -63,7 +63,6 @@ const REVIEWED: Record<string, Scope> = {
   "/api/v1/platform-admins/invite": "global",
   "/api/v1/platform-admins/{userId}/invitation/resend": "global",
   "/api/v1/platform-admins/{userId}/invitation/revoke": "global",
-  "/api/v1/supplies/import": "community-query",
   // Acts on the caller and takes no user id, so it is user-scoped for the same
   // reason /api/v1/users/current is -- but a fixed literal rather than a shape,
   // so it is decided here rather than in structuralScope.
@@ -139,7 +138,9 @@ describe("endpoint community scoping", () => {
 
   // The category that caused the bulk-import bug: communityId is optional in the
   // schema, so leaving it out is invisible until the rows land in the wrong
-  // community. Any new one has to be noticed here.
+  // community. Any new one has to be noticed here. None is left since the
+  // supply import moved under /communities/{communityId} (lucoenergia/conluz#532),
+  // so today both sides are empty.
   it("knows exactly which endpoints take communityId as a query parameter", () => {
     const byQuery = Object.entries(specPaths)
       .filter(([, operations]) =>

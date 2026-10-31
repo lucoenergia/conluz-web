@@ -27,6 +27,7 @@ import {
 } from "../../pages/production/sharingAgreementCoefficientState";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getRowIdentity } from "../../pages/production/sharingAgreementCoefficientIdentity";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface SharingAgreementCoefficientRowProps {
   coefficient: SharingAgreementPartitionCoefficientResponse;
@@ -255,6 +256,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
   const identity = getRowIdentity(coefficient.supply);
+  const label = (coefficient.supply && supplyDisplayLabel(coefficient.supply)) || "suministro";
   const applicationStateDetail = getApplicationStateDetail(coefficient, isDraft);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   // "Ver histórico" alone is reason enough to offer the menu — on a DRAFT the
@@ -278,7 +280,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
             <Checkbox
               checked={!!selected}
               onChange={onToggleSelected}
-              inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+              inputProps={{ "aria-label": `Seleccionar ${label}` }}
             />
           )}
         </TableCell>
@@ -307,7 +309,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
             installedPowerKw={installedPowerKw}
             onCoefficientChange={onCoefficientChange}
             align="end"
-            supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
+            supplyLabel={label}
           />
         ) : (
           <Typography variant="body2" fontWeight="600">
@@ -344,10 +346,10 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
             <RevertCoefficientSlot
               onRevert={onRevert}
-              supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
+              supplyLabel={label}
             />
             {onRemove && (
-              <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>
+              <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${label}`}>
                 <DeleteOutlineIcon fontSize="small" />
               </IconButton>
             )}
@@ -361,7 +363,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
               size="small"
               disabled={actionsDisabled}
               onClick={(event) => onOpenActionsMenu(event, coefficient)}
-              aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
+              aria-label={`Más acciones para ${label}`}
             >
               <MoreVertIcon fontSize="small" />
             </IconButton>
@@ -403,6 +405,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
   const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
   const identity = getRowIdentity(coefficient.supply);
+  const label = (coefficient.supply && supplyDisplayLabel(coefficient.supply)) || "suministro";
   const applicationStateDetail = getApplicationStateDetail(coefficient, isDraft);
   const availableActions = getAvailableCoefficientActions(coefficient.applicationState, coefficient.endState);
   // "Ver histórico" alone is reason enough to offer the menu — on a DRAFT the
@@ -445,7 +448,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
                   checked={!!selected}
                   onChange={onToggleSelected}
                   size="small"
-                  inputProps={{ "aria-label": `Seleccionar ${coefficient.supply?.name || "suministro"}` }}
+                  inputProps={{ "aria-label": `Seleccionar ${label}` }}
                 />
               )}
             </Box>
@@ -470,7 +473,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               installedPowerKw={installedPowerKw}
               onCoefficientChange={onCoefficientChange}
               align="start"
-              supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
+              supplyLabel={label}
             />
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
@@ -485,11 +488,11 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
           {isEditing && (
             <RevertCoefficientSlot
               onRevert={onRevert}
-              supplyLabel={coefficient.supply?.name || coefficient.supply?.code || "suministro"}
+              supplyLabel={label}
             />
           )}
           {isEditing && onRemove && (
-            <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${coefficient.supply?.name || "suministro"}`}>
+            <IconButton size="small" onClick={onRemove} aria-label={`Quitar ${label}`}>
               <DeleteOutlineIcon fontSize="small" />
             </IconButton>
           )}
@@ -498,7 +501,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               size="small"
               disabled={actionsDisabled}
               onClick={(event) => onOpenActionsMenu(event, coefficient)}
-              aria-label={`Más acciones para ${coefficient.supply?.name || coefficient.supply?.code || "suministro"}`}
+              aria-label={`Más acciones para ${label}`}
             >
               <MoreVertIcon fontSize="small" />
             </IconButton>

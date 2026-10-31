@@ -360,6 +360,7 @@ export const FIXED_SUPPLY: SupplyResponse = {
   contract: { validDateFrom: "2024-01-01" },
   distributor: { name: "Iberdrola", code: "2", pointType: 5 },
   shelly: null,
+  plant: null,
   user: { id: FIXED_MEMBER_USER.id },
   ownerRecord: ownerRecordOf(FIXED_MEMBER_USER),
   // The active-community guard compares this with the selected community; a
@@ -379,6 +380,7 @@ export const FIXED_SUPPLY_2: SupplyResponse = {
   contract: { validDateFrom: "2024-03-15" },
   distributor: { name: "Endesa", code: "1", pointType: 3 },
   shelly: null,
+  plant: null,
   user: { id: FIXED_MEMBER_USER.id },
   ownerRecord: ownerRecordOf(FIXED_MEMBER_USER),
   // The active-community guard compares this with the selected community; a
@@ -403,6 +405,7 @@ export const FIXED_ADMIN_OWNED_SUPPLY: SupplyResponse = {
   contract: { validDateFrom: "2024-02-01" },
   distributor: { name: "Iberdrola", code: "2", pointType: 5 },
   shelly: null,
+  plant: null,
   user: { id: FIXED_COMMUNITY_ADMIN_USER.id },
   ownerRecord: ownerRecordOf(FIXED_COMMUNITY_ADMIN_USER),
   community: { id: FIXED_COMMUNITY_ID, name: "Sol Común" },
@@ -1200,6 +1203,8 @@ export const MEMBER_ENERGY_METRICS: MembershipEnergyMetricsResponse = {
   savings: { amountEur: 18.15, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
   selfConsumptionRatio: 0.4515,
   selfSufficiencyRatio: 0.2937,
+  selfConsumptionRatioStatus: "AVAILABLE",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 121, assignedProductionKWh: 268, excludedPlantSupplyCount: 0 },
 };
 
 /** One of the two supplies sent nothing this month. */
@@ -1220,6 +1225,8 @@ export const MEMBER_ENERGY_METRICS_NO_MONTH: MembershipEnergyMetricsResponse = {
   savings: { amountEur: null, tariffSource: "ESTIMATE", estimatedPrice: null },
   selfConsumptionRatio: null,
   selfSufficiencyRatio: null,
+  selfConsumptionRatioStatus: "NOTHING_ASSIGNED",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 0 },
 };
 
 // The month before the reference month (#200), as the comparison requests
@@ -1244,6 +1251,8 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS: MembershipEnergyMetricsResponse = {
   savings: { amountEur: 11.7, tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
   selfConsumptionRatio: 0.3108,
   selfSufficiencyRatio: 0.2042,
+  selfConsumptionRatioStatus: "AVAILABLE",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 78, assignedProductionKWh: 251, excludedPlantSupplyCount: 0 },
 };
 
 /** July with nothing recorded: not yet published, or before the member's supplies existed. */
@@ -1255,6 +1264,8 @@ export const MEMBER_ENERGY_METRICS_PREVIOUS_NO_DATA: MembershipEnergyMetricsResp
   savings: { amountEur: 0, tariffSource: "ESTIMATE", estimatedPrice: null },
   selfConsumptionRatio: null,
   selfSufficiencyRatio: null,
+  selfConsumptionRatioStatus: "NOTHING_ASSIGNED",
+  selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 0 },
 };
 
 /** A stored month of the member's two supplies (#201), both reporting unless stated. */

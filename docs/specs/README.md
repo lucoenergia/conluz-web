@@ -33,7 +33,7 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-ENT` | Community entry: which community is active and where a caller lands | [`community-entry.md`](community-entry.md) |
 | `UI-INT` | Integrations: the community integrations page and the plant's Huawei integration | [`integrations.md`](integrations.md) |
 | `UI-PLT` | Plant detail: the plant's production, and the status of its agreements and integration; a plant deletion's refusal and its confirmation | [`plant-detail.md`](plant-detail.md) |
-| `UI-SUP` | Supplies: deleting a supply from its card menu or its detail page | [`supplies.md`](supplies.md) |
+| `UI-SUP` | Supplies: deleting a supply from its card menu or its detail page, the CSV import, a create or edit refused for its CUPS or owner, and how a supply is named | [`supplies.md`](supplies.md) |
 | `UI-USR` | Users: the edit screen (removed in #285; tombstones only) | [`users.md`](users.md) |
 | `UI-MBR` | Members: registration, the CSV import, invitations, member status, the member record edit and suspension, and the last active admin's role change and removal on the members page | [`members.md`](members.md) |
 | `UI-PRF` | Profile: the email field | [`profile.md`](profile.md) |

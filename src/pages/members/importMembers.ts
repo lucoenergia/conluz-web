@@ -1,23 +1,12 @@
 import type { ImportMembersRowErrorResponse, ImportMembersRowResponse } from "../../api/models";
 import { translateErrorDetail } from "../../errors/apiErrorCatalogue";
-import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
+import { columnLabel, csvTemplate, downloadCsvTemplate, type CsvImportColumn } from "../../components/CsvImportDialog/csvImport";
 
 /**
  * The member import's columns (lucoenergia/conluz#397; #284), in the order the
- * template lists them. The header is the parser's name for the column, so it
- * is shown as it is, in English and with its case; the rest is for the guide.
- * The examples are invented.
+ * template lists them. The examples are invented.
  */
-export interface ImportColumn {
-  header: string;
-  /** How the guide and the row reasons name the column. */
-  label: string;
-  meaning: string;
-  required: boolean;
-  example: string;
-}
-
-export const IMPORT_COLUMNS: readonly ImportColumn[] = [
+export const IMPORT_COLUMNS: readonly CsvImportColumn[] = [
   {
     header: "personalId",
     label: "DNI/NIE/NIF",
@@ -67,21 +56,14 @@ export const MAX_IMPORT_ROWS = 1000;
 
 export const MEMBER_TEMPLATE_FILE_NAME = "plantilla-miembros.csv";
 
-/**
- * The template: the header line alone, so that no example row is ever
- * registered by a file sent without removing it. The byte order mark makes
- * Excel open it as UTF-8, so accented names typed into it survive.
- */
-export const MEMBER_TEMPLATE_CSV = `\uFEFF${IMPORT_COLUMNS.map((column) => column.header).join(";")}\r\n`;
+/** The template: the header line alone (see csvTemplate). */
+export const MEMBER_TEMPLATE_CSV = csvTemplate(IMPORT_COLUMNS);
 
 export function downloadMemberTemplate(): void {
-  triggerBrowserDownload(
-    new Blob([MEMBER_TEMPLATE_CSV], { type: "text/csv;charset=utf-8" }),
-    MEMBER_TEMPLATE_FILE_NAME,
-  );
+  downloadCsvTemplate(MEMBER_TEMPLATE_FILE_NAME, IMPORT_COLUMNS);
 }
 
-const labelOf = (column: string) => IMPORT_COLUMNS.find((c) => c.header === column)?.label ?? column;
+const labelOf = (column: string) => columnLabel(IMPORT_COLUMNS, column);
 
 /**
  * One broken rule of a row, in Spanish, from its column and constraint. A

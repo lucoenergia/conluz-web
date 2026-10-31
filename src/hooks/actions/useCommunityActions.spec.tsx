@@ -10,7 +10,7 @@ import {
 } from "../../api/communities/communities";
 import {
   getGetAllSuppliesQueryKey,
-  useCreateSuppliesWithFile,
+  useImportSupplies,
   useCreateSupply,
 } from "../../api/supplies/supplies";
 import { useCreatePlant } from "../../api/plants/plants";
@@ -54,7 +54,7 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
 vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   ...(await importOriginal()),
   useCreateSupply: vi.fn(),
-  useCreateSuppliesWithFile: vi.fn(),
+  useImportSupplies: vi.fn(),
 }));
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -87,7 +87,7 @@ beforeEach(() => {
   vi.mocked(useDisableCommunity).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useSetCommunityContact).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreateSupply).mockReturnValue(mutation.idle({ mutateAsync }));
-  vi.mocked(useCreateSuppliesWithFile).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useImportSupplies).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreatePlant).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureDatadis).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useConfigureShelly).mockReturnValue(mutation.idle({ mutateAsync }));
@@ -172,10 +172,30 @@ describe("useCommunityActions", () => {
 
       // The screen used to pass this itself, from the active community, which
       // is a second place the target could be decided -- and disagree.
-      expect(mutateAsync).toHaveBeenCalledWith({
-        data: IMPORT_BODY,
-        params: { communityId: COMMUNITY_ID },
+      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, data: IMPORT_BODY });
+    });
+
+    it("hands back the result of a supply import and refreshes the supplies", async () => {
+      const response = { created: 1, failed: 0, rows: [] };
+      mutateAsync.mockResolvedValue(response);
+      const { result, queryClient } = render(communityWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.importSupplies?.run(IMPORT_BODY)).resolves.toEqual({
+        ok: true,
+        value: response,
       });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllSuppliesQueryKey(COMMUNITY_ID) });
+    });
+
+    it("hands back a supply import refused as a whole, and refreshes nothing", async () => {
+      const refusal = new Error("TEST-REFUSAL");
+      mutateAsync.mockRejectedValue(refusal);
+      const { result, queryClient } = render(communityWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.importSupplies?.run(IMPORT_BODY)).resolves.toEqual({ error: refusal });
+      expect(invalidateQueries).not.toHaveBeenCalled();
     });
 
     it("refreshes the list the created thing appears in", async () => {

@@ -9,6 +9,7 @@ import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHea
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface PlantDetailHeaderProps {
   plant?: PlantResponse;
@@ -68,10 +69,12 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading
             </Typography>
           )}
           {/* The CUPS identifies the supply; the name is a nicety, and on some
-              communities it still holds a UUID. Never label the link with it. */}
-          {supply.name && (
+              communities it still holds a UUID. Never label the link with it.
+              A reference has no address, so without a name the label would be
+              the CUPS already shown, and is left out. */}
+          {supplyDisplayLabel(supply) !== supply.code && (
             <Typography variant="caption" sx={{ display: "block", color: colors.text.subtle, fontWeight: 400 }}>
-              {supply.name}
+              {supplyDisplayLabel(supply)}
             </Typography>
           )}
         </>

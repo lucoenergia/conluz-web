@@ -35,6 +35,7 @@ import { useSupplyActions } from "../../hooks/actions";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 import { toConsumptionRows } from "./consumptionRows";
 import { getFirstApiErrorCode } from "../../errors/apiErrorCatalogue";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 /**
  * A daily or monthly consumption period that has not started yet: "Mes" in the
@@ -583,7 +584,7 @@ export const SupplyDetailPage: FC = () => {
           steps={[
             { label: "Inicio", href: "/" },
             { label: "Puntos de Suministro", href: "/supply-points" },
-            { label: supplyPoint?.name || supplyPoint?.code || supplyPointId, href: "#" },
+            { label: supplyPoint ? supplyDisplayLabel(supplyPoint) : supplyPointId, href: "#" },
           ]}
         />
       </Box>

@@ -1,4 +1,5 @@
 import type { SupplyReferenceResponse } from "../../api/models";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 /**
  * `supply.name` is nullable — the contract now says so too, since
@@ -14,5 +15,6 @@ export function getRowIdentity(supply: SupplyReferenceResponse | undefined) {
   const name = supply?.name?.trim();
   const code = supply?.code?.trim();
   if (name) return { primary: name, secondary: code || "-" };
-  return { primary: code || "-", secondary: null };
+  // A reference carries no address, so the label is the CUPS here.
+  return { primary: (supply && supplyDisplayLabel(supply).trim()) || "-", secondary: null };
 }

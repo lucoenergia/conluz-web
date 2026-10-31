@@ -26,10 +26,7 @@ import type {
 
 import type {
   CoefficientAtTimestampResponse,
-  CreateSuppliesWithFileBody,
-  CreateSuppliesWithFileParams,
   CreateSupplyBody,
-  CreationInBulkResponse,
   DatadisConsumption,
   GetActivePartitionCoefficientParams,
   GetAllSuppliesParams,
@@ -43,6 +40,8 @@ import type {
   GetSupplyMonthlyConsumptionParams,
   GetSupplyMonthlyProductionParams,
   GetSupplyYearlyConsumptionParams,
+  ImportSuppliesBody,
+  ImportSuppliesResponse,
   PagedResultSupplyResponse,
   PartitionCoefficientResponse,
   ProductionByTime,
@@ -242,6 +241,81 @@ export const useSyncDatadisSupplies = <TError = ErrorType<RestError>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Creates a supply in the community for each data row of a CSV file, as `createSupply` does. Only an active community admin of the community may import supplies; a platform admin may not.
+
+**The file.** UTF-8 or Windows-1252, the two encodings Spanish Excel saves a CSV file in ("CSV UTF-8" and "CSV"), separated by `,` or `;`, told from the header line. A file starting with a UTF-8 byte order mark is read as UTF-8; one starting with a UTF-16 byte order mark is refused; any other is read as UTF-8 if it is valid UTF-8, and as Windows-1252 otherwise. The header line names the columns, in any order: `code`, `address` and `personalId` are required; `addressRef` and `name` are optional. No other column is accepted. At most 1000 data rows; rows whose cells are all empty are skipped.
+
+**Whole-file refusals.** If the file is neither UTF-8 nor Windows-1252, its separator cannot be told, it is not valid CSV, its header names an unknown column, a column twice or lacks a required one, or it has more than 1000 data rows, the response is 400 with a dedicated code, and nothing is created.
+
+**Rows.** Otherwise each row is created in a transaction of its own, so a row that fails keeps the others. The response has one result per row. An empty `addressRef` or `name` is stored as null. A row with an empty required value, or whose `code` is not a CUPS (once upper-cased, it holds whitespace or is neither 20 nor 22 characters long), fails with `SUPPLY_IMPORT_ROW_INVALID` and lists each rule broken in `errors`, by column and constraint code, for a client to write its own text. A row whose `personalId` matches no member of this community fails with `SUPPLY_OWNER_NOT_FOUND`, whether or not it matches a user; a member whose membership is pending is an owner. The code is stored upper-cased, and is the same CUPS as another once both are completed to 22 characters (a 20-character one with `0F`) and compared case-insensitively. A CUPS a supply of this community already has, including from an earlier row of the same file, fails with `SUPPLY_ALREADY_EXISTS`, so importing the same file again is safe: rows already created fail with that code, and the rest are created. A CUPS only a supply of another community has fails with `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY`. No result carries a value of the file. Every `message` is in the language of the request's Accept-Language.
+
+ * @summary Imports supplies into a community from a CSV file.
+ */
+export const importSupplies = (
+    communityId: string,
+    importSuppliesBody: ImportSuppliesBody,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+formData.append(`file`, importSuppliesBody.file)
+
+      return customInstance<ImportSuppliesResponse>(
+      {url: `/api/v1/communities/${communityId}/supplies/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
+  
+
+
+export const getImportSuppliesMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSupplies>>, TError,{communityId: string;data: ImportSuppliesBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof importSupplies>>, TError,{communityId: string;data: ImportSuppliesBody}, TContext> => {
+
+const mutationKey = ['importSupplies'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importSupplies>>, {communityId: string;data: ImportSuppliesBody}> = (props) => {
+          const {communityId,data} = props ?? {};
+
+          return  importSupplies(communityId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportSuppliesMutationResult = NonNullable<Awaited<ReturnType<typeof importSupplies>>>
+    export type ImportSuppliesMutationBody = ImportSuppliesBody
+    export type ImportSuppliesMutationError = ErrorType<RestError>
+
+    /**
+ * @summary Imports supplies into a community from a CSV file.
+ */
+export const useImportSupplies = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSupplies>>, TError,{communityId: string;data: ImportSuppliesBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importSupplies>>,
+        TError,
+        {communityId: string;data: ImportSuppliesBody},
+        TContext
+      > => {
+
+      const mutationOptions = getImportSuppliesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * This endpoint is designed to create a new supply within the system.
 
 To utilize this endpoint, a client sends a request containing essential details such as the supply's address, partition coefficient, and any relevant parameters.
@@ -254,7 +328,16 @@ community does not exist or the caller is not a member of it, or 403 if the call
 not one of its admins.**
 
 The owner identified by `personalId` must be a member of the supply's community. An owner who is
-not a member of it is reported as not found (404), exactly like a `personalId` that matches no user.
+not a member of it is reported as not found (404, `SUPPLY_OWNER_NOT_FOUND`), exactly like a
+`personalId` that matches no user.
+
+The `code` is the supply's CUPS. It is upper-cased and stored that way; it must then hold no
+whitespace and be 20 or 22 characters long, or the request is refused with 400
+`SUPPLY_CUPS_INVALID`. A CUPS is the same as another once both are completed to 22 characters
+(a 20-character one with `0F`) and compared case-insensitively. If a supply of this community
+already has the same CUPS, the request is refused with 400 `SUPPLY_ALREADY_EXISTS`; if only a
+supply of another community has it, with 400 `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY`, which
+names neither that community nor its owner.
 
 Upon successful creation, the server responds with a status code of 200, providing comprehensive details about the newly created supply, including its unique identifier.
 
@@ -320,89 +403,6 @@ export const useCreateSupply = <TError = ErrorType<RestError>,
       > => {
 
       const mutationOptions = getCreateSupplyMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * This endpoint facilitates the creation of a set of supplies within the system by importing a
-CSV file.
-
-This endpoint requires clients to send a request containing a file with essential details for each
-supply, including code, address, users and any additional relevant information.
-
-Authentication is mandated, utilizing an authentication token, to ensure secure access.
-**Required: Community Admin**
-
-Upon successful file processing, the server responds with an HTTP status code of 200, along with
-comprehensive details about the result of the bulk operation, including what users have been created
-or any potential error.
-
-In cases where the creation process encounters errors, the server responds with an appropriate error status code, accompanied by a descriptive error message to guide clients in addressing and resolving the issue.
-
- * @summary Creates supplies in bulk importing a CSV file.
- */
-export const createSuppliesWithFile = (
-    createSuppliesWithFileBody: CreateSuppliesWithFileBody,
-    params: CreateSuppliesWithFileParams,
- signal?: AbortSignal
-) => {
-      
-      const formData = new FormData();
-formData.append(`file`, createSuppliesWithFileBody.file)
-
-      return customInstance<CreationInBulkResponse>(
-      {url: `/api/v1/supplies/import`, method: 'POST',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params, signal
-    },
-      );
-    }
-  
-
-
-export const getCreateSuppliesWithFileMutationOptions = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}, TContext> => {
-
-const mutationKey = ['createSuppliesWithFile'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSuppliesWithFile>>, {data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}> = (props) => {
-          const {data,params} = props ?? {};
-
-          return  createSuppliesWithFile(data,params,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateSuppliesWithFileMutationResult = NonNullable<Awaited<ReturnType<typeof createSuppliesWithFile>>>
-    export type CreateSuppliesWithFileMutationBody = CreateSuppliesWithFileBody
-    export type CreateSuppliesWithFileMutationError = ErrorType<RestError>
-
-    /**
- * @summary Creates supplies in bulk importing a CSV file.
- */
-export const useCreateSuppliesWithFile = <TError = ErrorType<RestError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSuppliesWithFile>>, TError,{data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createSuppliesWithFile>>,
-        TError,
-        {data: CreateSuppliesWithFileBody;params: CreateSuppliesWithFileParams},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateSuppliesWithFileMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -578,6 +578,8 @@ Clients send a request containing the updated supply details, and authentication
 A successful update results in an HTTP status code of 200, indicating that the supply information has been successfully modified. In cases where the update encounters errors, the server responds with an appropriate error status code along with a descriptive error message to assist clients in addressing and resolving the issue.
 
 If you don't provide some of the optional parameters, they will be considered as null value so their values will be updated with a null value.
+
+A `code` equal to the stored one is kept as it is, even if it was stored before the CUPS rules. A changed `code` follows the rules of `createSupply`: it is upper-cased, and refused with 400 `SUPPLY_CUPS_INVALID` if it is not a CUPS, `SUPPLY_ALREADY_EXISTS` if another supply of this community has the same CUPS, or `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY` if only a supply of another community has it.
  * @summary Updates supply information
  */
 export const updateSupply = (
@@ -1375,6 +1377,11 @@ totals and two ratios, on a 0-1 scale:
 
 - `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.
 - `selfConsumptionRatio`: self-consumed energy divided by the energy assigned to the supply.
+  It does not apply to a plant's own supply, whose surplus is stored as 0:
+  it is then `null` with `selfConsumptionRatioStatus` `NOT_APPLICABLE`, while every
+  other figure is reported as usual. `NOTHING_ASSIGNED` means nothing was assigned to
+  the supply in the period, and `AVAILABLE` that the ratio is computed.
+  `selfConsumptionRatioBasis` reports the two figures it was computed from.
 
 Both ratios are computed by summing every record first and dividing once, so hours of
 different magnitude weigh differently. A ratio whose denominator is zero is returned as
