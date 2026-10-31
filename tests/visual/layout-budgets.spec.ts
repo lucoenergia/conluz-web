@@ -21,6 +21,7 @@
  */
 
 import { type Page } from "@playwright/test";
+import type { SupplyResponse } from "../../src/api/models";
 import {
   test,
   expect,
@@ -31,6 +32,7 @@ import {
   FIXED_PLANT_ID,
   FIXED_PLATFORM_ADMIN_USER,
   FIXED_SHARING_AGREEMENTS,
+  FIXED_SUPPLY,
   FIXED_SUPPLY_ID,
   injectAuthToken,
   MEMBER_HOURLY_PROFILE_GAPS,
@@ -641,4 +643,67 @@ test.describe("Visual baselines", () => {
       expect(widths.rootScroll, `${containerPage.name} overflows its root box`).toBeLessThanOrEqual(widths.rootClient);
     });
   }
+});
+
+/**
+ * #247. The historical analysis page's supply selector at phone width: the
+ * trigger and the bottom sheet it opens fit a 390px viewport, the longest
+ * option (a long name, a CUPS and the "Punto de planta" tag) wraps instead of
+ * widening anything, and the page never scrolls sideways.
+ */
+test.describe("#247: the historical analysis supply selector", () => {
+  const LONG_PLANT_SUPPLY: SupplyResponse = {
+    ...FIXED_SUPPLY,
+    id: "dddddddd-eeee-ffff-0000-111111111111",
+    code: "ES0031300806333002ET0F",
+    name: "Cubierta fotovoltaica del polideportivo municipal de Luco de Jiloca",
+    plant: { id: FIXED_PLANT_ID, name: "Planta Solar 1" },
+  };
+
+  test("UI-HIS-001 at 390px the selector and its bottom sheet fit, and the page never scrolls sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The bottom sheet is the selector below sm; the budget is a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    // Registered after mockAllApiRoutes so it wins: the member's own listing,
+    // with a plant supply whose label is longer than a phone is wide.
+    await page.route(
+      (url) => url.href.includes(`/api/v1/users/${FIXED_MEMBER_USER.id}/supplies`),
+      (route) =>
+        route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([FIXED_SUPPLY, LONG_PLANT_SUPPLY]) }),
+    );
+    await page.goto("/historical-analysis");
+
+    const trigger = page.getByRole("button", { name: /^Punto de suministro/ });
+    await expect(trigger).toBeVisible();
+    await stabilizePage(page);
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+    const triggerBox = await trigger.boundingBox();
+    expect(triggerBox!.x + triggerBox!.width, "the trigger reaches past the viewport").toBeLessThanOrEqual(390);
+
+    await trigger.click();
+    const sheet = page.getByRole("dialog", { name: "Punto de suministro" });
+    await expect(sheet).toBeVisible();
+    await stabilizePage(page);
+
+    const sheetBox = await sheet.boundingBox();
+    expect(sheetBox!.x, "the sheet starts off-screen").toBeGreaterThanOrEqual(0);
+    expect(sheetBox!.x + sheetBox!.width, "the sheet is wider than the viewport").toBeLessThanOrEqual(390);
+    expect(sheetBox!.y + sheetBox!.height, "the sheet reaches below the viewport").toBeLessThanOrEqual(844);
+    const sheetScroll = await sheet.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
+    expect(sheetScroll.scroll, "the sheet scrolls sideways").toBeLessThanOrEqual(sheetScroll.client);
+
+    const radios = sheet.getByRole("radio");
+    await expect(radios).toHaveCount(3);
+    const longOption = sheet.getByText(LONG_PLANT_SUPPLY.name!, { exact: false });
+    const optionBox = await longOption.boundingBox();
+    expect(optionBox!.x + optionBox!.width, "the long option is cut off").toBeLessThanOrEqual(sheetBox!.x + sheetBox!.width);
+    await expect(sheet.getByText("Punto de planta")).toBeInViewport();
+  });
 });

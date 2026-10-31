@@ -128,6 +128,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import HomeIcon from "@mui/icons-material/Home";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import KeyIcon from "@mui/icons-material/Key";
 import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
 import LinkIcon from "@mui/icons-material/Link";
@@ -325,6 +326,7 @@ export const Icons = {
   Home: HomeIcon,
   HomeRounded: HomeRoundedIcon,
   InfoOutlined: InfoOutlinedIcon,
+  InsightsRounded: InsightsRoundedIcon,
   Key: KeyIcon,
   LightbulbRounded: LightbulbRoundedIcon,
   Link: LinkIcon,

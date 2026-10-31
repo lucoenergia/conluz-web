@@ -40,8 +40,9 @@ describe("SideMenu visibility", () => {
   test("a member of a community sees the operational entries and nothing else", () => {
     setup(menuFor(MEMBER));
     shows("Inicio");
+    shows("Mi consumo y ahorro");
     shows("Producción");
-    shows("Consumo");
+    shows("Puntos de suministro");
     hides("Miembros");
     hides("Integraciones");
     hides("Comunidades");
@@ -64,8 +65,23 @@ describe("SideMenu visibility", () => {
     shows("Comunidades");
     shows("Administradores de plataforma");
     hides("Inicio");
+    hides("Mi consumo y ahorro");
     hides("Miembros");
     hides("Integraciones");
+  });
+
+  test("UI-HIS-004 offers Mi consumo y ahorro with the community's canRead, right after Inicio", () => {
+    setup(menuFor(MEMBER));
+    const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
+
+    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Producción", "Puntos de suministro"]);
+    expect(entries[1]).toHaveAttribute("href", "/historical-analysis");
+  });
+
+  test("UI-HIS-004 names the supplies entry Puntos de suministro, not Consumo", () => {
+    setup(menuFor(MEMBER));
+    expect(screen.getByRole("link", { name: "Puntos de suministro" })).toHaveAttribute("href", "/supply-points");
+    expect(screen.queryByRole("link", { name: "Consumo" })).not.toBeInTheDocument();
   });
 
   test("UI-PAD-001 offers Administradores de plataforma only with canListPlatformAdmins", () => {
@@ -108,7 +124,7 @@ describe("SideMenu visibility", () => {
 
     expect(screen.getByText("Comunidad")).toBeVisible();
     expect(screen.getByText("Plataforma")).toBeVisible();
-    for (const label of ["Inicio", "Producción", "Consumo", "Miembros", "Integraciones"]) {
+    for (const label of ["Inicio", "Mi consumo y ahorro", "Producción", "Puntos de suministro", "Miembros", "Integraciones"]) {
       expect(within(community).getByText(label)).toBeInTheDocument();
     }
     for (const label of ["Comunidades", "Administradores de plataforma"]) {

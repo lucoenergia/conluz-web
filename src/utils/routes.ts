@@ -52,6 +52,7 @@ export type PageScope = "community" | "platform" | "personal" | "none" | "unknow
 
 const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "unknown"> }> = [
   { prefix: "/home", scope: "community" },
+  { prefix: "/historical-analysis", scope: "community" },
   { prefix: "/production", scope: "community" },
   { prefix: "/supply-points", scope: "community" },
   { prefix: "/members", scope: "community" },
@@ -81,6 +82,10 @@ export function resolvePageScope(pathname: string): PageScope {
  * their React Query keys cannot change when the active community does.
  * Refetching one after a switch returns the same foreign entity again.
  */
+/** The historical analysis page, and the query parameter holding its selected supply (#247). */
+export const HISTORICAL_ANALYSIS_PATH = "/historical-analysis";
+export const SUPPLY_ID_PARAM = "supplyId";
+
 const ENTITY_SCOPED_SECTIONS = ["/production", "/supply-points"] as const;
 
 /**
@@ -113,6 +118,17 @@ export function resolveCommunityScopedTarget(pathname: string, search: string): 
   // community's member under the new community's name.
   if (pathname === "/supply-points" && new URLSearchParams(search).has("personId")) {
     return "/supply-points";
+  }
+
+  // The historical analysis page holds the selected supply in ?supplyId=. A
+  // supply belongs to one community, so the id cannot follow the caller into
+  // another; whatever else the query string holds stays (#247).
+  if (pathname === HISTORICAL_ANALYSIS_PATH) {
+    const params = new URLSearchParams(search);
+    if (!params.has(SUPPLY_ID_PARAM)) return null;
+    params.delete(SUPPLY_ID_PARAM);
+    const rest = params.toString();
+    return rest ? `${HISTORICAL_ANALYSIS_PATH}?${rest}` : HISTORICAL_ANALYSIS_PATH;
   }
 
   return null;

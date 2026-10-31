@@ -39,6 +39,7 @@ const CommunityContactPage = lazyPage(() => import("./pages/contact/CommunityCon
 const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityPage"), "NoCommunityPage");
 const MemberHomePage = lazyPage(() => import("./pages/home/MemberHomePage"), "MemberHomePage");
 const CommunityManagementPage = lazyPage(() => import("./pages/home/CommunityManagementPage"), "CommunityManagementPage");
+const HistoricalAnalysisPage = lazyPage(() => import("./pages/historical-analysis/HistoricalAnalysisPage"), "HistoricalAnalysisPage");
 
 const SupplyPointsPage = lazyPage(() => import("./pages/supply-points/SupplyPointsPage"), "SupplyPointsPage");
 const SupplyDetailPage = lazyPage(() => import("./pages/supply-points/SupplyDetailPage"), "SupplyDetailPage");
@@ -104,6 +105,11 @@ function App() {
             <Route path="member" element={<HomeViewRoute view="member"><MemberHomePage /></HomeViewRoute>} />
             <Route path="management" element={<HomeViewRoute view="management"><CommunityManagementPage /></HomeViewRoute>} />
           </Route>
+          {/* The caller's own consumption and savings over time (#247). */}
+          <Route
+            path="historical-analysis"
+            element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><HistoricalAnalysisPage /></CapabilityRoute>}
+          />
           {/*
             Supplies and plants are a community's operational data, so every
             page under them needs an active community the caller may read

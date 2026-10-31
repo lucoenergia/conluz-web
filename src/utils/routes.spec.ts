@@ -134,6 +134,21 @@ describe("resolveCommunityScopedTarget", () => {
     expect(resolveCommunityScopedTarget("/supply-points", "?page=2")).toBeNull();
   });
 
+  it("drops ?supplyId= from the historical analysis page, since a supply belongs to one community", () => {
+    expect(resolveCommunityScopedTarget("/historical-analysis", "?supplyId=supply-a")).toBe("/historical-analysis");
+  });
+
+  it("keeps the rest of the historical analysis page's query string when it drops ?supplyId=", () => {
+    expect(resolveCommunityScopedTarget("/historical-analysis", "?supplyId=supply-a&period=2026-08")).toBe(
+      "/historical-analysis?period=2026-08",
+    );
+  });
+
+  it("leaves the historical analysis page alone without ?supplyId=", () => {
+    expect(resolveCommunityScopedTarget("/historical-analysis", "")).toBeNull();
+    expect(resolveCommunityScopedTarget("/historical-analysis", "?period=2026-08")).toBeNull();
+  });
+
   it("leaves community-agnostic routes alone", () => {
     for (const pathname of ["/", "/profile", "/members", "/integrations", "/platform-admins", "/platform", "/communities/community-1/edit", "/no-community"]) {
       expect(resolveCommunityScopedTarget(pathname, "")).toBeNull();
