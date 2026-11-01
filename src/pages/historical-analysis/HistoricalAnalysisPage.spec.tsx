@@ -23,10 +23,17 @@ vi.mock(import("../../api/communities/communities"), async (importOriginal) => (
   ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
 }));
-// Mocked only to prove the page never reads the community's whole supply list.
+// useGetAllSupplies is mocked only to prove the page never reads the
+// community's whole supply list. The energy metrics reads resolve the period's
+// anchor (#248); this spec is about the supply selector, so they stay pending.
 vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllSupplies: vi.fn(),
+  useGetSupplyEnergyMetrics: vi.fn(),
+}));
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetMembershipEnergyMetrics: vi.fn(),
 }));
 
 const mockErrorDispatch = vi.fn();
@@ -42,7 +49,8 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 }));
 
 import { getSuppliesByUserId, useGetSuppliesByUserId } from "../../api/users/users";
-import { getAllSupplies, useGetAllSupplies } from "../../api/supplies/supplies";
+import { getAllSupplies, useGetAllSupplies, useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
+import { useGetMembershipEnergyMetrics } from "../../api/memberships/memberships";
 import { useGetAllCommunities } from "../../api/communities/communities";
 import { useActiveCommunity } from "../../context/community.context";
 import { useCommunitySwitchRedirect } from "../../hooks/useCommunitySwitchRedirect";
@@ -119,6 +127,12 @@ beforeEach(() => {
   vi.mocked(useGetAllCommunities).mockReturnValue(query.disabled());
   vi.mocked(useGetAllSupplies).mockReturnValue(
     query.success<typeof getAllSupplies>({ items: [], size: 10, totalElements: 0, totalPages: 0, number: 0 }),
+  );
+  vi.mocked(useGetMembershipEnergyMetrics).mockImplementation((_communityId, _userId, _params, options) =>
+    options?.query?.enabled === false ? query.disabled() : query.loading(),
+  );
+  vi.mocked(useGetSupplyEnergyMetrics).mockImplementation((_supplyId, _params, options) =>
+    options?.query?.enabled === false ? query.disabled() : query.loading(),
   );
 });
 

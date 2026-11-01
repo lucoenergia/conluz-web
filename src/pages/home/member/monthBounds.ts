@@ -1,7 +1,7 @@
 import { APP_TIME_ZONE } from "../../../utils/formatCalendarDate";
 import type { ReferencePeriod } from "./useMemberEnergyMetrics";
 
-interface WallTime {
+export interface WallTime {
   year: number;
   /** 1-12. */
   month: number;
@@ -21,7 +21,7 @@ const wallTimeFormat = new Intl.DateTimeFormat("en-US", {
 });
 
 /** The wall-clock time an instant reads as in the app's time zone. */
-function wallTimeAt(instantMs: number): WallTime & { minute: number; second: number } {
+export function wallTimeAt(instantMs: number): WallTime & { minute: number; second: number } {
   const parts = Object.fromEntries(
     wallTimeFormat.formatToParts(instantMs).map(({ type, value }) => [type, Number(value)]),
   ) as Record<Intl.DateTimeFormatPartTypes, number>;
@@ -44,7 +44,7 @@ const pad = (value: number) => String(value).padStart(2, "0");
  * first guess is taken at the wrong instant whenever a transition lies between
  * the wall time read as UTC and the real one.
  */
-function zonedIso({ year, month, day, hour }: WallTime): string {
+export function zonedIso({ year, month, day, hour }: WallTime): string {
   const wallAsUtc = Date.UTC(year, month - 1, day, hour);
   const firstGuess = offsetMinutesAt(wallAsUtc);
   const offset = offsetMinutesAt(wallAsUtc - firstGuess * 60_000);

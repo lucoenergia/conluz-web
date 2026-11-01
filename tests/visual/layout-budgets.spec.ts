@@ -707,3 +707,58 @@ test.describe("#247: the historical analysis supply selector", () => {
     await expect(sheet.getByText("Punto de planta")).toBeInViewport();
   });
 });
+
+/**
+ * #248. The historical analysis period at phone width: the period sheet and
+ * the custom range picker it leads to fit a 390x844 viewport, the picker's
+ * calendar and its Aplicar button included, and the page never scrolls
+ * sideways. Measured, not captured: what the risk is is a box overflowing.
+ */
+test.describe("#248: the historical analysis period selector", () => {
+  test("UI-HIS-006 at 390px the period sheet and the range picker fit, and the page never scrolls sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The bottom sheets are the period selector below sm; the budget is a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    // Serves the membership's latest published month too, which anchors the period.
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await page.goto("/historical-analysis");
+
+    const trigger = page.getByRole("button", { name: /^Periodo/ });
+    await expect(trigger).toBeVisible();
+    await stabilizePage(page);
+
+    const fitsViewport = async (name: string, box: { x: number; y: number; width: number; height: number } | null) => {
+      expect(box!.x, `${name} starts off-screen`).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width, `${name} is wider than the viewport`).toBeLessThanOrEqual(390);
+      expect(box!.y + box!.height, `${name} reaches below the viewport`).toBeLessThanOrEqual(844);
+    };
+    const noSidewaysScroll = async (name: string, element: ReturnType<Page["getByRole"]>) => {
+      const widths = await element.evaluate((node) => ({ scroll: node.scrollWidth, client: node.clientWidth }));
+      expect(widths.scroll, `${name} scrolls sideways`).toBeLessThanOrEqual(widths.client);
+    };
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+    await fitsViewport("the trigger", await trigger.boundingBox());
+
+    await trigger.click();
+    const sheet = page.getByRole("dialog", { name: "Periodo" });
+    await expect(sheet).toBeVisible();
+    await stabilizePage(page);
+    await fitsViewport("the period sheet", await sheet.boundingBox());
+    await noSidewaysScroll("the period sheet", sheet);
+
+    await sheet.getByRole("radio", { name: /^Rango personalizado/ }).click();
+    const picker = page.getByRole("dialog", { name: "Rango personalizado" });
+    await expect(picker).toBeVisible();
+    await stabilizePage(page);
+    await fitsViewport("the range picker", await picker.boundingBox());
+    await noSidewaysScroll("the range picker", picker);
+    await fitsViewport("the calendar", await picker.getByRole("grid").boundingBox());
+    await expect(picker.getByRole("button", { name: "Aplicar" })).toBeInViewport();
+  });
+});
