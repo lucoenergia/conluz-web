@@ -16,8 +16,7 @@ const baseProps: ListTableProps<Row> = {
   columns: [{ key: "name", header: "Nombre", render: (row) => row.name }],
   isLoading: false,
   emptyMessage: "Sin filas",
-  rowActionsLabel: (row) => `Más acciones para ${row.name}`,
-  onRowActionsClick: vi.fn(),
+  rowActions: { label: (row) => `Más acciones para ${row.name}`, onClick: vi.fn() },
 };
 
 const selection: ListTableProps<Row>["selection"] = {

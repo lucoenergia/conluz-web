@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { RecordList, type RecordListItem } from "./RecordList";
 
 const ITEMS: RecordListItem[] = [
@@ -8,7 +8,6 @@ const ITEMS: RecordListItem[] = [
     id: "u1",
     title: "Ana García",
     status: <span>Activo</span>,
-    actions: <button type="button">Más acciones para Ana García</button>,
     fields: [
       { label: "Email", value: "ana@example.com" },
       { label: "Teléfono", value: "600000001" },
@@ -39,11 +38,19 @@ describe("RecordList", () => {
   });
 
   it("keeps row actions reachable — the whole point of the stacked layout", () => {
-    render(<RecordList items={ITEMS} label="Usuarios" emptyMessage="Sin usuarios" />);
+    const onClick = vi.fn();
+    render(
+      <RecordList
+        items={ITEMS}
+        label="Usuarios"
+        emptyMessage="Sin usuarios"
+        rowActions={{ label: (item) => `Más acciones para ${item.title}`, onClick, has: (item) => item.id === "u1" }}
+      />,
+    );
 
-    expect(
-      screen.getByRole("button", { name: "Más acciones para Ana García" }),
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones para Ana García" }));
+    expect(onClick).toHaveBeenCalledWith(expect.anything(), ITEMS[0]);
+    expect(screen.queryByRole("button", { name: "Más acciones para Bruno Leal" })).not.toBeInTheDocument();
   });
 
   it("shows the empty message instead of an empty list", () => {

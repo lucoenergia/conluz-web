@@ -8,7 +8,6 @@ import {
   Chip,
   Alert,
   Button,
-  IconButton,
   MenuItem,
   ListItemIcon,
   ListItemText,
@@ -16,13 +15,12 @@ import {
 import BusinessIcon from "@mui/icons-material/Business";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import { radii, shadows, colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { RecordList } from "../../components/RecordList";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, ListTableHeaderText, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -112,6 +110,10 @@ export const CommunitiesPage: FC = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  // The narrow list's item back to the community it was built from.
+  const communityOfItem = (item: RecordListItem) =>
+    communities.find((community) => String(community.id ?? "") === item.id);
 
   const handleEditClick = () => {
     handleMenuClose();
@@ -221,9 +223,11 @@ export const CommunitiesPage: FC = () => {
               getRowKey={(community) => community.id}
               isLoading={isLoading}
               emptyMessage="No hay comunidades registradas"
-              rowActionsLabel={(community) => `Más acciones para ${community.name || "la comunidad"}`}
-              onRowActionsClick={handleMenuOpen}
-              hasRowActions={hasRowActions}
+              rowActions={{
+                label: (community) => `Más acciones para ${community.name || "la comunidad"}`,
+                onClick: handleMenuOpen,
+                has: hasRowActions,
+              }}
               columns={[
                 {
                   key: "name",
@@ -321,6 +325,17 @@ export const CommunitiesPage: FC = () => {
                 label="Comunidades"
                 isLoading={isLoading}
                 emptyMessage="No se encontraron comunidades"
+                rowActions={{
+                  label: (item) => `Más acciones para ${communityOfItem(item)?.name || "la comunidad"}`,
+                  onClick: (event, item) => {
+                    const community = communityOfItem(item);
+                    if (community) handleMenuOpen(event, community);
+                  },
+                  has: (item) => {
+                    const community = communityOfItem(item);
+                    return !!community && hasRowActions(community);
+                  },
+                }}
                 items={communities.map((community) => ({
                   id: String(community.id ?? ""),
                   avatar: <BusinessIcon sx={{ color: "primary.main", fontSize: 20, mt: 0.5 }} />,
@@ -333,15 +348,6 @@ export const CommunitiesPage: FC = () => {
                       sx={{ fontWeight: 600 }}
                     />
                   ),
-                  actions: hasRowActions(community) ? (
-                    <IconButton
-                      aria-label={`Más acciones para ${community.name || "la comunidad"}`}
-                      onClick={(e) => handleMenuOpen(e, community)}
-                      sx={sxStyles.touchTarget}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  ) : undefined,
                   fields: [
                     { label: "Código", value: community.code || "—" },
                     { label: "CIF", value: community.legalId || "—" },

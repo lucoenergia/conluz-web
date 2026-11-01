@@ -1,4 +1,7 @@
-import { RecordList, Mui, Icons, fontSizes, sxStyles } from "conluz-web";
+import { RecordList, Mui, fontSizes } from "conluz-web";
+
+const noop = () => {};
+const rowActions = { label: (item: { title: string }) => `Más acciones para ${item.title}`, onClick: noop };
 
 const member = (id: string, name: string, email: string, role: string, enabled: boolean) => ({
   id,
@@ -10,11 +13,6 @@ const member = (id: string, name: string, email: string, role: string, enabled: 
   title: name,
   status: (
     <Mui.Chip label={enabled ? "Activo" : "Inactivo"} color={enabled ? "success" : "error"} size="small" sx={{ fontWeight: 600 }} />
-  ),
-  actions: (
-    <Mui.IconButton aria-label={`Más acciones para ${name}`} sx={sxStyles.touchTarget}>
-      <Icons.MoreVert />
-    </Mui.IconButton>
   ),
   fields: [
     { label: "Email", value: email },
@@ -30,7 +28,7 @@ const items = [
 
 export const Members = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
-    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={items} />
+    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={items} rowActions={rowActions} />
   </Mui.Box>
 );
 
@@ -39,6 +37,7 @@ export const WithBadge = () => (
     <RecordList
       label="Usuarios de la plataforma"
       emptyMessage="No se encontraron usuarios"
+      rowActions={rowActions}
       items={[
         {
           ...member("u-1", "Vicent Ribes Climent", "vicent.ribes@correo.es", "Miembro", true),
@@ -54,6 +53,7 @@ export const WithLines = () => (
     <RecordList
       label="Miembros de la comunidad"
       emptyMessage="No se encontraron miembros"
+      rowActions={{ ...rowActions, has: (item) => item.id === "m-4" }}
       items={[
         {
           id: "m-4",
@@ -61,11 +61,6 @@ export const WithLines = () => (
             <Mui.Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>A</Mui.Avatar>
           ),
           title: "Amparo Domínguez Llorens",
-          actions: (
-            <Mui.IconButton aria-label="Más acciones para Amparo Domínguez Llorens" sx={sxStyles.touchTarget}>
-              <Icons.MoreVert />
-            </Mui.IconButton>
-          ),
           badge: <Mui.Chip label="Invitación enviada" size="small" sx={{ fontWeight: 600 }} />,
           lines: ["Miembro · 12345678Z", "amparo.dominguez.llorens.cooperativa@telefonica.net"],
           fields: [],
@@ -102,6 +97,7 @@ export const WithSelection = () => (
     <RecordList
       label="Miembros de la comunidad"
       emptyMessage="No se encontraron miembros"
+      rowActions={rowActions}
       items={items.map((item, index) => ({
         ...item,
         selection:

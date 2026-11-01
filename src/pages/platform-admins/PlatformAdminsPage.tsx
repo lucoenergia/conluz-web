@@ -9,7 +9,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   ListItemIcon,
   ListItemText,
   MenuItem,
@@ -17,14 +16,13 @@ import {
   Typography,
 } from "@mui/material";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RemoveModeratorIcon from "@mui/icons-material/RemoveModerator";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { RecordList } from "../../components/RecordList";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -148,6 +146,9 @@ export const PlatformAdminsPage: FC = () => {
   };
   const handleMenuClose = () => setAnchorEl(null);
 
+  // The narrow list's item back to the admin it was built from.
+  const adminOfItem = (item: RecordListItem) => admins.find((admin) => admin.user.id === item.id);
+
   const handleRevokeConfirm = async () => {
     if (!selectedRevoke) return;
     const result = await selectedRevoke.run();
@@ -261,9 +262,11 @@ export const PlatformAdminsPage: FC = () => {
                   getRowKey={(admin) => admin.user.id}
                   isLoading={isLoading}
                   emptyMessage={EMPTY_MESSAGE}
-                  rowActionsLabel={(admin) => `Más acciones para ${admin.fullName}`}
-                  onRowActionsClick={handleMenuOpen}
-                  hasRowActions={hasRowActions}
+                  rowActions={{
+                    label: (admin) => `Más acciones para ${admin.fullName}`,
+                    onClick: handleMenuOpen,
+                    has: hasRowActions,
+                  }}
                   columns={[
                     {
                       key: "admin",
@@ -300,6 +303,17 @@ export const PlatformAdminsPage: FC = () => {
                     label="Administradores de plataforma"
                     isLoading={isLoading}
                     emptyMessage={EMPTY_MESSAGE}
+                    rowActions={{
+                      label: (item) => `Más acciones para ${item.title}`,
+                      onClick: (event, item) => {
+                        const admin = adminOfItem(item);
+                        if (admin) handleMenuOpen(event, admin);
+                      },
+                      has: (item) => {
+                        const admin = adminOfItem(item);
+                        return !!admin && hasRowActions(admin);
+                      },
+                    }}
                     items={admins.map((admin) => {
                       const invitation = membershipStateOf(admin);
                       const invitationCaption = invitation && invitationText(invitation);
@@ -312,15 +326,6 @@ export const PlatformAdminsPage: FC = () => {
                         ),
                         title: admin.fullName,
                         status: invitation ? <PlatformInvitationChip /> : <StateChip admin={admin} />,
-                        actions: hasRowActions(admin) ? (
-                          <IconButton
-                            aria-label={`Más acciones para ${admin.fullName}`}
-                            onClick={(event) => handleMenuOpen(event, admin)}
-                            sx={sxStyles.touchTarget}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
-                        ) : undefined,
                         fields: [
                           ...(admin.email ? [{ label: "Email", value: admin.email }] : []),
                           ...(invitationCaption ? [{ label: "Invitación", value: invitationCaption }] : []),

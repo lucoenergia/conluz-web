@@ -9,7 +9,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   ListItemIcon,
   ListItemText,
   MenuItem,
@@ -18,14 +17,13 @@ import {
 } from "@mui/material";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { RecordList } from "../../components/RecordList";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -114,6 +112,9 @@ export const CommunityAdminsPage: FC = () => {
     setSelectedUserId(admin.user.id);
   };
   const handleMenuClose = () => setAnchorEl(null);
+
+  // The narrow list's item back to the admin it was built from.
+  const adminOfItem = (item: RecordListItem) => admins.find((admin) => admin.user.id === item.id);
 
   const handleStatusConfirm = async () => {
     if (!selectedStatusToggle) return;
@@ -213,9 +214,11 @@ export const CommunityAdminsPage: FC = () => {
                   getRowKey={(admin) => admin.user.id}
                   isLoading={isLoading}
                   emptyMessage="Esta comunidad no tiene administradores"
-                  rowActionsLabel={(admin) => `Más acciones para ${admin.fullName}`}
-                  onRowActionsClick={handleMenuOpen}
-                  hasRowActions={hasRowActions}
+                  rowActions={{
+                    label: (admin) => `Más acciones para ${admin.fullName}`,
+                    onClick: handleMenuOpen,
+                    has: hasRowActions,
+                  }}
                   columns={[
                     {
                       key: "admin",
@@ -263,6 +266,17 @@ export const CommunityAdminsPage: FC = () => {
                     label="Administradores de la comunidad"
                     isLoading={isLoading}
                     emptyMessage="Esta comunidad no tiene administradores"
+                    rowActions={{
+                      label: (item) => `Más acciones para ${item.title}`,
+                      onClick: (event, item) => {
+                        const admin = adminOfItem(item);
+                        if (admin) handleMenuOpen(event, admin);
+                      },
+                      has: (item) => {
+                        const admin = adminOfItem(item);
+                        return !!admin && hasRowActions(admin);
+                      },
+                    }}
                     items={admins.map((admin) => {
                       return {
                         id: admin.user.id,
@@ -275,15 +289,6 @@ export const CommunityAdminsPage: FC = () => {
                         // Under the name, full width: a long sub-status on the title line
                         // squeezed the name to a letter per line (#331).
                         badge: <MembershipStatusChip membership={admin} />,
-                        actions: hasRowActions(admin) ? (
-                          <IconButton
-                            aria-label={`Más acciones para ${admin.fullName}`}
-                            onClick={(event) => handleMenuOpen(event, admin)}
-                            sx={sxStyles.touchTarget}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
-                        ) : undefined,
                         fields: [
                           { label: "DNI/NIE", value: admin.personalId },
                           ...(admin.contactEmail ? [{ label: "Email", value: admin.contactEmail }] : []),

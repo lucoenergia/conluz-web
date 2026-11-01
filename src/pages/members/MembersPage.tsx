@@ -17,7 +17,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -30,7 +29,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
@@ -40,7 +38,7 @@ import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { RecordList } from "../../components/RecordList";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
 import { EmptyState } from "../../components/EmptyState";
 import useWindowDimensions from "../../utils/useWindowDimensions";
@@ -214,6 +212,9 @@ export const MembersPage: FC = () => {
   };
 
   const handleMenuClose = () => setAnchorEl(null);
+
+  // The narrow list's item back to the membership it was built from.
+  const membershipOfItem = (item: RecordListItem) => memberships.find((m) => String(m.id ?? "") === item.id);
 
   const handleChangeRoleClick = () => {
     handleMenuClose();
@@ -509,9 +510,11 @@ export const MembersPage: FC = () => {
               rows={pageRows}              getRowKey={(membership) => membership.id}
               isLoading={isLoading}
               emptyMessage="No hay miembros en esta comunidad"
-              rowActionsLabel={(membership) => `Más acciones para ${membership.fullName}`}
-              onRowActionsClick={handleMenuOpen}
-              hasRowActions={hasRowActions}
+              rowActions={{
+                label: (membership) => `Más acciones para ${membership.fullName}`,
+                onClick: handleMenuOpen,
+                has: hasRowActions,
+              }}
               selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
               columns={[
                 {
@@ -578,6 +581,17 @@ export const MembersPage: FC = () => {
                 label="Miembros de la comunidad"
                 isLoading={isLoading}
                 emptyMessage="No se encontraron miembros"
+                rowActions={{
+                  label: (item) => `Más acciones para ${item.title}`,
+                  onClick: (event, item) => {
+                    const membership = membershipOfItem(item);
+                    if (membership) handleMenuOpen(event, membership);
+                  },
+                  has: (item) => {
+                    const membership = membershipOfItem(item);
+                    return !!membership && hasRowActions(membership);
+                  },
+                }}
                 items={pageRows.map((membership) => {
                   const role = ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER];
                   return {
@@ -590,15 +604,6 @@ export const MembersPage: FC = () => {
                     ),
                     title: membership.fullName,
                     badge: <MembershipStatusChip membership={membership} />,
-                    actions: hasRowActions(membership) ? (
-                      <IconButton
-                        aria-label={`Más acciones para ${membership.fullName}`}
-                        onClick={(e) => handleMenuOpen(e, membership)}
-                        sx={sxStyles.touchTarget}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    ) : undefined,
                     // Role and DNI/NIE/NIF on one line, the email on its own, left out when there is none.
                     lines: [
                       `${role} · ${membership.personalId}`,

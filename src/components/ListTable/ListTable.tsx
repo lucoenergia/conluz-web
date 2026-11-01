@@ -1,4 +1,4 @@
-import type { Key, MouseEvent, ReactNode } from "react";
+import type { Key, ReactNode } from "react";
 import {
   CircularProgress,
   IconButton,
@@ -13,6 +13,7 @@ import {
 import type { SxProps, Theme } from "@mui/material/styles";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { colors } from "../../theme/tokens";
+import type { RowActions } from "./RowActions";
 
 export interface ListTableColumn<T> {
   key: string;
@@ -30,18 +31,8 @@ export interface ListTableProps<T> {
   isLoading: boolean;
   /** Shown in a full-width row when `rows` is empty and not loading. */
   emptyMessage: string;
-  /** Accessible name of the row's actions button. */
-  rowActionsLabel: (row: T) => string;
-  onRowActionsClick: (event: MouseEvent<HTMLElement>, row: T) => void;
-  /**
-   * Whether this row has any action to offer. Every row does, by default.
-   *
-   * A page whose menu is built from capabilities can reach a row with nothing
-   * in it. That row gets no button rather than one that opens an empty menu:
-   * the kebab is a promise of something to do, and the column stays so the
-   * table does not reflow around it.
-   */
-  hasRowActions?: (row: T) => boolean;
+  /** The trailing kebab of each row; a row whose `has` is false gets no button. */
+  rowActions: RowActions<T>;
   /**
    * A leading selection column, for a page that acts on several rows at once.
    *
@@ -76,9 +67,7 @@ export const ListTable = <T,>({
   columns,
   isLoading,
   emptyMessage,
-  rowActionsLabel,
-  onRowActionsClick,
-  hasRowActions,
+  rowActions,
   selection,
 }: ListTableProps<T>) => {
   const colSpan = columns.length + 1 + (selection ? 1 : 0);
@@ -134,11 +123,11 @@ export const ListTable = <T,>({
                   </TableCell>
                 ))}
                 <TableCell align="center">
-                  {(hasRowActions?.(row) ?? true) && (
+                  {(rowActions.has?.(row) ?? true) && (
                   <IconButton
                     size="small"
-                    aria-label={rowActionsLabel(row)}
-                    onClick={(e) => onRowActionsClick(e, row)}
+                    aria-label={rowActions.label(row)}
+                    onClick={(e) => rowActions.onClick(e, row)}
                     sx={{
                       color: colors.text.subtle,
                       // eslint-disable-next-line no-restricted-syntax -- icon-button hover tint (Tailwind gray-100); no matching token

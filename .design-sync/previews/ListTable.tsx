@@ -48,8 +48,7 @@ export const Members = () => (
     columns={columns}
     isLoading={false}
     emptyMessage="No hay miembros en esta comunidad"
-    rowActionsLabel={(m) => `Más acciones para ${m.name}`}
-    onRowActionsClick={noop}
+    rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
   />
 );
 
@@ -60,8 +59,7 @@ export const Loading = () => (
     columns={columns}
     isLoading
     emptyMessage="No hay miembros en esta comunidad"
-    rowActionsLabel={(m) => `Más acciones para ${m.name}`}
-    onRowActionsClick={noop}
+    rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
   />
 );
 
@@ -72,8 +70,7 @@ export const Empty = () => (
     columns={columns}
     isLoading={false}
     emptyMessage="No hay miembros en esta comunidad"
-    rowActionsLabel={(m) => `Más acciones para ${m.name}`}
-    onRowActionsClick={noop}
+    rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
   />
 );
 
@@ -87,8 +84,7 @@ export const WithSelection = () => (
     columns={columns}
     isLoading={false}
     emptyMessage="No hay miembros en esta comunidad"
-    rowActionsLabel={(m) => `Más acciones para ${m.name}`}
-    onRowActionsClick={noop}
+    rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
     selection={{
       header: <Mui.Checkbox indeterminate inputProps={{ "aria-label": "Seleccionar todo" }} />,
       render: (m) =>

@@ -1,6 +1,9 @@
 import type { FC, ReactNode } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, IconButton, Typography } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { colors, fontSizes, radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
+import type { RowActions } from "../ListTable/RowActions";
 
 export interface RecordField {
   label: string;
@@ -21,9 +24,6 @@ export interface RecordListItem {
   badge?: ReactNode;
   /** Status chip, kept on the title line so state reads at a glance. */
   status?: ReactNode;
-  /** Row actions. Always rendered on the title line so they can never be
-   *  pushed out of reach the way an off-canvas table column can. */
-  actions?: ReactNode;
   /** Plain lines under the badge, one per row. Each stays on one line and is
    *  cut with an ellipsis only when it is wider than the card. */
   lines?: ReactNode[];
@@ -40,6 +40,9 @@ export interface RecordListProps {
   label: string;
   isLoading?: boolean;
   emptyMessage: string;
+  /** Each record's kebab, always on the title line so it can never be pushed
+   *  out of reach the way an off-canvas table column can. */
+  rowActions?: RowActions<RecordListItem>;
 }
 
 /**
@@ -52,7 +55,7 @@ export interface RecordListProps {
  *
  * Pair with a table hidden below the `sm` breakpoint; this list hides above it.
  */
-export const RecordList: FC<RecordListProps> = ({ items, label, isLoading, emptyMessage }) => {
+export const RecordList: FC<RecordListProps> = ({ items, label, isLoading, emptyMessage, rowActions }) => {
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
@@ -121,7 +124,15 @@ export const RecordList: FC<RecordListProps> = ({ items, label, isLoading, empty
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
               {item.status}
-              {item.actions}
+              {rowActions && (rowActions.has?.(item) ?? true) && (
+                <IconButton
+                  aria-label={rowActions.label(item)}
+                  onClick={(event) => rowActions.onClick(event, item)}
+                  sx={sxStyles.touchTarget}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+              )}
             </Box>
           </Box>
 
