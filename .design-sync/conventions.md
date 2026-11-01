@@ -41,8 +41,11 @@ community context the dialogs read. There is no signed-in user, so community-sco
 
 ## Patterns the app always follows
 
-- Lists: desktop `ListTable` + `RowActionsMenu`; row actions live **only** in the kebab menu. Mobile:
-  `RecordList`. The one inline control a row may carry is a selection checkbox in the leading slot
+- Lists: a `ResponsiveRecordList` panel holding a `ListTable` (from a 1024px viewport) and a
+  `RecordList` (below it), with `ListPagination` in its footer above 25 rows. Both layouts take the
+  same `rowActions` ({ label, onClick, has }); row actions live **only** in the kebab menu, and the
+  table draws its actions column only while some row has actions. No row hover; only the title (the
+  table's `title` column) may link to a detail page. The one inline control a row may carry is a selection checkbox in the leading slot
   (`ListTable`'s `selection`, `RecordListItem.selection`), named "Seleccionar <nombre>", with a
   tri-state "select all"; the actions on the selection sit outside the rows. Card grids: `CardGrid` (pass `fadeTimeout={0}` for static mockups).
 - Any action that changes data opens a confirmation dialog (`ConfirmationModal`,

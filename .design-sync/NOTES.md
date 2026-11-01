@@ -96,6 +96,8 @@
   the banner's brand fill, so its previews sit in a `brand.main` box.
 - Not previewable statically: GraphFilter ranges other than "Día" (no controlled prop), the
   banner/spine "Ver todos los pasos" expanded list.
+- ResponsiveRecordList and ListPagination pick their layout from the window width (1024px), so a
+  card narrower than that still shows the table unless the viewport is narrow.
 - App facts noticed: PaginatedList and SupportCard have no usages in `src/`; PaginationOutlined passes
   Tailwind classes via `className` (no effect, no Tailwind loaded); LoadingStat requires `label`.
 

@@ -75,6 +75,8 @@ export { PlantCard } from "../../src/components/PlantCard/PlantCard";
 export { PlantDetailHeader } from "../../src/components/PlantDetailHeader/PlantDetailHeader";
 export { PlatformKpiCard } from "../../src/components/PlatformKpiCard/PlatformKpiCard";
 export { RecordList } from "../../src/components/RecordList/RecordList";
+export { ResponsiveRecordList } from "../../src/components/ResponsiveRecordList/ResponsiveRecordList";
+export { ListPagination } from "../../src/components/ListPagination/ListPagination";
 export { ResultStatus } from "../../src/components/ResultStatus/ResultStatus";
 export { RouteFallback } from "../../src/components/RouteFallback/RouteFallback";
 export { SearchBar } from "../../src/components/SearchBar/SearchBar";

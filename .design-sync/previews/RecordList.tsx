@@ -102,3 +102,17 @@ export const WithSelection = () => (
     />
   </Mui.Box>
 );
+
+export const WithLinks = () => (
+  <Mui.Box sx={{ maxWidth: 390 }}>
+    <RecordList
+      label="Puntos de suministro"
+      chevron
+      items={[
+        { id: "s-1", title: "Casa de Lucía", href: "/supply-points/s-1", lines: ["ES0021000000000001AB"] },
+        { id: "s-2", title: "Local de la cooperativa", href: "/supply-points/s-2", lines: ["ES0021000000000002CD"] },
+        { id: "s-3", title: "Nave antigua", href: "/supply-points/s-3", lines: ["ES0021000000000003EF"], inactive: true },
+      ]}
+    />
+  </Mui.Box>
+);

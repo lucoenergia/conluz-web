@@ -270,20 +270,22 @@ interface StatItem {
 
 interface RecordListItem {
   id: string;
-  /** Leading selection checkbox, named "Seleccionar <name>", for a page that acts on several records at once. When any item has one, every item gets the slot, so the cards stay aligned whether or not theirs can be selected. The actions on the selection live outside the list. */
+  /** Leading selection checkbox, named "Seleccionar <name>", for a page that acts on several records at once. When any item has one, every item gets the slot, so the rows stay aligned whether or not theirs can be selected. The actions on the selection live outside the list. */
   selection?: ReactNode;
   /** Leading avatar or icon. Optional — omit for records without one. */
   avatar?: ReactNode;
   title: string;
+  /** The record's detail route. The title becomes its link; the row never does (UI-LST-002). */
+  href?: string;
   /** Secondary marker under the title, e.g. a role chip. */
   badge?: ReactNode;
   /** Status chip, kept on the title line so state reads at a glance. */
   status?: ReactNode;
-  /** Row actions. Always rendered on the title line so they can never be pushed out of reach the way an off-canvas table column can. */
-  actions?: ReactNode;
-  /** Plain lines under the badge, one per row. Each stays on one line and is cut with an ellipsis only when it is wider than the card. */
+  /** Plain lines under the badge, one per row. A long value wraps rather than being cut, so nothing is hidden. */
   lines?: ReactNode[];
-  fields: RecordField[];
+  fields?: RecordField[];
+  /** Mutes the row, e.g. for a disabled record. */
+  inactive?: boolean;
 }
 
 interface RecordField {
