@@ -43,7 +43,7 @@ import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
 import {
   AUGUST_2026,
   COMMUNITY_ID,
-  DECEMBER_2026,
+  DECEMBER_2025,
   GARAGE,
   HOME,
   NOTHING_PUBLISHED,
@@ -182,7 +182,7 @@ describe("UI-HIS-005 the period ends no later than the latest month published fo
       .map((radio) => radio.closest("label")!.textContent);
     expect(options).toEqual([
       "Último mes publicadoSeptiembre de 2026 · por días",
-      "Este añoDe enero a septiembre de 2026 · por meses",
+      "Año 2026De enero a septiembre · por meses",
       "Últimos 12 mesesDe octubre de 2025 a septiembre de 2026 · por meses",
       "Rango personalizadoElige las fechas, hasta 24 meses",
     ]);
@@ -205,20 +205,20 @@ describe("UI-HIS-005 the period ends no later than the latest month published fo
     expect(container.querySelector(".MuiAlert-root")).toBeNull();
   });
 
-  it("UI-HIS-005 AC4 -- anchor December 2026: 'Este año' is a neutral state that leads to the last 12 months", async () => {
-    membershipAnchors[COMMUNITY_ID] = DECEMBER_2026;
-    const { container } = renderPage("?period=year");
+  it("UI-HIS-005 the year preset is named after the anchor's year, and re-resolves when a supply's anchor is in the previous year", async () => {
+    supplyAnchors[HOME.id] = DECEMBER_2025;
+    renderPage("?period=year");
 
-    const note = screen.getByRole("note");
-    expect(note).toHaveTextContent("Aún no hay datos de 2027");
-    expect(note).toHaveTextContent("Los datos de enero se publican hacia el 10 de febrero. Mientras tanto, puedes ver tus últimos 12 meses.");
-    expect(container.querySelector(".MuiAlert-root")).toBeNull();
-    expect(screen.getByRole("button", { name: PERIOD })).toHaveTextContent("Este año");
+    expect(screen.getByRole("button", { name: PERIOD })).toHaveTextContent("Año 2026");
+    expect(heading()).toHaveTextContent("Datos de enero a septiembre de 2026");
 
-    await userEvent.click(screen.getByRole("button", { name: "Ver últimos 12 meses" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Punto de suministro/ }));
+    await userEvent.click(within(screen.getByRole("dialog", { name: "Punto de suministro" })).getByRole("radio", { name: /^Casa/ }));
 
-    expect(currentSearch().get("period")).toBe("last12");
-    expect(heading()).toHaveTextContent("Datos de enero a diciembre de 2026");
+    await waitFor(() => expect(screen.getByRole("button", { name: PERIOD })).toHaveTextContent("Año 2025"));
+    expect(heading()).toHaveTextContent("Datos de enero a diciembre de 2025");
+    expect(currentSearch().get("period")).toBe("year");
+    // A preset is not clamped: it is the new anchor's year, with no notice.
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
   });
 });
@@ -398,7 +398,7 @@ describe("UI-HIS-008 a custom range is clamped to the anchor it meets, and the u
     renderPage(`?supplyId=${HOME.id}&period=custom&from=2026-07-10&to=2026-09-20`);
     await waitFor(() => expect(screen.getByRole("note")).toHaveTextContent(CLAMPED_TO_AUGUST_SUPPLY));
 
-    await chooseInSheet(/^Este año/);
+    await chooseInSheet(/^Año 2026/);
 
     expect(screen.queryByText(CLAMPED_TO_AUGUST_SUPPLY)).not.toBeInTheDocument();
   });
@@ -419,7 +419,7 @@ describe("UI-HIS-009 the period is held in the query string (#248)", () => {
   it("UI-HIS-009 a chosen preset is written next to the supply, and read back on arrival", async () => {
     renderPage(`?supplyId=${GARAGE.id}`);
 
-    await chooseInSheet(/^Este año/);
+    await chooseInSheet(/^Año 2026/);
 
     expect(currentSearch().toString()).toBe(`supplyId=${GARAGE.id}&period=year`);
     expect(heading()).toHaveTextContent("Datos de enero a septiembre de 2026");

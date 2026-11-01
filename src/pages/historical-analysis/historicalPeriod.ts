@@ -68,8 +68,6 @@ export type PeriodResolution =
       pickedDays: number;
       snapped: SnappedRange | null;
     }
-  /** "Este año" before its January is published. */
-  | { status: "yearEmpty"; year: number }
   /** More than MAX_MONTHS after snapping. */
   | { status: "tooLong"; pickedDays: number }
   /** A custom range that ends after the anchor month, or runs backwards. */
@@ -140,17 +138,6 @@ function startOfDay(day: CalendarDay): string {
 export function anchorFromPeriodStart(startDate: string): CalendarMonth {
   const { year, month } = wallTimeAt(Date.parse(startDate));
   return { year, month };
-}
-
-/**
- * The year "Este año" is about. The current month is never published, so an
- * anchor in December means the current month is January of the next year or
- * later, and that January is not published yet. Any other anchor is read as
- * the current year: without the device clock, nothing tells the few days
- * between New Year and the publication of December apart.
- */
-export function thisYearOf(anchor: CalendarMonth): number {
-  return anchor.month === 12 ? anchor.year + 1 : anchor.year;
 }
 
 // ─── Labels ──────────────────────────────────────────────────────────────────
@@ -256,11 +243,10 @@ export function resolvePeriod(anchor: CalendarMonth, selection: PeriodSelection)
   switch (selection.kind) {
     case "latest":
       return resolveRange(firstDayOf(anchor), anchorEnd);
-    case "year": {
-      const year = thisYearOf(anchor);
-      if (year > anchor.year) return { status: "yearEmpty", year };
-      return resolveRange({ year, month: 1, day: 1 }, anchorEnd);
-    }
+    case "year":
+      // "Año {año}": the anchor's own year, from January to the anchor month. It
+      // never assumes which year today is, so it needs no clock.
+      return resolveRange({ year: anchor.year, month: 1, day: 1 }, anchorEnd);
     case "last12":
       return resolveRange(firstDayOf(addMonths(anchor, -11)), anchorEnd);
     case "custom":
@@ -279,16 +265,21 @@ export function rangeResultText(resolution: PeriodResolution): string | null {
   return `${days}: se mostrará por meses, de ${monthRangePhrase(resolution.firstDay, resolution.lastDay)}.`;
 }
 
-/** "Septiembre de 2026 · por días", how a preset is offered. */
-export function presetSummary(resolution: PeriodResolution): string {
-  switch (resolution.status) {
-    case "ok":
-      return `${resolution.period.label} · ${resolution.period.granularity === "daily" ? "por días" : "por meses"}`;
-    case "yearEmpty":
-      return `Aún no hay datos de ${resolution.year}`;
-    default:
-      return "";
-  }
+/** "Año 2026", the name of the year preset: the anchor's year. */
+export const yearPresetName = (anchor: CalendarMonth) => `Año ${anchor.year}`;
+
+/**
+ * How a preset is offered: the period it resolves to and its granularity.
+ * "Septiembre de 2026 · por días"; for "Año {año}", whose name carries the
+ * year, "De enero a septiembre · por meses".
+ */
+export function presetSummary(anchor: CalendarMonth, kind: PresetKind): string {
+  const resolution = resolvePeriod(anchor, { kind });
+  if (resolution.status !== "ok") return "";
+  const granularity = resolution.period.granularity === "daily" ? "por días" : "por meses";
+  if (kind !== "year") return `${resolution.period.label} · ${granularity}`;
+  const months = anchor.month === 1 ? capitalise(monthName(anchor)) : `De enero a ${monthName(anchor)}`;
+  return `${months} · ${granularity}`;
 }
 
 // ─── Anchor changes ──────────────────────────────────────────────────────────

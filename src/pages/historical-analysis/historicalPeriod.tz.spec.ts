@@ -54,7 +54,7 @@ describe("UI-HIS-005 AC5 -- every period is bounded in Madrid, from the anchor a
       { startDate: "2026-09-15T00:00:00+02:00", endDate: "2026-11-14T00:00:00+01:00", granularity: "daily" },
     ],
     [
-      "AC4 Este año",
+      "AC4 Año 2026",
       { year: 2026, month: 9 },
       { kind: "year" },
       { startDate: "2026-01-01T00:00:00+01:00", endDate: "2026-10-01T00:00:00+02:00", granularity: "monthly" },
@@ -76,7 +76,12 @@ describe("UI-HIS-005 AC5 -- every period is bounded in Madrid, from the anchor a
     expect(resolution.status === "ok" && resolution.period).toMatchObject(expected);
   });
 
-  it("UI-HIS-005 AC5 -- anchor December 2026: 'Este año' is 2027, whatever year the device says it is", () => {
-    expect(resolvePeriod({ year: 2026, month: 12 }, { kind: "year" })).toEqual({ status: "yearEmpty", year: 2027 });
+  it.each<[string, { year: number; month: number }, { startDate: string; endDate: string; granularity: string }]>([
+    ["December 2026", { year: 2026, month: 12 }, { startDate: "2026-01-01T00:00:00+01:00", endDate: "2027-01-01T00:00:00+01:00", granularity: "monthly" }],
+    ["January 2027", { year: 2027, month: 1 }, { startDate: "2027-01-01T00:00:00+01:00", endDate: "2027-02-01T00:00:00+01:00", granularity: "daily" }],
+    ["February 2027", { year: 2027, month: 2 }, { startDate: "2027-01-01T00:00:00+01:00", endDate: "2027-03-01T00:00:00+01:00", granularity: "daily" }],
+  ])("UI-HIS-005 AC5 -- anchor %s: the year preset is the anchor's year, whatever year the device says it is", (_, anchor, expected) => {
+    const resolution = resolvePeriod(anchor, { kind: "year" });
+    expect(resolution.status === "ok" && resolution.period).toMatchObject(expected);
   });
 });

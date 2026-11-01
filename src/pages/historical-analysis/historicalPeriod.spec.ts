@@ -5,6 +5,7 @@ import {
   clampToAnchor,
   parseSelection,
   presetSummary,
+  yearPresetName,
   rangeResultText,
   resolvePeriod,
   settleSelection,
@@ -41,7 +42,7 @@ describe("UI-HIS-005 the anchor is the month the server resolved (#248)", () => 
     expect(title).toBe("Datos de septiembre de 2026");
   });
 
-  it("UI-HIS-005 AC4 -- anchor September 2026: 'Este año' is January to September 2026, month by month", () => {
+  it("UI-HIS-005 AC4 -- anchor September 2026: 'Año 2026' is January to September 2026, month by month", () => {
     const { period, title } = ok(resolvePeriod(SEPTEMBER_2026, { kind: "year" }));
     expect(period).toEqual({
       startDate: "2026-01-01T00:00:00+01:00",
@@ -63,17 +64,23 @@ describe("UI-HIS-005 the anchor is the month the server resolved (#248)", () => 
     expect(title).toBe("Datos de octubre de 2025 a septiembre de 2026");
   });
 
-  it("UI-HIS-005 AC4 -- anchor December 2026: 'Este año' is 2027, which has no published month yet", () => {
-    expect(resolvePeriod({ year: 2026, month: 12 }, { kind: "year" })).toEqual({ status: "yearEmpty", year: 2027 });
+  it("UI-HIS-005 anchor December 2026: 'Año 2026' is the whole of 2026, month by month", () => {
+    const { period } = ok(resolvePeriod({ year: 2026, month: 12 }, { kind: "year" }));
+    expect(period).toEqual({
+      startDate: "2026-01-01T00:00:00+01:00",
+      endDate: "2027-01-01T00:00:00+01:00",
+      granularity: "monthly",
+      label: "De enero a diciembre de 2026",
+    });
   });
 
-  it("UI-HIS-005 anchor January: 'Este año' is the 31 days of January, day by day", () => {
+  it("UI-HIS-005 anchor January 2027: 'Año 2027' is the 31 days of January, day by day", () => {
     const { period } = ok(resolvePeriod({ year: 2027, month: 1 }, { kind: "year" }));
     expect(period.granularity).toBe("daily");
     expect(period).toMatchObject({ startDate: "2027-01-01T00:00:00+01:00", endDate: "2027-02-01T00:00:00+01:00", label: "Enero de 2027" });
   });
 
-  it("UI-HIS-005 anchor February: 'Este año' is 59 days, day by day", () => {
+  it("UI-HIS-005 anchor February 2027: 'Año 2027' is 59 days, day by day", () => {
     const resolution = ok(resolvePeriod({ year: 2027, month: 2 }, { kind: "year" }));
     expect(resolution.pickedDays).toBe(59);
     expect(resolution.period).toMatchObject({
@@ -196,14 +203,21 @@ describe("UI-HIS-006 granularity follows calendar days in Madrid (#248)", () => 
     );
   });
 
+  it("UI-HIS-005 the year preset is named after the anchor's year, whatever its month", () => {
+    expect(yearPresetName(SEPTEMBER_2026)).toBe("Año 2026");
+    expect(yearPresetName({ year: 2026, month: 12 })).toBe("Año 2026");
+    expect(yearPresetName({ year: 2027, month: 1 })).toBe("Año 2027");
+  });
+
   it("UI-HIS-006 each preset is offered with its period and granularity", () => {
-    expect(presetSummary(resolvePeriod(SEPTEMBER_2026, { kind: "latest" }))).toBe("Septiembre de 2026 · por días");
-    expect(presetSummary(resolvePeriod(SEPTEMBER_2026, { kind: "year" }))).toBe("De enero a septiembre de 2026 · por meses");
-    expect(presetSummary(resolvePeriod(SEPTEMBER_2026, { kind: "last12" }))).toBe(
+    expect(presetSummary(SEPTEMBER_2026, "latest")).toBe("Septiembre de 2026 · por días");
+    expect(presetSummary(SEPTEMBER_2026, "year")).toBe("De enero a septiembre · por meses");
+    expect(presetSummary(SEPTEMBER_2026, "last12")).toBe(
       "De octubre de 2025 a septiembre de 2026 · por meses",
     );
-    expect(presetSummary(resolvePeriod({ year: 2027, month: 1 }, { kind: "year" }))).toBe("Enero de 2027 · por días");
-    expect(presetSummary(resolvePeriod({ year: 2026, month: 12 }, { kind: "year" }))).toBe("Aún no hay datos de 2027");
+    expect(presetSummary({ year: 2027, month: 2 }, "year")).toBe("De enero a febrero · por días");
+    expect(presetSummary({ year: 2027, month: 1 }, "year")).toBe("Enero · por días");
+    expect(presetSummary({ year: 2026, month: 12 }, "year")).toBe("De enero a diciembre · por meses");
   });
 });
 

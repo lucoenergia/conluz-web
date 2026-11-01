@@ -1,5 +1,5 @@
 import { useEffect, type FC } from "react";
-import { Box, Button, Skeleton, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import { useErrorDispatch } from "../../context/error.context";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
@@ -70,8 +70,6 @@ const NO_DATA_BODY =
   "La distribuidora publica los datos de cada mes hacia el día 10 del mes siguiente. Los verás aquí en cuanto se publique tu primer mes.";
 const ANCHOR_ERROR = "No se pudieron cargar tus datos de energía. Comprueba tu conexión e inténtalo de nuevo.";
 
-const YEAR_EMPTY_BODY = "Los datos de enero se publican hacia el 10 de febrero. Mientras tanto, puedes ver tus últimos 12 meses.";
-
 /** What hangs off the latest published month of the selected scope (UI-HIS-005). */
 const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodState }> = ({ anchor, period }) => {
   switch (anchor.status) {
@@ -88,15 +86,6 @@ const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodSt
       return (
         <>
           {period.clampNotice && <Notice severity="info">{period.clampNotice}</Notice>}
-          {resolution?.status === "yearEmpty" && (
-            // Neutral, not a failure: an ordinary few weeks of every year.
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1.5 }}>
-              <NeutralNotice title={`Aún no hay datos de ${resolution.year}`}>{YEAR_EMPTY_BODY}</NeutralNotice>
-              <Button variant="outlined" onClick={() => period.select({ kind: "last12" })}>
-                Ver últimos 12 meses
-              </Button>
-            </Box>
-          )}
           {resolved && <PeriodHeader anchor={anchor.anchor} resolution={resolved} />}
           <HistoricalPeriodContext.Provider value={resolved?.period}>
             {/* The content region the figures land in. */}

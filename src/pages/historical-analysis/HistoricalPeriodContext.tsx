@@ -13,8 +13,8 @@ export const HistoricalPeriodContext = createContext<HistoricalPeriod | undefine
  *
  * `undefined` until the latest published month of the selected scope has
  * resolved and the selection resolves to a period: while the anchor is
- * pending, after it failed, when nothing is published, and for "Este año"
- * before its January is published. A block reading it fetches nothing then.
+ * pending, after it failed, and when nothing is published. A block reading it
+ * fetches nothing then.
  * A period it does return never starts in the future, never runs backwards,
  * never ends after the latest published month and never exceeds 24 months, so
  * the request cannot be refused with ENERGY_METRICS_PERIOD_START_IN_FUTURE,

@@ -17,16 +17,17 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { colors, radii } from "../../theme/tokens";
 import { CustomRangePicker } from "./CustomRangePicker";
-import { presetSummary, resolvePeriod, type CalendarMonth, type PeriodSelection, type PresetKind } from "./historicalPeriod";
+import { presetSummary, yearPresetName, type CalendarMonth, type PeriodSelection, type PresetKind } from "./historicalPeriod";
 
 const LABEL = "Periodo";
 
-const NAMES: Record<PeriodSelection["kind"], string> = {
-  latest: "Último mes publicado",
-  year: "Este año",
-  last12: "Últimos 12 meses",
-  custom: "Rango personalizado",
-};
+const nameOf = (kind: PeriodSelection["kind"], anchor: CalendarMonth): string =>
+  ({
+    latest: "Último mes publicado",
+    year: yearPresetName(anchor),
+    last12: "Últimos 12 meses",
+    custom: "Rango personalizado",
+  })[kind];
 const CUSTOM_SUMMARY = "Elige las fechas, hasta 24 meses";
 const PRESETS: PresetKind[] = ["latest", "year", "last12"];
 
@@ -44,8 +45,8 @@ interface Option {
 }
 
 const optionsFor = (anchor: CalendarMonth): Option[] => [
-  ...PRESETS.map((kind) => ({ kind, name: NAMES[kind], summary: presetSummary(resolvePeriod(anchor, { kind })) })),
-  { kind: "custom", name: NAMES.custom, summary: CUSTOM_SUMMARY },
+  ...PRESETS.map((kind) => ({ kind, name: nameOf(kind, anchor), summary: presetSummary(anchor, kind) })),
+  { kind: "custom", name: nameOf("custom", anchor), summary: CUSTOM_SUMMARY },
 ];
 
 /**
@@ -74,7 +75,7 @@ const PeriodDropdown: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }
           const kind = event.target.value as PeriodSelection["kind"];
           if (kind !== "custom") onSelect({ kind });
         }}
-        slotProps={{ select: { renderValue: (kind) => NAMES[kind as PeriodSelection["kind"]] } }}
+        slotProps={{ select: { renderValue: (kind) => nameOf(kind as PeriodSelection["kind"], anchor) } }}
         fullWidth
       >
         {optionsFor(anchor).map((option) => (
@@ -135,7 +136,7 @@ const PeriodSheet: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }) =
         sx={{ justifyContent: "space-between", textAlign: "left", textTransform: "none", borderRadius: radii.default, minWidth: 0 }}
       >
         <Box id={valueId} component="span" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
-          {NAMES[selection.kind]}
+          {nameOf(selection.kind, anchor)}
         </Box>
       </Button>
       <SwipeableDrawer

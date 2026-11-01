@@ -20,7 +20,7 @@ export const GARAGE: SupplyResponse = { ...CAPTURED_PLANT_SUPPLY, id: "own-garag
 /** A month's bounds as the server writes them for LATEST_PUBLISHED_MONTH. */
 export const AUGUST_2026 = { startDate: "2026-08-01T00:00:00+02:00", endDate: "2026-09-01T00:00:00+02:00" };
 export const SEPTEMBER_2026 = { startDate: "2026-09-01T00:00:00+02:00", endDate: "2026-10-01T00:00:00+02:00" };
-export const DECEMBER_2026 = { startDate: "2026-12-01T00:00:00+01:00", endDate: "2027-01-01T00:00:00+01:00" };
+export const DECEMBER_2025 = { startDate: "2025-12-01T00:00:00+01:00", endDate: "2026-01-01T00:00:00+01:00" };
 export const NOTHING_PUBLISHED = { startDate: null, endDate: null };
 
 type Period = { startDate: string | null; endDate: string | null };
