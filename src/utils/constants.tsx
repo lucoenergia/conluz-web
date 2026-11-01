@@ -10,7 +10,14 @@ import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSetting
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { MenuRequirement } from "../hooks/permissions";
 
+/** Below this the side menu is a temporary drawer; it says nothing about lists. */
 export const MIN_DESKTOP_WIDTH = 768;
+/**
+ * From this viewport width a records list is a table, below it a stacked list
+ * (#347). With the side menu open, no list table fits a narrower viewport, and
+ * a table that scrolls sideways hides data.
+ */
+export const LIST_TABLE_MIN_WIDTH = 1024;
 export const SIDEMENU_WIDTH = 260;
 
 export interface MenuItem {

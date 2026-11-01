@@ -18,6 +18,7 @@ import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import { MembershipResponseRole } from "../../api/models";
 import { SearchBar } from "../../components/SearchBar";
 import { colors, fontSizes } from "../../theme/tokens";
+import { useListLayout } from "../../components/ResponsiveRecordList/useListLayout";
 import { sxStyles } from "../../theme/sx";
 import { STATUS_LABELS } from "./membershipStatus";
 import { membersCount, type MemberFilters, type RoleFilter, type StatusFilter } from "./memberFilters";
@@ -53,7 +54,6 @@ interface MembersFiltersProps {
   resultCount: number;
   /** Whether the filter-bar "Limpiar filtros" is shown: something is active and some row matches. */
   showClear: boolean;
-  isNarrow: boolean;
 }
 
 const ClearButton: FC<{ onClear: () => void }> = ({ onClear }) => (
@@ -72,8 +72,8 @@ export const MembersFilters: FC<MembersFiltersProps> = ({
   onClear,
   resultCount,
   showClear,
-  isNarrow,
 }) => {
+  const layout = useListLayout();
   const [panelOpen, setPanelOpen] = useState(false);
   const panelId = useId();
 
@@ -86,7 +86,7 @@ export const MembersFilters: FC<MembersFiltersProps> = ({
     />
   );
 
-  if (!isNarrow) {
+  if (layout === "wide") {
     return (
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
         <Box sx={{ flex: "1 1 280px", minWidth: 0 }}>{search}</Box>

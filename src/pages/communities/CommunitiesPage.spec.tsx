@@ -1,7 +1,8 @@
 import "@testing-library/jest-dom";
-import { screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { AxiosError } from "axios";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
 import {
@@ -141,16 +142,14 @@ describe("CommunitiesPage", () => {
     expect(screen.getByText("VRD")).toBeInTheDocument();
   });
 
-  it("shows first two admin names and 'y N más' overflow for Sol Común", () => {
+  it("shows first two admin names and 'y N más' overflow under Sol Común's name", () => {
     setup();
-    expect(screen.getByText(/Ana García, Bruno Leal/)).toBeInTheDocument();
-    expect(screen.getByText(/y 1 más/)).toBeInTheDocument();
+    expect(screen.getByText("Administradores: Ana García, Bruno Leal y 1 más")).toBeInTheDocument();
   });
 
-  it("shows single admin name without overflow for Verde Activa", () => {
+  it("shows single admin name without overflow under Verde Activa's name", () => {
     setup();
-    expect(screen.getByText("Diana Mora")).toBeInTheDocument();
-    expect(screen.queryByText(/y.*más/)).toBeInTheDocument(); // only for Sol Común
+    expect(screen.getByText("Administradores: Diana Mora")).toBeInTheDocument();
   });
 
   it("shows memberCount and supplyPointCount columns", () => {
@@ -282,5 +281,123 @@ describe("CommunitiesPage", () => {
       expect(await screen.findByRole("menuitem", { name: /Editar/ })).toBeInTheDocument();
       expect(screen.queryByRole("menuitem", { name: /Gestionar administradores/ })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("CommunitiesPage as a records list (#347)", () => {
+  const originalWidth = window.innerWidth;
+  const setViewportWidth = (width: number) =>
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+
+  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => setViewportWidth(originalWidth));
+
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, index) =>
+      community({ id: `c${index + 1}`, name: `Comunidad ${String(index + 1).padStart(2, "0")}`, code: `C${index + 1}` }),
+    );
+
+  it("UI-LST-001 shows the stacked list, not a table, at a 1023px viewport", () => {
+    setViewportWidth(1023);
+    setup();
+
+    expect(screen.getByRole("list", { name: "Comunidades" })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("UI-LST-001 shows the table from a 1024px viewport, with code, NIF/CIF, address and administrators under the name", () => {
+    setViewportWidth(1024);
+    setup();
+
+    expect(screen.queryByRole("list", { name: "Comunidades" })).not.toBeInTheDocument();
+    const table = screen.getByRole("table");
+    expect(within(table).getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+      "Nombre",
+      "Miembros",
+      "Suministros",
+      "Estado",
+      "Acciones",
+    ]);
+
+    const sol = within(screen.getByText("Sol Común").closest("td") as HTMLElement);
+    expect(sol.getByText("SOL")).toBeInTheDocument();
+    expect(sol.getByText("NIF/CIF B12345678")).toBeInTheDocument();
+    expect(sol.getByText("Calle Mayor 1")).toBeInTheDocument();
+    expect(sol.getByText("Administradores: Ana García, Bruno Leal y 1 más")).toBeInTheDocument();
+    // In that order: code, NIF/CIF, address, administrators.
+    expect(screen.getByText("Sol Común").closest("td")).toHaveTextContent(
+      /^Sol Común\s*SOL\s*NIF\/CIF B12345678\s*Calle Mayor 1\s*Administradores: Ana García, Bruno Leal y 1 más$/,
+    );
+
+    // A missing tax id or address is left out, not shown as "—".
+    const verde = screen.getByText("Verde Activa").closest("td") as HTMLElement;
+    expect(within(verde).getByText("VRD")).toBeInTheDocument();
+    expect(verde).not.toHaveTextContent("NIF/CIF");
+    expect(verde).not.toHaveTextContent("—");
+  });
+
+  it("UI-LST-001 leaves the administrators line out for a community without administrators, with no placeholder", () => {
+    setViewportWidth(1024);
+    setup({
+      communities: [
+        community({ id: "c1", name: "Sol Común", code: "SOL", adminNames: ["Ana García"] }),
+        community({ id: "c3", name: "Sin Gestión", code: "SGN", adminNames: [] }),
+      ],
+    });
+
+    const row = screen.getByText("Sin Gestión").closest("tr") as HTMLElement;
+    expect(row).not.toHaveTextContent("Administradores");
+    expect(row).not.toHaveTextContent("—");
+    expect(screen.getByText("Administradores: Ana García")).toBeInTheDocument();
+  });
+
+  it("UI-LST-004 shows what failed and a retry that reads the list again, not the empty state", async () => {
+    const user = userEvent.setup();
+    loggedUser.current = buildCurrentUser({
+      platformCapabilities: buildPlatformCapabilities({ canAdministerPlatform: true }),
+    });
+    const failed = query.error<CommunityResponse[]>(new AxiosError("Network Error"));
+    vi.mocked(useGetAllCommunities).mockReturnValue(failed);
+    renderWithProviders(<CommunitiesPage />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("No se pudieron cargar las comunidades.");
+    expect(screen.queryByText("No hay comunidades registradas")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+
+    expect(failed.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the empty state for a list that loaded with no communities", () => {
+    setup({ communities: [] });
+
+    expect(screen.getByRole("heading", { name: "No hay comunidades registradas" })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("UI-LST-005 shows 25 communities without pagination", () => {
+    setup({ communities: many(25) });
+
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+    expect(screen.queryByRole("navigation", { name: "Páginas de comunidades" })).not.toBeInTheDocument();
+  });
+
+  it("UI-LST-005 shows the first 25 of 26 communities, and the pagination", async () => {
+    const user = userEvent.setup();
+    setup({ communities: many(26) });
+
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+    expect(screen.getByText("Comunidad 25")).toBeInTheDocument();
+    expect(screen.queryByText("Comunidad 26")).not.toBeInTheDocument();
+    expect(screen.getByText("1–25 de 26 comunidades")).toBeInTheDocument();
+
+    await user.click(
+      within(screen.getByRole("navigation", { name: "Páginas de comunidades" })).getByRole("button", {
+        name: "Página siguiente",
+      }),
+    );
+
+    expect(screen.getByText("Comunidad 26")).toBeInTheDocument();
+    expect(screen.queryByText("Comunidad 01")).not.toBeInTheDocument();
   });
 });

@@ -18,9 +18,6 @@ export const NO_MEMBER_FILTERS: MemberFilters = { query: "", status: "all", role
 /** "0 miembros", "1 miembro", "N miembros". */
 export const membersCount = (count: number) => (count === 1 ? "1 miembro" : `${count} miembros`);
 
-/** The rows of one page of the members list (#331). */
-export const MEMBERS_PAGE_SIZE = 25;
-
 type SearchedFields = Pick<MembershipResponse, "fullName" | "personalId" | "contactEmail">;
 
 /**
@@ -57,15 +54,4 @@ export function filterMemberships(memberships: MembershipResponse[], filters: Me
       matchesStatus(membership, filters.status) &&
       matchesRole(membership, filters.role),
   );
-}
-
-/** How many pages `count` rows fill; one when there are none. */
-export function pageCountOf(count: number): number {
-  return Math.max(1, Math.ceil(count / MEMBERS_PAGE_SIZE));
-}
-
-/** The rows of a 1-based page, clamped to the last one. */
-export function pageOf<T>(rows: T[], page: number): T[] {
-  const current = Math.min(Math.max(1, page), pageCountOf(rows.length));
-  return rows.slice((current - 1) * MEMBERS_PAGE_SIZE, current * MEMBERS_PAGE_SIZE);
 }

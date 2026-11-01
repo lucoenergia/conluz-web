@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useRef, useState, type FC } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import {
@@ -6,9 +6,7 @@ import {
   Typography,
   Paper,
   Chip,
-  Alert,
   Button,
-  IconButton,
   MenuItem,
   ListItemIcon,
   ListItemText,
@@ -16,17 +14,18 @@ import {
 import BusinessIcon from "@mui/icons-material/Business";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
-import { radii, shadows, colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
+import { colors, fontSizes, interactiveTransition, motion} from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { RecordList } from "../../components/RecordList";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, ListTableHeaderText, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
-import useWindowDimensions from "../../utils/useWindowDimensions";
-import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
+import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
+import { EmptyState } from "../../components/EmptyState";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
 import { useGetAllCommunities } from "../../api/communities/communities";
@@ -35,6 +34,25 @@ import { useCommunityActions, usePlatformActions } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
+
+/**
+ * The table's column widths, padding included. Each fixed column fits its
+ * header (the icon headers) or its chip; Nombre has none and takes what is
+ * left, about 269px at a 1024px viewport with the side menu open.
+ */
+const COLUMN_WIDTHS = {
+  memberCount: "112px",
+  supplyPointCount: "128px",
+  status: "104px",
+} as const;
+
+/** "Administradores: Ana, Bruno y 2 más" under the name, or nothing when there are none. */
+function adminNamesLine(adminNames?: string[]): string | undefined {
+  if (!adminNames || adminNames.length === 0) return undefined;
+  const shown = adminNames.slice(0, MAX_ADMIN_NAMES_SHOWN).join(", ");
+  const overflow = adminNames.length - MAX_ADMIN_NAMES_SHOWN;
+  return `Administradores: ${shown}${overflow > 0 ? ` y ${overflow} más` : ""}`;
+}
 
 function AdminNamesCell({ adminNames }: { adminNames?: string[] }) {
   if (!adminNames || adminNames.length === 0) {
@@ -59,14 +77,18 @@ function AdminNamesCell({ adminNames }: { adminNames?: string[] }) {
 }
 
 export const CommunitiesPage: FC = () => {
-  const { width } = useWindowDimensions();
-  // Render ONE layout, not two hidden copies: a stacked list below the
-  // project's desktop breakpoint, the table above it.
-  const isNarrow = width < MIN_DESKTOP_WIDTH;
 
   const theme = useTheme();
   const navigate = useNavigate();
-  const { data: communities = [], isLoading, error } = useGetAllCommunities();
+  const { data: communities = [], isLoading, error, refetch } = useGetAllCommunities();
+
+  // Pages of 25 (UI-LST-005); a page change brings the list's top into view.
+  const { page, setPage, pageCount, pageRows } = useListPage(communities);
+  const listRef = useRef<HTMLDivElement>(null);
+  const changePage = (next: number) => {
+    setPage(next);
+    listRef.current?.scrollIntoView?.({ block: "start" });
+  };
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   // The id, not the row. A write invalidates the list, so a stored row would go
@@ -99,7 +121,7 @@ export const CommunitiesPage: FC = () => {
 
   // No permitted action means no menu at all, rather than a menu with nothing
   // in it or items the backend would refuse.
-  const hasRowActions = (community: CommunityResponse) =>
+  const offersRowActions = (community: CommunityResponse) =>
     !!forCommunity(community).actions.update || rowAdmins(community).state === "allowed";
 
   const selectedUpdate = forCommunity(selectedCommunity ?? undefined).actions.update;
@@ -112,6 +134,10 @@ export const CommunitiesPage: FC = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  // The narrow list's item back to the community it was built from.
+  const communityOfItem = (item: RecordListItem) =>
+    communities.find((community) => String(community.id ?? "") === item.id);
 
   const handleEditClick = () => {
     handleMenuClose();
@@ -192,83 +218,47 @@ export const CommunitiesPage: FC = () => {
       </Box>
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-            overflow: "hidden",
-            width: "100%",
-          }}
-        >
-          {error ? (
-            <Alert severity="error" sx={{ m: 2 }}>
-              Error al cargar las comunidades. Por favor, inténtalo de nuevo.
-            </Alert>
-          ) : (
-            <>
+        <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={error ? { message: "No se pudieron cargar las comunidades.", onRetry: () => void refetch() } : undefined}
+          ref={listRef}
+          header={
             <ResultStatus
               isLoading={isLoading}
               count={communities.length}
               noun={{ one: "comunidad", other: "comunidades" }}
               emptyMessage="No se encontraron comunidades"
             />
-
-            {!isNarrow && (
+          }
+          empty={
+            !isLoading && communities.length === 0 ? (
+              <EmptyState icon={BusinessIcon} title="No hay comunidades registradas" />
+            ) : undefined
+          }
+          wide={
             <ListTable
-              rows={communities}
+              rows={pageRows}
               getRowKey={(community) => community.id}
               isLoading={isLoading}
-              emptyMessage="No hay comunidades registradas"
-              rowActionsLabel={(community) => `Más acciones para ${community.name || "la comunidad"}`}
-              onRowActionsClick={handleMenuOpen}
-              hasRowActions={hasRowActions}
+              rowActions={{
+                label: (community) => `Más acciones para ${community.name || "la comunidad"}`,
+                onClick: handleMenuOpen,
+                has: offersRowActions,
+              }}
+              title={{
+                header: "Nombre",
+                text: (community) => community.name,
+                leading: () => <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />,
+                // Under the name rather than in columns of their own: with the side menu
+                // open, no wider table leaves the name room at a 1024px viewport (UI-LST-001).
+                secondary: (community) => [
+                  community.code,
+                  community.legalId && `NIF/CIF ${community.legalId}`,
+                  community.address,
+                  adminNamesLine(community.adminNames),
+                ].filter((line): line is string => !!line),
+              }}
               columns={[
-                {
-                  key: "name",
-                  header: "Nombre",
-                  render: (community) => (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {community.name}
-                      </Typography>
-                    </Box>
-                  ),
-                },
-                {
-                  key: "code",
-                  header: "Código",
-                  render: (community) => (
-                    <Typography variant="body2" sx={{ color: "secondary.main", fontFamily: "monospace" }}>
-                      {community.code}
-                    </Typography>
-                  ),
-                },
-                {
-                  key: "legalId",
-                  header: "NIF/CIF",
-                  render: (community) => (
-                    <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                      {community.legalId || "—"}
-                    </Typography>
-                  ),
-                },
-                {
-                  key: "address",
-                  header: "Dirección",
-                  render: (community) => (
-                    <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                      {community.address || "—"}
-                    </Typography>
-                  ),
-                },
-                {
-                  key: "admins",
-                  header: "Administradores",
-                  render: (community) => <AdminNamesCell adminNames={community.adminNames} />,
-                },
                 {
                   key: "memberCount",
                   header: (
@@ -278,9 +268,10 @@ export const CommunitiesPage: FC = () => {
                     </Box>
                   ),
                   align: "center",
+                  width: COLUMN_WIDTHS.memberCount,
                   render: (community) => (
                     <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {community.memberCount ?? "—"}
+                      {community.memberCount}
                     </Typography>
                   ),
                 },
@@ -293,15 +284,17 @@ export const CommunitiesPage: FC = () => {
                     </Box>
                   ),
                   align: "center",
+                  width: COLUMN_WIDTHS.supplyPointCount,
                   render: (community) => (
                     <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      {community.supplyPointCount ?? "—"}
+                      {community.supplyPointCount}
                     </Typography>
                   ),
                 },
                 {
                   key: "status",
                   header: "Estado",
+                  width: COLUMN_WIDTHS.status,
                   render: (community) => (
                     <Chip
                       label={community.enabled ? "Activa" : "Inactiva"}
@@ -313,50 +306,58 @@ export const CommunitiesPage: FC = () => {
                 },
               ]}
             />
-            )}
-
-            {isNarrow && (
-            <Box sx={{ p: 2 }}>
-              <RecordList
-                label="Comunidades"
-                isLoading={isLoading}
-                emptyMessage="No se encontraron comunidades"
-                items={communities.map((community) => ({
-                  id: String(community.id ?? ""),
-                  avatar: <BusinessIcon sx={{ color: "primary.main", fontSize: 20, mt: 0.5 }} />,
-                  title: community.name || "Sin nombre",
-                  status: (
-                    <Chip
-                      label={community.enabled ? "Activa" : "Inactiva"}
-                      color={community.enabled ? "success" : "error"}
-                      size="small"
-                      sx={{ fontWeight: 600 }}
-                    />
-                  ),
-                  actions: hasRowActions(community) ? (
-                    <IconButton
-                      aria-label={`Más acciones para ${community.name || "la comunidad"}`}
-                      onClick={(e) => handleMenuOpen(e, community)}
-                      sx={sxStyles.touchTarget}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  ) : undefined,
-                  fields: [
-                    { label: "Código", value: community.code || "—" },
-                    { label: "CIF", value: community.legalId || "—" },
-                    { label: "Dirección", value: community.address || "—" },
-                    { label: "Admins", value: <AdminNamesCell adminNames={community.adminNames} /> },
-                    { label: "Socios", value: community.memberCount ?? "—" },
-                    { label: "Suministros", value: community.supplyPointCount ?? "—" },
-                  ],
-                }))}
+          }
+          narrow={
+            <RecordList
+              label="Comunidades"
+              isLoading={isLoading}
+              rowActions={{
+                label: (item) => `Más acciones para ${communityOfItem(item)?.name || "la comunidad"}`,
+                onClick: (event, item) => {
+                  const community = communityOfItem(item);
+                  if (community) handleMenuOpen(event, community);
+                },
+                has: (item) => {
+                  const community = communityOfItem(item);
+                  return !!community && offersRowActions(community);
+                },
+              }}
+              items={pageRows.map((community) => ({
+                id: String(community.id ?? ""),
+                avatar: <BusinessIcon sx={{ color: "primary.main", fontSize: 20, mt: 0.5 }} />,
+                title: community.name || "Sin nombre",
+                status: (
+                  <Chip
+                    label={community.enabled ? "Activa" : "Inactiva"}
+                    color={community.enabled ? "success" : "error"}
+                    size="small"
+                    sx={{ fontWeight: 600 }}
+                  />
+                ),
+                // A missing value is left out rather than shown as "—".
+                fields: [
+                  ...(community.code ? [{ label: "Código", value: community.code }] : []),
+                  ...(community.legalId ? [{ label: "CIF", value: community.legalId }] : []),
+                  ...(community.address ? [{ label: "Dirección", value: community.address }] : []),
+                  { label: "Administradores", value: <AdminNamesCell adminNames={community.adminNames} /> },
+                  { label: "Miembros", value: community.memberCount },
+                  { label: "Suministros", value: community.supplyPointCount },
+                ],
+              }))}
+            />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={page}
+                pageCount={pageCount}
+                total={communities.length}
+                noun={{ one: "comunidad", other: "comunidades" }}
+                onChange={changePage}
               />
-            </Box>
-            )}
-            </>
-          )}
-        </Paper>
+            )
+          }
+        />
       </Box>
 
       {/* Every item is the selected row's own answer. Editing is the

@@ -1,18 +1,22 @@
 import type { FC } from "react";
-import { Box, IconButton, Pagination, Typography } from "@mui/material";
+import { Box, IconButton, Typography } from "@mui/material";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { sxStyles } from "../../theme/sx";
-import { MEMBERS_PAGE_SIZE } from "./memberFilters";
+import { PaginationOutlined } from "../Pagination/Pagination";
+import { useListLayout } from "../ResponsiveRecordList/useListLayout";
+import { LIST_PAGE_SIZE } from "./paging";
 
-interface MembersPaginationProps {
+export interface ListPaginationProps {
   /** The 1-based page shown. */
   page: number;
   pageCount: number;
-  /** How many rows the filtered result holds. */
+  /** How many rows the list holds. */
   total: number;
+  pageSize?: number;
+  /** What the rows are, in both numbers: { one: "miembro", other: "miembros" }. */
+  noun: { one: string; other: string };
   onChange: (page: number) => void;
-  isNarrow: boolean;
 }
 
 const pageLabel = (type: string, page: number | null, selected: boolean) => {
@@ -31,13 +35,24 @@ const pageLabel = (type: string, page: number | null, selected: boolean) => {
 };
 
 /**
- * The pages of the filtered members (#331). A phone gets previous, "current
- * of total" and next, each a full touch target; a wider screen, the page
- * numbers too.
+ * The pages of a records list (UI-LST-005): nothing at all up to one page. The
+ * narrow layout gets previous, "current of total" and next, each a full touch
+ * target; the wide one, the page numbers too.
  */
-export const MembersPagination: FC<MembersPaginationProps> = ({ page, pageCount, total, onChange, isNarrow }) => {
-  const start = (page - 1) * MEMBERS_PAGE_SIZE + 1;
-  const end = Math.min(page * MEMBERS_PAGE_SIZE, total);
+export const ListPagination: FC<ListPaginationProps> = ({
+  page,
+  pageCount,
+  total,
+  pageSize = LIST_PAGE_SIZE,
+  noun,
+  onChange,
+}) => {
+  const layout = useListLayout();
+  if (total <= pageSize) return null;
+
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
+  const navLabel = `Páginas de ${noun.other}`;
 
   return (
     <Box
@@ -50,10 +65,10 @@ export const MembersPagination: FC<MembersPaginationProps> = ({ page, pageCount,
       }}
     >
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {start}–{end} de {total} miembros
+        {start}–{end} de {total} {total === 1 ? noun.one : noun.other}
       </Typography>
-      {isNarrow ? (
-        <Box component="nav" aria-label="Páginas de miembros" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      {layout === "narrow" ? (
+        <Box component="nav" aria-label={navLabel} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton
             aria-label="Página anterior"
             disabled={page <= 1}
@@ -75,13 +90,12 @@ export const MembersPagination: FC<MembersPaginationProps> = ({ page, pageCount,
           </IconButton>
         </Box>
       ) : (
-        <Pagination
-          aria-label="Páginas de miembros"
+        <PaginationOutlined
+          ariaLabel={navLabel}
+          getItemAriaLabel={pageLabel}
           count={pageCount}
           page={page}
-          onChange={(_, value) => onChange(value)}
-          color="primary"
-          getItemAriaLabel={pageLabel}
+          handleChange={(_, value) => onChange(value)}
         />
       )}
     </Box>

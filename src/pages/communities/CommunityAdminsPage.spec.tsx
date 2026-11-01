@@ -699,3 +699,59 @@ describe("refused row actions", () => {
     expect(screen.getByRole("dialog", { name: `Suspender administrador en ${COMMUNITY_NAME}` })).toBeInTheDocument();
   });
 });
+
+describe("a failed read (#347)", () => {
+  it("UI-LST-004 shows what failed and a retry that reads the admins again, not the empty state", async () => {
+    // The first read fails; the retry is answered.
+    let failNext = true;
+    const admins: Admins = {
+      get current() {
+        if (failNext) {
+          failNext = false;
+          throw { response: { status: 500, headers: {}, data: { status: 500, message: "boom", errors: [] } } };
+        }
+        return [ROSA, PABLO];
+      },
+    };
+    const router = serveAdminsPage(admins);
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No se pudieron cargar los administradores.");
+    expect(screen.queryByText("Esta comunidad no tiene administradores")).not.toBeInTheDocument();
+    expect(adminReads(router)).toBe(1);
+
+    await user().click(screen.getByRole("button", { name: "Reintentar" }));
+
+    expect(await screen.findByText("Rosa Activa")).toBeInTheDocument();
+    expect(adminReads(router)).toBe(2);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+describe("pages of the admins list (#347)", () => {
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, index) => {
+      const n = String(index + 1).padStart(2, "0");
+      return admin(`u-${n}`, `Administrador ${n}`);
+    });
+
+  it("UI-LST-005 shows 25 admins without pagination", async () => {
+    serveAdminsPage({ current: many(25) });
+    renderPage();
+
+    expect(await screen.findByText("Administrador 25")).toBeInTheDocument();
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+    expect(screen.queryByRole("navigation", { name: "Páginas de administradores" })).not.toBeInTheDocument();
+  });
+
+  it("UI-LST-005 shows the first 25 of 26 admins, and the pagination", async () => {
+    serveAdminsPage({ current: many(26) });
+    renderPage();
+
+    expect(await screen.findByText("Administrador 25")).toBeInTheDocument();
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+    expect(screen.queryByText("Administrador 26")).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Páginas de administradores" })).toBeInTheDocument();
+    expect(screen.getByText("1–25 de 26 administradores")).toBeInTheDocument();
+  });
+});

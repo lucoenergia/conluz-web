@@ -1,4 +1,7 @@
-import { RecordList, Mui, Icons, fontSizes, sxStyles } from "conluz-web";
+import { RecordList, Mui, fontSizes } from "conluz-web";
+
+const noop = () => {};
+const rowActions = { label: (item: { title: string }) => `Más acciones para ${item.title}`, onClick: noop };
 
 const member = (id: string, name: string, email: string, role: string, enabled: boolean) => ({
   id,
@@ -10,11 +13,6 @@ const member = (id: string, name: string, email: string, role: string, enabled: 
   title: name,
   status: (
     <Mui.Chip label={enabled ? "Activo" : "Inactivo"} color={enabled ? "success" : "error"} size="small" sx={{ fontWeight: 600 }} />
-  ),
-  actions: (
-    <Mui.IconButton aria-label={`Más acciones para ${name}`} sx={sxStyles.touchTarget}>
-      <Icons.MoreVert />
-    </Mui.IconButton>
   ),
   fields: [
     { label: "Email", value: email },
@@ -30,7 +28,7 @@ const items = [
 
 export const Members = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
-    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={items} />
+    <RecordList label="Miembros de la comunidad" items={items} rowActions={rowActions} />
   </Mui.Box>
 );
 
@@ -38,7 +36,8 @@ export const WithBadge = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
     <RecordList
       label="Usuarios de la plataforma"
-      emptyMessage="No se encontraron usuarios"
+     
+      rowActions={rowActions}
       items={[
         {
           ...member("u-1", "Vicent Ribes Climent", "vicent.ribes@correo.es", "Miembro", true),
@@ -53,7 +52,8 @@ export const WithLines = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
     <RecordList
       label="Miembros de la comunidad"
-      emptyMessage="No se encontraron miembros"
+     
+      rowActions={{ ...rowActions, has: (item) => item.id === "m-4" }}
       items={[
         {
           id: "m-4",
@@ -61,11 +61,6 @@ export const WithLines = () => (
             <Mui.Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>A</Mui.Avatar>
           ),
           title: "Amparo Domínguez Llorens",
-          actions: (
-            <Mui.IconButton aria-label="Más acciones para Amparo Domínguez Llorens" sx={sxStyles.touchTarget}>
-              <Icons.MoreVert />
-            </Mui.IconButton>
-          ),
           badge: <Mui.Chip label="Invitación enviada" size="small" sx={{ fontWeight: 600 }} />,
           lines: ["Miembro · 12345678Z", "amparo.dominguez.llorens.cooperativa@telefonica.net"],
           fields: [],
@@ -87,13 +82,7 @@ export const WithLines = () => (
 
 export const Loading = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
-    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={[]} isLoading />
-  </Mui.Box>
-);
-
-export const Empty = () => (
-  <Mui.Box sx={{ maxWidth: 390 }}>
-    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={[]} />
+    <RecordList label="Miembros de la comunidad" items={[]} isLoading />
   </Mui.Box>
 );
 
@@ -101,7 +90,8 @@ export const WithSelection = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
     <RecordList
       label="Miembros de la comunidad"
-      emptyMessage="No se encontraron miembros"
+     
+      rowActions={rowActions}
       items={items.map((item, index) => ({
         ...item,
         selection:
@@ -109,6 +99,20 @@ export const WithSelection = () => (
             <Mui.Checkbox checked={index === 0} inputProps={{ "aria-label": `Seleccionar ${item.title}` }} />
           ) : undefined,
       }))}
+    />
+  </Mui.Box>
+);
+
+export const WithLinks = () => (
+  <Mui.Box sx={{ maxWidth: 390 }}>
+    <RecordList
+      label="Puntos de suministro"
+      chevron
+      items={[
+        { id: "s-1", title: "Casa de Lucía", href: "/supply-points/s-1", lines: ["ES0021000000000001AB"] },
+        { id: "s-2", title: "Local de la cooperativa", href: "/supply-points/s-2", lines: ["ES0021000000000002CD"] },
+        { id: "s-3", title: "Nave antigua", href: "/supply-points/s-3", lines: ["ES0021000000000003EF"], inactive: true },
+      ]}
     />
   </Mui.Box>
 );
